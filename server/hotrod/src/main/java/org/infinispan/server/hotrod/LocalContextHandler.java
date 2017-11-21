@@ -1,8 +1,10 @@
 package org.infinispan.server.hotrod;
 
+import static org.infinispan.server.hotrod.HotRodOperation.PING;
 import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
 
 import org.infinispan.server.core.transport.NettyTransport;
+import org.infinispan.server.hotrod.multimap.MultimapCacheDecodeContext;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -25,9 +27,29 @@ public class LocalContextHandler extends ChannelInboundHandlerAdapter {
    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
       if (msg instanceof CacheDecodeContext) {
          CacheDecodeContext cdc = (CacheDecodeContext) msg;
-         realChannelRead(ctx, msg, cdc);
+         if (cdc.header.op.isMultimap())
+            realChannelReadMultimap(ctx, cdc, msg, new MultimapCacheDecodeContext(cdc.cache, cdc));
+         else
+            realChannelRead(ctx, msg, cdc);
       } else {
          super.channelRead(ctx, msg);
+      }
+   }
+
+   private void realChannelReadMultimap(ChannelHandlerContext ctx, CacheDecodeContext cdc, Object msg, MultimapCacheDecodeContext mcc) throws Exception {
+      HotRodHeader h = cdc.header;
+      switch (h.op) {
+         case CONTAINS_KEY_MULTIMAP:
+            writeResponse(cdc, ctx.channel(), mcc.containsKey());
+            break;
+         case GET_MULTIMAP:
+            writeResponse(cdc, ctx.channel(), mcc.get());
+            break;
+         case GET_MULTIMAP_WITH_METADATA:
+            writeResponse(cdc, ctx.channel(), mcc.getWithMetadata());
+            break;
+         default:
+            super.channelRead(ctx, msg);
       }
    }
 
@@ -46,7 +68,7 @@ public class LocalContextHandler extends ChannelInboundHandlerAdapter {
             break;
          case PING:
             writeResponse(cdc, ctx.channel(), new EmptyResponse(h.version, h.messageId, h.cacheName,
-                  h.clientIntel, HotRodOperation.PING, OperationStatus.Success, h.topologyId));
+                  h.clientIntel, PING, OperationStatus.Success, h.topologyId));
             break;
          case STATS:
             writeResponse(cdc, ctx.channel(), cdc.decoder.createStatsResponse(cdc, transport));

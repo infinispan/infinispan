@@ -109,7 +109,12 @@
          <artifactId>infinispan-clustered-lock</artifactId>
       </dependency>
 
-      <dependency>
+       <dependency>
+           <groupId>${project.groupId}</groupId>
+           <artifactId>infinispan-multimap</artifactId>
+       </dependency>
+
+       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-server-core</artifactId>
       </dependency>
@@ -203,6 +208,10 @@
                            <title>Clustered Counter API</title>
                            <packages>org.infinispan.counter*</packages>
                         </group>
+                         <group>
+                             <title>Multimap API</title>
+                             <packages>org.infinispan.multimap*</packages>
+                         </group>
                         <group>
                            <title>Clustered Lock API</title>
                            <packages>org.infinispan.lock*</packages>

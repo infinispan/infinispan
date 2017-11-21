@@ -20,7 +20,8 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.multimap.api.MultimapCache;
+import org.infinispan.multimap.api.BasicMultimapCache;
+import org.infinispan.multimap.api.embedded.MultimapCache;
 import org.infinispan.multimap.impl.function.ContainsFunction;
 import org.infinispan.multimap.impl.function.GetFunction;
 import org.infinispan.multimap.impl.function.PutFunction;
@@ -29,6 +30,36 @@ import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * Embedded implementation of {@link MultimapCache}
+ *
+ * <h2>Transactions</h2>
+ *
+ * EmbeddedMultimapCache supports implicit transactions without blocking. The following methods block when
+ * they are called in a explicit transaction context. This limitation could be improved in the following versions if
+ * technically possible :
+ *
+ * <ul>
+ *    <li>{@link BasicMultimapCache#size()} </li>
+ *    <li>{@link BasicMultimapCache#containsEntry(Object, Object)}</li>
+ * </ul>
+ *
+ * More about transactions in :
+ * <a href="http://infinispan.org/docs/dev/user_guide/user_guide.html#transactions">the Infinispan Documentation</a>.
+ *
+ * <h2>Duplicates</h2>
+ * The current implementation does not support duplicate values on keys. {@link
+ * Object#equals(Object)} method is used to check if a value is already present in the key. This means that the
+ * following code.
+ *
+ * <pre>
+ *    multimapCache.put("k", "v1").join();
+ *    multimapCache.put("k", "v2").join();
+ *    multimapCache.put("k", "v2").join();
+ *    multimapCache.put("k", "v2").join();
+ *
+ *    multimapCache.get("k").thenAccept(values -> System.out.println(values.size()));
+ *    // prints the value 2. "k" -> ["v1", "v2"]
+ * </pre>
+ *
  *
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.2

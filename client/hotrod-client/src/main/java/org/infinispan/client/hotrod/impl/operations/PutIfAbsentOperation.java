@@ -36,7 +36,7 @@ public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
 
    @Override
    protected V executeOperation(Transport transport) {
-      short status = sendPutOperation(transport, PUT_IF_ABSENT_REQUEST, PUT_IF_ABSENT_RESPONSE);
+      short status = sendKeyValueOperation(transport, PUT_IF_ABSENT_REQUEST, PUT_IF_ABSENT_RESPONSE);
       V previousValue = null;
       if (HotRodConstants.isNotExecuted(status)) {
          previousValue = returnPossiblePrevValue(transport, status);

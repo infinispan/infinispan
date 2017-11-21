@@ -31,7 +31,7 @@ public class PutOperation<V> extends AbstractKeyValueOperation<V> {
 
    @Override
    protected V executeOperation(Transport transport) {
-      short status = sendPutOperation(transport, PUT_REQUEST, PUT_RESPONSE);
+      short status = sendKeyValueOperation(transport, PUT_REQUEST, PUT_RESPONSE);
       if (!HotRodConstants.isSuccess(status)) {
          throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));
       }

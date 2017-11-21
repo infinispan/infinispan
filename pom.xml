@@ -470,6 +470,11 @@
             <version>${project.version}</version>
          </dependency>
          <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-multimap</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
             <groupId>org.apache.maven.surefire</groupId>
             <artifactId>surefire-junit47</artifactId>
             <version>${version.maven.surefire}</version>

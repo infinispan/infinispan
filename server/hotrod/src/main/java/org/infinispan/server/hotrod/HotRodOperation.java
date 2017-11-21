@@ -73,6 +73,17 @@ public enum HotRodOperation {
    COUNTER_REMOVE(0x5E, 0x5F, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
    COUNTER_GET_NAMES(0x64, 0x65, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
 
+   // Multimap operations
+   GET_MULTIMAP(0x67, 0x68, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD, OpReqs.IS_MULTIMAP), DecoderRequirements.KEY),
+   GET_MULTIMAP_WITH_METADATA(0x69, 0x6A, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD, OpReqs.IS_MULTIMAP), DecoderRequirements.KEY),
+   PUT_MULTIMAP(0x6B, 0x6C, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_VALUE, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD, OpReqs.IS_MULTIMAP), DecoderRequirements.VALUE),
+   REMOVE_MULTIMAP(0x6D, 0x6E, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_VALUE, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD, OpReqs.IS_MULTIMAP), DecoderRequirements.KEY),
+   REMOVE_ENTRY_MULTIMAP(0x6F, 0x70, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_VALUE, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD, OpReqs.IS_MULTIMAP), DecoderRequirements.VALUE),
+   SIZE_MULTIMAP(0x71, 0x72, EnumSet.of(OpReqs.REQUIRES_AUTH, OpReqs.IS_MULTIMAP), DecoderRequirements.HEADER),
+   CONTAINS_ENTRY_MULTIMAP(0x73, 0x74, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_VALUE, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD, OpReqs.IS_MULTIMAP), DecoderRequirements.VALUE),
+   CONTAINS_KEY_MULTIMAP(0x75, 0x76, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD, OpReqs.IS_MULTIMAP), DecoderRequirements.KEY),
+   CONTAINS_VALUE_MULTIMAP(0x77, 0x78, EnumSet.of(OpReqs.REQUIRES_VALUE, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD, OpReqs.IS_MULTIMAP), DecoderRequirements.VALUE),
+
    // Responses
    ERROR(0x50),
    CACHE_ENTRY_CREATED_EVENT(0x60),
@@ -81,6 +92,7 @@ public enum HotRodOperation {
    CACHE_ENTRY_EXPIRED_EVENT(0x63),
    COUNTER_EVENT(0x66);
 
+   private final boolean isMultimap;
    private final int requestOpCode;
    private final int responseOpCode;
    private final boolean requiresKey;
@@ -105,6 +117,7 @@ public enum HotRodOperation {
       this.canSkipCacheLoading = opRequirements.contains(OpReqs.CAN_SKIP_CACHE_LOAD);
       this.canReturnPreviousValue = opRequirements.contains(OpReqs.CAN_RETURN_PREVIOUS_VALUE);
       this.isConditional = opRequirements.contains(OpReqs.IS_CONDITIONAL);
+      this.isMultimap = opRequirements.contains(OpReqs.IS_MULTIMAP);
    }
 
    HotRodOperation(int responseOpCode) {
@@ -113,6 +126,10 @@ public enum HotRodOperation {
 
    public int getRequestOpCode() {
       return requestOpCode;
+   }
+
+   public boolean isMultimap() {
+      return isMultimap;
    }
 
    public int getResponseOpCode() {
@@ -192,5 +209,6 @@ enum OpReqs {
    CAN_SKIP_INDEXING,
    CAN_SKIP_CACHE_LOAD,
    CAN_RETURN_PREVIOUS_VALUE,
-   IS_CONDITIONAL
+   IS_CONDITIONAL,
+   IS_MULTIMAP
 }

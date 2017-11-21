@@ -1,4 +1,4 @@
-package org.infinispan.multimap.api;
+package org.infinispan.multimap.api.embedded;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.multimap.impl.EmbeddedMultimapCacheManager;

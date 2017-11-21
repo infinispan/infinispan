@@ -5,8 +5,8 @@ import java.util.Collection;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.multimap.api.MultimapCache;
-import org.infinispan.multimap.api.MultimapCacheManager;
+import org.infinispan.multimap.api.embedded.MultimapCache;
+import org.infinispan.multimap.api.embedded.MultimapCacheManager;
 
 /**
  * Embedded implementation of {@link MultimapCacheManager}

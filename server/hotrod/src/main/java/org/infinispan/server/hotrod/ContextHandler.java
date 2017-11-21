@@ -15,6 +15,7 @@ import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.server.hotrod.multimap.MultimapCacheDecodeContext;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
 import org.infinispan.util.KeyValuePair;
@@ -49,7 +50,11 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
    protected void channelRead0(ChannelHandlerContext ctx, CacheDecodeContext msg) throws Exception {
       executor.execute(() -> {
          try {
-            realRead(ctx, msg);
+            if (msg.header.op.isMultimap()) {
+               new MultimapCacheDecodeContext(msg.cache, msg).read(ctx);
+            } else {
+               realRead(ctx, msg);
+            }
          } catch (PrivilegedActionException e) {
             ctx.fireExceptionCaught(e.getCause());
          } catch (Exception e) {

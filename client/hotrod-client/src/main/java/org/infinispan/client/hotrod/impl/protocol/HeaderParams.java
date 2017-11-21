@@ -64,7 +64,7 @@ public class HeaderParams {
       return this;
    }
 
-   private short toOpRespCode(short opCode) {
+   protected short toOpRespCode(short opCode) {
       switch (opCode) {
          case HotRodConstants.PUT_REQUEST:
             return HotRodConstants.PUT_RESPONSE;
