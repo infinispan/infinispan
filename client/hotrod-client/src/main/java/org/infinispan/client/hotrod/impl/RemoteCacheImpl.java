@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod.impl;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
 
-import java.io.IOException;
 import java.util.AbstractCollection;
 import java.util.AbstractMap;
 import java.util.Collection;
@@ -30,7 +29,6 @@ import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.StreamingRemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
 import org.infinispan.client.hotrod.filter.Filters;
 import org.infinispan.client.hotrod.impl.iteration.RemoteCloseableIterator;
@@ -57,6 +55,7 @@ import org.infinispan.client.hotrod.impl.operations.SizeOperation;
 import org.infinispan.client.hotrod.impl.operations.StatsOperation;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
@@ -509,15 +508,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    byte[] obj2bytes(Object o, boolean isKey) {
-      try {
-         return marshaller.objectToByteBuffer(o, isKey ? estimateKeySize : estimateValueSize);
-      } catch (IOException ioe) {
-         throw new HotRodClientException(
-               "Unable to marshall object of type [" + o.getClass().getName() + "]", ioe);
-      } catch (InterruptedException ie) {
-         Thread.currentThread().interrupt();
-         return null;
-      }
+      return MarshallerUtil.obj2bytes(marshaller, o, isKey, estimateKeySize, estimateValueSize);
    }
 
    private void assertRemoteCacheManagerIsStarted() {
@@ -798,4 +789,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       }
    }
 
+   public boolean hasCompatibility() {
+      return hasCompatibility;
+   }
 }

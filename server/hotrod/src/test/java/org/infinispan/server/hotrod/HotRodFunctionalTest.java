@@ -48,7 +48,7 @@ import org.testng.annotations.Test;
 public class HotRodFunctionalTest extends HotRodSingleNodeTest {
 
    public void testUnknownCommand(Method m) {
-      OperationStatus status = client().execute(0xA0, (byte) 0x77, cacheName, k(m), 0, 0, v(m), 0, (byte) 1, 0).status;
+      OperationStatus status = client().execute(0xA0, (byte) 0x79, cacheName, k(m), 0, 0, v(m), 0, (byte) 1, 0).status;
       assertEquals(status, UnknownOperation,
                    "Status should have been 'UnknownOperation' but instead was: " + status);
    }

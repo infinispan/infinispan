@@ -375,6 +375,14 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
       return counterManager;
    }
 
+   public TransportFactory getTransportFactory() {
+      return transportFactory;
+   }
+
+   public Codec getCodec() {
+      return codec;
+   }
+
    private static class RemoteCacheKey {
 
       final String cacheName;

@@ -45,7 +45,7 @@ public abstract class HotRodOperation implements HotRodConstants {
    public abstract Object execute();
 
    protected final HeaderParams writeHeader(Transport transport, short operationCode) {
-      HeaderParams params = new HeaderParams()
+      HeaderParams params = createHeader()
             .opCode(operationCode).cacheName(cacheName).flags(flags)
             .clientIntel(cfg.clientIntelligence())
             .topologyId(topologyId).txMarker(NO_TX)
@@ -58,6 +58,10 @@ public abstract class HotRodOperation implements HotRodConstants {
     */
    protected short readHeaderAndValidate(Transport transport, HeaderParams params) {
       return codec.readHeader(transport, params);
+   }
+
+   protected HeaderParams createHeader() {
+      return new HeaderParams();
    }
 
 }

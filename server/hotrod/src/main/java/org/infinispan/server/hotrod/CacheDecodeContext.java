@@ -24,7 +24,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.NumericVersionGenerator;
-import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
@@ -94,6 +93,10 @@ public final class CacheDecodeContext {
 
    public byte[] getKey() {
       return key;
+   }
+
+   public byte[] getValue() {
+      return (byte[]) operationDecodeContext;
    }
 
    public RequestParameters getParams() {
@@ -502,44 +505,15 @@ public final class CacheDecodeContext {
 
    Response getKeyMetadata() {
       CacheEntry<byte[], byte[]> ce = cache.getCacheEntry(key);
-      if (ce != null) {
-         EntryVersion entryVersion = ce.getMetadata().version();
-         long version = extractVersion(entryVersion);
-         byte[] v = ce.getValue();
-         int lifespan = ce.getLifespan() < 0 ? -1 : (int) ce.getLifespan() / 1000;
-         int maxIdle = ce.getMaxIdle() < 0 ? -1 : (int) ce.getMaxIdle() / 1000;
-         if (header.op == HotRodOperation.GET_WITH_METADATA) {
-            return new GetWithMetadataResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
-                  header.op, OperationStatus.Success, header.topologyId, v, version,
-                  ce.getCreated(), lifespan, ce.getLastUsed(), maxIdle);
-         } else {
-            int offset = (Integer) operationDecodeContext;
-            return new GetStreamResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
-                  header.op, OperationStatus.Success, header.topologyId, v, offset, version,
-                  ce.getCreated(), lifespan, ce.getLastUsed(), maxIdle);
-         }
+      OperationStatus status = ce == null ? OperationStatus.KeyDoesNotExist : OperationStatus.Success;
+      if (header.op == HotRodOperation.GET_WITH_METADATA) {
+         return new GetWithMetadataResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
+               header.op, status, header.topologyId, ce);
       } else {
-         if (header.op == HotRodOperation.GET_WITH_METADATA) {
-            return new GetWithMetadataResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
-                  header.op, OperationStatus.KeyDoesNotExist, header.topologyId);
-         } else {
-            return new GetStreamResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
-                  header.op, OperationStatus.KeyDoesNotExist, header.topologyId);
-         }
+         int offset = ce == null ? 0 : ((Integer) operationDecodeContext).intValue();
+         return new GetStreamResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
+               header.op, status, header.topologyId, offset, ce);
       }
-   }
-
-   static long extractVersion(EntryVersion entryVersion) {
-      long version = 0;
-      if (entryVersion != null) {
-         if (entryVersion instanceof NumericVersion) {
-            version = NumericVersion.class.cast(entryVersion).getVersion();
-         }
-         if (entryVersion instanceof SimpleClusteredVersion) {
-            version = SimpleClusteredVersion.class.cast(entryVersion).getVersion();
-         }
-      }
-      return version;
    }
 
    Response containsKey() {
@@ -672,7 +646,7 @@ public final class CacheDecodeContext {
       if (isTrace) {
          log.tracef("Checking version for operation %s. Entry is %s", write, entry);
       }
-      return entry != null && write.versionRead == extractVersion(entry.getMetadata().version());
+      return entry != null && write.versionRead == MetadataUtils.extractVersion(entry);
    }
 
    /**

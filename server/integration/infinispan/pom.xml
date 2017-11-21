@@ -108,6 +108,11 @@
             <optional>true</optional>
         </dependency>
         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-multimap</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
             <groupId>org.jboss.byteman</groupId>
             <artifactId>byteman-bmunit</artifactId>
             <scope>test</scope>

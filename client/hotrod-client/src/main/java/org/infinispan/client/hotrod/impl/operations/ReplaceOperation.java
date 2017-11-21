@@ -30,7 +30,7 @@ public class ReplaceOperation<V> extends AbstractKeyValueOperation<V> {
 
    @Override
    protected V executeOperation(Transport transport) {
-      short status = sendPutOperation(transport, REPLACE_REQUEST, REPLACE_RESPONSE);
+      short status = sendKeyValueOperation(transport, REPLACE_REQUEST, REPLACE_RESPONSE);
       return returnPossiblePrevValue(transport, status);
    }
 }

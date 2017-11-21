@@ -38,8 +38,16 @@
       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-core</artifactId>
+          <artifactId>infinispan-commons</artifactId>
       </dependency>
+       <dependency>
+           <groupId>${project.groupId}</groupId>
+           <artifactId>infinispan-core</artifactId>
+       </dependency>
+       <dependency>
+           <groupId>${project.groupId}</groupId>
+           <artifactId>infinispan-multimap</artifactId>
+       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-server-hotrod</artifactId>

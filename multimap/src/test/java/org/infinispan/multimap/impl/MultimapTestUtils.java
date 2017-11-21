@@ -10,7 +10,7 @@ import java.util.Map;
 
 import javax.transaction.TransactionManager;
 
-import org.infinispan.multimap.api.MultimapCache;
+import org.infinispan.multimap.api.embedded.MultimapCache;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.data.Person;
 

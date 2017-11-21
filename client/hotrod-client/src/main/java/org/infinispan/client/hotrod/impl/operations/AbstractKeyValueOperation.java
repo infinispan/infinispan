@@ -42,7 +42,7 @@ public abstract class AbstractKeyValueOperation<T> extends AbstractKeyOperation<
    }
 
    //[header][key length][key][lifespan][max idle][value length][value]
-   protected short sendPutOperation(Transport transport, short opCode, byte opRespCode) {
+   protected short sendKeyValueOperation(Transport transport, short opCode, byte opRespCode) {
       // 1) write header
       HeaderParams params = writeHeader(transport, opCode);
 

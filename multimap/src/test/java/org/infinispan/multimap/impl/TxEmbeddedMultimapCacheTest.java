@@ -18,8 +18,8 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.multimap.api.EmbeddedMultimapCacheManagerFactory;
-import org.infinispan.multimap.api.MultimapCacheManager;
+import org.infinispan.multimap.api.embedded.EmbeddedMultimapCacheManagerFactory;
+import org.infinispan.multimap.api.embedded.MultimapCacheManager;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;

@@ -18,7 +18,7 @@ import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.multimap.api.MultimapCache;
+import org.infinispan.multimap.api.embedded.MultimapCache;
 import org.infinispan.test.data.Person;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
