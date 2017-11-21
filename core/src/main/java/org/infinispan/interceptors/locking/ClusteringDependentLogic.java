@@ -3,10 +3,9 @@ package org.infinispan.interceptors.locking;
 import static org.infinispan.transaction.impl.WriteSkewHelper.performTotalOrderWriteSkewCheckAndReturnNewVersions;
 import static org.infinispan.transaction.impl.WriteSkewHelper.performWriteSkewCheckAndReturnNewVersions;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.Iterator;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
@@ -186,10 +185,12 @@ public interface ClusteringDependentLogic {
 
       private void commitClearCommand(DataContainer<Object, Object> dataContainer, ClearCacheEntry<Object, Object> cacheEntry,
                                       InvocationContext context, FlagAffectedCommand command) {
-         List<InternalCacheEntry<Object, Object>> copyEntries = new ArrayList<>(dataContainer.sizeIncludingExpired());
-         dataContainer.iterator().forEachRemaining(copyEntries::add);
-         cacheEntry.commit(dataContainer);
-         for (InternalCacheEntry entry : copyEntries) {
+         Iterator<InternalCacheEntry<Object, Object>> iterator = dataContainer.iterator();
+
+         while (iterator.hasNext()) {
+            InternalCacheEntry entry = iterator.next();
+            // Iterator doesn't support remove
+            dataContainer.remove(entry.getKey());
             notifier.notifyCacheEntryRemoved(entry.getKey(), entry.getValue(), entry.getMetadata(), false, context, command);
          }
       }
