@@ -6,11 +6,13 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.tx.LocalModeTxTest;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -19,6 +21,15 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "tx.synchronisation.LocalModeWithSyncTxTest")
 public class LocalModeWithSyncTxTest extends LocalModeTxTest {
+
+   @Factory
+   public Object[] factory() {
+      return new Object[] {
+            new LocalModeWithSyncTxTest().withStorage(StorageType.BINARY),
+            new LocalModeWithSyncTxTest().withStorage(StorageType.OBJECT),
+            new LocalModeWithSyncTxTest().withStorage(StorageType.OFF_HEAP)
+      };
+   }
 
    @Override
    protected EmbeddedCacheManager createCacheManager() {
