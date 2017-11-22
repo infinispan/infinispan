@@ -44,7 +44,7 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
          // Use size of entry plus 16 for our LRU pointers
          sizeCalculator = i -> offHeapEntryFactory.getSize(i);
          // We have to make sure to count the address hash as part of our size
-         initialSize = memoryAddressCount << 3;
+         initialSize = UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(memoryAddressCount << 3);
          currentSize = initialSize;
       }
       this.lruLock = new ReentrantLock();

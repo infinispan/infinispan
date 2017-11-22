@@ -29,7 +29,7 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.memory()
             // Only allocate enough for address count - oops
-            .size(MemoryConfiguration.ADDRESS_COUNT.getDefaultValue() * 8)
+            .size(16 + MemoryConfiguration.ADDRESS_COUNT.getDefaultValue() * 8)
             .evictionType(EvictionType.MEMORY)
             .storageType(StorageType.OFF_HEAP);
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
@@ -56,11 +56,13 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
       AdvancedCache<Object, Object> cache = manager.getCache().getAdvancedCache();
 
-      cache.put(1, 2);
-
       OffHeapMemoryAllocator allocator = cache.getComponentRegistry().getComponent(
             OffHeapMemoryAllocator.class);
       BoundedOffHeapDataContainer container = (BoundedOffHeapDataContainer) getContainer(cache);
+      assertEquals(allocator.getAllocatedAmount(), container.currentSize);
+
+      cache.put(1, 2);
+
       assertEquals(allocator.getAllocatedAmount(), container.currentSize);
 
       cache.clear();
