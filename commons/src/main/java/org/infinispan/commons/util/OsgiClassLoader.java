@@ -23,8 +23,8 @@ public class OsgiClassLoader extends ClassLoader {
    // in the container.
    private final List<WeakReference<Bundle>> bundles;
 
-   private final Map<String, Class<?>> classCache = new HashMap<String, Class<?>>();
-   private final Map<String, URL> resourceCache = new HashMap<String, URL>();
+   private final Map<String, Class<?>> classCache = new HashMap<>();
+   private final Map<String, URL> resourceCache = new HashMap<>();
 
    // TODO: For OSGi, this is *bad*.  But:
    // The ctor currently loops through all Bundles in the BundleContext -- not a lightweight task.  But since most
@@ -49,12 +49,12 @@ public class OsgiClassLoader extends ClassLoader {
       if (Util.isOSGiContext()) {
          final BundleContext bundleContext = FrameworkUtil.getBundle(OsgiClassLoader.class).getBundleContext();
          Bundle[] foundBundles = bundleContext.getBundles();
-         bundles = new ArrayList<WeakReference<Bundle>>(foundBundles.length);
+         bundles = new ArrayList<>(foundBundles.length);
          for (Bundle foundBundle : foundBundles) {
-            bundles.add(new WeakReference<Bundle>(foundBundle));
+            bundles.add(new WeakReference<>(foundBundle));
          }
       } else {
-         bundles = Collections.EMPTY_LIST;
+         bundles = Collections.emptyList();
       }
    }
 
@@ -73,8 +73,8 @@ public class OsgiClassLoader extends ClassLoader {
 
       for (WeakReference<Bundle> ref : bundles) {
          final Bundle bundle = ref.get();
-         // ISPN-4679 may get a null handle from the weak refrence
-         if(bundle == null) continue;
+         // ISPN-4679 may get a null handle from the weak reference
+         if (bundle == null) continue;
          if (bundle.getState() == Bundle.ACTIVE) {
             try {
                final Class clazz = bundle.loadClass(name);
@@ -128,7 +128,7 @@ public class OsgiClassLoader extends ClassLoader {
    @Override
    @SuppressWarnings("unchecked")
    protected Enumeration<URL> findResources(String name) {
-      final List<Enumeration<URL>> enumerations = new ArrayList<Enumeration<URL>>();
+      final List<Enumeration<URL>> enumerations = new ArrayList<>();
 
       for (WeakReference<Bundle> ref : bundles) {
          final Bundle bundle = ref.get();
@@ -143,7 +143,7 @@ public class OsgiClassLoader extends ClassLoader {
          }
       }
 
-      final Enumeration<URL> aggEnumeration = new Enumeration<URL>() {
+      return new Enumeration<URL>() {
 
          @Override
          public boolean hasMoreElements() {
@@ -165,8 +165,5 @@ public class OsgiClassLoader extends ClassLoader {
             throw new NoSuchElementException();
          }
       };
-
-      return aggEnumeration;
    }
-
 }
