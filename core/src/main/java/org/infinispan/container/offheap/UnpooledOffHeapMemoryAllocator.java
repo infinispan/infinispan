@@ -28,28 +28,33 @@ public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
 
    @Override
    public long allocate(long memoryLength) {
-      long roundedMemoryLength = roundUpTo8(memoryLength);
+      long estimatedMemoryLength = estimateSizeOverhead(memoryLength);
       long memoryLocation = MEMORY.allocate(memoryLength);
-      amountAllocated.add(roundedMemoryLength);
+      amountAllocated.add(estimatedMemoryLength);
       if (trace) {
          log.tracef("Allocated off heap memory at 0x%016x with %d bytes. Total size: %d", memoryLocation,
-               roundedMemoryLength, amountAllocated.sum());
+               estimatedMemoryLength, amountAllocated.sum());
       }
       return memoryLocation;
    }
 
    @Override
    public void deallocate(long memoryAddress) {
-      deallocate(memoryAddress, sizeCalculator.applyAsLong(memoryAddress));
+      // Size calculator already takes care of size estimate
+      innerDeallocate(memoryAddress, sizeCalculator.applyAsLong(memoryAddress));
    }
 
    @Override
    public void deallocate(long memoryAddress, long size) {
-      long roundedMemoryLength = roundUpTo8(size);
-      amountAllocated.add(- roundedMemoryLength);
+      long estimatedMemoryLength = estimateSizeOverhead(size);
+      innerDeallocate(memoryAddress, estimatedMemoryLength);
+   }
+
+   private void innerDeallocate(long memoryAddress, long estimatedSize) {
+      amountAllocated.add(- estimatedSize);
       if (trace) {
          log.tracef("Deallocating off heap memory at 0x%016x with %d bytes. Total size: %d", memoryAddress,
-               roundedMemoryLength, amountAllocated.sum());
+               estimatedSize, amountAllocated.sum());
       }
       MEMORY.free(memoryAddress);
    }
@@ -60,11 +65,13 @@ public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
    }
 
    /**
-    * Round up the size to a multiple of 8 to account for most memory allocators aligning allocations to a multiple of 8
-    * @param size the size to align to 8
-    * @return the resulting aligned value
+    * Tries to estimate overhead of the allocation by first adding 8 to account for underlying allocator housekeeping
+    * and then rounds up to nearest power of 16 to account for 16 byte alignment.
+    * @param size the desired size of the allocation
+    * @return the resulting size taking into account various overheads
     */
-   public static long roundUpTo8(long size) {
-      return (size + 7) & ~0x7;
+   public static long estimateSizeOverhead(long size) {
+      // We take 8 and add the number provided and then round up to 16 (& operator has higher precedence than +)
+      return (size + 8 + 15) & ~0x15;
    }
 }
