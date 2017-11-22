@@ -31,6 +31,8 @@ import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.topology.CacheTopology;
 
+import net.jcip.annotations.GuardedBy;
+
 /**
  * @author Ryan Emerson
  * @since 9.1
@@ -161,26 +163,29 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
          // If an exception is thrown by any of the inboundTransferTasks, then remove all segment results and cancel all tasks
          allSegmentRequests.exceptionally(throwable -> {
             if (trace) log.tracef(throwable, "Exception when processing InboundTransferTask for cache %s", cacheName);
-            cancel(throwable);
-            return null;
+            synchronized (StateReceiverImpl.this) {
+               cancel(throwable);
+               return null;
+            }
          });
 
          future = allSegmentRequests.thenApply(aVoid -> {
             List<Map<Address, CacheEntry<K, V>>> retVal = keyReplicaMap.entrySet().stream()
                   .map(Map.Entry::getValue)
                   .collect(Collectors.toList());
-            clear();
-            return Collections.unmodifiableList(retVal);
+            synchronized (StateReceiverImpl.this) {
+               clear();
+               return Collections.unmodifiableList(retVal);
+            }
          });
          return future;
       }
 
+      @GuardedBy("StateReceiverImpl.this")
       synchronized void clear() {
          keyReplicaMap.clear();
          transferTaskMap.clear();
-         synchronized (StateReceiverImpl.this) {
-            requestMap.remove(segmentId);
-         }
+         requestMap.remove(segmentId);
       }
 
       synchronized void receiveState(Address sender, int topologyId, Collection<StateChunk> stateChunks) {

@@ -460,7 +460,6 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
                   Thread.currentThread().interrupt();
                   throw new CacheException(e);
                } catch (ExecutionException | CancellationException e) {
-                  stateReceiver.stop();
                   throw new CacheException(e.getMessage(), e.getCause());
                }
             } else {
