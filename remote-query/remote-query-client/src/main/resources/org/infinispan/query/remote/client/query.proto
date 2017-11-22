@@ -59,14 +59,14 @@ message QueryResponse {
     *
     *      0 - no projection
     * 1 .. N - projection with N components
-    *    < 0 - illegal value
+    *    < 0 - illegal value, not used
     */
    required int32 projectionSize = 2;
 
    /**
     * The list of matching results. The size should be either numResults, if no projections are used, or numResults *
     * projectionSize otherwise. If projections are used, then each group of projectionSize consecutive elements
-    * represent together a result.
+    * represent together a row from the result.
     */
    repeated org.infinispan.protostream.WrappedMessage results = 3;
 
@@ -101,9 +101,9 @@ message ContinuousQueryResult {
 
    required bytes key = 2;
 
-   /* Only present if resultType is JOINING or UPDATED and projection is missing */
+   /* Only present if resultType is JOINING or UPDATED and 'projection' field is missing */
    optional bytes value = 3;
 
-   /* Only present if resultType is JOINING or UPDATED and value is missing */
+   /* Only present if resultType is JOINING or UPDATED and 'value' field is missing */
    repeated org.infinispan.protostream.WrappedMessage projection = 4;
 }
