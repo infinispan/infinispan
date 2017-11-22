@@ -102,9 +102,9 @@ public final class QueryRequest {
    @SerializeWith(Externalizers.NamedParameterExternalizer.class)
    public static final class NamedParameter {
 
-      private String name;
+      private final String name;
 
-      private Object value;
+      private final Object value;
 
       public NamedParameter(String name, Object value) {
          if (name == null) {
