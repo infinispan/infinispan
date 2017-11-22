@@ -22,9 +22,9 @@ public interface OffHeapEntryFactory {
 
    /**
     * Returns how many bytes in memory this address location uses assuming it is an {@link InternalCacheEntry}.
-    * This will be rounded up to the nearest number divisible by 8.
+    * This will estimate the size assuming 8 byte alignment and 16 byte allocation overhead
     * @param address the address of the entry
-    * @return how many bytes this address was allocated as
+    * @return how many bytes this address was estimated to be
     */
    long getSize(long address);
 
