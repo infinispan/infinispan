@@ -1,8 +1,20 @@
 package org.infinispan.server.test.client.hotrod;
 
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.infinispan.server.test.util.ITestUtils.eventually;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.DEPLOYMENT;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.NAME;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OUTCOME;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.READ_ATTRIBUTE_OPERATION;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.STATUS;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUCCESS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -33,11 +45,14 @@ import org.infinispan.protostream.sampledomain.marshallers.GenderMarshaller;
 import org.infinispan.protostream.sampledomain.marshallers.UserMarshaller;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 import org.infinispan.server.test.category.HotRodSingleNode;
-import org.infinispan.server.test.category.Unstable;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.client.ModelControllerClient;
+import org.jboss.dmr.ModelNode;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
@@ -49,18 +64,22 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 /**
- * Tests for remote iteration using a custom filter with custom classes marshalled with a custom Protobuf based marshaller.
+ * Tests for remote iteration using a custom filter with custom classes marshalled with a custom Protobuf based
+ * marshaller.
  *
  * @author gustavonalle
+ * @author anistor@redhat.com
  * @since 8.0
  */
 @RunWith(Arquillian.class)
-@Category({HotRodSingleNode.class, Unstable.class}) // ISPN-8001
+@Category(HotRodSingleNode.class)
 public class HotRodCustomMarshallerIteratorIT {
 
+   private static final String FILTER_MARSHALLER_DEPLOYMENT_JAR = "filter-marshaller.jar";
    private static final String TO_STRING_FILTER_CONVERTER_FACTORY_NAME = "to-string-filter-converter";
    private static final String PARAM_FILTER_CONVERTER_FACTORY_NAME = "param-filter-converter";
    private static final String CACHE_NAME = "default";
+
    private static RemoteCacheManager remoteCacheManager;
 
    private RemoteCache<Integer, User> remoteCache;
@@ -68,35 +87,12 @@ public class HotRodCustomMarshallerIteratorIT {
    @InfinispanResource("container1")
    RemoteInfinispanServer server1;
 
-   @Deployment(testable = false, name = "marshallerFilter")
+   @Deployment(testable = false)
    @TargetsContainer("container1")
    public static Archive<?> deploy() throws IOException {
-      return createFilterMarshallerArchive();
-   }
-
-   @Before
-   public void setup() throws IOException {
-      RemoteCacheManagerFactory remoteCacheManagerFactory = new RemoteCacheManagerFactory();
-      ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-      clientBuilder.addServer()
-                   .host(server1.getHotrodEndpoint().getInetAddress().getHostName())
-                   .port(server1.getHotrodEndpoint().getPort())
-                   .marshaller(new CustomProtoStreamMarshaller());
-      remoteCacheManager = remoteCacheManagerFactory.createManager(clientBuilder);
-      remoteCache = remoteCacheManager.getCache(CACHE_NAME);
-   }
-
-   @AfterClass
-   public static void release() {
-      if (remoteCacheManager != null) {
-         remoteCacheManager.stop();
-      }
-   }
-
-   private static Archive<?> createFilterMarshallerArchive() throws IOException {
       String protoFile = Util.getResourceAsString("/sample_bank_account/bank.proto", HotRodCustomMarshallerIteratorIT.class.getClassLoader());
 
-      return ShrinkWrap.create(JavaArchive.class, "filter-marshaller.jar")
+      return ShrinkWrap.create(JavaArchive.class, FILTER_MARSHALLER_DEPLOYMENT_JAR)
             // Add custom marshaller classes
             .addClasses(CustomProtoStreamMarshaller.class, ProtoStreamMarshaller.class, BaseProtoStreamMarshaller.class)
             .addClasses(HotRodClientException.class, UserMarshaller.class, GenderMarshaller.class, User.class, Address.class)
@@ -110,6 +106,42 @@ public class HotRodCustomMarshallerIteratorIT {
                   ParamCustomFilterFactory.ParamCustomFilter.class)
             // Register custom filterConverterFactories
             .addAsServiceProviderAndClasses(KeyValueFilterConverterFactory.class, ParamCustomFilterFactory.class, CustomFilterFactory.class);
+   }
+
+   @Before
+   public void setup() throws Exception {
+      RemoteCacheManagerFactory remoteCacheManagerFactory = new RemoteCacheManagerFactory();
+      ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+      clientBuilder.addServer()
+            .host(server1.getHotrodEndpoint().getInetAddress().getHostName())
+            .port(server1.getHotrodEndpoint().getPort())
+            .marshaller(new CustomProtoStreamMarshaller());
+      remoteCacheManager = remoteCacheManagerFactory.createManager(clientBuilder);
+      remoteCache = remoteCacheManager.getCache(CACHE_NAME);
+
+      waitForDeploymentCompletion();
+   }
+
+   /**
+    * Waits up to one minute until the jar deployment completes successfully, namely invocation of DMR operation
+    * "/deployment=filter-marshaller.jar/:read-attribute(name=status)" yields "success".
+    */
+   private void waitForDeploymentCompletion() throws Exception {
+      ModelControllerClient controllerClient = ModelControllerClient.Factory.create(server1.getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);
+      PathAddress address = PathAddress.pathAddress(PathElement.pathElement(DEPLOYMENT, FILTER_MARSHALLER_DEPLOYMENT_JAR));
+      ModelNode op = new ModelNode();
+      op.get(OP).set(READ_ATTRIBUTE_OPERATION);
+      op.get(OP_ADDR).set(address.toModelNode());
+      op.get(NAME).set(STATUS);
+      eventually(() -> SUCCESS.equals(controllerClient.execute(op).get(OUTCOME).asString()), 60000);
+   }
+
+   @AfterClass
+   public static void after() {
+      if (remoteCacheManager != null) {
+         remoteCacheManager.stop();
+      }
+      new File(System.getProperty("server1.dist"), "/standalone/deployments/" + FILTER_MARSHALLER_DEPLOYMENT_JAR).delete();
    }
 
    @Test
@@ -148,7 +180,7 @@ public class HotRodCustomMarshallerIteratorIT {
             entryMap.put(next.getKey(), next.getValue());
          }
       } finally {
-         assert iterator != null;
+         assertNotNull(iterator);
          iterator.close();
       }
       return entryMap;
@@ -164,7 +196,6 @@ public class HotRodCustomMarshallerIteratorIT {
          serCtx.registerMarshaller(new GenderMarshaller());
       }
    }
-
 
    @NamedFactory(name = TO_STRING_FILTER_CONVERTER_FACTORY_NAME)
    public static class CustomFilterFactory implements KeyValueFilterConverterFactory<Integer, User, String> {
