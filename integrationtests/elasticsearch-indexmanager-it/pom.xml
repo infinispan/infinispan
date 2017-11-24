@@ -81,14 +81,8 @@
                     <useFile>false</useFile>
                     <skip>${skipTests}</skip>
                     <properties>
-                        <property>
-                            <name>usedefaultlisteners</name>
-                            <value>false</value>
-                        </property>
-                        <property>
-                            <name>listener</name>
-                            <value>${testNGListeners}</value>
-                        </property>
+                        <usedefaultlisteners>false</usedefaultlisteners>
+                        <listener>${testNGListeners}</listener>
                     </properties>
                     <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                 </configuration>

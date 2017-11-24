@@ -871,10 +871,7 @@
                         <element>${driver.dir}/${driver.jar}</element>
                     </additionalClasspathElements>
                     <properties>
-                        <property>
-                            <name>listener</name>
-                            <value>org.infinispan.commons.test.JUnitTestListener</value>
-                        </property>
+                        <listener>org.infinispan.commons.test.JUnitTestListener</listener>
                     </properties>
                 </configuration>
                 <executions>

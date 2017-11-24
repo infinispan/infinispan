@@ -203,10 +203,8 @@
                <testNGArtifactName>none:none</testNGArtifactName>
                <disableXmlReport>false</disableXmlReport>
                <properties>
-                  <property>
-                     <name>listener</name>
-                     <value>${junitListener}</value>
-                  </property>
+                  <usedefaultlisteners>false</usedefaultlisteners>
+                  <listener>${junitListener}</listener>
                </properties>
                <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
             </configuration>

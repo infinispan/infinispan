@@ -88,10 +88,7 @@
                <forkCount>1</forkCount>
                <reuseForks>false</reuseForks>
                <properties>
-                  <property>
-                     <name>listener</name>
-                     <value>org.infinispan.commons.test.JUnitTestListener</value>
-                  </property>
+                  <listener>${junitListener}</listener>
                </properties>
             </configuration>
             <executions>
