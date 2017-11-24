@@ -61,10 +61,8 @@
                </systemPropertyVariables>
                <trimStackTrace>false</trimStackTrace>
                <properties>
-                  <property>
-                     <name>listener</name>
-                     <value>${testNGListeners}</value>
-                  </property>
+                  <usedefaultlisteners>false</usedefaultlisteners>
+                  <listener>${testNGListeners}</listener>
                </properties>
                <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
             </configuration>

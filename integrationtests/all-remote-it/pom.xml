@@ -127,14 +127,8 @@
                <excludedGroups combine.self="override" />
                <disableXmlReport>false</disableXmlReport>
                <properties>
-                  <property>
-                     <name>usedefaultlisteners</name>
-                     <value>false</value>
-                  </property>
-                  <property>
-                     <name>listener</name>
-                     <value>${junitListener}</value>
-                  </property>
+                  <usedefaultlisteners>false</usedefaultlisteners>
+                  <listener>${junitListener}</listener>
                </properties>
             </configuration>
          </plugin>

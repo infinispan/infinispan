@@ -1824,15 +1824,9 @@
                </systemPropertyVariables>
                <trimStackTrace>false</trimStackTrace>
                <properties>
-                  <property>
-                     <!-- Deactivate the default listeners which may cause OOME. TeamCity uses the surefire generated XML file. -->
-                     <name>usedefaultlisteners</name>
-                     <value>false</value>
-                  </property>
-                  <property>
-                     <name>listener</name>
-                     <value>${testNGListeners}</value>
-                  </property>
+                  <!-- Deactivate the default listeners which may cause OOME. Jenkins uses the surefire generated XML file. -->
+                  <usedefaultlisteners>false</usedefaultlisteners>
+                  <listener>${testNGListeners}</listener>
                </properties>
                <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
             </configuration>

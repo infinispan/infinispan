@@ -112,16 +112,9 @@
                   <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                   <build.directory>${project.build.directory}</build.directory>
                </systemPropertyVariables>
-               <argLine combine.self="override">-Xmx768m</argLine>
-               <properties>
-                  <property>
-                     <name>usedefaultlisteners</name>
-                     <value>false</value>
-                  </property>
-                  <property>
-                     <name>listener</name>
-                     <value>${junitListener}</value>
-                  </property>
+               <properties combine.self="override">
+                  <usedefaultlisteners>false</usedefaultlisteners>
+                  <listener>${junitListener}</listener>
                </properties>
                <disableXmlReport>false</disableXmlReport>
             </configuration>
