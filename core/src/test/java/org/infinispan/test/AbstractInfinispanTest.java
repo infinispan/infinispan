@@ -37,6 +37,7 @@ import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.test.fwk.ChainMethodInterceptor;
+import org.infinispan.commons.test.TestNGLongTestsHook;
 import org.infinispan.test.fwk.NamedTestMethod;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TestSelector;
@@ -62,7 +63,7 @@ import org.testng.internal.MethodInstance;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-@Listeners(ChainMethodInterceptor.class)
+@Listeners({ChainMethodInterceptor.class, TestNGLongTestsHook.class})
 @TestSelector(interceptors = AbstractInfinispanTest.OrderByInstance.class)
 public class AbstractInfinispanTest {
    protected interface Condition {

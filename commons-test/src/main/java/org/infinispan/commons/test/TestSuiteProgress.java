@@ -37,7 +37,7 @@ public class TestSuiteProgress {
       log.info(message);
    }
 
-   void testFinished(String name) {
+   void testSucceeded(String name) {
       succeeded.incrementAndGet();
       String message = "Test succeeded: " + name;
       progress(GREEN, message);

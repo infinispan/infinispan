@@ -35,7 +35,7 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
 
    @Override
    public void onTestSuccess(ITestResult result) {
-      progressLogger.testFinished(testName(result));
+      progressLogger.testSucceeded(testName(result));
    }
 
    @Override
@@ -127,15 +127,19 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
    @Override
    public void beforeConfiguration(ITestResult testResult) {
       log.debugf("Before setup %s", testResult.getMethod().getMethodName());
+      String simpleName = testResult.getTestClass().getRealClass().getSimpleName();
+      RunningTestsRegistry.registerThreadWithTest(testName(testResult), simpleName);
    }
 
    @Override
    public void onConfigurationSuccess(ITestResult testResult) {
+      RunningTestsRegistry.unregisterThreadWithTest();
       log.debugf("After setup %s", testResult.getMethod().getMethodName());
    }
 
    @Override
    public void onConfigurationFailure(ITestResult testResult) {
+      RunningTestsRegistry.unregisterThreadWithTest();
       if (testResult.getThrowable() != null) {
          progressLogger.setupFailed(testName(testResult), testResult.getThrowable());
       }
@@ -143,6 +147,7 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
 
    @Override
    public void onConfigurationSkip(ITestResult testResult) {
+      RunningTestsRegistry.unregisterThreadWithTest();
       if (testResult.getThrowable() != null) {
          progressLogger.testIgnored(testName(testResult));
       }
