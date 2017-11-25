@@ -82,6 +82,13 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertNull(client.get(k(m)));
    }
 
+   public void testSetWithUTF8Key(Method m) throws InterruptedException, ExecutionException, TimeoutException {
+      String key = "\u4f60\u597d-";
+      OperationFuture<Boolean> f = client.set(k(m, key), 0, v(m));
+      assertTrue(f.get(timeout, TimeUnit.SECONDS));
+      assertEquals(v(m), client.get(k(m, key)));
+   }
+
    public void testGetMultipleKeys(Method m) throws InterruptedException, ExecutionException, TimeoutException {
       OperationFuture<Boolean> f1 = client.set(k(m, "k1-"), 0, v(m, "v1-"));
       OperationFuture<Boolean> f2 = client.set(k(m, "k2-"), 0, v(m, "v2-"));
