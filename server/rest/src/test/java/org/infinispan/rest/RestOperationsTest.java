@@ -343,6 +343,21 @@ public class RestOperationsTest extends AbstractInfinispanTest {
    }
 
    @Test
+   public void shouldDeleteExistingValueEvenWithoutMetadata() throws Exception {
+      putValueInCache("default", "test", "test");
+
+      //when
+      ContentResponse response = client
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .method(HttpMethod.DELETE)
+            .send();
+
+      //then
+      ResponseAssertion.assertThat(response).isOk();
+      Assertions.assertThat(restServer.getCacheManager().getCache("default")).isEmpty();
+   }
+
+   @Test
    public void shouldDeleteExistingValue() throws Exception {
       putValueWithMetadataInCache("default", "test", "test");
 

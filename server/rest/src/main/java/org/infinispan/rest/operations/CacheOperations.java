@@ -206,26 +206,36 @@ public class CacheOperations {
 
          if (entry instanceof InternalCacheEntry) {
             InternalCacheEntry<String, Object> ice = (InternalCacheEntry<String, Object>) entry;
-            Metadata meta = entry.getMetadata();
-            if (meta instanceof MimeMetadata) {
-               String etag = calcETAG(ice.getValue(), ((MimeMetadata) meta).contentType());
-               Optional<String> clientEtag = request.getEtagIfNoneMatch();
-               if (clientEtag.map(t -> t.equals(etag)).orElse(true)) {
-                  response.status(HttpResponseStatus.OK);
-                  if (useAsync.isPresent() && useAsync.get()) {
-                     restCacheManager.getCache(cacheName).removeAsync(key);
+            Optional<String> clientEtag = request.getEtagIfNoneMatch();
+            if (clientEtag.isPresent()) {
+               Metadata meta = entry.getMetadata();
+               if (meta instanceof MimeMetadata) {
+                  String etag = calcETAG(ice.getValue(), ((MimeMetadata) meta).contentType());
+
+                  if (clientEtag.get().equals(etag)) {
+                     response.status(HttpResponseStatus.OK);
+                     deleteCacheValue(cacheName, key, useAsync);
                   } else {
-                     restCacheManager.getCache(cacheName).remove(key);
+                     //ETags don't match, so preconditions failed
+                     response.status(HttpResponseStatus.PRECONDITION_FAILED);
                   }
-               } else {
-                  //ETags don't match, so preconditions failed
-                  response.status(HttpResponseStatus.PRECONDITION_FAILED);
                }
+            } else {
+               response.status(HttpResponseStatus.OK);
+               deleteCacheValue(cacheName, key, useAsync);
             }
          }
          return response;
       } catch (CacheException cacheException) {
          throw new NoCacheFoundException(cacheException.getLocalizedMessage());
+      }
+   }
+
+   private void deleteCacheValue(String cacheName, String key, Optional<Boolean> useAsync) {
+      if (useAsync.isPresent() && useAsync.get()) {
+         restCacheManager.getCache(cacheName).removeAsync(key);
+      } else {
+         restCacheManager.getCache(cacheName).remove(key);
       }
    }
 
@@ -279,11 +289,11 @@ public class CacheOperations {
             if (entry instanceof InternalCacheEntry) {
                InternalCacheEntry ice = (InternalCacheEntry) entry;
                oldData = Optional.of(entry.getValue());
-               Metadata meta = ice.getMetadata();
-               if (meta instanceof MimeMetadata) {
-                  // The item already exists in the cache, evaluate preconditions based on its attributes and the headers
-                  Optional<String> clientEtag = request.getEtagIfNoneMatch();
-                  if (clientEtag.isPresent()) {
+               // The item already exists in the cache, evaluate preconditions based on its attributes and the headers
+               Optional<String> clientEtag = request.getEtagIfNoneMatch();
+               if (clientEtag.isPresent()) {
+                  Metadata meta = ice.getMetadata();
+                  if (meta instanceof MimeMetadata) {
                      String etag = calcETAG(ice.getValue(), ((MimeMetadata) meta).contentType());
                      if (clientEtag.get().equals(etag)) {
                         //client's and our ETAG match. Nothing to do, an entry is cached on the client side...
@@ -293,7 +303,6 @@ public class CacheOperations {
                   }
                }
             }
-
             boolean useAsync = request.getUseAsync().orElse(false);
             String dataType = request.getContentType().orElse("text/plain");
             Optional<Long> ttl = request.getTimeToLiveSeconds();
