@@ -97,14 +97,14 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    public void receiveState(Address sender, int topologyId, Collection<StateChunk> stateChunks) {
       if (stateChunks.isEmpty()) {
          if (trace)
-            log.tracef("Ignoring received state for cache %s from %s because stateChunks are empty", cacheName, sender);
+            log.tracef("Cache %s Ignoring received state from %s because stateChunks are empty", cacheName, sender);
          return;
       }
 
       int segmentId = stateChunks.iterator().next().getSegmentId();
       SegmentRequest request = requestMap.get(segmentId);
       if (request == null) {
-         if (trace) log.tracef("Ignoring received state for cache %s because the associated request was completed or cancelled %s", cacheName);
+         if (trace) log.tracef("Cache %s Ignoring received state because the associated request was completed or cancelled %s", cacheName);
          return;
       }
       request.receiveState(sender, topologyId, stateChunks);
@@ -139,7 +139,8 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
 
       synchronized CompletableFuture<List<Map<Address, CacheEntry<K, V>>>> requestState() {
          assert future == null;
-         if (trace) log.tracef("Attempting to receive replicas for segment %s from %s with topology %s", segmentId, replicaHosts, topology);
+         if (trace) log.tracef("Cache %s Attempting to receive replicas for segment %s from %s with topology %s",
+               cacheName, segmentId, replicaHosts, topology);
 
          List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
          for (Address replica : replicaHosts) {

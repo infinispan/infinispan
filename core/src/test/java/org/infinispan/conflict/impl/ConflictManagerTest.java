@@ -97,7 +97,8 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
       assertTrue(versionMap != null);
       assertTrue(!versionMap.isEmpty());
       assertEquals(String.format("Returned versionMap %s", versionMap),2, versionMap.size());
-      versionMap.values().forEach(icv -> assertEquals(value, icv.getValue()));
+      if (log.isTraceEnabled()) log.tracef("Returned versionMap %s", versionMap);
+      versionMap.values().forEach(icv -> assertEquals(versionMap.toString(), value, icv.getValue()));
    }
 
    public void testGetAllVersionsTimeout() throws Throwable {
