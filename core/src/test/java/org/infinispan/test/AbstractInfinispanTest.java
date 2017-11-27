@@ -10,6 +10,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,12 +33,12 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.commons.test.TestNGLongTestsHook;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.test.fwk.ChainMethodInterceptor;
-import org.infinispan.commons.test.TestNGLongTestsHook;
 import org.infinispan.test.fwk.NamedTestMethod;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TestSelector;
@@ -53,6 +54,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
+import org.testng.annotations.Test;
 import org.testng.internal.MethodInstance;
 
 
@@ -124,6 +126,8 @@ public class AbstractInfinispanTest {
       }
 
       TestResourceTracker.testStarted(getTestName());
+
+      skipInstancesInExcludedGroups(context);
    }
 
    @AfterClass(alwaysRun = true)
@@ -456,6 +460,23 @@ public class AbstractInfinispanTest {
                       ref);
             ref.interrupt();
          }
+      }
+   }
+
+   /**
+    * Some stress tests extend a functional test and change some parameters (e.g. number of operations)
+    * If the author forgets to override the test methods, they inherit the group from the base class
+    */
+   private void skipInstancesInExcludedGroups(ITestContext context) {
+      List<String> excludedGroups = context.getCurrentXmlTest().getExcludedGroups();
+      Test classAnnotation = getClass().getAnnotation(Test.class);
+      List<String> groups = new ArrayList<>(classAnnotation != null ?
+                                            Arrays.asList(classAnnotation.groups()) :
+                                            Collections.emptyList());
+      groups.retainAll(excludedGroups);
+      if (!groups.isEmpty()) {
+         throw new AssertionError("Class " + getClass().getName() + " has an excluded group " + groups +
+                                        " but doesn't override all inherited test methods.");
       }
    }
 

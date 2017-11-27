@@ -13,4 +13,19 @@ public class ConcurrentOperationsStressTest extends ConcurrentOperationsTest {
    public ConcurrentOperationsStressTest() {
       super(CacheMode.DIST_SYNC, 3, 4, 300);
    }
+
+   @Override
+   public void testNoTimeout() throws Throwable {
+      super.testNoTimeout();
+   }
+
+   @Override
+   public void testNoTimeoutAndCorrectness() throws Throwable {
+      super.testNoTimeoutAndCorrectness();
+   }
+
+   @Override
+   public void testReplace() {
+      super.testReplace();
+   }
 }
