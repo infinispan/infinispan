@@ -13,4 +13,6 @@ public class RestOperationsOffHeapTest extends RestOperationsTest {
       configurationBuilder.memory().storageType(StorageType.OFF_HEAP);
       return configurationBuilder;
    }
+
+
 }
