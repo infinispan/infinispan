@@ -3,6 +3,7 @@ package org.infinispan.query.dsl.embedded.testdomain;
 import java.io.Serializable;
 
 import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Store;
 
 /**
  * @author anistor@redhat.com
@@ -10,7 +11,7 @@ import org.hibernate.search.annotations.Field;
  */
 public class Author implements Serializable {
 
-   @Field
+   @Field(store = Store.YES)
    private String name;
 
    @Field
