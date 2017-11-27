@@ -27,4 +27,19 @@ public class ConditionalOperationsConcurrentStressTest extends ConditionalOperat
    public ConditionalOperationsConcurrentStressTest() {
       super(3, 500, 4);
    }
+
+   @Override
+   public void testReplace() throws Exception {
+      super.testReplace();
+   }
+
+   @Override
+   public void testConditionalRemove() throws Exception {
+      super.testConditionalRemove();
+   }
+
+   @Override
+   public void testPutIfAbsent() throws Exception {
+      super.testPutIfAbsent();
+   }
 }
