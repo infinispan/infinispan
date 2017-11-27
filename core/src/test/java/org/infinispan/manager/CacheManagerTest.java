@@ -260,11 +260,11 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
    public void testConcurrentCacheManagerStopAndGetCache() throws Exception {
       EmbeddedCacheManager manager = createCacheManager(false);
+      CompletableFuture<Void> cacheStartBlocked = new CompletableFuture<>();
+      CompletableFuture<Void> cacheStartResumed = new CompletableFuture<>();
+      CompletableFuture<Void> managerStopBlocked = new CompletableFuture<>();
+      CompletableFuture<Void> managerStopResumed = new CompletableFuture<>();
       try {
-         CompletableFuture<Void> cacheStartBlocked = new CompletableFuture<>();
-         CompletableFuture<Void> cacheStartResumed = new CompletableFuture<>();
-         CompletableFuture<Void> managerStopBlocked = new CompletableFuture<>();
-         CompletableFuture<Void> managerStopResumed = new CompletableFuture<>();
          manager.addListener(new MyListener(cacheStartBlocked, cacheStartResumed));
          TestingUtil.replaceComponent(manager, GlobalMarshaller.class, new GlobalMarshaller() {
             @Override
@@ -292,6 +292,11 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          managerStopResumed.complete(null);
          managerStopFuture.get(10, SECONDS);
       } finally {
+         cacheStartBlocked.complete(null);
+         cacheStartResumed.complete(null);
+         managerStopBlocked.complete(null);
+         managerStopResumed.complete(null);
+
          TestingUtil.killCacheManagers(manager);
       }
    }
