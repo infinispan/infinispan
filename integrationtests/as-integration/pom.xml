@@ -1,12 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version='1.0' encoding='UTF-8'?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>5.2.8-SNAPSHOT</version>
+      <version>5.2.23.Final</version>
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
 
@@ -85,7 +84,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
-               <!-- Force use of JUnit, since TestNG+Arquillian break in wonderful ways -->
+               
                <testNGArtifactName>none:none</testNGArtifactName>
             </configuration>
             <executions>
@@ -139,7 +138,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
             <executions>
-               <!-- Copy the AS configuration files so we can use our custom configurations -->
+               
                <execution>
                   <id>configure-as-node</id>
                   <phase>pre-integration-test</phase>

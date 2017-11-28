@@ -37,9 +37,9 @@ public class Version {
 
    private static final String MAJOR = "5";
    private static final String MINOR = "2";
-   private static final String MICRO = "6";
-   private static final String MODIFIER = "SNAPSHOT";
-   private static final boolean SNAPSHOT = true;
+   private static final String MICRO = "23";
+   private static final String MODIFIER = "Final";
+   private static final boolean SNAPSHOT = false;
 
    public static final String VERSION = String.format("%s.%s.%s%s%s", MAJOR, MINOR, MICRO, SNAPSHOT ? "-" : ".", MODIFIER);
    public static final String CODENAME = "Delirium";
