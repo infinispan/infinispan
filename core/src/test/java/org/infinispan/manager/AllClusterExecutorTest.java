@@ -393,15 +393,20 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
                      KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR, stpe, true);
             }
 
+            // These are to make sure the call to the scheduled executor doesn't overlap with others, so these should
+            // be unique
+            long crazyNumber = 84129912895471L;
+            TimeUnit unit = TimeUnit.DAYS;
+
             CompletableFuture<Void> future =
-                  executor(cm1).timeout(10, TimeUnit.MILLISECONDS).submitConsumer(m -> {
+                  executor(cm1).timeout(crazyNumber, unit).submitConsumer(m -> {
                      ArgumentCaptor<Callable> argument = ArgumentCaptor.forClass(Callable.class);
                      // This will be a mock as we replaced them all above
                      ScheduledExecutorService innerStpe = m.getGlobalComponentRegistry().getComponent(
                            ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR);
 
                      Mockito.verify(innerStpe, Mockito.timeout(TimeUnit.SECONDS.toMillis(10)).atLeastOnce()).schedule(argument.capture(),
-                           Mockito.anyLong(), Mockito.any());
+                           Mockito.eq(crazyNumber), Mockito.eq(unit));
                      // We run the timeout ourselves, which should cause the timeout exception to occur.
                      try {
                         argument.getValue().call();
