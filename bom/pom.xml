@@ -371,6 +371,16 @@
             <version>${project.version}</version>
          </dependency>
          <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-hibernate-cache-commons</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-hibernate-cache-v51</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
             <groupId>${project.groupId}.server</groupId>
             <artifactId>infinispan-server-commons</artifactId>
             <version>${project.version}</version>
