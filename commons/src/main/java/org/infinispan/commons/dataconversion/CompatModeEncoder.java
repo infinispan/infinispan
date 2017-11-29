@@ -18,7 +18,11 @@ public class CompatModeEncoder implements Encoder {
    protected final Marshaller marshaller;
 
    public CompatModeEncoder(Marshaller marshaller) {
-      this.marshaller = marshaller == null ? new GenericJBossMarshaller() : marshaller;
+      this(marshaller, CompatModeEncoder.class.getClassLoader());
+   }
+
+   public CompatModeEncoder(Marshaller marshaller, ClassLoader classLoader) {
+      this.marshaller = marshaller == null ? new GenericJBossMarshaller(classLoader) : marshaller;
    }
 
    @Override

@@ -31,13 +31,15 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
    @Override
    public <T> T construct(Class<T> componentType) {
       EncoderRegistryImpl encoderRegistry = new EncoderRegistryImpl();
+      ClassLoader classLoader = globalConfiguration.classLoader();
+
       encoderRegistry.registerEncoder(IdentityEncoder.INSTANCE);
       encoderRegistry.registerEncoder(UTF8Encoder.INSTANCE);
       encoderRegistry.registerEncoder(JavaSerializationEncoder.INSTANCE);
       encoderRegistry.registerEncoder(new BinaryEncoder(globalMarshaller));
-      encoderRegistry.registerEncoder(GenericJbossMarshallerEncoder.INSTANCE);
+      encoderRegistry.registerEncoder(new GenericJbossMarshallerEncoder(classLoader));
       encoderRegistry.registerEncoder(new GlobalMarshallerEncoder(globalMarshaller));
-      encoderRegistry.registerEncoder(new CompatModeEncoder(globalMarshaller));
+      encoderRegistry.registerEncoder(new CompatModeEncoder(globalMarshaller, classLoader));
       encoderRegistry.registerEncoder(JavaCompatEncoder.INSTANCE);
       encoderRegistry.registerEncoder(UTF8CompatEncoder.INSTANCE);
       encoderRegistry.registerTranscoder(TextTranscoder.INSTANCE);

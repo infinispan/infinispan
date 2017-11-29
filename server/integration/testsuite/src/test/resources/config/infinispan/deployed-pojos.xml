@@ -1,0 +1,11 @@
+<subsystem xmlns="urn:infinispan:server:core:9.2">
+    <cache-container name="local" default-cache="default">
+        <modules>
+            <module name="deployment.price-task.jar"/>
+        </modules>
+        <local-cache name="default">
+            <compatibility enabled="true"/>
+        </local-cache>
+        <local-cache name="memcachedCache"/>
+    </cache-container>
+</subsystem>

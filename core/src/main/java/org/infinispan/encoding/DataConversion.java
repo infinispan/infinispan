@@ -154,7 +154,7 @@ public class DataConversion {
          }
       }
       this.lookupWrapper(encoderRegistry);
-      this.lookupEncoder(encoderRegistry, compatibility);
+      this.lookupEncoder(encoderRegistry, compatibility, gcr.classLoader());
       this.storageMediaType = getStorageMediaType(configuration, embeddedMode);
       this.lookupTranscoder(encoderRegistry);
    }
@@ -180,14 +180,14 @@ public class DataConversion {
       }
    }
 
-   private void lookupEncoder(EncoderRegistry encoderRegistry, CompatibilityModeConfiguration compatConfig) {
+   private void lookupEncoder(EncoderRegistry encoderRegistry, CompatibilityModeConfiguration compatConfig, ClassLoader classLoader) {
       if (!compatConfig.enabled()) {
          this.encoder = encoderRegistry.getEncoder(encoderClass, encoderId);
       } else {
          if (encoderClass == null || encoderClass.equals(CompatModeEncoder.class)) {
             this.encoderClass = CompatModeEncoder.class;
             Marshaller compatMarshaller = compatConfig.marshaller();
-            this.encoder = new CompatModeEncoder(compatMarshaller);
+            this.encoder = new CompatModeEncoder(compatMarshaller, classLoader);
          } else {
             this.encoder = encoderRegistry.getEncoder(encoderClass, encoderId);
          }
