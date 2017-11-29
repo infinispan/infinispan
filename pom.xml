@@ -483,6 +483,12 @@
             <version>${project.version}</version>
          </dependency>
          <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-hibernate-cache-commons</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+         </dependency>
+         <dependency>
             <groupId>org.apache.maven.surefire</groupId>
             <artifactId>surefire-junit47</artifactId>
             <version>${version.maven.surefire}</version>
