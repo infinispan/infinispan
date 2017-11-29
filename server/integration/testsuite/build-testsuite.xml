@@ -236,6 +236,7 @@
         <transform in="standalone.xml" out="testsuite/standalone-eviction.xml" modifyInfinispan="${infinispan.parts}/eviction.xml"/>
         <transform in="standalone.xml" out="testsuite/standalone-customcs.xml" modifyInfinispan="${infinispan.parts}/customcs.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-customtask.xml" modifyInfinispan="${infinispan.parts}/customtask.xml" filtering="true"/>
+        <transform in="standalone.xml" out="testsuite/standalone-deployed-pojos.xml" modifyInfinispan="${infinispan.parts}/deployed-pojos.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-custom-compat-marshaller.xml" modifyInfinispan="${infinispan.parts}/custom-compat-marshaller.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-query-programmatic-search-mapping-provider.xml" modifyInfinispan="${infinispan.parts}/query-programmatic-search-mapping-provider.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-off-heap.xml" modifyInfinispan="${infinispan.parts}/off-heap.xml"/>

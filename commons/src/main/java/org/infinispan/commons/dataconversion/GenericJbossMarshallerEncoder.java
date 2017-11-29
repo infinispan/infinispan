@@ -10,7 +10,11 @@ public class GenericJbossMarshallerEncoder extends MarshallerEncoder {
    public static final GenericJbossMarshallerEncoder INSTANCE = new GenericJbossMarshallerEncoder();
 
    private GenericJbossMarshallerEncoder() {
-      super(new GenericJBossMarshaller());
+      this(GenericJbossMarshallerEncoder.class.getClassLoader());
+   }
+
+   public GenericJbossMarshallerEncoder(ClassLoader classLoader) {
+      super(new GenericJBossMarshaller(classLoader));
    }
 
    @Override
