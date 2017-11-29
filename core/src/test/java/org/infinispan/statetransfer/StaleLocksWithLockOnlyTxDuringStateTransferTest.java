@@ -10,6 +10,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import javax.transaction.TransactionManager;
 
 import org.hamcrest.BaseMatcher;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.control.LockControlCommand;
@@ -71,7 +72,9 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
             .before("st:block_get_transactions", "st:resume_get_transactions");
       // Block the final topology update until the tx has finished
       advanceOnGlobalComponentMethod(sequencer, manager(0), LocalTopologyManager.class,
-            matchMethodCall("handleTopologyUpdate").withMatcher(1, new CacheTopologyMatcher(finalTopologyId)).build())
+            matchMethodCall("handleTopologyUpdate")
+                  .withMatcher(0, CoreMatchers.equalTo(CACHE_NAME))
+                  .withMatcher(1, new CacheTopologyMatcher(finalTopologyId)).build())
             .before("st:block_ch_update_on_0", "st:resume_ch_update_on_0");
       advanceOnGlobalComponentMethod(sequencer, manager(1), LocalTopologyManager.class,
             matchMethodCall("handleTopologyUpdate").withMatcher(1, new CacheTopologyMatcher(finalTopologyId)).build())
