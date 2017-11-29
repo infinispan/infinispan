@@ -4,7 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
@@ -41,6 +43,11 @@ import org.junit.runner.RunWith;
 @Category(Queries.class)
 public class RemoteQueryCompatModeIT {
 
+   /**
+    * The deployments to cleanup after suite.
+    */
+   private static final Set<File> deployments = new HashSet<>();
+
    private static RemoteCacheManager remoteCacheManager;
 
    @InfinispanResource("standalone-custom-compat-marshaller")
@@ -62,15 +69,21 @@ public class RemoteQueryCompatModeIT {
                   "META-INF/MANIFEST.MF")
             .addAsServiceProvider(Marshaller.class, CustomCompatModeMarshaller.class);
 
-      String serverDir = System.getProperty("server1.dist");
-      entityArchive.as(ZipExporter.class).exportTo(new File(serverDir, "/standalone/deployments/custom-test-entity.jar"), true);
-      marshallerArchive.as(ZipExporter.class).exportTo(new File(serverDir, "/standalone/deployments/custom-compat-marshaller.jar"), true);
+      File deployment1 = new File(System.getProperty("server1.dist"), "/standalone/deployments/custom-test-entity.jar");
+      entityArchive.as(ZipExporter.class).exportTo(deployment1, true);
+      deployments.add(deployment1);
+      File deployment2 = new File(System.getProperty("server1.dist"), "/standalone/deployments/custom-compat-marshaller.jar");
+      marshallerArchive.as(ZipExporter.class).exportTo(deployment2, true);
+      deployments.add(deployment2);
    }
 
    @AfterClass
-   public static void release() {
+   public static void after() {
       if (remoteCacheManager != null) {
          remoteCacheManager.stop();
+      }
+      for (File f : deployments) {
+         f.delete();
       }
    }
 

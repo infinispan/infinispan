@@ -14,8 +14,6 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.persistence.cluster.MyCustomCacheStore;
 import org.infinispan.persistence.spi.ExternalStore;
 import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
@@ -25,6 +23,7 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -39,24 +38,31 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 @Category(CacheStore.class)
 public class CustomCacheStoreIT {
-   private static final Log log = LogFactory.getLog(CustomCacheStoreIT.class);
+
+   private static File deployment;
 
    @InfinispanResource("standalone-customcs")
    RemoteInfinispanServer server;
 
-   final int managementPort = 9990;
-   final String cacheLoaderMBean = "jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache,name=\"default(local)\",manager=\"local\",component=CacheLoader";
+   private static final int managementPort = 9990;
+
+   private static final String cacheLoaderMBean = "jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache,name=\"default(local)\",manager=\"local\",component=CacheLoader";
 
    @BeforeClass
    public static void before() throws Exception {
-      String serverDir = System.getProperty("server1.dist");
-
       JavaArchive deployedCacheStore = ShrinkWrap.create(JavaArchive.class);
       deployedCacheStore.addPackage(MyCustomCacheStore.class.getPackage());
       deployedCacheStore.addAsServiceProvider(ExternalStore.class, MyCustomCacheStore.class);
 
-      deployedCacheStore.as(ZipExporter.class).exportTo(
-            new File(serverDir, "/standalone/deployments/custom-store.jar"), true);
+      deployment = new File(System.getProperty("server1.dist"), "/standalone/deployments/custom-store.jar");
+      deployedCacheStore.as(ZipExporter.class).exportTo(deployment, true);
+   }
+
+   @AfterClass
+   public static void after() {
+      if (deployment != null) {
+         deployment.delete();
+      }
    }
 
    @Test
