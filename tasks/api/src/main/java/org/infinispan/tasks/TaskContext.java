@@ -7,6 +7,7 @@ import java.util.Optional;
 import javax.security.auth.Subject;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
@@ -50,7 +51,12 @@ public class TaskContext {
     * other caches can be obtained from the cache manager
     */
    public TaskContext cache(Cache<?, ?> cache) {
-      this.cache = Optional.of(cache);
+      Optional<Cache<?, ?>> optionalCache = Optional.of(cache);
+      this.cache = optionalCache.map(c -> {
+         if (SecurityActions.getCacheConfiguration(c.getAdvancedCache()).compatibility().enabled())
+            return c.getAdvancedCache().withEncoding(IdentityEncoder.class);
+         return c;
+      });
       return this;
    }
 
@@ -76,9 +82,7 @@ public class TaskContext {
     * Adds a named parameter to the task context
     */
    public TaskContext addParameter(String name, Object value) {
-      Map<String, Object> params = (Map<String, Object>) parameters.orElseGet(() -> {
-         return new HashMap<>();
-      });
+      Map<String, Object> params = (Map<String, Object>) parameters.orElseGet(HashMap::new);
       params.put(name, value);
 
       return parameters(params);

@@ -75,7 +75,7 @@ public class PriceTask implements ServerTask {
 
    @SuppressWarnings("unchecked")
    private <K, V> Cache<K, V> getCache() {
-      return (Cache<K, V>) ctx.getCache().get().getAdvancedCache().withEncoding(IdentityEncoder.class);
+      return (Cache<K, V>) ctx.getCache().get();
    }
 
 }
