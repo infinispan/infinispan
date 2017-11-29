@@ -1,5 +1,6 @@
 package org.infinispan.util.concurrent.locks;
 
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.util.concurrent.TimeoutException;
 
 /**
@@ -43,4 +44,9 @@ public interface LockPromise {
     * @param listener the {@link LockListener} to invoke.
     */
    void addListener(LockListener listener);
+
+   /**
+    * @return an {@link InvocationStage} for this lock.
+    */
+   InvocationStage toInvocationStage();
 }

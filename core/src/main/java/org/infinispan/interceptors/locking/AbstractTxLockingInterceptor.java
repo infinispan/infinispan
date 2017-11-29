@@ -4,7 +4,6 @@ import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.FlagAffectedCommand;
@@ -14,9 +13,10 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.OutdatedTopologyException;
+import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.concurrent.locks.PendingLockManager;
 import org.infinispan.util.logging.Log;
 
@@ -26,17 +26,15 @@ import org.infinispan.util.logging.Log;
  * @author Mircea.Markus@jboss.com
  */
 public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
-   protected final boolean trace = getLog().isTraceEnabled();
+   private final boolean trace = getLog().isTraceEnabled();
 
-   protected RpcManager rpcManager;
    private PartitionHandlingManager partitionHandlingManager;
    private PendingLockManager pendingLockManager;
+   final InvocationSuccessFunction invokeNextFunction = (rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand);
 
    @Inject
-   public void setDependencies(RpcManager rpcManager,
-                               PartitionHandlingManager partitionHandlingManager,
-                               PendingLockManager pendingLockManager) {
-      this.rpcManager = rpcManager;
+   public void setDependencies(PartitionHandlingManager partitionHandlingManager,
+         PendingLockManager pendingLockManager) {
       this.partitionHandlingManager = partitionHandlingManager;
       this.pendingLockManager = pendingLockManager;
    }
@@ -70,26 +68,22 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     * becomes a primary owner a new transaction trying to obtain the "real" lock will have to wait for all backup
     * locks to be released. The backup lock will be released either by a commit/rollback/unlock command or by
     * the originator leaving the cluster (if recovery is disabled).
-    *
-    * @return {@code true} if the key was really locked.
     */
-   protected final boolean lockOrRegisterBackupLock(TxInvocationContext<?> ctx, Object key, long lockTimeout)
+   final KeyAwareLockPromise lockOrRegisterBackupLock(TxInvocationContext<?> ctx, Object key, long lockTimeout)
          throws InterruptedException {
       switch (cdl.getCacheTopology().getDistribution(key).writeOwnership()) {
          case PRIMARY:
             if (trace) {
                getLog().tracef("Acquiring locks on %s.", toStr(key));
             }
-            checkPendingAndLockKey(ctx, key, lockTimeout);
-            return true;
+            return checkPendingAndLockKey(ctx, key, lockTimeout);
          case BACKUP:
             if (trace) {
                getLog().tracef("Acquiring backup locks on %s.", key);
             }
             ctx.getCacheTransaction().addBackupLockForKey(key);
-            return false;
          default:
-            return false;
+            return KeyAwareLockPromise.NO_OP;
       }
    }
 
@@ -98,10 +92,10 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     *
     * @return a collection with the keys locked.
     */
-   protected final Collection<Object> lockAllOrRegisterBackupLock(TxInvocationContext<?> ctx, Collection<?> keys,
+   final KeyAwareLockPromise lockAllOrRegisterBackupLock(TxInvocationContext<?> ctx, Collection<?> keys,
                                                                   long lockTimeout) throws InterruptedException {
       if (keys.isEmpty()) {
-         return Collections.emptyList();
+         return KeyAwareLockPromise.NO_OP;
       }
 
       final Log log = getLog();
@@ -128,11 +122,10 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       }
 
       if (keysToLock.isEmpty()) {
-         return Collections.emptyList();
+         return KeyAwareLockPromise.NO_OP;
       }
 
-      checkPendingAndLockAllKeys(ctx, keysToLock, lockTimeout);
-      return keysToLock;
+      return checkPendingAndLockAllKeys(ctx, keysToLock, lockTimeout);
    }
 
    /**
@@ -155,20 +148,20 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     * Note: The algorithm described below only when nodes leave the cluster, so it doesn't add a performance burden
     * when the cluster is stable.
     */
-   private void checkPendingAndLockKey(InvocationContext ctx, Object key, long lockTimeout) throws InterruptedException {
+   private KeyAwareLockPromise checkPendingAndLockKey(InvocationContext ctx, Object key, long lockTimeout) throws InterruptedException {
       final long remaining = pendingLockManager.awaitPendingTransactionsForKey((TxInvocationContext<?>) ctx, key,
                                                                                lockTimeout, TimeUnit.MILLISECONDS);
-      lockAndRecord(ctx, key, remaining);
+      return lockAndRecord(ctx, key, remaining);
    }
 
-   private void checkPendingAndLockAllKeys(InvocationContext ctx, Collection<Object> keys, long lockTimeout)
+   private KeyAwareLockPromise checkPendingAndLockAllKeys(InvocationContext ctx, Collection<Object> keys, long lockTimeout)
          throws InterruptedException {
       final long remaining = pendingLockManager.awaitPendingTransactionsForAllKeys((TxInvocationContext<?>) ctx, keys,
                                                                                    lockTimeout, TimeUnit.MILLISECONDS);
-      lockAllAndRecord(ctx, keys, remaining);
+      return lockAllAndRecord(ctx, keys, remaining);
    }
 
-   protected void releaseLockOnTxCompletion(TxInvocationContext ctx) {
+   void releaseLockOnTxCompletion(TxInvocationContext ctx) {
       boolean shouldReleaseLocks = ctx.isOriginLocal() &&
             !partitionHandlingManager.isTransactionPartiallyCommitted(ctx.getGlobalTransaction());
       if (shouldReleaseLocks) {

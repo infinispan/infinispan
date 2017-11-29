@@ -10,6 +10,10 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.interceptors.InvocationFinallyAction;
+import org.infinispan.interceptors.InvocationSuccessFunction;
+import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
+import org.infinispan.util.concurrent.locks.LockPromise;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -20,7 +24,8 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    private static final Log log = LogFactory.getLog(OptimisticLockingInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
+   private final InvocationFinallyAction releaseLockOnCompletionAction = (rCtx, rCommand, rv, throwable) -> releaseLockOnTxCompletion((TxInvocationContext<?>) rCtx);
+   private final InvocationSuccessFunction onePhaseCommitFunction = (rCtx, rCommand, rv) -> invokeNextAndFinally(rCtx, rCommand, releaseLockOnCompletionAction);
 
    @Override
    protected Log getLog() {
@@ -30,6 +35,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       final Collection<?> keysToLock = command.getKeysToLock();
+      LockPromise lockPromise = KeyAwareLockPromise.NO_OP;
       ((TxInvocationContext<?>) ctx).addAllAffectedKeys(command.getAffectedKeys());
       if (!keysToLock.isEmpty()) {
          if (command.isRetriedCommand() && ctx.isOriginLocal()) {
@@ -37,14 +43,14 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
             ctx.getCacheTransaction().cleanupBackupLocks();
             keysToLock.removeAll(ctx.getLockedKeys()); //already locked!
          }
-         lockAllOrRegisterBackupLock(ctx, keysToLock, cacheConfiguration.locking().lockAcquisitionTimeout());
+         lockPromise = lockAllOrRegisterBackupLock(ctx, keysToLock, cacheConfiguration.locking().lockAcquisitionTimeout());
       }
 
-      if (!command.isOnePhaseCommit()) {
-         return invokeNext(ctx, command);
+      if (command.isOnePhaseCommit()) {
+         return lockPromise.toInvocationStage().thenApply(ctx, command, onePhaseCommitFunction);
+      } else {
+         return lockPromise.toInvocationStage().thenApply(ctx, command, invokeNextFunction);
       }
-      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> releaseLockOnTxCompletion(((TxInvocationContext) rCtx)));
-
    }
 
    @Override

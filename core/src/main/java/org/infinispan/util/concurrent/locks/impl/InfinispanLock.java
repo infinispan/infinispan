@@ -11,7 +11,12 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
+import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.SyncInvocationStage;
+import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.DeadlockChecker;
@@ -50,6 +55,7 @@ public class InfinispanLock {
    private final ConcurrentMap<Object, LockPlaceHolder> lockOwners;
    private final Runnable releaseRunnable;
    private TimeService timeService;
+   @SuppressWarnings("CanBeFinal")
    private volatile LockPlaceHolder current;
 
    /**
@@ -302,7 +308,8 @@ public class InfinispanLock {
 
       private final Object owner;
       private final long timeout;
-      private final CompletableFuture<Void> notifier;
+      private final CompletableFuture<LockState> notifier;
+      @SuppressWarnings("CanBeFinal")
       volatile LockState lockState;
 
       private LockPlaceHolder(Object owner, long timeout) {
@@ -345,7 +352,12 @@ public class InfinispanLock {
 
       @Override
       public void addListener(LockListener listener) {
-         notifier.thenRun(() -> this.invoke(listener));
+         notifier.thenAccept(listener::onEvent);
+      }
+
+      @Override
+      public InvocationStage toInvocationStage() {
+         return toInvocationStage(() -> new TimeoutException("Timeout waiting for lock."));
       }
 
       @Override
@@ -385,6 +397,21 @@ public class InfinispanLock {
       }
 
       @Override
+      public InvocationStage toInvocationStage(Supplier<TimeoutException> timeoutSupplier) {
+         if (notifier.isDone()) {
+            return checkState(notifier.getNow(lockState), SyncInvocationStage::new,
+                  SimpleAsyncInvocationStage::new, timeoutSupplier);
+         }
+         return new SimpleAsyncInvocationStage(notifier.thenApplyAsync(state -> {
+            Object rv = checkState(state, () -> null, throwable -> throwable, timeoutSupplier);
+            if (rv != null) {
+               throw (RuntimeException) rv;
+            }
+            return null;
+         }));
+      }
+
+      @Override
       public String toString() {
          return "LockPlaceHolder{" +
                "lockState=" + lockState +
@@ -392,21 +419,20 @@ public class InfinispanLock {
                '}';
       }
 
-      private void invoke(LockListener invoker) {
-         LockState state = lockState;
+      private <T> T checkState(LockState state, Supplier<T> acquired, Function<Throwable, T> exception, Supplier<TimeoutException> timeoutSupplier) {
          switch (state) {
-            case WAITING:
-               throw new IllegalStateException("WAITING is not a valid state to invoke the listener");
             case ACQUIRED:
+               return acquired.get();
             case RELEASED:
-               invoker.onEvent(LockState.ACQUIRED);
-               break;
+               return exception.apply(new IllegalStateException("Lock already released!"));
             case TIMED_OUT:
+               cleanup();
+               return exception.apply(timeoutSupplier.get());
             case DEADLOCKED:
-               invoker.onEvent(state);
-               break;
+               cleanup();
+               return exception.apply(new DeadlockDetectedException("DeadLock detected"));
             default:
-               throw new IllegalStateException("Unknown lock state " + state);
+               return exception.apply(new IllegalStateException("Unknown lock state: " + state));
          }
       }
 
@@ -486,8 +512,9 @@ public class InfinispanLock {
       }
 
       private void notifyListeners() {
-         if (lockState != LockState.WAITING) {
-            notifier.complete(null);
+         LockState state = lockState;
+         if (state != LockState.WAITING) {
+            notifier.complete(state);
          }
       }
    }
