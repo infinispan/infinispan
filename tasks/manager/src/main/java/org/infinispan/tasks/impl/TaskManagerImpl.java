@@ -100,8 +100,8 @@ public class TaskManagerImpl implements TaskManager {
             return task.whenComplete((r, e) -> {
                if (context.isLogEvent()) {
                   EventLogger eventLog = EventLogManager.getEventLogger(cacheManager).scope(cacheManager.getAddress());
-                  who.ifPresent(s -> eventLog.who(s));
-                  context.getCache().ifPresent(cache -> eventLog.context(cache));
+                  who.ifPresent(eventLog::who);
+                  context.getCache().ifPresent(eventLog::context);
                   if (e != null) {
                      eventLog.detail(e)
                            .error(EventLogCategory.TASKS, MESSAGES.taskFailure(name));

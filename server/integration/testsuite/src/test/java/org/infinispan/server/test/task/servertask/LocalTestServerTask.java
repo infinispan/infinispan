@@ -29,11 +29,7 @@ public class LocalTestServerTask implements ServerTask {
       Cache<Object, Object> cache = (Cache<Object, Object>) taskContext.getCache().get();
       Map.Entry<Object, Object> entry = cache.entrySet().iterator().next();
 
-      assert taskContext.getMarshaller().isPresent();
-      String existingKey = (String) taskContext.getMarshaller().get().objectFromByteBuffer((byte[]) entry.getKey());
-      String existingValue = (String) taskContext.getMarshaller().get().objectFromByteBuffer((byte[]) entry.getValue());
-
-      cache.getCacheManager().getCache(CACHE_NAME).put(existingKey, MODIFIED_PREFIX + existingValue);
+      cache.getCacheManager().getCache(CACHE_NAME).put(entry.getKey(), MODIFIED_PREFIX + entry.getValue());
 
       return null;
    }
