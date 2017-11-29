@@ -19,6 +19,7 @@ import static org.infinispan.stats.impl.StatKeys.OFF_HEAP_MEMORY_USED;
 import static org.infinispan.stats.impl.StatKeys.PASSIVATIONS;
 import static org.infinispan.stats.impl.StatKeys.REMOVE_HITS;
 import static org.infinispan.stats.impl.StatKeys.REMOVE_MISSES;
+import static org.infinispan.stats.impl.StatKeys.REQUIRED_MIN_NODES;
 import static org.infinispan.stats.impl.StatKeys.STORES;
 import static org.infinispan.stats.impl.StatKeys.TIME_SINCE_START;
 
@@ -105,9 +106,11 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       putLongAttributesAverage(responseList, AVERAGE_WRITE_TIME);
       putLongAttributesAverage(responseList, AVERAGE_READ_TIME);
       putLongAttributesAverage(responseList, AVERAGE_REMOVE_TIME);
+      putLongAttributesAverage(responseList, OFF_HEAP_MEMORY_USED);
 
       putIntAttributes(responseList, NUMBER_OF_LOCKS_HELD);
       putIntAttributes(responseList, NUMBER_OF_LOCKS_AVAILABLE);
+      putIntAttributesMax(responseList, REQUIRED_MIN_NODES);
 
       long numberOfEntriesInMemory = getCacheMode(cache).isReplicated() ?
             cache.getStats().getCurrentNumberOfEntriesInMemory() :
@@ -137,6 +140,11 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
          displayType = DisplayType.SUMMARY)
    public long getAverageRemoveTime() {
       return getStatAsLong(AVERAGE_REMOVE_TIME);
+   }
+
+   @Override
+   public int getRequiredMinimumNumberOfNodes() {
+      return getStatAsInt(REQUIRED_MIN_NODES);
    }
 
    @Override
@@ -420,6 +428,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
          }
 
          map.put(OFF_HEAP_MEMORY_USED, stats.getOffHeapMemoryUsed());
+         map.put(REQUIRED_MIN_NODES, stats.getRequiredMinimumNumberOfNodes());
          map.put(STORES, stats.getStores());
          map.put(REMOVE_HITS, stats.getRemoveHits());
          map.put(REMOVE_MISSES, stats.getRemoveMisses());

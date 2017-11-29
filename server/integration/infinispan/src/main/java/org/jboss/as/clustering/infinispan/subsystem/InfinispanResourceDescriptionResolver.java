@@ -209,6 +209,7 @@ public class InfinispanResourceDescriptionResolver extends SubsystemResourceDesc
         sharedAttributeResolver.put(MetricKeys.NUMBER_OF_LOCKS_AVAILABLE, "cache");
         sharedAttributeResolver.put(MetricKeys.NUMBER_OF_LOCKS_HELD, "cache");
         sharedAttributeResolver.put(MetricKeys.OFF_HEAP_MEMORY_USED, "cache");
+        sharedAttributeResolver.put(MetricKeys.MINIMUM_REQUIRED_NODES, "cache");
         sharedAttributeResolver.put(MetricKeys.SITES_OFFLINE, "cache");
         sharedAttributeResolver.put(MetricKeys.SITES_ONLINE, "cache");
         sharedAttributeResolver.put(MetricKeys.PREPARES, "cache");

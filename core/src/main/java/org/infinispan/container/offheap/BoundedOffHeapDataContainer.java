@@ -195,6 +195,16 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
       super.performClear();
    }
 
+   @Override
+   public long capacity() {
+      return maxSize;
+   }
+
+   @Override
+   public long evictionSize() {
+      return currentSize;
+   }
+
    /**
     * This method repeatedly removes the head of the LRU list until there the current size is less than or equal to
     * `maxSize`.

@@ -362,6 +362,12 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       return new EntryIterator(entries.values().iterator(), true);
    }
 
+   @Override
+   public long evictionSize() {
+      Policy.Eviction<K, InternalCacheEntry<K, V>> evict = eviction();
+      return evict.weightedSize().orElse(entries.size());
+   }
+
    private final class DefaultEvictionListener implements EvictionListener<K, InternalCacheEntry<K, V>> {
 
       @Override

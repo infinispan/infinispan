@@ -91,6 +91,7 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
         NUMBER_OF_ENTRIES(MetricKeys.NUMBER_OF_ENTRIES, ModelType.INT, true),
         NUMBER_OF_ENTRIES_IN_MEMORY(MetricKeys.NUMBER_OF_ENTRIES_IN_MEMORY, ModelType.INT, true),
         OFF_HEAP_MEMORY_USED(MetricKeys.OFF_HEAP_MEMORY_USED, ModelType.LONG, true),
+        MINIMUM_REQUIRED_NODES(MetricKeys.MINIMUM_REQUIRED_NODES, ModelType.INT, true),
         READ_WRITE_RATIO(MetricKeys.READ_WRITE_RATIO, ModelType.DOUBLE, true),
         REMOVE_HITS(MetricKeys.REMOVE_HITS, ModelType.LONG, true),
         REMOVE_MISSES(MetricKeys.REMOVE_MISSES, ModelType.LONG, true),
@@ -255,6 +256,9 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
                     break;
                 case OFF_HEAP_MEMORY_USED:
                     result.set(stats.getOffHeapMemoryUsed());
+                    break;
+                case MINIMUM_REQUIRED_NODES:
+                    result.set(stats.getRequiredMinimumNumberOfNodes());
                     break;
                 case READ_WRITE_RATIO:
                    result.set(stats.getReadWriteRatio());

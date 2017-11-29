@@ -15,6 +15,7 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
@@ -201,6 +202,11 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
       if (removes == 0)
          return 0;
       return (removeTimes.sum()) / removes;
+   }
+
+   @Override
+   public int getRequiredMinimumNumberOfNodes() {
+      return CacheMgmtInterceptor.calculateRequiredMinimumNumberOfNodes(cache);
    }
 
    @Override
