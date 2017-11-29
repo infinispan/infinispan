@@ -19,32 +19,38 @@ import org.testng.annotations.Test;
  */
 public class TestNGTestListener implements ITestListener, IConfigurationListener2, ISuiteListener {
    private static final Logger log = Logger.getLogger(TestNGTestListener.class);
+   private final TestSuiteProgress progressLogger;
    private Set<Long> startupThreads;
    private boolean suiteRunning;
 
+
+   public TestNGTestListener() {
+      progressLogger = new TestSuiteProgress();
+   }
+
    @Override
    public void onTestStart(ITestResult result) {
-      TestSuiteProgress.testStarted(testName(result));
+      progressLogger.testStarted(testName(result));
    }
 
    @Override
    public void onTestSuccess(ITestResult result) {
-      TestSuiteProgress.testFinished(testName(result));
+      progressLogger.testFinished(testName(result));
    }
 
    @Override
    public void onTestFailure(ITestResult result) {
-      TestSuiteProgress.testFailed(testName(result), result.getThrowable());
+      progressLogger.testFailed(testName(result), result.getThrowable());
    }
 
    @Override
    public void onTestSkipped(ITestResult result) {
-      TestSuiteProgress.testIgnored(testName(result));
+      progressLogger.testIgnored(testName(result));
    }
 
    @Override
    public void onTestFailedButWithinSuccessPercentage(ITestResult result) {
-      TestSuiteProgress.testFailed(testName(result), result.getThrowable());
+      progressLogger.testFailed(testName(result), result.getThrowable());
    }
 
    @Override
@@ -131,14 +137,14 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
    @Override
    public void onConfigurationFailure(ITestResult testResult) {
       if (testResult.getThrowable() != null) {
-         TestSuiteProgress.setupFailed(testName(testResult), testResult.getThrowable());
+         progressLogger.setupFailed(testName(testResult), testResult.getThrowable());
       }
    }
 
    @Override
    public void onConfigurationSkip(ITestResult testResult) {
       if (testResult.getThrowable() != null) {
-         TestSuiteProgress.testIgnored(testName(testResult));
+         progressLogger.testIgnored(testName(testResult));
       }
    }
 }
