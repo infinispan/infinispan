@@ -121,6 +121,15 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       return result;
    }
 
+   @Override
+   public int getRequiredMinimumNumberOfNodes() {
+      int result = -1;
+      for (Stats stats : getStats()) {
+         result = Math.max(result, stats.getRequiredMinimumNumberOfNodes());
+      }
+      return result;
+   }
+
    protected long calculateAverageRemoveTime() {
       long totalAverageRemoveTime = 0;
       int includedCacheCounter = 0;
@@ -495,6 +504,17 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    @Override
    public void reset() {
       resetStatistics();
+   }
+
+   private Set<Stats> getStats() {
+      Set<Stats> stats = new HashSet<Stats>();
+      for (String cn : cm.getCacheNames()) {
+         if (cm.cacheExists(cn)) {
+            AdvancedCache cache = cm.getCache(cn).getAdvancedCache();
+            stats.add(cache.getStats());
+         }
+      }
+      return stats;
    }
 
    private Set<Stats> getEnabledStats() {

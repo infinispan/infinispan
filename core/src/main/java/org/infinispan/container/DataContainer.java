@@ -234,4 +234,14 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
    default long capacity() {
       throw new UnsupportedOperationException();
    }
+
+   /**
+    * Returns how large the eviction size is currently. This is only supported if the container is bounded. An
+    * {@link UnsupportedOperationException} is thrown otherwise. This value will always be lower than the value returned
+    * from {@link DataContainer#capacity()}
+    * @return how large the counted eviction is
+    */
+   default long evictionSize() {
+      throw new UnsupportedOperationException();
+   }
 }

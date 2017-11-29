@@ -154,12 +154,22 @@ public abstract class AbstractClusterStats implements JmxStatisticsExposer {
       int total = 0;
       for (Map<String, Number> m : responseList) {
          Number value = m.get(attribute);
-         long intValue = value.intValue();
+         int intValue = value.intValue();
          if (intValue > -1) {
             total += intValue;
          }
       }
       return total;
+   }
+
+   int maxIntAttributes(List<Map<String, Number>> responseList, String attribute) {
+      int max = 0;
+      for (Map<String, Number> m : responseList) {
+         Number value = m.get(attribute);
+         int intValue = value.intValue();
+         max = Math.max(max, intValue);
+      }
+      return max;
    }
 
    void putLongAttributesAverage(List<Map<String, Number>> responseList, String attribute) {
@@ -183,6 +193,10 @@ public abstract class AbstractClusterStats implements JmxStatisticsExposer {
 
    void putIntAttributes(List<Map<String, Number>> responseList, String attribute) {
       statsMap.put(attribute, addIntAttributes(responseList, attribute));
+   }
+
+   void putIntAttributesMax(List<Map<String, Number>> responseList, String attribute) {
+      statsMap.put(attribute, maxIntAttributes(responseList, attribute));
    }
 
    long getStatAsLong(String attribute) {

@@ -11,6 +11,7 @@ import static org.infinispan.stats.impl.StatKeys.NUMBER_OF_ENTRIES_IN_MEMORY;
 import static org.infinispan.stats.impl.StatKeys.OFF_HEAP_MEMORY_USED;
 import static org.infinispan.stats.impl.StatKeys.REMOVE_HITS;
 import static org.infinispan.stats.impl.StatKeys.REMOVE_MISSES;
+import static org.infinispan.stats.impl.StatKeys.REQUIRED_MIN_NODES;
 import static org.infinispan.stats.impl.StatKeys.RETRIEVALS;
 import static org.infinispan.stats.impl.StatKeys.STORES;
 import static org.infinispan.stats.impl.StatKeys.TIME_SINCE_RESET;
@@ -36,7 +37,7 @@ public class StatsImpl implements Stats {
 
    private static String[] Attributes = new String[]{TIME_SINCE_RESET, TIME_SINCE_START, NUMBER_OF_ENTRIES, NUMBER_OF_ENTRIES_IN_MEMORY,
          OFF_HEAP_MEMORY_USED, RETRIEVALS, STORES, HITS, MISSES, REMOVE_HITS, REMOVE_MISSES, EVICTIONS, AVERAGE_READ_TIME,
-         AVERAGE_REMOVE_TIME, AVERAGE_WRITE_TIME};
+         AVERAGE_REMOVE_TIME, AVERAGE_WRITE_TIME, REQUIRED_MIN_NODES};
 
    private final Map<String, Long> statsMap = new HashMap<>();
    final CacheMgmtInterceptor mgmtInterceptor;
@@ -62,6 +63,7 @@ public class StatsImpl implements Stats {
          statsMap.put(AVERAGE_READ_TIME, mgmtInterceptor.getAverageReadTime());
          statsMap.put(AVERAGE_REMOVE_TIME, mgmtInterceptor.getAverageRemoveTime());
          statsMap.put(AVERAGE_WRITE_TIME, mgmtInterceptor.getAverageWriteTime());
+         statsMap.put(REQUIRED_MIN_NODES, (long) mgmtInterceptor.getRequiredMinimumNumberOfNodes());
       } else {
          for (String key : Attributes)
             statsMap.put(key, -1L);
@@ -87,6 +89,7 @@ public class StatsImpl implements Stats {
          statsMap.put(AVERAGE_READ_TIME, other.getAverageReadTime());
          statsMap.put(AVERAGE_REMOVE_TIME, other.getAverageRemoveTime());
          statsMap.put(AVERAGE_WRITE_TIME, other.getAverageWriteTime());
+         statsMap.put(REQUIRED_MIN_NODES, (long) other.getRequiredMinimumNumberOfNodes());
       } else {
          for (String key : Attributes)
             statsMap.put(key, -1L);
@@ -171,6 +174,11 @@ public class StatsImpl implements Stats {
    @Override
    public long getAverageRemoveTime() {
       return statsMap.get(AVERAGE_REMOVE_TIME);
+   }
+
+   @Override
+   public int getRequiredMinimumNumberOfNodes() {
+      return Math.toIntExact(statsMap.get(REQUIRED_MIN_NODES));
    }
 
    @Override

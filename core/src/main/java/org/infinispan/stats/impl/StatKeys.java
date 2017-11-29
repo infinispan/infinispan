@@ -20,6 +20,7 @@ class StatKeys {
    static final String OFF_HEAP_MEMORY_USED = "offHeapMemoryUsed";
    static final String RETRIEVALS = "retrievals";
    static final String STORES = "stores";
+   static final String REQUIRED_MIN_NODES = "minRequiredNodes";
 
    //LockManager
    static final String NUMBER_OF_LOCKS_HELD = "numberOfLocksHeld";

@@ -675,4 +675,9 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    public Iterator<InternalCacheEntry<WrappedBytes, WrappedBytes>> iteratorIncludingExpired() {
       return entryStreamIncludingExpired().iterator();
    }
+
+   @Override
+   public long evictionSize() {
+      return size.get();
+   }
 }

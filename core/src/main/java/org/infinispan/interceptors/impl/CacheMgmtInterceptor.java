@@ -20,6 +20,9 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.offheap.OffHeapMemoryAllocator;
 import org.infinispan.context.Flag;
@@ -33,6 +36,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Units;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.StripedCounters;
 
@@ -398,6 +402,48 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    )
    public long getOffHeapMemoryUsed() {
       return allocator.getAllocatedAmount();
+   }
+
+   @ManagedAttribute(
+         description = "Amount of nodes required to guarantee data consistency",
+         displayName = "Required Minimum Nodes",
+         displayType = DisplayType.SUMMARY
+   )
+   public int getRequiredMinimumNumberOfNodes() {
+      return calculateRequiredMinimumNumberOfNodes(cache);
+   }
+
+   public static int calculateRequiredMinimumNumberOfNodes(AdvancedCache<?, ?> cache) {
+      Configuration config = cache.getCacheConfiguration();
+
+      ClusteringConfiguration clusteringConfiguration = config.clustering();
+      CacheMode mode = clusteringConfiguration.cacheMode();
+      if (mode.isReplicated() || !mode.isClustered()) {
+         // Local and replicated only require the 1 node to keep the data
+         return 1;
+      }
+      CacheTopology cacheTopology = cache.getDistributionManager().getCacheTopology();
+      if (mode.isInvalidation()) {
+         // Invalidation requires all as we don't know what data is installed on which
+         return cacheTopology.getMembers().size();
+      }
+      int numMembers = cacheTopology.getMembers().size();
+      // If scattered just assume 2 owners - numOwners in config says 1 though
+      int numOwners = mode.isScattered() ? 2 : clusteringConfiguration.hash().numOwners();
+      int minNodes = numMembers - numOwners + 1;
+      long maxSize = config.memory().size();
+
+      int evictionRestrictedNodes;
+      if (maxSize > 0) {
+         DataContainer dataContainer = cache.getDataContainer();
+         long totalData = dataContainer.evictionSize() * numOwners;
+         long capacity = dataContainer.capacity();
+
+         evictionRestrictedNodes = (int) (totalData / capacity) + (totalData % capacity != 0 ? 1 : 0);
+      } else {
+         evictionRestrictedNodes = 1;
+      }
+      return Math.max(evictionRestrictedNodes, minNodes);
    }
 
    @ManagedAttribute(
