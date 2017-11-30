@@ -2,7 +2,6 @@ package org.infinispan.server.test.client.hotrod;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -41,7 +40,7 @@ public class HotRodRemoteCacheCompatIT {
    RemoteInfinispanServer server1;
 
    @Before
-   public void setup() throws IOException {
+   public void setup() {
       RemoteCacheManagerFactory remoteCacheManagerFactory = new RemoteCacheManagerFactory();
       ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
       clientBuilder.addServer()
