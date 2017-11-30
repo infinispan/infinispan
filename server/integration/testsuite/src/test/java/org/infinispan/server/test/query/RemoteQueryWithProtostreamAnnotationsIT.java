@@ -39,7 +39,7 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 public class RemoteQueryWithProtostreamAnnotationsIT {
 
-   private final String cacheName = "localtestcache";
+   private static final String cacheName = "localtestcache";
 
    private RemoteCacheManager remoteCacheManager;
    private RemoteCache<Integer, AnnotatedUser> remoteCache;
@@ -58,7 +58,7 @@ public class RemoteQueryWithProtostreamAnnotationsIT {
 
       private AnnotatedAddress address;
 
-      @ProtoDoc("@IndexedField(index = false, store=false)")
+      @ProtoDoc("@IndexedField(index = false, store = false)")
       @ProtoField(number = 1, required = true)
       public int getId() {
          return id;
@@ -161,7 +161,7 @@ public class RemoteQueryWithProtostreamAnnotationsIT {
    }
 
    @Test
-   public void testAttributeQuery() throws Exception {
+   public void testAttributeQuery() {
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 

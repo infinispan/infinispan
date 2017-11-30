@@ -63,7 +63,7 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
    }
 
    @Test
-   public void testEventFilter() throws Exception {
+   public void testEventFilter() {
       User user1 = new User();
       user1.setId(1);
       user1.setName("John");
@@ -167,6 +167,7 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
       }
 
       @ClientCacheEntryCreated
+      @SuppressWarnings("unused")
       public void handleClientCacheEntryCreatedEvent(ClientCacheEntryCustomEvent event) throws IOException {
          FilterResult r = ProtobufUtil.fromWrappedByteArray(serializationContext, (byte[]) event.getEventData());
          createEvents.add(r);
@@ -178,6 +179,7 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
       }
 
       @ClientCacheEntryModified
+      @SuppressWarnings("unused")
       public void handleClientCacheEntryModifiedEvent(ClientCacheEntryCustomEvent event) throws IOException {
          FilterResult r = ProtobufUtil.fromWrappedByteArray(serializationContext, (byte[]) event.getEventData());
          modifyEvents.add(r);
@@ -190,6 +192,7 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
       }
 
       @ClientCacheEntryRemoved
+      @SuppressWarnings("unused")
       public void handleClientCacheEntryRemovedEvent(ClientCacheEntryRemovedEvent event) {
          log.debugf("handleClientCacheEntryRemovedEvent %s\n", event.getKey());
       }
