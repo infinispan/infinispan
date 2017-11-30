@@ -17,8 +17,8 @@ public class StaticCacheEventConverterFactory implements CacheEventConverterFact
 
     static class StaticCacheEventConverter implements CacheEventConverter<Integer, String, CustomEvent>, Serializable {
         @Override
-        public CustomEvent convert(Integer key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
-            return new CustomEvent(key, newValue);
+        public CustomEvent<Integer, String> convert(Integer key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
+            return new CustomEvent<>(key, newValue);
         }
     }
 }

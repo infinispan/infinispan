@@ -45,7 +45,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 /**
- * Test for full-text remote queries over HotRod unsing Ickle query language. A ProgrammaticSearchMappingProvider is
+ * Test for full-text remote queries over HotRod using Ickle query language. A ProgrammaticSearchMappingProvider is
  * used to define the analyzers.
  *
  * @author anistor@redhat.com
@@ -55,13 +55,17 @@ import org.junit.runner.RunWith;
 @Category(Queries.class)
 public class RemoteQueryStringIT {
 
+   private static final String TEST_PROGRAMMATIC_SEARCH_MAPPING_PROVIDER_JAR = "test-ProgrammaticSearchMappingProvider.jar";
+
+   private static File deployment;
+
    private static RemoteCacheManager remoteCacheManager;
 
    @InfinispanResource("query-programmatic-search-mapping-provider")
    RemoteInfinispanServer server1;
 
    @BeforeClass
-   public static void before() throws Exception {
+   public static void before() {
       JavaArchive programmaticSearchMappingProviderArchive = ShrinkWrap.create(JavaArchive.class)
             .addClass(TestAnalyzerProvider.class)
             .addClass(TestSearchMappingFactory.class)
@@ -69,15 +73,17 @@ public class RemoteQueryStringIT {
             .add(new StringAsset("Dependencies: org.infinispan.query, org.hibernate.search.engine"), "META-INF/MANIFEST.MF")
             .addAsServiceProvider(ProgrammaticSearchMappingProvider.class, TestAnalyzerProvider.class);
 
-      String serverDir = System.getProperty("server1.dist");
-      programmaticSearchMappingProviderArchive.as(ZipExporter.class)
-            .exportTo(new File(serverDir, "/standalone/deployments/test-ProgrammaticSearchMappingProvider.jar"), true);
+      deployment = new File(System.getProperty("server1.dist"), "/standalone/deployments/" + TEST_PROGRAMMATIC_SEARCH_MAPPING_PROVIDER_JAR);
+      programmaticSearchMappingProviderArchive.as(ZipExporter.class).exportTo(deployment, true);
    }
 
    @AfterClass
-   public static void release() {
+   public static void after() {
       if (remoteCacheManager != null) {
          remoteCacheManager.stop();
+      }
+      if (deployment != null) {
+         deployment.delete();
       }
    }
 
