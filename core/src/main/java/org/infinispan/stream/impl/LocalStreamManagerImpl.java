@@ -24,6 +24,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -35,9 +37,7 @@ import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
-import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -55,7 +55,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
 
    private AdvancedCache<K, V> cache;
    private ComponentRegistry registry;
-   private StateTransferManager stm;
+   private DistributionManager dm;
    private RpcManager rpc;
    private CommandsFactory factory;
    private boolean hasLoader;
@@ -109,7 +109,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    }
 
    @Inject
-   public void inject(Cache<K, V> cache, ComponentRegistry registry, StateTransferManager stm, RpcManager rpc,
+   public void inject(Cache<K, V> cache, ComponentRegistry registry, DistributionManager dm, RpcManager rpc,
            Configuration configuration, CommandsFactory factory, IteratorHandler iterationHandler) {
       // We need to unwrap the cache as a local stream should only deal with BOXED values and obviously only
       // with local entries.  Any mappings will be provided by the originator node in their intermediate operation
@@ -117,7 +117,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       this.cache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
       this.cacheName = ByteString.fromString(cache.getName());
       this.registry = registry;
-      this.stm = stm;
+      this.dm = dm;
       this.rpc = rpc;
       this.factory = factory;
       this.hasLoader = configuration.persistence().usingStores();
@@ -202,7 +202,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    private Stream<CacheEntry<K, V>> getRehashStream(CacheSet<CacheEntry<K, V>> cacheEntrySet, Object requestId,
            SegmentListener listener, boolean parallelStream, Set<Integer> segments, Set<K> keysToInclude,
            Set<K> keysToExclude) {
-      CacheTopology topology = stm.getCacheTopology();
+      LocalizedCacheTopology topology = dm.getCacheTopology();
       if (trace) {
          log.tracef("Topology for supplier is %s for id %s", topology, requestId);
       }
@@ -214,10 +214,10 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
          while (iterator.hasNext()) {
             Integer segment = iterator.next();
             // This is to ensure we only unbox the value once, as below will twice most times (happy path)
-            int intSegment = segment.intValue();
+            int intSegment = segment;
             // If the segment is not owned by both CHs we can't use it during rehash
-            if (!pendingCH.locateOwnersForSegment(intSegment).contains(localAddress)
-                    || !readCH.locateOwnersForSegment(intSegment).contains(localAddress)) {
+            if (!pendingCH.isSegmentLocalToNode(localAddress, intSegment)
+                    || !readCH.isSegmentLocalToNode(localAddress, intSegment)) {
                iterator.remove();
                lostSegments.add(segment);
             }
@@ -231,7 +231,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
             log.tracef("Currently in the middle of a rehash for id %s", requestId);
          }
       } else {
-         Set<Integer> ourSegments = readCH.getSegmentsForOwner(localAddress);
+         Set<Integer> ourSegments = topology.getLocalReadSegments();
          if (segments.retainAll(ourSegments)) {
             if (trace) {
                log.tracef("We found to be missing some segments requested for id %s", requestId);

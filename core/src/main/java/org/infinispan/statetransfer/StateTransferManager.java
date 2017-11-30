@@ -43,6 +43,7 @@ public interface StateTransferManager {
     */
    boolean isStateTransferInProgressForKey(Object key);
 
+   @Deprecated
    CacheTopology getCacheTopology();
 
    void start() throws Exception;
