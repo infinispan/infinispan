@@ -156,6 +156,11 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
          cause = cause.getCause();
       }
       if (cause instanceof RemoteIllegalLifecycleStateException || cause instanceof IOException || cause instanceof TransportException) {
+         if (Thread.interrupted()) {
+            // Don't invalidate the transport if our thread was interrupted
+            completeExceptionally(new InterruptedException());
+            return null;
+         }
          if (address != null) {
             updateFailedServers(address);
          }
