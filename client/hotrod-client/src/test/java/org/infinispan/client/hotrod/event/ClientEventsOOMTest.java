@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "client.hotrod.event.ClientEventsOOMTest")
 public class ClientEventsOOMTest extends MultiHotRodServersTest {
 
-   private static final int NUM_ENTRIES = Integer.getInteger("client.stress.num_entries", 1000);
+   private static final int NUM_ENTRIES = Integer.getInteger("client.stress.num_entries", 100);
    private static final long SLEEP_TIME = Long.getLong("client.stress.sleep_time", 10); // ms
 
    private static final int NUM_NODES = 2;
@@ -93,8 +93,8 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
          remoteCache.removeClientListener(listener);
          assertEquals(NUM_ENTRIES, listener.eventCount);
       } catch(Throwable t) {
-         log.debug("Exception reported, direct memory usage is:", t);
          logDirectMemory(log);
+         log.debug("Exception reported", t);
          throw t;
       }
    }
