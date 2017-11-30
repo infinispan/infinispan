@@ -60,7 +60,7 @@ public class RemoteQuerySecurityIT {
    protected RemoteInfinispanServer server;
 
    private RemoteCacheManagerFactory rcmFactory;
-   private Map<String, RemoteCacheManager> remoteCacheManagers = new HashMap<>();
+   private final Map<String, RemoteCacheManager> remoteCacheManagers = new HashMap<>();
 
    private static final String TEST_CACHE_INDEXED = "test_cache_indexed";
    private static final String TEST_CACHE_NOT_INDEXED = "test_cache_not_indexed";

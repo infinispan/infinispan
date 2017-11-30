@@ -54,7 +54,7 @@ public class RemoteQueryCompatModeIT {
    RemoteInfinispanServer server1;
 
    @BeforeClass
-   public static void before() throws Exception {
+   public static void before() {
       // We put the entity class in one jar and the marshaller in another jar, just to make things more interesting.
       JavaArchive entityArchive = ShrinkWrap.create(JavaArchive.class)
             .addClasses(TestEntity.class)
@@ -89,7 +89,7 @@ public class RemoteQueryCompatModeIT {
 
    @Test
    @WithRunningServer(@RunningServer(name = "custom-compat-marshaller"))
-   public void testCompatQuery() throws Exception {
+   public void testCompatQuery() {
       remoteCacheManager = ITestUtils.createCacheManager(server1);
       RemoteCache<Integer, TestEntity> remoteCache = remoteCacheManager.getCache();
       remoteCache.clear();
