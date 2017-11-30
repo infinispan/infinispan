@@ -98,7 +98,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
             .marshaller(new ProtoStreamMarshaller());
    }
 
-   public void testEventFilter() throws Exception {
+   public void testEventFilter() {
       User user1 = new UserPB();
       user1.setId(1);
       user1.setName("John");
@@ -166,7 +166,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       remoteCache.removeClientListener(listener);
    }
 
-   public void testEventFilterChangingParameter() throws Exception {
+   public void testEventFilterChangingParameter() {
       User user1 = new UserPB();
       user1.setId(1);
       user1.setName("John");
