@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "stats.ClusteredStatsTest")
@@ -16,7 +15,6 @@ public class ClusteredStatsTest extends SingleStatsTest {
    protected ClusterCacheStats stats;
 
    @Override
-   @Factory
    public Object[] factory() {
       return new Object[]{
             new ClusteredStatsTest().withStorage(StorageType.OBJECT),

@@ -11,7 +11,6 @@ import org.infinispan.eviction.EvictionType;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "stats.SingleStatsTest")
@@ -23,7 +22,7 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
    protected Cache cache;
    protected Stats stats;
 
-   @Factory
+   @Override
    public Object[] factory() {
       return new Object[]{
             new SingleStatsTest().withStorage(StorageType.BINARY),
