@@ -17,6 +17,7 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.RangeSet;
 
 /**
  * Extends {@link CacheTopology} with information about keys owned by the local node.
@@ -35,6 +36,7 @@ public class LocalizedCacheTopology extends CacheTopology {
    private final int maxOwners;
    private final DistributionInfo[] distributionInfos;
    private final boolean isScattered;
+   private final Set<Integer> localReadSegments;
 
    public static LocalizedCacheTopology makeSingletonTopology(CacheMode cacheMode, Address localAddress) {
       List<Address> members = Collections.singletonList(localAddress);
@@ -59,9 +61,11 @@ public class LocalizedCacheTopology extends CacheTopology {
       boolean isReplicated = cacheMode.isReplicated();
       this.isSegmented = isDistributed || isReplicated || isScattered;
       this.numSegments = readCH.getNumSegments();
+
       if (isDistributed || isScattered) {
          this.distributionInfos = new DistributionInfo[numSegments];
          int maxOwners = 1;
+         Set<Integer> localReadSegments = new SmallIntSet(numSegments);
          for (int segmentId = 0; segmentId < numSegments; segmentId++) {
             Address primary = readCH.locatePrimaryOwnerForSegment(segmentId);
             List<Address> readOwners = readCH.locateOwnersForSegment(segmentId);
@@ -70,9 +74,13 @@ public class LocalizedCacheTopology extends CacheTopology {
             this.distributionInfos[segmentId] =
                   new DistributionInfo(segmentId, primary, readOwners, writeOwners, writeBackups, localAddress);
             maxOwners = Math.max(maxOwners, writeOwners.size());
+            if (readOwners.contains(localAddress)) {
+               localReadSegments.add(segmentId);
+            }
          }
          this.maxOwners = maxOwners;
          this.allLocal = false;
+         this.localReadSegments = Collections.unmodifiableSet(localReadSegments);
       } else if (isReplicated) {
          // Writes must be broadcast to the entire cluster
          Map<Address, List<Address>> readOwnersMap = new HashMap<>();
@@ -91,6 +99,7 @@ public class LocalizedCacheTopology extends CacheTopology {
          }
          this.maxOwners = cacheTopology.getMembers().size();
          this.allLocal = readOwnersMap.containsKey(localAddress);
+         this.localReadSegments = new RangeSet(allLocal ? numSegments : 0);
       } else { // Invalidation/Local
          assert cacheMode.isInvalidation() || cacheMode == CacheMode.LOCAL;
          // Reads and writes are local, only the invalidation is replicated
@@ -101,6 +110,7 @@ public class LocalizedCacheTopology extends CacheTopology {
          };
          this.maxOwners = 1;
          this.allLocal = true;
+         this.localReadSegments = new RangeSet(numSegments);
       }
    }
 
@@ -183,6 +193,13 @@ public class LocalizedCacheTopology extends CacheTopology {
       } else {
          return getDistributionForSegment(0).writeOwners();
       }
+   }
+
+   /**
+    * @return The segments owned by the local node for reading.
+    */
+   public Set<Integer> getLocalReadSegments() {
+      return localReadSegments;
    }
 
    /**
