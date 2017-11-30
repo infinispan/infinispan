@@ -63,7 +63,7 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
    }
 
    @Test
-   public void testEventFilter() throws Exception {
+   public void testEventFilter() {
       User user1 = new User();
       user1.setId(1);
       user1.setName("John");

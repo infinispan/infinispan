@@ -46,7 +46,7 @@ public class RemoteQueryCompatModeIT {
    /**
     * The deployments to cleanup after suite.
     */
-   private static Set<File> deployments = new HashSet<>();
+   private static final Set<File> deployments = new HashSet<>();
 
    private static RemoteCacheManager remoteCacheManager;
 

@@ -45,7 +45,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 /**
- * Test for full-text remote queries over HotRod unsing Ickle query language. A ProgrammaticSearchMappingProvider is
+ * Test for full-text remote queries over HotRod using Ickle query language. A ProgrammaticSearchMappingProvider is
  * used to define the analyzers.
  *
  * @author anistor@redhat.com
@@ -65,7 +65,7 @@ public class RemoteQueryStringIT {
    RemoteInfinispanServer server1;
 
    @BeforeClass
-   public static void before() throws Exception {
+   public static void before() {
       JavaArchive programmaticSearchMappingProviderArchive = ShrinkWrap.create(JavaArchive.class)
             .addClass(TestAnalyzerProvider.class)
             .addClass(TestSearchMappingFactory.class)

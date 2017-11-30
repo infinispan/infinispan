@@ -192,7 +192,7 @@ public class HotRodCustomMarshallerEventIT {
         }
 
         @Override
-        public boolean isMarshallable(Object o) throws Exception {
+        public boolean isMarshallable(Object o) {
             return true;
         }
     }
