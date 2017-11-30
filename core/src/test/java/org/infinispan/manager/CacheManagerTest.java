@@ -41,7 +41,7 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -265,7 +265,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       CompletableFuture<Void> managerStopBlocked = new CompletableFuture<>();
       CompletableFuture<Void> managerStopResumed = new CompletableFuture<>();
       try {
-         manager.addListener(new MyListener(cacheStartBlocked, cacheStartResumed));
+         manager.addListener(new MyListener(CACHE_NAME, cacheStartBlocked, cacheStartResumed));
          TestingUtil.replaceComponent(manager, GlobalMarshaller.class, new GlobalMarshaller() {
             @Override
             public void stop() {
@@ -345,7 +345,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          cacheManager.defineConfiguration("correct-cache-3", cacheManager.getDefaultCacheConfiguration());
          ConfigurationBuilder incorrectBuilder = new ConfigurationBuilder();
          incorrectBuilder.customInterceptors().addInterceptor().position(InterceptorConfiguration.Position.FIRST)
-               .interceptor(new BaseCustomInterceptor() {
+               .interceptor(new BaseCustomAsyncInterceptor() {
                   @Override
                   protected void start() {
                      throw new IllegalStateException();
@@ -555,10 +555,12 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
    @Listener
    private class MyListener {
+      private String cacheName;
       private final CompletableFuture<Void> cacheStartBlocked;
       private final CompletableFuture<Void> cacheStartResumed;
 
-      public MyListener(CompletableFuture<Void> cacheStartBlocked, CompletableFuture<Void> cacheStartResumed) {
+      public MyListener(String cacheName, CompletableFuture<Void> cacheStartBlocked, CompletableFuture<Void> cacheStartResumed) {
+         this.cacheName = cacheName;
          this.cacheStartBlocked = cacheStartBlocked;
          this.cacheStartResumed = cacheStartResumed;
       }
@@ -566,8 +568,10 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       @CacheStarted
       public void cacheStarted(CacheStartedEvent event) {
          log.tracef("Cache started: %s", event.getCacheName());
-         cacheStartBlocked.complete(null);
-         cacheStartResumed.join();
+         if (cacheName.equals(event.getCacheName())) {
+            cacheStartBlocked.complete(null);
+            cacheStartResumed.join();
+         }
       }
 
       @CacheStopped
