@@ -55,8 +55,10 @@ import org.junit.runner.RunWith;
 @Category(Queries.class)
 public class RemoteQueryStringIT {
 
+   private static final String TEST_PROGRAMMATIC_SEARCH_MAPPING_PROVIDER_JAR = "test-ProgrammaticSearchMappingProvider.jar";
+
    private static File deployment;
-   
+
    private static RemoteCacheManager remoteCacheManager;
 
    @InfinispanResource("query-programmatic-search-mapping-provider")
@@ -71,9 +73,8 @@ public class RemoteQueryStringIT {
             .add(new StringAsset("Dependencies: org.infinispan.query, org.hibernate.search.engine"), "META-INF/MANIFEST.MF")
             .addAsServiceProvider(ProgrammaticSearchMappingProvider.class, TestAnalyzerProvider.class);
 
-      deployment = new File(System.getProperty("server1.dist"), "/standalone/deployments/test-ProgrammaticSearchMappingProvider.jar");
-      programmaticSearchMappingProviderArchive.as(ZipExporter.class)
-            .exportTo(deployment, true);
+      deployment = new File(System.getProperty("server1.dist"), "/standalone/deployments/" + TEST_PROGRAMMATIC_SEARCH_MAPPING_PROVIDER_JAR);
+      programmaticSearchMappingProviderArchive.as(ZipExporter.class).exportTo(deployment, true);
    }
 
    @AfterClass
