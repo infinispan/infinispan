@@ -14,6 +14,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -86,34 +87,9 @@ public class HotRodCustomMarshallerIteratorIT {
    @InfinispanResource("container1")
    RemoteInfinispanServer server1;
 
-   @Deployment(testable = false, name = "marshallerFilter")
+   @Deployment(testable = false)
    @TargetsContainer("container1")
    public static Archive<?> deploy() throws IOException {
-      return createFilterMarshallerArchive();
-   }
-
-   @Before
-   public void setup() throws Exception {
-      RemoteCacheManagerFactory remoteCacheManagerFactory = new RemoteCacheManagerFactory();
-      ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-      clientBuilder.addServer()
-            .host(server1.getHotrodEndpoint().getInetAddress().getHostName())
-            .port(server1.getHotrodEndpoint().getPort())
-            .marshaller(new CustomProtoStreamMarshaller());
-      remoteCacheManager = remoteCacheManagerFactory.createManager(clientBuilder);
-      remoteCache = remoteCacheManager.getCache(CACHE_NAME);
-
-      waitForDeploymentCompletion();
-   }
-
-   @AfterClass
-   public static void release() {
-      if (remoteCacheManager != null) {
-         remoteCacheManager.stop();
-      }
-   }
-
-   private static Archive<?> createFilterMarshallerArchive() throws IOException {
       String protoFile = Util.read(HotRodCustomMarshallerIteratorIT.class.getResourceAsStream("/sample_bank_account/bank.proto"));
 
       return ShrinkWrap.create(JavaArchive.class, FILTER_MARSHALLER_DEPLOYMENT_JAR)
@@ -132,6 +108,20 @@ public class HotRodCustomMarshallerIteratorIT {
             .addAsServiceProviderAndClasses(KeyValueFilterConverterFactory.class, ParamCustomFilterFactory.class, CustomFilterFactory.class);
    }
 
+   @Before
+   public void setup() throws Exception {
+      RemoteCacheManagerFactory remoteCacheManagerFactory = new RemoteCacheManagerFactory();
+      ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+      clientBuilder.addServer()
+            .host(server1.getHotrodEndpoint().getInetAddress().getHostName())
+            .port(server1.getHotrodEndpoint().getPort())
+            .marshaller(new CustomProtoStreamMarshaller());
+      remoteCacheManager = remoteCacheManagerFactory.createManager(clientBuilder);
+      remoteCache = remoteCacheManager.getCache(CACHE_NAME);
+
+      waitForDeploymentCompletion();
+   }
+
    /**
     * Waits up to one minute until the jar deployment completes successfully, namely invocation of DMR operation
     * "/deployment=filter-marshaller.jar/:read-attribute(name=status)" yields "success".
@@ -144,6 +134,14 @@ public class HotRodCustomMarshallerIteratorIT {
       op.get(OP_ADDR).set(address.toModelNode());
       op.get(NAME).set(STATUS);
       eventually(() -> SUCCESS.equals(controllerClient.execute(op).get(OUTCOME).asString()), 60000);
+   }
+
+   @AfterClass
+   public static void after() {
+      if (remoteCacheManager != null) {
+         remoteCacheManager.stop();
+      }
+      new File(System.getProperty("server1.dist"), "/standalone/deployments/" + FILTER_MARSHALLER_DEPLOYMENT_JAR).delete();
    }
 
    @Test

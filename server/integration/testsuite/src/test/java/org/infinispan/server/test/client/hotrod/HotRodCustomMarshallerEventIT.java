@@ -3,7 +3,7 @@ package org.infinispan.server.test.client.hotrod;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.util.ArrayList;
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -51,18 +51,23 @@ import org.junit.runner.RunWith;
 @Category(HotRodSingleNode.class)
 public class HotRodCustomMarshallerEventIT {
 
+    private static final String MARSHALLER_JAR = "marshaller.jar";
+
     private final String TEST_CACHE_NAME = "default";
 
     static RemoteCacheManager remoteCacheManager;
+
     RemoteCache<Id, Id> remoteCache;
 
     @InfinispanResource("container1")
     RemoteInfinispanServer server1;
 
-    @Deployment(testable = false, name = "marshaller")
+    @Deployment(testable = false)
     @TargetsContainer("container1")
-    public static Archive<?> deploy1() {
-        return createArchive();
+    public static Archive<?> deploy() {
+       return ShrinkWrap.create(JavaArchive.class, MARSHALLER_JAR)
+             .addClasses(Id.class, IdMarshaller.class)
+             .addAsServiceProvider(Marshaller.class, IdMarshaller.class);
     }
 
     @Before
@@ -77,8 +82,9 @@ public class HotRodCustomMarshallerEventIT {
     private Configuration createRemoteCacheManagerConfiguration() {
         ConfigurationBuilder config = new ConfigurationBuilder();
         for (RemoteInfinispanServer server : getServers()) {
-            config.addServer().host(server.getHotrodEndpoint().getInetAddress().getHostName())
-                    .port(server.getHotrodEndpoint().getPort());
+            config.addServer()
+                  .host(server.getHotrodEndpoint().getInetAddress().getHostName())
+                  .port(server.getHotrodEndpoint().getPort());
         }
 
         config.marshaller("org.infinispan.server.test.client.hotrod.HotRodCustomMarshallerEventIT$IdMarshaller");
@@ -86,22 +92,15 @@ public class HotRodCustomMarshallerEventIT {
     }
 
     @AfterClass
-    public static void release() {
+    public static void after() {
         if (remoteCacheManager != null) {
             remoteCacheManager.stop();
         }
-    }
-
-    private static Archive<?> createArchive() {
-        return ShrinkWrap.create(JavaArchive.class, "marshaller.jar")
-                .addClasses(Id.class, IdMarshaller.class)
-                .addAsServiceProvider(Marshaller.class, IdMarshaller.class);
+        new File(System.getProperty("server1.dist"), "/standalone/deployments" + MARSHALLER_JAR).delete();
     }
 
     private List<RemoteInfinispanServer> getServers() {
-        List<RemoteInfinispanServer> servers = new ArrayList<>();
-        servers.add(server1);
-        return Collections.unmodifiableList(servers);
+        return Collections.unmodifiableList(Collections.singletonList(server1));
     }
 
     @Test
@@ -134,11 +133,13 @@ public class HotRodCustomMarshallerEventIT {
 
     @ClientListener
     public static class IdEventListener {
-        public BlockingQueue<ClientEvent> events = new ArrayBlockingQueue<>(128);
+
+        BlockingQueue<ClientEvent> events = new ArrayBlockingQueue<>(128);
 
         @ClientCacheEntryCreated
         @ClientCacheEntryModified
         @ClientCacheEntryRemoved
+        @SuppressWarnings("unused")
         public void handleCreatedEvent(ClientEvent e) {
             events.add(e);
         }
@@ -155,7 +156,9 @@ public class HotRodCustomMarshallerEventIT {
     }
 
     public static class Id {
+
         final byte id;
+
         public Id(int id) {
             this.id = (byte) id;
         }
@@ -164,11 +167,8 @@ public class HotRodCustomMarshallerEventIT {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-
             Id id1 = (Id) o;
-
             return id == id1.id;
-
         }
 
         @Override
@@ -178,6 +178,7 @@ public class HotRodCustomMarshallerEventIT {
     }
 
     public static class IdMarshaller extends AbstractMarshaller {
+
         @Override
         protected ByteBuffer objectToBuffer(Object o, int estimatedSize) {
             Id obj = (Id) o;
@@ -191,7 +192,7 @@ public class HotRodCustomMarshallerEventIT {
         }
 
         @Override
-        public boolean isMarshallable(Object o) throws Exception {
+        public boolean isMarshallable(Object o) {
             return true;
         }
     }
