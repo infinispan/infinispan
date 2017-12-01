@@ -24,7 +24,7 @@
     <Logger name="org.jgroups.protocols.pbcast.GMS" level="TRACE"/>
 
     <Root level="DEBUG">
-      <AppenderRef ref="STDOUT" level="ERROR"/>
+      <AppenderRef ref="STDOUT" level="FATAL"/>
       <AppenderRef ref="CompressedFile"/>
       <!--
    Uncomment the filter definition below to only allow TRACE and DEBUG messages from threads
