@@ -77,7 +77,9 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
                   .withMatcher(1, new CacheTopologyMatcher(finalTopologyId)).build())
             .before("st:block_ch_update_on_0", "st:resume_ch_update_on_0");
       advanceOnGlobalComponentMethod(sequencer, manager(1), LocalTopologyManager.class,
-            matchMethodCall("handleTopologyUpdate").withMatcher(1, new CacheTopologyMatcher(finalTopologyId)).build())
+            matchMethodCall("handleTopologyUpdate")
+               .withMatcher(0, CoreMatchers.equalTo(CACHE_NAME))
+               .withMatcher(1, new CacheTopologyMatcher(finalTopologyId)).build())
             .before("st:block_ch_update_on_1", "st:resume_ch_update_on_1");
 
       // Start cache 1, but the state request will be blocked on cache 0
