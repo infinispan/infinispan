@@ -40,7 +40,7 @@ public class TestSuiteProgress {
    void testFinished(String name) {
       succeeded.incrementAndGet();
       String message = "Test succeeded: " + name;
-      progress(message, GREEN);
+      progress(GREEN, message);
       log.info(message);
 
    }
@@ -48,40 +48,49 @@ public class TestSuiteProgress {
    void testFailed(String name, Throwable exception) {
       failed.incrementAndGet();
       String message = "Test failed: " + name;
-      progress(message, RED);
+      progress(RED, message, exception);
       log.error(message, exception);
    }
 
    void testIgnored(String name) {
       skipped.incrementAndGet();
       String message = "Test ignored: " + name;
-      progress(message, YELLOW);
+      progress(YELLOW, message);
       log.info(message);
    }
 
    void testAssumptionFailed(String name, Throwable exception) {
       skipped.incrementAndGet();
       String message = "Test assumption failed: " + name;
-      progress(message, YELLOW);
+      progress(YELLOW, message, exception);
       log.info(message, exception);
    }
 
    void setupFailed(String name, Throwable exception) {
       failed.incrementAndGet();
       String message = "Test setup failed: " + name;
-      progress(message, RED);
+      progress(RED, message);
       log.error(message, exception);
    }
 
-   synchronized void progress(CharSequence message) {
-      out.printf("[OK: %5s, KO: %5s, SKIP: %5s] %s%n", succeeded.get(), failed.get(), skipped.get(), message);
+   void progress(CharSequence message) {
+      progress(null, message, null);
    }
 
-   void progress(String message, String color) {
-      if (useColor) {
-         progress(color + message + RESET);
-      } else {
-         progress(message);
+   void progress(String color, CharSequence message) {
+      progress(color, message, null);
+   }
+
+   synchronized void progress(String color, CharSequence message, Throwable t) {
+      if (useColor && color != null) {
+         out.print(color);
+      }
+      out.printf("[OK: %5s, KO: %5s, SKIP: %5s] %s%n", succeeded.get(), failed.get(), skipped.get(), message);
+      if (t != null) {
+         t.printStackTrace(out);
+      }
+      if (useColor && color != null) {
+         out.print(RESET);
       }
    }
 }
