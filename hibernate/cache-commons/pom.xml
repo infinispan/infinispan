@@ -18,6 +18,33 @@
       <version.hibernate.core>5.1.10.Final</version.hibernate.core>
    </properties>
 
+   <dependencies>
+      <dependency>
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-core</artifactId>
+         <version>${version.hibernate.core}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-testing</artifactId>
+         <version>${version.hibernate.core}</version>
+         <scope>test</scope>
+         <exclusions>
+            <exclusion>
+               <groupId>log4j</groupId>
+               <artifactId>log4j</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+      <dependency>
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-entitymanager</artifactId>
+         <version>${version.hibernate.core}</version>
+         <scope>test</scope>
+      </dependency>
+   </dependencies>
+
    <build>
       <plugins>
          <plugin>

@@ -15,6 +15,7 @@
    <modules>
       <module>cache-commons</module>
       <module>cache-v51</module>
+      <module>cache</module>
    </modules>
 
    <dependencies>

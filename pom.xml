@@ -154,7 +154,7 @@
       <module>integrationtests/all-remote-it</module>
       <module>integrationtests/spring-boot-it</module>
       <module>client/marshaller</module>
-      <module>hibernate-cache</module>
+      <module>hibernate</module>
    </modules>
    <properties>
 
