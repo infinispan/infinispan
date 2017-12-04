@@ -246,6 +246,23 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
       return qe.buildQuery(null, qe.parse(queryString), null, -1, -1);
    }
 
+   public void testSimpleProjection1() {
+      IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("select b.author.name from org.infinispan.query.dsl.embedded.testdomain.Book b", qe.propertyHelper);
+      CacheQuery q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
+
+      List<?> list = q.list();
+      assertEquals(3, list.size());
+   }
+
+   @Test(enabled = false, description = "Disabled due to https://issues.jboss.org/browse/ISPN-8564")
+   public void testSimpleProjection2() {
+      IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("select author.name from org.infinispan.query.dsl.embedded.testdomain.Book", qe.propertyHelper);
+      CacheQuery q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
+
+      List<?> list = q.list();
+      assertEquals(3, list.size());
+   }
+
    public void testGrouping() {
       Query q = buildQuery("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS " +
             "where surname is not null group by name having name >= 'A'");
@@ -442,9 +459,9 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
 
    public void testAggregateNulls() {
       Query q = buildQuery("select name, sum(age), avg(age) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS " +
-                  "where surname is not null " +
-                  "group by name " +
-                  "having name >= 'A' and count(age) >= 1");
+            "where surname is not null " +
+            "group by name " +
+            "having name >= 'A' and count(age) >= 1");
       List<User> list = q.list();
       assertEquals(2, list.size());
    }
