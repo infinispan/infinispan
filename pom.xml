@@ -253,6 +253,7 @@
       <version.jacoco>0.7.5.201505241946</version.jacoco>
       <version.java>1.8</version.java>
       <version.javassist>3.20.0-GA</version.javassist>
+      <version.javax.cache>1.1.0</version.javax.cache>
       <version.javax.cache.cache-tests>${version.javax.cache}</version.javax.cache.cache-tests>
       <version.javax.servlet>2.5</version.javax.servlet>
       <version.jboss.common.core>2.2.16.GA</version.jboss.common.core>

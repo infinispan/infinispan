@@ -4,6 +4,7 @@ package org.infinispan.jcache.logging;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 
+import java.io.Closeable;
 import java.util.List;
 
 import javax.cache.CacheException;
@@ -100,6 +101,13 @@ public interface Log extends org.infinispan.commons.logging.Log {
 
    @Message(value = "The server management operation failed.", id = 21028)
    CacheException serverManagementOperationFailed(@Cause Throwable t);
+
+   @Message(value = "Cache manager is already closed.", id = 21030)
+   IllegalStateException cacheManagerClosed();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Error closing %s", id = 21031)
+   void errorClosingCloseable(Closeable closeable, @Cause Exception e);
 
    class LeakDescription extends Throwable {
 

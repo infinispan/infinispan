@@ -424,4 +424,13 @@ public abstract class AbstractJCache<K, V> implements Cache<K, V> {
    protected boolean statisticsEnabled() {
       return getConfiguration(CompleteConfiguration.class).isStatisticsEnabled();
    }
+
+   @Override
+   public void close() {
+      notifier.close();
+      Closeables.close(this.expiryPolicy);
+      Closeables.close(this.jcacheLoader);
+      Closeables.close(this.jcacheWriter);
+   }
+
 }

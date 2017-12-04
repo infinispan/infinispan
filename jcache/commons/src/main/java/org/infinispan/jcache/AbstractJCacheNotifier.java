@@ -1,5 +1,6 @@
 package org.infinispan.jcache;
 
+import java.io.Closeable;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 
 import javax.cache.Cache;
 import javax.cache.configuration.CacheEntryListenerConfiguration;
@@ -35,7 +37,7 @@ import org.infinispan.jcache.logging.Log;
  * @author Galder Zamarreño
  * @since 5.3
  */
-public abstract class AbstractJCacheNotifier<K, V> {
+public abstract class AbstractJCacheNotifier<K, V> implements Closeable {
 
    private static final Log log =
          LogFactory.getLog(AbstractJCacheNotifier.class, Log.class);
@@ -124,7 +126,7 @@ public abstract class AbstractJCacheNotifier<K, V> {
       try {
          if (!createdListeners.isEmpty()) {
             List<CacheEntryEvent<? extends K, ? extends V>> events =
-                  createEvent(cache, key, value, EventType.CREATED);
+               eventAsList(new RICacheEntryEvent<>(cache, key, value, EventType.CREATED));
             for (CacheEntryCreatedListener<K, V> listener : createdListeners)
                listener.onCreated(getEntryIterable(events, listenerCfgs.get(listener)));
          }
@@ -133,11 +135,11 @@ public abstract class AbstractJCacheNotifier<K, V> {
       }
    }
 
-   public void notifyEntryUpdated(Cache<K, V> cache, K key, V value) {
+   public void notifyEntryUpdated(Cache<K, V> cache, K key, V value, V prev) {
       try {
          if (!updatedListeners.isEmpty()) {
             List<CacheEntryEvent<? extends K, ? extends V>> events =
-                  createEvent(cache, key, value, EventType.UPDATED);
+               eventAsList(new RICacheEntryEvent<>(cache, key, value, prev, EventType.UPDATED));
             for (CacheEntryUpdatedListener<K, V> listener : updatedListeners)
                listener.onUpdated(getEntryIterable(events, listenerCfgs.get(listener)));
          }
@@ -146,11 +148,11 @@ public abstract class AbstractJCacheNotifier<K, V> {
       }
    }
 
-   public void notifyEntryRemoved(Cache<K, V> cache, K key, V value) {
+   public void notifyEntryRemoved(Cache<K, V> cache, K key, V value, V prev) {
       try {
          if (!removedListeners.isEmpty()) {
             List<CacheEntryEvent<? extends K, ? extends V>> events =
-                  createEvent(cache, key, value, EventType.REMOVED);
+               eventAsList(new RICacheEntryEvent<>(cache, key, value, prev, EventType.REMOVED));
             for (CacheEntryRemovedListener<K, V> listener : removedListeners) {
                listener.onRemoved(getEntryIterable(events, listenerCfgs.get(listener)));
             }
@@ -163,7 +165,7 @@ public abstract class AbstractJCacheNotifier<K, V> {
    public void notifyEntryExpired(Cache<K, V> cache, K key, V value) {
       if (!expiredListeners.isEmpty()) {
          List<CacheEntryEvent<? extends K, ? extends V>> events =
-               createEvent(cache, key, value, EventType.EXPIRED);
+            eventAsList(new RICacheEntryEvent<>(cache, key, value, EventType.EXPIRED));
          for (CacheEntryExpiredListener<K, V> listener : expiredListeners) {
             listener.onExpired(getEntryIterable(events, listenerCfgs.get(listener)));
          }
@@ -194,14 +196,38 @@ public abstract class AbstractJCacheNotifier<K, V> {
    private Iterable<CacheEntryEvent<? extends K, ? extends V>> getEntryIterable(
          List<CacheEntryEvent<? extends K, ? extends V>> events,
          CacheEntryListenerConfiguration<K, V> listenerCfg) {
-      Factory<CacheEntryEventFilter<? super K,? super V>> factory = listenerCfg.getCacheEntryEventFilterFactory();
-      if (factory != null) {
-         CacheEntryEventFilter<? super K, ? super V> filter = factory.create();
-         return filter == null  ? events
-               : new JCacheEventFilteringIterable<K, V>(events, filter);
-      }
+      CacheEntryEventFilter<? super K, ? super V> filter = createFilterIfNeeded(listenerCfg);
+      return events.stream()
+         .filter(e -> filter == null || filter.evaluate(e))
+         .map(e -> launderEvent(e, listenerCfg))
+         .collect(Collectors.toList());
+   }
 
-      return events;
+   private CacheEntryEvent<? extends K, ? extends V> launderEvent(
+      CacheEntryEvent<? extends K, ? extends V> e, CacheEntryListenerConfiguration<K, V> cfg) {
+      switch (e.getEventType()) {
+         case UPDATED:
+         case REMOVED:
+         case EXPIRED:
+            if (cfg.isOldValueRequired())
+               return e;
+
+            // Since JCache 1.1, removed & expired events have to return oldValue or null when oldValueRequired == false
+            // RI chooses to return null as old value and oldValueAvailable is false in this case
+            if (e.getEventType() == EventType.REMOVED || e.getEventType() == EventType.EXPIRED)
+               return new RICacheEntryEvent<>(e.getSource(), e.getKey(), null, null,
+                  e.getEventType(), false);
+
+            return new RICacheEntryEvent(e.getSource(), e.getKey(), e.getValue(), e.getEventType());
+
+         default:
+            return e;
+      }
+   }
+
+   protected CacheEntryEventFilter<? super K,? super V> createFilterIfNeeded(CacheEntryListenerConfiguration<K, V> listenerCfg) {
+      Factory<CacheEntryEventFilter<? super K,? super V>> factory = listenerCfg.getCacheEntryEventFilterFactory();
+      return factory != null ? factory.create() : null;
    }
 
    @SuppressWarnings("unchecked")
@@ -269,16 +295,20 @@ public abstract class AbstractJCacheNotifier<K, V> {
       }
    }
 
-   private List<CacheEntryEvent<? extends K, ? extends V>> createEvent(
-         Cache<K, V> cache, K key, V value, EventType eventType) {
+   private List<CacheEntryEvent<? extends K, ? extends V>> eventAsList(
+         CacheEntryEvent<? extends K, ? extends V> event) {
       List<CacheEntryEvent<? extends K, ? extends V>> events =
-            Collections.<CacheEntryEvent<? extends K, ? extends V>>singletonList(
-                  new RICacheEntryEvent<K, V>(cache, key, value, eventType));
+            Collections.<CacheEntryEvent<? extends K, ? extends V>>singletonList(event);
       if (isTrace) log.tracef("Received event: %s", events);
       return events;
    }
 
    protected abstract AbstractJCacheListenerAdapter<K, V> createListenerAdapter(AbstractJCache<K, V> jcache, AbstractJCacheNotifier<K, V> notifier);
+
+   @Override
+   public void close() {
+      Closeables.close(listenerCfgs.keySet());
+   }
 
    private static class EventSource<K, V> {
       private final Cache<K, V> cache;

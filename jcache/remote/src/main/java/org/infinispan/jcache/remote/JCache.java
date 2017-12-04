@@ -194,7 +194,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotNull(key, "key");
       checkNotNull(value, "value");
 
-      boolean put = put(cache, cacheWithoutStats, key, value, true) == null;
+      boolean put = put(cache, cache, key, value, true) == null;
       if (put) {
          writeToCacheWriter(key, value);
       }
@@ -316,12 +316,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    public void clear() {
       checkNotClosed();
 
-      try (CloseableIterator<K> it = cacheWithoutStats.keySet().iterator()) {
-         while (it.hasNext()) {
-            cacheWithoutStats.remove(it.next());
-         }
-      }
-      //FIXME locks
+      cache.clear();
    }
 
    @Override
@@ -387,7 +382,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    @Override
    public void close() {
-      //TODO
+      super.close();
       cache.stop();
       isClosed = true;
    }
