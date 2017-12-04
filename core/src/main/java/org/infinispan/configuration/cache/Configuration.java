@@ -208,7 +208,8 @@ public class Configuration implements Matchable<Configuration> {
    @Override
    public String toString() {
       return "Configuration{" +
-            "simpleCache=" + simpleCache +
+            "template=" + template +
+            ", simpleCache=" + simpleCache +
             ", clustering=" + clusteringConfiguration +
             ", customInterceptors=" + customInterceptorsConfiguration +
             ", dataContainer=" + dataContainerConfiguration +

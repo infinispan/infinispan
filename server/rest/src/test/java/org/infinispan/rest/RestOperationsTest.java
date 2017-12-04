@@ -1,6 +1,9 @@
 package org.infinispan.rest;
 
 import static org.infinispan.rest.JSONConstants.TYPE;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.http.HttpHeader;
@@ -8,6 +11,8 @@ import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.eviction.EvictionType;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.testng.annotations.Test;
 
@@ -195,6 +200,37 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       restServer.unignoreCache("default");
       response = client.newRequest(url).send();
       ResponseAssertion.assertThat(response).isOk();
+   }
+
+   @Test
+   public void adminCache() throws Exception {
+      // Simple cache creation
+      String url = String.format("http://localhost:%d/rest/newCache", restServer.getPort());
+      ContentResponse response = client.newRequest(url).method("MKCOL").send();
+      ResponseAssertion.assertThat(response).isOk();
+      EmbeddedCacheManager cacheManager = this.restServer.getCacheManager();
+      assertTrue("Cache created over HTTP doesn't exist in the cachemanager", cacheManager.cacheExists("newCache"));
+
+      // Create cache with template
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.template(true).memory().evictionType(EvictionType.COUNT).size(1000);
+      cacheManager.defineConfiguration("aTemplate", builder.build());
+      url = String.format("http://localhost:%d/rest/aCache?template=aTemplate", restServer.getPort());
+      response = client.newRequest(url).method("MKCOL").send();
+      ResponseAssertion.assertThat(response).isOk();
+      assertTrue("Cache created over HTTP doesn't exist in the cachemanager", cacheManager.cacheExists("aCache"));
+      builder.template(false);
+      assertEquals("Cache created over HTTP doesn't match the expected template", cacheManager.getCacheConfiguration("aCache"), builder.build());
+
+      // Try to create existing cache
+      url = String.format("http://localhost:%d/rest/newCache", restServer.getPort());
+      response = client.newRequest(url).method("MKCOL").send();
+      ResponseAssertion.assertThat(response).isNotAllowed();
+
+      // Delete an existing cache
+      response = client.newRequest(url).method("DELETE").header("Depth", "infinity").send();
+      ResponseAssertion.assertThat(response).hasNoContent();
+      assertFalse("Cache created over HTTP shouldn't exist in the cachemanager", cacheManager.cacheExists("newCache"));
    }
 
 }

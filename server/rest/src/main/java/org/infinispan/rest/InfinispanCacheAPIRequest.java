@@ -23,6 +23,7 @@ public class InfinispanCacheAPIRequest extends InfinispanRequest {
 
    private final Optional<String> key;
    private final CacheOperations cacheOperations;
+   public static final HttpMethod MKCOL = new HttpMethod("MKCOL");
 
    InfinispanCacheAPIRequest(CacheOperations operations, FullHttpRequest request, ChannelHandlerContext ctx, Optional<String> cacheName, Optional<String> key, String context, Map<String, List<String>> parameters) {
       super(request, ctx, cacheName.orElse(null), context, parameters);
@@ -58,10 +59,12 @@ public class InfinispanCacheAPIRequest extends InfinispanRequest {
          response = cacheOperations.getCacheValue(this);
       } else if (request.method() == HttpMethod.DELETE) {
          if (!key.isPresent()) {
-            response = cacheOperations.clearEntireCache(this);
+            response = cacheOperations.clearOrRemoveEntireCache(this, request.headers().get("Depth"));
          } else {
             response = cacheOperations.deleteCacheValue(this);
          }
+      } else if (request.method().equals(MKCOL)) {
+         response = cacheOperations.createCache(this, getParameterValue(JSONConstants.TEMPLATE));
       }
       return response;
    }
