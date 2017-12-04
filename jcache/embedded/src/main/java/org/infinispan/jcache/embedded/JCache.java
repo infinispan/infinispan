@@ -266,6 +266,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    @Override
    public void close() {
+      super.close();
       cache.stop();
    }
 
@@ -485,7 +486,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
          }
 
          return put(skipCacheLoadCache,
-               skipCacheLoadAndStatsCache, key, value, true) == null;
+               skipCacheLoadCache, key, value, true) == null;
       } catch (org.infinispan.commons.CacheException e) {
          throw Exceptions.launderException(e);
       }

@@ -130,24 +130,14 @@ public abstract class AbstractJCacheManager implements CacheManager {
    public <K, V> Cache<K, V> getCache(String cacheName) {
       checkNotClosed();
       synchronized (caches) {
-         Cache<K, V> cache = unchecked(caches.get(cacheName));
-         if (cache != null) {
-            Configuration<K, V> configuration = cache.getConfiguration(Configuration.class);
-            Class<K> keyType = configuration.getKeyType();
-            Class<V> valueType = configuration.getValueType();
-            if (Object.class.equals(keyType) && Object.class.equals(valueType))
-               return cache;
-
-            throw log.unsafeTypedCacheRequest(cacheName, keyType, valueType);
-         }
-
-         return null;
+         return unchecked(caches.get(cacheName));
       }
    }
 
    @Override
    public Iterable<String> getCacheNames() {
-      return isClosed ? Collections.emptyList() : delegateCacheNames();
+      if (isClosed) throw log.cacheManagerClosed();
+      return delegateCacheNames();
    }
 
    @Override
@@ -162,6 +152,7 @@ public abstract class AbstractJCacheManager implements CacheManager {
       if (destroyedCache != null) {
          /* Don't destroy caches not created through jcache. */
          delegateRemoveCache(destroyedCache);
+         destroyedCache.close();
       }
       unregisterCacheMBeans(destroyedCache);
    }

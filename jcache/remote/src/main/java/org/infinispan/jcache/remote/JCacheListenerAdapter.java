@@ -29,11 +29,11 @@ public class JCacheListenerAdapter<K, V> extends AbstractJCacheListenerAdapter<K
          break;
       }
       case CLIENT_CACHE_ENTRY_REMOVED: {
-         notifier.notifyEntryRemoved(jcache, event.getKey(), event.getPrev());
+         notifier.notifyEntryRemoved(jcache, event.getKey(), event.getPrev(), event.getPrev());
          break;
       }
       case CLIENT_CACHE_ENTRY_MODIFIED: {
-         notifier.notifyEntryUpdated(jcache, event.getKey(), event.getValue());
+         notifier.notifyEntryUpdated(jcache, event.getKey(), event.getValue(), event.getPrev());
          break;
       }
       case CLIENT_CACHE_ENTRY_EXPIRED: {
