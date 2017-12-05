@@ -30,11 +30,11 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
 
       CacheTopology t1 = s1.getCacheTopology();
       CacheTopology t2 = s2.getCacheTopology();
-      int topologyId = ((Integer)t1.getTopologyId()).compareTo(t2.getTopologyId());
+      int topologyId = Integer.compare(t1.getTopologyId(), t2.getTopologyId());
       if (topologyId != 0)
          return topologyId;
 
-      int rebalanceId = ((Integer)t1.getRebalanceId()).compareTo(t2.getRebalanceId());
+      int rebalanceId = Integer.compare(t1.getRebalanceId(), t2.getRebalanceId());
       if (rebalanceId != 0)
          return topologyId;
 
@@ -43,7 +43,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       if (m1.size() == m2.size()) {
          int compareAddress = m1.get(0).compareTo(m2.get(0));
          if (compareAddress == 0)
-            return ((Integer)t1.hashCode()).compareTo(t2.hashCode());
+            return Integer.compare(t1.hashCode(), t2.hashCode());
       }
       return m1.size() > m2.size() ? -1 : 1;
    };
@@ -121,21 +121,28 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
             .sorted(RESPONSE_COMPARATOR)
             .collect(Collectors.toList());
 
+      List<Address> newMembers = context.getExpectedMembers();
+
       // Pick the biggest stable topology (i.e. the one with most members)
       CacheTopology maxStableTopology = null;
+      List<Address> maxStableActualMembers = null;
       for (CacheStatusResponse response : statusResponses) {
          CacheTopology stableTopology = response.getStableTopology();
          if (stableTopology == null) {
             // The node hasn't properly joined yet.
             continue;
          }
-         if (maxStableTopology == null || maxStableTopology.getMembers().size() < stableTopology.getMembers().size()) {
+         List<Address> actualMembers = new ArrayList<>(stableTopology.getMembers());
+         actualMembers.retainAll(newMembers);
+         if (maxStableTopology == null || maxStableActualMembers.size() < actualMembers.size()) {
             maxStableTopology = stableTopology;
+            maxStableActualMembers = actualMembers;
          }
       }
 
       // Now pick the biggest current topology derived from the biggest stable topology
       CacheTopology maxTopology = null;
+      List<Address> maxActualMembers = null;
       for (CacheStatusResponse response : statusResponses) {
          CacheTopology stableTopology = response.getStableTopology();
          if (!Objects.equals(stableTopology, maxStableTopology))
@@ -146,8 +153,10 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
             // The node hasn't properly joined yet.
             continue;
          }
-         if (maxTopology == null || maxTopology.getMembers().size() < topology.getMembers().size()) {
+         List<Address> actualMembers = new ArrayList<>(topology.getMembers());
+         if (maxTopology == null || maxActualMembers.size() < actualMembers.size()) {
             maxTopology = topology;
+            maxActualMembers = actualMembers;
          }
       }
 
@@ -155,7 +164,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
          log.debugf("No current topology, recovered only joiners for cache %s", context.getCacheName());
       }
 
-      // Since we picked the biggest topology, its topology id may not be the biggest
+      // Since we picked the biggest topology by size, its topology id may not be the biggest
       int maxTopologyId = 0;
       int maxRebalanceId = 0;
       for (CacheStatusResponse response : statusResponses) {
@@ -176,7 +185,6 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       // Also cancel any pending rebalance by removing the pending CH, because we don't recover the rebalance
       // confirmation status (yet).
       CacheTopology mergedTopology = null;
-      List<Address> newMembers = context.getExpectedMembers();
       boolean resolveConflicts = resolveConflictsOnMerge && isSplitBrainHealing(context, maxTopology, maxStableTopology);
       if (maxTopology != null) {
          // If we are required to resolveConflicts, then we utilise the CH of the expected members. This is necessary
@@ -188,6 +196,8 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
             mergedTopology = new CacheTopology(maxTopologyId + 1, maxRebalanceId + 1, maxTopology.getCurrentCH(),
                   mergehash, mergehash, CacheTopology.Phase.CONFLICT_RESOLUTION, newMembers, persistentUUIDManager.mapAddresses(newMembers));
          } else {
+            // TODO If maxTopology.getPhase() == READ_NEW_WRITE_ALL, the pending CH would be more appropriate
+            // The best approach may be to collect the read owners from all the topologies and use their union as the current CH
             mergedTopology = new CacheTopology(maxTopologyId + 1, maxRebalanceId + 1,
                   maxTopology.getCurrentCH(), null, CacheTopology.Phase.NO_REBALANCE, maxTopology.getActualMembers(),
                   persistentUUIDManager.mapAddresses(maxTopology.getActualMembers()));
@@ -200,6 +210,10 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       List<Address> survivingMembers = new ArrayList<>(newMembers);
       if (mergedTopology != null && survivingMembers.retainAll(mergedTopology.getMembers())) {
          checkForLostData(context, survivingMembers);
+      }
+      if (survivingMembers.isEmpty()) {
+         // No surviving members, use the expected members instead
+         survivingMembers = newMembers;
       }
       context.updateCurrentTopology(survivingMembers);
 
