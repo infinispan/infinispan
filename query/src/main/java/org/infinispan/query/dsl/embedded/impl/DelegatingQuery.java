@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
@@ -22,6 +23,7 @@ final class DelegatingQuery<TypeMetadata> extends BaseQuery {
    private static final Log log = Logger.getMessageLogger(Log.class, DelegatingQuery.class.getName());
 
    private final QueryEngine<TypeMetadata> queryEngine;
+   private final IndexedQueryMode queryMode;
 
    private final IckleParsingResult<TypeMetadata> parsingResult;
 
@@ -30,9 +32,10 @@ final class DelegatingQuery<TypeMetadata> extends BaseQuery {
     */
    private BaseQuery query;
 
-   DelegatingQuery(QueryEngine<TypeMetadata> queryEngine, QueryFactory queryFactory, String queryString) {
+   DelegatingQuery(QueryEngine<TypeMetadata> queryEngine, QueryFactory queryFactory, String queryString, IndexedQueryMode queryMode) {
       super(queryFactory, queryString);
       this.queryEngine = queryEngine;
+      this.queryMode = queryMode;
 
       // parse and validate early
       parsingResult = queryEngine.parse(queryString);
@@ -49,6 +52,7 @@ final class DelegatingQuery<TypeMetadata> extends BaseQuery {
                    Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults) {
       super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults);
       this.queryEngine = queryEngine;
+      this.queryMode = IndexedQueryMode.FETCH;
 
       // parse and validate early
       parsingResult = queryEngine.parse(queryString);
@@ -88,7 +92,7 @@ final class DelegatingQuery<TypeMetadata> extends BaseQuery {
    private Query createQuery() {
       // the query is created first time only
       if (query == null) {
-         query = queryEngine.buildQuery(queryFactory, parsingResult, namedParameters, startOffset, maxResults);
+         query = queryEngine.buildQuery(queryFactory, parsingResult, namedParameters, startOffset, maxResults, queryMode);
       }
       return query;
    }

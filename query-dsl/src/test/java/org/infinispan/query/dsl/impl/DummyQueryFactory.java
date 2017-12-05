@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.impl;
 
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
 
 /**
@@ -10,6 +11,11 @@ class DummyQueryFactory extends BaseQueryFactory {
 
    @Override
    public Query create(String queryString) {
+      return new DummyQuery();
+   }
+
+   @Override
+   public Query create(String queryString, IndexedQueryMode queryMode) {
       return new DummyQuery();
    }
 
