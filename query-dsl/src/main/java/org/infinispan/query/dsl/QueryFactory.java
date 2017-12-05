@@ -18,6 +18,12 @@ public interface QueryFactory {
    Query create(String queryString);
 
    /**
+    * Creates a Query based on an Ickle query string
+    * @param queryMode the {@link IndexedQueryMode} dictating the indexed query execution mode if applicable.
+    */
+   Query create(String queryString, IndexedQueryMode queryMode);
+
+   /**
     * Creates a QueryBuilder for the given entity type.
     *
     * @param entityType the Class of the entity

@@ -50,6 +50,7 @@ public class QueryDefinition {
          this.sort = hsQueryRequest.getSort();
          hsQuery.firstResult(firstResult);
          hsQuery.maxResults(maxResults);
+         hsQuery.projection(hsQueryRequest.getProjections());
       }
    }
 

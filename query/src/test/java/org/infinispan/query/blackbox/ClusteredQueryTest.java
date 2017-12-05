@@ -16,7 +16,6 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.SortField.Type;
@@ -33,6 +32,8 @@ import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.IndexedQueryMode;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -285,7 +286,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    public void testFuzzyQuery() throws ParseException {
       populateCache();
 
-      Query query = queryParser.parse("name:name1~2");
+      org.apache.lucene.search.Query query = queryParser.parse("name:name1~2");
 
       CacheQuery<Person> clusteredQuery = Search.getSearchManager(cacheAMachine1)
             .getClusteredQuery(query, Person.class);
@@ -418,6 +419,65 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
                   IndexedQueryMode.BROADCAST, Person.class);
 
       aggregationQuery.list();
+   }
+
+   @Test
+   public void testBroadcastNativeInfinispanMatchAllQuery() throws Exception {
+      String q = String.format("FROM %s", Person.class.getName());
+      Query partialResultQuery = Search.getQueryFactory(cacheAMachine1).create(q);
+      Query fullResultQuery = Search.getQueryFactory(cacheAMachine2).create(q, IndexedQueryMode.BROADCAST);
+
+      int docsInMachine1 = countLocalIndex(cacheAMachine1);
+
+      assertEquals(docsInMachine1, partialResultQuery.list().size());
+      assertEquals(NUM_ENTRIES, fullResultQuery.list().size());
+   }
+
+   @Test
+   public void testBroadcastNativeInfinispanHybridQuery() throws Exception {
+      String q = "FROM " + Person.class.getName() + " where age >= 40 and nonSearchableField = 'na'";
+      Query query = Search.getQueryFactory(cacheAMachine1).create(q, IndexedQueryMode.BROADCAST);
+
+      assertEquals(10, query.list().size());
+   }
+
+   @Test
+   public void testBroadcastNativeInfinispanFuzzyQuery() throws Exception {
+      String q = String.format("FROM %s p where p.name:'nome'~2", Person.class.getName());
+
+      Query query = Search.getQueryFactory(cacheAMachine1).create(q, IndexedQueryMode.BROADCAST);
+
+      assertEquals(10, query.list().size());
+   }
+
+   @Test
+   public void testBroadcastSortedInfinispanQuery() throws Exception {
+      QueryFactory queryFactory = Search.getQueryFactory(cacheAMachine1);
+      Query sortedQuery = queryFactory.create("FROM " + Person.class.getName() + " p order by p.age desc",
+            IndexedQueryMode.BROADCAST);
+
+      List<Person> results = sortedQuery.list();
+      assertEquals(NUM_ENTRIES, results.size());
+      assertEquals(NUM_ENTRIES - 1, results.iterator().next().getAge());
+      StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
+   }
+
+   @Test
+   public void testBroadcastAggregatedInfinispanQuery() throws Exception {
+      QueryFactory queryFactory = Search.getQueryFactory(cacheAMachine2);
+      Query hybridQuery = queryFactory.create("select name FROM " + Person.class.getName() + " WHERE name : 'na*' group by name",
+            IndexedQueryMode.BROADCAST);
+
+      assertEquals(NUM_ENTRIES, hybridQuery.list().size());
+   }
+
+   @Test
+   public void testNonIndexedBroadcastInfinispanQuery() throws Exception {
+      QueryFactory queryFactory = Search.getQueryFactory(cacheAMachine2);
+      Query slowQuery = queryFactory.create("FROM " + Person.class.getName() + " WHERE nonSearchableField LIKE 'na%'",
+            IndexedQueryMode.BROADCAST);
+
+      assertEquals(NUM_ENTRIES, slowQuery.list().size());
    }
 
    protected void populateCache() throws ParseException {
