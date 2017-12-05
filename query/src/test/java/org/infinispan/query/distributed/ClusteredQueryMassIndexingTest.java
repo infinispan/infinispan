@@ -7,6 +7,7 @@ import org.apache.lucene.search.TermQuery;
 import org.infinispan.Cache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.testng.annotations.Test;
 
 /**
@@ -22,7 +23,7 @@ public class ClusteredQueryMassIndexingTest extends DistributedMassIndexingTest 
 
    protected void verifyFindsCar(Cache cache, int expectedCount, String carMake) {
       CacheQuery<?> cacheQuery = Search.getSearchManager(cache)
-            .getClusteredQuery(new TermQuery(new Term("make", carMake)));
+            .getQuery(new TermQuery(new Term("make", carMake)), IndexedQueryMode.BROADCAST);
 
       assertEquals(expectedCount, cacheQuery.getResultSize());
    }

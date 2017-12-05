@@ -2,6 +2,7 @@ package org.infinispan.query.clustered.commandworkers;
 
 import org.apache.lucene.search.TopDocs;
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
+import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryResponse;
@@ -18,33 +19,41 @@ public class CQCreateEagerQuery extends ClusteredQueryCommandWorker {
 
    @Override
    public QueryResponse perform() {
+      HSQuery query = queryDefinition.getHsQuery();
       query.afterDeserialise(getSearchFactory());
-      DocumentExtractor extractor = query.queryDocumentExtractor();
-      try {
+      try (DocumentExtractor extractor = query.queryDocumentExtractor()) {
          int resultSize = query.queryResultSize();
-         NodeTopDocs eagerTopDocs = resultSize == 0 ? null : collectKeys(extractor);
+         NodeTopDocs eagerTopDocs = resultSize == 0 ? null : collectKeys(extractor, query);
          QueryResponse queryResponse = new QueryResponse(eagerTopDocs, getQueryBox().getMyId(), resultSize);
          queryResponse.setAddress(cache.getAdvancedCache().getRpcManager().getAddress());
          return queryResponse;
-      } finally {
-         extractor.close();
       }
    }
 
-   private NodeTopDocs collectKeys(DocumentExtractor extractor) {
+   private NodeTopDocs collectKeys(DocumentExtractor extractor, HSQuery query) {
       TopDocs topDocs = extractor.getTopDocs();
 
-      Object[] keys = new Object[topDocs.scoreDocs.length];
+      int topDocsLength = topDocs.scoreDocs.length;
+      Object[] keys = null;
+      Object[] projections = null;
       KeyTransformationHandler keyTransformationHandler = KeyTransformationHandler
             .getInstance(cache.getAdvancedCache());
 
-      // collecting keys (it's a eager query!)
-      for (int i = 0; i < topDocs.scoreDocs.length; i++) {
-         keys[i] = QueryExtractorUtil.extractKey(extractor, cache,
-               keyTransformationHandler, i);
+      if (query.getProjectedFields() == null) {
+         keys = new Object[topDocsLength];
+         // collecting keys (it's a eager query!)
+         for (int i = 0; i < topDocsLength; i++) {
+            keys[i] = QueryExtractorUtil.extractKey(extractor, cache,
+                  keyTransformationHandler, i);
+         }
+      } else {
+         projections = new Object[topDocsLength];
+         for (int i = 0; i < topDocsLength; i++) {
+            projections[i] = QueryExtractorUtil.extractProjection(extractor, i);
+         }
       }
 
-      return new NodeTopDocs(topDocs, keys);
+      return new NodeTopDocs(topDocs, keys, projections);
    }
 
 }

@@ -8,6 +8,7 @@ import org.infinispan.Cache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.testng.annotations.Test;
 
 /**
@@ -27,7 +28,7 @@ public class UnsharedDistMassIndexTest extends DistributedMassIndexingTest {
    @Override
    protected void verifyFindsCar(Cache cache, int expectedCount, String carMake) {
       SearchManager searchManager = Search.getSearchManager(cache);
-      CacheQuery<?> cacheQuery = searchManager.getClusteredQuery(new TermQuery(new Term("make", carMake)));
+      CacheQuery<?> cacheQuery = searchManager.getQuery(new TermQuery(new Term("make", carMake)), IndexedQueryMode.BROADCAST);
       assertEquals(expectedCount, cacheQuery.getResultSize());
    }
 }

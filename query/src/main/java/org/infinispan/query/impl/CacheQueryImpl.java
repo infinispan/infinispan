@@ -19,6 +19,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.FetchOptions.FetchMode;
+import org.infinispan.query.QueryDefinition;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
 
@@ -43,7 +44,7 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
 
    protected final AdvancedCache<?, ?> cache;
    protected final KeyTransformationHandler keyTransformationHandler;
-   protected HSQuery hSearchQuery;
+   protected QueryDefinition queryDefinition;
    private ProjectionConverter projectionConverter;
 
    /**
@@ -57,11 +58,18 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
             cache, keyTransformationHandler);
    }
 
+   public CacheQueryImpl(String queryString, AdvancedCache<?, ?> cache,
+                         KeyTransformationHandler keyTransformationHandler) {
+      this.queryDefinition = new QueryDefinition(queryString);
+      this.cache = cache;
+      this.keyTransformationHandler = keyTransformationHandler;
+   }
+
    /**
     * Create a CacheQueryImpl based on a HSQuery.
     */
    public CacheQueryImpl(HSQuery hSearchQuery, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler) {
-      this.hSearchQuery = hSearchQuery;
+      this.queryDefinition = new QueryDefinition(hSearchQuery);
       this.cache = cache;
       this.keyTransformationHandler = keyTransformationHandler;
    }
@@ -73,7 +81,7 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
     */
    @Override
    public CacheQuery<E> filter(Filter filter) {
-      hSearchQuery.filter(filter);
+      queryDefinition.filter(filter);
       return this;
    }
 
@@ -82,12 +90,12 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
     */
    @Override
    public int getResultSize() {
-      return hSearchQuery.queryResultSize();
+      return queryDefinition.getHsQuery().queryResultSize();
    }
 
    @Override
    public CacheQuery<E> sort(Sort sort) {
-      hSearchQuery.sort(sort);
+      queryDefinition.setSort(sort);
       return this;
    }
 
@@ -99,7 +107,7 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
     */
    @Override
    public FullTextFilter enableFullTextFilter(String name) {
-      return hSearchQuery.enableFullTextFilter(name);
+      return queryDefinition.enableFullTextFilter(name);
    }
 
    /**
@@ -109,7 +117,7 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
     */
    @Override
    public CacheQuery<E> disableFullTextFilter(String name) {
-      hSearchQuery.disableFullTextFilter(name);
+      queryDefinition.disableFullTextFilter(name);
       return this;
    }
 
@@ -121,13 +129,13 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
     */
    @Override
    public CacheQuery<E> firstResult(int firstResult) {
-      hSearchQuery.firstResult(firstResult);
+      queryDefinition.setFirstResult(firstResult);
       return this;
    }
 
    @Override
    public CacheQuery<E> maxResults(int maxResults) {
-      hSearchQuery.maxResults(maxResults);
+      queryDefinition.setMaxResults(maxResults);
       return this;
    }
 
@@ -138,13 +146,14 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
 
    @Override
    public ResultIterator<E> iterator(FetchOptions fetchOptions) throws SearchException {
+      HSQuery hSearchQuery = queryDefinition.getHsQuery();
       if (fetchOptions.getFetchMode() == FetchOptions.FetchMode.EAGER) {
          hSearchQuery.getTimeoutManager().start();
          List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();
-         return filterNulls(new EagerIterator<>(entityInfos, getResultLoader(), fetchOptions.getFetchSize()));
+         return filterNulls(new EagerIterator<>(entityInfos, getResultLoader(hSearchQuery), fetchOptions.getFetchSize()));
       } else if (fetchOptions.getFetchMode() == FetchOptions.FetchMode.LAZY) {
          DocumentExtractor extractor = hSearchQuery.queryDocumentExtractor();   //triggers actual Lucene search
-         return filterNulls(new LazyIterator<>(extractor, getResultLoader(), fetchOptions.getFetchSize()));
+         return filterNulls(new LazyIterator<>(extractor, getResultLoader(hSearchQuery), fetchOptions.getFetchSize()));
       } else {
          throw new IllegalArgumentException("Unknown FetchMode " + fetchOptions.getFetchMode());
       }
@@ -156,16 +165,17 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
 
    @Override
    public List<E> list() throws SearchException {
+      HSQuery hSearchQuery = queryDefinition.getHsQuery();
       hSearchQuery.getTimeoutManager().start();
       final List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();
-      return (List<E>) getResultLoader().load(entityInfos);
+      return (List<E>) getResultLoader(hSearchQuery).load(entityInfos);
    }
 
-   private QueryResultLoader getResultLoader() {
-      return isProjected() ? getProjectionLoader() : getEntityLoader();
+   private QueryResultLoader getResultLoader(HSQuery hSearchQuery) {
+      return isProjected(hSearchQuery) ? getProjectionLoader() : getEntityLoader();
    }
 
-   private boolean isProjected() {
+   private boolean isProjected(HSQuery hSearchQuery) {
       return hSearchQuery.getProjectedFields() != null;
    }
 
@@ -179,24 +189,24 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
 
    @Override
    public FacetManager getFacetManager() {
-      return hSearchQuery.getFacetManager();
+      return queryDefinition.getHsQuery().getFacetManager();
    }
 
    @Override
    public Explanation explain(int documentId) {
-      return hSearchQuery.explain(documentId);
+      return queryDefinition.getHsQuery().explain(documentId);
    }
 
    @Override
    public CacheQuery<Object[]> projection(String... fields) {
       this.projectionConverter = new ProjectionConverter(fields, cache, keyTransformationHandler);
-      hSearchQuery.projection(projectionConverter.getHSearchProjection());
+      queryDefinition.getHsQuery().projection(projectionConverter.getHSearchProjection());
       return (CacheQuery<Object[]>) this;
    }
 
    @Override
    public CacheQuery<E> timeout(long timeout, TimeUnit timeUnit) {
-      hSearchQuery.getTimeoutManager().setTimeout(timeout, timeUnit);
+      queryDefinition.getHsQuery().getTimeoutManager().setTimeout(timeout, timeUnit);
       return this;
    }
 

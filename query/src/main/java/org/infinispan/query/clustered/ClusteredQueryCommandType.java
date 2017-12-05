@@ -2,8 +2,8 @@ package org.infinispan.query.clustered;
 
 import java.util.UUID;
 
-import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.Cache;
+import org.infinispan.query.QueryDefinition;
 import org.infinispan.query.clustered.commandworkers.CQCreateEagerQuery;
 import org.infinispan.query.clustered.commandworkers.CQCreateLazyQuery;
 import org.infinispan.query.clustered.commandworkers.CQGetResultSize;
@@ -55,11 +55,10 @@ public enum ClusteredQueryCommandType {
 
    protected abstract ClusteredQueryCommandWorker getNewInstance();
 
-   public ClusteredQueryCommandWorker getCommand(Cache<?, ?> cache, HSQuery query, UUID lazyQueryId,
-            int docIndex) {
-      ClusteredQueryCommandWorker command = null;
-      command = getNewInstance();
-      command.init(cache, query, lazyQueryId, docIndex);
+   public ClusteredQueryCommandWorker getCommand(Cache<?, ?> cache, QueryDefinition queryDefinition, UUID lazyQueryId,
+                                                 int docIndex) {
+      ClusteredQueryCommandWorker command = getNewInstance();
+      command.init(cache, queryDefinition, lazyQueryId, docIndex);
       return command;
    }
 

@@ -22,11 +22,16 @@ public class ClusteredTopDocsExternalizer extends AbstractExternalizer<NodeTopDo
    public NodeTopDocs readObject(final ObjectInput input) throws IOException, ClassNotFoundException {
       final int keysNumber = UnsignedNumeric.readUnsignedInt(input);
       final Object[] keys = new Object[keysNumber];
-      for (int i=0; i<keysNumber; i++) {
+      for (int i = 0; i < keysNumber; i++) {
          keys[i] = input.readObject();
       }
+      final int projectionsNumber = UnsignedNumeric.readUnsignedInt(input);
+      final Object[] projections = new Object[projectionsNumber];
+      for (int i = 0; i < projectionsNumber; i++) {
+         projections[i] = input.readObject();
+      }
       final TopDocs innerTopDocs = (TopDocs) input.readObject();
-      return new NodeTopDocs(innerTopDocs, keys);
+      return new NodeTopDocs(innerTopDocs, keys, projections);
    }
 
    @Override
@@ -37,7 +42,12 @@ public class ClusteredTopDocsExternalizer extends AbstractExternalizer<NodeTopDo
       for (int i = 0; i < size; i++) {
          output.writeObject(keys[i]);
       }
-
+      final Object[] projections = topDocs.projections;
+      int projectionSize = projections == null ? 0 : projections.length;
+      UnsignedNumeric.writeUnsignedInt(output, projectionSize);
+      for (int i = 0; i < projectionSize; i++) {
+         output.writeObject(projections[i]);
+      }
       output.writeObject(topDocs.topDocs);
    }
 

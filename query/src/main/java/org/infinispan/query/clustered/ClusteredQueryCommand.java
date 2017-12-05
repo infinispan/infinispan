@@ -6,11 +6,11 @@ import java.io.ObjectOutput;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.query.QueryDefinition;
 import org.infinispan.query.clustered.commandworkers.ClusteredQueryCommandWorker;
 import org.infinispan.query.impl.CommandInitializer;
 import org.infinispan.query.impl.CustomQueryCommand;
@@ -30,7 +30,7 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
 
    private ClusteredQueryCommandType commandType;
 
-   private HSQuery query;
+   private QueryDefinition queryDefinition;
 
    // local instance (set only when command arrives on target node)
    private Cache<?, ?> cache;
@@ -59,22 +59,22 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
       this.cache = ci.getCacheManager().getCache(cacheName.toString());
    }
 
-   public static ClusteredQueryCommand createLazyIterator(HSQuery query, Cache<?, ?> cache, UUID id) {
+   public static ClusteredQueryCommand createLazyIterator(QueryDefinition queryDefinition, Cache<?, ?> cache, UUID id) {
       ClusteredQueryCommand clQuery = new ClusteredQueryCommand(ClusteredQueryCommandType.CREATE_LAZY_ITERATOR, cache.getName());
-      clQuery.query = query;
+      clQuery.queryDefinition = queryDefinition;
       clQuery.lazyQueryId = id;
       return clQuery;
    }
 
-   public static ClusteredQueryCommand getResultSize(HSQuery query, Cache<?, ?> cache) {
+   public static ClusteredQueryCommand getResultSize(QueryDefinition queryDefinition, Cache<?, ?> cache) {
       ClusteredQueryCommand clQuery = new ClusteredQueryCommand(ClusteredQueryCommandType.GET_RESULT_SIZE, cache.getName());
-      clQuery.query = query;
+      clQuery.queryDefinition = queryDefinition;
       return clQuery;
    }
 
-   public static ClusteredQueryCommand createEagerIterator(HSQuery query, Cache<?, ?> cache) {
+   public static ClusteredQueryCommand createEagerIterator(QueryDefinition queryDefinition, Cache<?, ?> cache) {
       ClusteredQueryCommand clQuery = new ClusteredQueryCommand(ClusteredQueryCommandType.CREATE_EAGER_ITERATOR, cache.getName());
-      clQuery.query = query;
+      clQuery.queryDefinition = queryDefinition;
       return clQuery;
    }
 
@@ -110,7 +110,7 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    }
 
    public QueryResponse perform(Cache<?, ?> cache) {
-      ClusteredQueryCommandWorker worker = commandType.getCommand(cache, query, lazyQueryId, docIndex);
+      ClusteredQueryCommandWorker worker = commandType.getCommand(cache, queryDefinition, lazyQueryId, docIndex);
       return worker.perform();
    }
 
@@ -122,7 +122,7 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       MarshallUtil.marshallEnum(commandType, output);
-      output.writeObject(query);
+      output.writeObject(queryDefinition);
       MarshallUtil.marshallUUID(lazyQueryId, output, true);
       output.writeInt(docIndex);
    }
@@ -130,7 +130,7 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       commandType = MarshallUtil.unmarshallEnum(input, ClusteredQueryCommandType::valueOf);
-      query = (HSQuery) input.readObject();
+      queryDefinition = (QueryDefinition) input.readObject();
       lazyQueryId = MarshallUtil.unmarshallUUID(input, true);
       docIndex = input.readInt();
    }
@@ -145,7 +145,7 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
       final int prime = 31;
       int result = 1;
       result = prime * result + ((cacheName == null) ? 0 : cacheName.hashCode());
-      result = prime * result + ((query == null) ? 0 : query.hashCode());
+      result = prime * result + ((queryDefinition == null) ? 0 : queryDefinition.hashCode());
       return result;
    }
 
@@ -163,10 +163,10 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
             return false;
       } else if (!cacheName.equals(other.cacheName))
          return false;
-      if (query == null) {
-         if (other.query != null)
+      if (queryDefinition == null) {
+         if (other.queryDefinition != null)
             return false;
-      } else if (!query.equals(other.query))
+      } else if (!queryDefinition.equals(other.queryDefinition))
          return false;
       return true;
    }

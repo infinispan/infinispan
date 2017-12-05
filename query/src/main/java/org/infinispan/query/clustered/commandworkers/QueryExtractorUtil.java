@@ -2,6 +2,7 @@ package org.infinispan.query.clustered.commandworkers;
 
 import java.io.IOException;
 
+import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.infinispan.Cache;
 import org.infinispan.query.backend.KeyTransformationHandler;
@@ -33,9 +34,16 @@ public class QueryExtractorUtil {
          return null;
       }
 
-      Object key = keyTransformationHandler.stringToKey(bufferDocumentId, cache
+      return keyTransformationHandler.stringToKey(bufferDocumentId, cache
             .getAdvancedCache().getClassLoader());
-      return key;
+   }
+
+   static Object[] extractProjection(DocumentExtractor extractor, int docIndex) {
+      try {
+         return extractor.extract(docIndex).getProjection();
+      } catch (IOException e) {
+         throw new SearchException("Error while extracting projection...", e);
+      }
    }
 
 }
