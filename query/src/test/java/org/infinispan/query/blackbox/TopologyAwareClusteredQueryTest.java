@@ -19,9 +19,9 @@ public class TopologyAwareClusteredQueryTest extends ClusteredQueryTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       List caches = TestQueryHelperFactory.createTopologyAwareCacheNodes(2, getCacheMode(), transactionEnabled(),
-                                                                         isIndexLocalOnly(), isRamDirectory(), "default", Person.class);
+            isIndexLocalOnly(), isRamDirectory(), "default", Person.class);
 
-      for(Object cache : caches) {
+      for (Object cache : caches) {
          cacheManagers.add(((Cache) cache).getCacheManager());
       }
 
@@ -29,6 +29,7 @@ public class TopologyAwareClusteredQueryTest extends ClusteredQueryTest {
       cacheAMachine2 = (Cache<String, Person>) caches.get(1);
 
       waitForClusterToForm();
+      populateCache();
    }
 
    public CacheMode getCacheMode() {

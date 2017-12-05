@@ -1,11 +1,17 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import static java.util.Collections.emptyMap;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
+import org.apache.lucene.search.Sort;
+import org.hibernate.search.query.engine.spi.HSQuery;
+import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
@@ -43,10 +49,14 @@ import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.syntax.parser.RowPropertyHelper;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.query.clustered.ClusteredCacheQueryImpl;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.dsl.impl.QueryStringCreator;
+import org.infinispan.query.impl.CacheQueryImpl;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -685,6 +695,82 @@ public class QueryEngine<TypeMetadata> {
 
    protected IckleFilterAndConverter createFilter(String queryString, Map<String, Object> namedParameters) {
       return new IckleFilterAndConverter(queryString, namedParameters, matcherImplClass);
+   }
+
+   public <E> CacheQuery<E> buildCacheQuery(org.apache.lucene.search.Query luceneQuery, IndexedQueryMode indexedQueryMode,
+                                            KeyTransformationHandler keyTransformationHandler,
+                                            TimeoutExceptionFactory timeoutExceptionFactory,
+                                            ExecutorService asyncExecutor,
+                                            Class<?>... classes) {
+      CacheQuery cacheQuery;
+      if (indexedQueryMode == IndexedQueryMode.BROADCAST) {
+         cacheQuery = new ClusteredCacheQueryImpl<>(luceneQuery, getSearchFactory(), asyncExecutor, cache,
+               keyTransformationHandler, classes);
+      } else {
+         cacheQuery = new CacheQueryImpl<>(luceneQuery, getSearchFactory(), cache, keyTransformationHandler,
+               timeoutExceptionFactory, classes);
+      }
+      return (CacheQuery<E>) cacheQuery;
+   }
+
+   public HsQueryRequest createHsQuery(String queryString) {
+      IckleParsingResult<TypeMetadata> parsingResult = parse(queryString);
+      if (parsingResult.hasGroupingOrAggregations()) {
+         throw log.groupAggregationsNotSupported();
+      }
+      LuceneQueryParsingResult luceneParsingResult = transformParsingResult(parsingResult, emptyMap());
+      org.apache.lucene.search.Query luceneQuery = makeTypeQuery(luceneParsingResult.getQuery(), luceneParsingResult.getTargetEntityName());
+      HSQuery hsQuery = getSearchFactory().createHSQuery(luceneQuery);
+      Sort sort = luceneParsingResult.getSort();
+      String[] projections = luceneParsingResult.getProjections();
+      if (sort != null) {
+         hsQuery.sort(sort);
+      }
+      if (projections != null) {
+         hsQuery.projection(projections);
+      }
+      return new HsQueryRequest(hsQuery, sort, projections);
+   }
+
+   public <E> CacheQuery<E> buildCacheQuery(String queryString, IndexedQueryMode indexedQueryMode,
+                                            KeyTransformationHandler keyTransformationHandler,
+                                            TimeoutExceptionFactory timeoutExceptionFactory,
+                                            ExecutorService asyncExecutor,
+                                            Class<?>... classes) {
+      if (!isIndexed) {
+         throw log.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
+      }
+
+      if (log.isDebugEnabled()) {
+         log.debugf("Building Lucene query for : %s", queryString);
+      }
+
+      IckleParsingResult<TypeMetadata> parsingResult = parse(queryString);
+      if (parsingResult.hasGroupingOrAggregations()) {
+         throw log.groupAggregationsNotSupported();
+      }
+      LuceneQueryParsingResult luceneParsingResult = transformParsingResult(parsingResult, emptyMap());
+      org.apache.lucene.search.Query luceneQuery = makeTypeQuery(luceneParsingResult.getQuery(), luceneParsingResult.getTargetEntityName());
+
+      if (indexedQueryMode == IndexedQueryMode.BROADCAST) {
+         return new ClusteredCacheQueryImpl<>(queryString, asyncExecutor, cache, keyTransformationHandler);
+      } else {
+
+         if (log.isDebugEnabled()) {
+            log.debugf("The resulting Lucene query is : %s", luceneQuery.toString());
+         }
+
+         CacheQuery cacheQuery = new CacheQueryImpl<>(luceneQuery, searchFactory, cache, keyTransformationHandler,
+               timeoutExceptionFactory, classes);
+
+         if (luceneParsingResult.getSort() != null) {
+            cacheQuery = cacheQuery.sort(luceneParsingResult.getSort());
+         }
+         if (luceneParsingResult.getProjections() != null) {
+            cacheQuery = cacheQuery.projection(luceneParsingResult.getProjections());
+         }
+         return (CacheQuery<E>) cacheQuery;
+      }
    }
 
    /**

@@ -12,6 +12,7 @@ import java.util.List;
 import javax.transaction.Transaction;
 
 import org.hibernate.search.backend.LuceneWork;
+import org.hibernate.search.exception.SearchException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.remoting.transport.Address;
@@ -158,4 +159,13 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "infinispan-query.jar module is in the classpath but has not been properly initialised!", id = 14038)
    CacheException queryModuleNotInitialised();
+
+   @Message(value = "Queries containing groups or aggregations cannot be converted to an indexed query", id = 14039)
+   SearchException groupAggregationsNotSupported();
+
+   @Message(value = "Unable to define filters, please use filters in the query string instead.", id = 14040)
+   SearchException filterNotSupportedWithQueryString();
+
+   @Message(value = "Unable to define sort, please use sorting in the query string instead.", id = 14041)
+   SearchException sortNotSupportedWithQueryString();
 }

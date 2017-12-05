@@ -52,4 +52,6 @@ public interface ExternalizerIds {
    Integer LUCENE_QUERY_WILDCARD = 1619;
 
    Integer LUCENE_QUERY_FUZZY = 1620;
+
+   Integer QUERY_DEFINITION = 1621;
 }

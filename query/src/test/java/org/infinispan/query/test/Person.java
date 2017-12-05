@@ -107,7 +107,8 @@ public class Person implements Serializable, ExternalPojo {
       if (age != person.age) return false;
       if (blurb != null ? !blurb.equals(person.blurb) : person.blurb != null) return false;
       if (name != null ? !name.equals(person.name) : person.name != null) return false;
-      if (dateOfGraduation != null ? !dateOfGraduation.equals(person.dateOfGraduation) : person.dateOfGraduation != null) return false;
+      if (dateOfGraduation != null ? !dateOfGraduation.equals(person.dateOfGraduation) : person.dateOfGraduation != null)
+         return false;
 
       return true;
    }
