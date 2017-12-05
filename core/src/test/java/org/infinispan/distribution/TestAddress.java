@@ -1,5 +1,7 @@
 package org.infinispan.distribution;
 
+import java.util.Objects;
+
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -7,9 +9,9 @@ import org.infinispan.remoting.transport.Address;
  * @since 4.2
  */
 public class TestAddress implements Address {
-   final int addressNum;
+   private final int addressNum;
 
-   String name;
+   private String name;
 
    public void setName(String name) {
       this.name = name;
@@ -31,9 +33,7 @@ public class TestAddress implements Address {
 
       TestAddress that = (TestAddress) o;
 
-      if (addressNum != that.addressNum) return false;
-
-      return true;
+      return addressNum == that.addressNum && Objects.equals(name, that.name);
    }
 
    @Override
