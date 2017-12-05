@@ -405,7 +405,11 @@ public final class CacheDecodeContext {
          UnknownVersionException uve = (UnknownVersionException) e;
          return new ErrorResponse(uve.version, uve.messageId, "", (short) 1, OperationStatus.UnknownVersion, 0, e.toString());
       } else if (e instanceof RequestParsingException) {
-         log.exceptionReported(e);
+         if (e instanceof CacheNotFoundException)
+            log.debug(e.getMessage());
+         else
+            log.exceptionReported(e);
+
          String msg = e.getCause() == null ? e.toString() : format("%s: %s", e.getMessage(), e.getCause().toString());
          RequestParsingException rpe = (RequestParsingException) e;
          return new ErrorResponse(rpe.version, rpe.messageId, "", (short) 1, OperationStatus.ParseError, 0, msg);
