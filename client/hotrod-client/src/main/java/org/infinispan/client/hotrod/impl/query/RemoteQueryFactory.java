@@ -41,12 +41,12 @@ public final class RemoteQueryFactory extends BaseQueryFactory {
 
    @Override
    public Query create(String queryString) {
-      return new RemoteQuery(this, cache, serializationContext, queryString);
+      return new RemoteQuery(this, cache, serializationContext, queryString, IndexedQueryMode.FETCH);
    }
 
    @Override
    public Query create(String queryString, IndexedQueryMode queryMode) {
-      return create(queryString);
+      return new RemoteQuery(this, cache, serializationContext, queryString, queryMode);
    }
 
    @Override

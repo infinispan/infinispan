@@ -25,6 +25,8 @@ public final class QueryRequest {
 
    private Integer maxResults;
 
+   private String indexedQueryMode;
+
    public String getQueryString() {
       return queryString;
    }
@@ -68,6 +70,14 @@ public final class QueryRequest {
       return params;
    }
 
+   public void setIndexedQueryMode(String indexedQueryMode) {
+      this.indexedQueryMode = indexedQueryMode;
+   }
+
+   public String getIndexedQueryMode() {
+      return indexedQueryMode;
+   }
+
    static final class Marshaller implements MessageMarshaller<QueryRequest> {
 
       @Override
@@ -77,6 +87,7 @@ public final class QueryRequest {
          queryRequest.setStartOffset(reader.readLong("startOffset"));
          queryRequest.setMaxResults(reader.readInt("maxResults"));
          queryRequest.setNamedParameters(reader.readCollection("namedParameters", new ArrayList<>(), NamedParameter.class));
+         queryRequest.setIndexedQueryMode(reader.readString("indexedQueryMode"));
          return queryRequest;
       }
 
@@ -86,6 +97,7 @@ public final class QueryRequest {
          writer.writeLong("startOffset", queryRequest.getStartOffset());
          writer.writeInt("maxResults", queryRequest.getMaxResults());
          writer.writeCollection("namedParameters", queryRequest.getNamedParameters(), NamedParameter.class);
+         writer.writeString("indexedQueryMode", queryRequest.getIndexedQueryMode());
       }
 
       @Override

@@ -42,6 +42,8 @@ message QueryRequest {
        */
       required org.infinispan.protostream.WrappedMessage value = 2;
    }
+
+   optional String indexedQueryMode = 6;
 }
 
 /**
