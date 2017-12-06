@@ -23,23 +23,23 @@ public class DbMetaData {
       this.indexingDisabled = indexingDisabled;
    }
 
-   DatabaseType getType() {
+   public DatabaseType getType() {
       return type;
    }
 
-   int getMajorVersion() {
+   public int getMajorVersion() {
       return majorVersion;
    }
 
-   int getMinorVersion() {
+   public int getMinorVersion() {
       return minorVersion;
    }
 
-   boolean isUpsertDisabled() {
+   public boolean isUpsertDisabled() {
       return upsertDisabled;
    }
 
-   boolean isIndexingDisabled() {
+   public boolean isIndexingDisabled() {
       return indexingDisabled;
    }
 }

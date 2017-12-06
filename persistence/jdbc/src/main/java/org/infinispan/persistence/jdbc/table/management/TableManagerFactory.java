@@ -20,8 +20,8 @@ import org.infinispan.util.logging.LogFactory;
 public class TableManagerFactory {
 
    private static final Log LOG = LogFactory.getLog(TableManagerFactory.class, Log.class);
-   private static final String UPSERT_DISABLED = "infinispan.jdbc.upsert.disabled";
-   private static final String INDEXING_DISABLED = "infinispan.jdbc.indexing.disabled";
+   public static final String UPSERT_DISABLED = "infinispan.jdbc.upsert.disabled";
+   public static final String INDEXING_DISABLED = "infinispan.jdbc.indexing.disabled";
 
    public static TableManager getManager(ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config) {
       DbMetaData metaData = getDbMetaData(connectionFactory, config.dialect(), config.dbMajorVersion(),
