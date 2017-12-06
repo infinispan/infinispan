@@ -13,7 +13,7 @@ rem         standalone.bat --debug 9797
 rem By default debug mode is disable.
 set DEBUG_MODE=false
 set DEBUG_PORT=8787
-set USE_JMX_COLLECTORS=fals
+set USE_JMX_COLLECTORS=false
 rem Set to all parameters by default
 set "SERVER_OPTS=%*"
 
