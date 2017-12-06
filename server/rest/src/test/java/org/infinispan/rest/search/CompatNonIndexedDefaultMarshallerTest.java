@@ -1,5 +1,6 @@
 package org.infinispan.rest.search;
 
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
@@ -13,7 +14,7 @@ public class CompatNonIndexedDefaultMarshallerTest extends BaseRestSearchTest {
 
    @Override
    ConfigurationBuilder getConfigBuilder() {
-      ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+      ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configurationBuilder.compatibility().enable();
       return configurationBuilder;
    }

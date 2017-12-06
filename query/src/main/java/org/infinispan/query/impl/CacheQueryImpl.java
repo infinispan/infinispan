@@ -58,9 +58,9 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
             cache, keyTransformationHandler);
    }
 
-   public CacheQueryImpl(String queryString, AdvancedCache<?, ?> cache,
+   public CacheQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache,
                          KeyTransformationHandler keyTransformationHandler) {
-      this.queryDefinition = new QueryDefinition(queryString);
+      this.queryDefinition = queryDefinition;
       this.cache = cache;
       this.keyTransformationHandler = keyTransformationHandler;
    }

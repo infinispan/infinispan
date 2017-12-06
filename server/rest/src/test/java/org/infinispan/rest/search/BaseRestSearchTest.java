@@ -4,13 +4,17 @@ import static org.eclipse.jetty.http.HttpMethod.GET;
 import static org.eclipse.jetty.http.HttpMethod.POST;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.rest.JSONConstants.HIT;
+import static org.infinispan.rest.JSONConstants.QUERY_MODE;
 import static org.infinispan.rest.JSONConstants.TOTAL_RESULTS;
 import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.stream.IntStream;
 
 import org.apache.http.HttpStatus;
 import org.codehaus.jackson.JsonNode;
@@ -25,10 +29,12 @@ import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.helper.RestServerHelper;
-import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -39,41 +45,66 @@ import org.testng.annotations.Test;
  * @since 9.2
  */
 @Test(groups = "functional")
-public abstract class BaseRestSearchTest extends AbstractInfinispanTest {
+public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    private static final String CACHE_NAME = "search-rest";
    private static final String PROTO_FILE_NAME = "person.proto";
    private static final ObjectMapper MAPPER = new ObjectMapper();
 
    private HttpClient client;
-   private RestServerHelper restServer;
-   private String searchUrl;
+   private List<RestServerHelper> restServers = new ArrayList<>();
+   private final Random random = new Random(1000);
+
+   protected int getNumNodes() {
+      return 3;
+   }
+
+   @Override
+   protected void createCacheManagers() throws Throwable {
+      ConfigurationBuilder builder = getConfigBuilder();
+      createClusteredCaches(getNumNodes(), builder, true, CACHE_NAME);
+      waitForClusterToForm(CACHE_NAME);
+   }
 
    @DataProvider(name = "HttpMethodProvider")
    protected static Object[][] provideCacheMode() {
       return new Object[][]{{GET}, {POST}};
    }
 
+   private RestServerHelper pickServer() {
+      return restServers.get(random.nextInt(getNumNodes()));
+   }
+
+   private String getUrl(RestServerHelper restServerHelper) {
+      return String.format("http://localhost:%d/rest/%s?action=search", restServerHelper.getPort(), CACHE_NAME);
+   }
+
    @BeforeClass
    public void setUp() throws Exception {
-      restServer = RestServerHelper.defaultRestServer("default");
-      restServer.defineCache(CACHE_NAME, getConfigBuilder());
-      restServer.start();
+      IntStream.range(0, getNumNodes()).forEach(n -> {
+         RestServerHelper restServer = new RestServerHelper(cacheManagers.get(n));
+         restServer.start();
+         restServers.add(restServer);
+      });
 
       client = new HttpClient();
       client.start();
-
-      searchUrl = String.format("http://localhost:%d/rest/%s?action=search", restServer.getPort(), CACHE_NAME);
 
       String protoFile = Util.read(IndexedRestSearchTest.class.getClassLoader().getResourceAsStream(PROTO_FILE_NAME));
       registerProtobuf(PROTO_FILE_NAME, protoFile);
       populateData();
    }
 
+   @AfterMethod
+   @Override
+   protected void clearContent() throws Throwable {
+   }
+
    @Test(dataProvider = "HttpMethodProvider")
    public void shouldReportInvalidQueries(HttpMethod method) throws Exception {
       ContentResponse response;
       String wrongQuery = "from Whatever";
+      String searchUrl = getUrl(pickServer());
       if (method == POST) {
          response = client
                .newRequest(searchUrl)
@@ -171,6 +202,7 @@ public abstract class BaseRestSearchTest extends AbstractInfinispanTest {
 
    @Test(dataProvider = "HttpMethodProvider")
    public void testIncompleteSearch(HttpMethod method) throws Exception {
+      String searchUrl = getUrl(pickServer());
       ContentResponse response = client.newRequest(searchUrl).method(method).send();
 
       ResponseAssertion.assertThat(response).isBadRequest();
@@ -183,7 +215,7 @@ public abstract class BaseRestSearchTest extends AbstractInfinispanTest {
    @AfterClass
    public void tearDown() throws Exception {
       client.stop();
-      restServer.stop();
+      restServers.forEach(RestServerHelper::stop);
    }
 
    protected void populateData() throws Exception {
@@ -200,7 +232,7 @@ public abstract class BaseRestSearchTest extends AbstractInfinispanTest {
 
    private void index(int id, String person) throws Exception {
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%d", restServer.getPort(), CACHE_NAME, id))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%d", pickServer().getPort(), CACHE_NAME, id))
             .method(POST)
             .content(new StringContentProvider(person))
             .header(HttpHeader.CONTENT_TYPE, "application/json")
@@ -246,7 +278,7 @@ public abstract class BaseRestSearchTest extends AbstractInfinispanTest {
    }
 
    private String getProtobufMetadataUrl(String key) {
-      return String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), PROTOBUF_METADATA_CACHE_NAME, key);
+      return String.format("http://localhost:%d/rest/%s/%s", pickServer().getPort(), PROTOBUF_METADATA_CACHE_NAME, key);
    }
 
    private void assertZeroHits(JsonNode queryResponse) throws Exception {
@@ -260,17 +292,21 @@ public abstract class BaseRestSearchTest extends AbstractInfinispanTest {
 
    private JsonNode query(String q, HttpMethod method, int offset, int maxResults) throws Exception {
       Request request;
+      String searchUrl = getUrl(pickServer());
+      String mode = getQueryMode().toString();
       if (method == POST) {
          ObjectNode queryReq = MAPPER.createObjectNode();
          queryReq.put("query", q);
          queryReq.put("offset", offset);
          queryReq.put("max_results", maxResults);
+         queryReq.put(QUERY_MODE, mode);
          request = client.newRequest(searchUrl).method(POST).content(new StringContentProvider(queryReq.toString()));
       } else {
          StringBuilder queryReq = new StringBuilder(searchUrl);
          queryReq.append("&query=").append(URLEncoder.encode(q, "UTF-8"));
          queryReq.append("&offset=").append(offset);
          queryReq.append("&max_results=").append(maxResults);
+         queryReq.append("&").append(QUERY_MODE).append("=").append(mode);
          request = client.newRequest(queryReq.toString()).method(GET);
       }
       ContentResponse response = request.send();
@@ -285,5 +321,9 @@ public abstract class BaseRestSearchTest extends AbstractInfinispanTest {
    }
 
    abstract ConfigurationBuilder getConfigBuilder();
+
+   IndexedQueryMode getQueryMode() {
+      return IndexedQueryMode.FETCH;
+   }
 
 }

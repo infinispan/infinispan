@@ -25,7 +25,7 @@ public class RestServerHelper {
    private Authenticator authenticator = new VoidAuthenticator();
    private String host;
 
-   private RestServerHelper(EmbeddedCacheManager cacheManager) {
+   public RestServerHelper(EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
       restServerConfigurationBuilder.host("localhost").port(0).maxContentLength(1_000_000);
    }

@@ -27,5 +27,10 @@ public interface Query extends PaginationContext<Query>, ParameterContext<Query>
     */
    int getResultSize(); //todo [anistor] this should probably be a long?
 
+   /**
+    * @return the values for query projections or null if the query does not have projections.
+    */
+   String[] getProjection();
+
    //todo [anistor] also add long getStartOffset() ?
 }

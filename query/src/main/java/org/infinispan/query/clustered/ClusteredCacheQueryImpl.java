@@ -10,6 +10,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.exception.SearchException;
+import org.hibernate.search.spi.CustomTypeMetadata;
+import org.hibernate.search.spi.IndexedTypeMap;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
@@ -43,11 +45,14 @@ public class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
       this.asyncExecutor = asyncExecutor;
    }
 
-   public ClusteredCacheQueryImpl(String queryString, ExecutorService asyncExecutor, AdvancedCache<?, ?> cache,
-                                  KeyTransformationHandler keyTransformationHandler) {
-      super(queryString, cache, keyTransformationHandler);
+   public ClusteredCacheQueryImpl(QueryDefinition queryDefinition, ExecutorService asyncExecutor, AdvancedCache<?, ?> cache,
+                                  KeyTransformationHandler keyTransformationHandler, IndexedTypeMap<CustomTypeMetadata> metadata) {
+      super(queryDefinition, cache, keyTransformationHandler);
+      if (metadata != null) {
+         this.queryDefinition.setIndexedType(metadata.keySet().iterator().next().getPojoType());
+         this.queryDefinition.setSortableField(metadata.values().iterator().next().getSortableFields());
+      }
       this.asyncExecutor = asyncExecutor;
-      this.queryDefinition = new QueryDefinition(queryString);
    }
 
    @Override
