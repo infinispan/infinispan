@@ -4,11 +4,17 @@ import static org.infinispan.tools.jdbc.migrator.Element.CACHE_NAME;
 import static org.infinispan.tools.jdbc.migrator.Element.CLASS;
 import static org.infinispan.tools.jdbc.migrator.Element.CONNECTION_POOL;
 import static org.infinispan.tools.jdbc.migrator.Element.CONNECTION_URL;
+import static org.infinispan.tools.jdbc.migrator.Element.DB;
 import static org.infinispan.tools.jdbc.migrator.Element.DIALECT;
+import static org.infinispan.tools.jdbc.migrator.Element.DISABLE_INDEXING;
+import static org.infinispan.tools.jdbc.migrator.Element.DISABLE_UPSERT;
 import static org.infinispan.tools.jdbc.migrator.Element.DRIVER_CLASS;
 import static org.infinispan.tools.jdbc.migrator.Element.EXTERNALIZERS;
+import static org.infinispan.tools.jdbc.migrator.Element.MAJOR_VERSION;
 import static org.infinispan.tools.jdbc.migrator.Element.MARSHALLER;
+import static org.infinispan.tools.jdbc.migrator.Element.MINOR_VERSION;
 import static org.infinispan.tools.jdbc.migrator.Element.SOURCE;
+import static org.infinispan.tools.jdbc.migrator.Element.TARGET;
 import static org.infinispan.tools.jdbc.migrator.Element.TYPE;
 import static org.infinispan.tools.jdbc.migrator.StoreType.MIXED;
 
@@ -24,8 +30,12 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.persistence.jdbc.DatabaseType;
+import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
+import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
+import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
 import org.infinispan.test.data.Person;
 import org.infinispan.tools.jdbc.migrator.marshaller.LegacyVersionAwareMarshaller;
 import org.testng.annotations.BeforeMethod;
@@ -95,13 +105,41 @@ public class MigratorConfigurationTest {
       assert externalizerWriteCount.get() == 1;
    }
 
+   public void testDbPropertiesLoaded() throws Exception {
+      Properties properties = createBaseProperties();
+      properties.putAll(createBaseProperties(TARGET));
+      Element[] storeTypes = new Element[] {SOURCE, TARGET};
+      for (Element storeType : storeTypes) {
+         properties.put(propKey(storeType, DB, MAJOR_VERSION), "1");
+         properties.put(propKey(storeType, DB, MINOR_VERSION), "1");
+         properties.put(propKey(storeType, DB, DISABLE_INDEXING), "true");
+         properties.put(propKey(storeType, DB, DISABLE_UPSERT), "true");
+      }
+
+      for (Element storeType : storeTypes) {
+         MigratorConfiguration migratorConfig = new MigratorConfiguration(storeType == SOURCE, properties);
+         JdbcStringBasedStoreConfigurationBuilder builder = migratorConfig.getJdbcConfigBuilder();
+         Configuration cacheConfig = builder.build();
+         JdbcStringBasedStoreConfiguration config = (JdbcStringBasedStoreConfiguration) cacheConfig.persistence().stores().get(0);
+         assert config.dbMajorVersion() == 1;
+         assert config.dbMinorVersion() == 1;
+         assert Boolean.parseBoolean(config.properties().getProperty(TableManagerFactory.INDEXING_DISABLED));
+         assert Boolean.parseBoolean(config.properties().getProperty(TableManagerFactory.UPSERT_DISABLED));
+      }
+
+   }
+
    private Properties createBaseProperties() {
+      return createBaseProperties(SOURCE);
+   }
+
+   private Properties createBaseProperties(Element orientation) {
       Properties properties = new Properties();
-      properties.put(propKey(SOURCE, CACHE_NAME), DEFAULT_CACHE_NAME);
-      properties.put(propKey(SOURCE, TYPE), MIXED.toString());
-      properties.put(propKey(SOURCE, DIALECT), DatabaseType.H2.toString());
-      properties.put(propKey(SOURCE, CONNECTION_POOL, CONNECTION_URL), "jdbc:postgresql:postgres");
-      properties.put(propKey(SOURCE, CONNECTION_POOL, DRIVER_CLASS), "org.postgresql.Driver");
+      properties.put(propKey(orientation, CACHE_NAME), DEFAULT_CACHE_NAME);
+      properties.put(propKey(orientation, TYPE), MIXED.toString());
+      properties.put(propKey(orientation, DIALECT), DatabaseType.H2.toString());
+      properties.put(propKey(orientation, CONNECTION_POOL, CONNECTION_URL), "jdbc:postgresql:postgres");
+      properties.put(propKey(orientation, CONNECTION_POOL, DRIVER_CLASS), "org.postgresql.Driver");
       return properties;
    }
 
