@@ -1,5 +1,7 @@
 package org.infinispan.query;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -35,6 +37,7 @@ public class QueryDefinition {
    private Set<String> sortableFields;
    private Class<?> indexedType;
 
+   private final Map<String, Object> namedParameters = new HashMap<>();
    private transient Sort sort;
 
    public QueryDefinition(String queryString) {
@@ -63,9 +66,9 @@ public class QueryDefinition {
          HsQueryRequest hsQueryRequest;
          if (indexedType != null && sortableFields != null) {
             IndexedTypeMap<CustomTypeMetadata> metadata = createMetadata();
-            hsQueryRequest = queryEngine.createHsQuery(queryString, metadata);
+            hsQueryRequest = queryEngine.createHsQuery(queryString, metadata, namedParameters);
          } else {
-            hsQueryRequest = queryEngine.createHsQuery(queryString, null);
+            hsQueryRequest = queryEngine.createHsQuery(queryString, null, namedParameters);
          }
          this.hsQuery = hsQueryRequest.getHsQuery();
          this.sort = hsQueryRequest.getSort();
@@ -91,6 +94,18 @@ public class QueryDefinition {
       if (hsQuery != null) {
          hsQuery.maxResults(maxResults);
       }
+   }
+
+   public void setNamedParameters(Map<String, Object> params) {
+      if (params == null) {
+         namedParameters.clear();
+      } else {
+         namedParameters.putAll(params);
+      }
+   }
+
+   public Map<String, Object> getNamedParameters() {
+      return namedParameters;
    }
 
    public int getFirstResult() {
