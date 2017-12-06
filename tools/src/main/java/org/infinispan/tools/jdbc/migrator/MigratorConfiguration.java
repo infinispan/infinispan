@@ -47,6 +47,7 @@ import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigu
 import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.infinispan.persistence.jdbc.table.management.DbMetaData;
+import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.tools.jdbc.migrator.marshaller.LegacyVersionAwareMarshaller;
@@ -98,7 +99,7 @@ class MigratorConfiguration {
       JdbcStringBasedStoreConfigurationBuilder builder = new ConfigurationBuilder().persistence()
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
 
-      dbMetaData = createDbMeta();
+      dbMetaData = createDbMeta(builder);
       connectionConfig = createConnectionConfig(builder);
       marshaller = createMarshaller();
       if (sourceStore) {
@@ -121,14 +122,34 @@ class MigratorConfiguration {
       jdbcConfigBuilder = builder;
    }
 
-   private DbMetaData createDbMeta() {
+   private DbMetaData createDbMeta(JdbcStringBasedStoreConfigurationBuilder builder) {
       requiredProps(propKey(DIALECT));
       String prop;
       DatabaseType type = DatabaseType.valueOf(property(DIALECT).toUpperCase());
-      int major = (prop = property(DB, MAJOR_VERSION)) != null ? new Integer(prop) : -1;
-      int minor = (prop = property(DB, MINOR_VERSION)) != null ? new Integer(prop) : -1;
-      boolean upsert = Boolean.parseBoolean(property(DB, DISABLE_UPSERT));
-      boolean indexing = Boolean.parseBoolean(property(DB, DISABLE_INDEXING));
+      builder.dialect(type);
+
+      Integer major = null;
+      if ((prop = property(DB, MAJOR_VERSION)) != null) {
+         major = new Integer(prop);
+         builder.dbMajorVersion(major);
+      }
+
+      Integer minor = null;
+      if ((prop = property(DB, MINOR_VERSION)) != null) {
+         minor = new Integer(prop);
+         builder.dbMinorVersion(minor);
+      }
+
+      String disableUpsert = property(DB, DISABLE_UPSERT);
+      boolean upsert = Boolean.parseBoolean(disableUpsert);
+      if (upsert)
+         builder.addProperty(TableManagerFactory.UPSERT_DISABLED, disableUpsert);
+
+      String disableIndexing = property(DB, DISABLE_INDEXING);
+      boolean indexing = Boolean.parseBoolean(disableIndexing);
+      if (indexing)
+         builder.addProperty(TableManagerFactory.INDEXING_DISABLED, disableIndexing);
+
       return new DbMetaData(type, major, minor, upsert, indexing);
    }
 
