@@ -82,15 +82,15 @@ public class TestSuiteProgress {
    }
 
    synchronized void progress(String color, CharSequence message, Throwable t) {
+      String actualColor = "";
+      String actualReset = "";
       if (useColor && color != null) {
-         out.print(color);
+         actualColor = color;
+         actualReset = RESET;
       }
-      out.printf("[OK: %5s, KO: %5s, SKIP: %5s] %s%n", succeeded.get(), failed.get(), skipped.get(), message);
+      out.printf("%s[OK: %5s, KO: %5s, SKIP: %5s] %s%s%n", actualColor, succeeded.get(), failed.get(), skipped.get(), message, actualReset);
       if (t != null) {
          t.printStackTrace(out);
-      }
-      if (useColor && color != null) {
-         out.print(RESET);
       }
    }
 }

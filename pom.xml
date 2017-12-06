@@ -180,6 +180,7 @@
       <testjvm.jigsawArgs />
       <forkJvmArgs>-Xmx1G ${testjvm.commonArgs}</forkJvmArgs>
       <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
+      <ansi.strip/>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
       <infinispan.test.parallel.threads>8</infinispan.test.parallel.threads>
       <jboss.releases.repo.id>jboss-releases-repository</jboss.releases.repo.id>
@@ -1355,7 +1356,9 @@
                <version>${version.maven.surefire}</version>
                <configuration>
                   <systemPropertyVariables>
+                     <!-- this is picked up in the log4j xml which prepends it to each module's log file-->
                      <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
+                     <ansi.strip>${ansi.strip}</ansi.strip>
                   </systemPropertyVariables>
                   <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                </configuration>
@@ -1818,6 +1821,7 @@
 
                   <!-- this is picked up in the log4j xml which prepends it to each module's log file-->
                   <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
+                  <ansi.strip>${ansi.strip}</ansi.strip>
                   <!-- Log the correct thread name after we call Thread.setName(),
                        see https://issues.apache.org/jira/browse/LOG4J2-2052 -->
                   <AsyncLogger.ThreadNameStrategy>UNCACHED</AsyncLogger.ThreadNameStrategy>
