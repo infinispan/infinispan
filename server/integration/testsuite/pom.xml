@@ -328,7 +328,7 @@
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false
             -Djboss.default.multicast.address=${mcast.ip}
         </jvm.ip.stack>
-        <server.jvm.args>${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args} ${testjvm.jigsawArgs}</server.jvm.args>
+        <server.jvm.args>${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args} ${testjvm.jigsawArgs} -Dansi.strip=${ansi.strip}</server.jvm.args>
         <log4j.configurationFile>log4j2.xml</log4j.configurationFile>
         <suite.manual.phase>integration-test</suite.manual.phase>
         <suite.queries.phase>integration-test</suite.queries.phase>
@@ -889,6 +889,7 @@
                             <groups>${suite.manual.include.groups}</groups>
                             <systemPropertyVariables>
                                 <arquillian.launch>suite-manual</arquillian.launch>
+                                <infinispan.module-suffix>${infinispan.module-suffix}-manual</infinispan.module-suffix>
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
@@ -903,6 +904,7 @@
                             <groups>${groups.queries}</groups>
                             <systemPropertyVariables>
                                 <arquillian.launch>queries</arquillian.launch>
+                                <infinispan.module-suffix>${infinispan.module-suffix}-queries</infinispan.module-suffix>
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
@@ -919,6 +921,7 @@
                             <systemPropertyVariables>
                                 <clustering.mode>local</clustering.mode>
                                 <arquillian.launch>suite-client-local</arquillian.launch>
+                                <infinispan.module-suffix>${infinispan.module-suffix}-client-local</infinispan.module-suffix>
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
@@ -935,6 +938,7 @@
                             <systemPropertyVariables>
                                 <clustering.mode>local</clustering.mode>
                                 <arquillian.launch>suite-memcached-local</arquillian.launch>
+                                <infinispan.module-suffix>${infinispan.module-suffix}-memcached-local</infinispan.module-suffix>
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
@@ -951,6 +955,7 @@
                             <systemPropertyVariables>
                                 <clustering.mode>local</clustering.mode>
                                 <arquillian.launch>${suite.client.arq.domain}</arquillian.launch>
+                                <infinispan.module-suffix>${infinispan.module-suffix}-client-domain-local</infinispan.module-suffix>
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
@@ -967,6 +972,7 @@
                             <systemPropertyVariables>
                                 <clustering.mode>dist</clustering.mode>
                                 <arquillian.launch>suite-client-dist</arquillian.launch>
+                                <infinispan.module-suffix>${infinispan.module-suffix}-client-dist</infinispan.module-suffix>
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
@@ -983,6 +989,7 @@
                             <systemPropertyVariables>
                                 <clustering.mode>dist</clustering.mode>
                                 <arquillian.launch>suite-memcached-dist</arquillian.launch>
+                                <infinispan.module-suffix>${infinispan.module-suffix}-memcached-dist</infinispan.module-suffix>
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
@@ -999,6 +1006,7 @@
                             <systemPropertyVariables>
                                 <clustering.mode>dist</clustering.mode>
                                 <arquillian.launch>${suite.client.arq.domain}</arquillian.launch>
+                                <infinispan.module-suffix>${infinispan.module-suffix}-client-domain-dist</infinispan.module-suffix>
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
@@ -1015,6 +1023,7 @@
                             <systemPropertyVariables>
                                 <clustering.mode>repl</clustering.mode>
                                 <arquillian.launch>suite-client-repl</arquillian.launch>
+                                <infinispan.module-suffix>${infinispan.module-suffix}-client-repl</infinispan.module-suffix>
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
@@ -1031,6 +1040,7 @@
                             <systemPropertyVariables>
                                 <clustering.mode>repl</clustering.mode>
                                 <arquillian.launch>${suite.client.arq.domain}</arquillian.launch>
+                                <infinispan.module-suffix>${infinispan.module-suffix}-client-domain-repl</infinispan.module-suffix>
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
@@ -1044,6 +1054,7 @@
                             <groups>${groups.security}</groups>
                             <systemPropertyVariables>
                                 <arquillian.launch>${suite.security.arquillian}</arquillian.launch>
+                                <infinispan.module-suffix>${infinispan.module-suffix}-security</infinispan.module-suffix>
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
@@ -1058,8 +1069,16 @@
                             <excludedGroups>${groups.unstable}, org.infinispan.server.test.category.MemcachedClustered</excludedGroups>
                             <systemPropertyVariables>
                                 <arquillian.launch>suite-client-dist</arquillian.launch>
+                                <infinispan.module-suffix>${infinispan.module-suffix}-smoke</infinispan.module-suffix>
                             </systemPropertyVariables>
                            </configuration>
+                    </execution>
+                    <execution>
+                        <id>verify</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
