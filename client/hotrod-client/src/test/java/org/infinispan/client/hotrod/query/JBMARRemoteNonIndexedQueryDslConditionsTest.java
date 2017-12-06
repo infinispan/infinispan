@@ -32,13 +32,13 @@ public class JBMARRemoteNonIndexedQueryDslConditionsTest extends JBMARRemoteQuer
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextTerm() throws Exception {
+   public void testFullTextTerm() {
       super.testFullTextTerm();
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextPhrase() throws Exception {
+   public void testFullTextPhrase() {
       super.testFullTextPhrase();
    }
 }

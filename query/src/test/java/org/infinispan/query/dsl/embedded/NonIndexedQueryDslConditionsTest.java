@@ -40,17 +40,14 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
       newUser.setGender(User.Gender.MALE);
       newUser.setAge(20);
 
-      List results = withTx(tm(0), new Callable<List>() {
-         @Override
-         public List call() throws Exception {
-            Query q = getQueryFactory().from(getModelFactory().getUserImplClass())
-                  .not().having("age").eq(20)
-                  .build();
+      List results = withTx(tm(0), (Callable<List>) () -> {
+         Query q = getQueryFactory().from(getModelFactory().getUserImplClass())
+               .not().having("age").eq(20)
+               .build();
 
-            cache(0).put("new_user_" + newUser.getId(), newUser);
+         cache(0).put("new_user_" + newUser.getId(), newUser);
 
-            return q.list();
-         }
+         return q.list();
       });
 
       cache(0).remove("new_user_" + newUser.getId());
@@ -69,7 +66,7 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
     * This test uses fields that are not marked as @NumericField so it cannot work correctly with Lucene but should work
     * correctly for non-indexed.
     */
-   public void testAnd5() throws Exception {
+   public void testAnd5() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -84,13 +81,13 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextTerm() throws Exception {
+   public void testFullTextTerm() {
       super.testFullTextTerm();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextPhrase() throws Exception {
+   public void testFullTextPhrase() {
       super.testFullTextPhrase();
    }
 }

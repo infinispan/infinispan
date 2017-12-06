@@ -178,7 +178,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       }
    }
 
-   public void testParam() throws Exception {
+   public void testParam() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where id = :idParam");
@@ -199,7 +199,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
    }
 
    @Test(enabled = false)
-   public void testParamWithSpacePadding() throws Exception {
+   public void testParamWithSpacePadding() {
       QueryFactory qf = getQueryFactory();
 
       //todo [anistor] need special tree nodes for all literal types (and for params) to be able to distinguish them better; QueryRendererDelegate.predicateXXX should receive such a tree node instead of a string
@@ -208,7 +208,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(1, list.size());
    }
 
-   public void testExactMatch() throws Exception {
+   public void testExactMatch() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where description = 'Birthday present'");
@@ -217,7 +217,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(1, list.size());
    }
 
-   public void testFullTextTerm() throws Exception {
+   public void testFullTextTerm() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'rent'");
@@ -226,7 +226,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(1, list.size());
    }
 
-   public void testFullTextTermRightOperandAnalyzed() throws Exception {
+   public void testFullTextTermRightOperandAnalyzed() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'RENT'");
@@ -235,7 +235,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(1, list.size());
    }
 
-   public void testFullTextTermBoost() throws Exception {
+   public void testFullTextTermBoost() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where longDescription:('rent'^8 'shoes')");
@@ -244,7 +244,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(51, list.size());
    }
 
-   public void testFullTextPhrase() throws Exception {
+   public void testFullTextPhrase() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'expensive shoes'");
@@ -253,7 +253,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(50, list.size());
    }
 
-   public void testFullTextWithAggregation() throws Exception {
+   public void testFullTextWithAggregation() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("select t.accountId, max(t.amount), max(t.description) from " + getModelFactory().getTransactionTypeName()
@@ -266,7 +266,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals("Expensive shoes 9", list.get(0)[2]);
    }
 
-   public void testFullTextTermBoostAndSorting() throws Exception {
+   public void testFullTextTermBoostAndSorting() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where longDescription:('rent'^8 'shoes') order by amount");
@@ -275,7 +275,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(51, list.size());
    }
 
-   public void testFullTextTermOccur() throws Exception {
+   public void testFullTextTermOccur() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where not (t.longDescription : (+'failed') or t.longDescription : 'blocked')");
@@ -284,7 +284,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(56, list.size());
    }
 
-   public void testFullTextTermDoesntOccur() throws Exception {
+   public void testFullTextTermDoesntOccur() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : (-'really')");
@@ -293,7 +293,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(6, list.size());
    }
 
-   public void testFullTextRangeWildcard() throws Exception {
+   public void testFullTextRangeWildcard() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : [* to *]");
@@ -302,7 +302,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(54, list.size());
    }
 
-   public void testFullTextRange() throws Exception {
+   public void testFullTextRange() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.amount : [23 to 45]");
@@ -311,7 +311,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(2, list.size());
    }
 
-   public void testFullTextPrefix() throws Exception {
+   public void testFullTextPrefix() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ren*'");
@@ -320,7 +320,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(1, list.size());
    }
 
-   public void testFullTextWildcard() throws Exception {
+   public void testFullTextWildcard() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 're?t'");
@@ -330,7 +330,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014036: Prefix, wildcard or regexp queries cannot be fuzzy.*")
-   public void testFullTextWildcardFuzzyNotAllowed() throws Exception {
+   public void testFullTextWildcardFuzzyNotAllowed() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 're?t'~2");
@@ -338,7 +338,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       q.list();
    }
 
-   public void testFullTextFuzzy() throws Exception {
+   public void testFullTextFuzzy() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'retn'~");
@@ -347,7 +347,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(1, list.size());
    }
 
-   public void testFullTextFuzzyDefaultEdits() throws Exception {
+   public void testFullTextFuzzyDefaultEdits() {
       QueryFactory qf = getQueryFactory();
 
       // default number of edits should be 2
@@ -362,7 +362,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(0, list.size());
    }
 
-   public void testFullTextFuzzySpecifiedEdits() throws Exception {
+   public void testFullTextFuzzySpecifiedEdits() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ajnuary'~1");
@@ -376,7 +376,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(0, list.size());
    }
 
-   public void testFullTextRegexp() throws Exception {
+   public void testFullTextRegexp() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : /[R|r]ent/");
@@ -386,7 +386,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
-   public void testFullTextRegexpFuzzyNotAllowed() throws Exception {
+   public void testFullTextRegexpFuzzyNotAllowed() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : /[R|r]ent/~2");
@@ -395,7 +395,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028522: .*property is analyzed.*")
-   public void testExactMatchOnAnalyzedFieldNotAllowed() throws Exception {
+   public void testExactMatchOnAnalyzedFieldNotAllowed() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where longDescription = 'Birthday present'");
@@ -404,7 +404,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: .*unless the property is indexed and analyzed.*")
-   public void testFullTextTermOnNonAnalyzedFieldNotAllowed() throws Exception {
+   public void testFullTextTermOnNonAnalyzedFieldNotAllowed() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where description:'rent'");
@@ -413,7 +413,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
    }
 
    @Test(enabled = false) //TODO [anistor] fix!
-   public void testFullTextRegexp2() throws Exception {
+   public void testFullTextRegexp2() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : ( -'beer' and '*')");
@@ -422,7 +422,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(1, list.size());
    }
 
-   public void testInstant1() throws Exception {
+   public void testInstant1() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getUserTypeName() + " u where u.creationDate = '2011-12-03T10:15:30Z'");
@@ -431,7 +431,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(3, list.size());
    }
 
-   public void testInstant2() throws Exception {
+   public void testInstant2() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getUserTypeName() + " u where u.passwordExpirationDate = '2011-12-03T10:15:30Z'");

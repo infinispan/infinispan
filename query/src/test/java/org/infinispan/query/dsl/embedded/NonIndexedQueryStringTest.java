@@ -24,120 +24,120 @@ public class NonIndexedQueryStringTest extends QueryStringTest {
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextTerm() throws Exception {
+   public void testFullTextTerm() {
       super.testFullTextTerm();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextTermRightOperandAnalyzed() throws Exception {
+   public void testFullTextTermRightOperandAnalyzed() {
       super.testFullTextTermRightOperandAnalyzed();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextTermBoost() throws Exception {
+   public void testFullTextTermBoost() {
       super.testFullTextTermBoost();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextPhrase() throws Exception {
+   public void testFullTextPhrase() {
       super.testFullTextPhrase();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextWithAggregation() throws Exception {
+   public void testFullTextWithAggregation() {
       super.testFullTextWithAggregation();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextTermBoostAndSorting() throws Exception {
+   public void testFullTextTermBoostAndSorting() {
       super.testFullTextTermBoostAndSorting();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextTermOccur() throws Exception {
+   public void testFullTextTermOccur() {
       super.testFullTextTermOccur();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextTermDoesntOccur() throws Exception {
+   public void testFullTextTermDoesntOccur() {
       super.testFullTextTermDoesntOccur();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028527: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed.")
    @Override
-   public void testFullTextRangeWildcard() throws Exception {
+   public void testFullTextRangeWildcard() {
       super.testFullTextRangeWildcard();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028527: Full-text queries cannot be applied to property 'amount' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed.")
    @Override
-   public void testFullTextRange() throws Exception {
+   public void testFullTextRange() {
       super.testFullTextRange();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextPrefix() throws Exception {
+   public void testFullTextPrefix() {
       super.testFullTextPrefix();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextWildcard() throws Exception {
+   public void testFullTextWildcard() {
       super.testFullTextWildcard();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextWildcardFuzzyNotAllowed() throws Exception {
+   public void testFullTextWildcardFuzzyNotAllowed() {
       super.testFullTextWildcardFuzzyNotAllowed();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextFuzzy() throws Exception {
+   public void testFullTextFuzzy() {
       super.testFullTextFuzzy();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextFuzzyDefaultEdits() throws Exception {
+   public void testFullTextFuzzyDefaultEdits() {
       super.testFullTextFuzzyDefaultEdits();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextFuzzySpecifiedEdits() throws Exception {
+   public void testFullTextFuzzySpecifiedEdits() {
       super.testFullTextFuzzySpecifiedEdits();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextRegexp() throws Exception {
+   public void testFullTextRegexp() {
       super.testFullTextRegexp();
    }
 
-   @Test(enabled = false, description = "Not applicable in non-indexed mode")
-   public void testExactMatchOnAnalyzedFieldNotAllowed() throws Exception {
-      // this test does not make sense in non-indexed mode
+   @Override
+   public void testExactMatchOnAnalyzedFieldNotAllowed() {
+      // Not applicable to non-indexed caches
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'description' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextTermOnNonAnalyzedFieldNotAllowed() throws Exception {
+   public void testFullTextTermOnNonAnalyzedFieldNotAllowed() {
       super.testFullTextTermOnNonAnalyzedFieldNotAllowed();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
    @Override
-   public void testFullTextRegexp2() throws Exception {
+   public void testFullTextRegexp2() {
       super.testFullTextRegexp2();
    }
 }

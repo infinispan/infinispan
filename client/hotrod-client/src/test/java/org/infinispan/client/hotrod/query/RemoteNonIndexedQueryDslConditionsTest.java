@@ -27,13 +27,13 @@ public class RemoteNonIndexedQueryDslConditionsTest extends RemoteQueryDslCondit
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: The cache must be indexed in order to use full-text queries.")
    @Override
-   public void testFullTextTerm() throws Exception {
+   public void testFullTextTerm() {
       super.testFullTextTerm();
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: The cache must be indexed in order to use full-text queries.")
    @Override
-   public void testFullTextPhrase() throws Exception {
+   public void testFullTextPhrase() {
       super.testFullTextPhrase();
    }
 }

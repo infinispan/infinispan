@@ -131,7 +131,6 @@ public class RemoteQueryStringTest extends QueryStringTest {
       serCtx.registerMarshaller(new AnalyzerTestEntityMarshaller());
    }
 
-
    /**
     * Logs the Protobuf schema errors (if any) and fails the test appropriately.
     */
@@ -164,26 +163,26 @@ public class RemoteQueryStringTest extends QueryStringTest {
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN014036: Prefix, wildcard or regexp queries cannot be fuzzy.*")
    @Override
-   public void testFullTextWildcardFuzzyNotAllowed() throws Exception {
+   public void testFullTextWildcardFuzzyNotAllowed() {
       super.testFullTextWildcardFuzzyNotAllowed();
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028526: Invalid query.*")
    @Override
-   public void testFullTextRegexpFuzzyNotAllowed() throws Exception {
+   public void testFullTextRegexpFuzzyNotAllowed() {
       super.testFullTextRegexpFuzzyNotAllowed();
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028522: .*property is analyzed.*")
    @Override
-   public void testExactMatchOnAnalyzedFieldNotAllowed() throws Exception {
+   public void testExactMatchOnAnalyzedFieldNotAllowed() {
       // exception is wrapped in HotRodClientException
       super.testExactMatchOnAnalyzedFieldNotAllowed();
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028521: .*unless the property is indexed and analyzed.*")
    @Override
-   public void testFullTextTermOnNonAnalyzedFieldNotAllowed() throws Exception {
+   public void testFullTextTermOnNonAnalyzedFieldNotAllowed() {
       // exception is wrapped in HotRodClientException
       super.testFullTextTermOnNonAnalyzedFieldNotAllowed();
    }
@@ -193,7 +192,7 @@ public class RemoteQueryStringTest extends QueryStringTest {
     * timestamps).
     */
    @Override
-   public void testInstant1() throws Exception {
+   public void testInstant1() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getUserTypeName() + " u where u.creationDate = " + Instant.parse("2011-12-03T10:15:30Z").toEpochMilli());
@@ -207,7 +206,7 @@ public class RemoteQueryStringTest extends QueryStringTest {
     * timestamps).
     */
    @Override
-   public void testInstant2() throws Exception {
+   public void testInstant2() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getUserTypeName() + " u where u.passwordExpirationDate = " + Instant.parse("2011-12-03T10:15:30Z").toEpochMilli());
@@ -216,7 +215,7 @@ public class RemoteQueryStringTest extends QueryStringTest {
       assertEquals(3, list.size());
    }
 
-   public void testCustomFieldAnalyzer() throws Exception {
+   public void testCustomFieldAnalyzer() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from sample_bank_account.AnalyzerTestEntity where f1:'test'");

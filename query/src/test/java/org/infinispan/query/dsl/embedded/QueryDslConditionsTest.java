@@ -261,7 +261,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(EmbeddedQueryFactory.class, getQueryFactory().getClass());
    }
 
-   public void testEq1() throws Exception {
+   public void testEq1() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -274,7 +274,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Doe", list.get(0).getSurname());
    }
 
-   public void testEqEmptyString() throws Exception {
+   public void testEqEmptyString() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -285,7 +285,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(list.isEmpty());
    }
 
-   public void testEqSentence() throws Exception {
+   public void testEqSentence() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getAccountImplClass())
@@ -297,7 +297,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1, list.get(0).getId());
    }
 
-   public void testEq() throws Exception {
+   public void testEq() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -308,7 +308,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(0, list.size());
    }
 
-   public void testEqNonIndexedType() throws Exception {
+   public void testEqNonIndexedType() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(NotIndexed.class)
@@ -320,7 +320,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("testing 123", list.get(0).notIndexedField);
    }
 
-   public void testEqNonIndexedField() throws Exception {
+   public void testEqNonIndexedField() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -332,7 +332,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1, list.get(0).getId());
    }
 
-   public void testEqHybridQuery() throws Exception {
+   public void testEqHybridQuery() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -345,7 +345,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1, list.get(0).getId());
    }
 
-   public void testEqHybridQueryWithParam() throws Exception {
+   public void testEqHybridQueryWithParam() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -360,7 +360,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1, list.get(0).getId());
    }
 
-   public void testEqHybridQueryWithPredicateOptimisation() throws Exception {
+   public void testEqHybridQueryWithPredicateOptimisation() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -374,7 +374,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Lorem ipsum dolor sit amet", list.get(0).getNotes());
    }
 
-   public void testEqInNested1() throws Exception {
+   public void testEqInNested1() {
       QueryFactory qf = getQueryFactory();
 
       // all users in a given post code
@@ -387,7 +387,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("X1234", list.get(0).getAddresses().get(0).getPostCode());
    }
 
-   public void testEqInNested2() throws Exception {
+   public void testEqInNested2() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -399,7 +399,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(2, list.get(0).getAddresses().size());
    }
 
-   public void testLike() throws Exception {
+   public void testLike() {
       QueryFactory qf = getQueryFactory();
 
       // all rent payments made from a given account
@@ -414,7 +414,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014802: 'from' must be an instance of java.lang.Comparable")
-   public void testBetweenArgsAreComparable() throws Exception {
+   public void testBetweenArgsAreComparable() {
       QueryFactory qf = getQueryFactory();
 
       qf.from(getModelFactory().getTransactionImplClass())
@@ -470,7 +470,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       }
    }
 
-   public void testGt() throws Exception {
+   public void testGt() {
       QueryFactory qf = getQueryFactory();
 
       // all the transactions greater than a given amount
@@ -483,7 +483,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(list.get(0).getAmount() > 1500);
    }
 
-   public void testGte() throws Exception {
+   public void testGte() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getTransactionImplClass())
@@ -497,7 +497,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       }
    }
 
-   public void testLt() throws Exception {
+   public void testLt() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getTransactionImplClass())
@@ -511,7 +511,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       }
    }
 
-   public void testLte() throws Exception {
+   public void testLte() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getTransactionImplClass())
@@ -526,7 +526,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    // This tests against https://hibernate.atlassian.net/browse/HSEARCH-2030
-   public void testLteOnFieldWithNullToken() throws Exception {
+   public void testLteOnFieldWithNullToken() {
       QueryFactory qf = getQueryFactory();
 
       // all the transactions that happened in January 2013
@@ -539,7 +539,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("-Popcorn", list.get(0).getDescription());
    }
 
-   public void testAnd1() throws Exception {
+   public void testAnd1() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -552,7 +552,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(2, list.get(0).getId());
    }
 
-   public void testAnd2() throws Exception {
+   public void testAnd2() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -565,7 +565,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(2, list.get(0).getId());
    }
 
-   public void testAnd3() throws Exception {
+   public void testAnd3() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -577,7 +577,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(0, list.size());
    }
 
-   public void testAnd4() throws Exception {
+   public void testAnd4() {
       QueryFactory qf = getQueryFactory();
 
       //test for parenthesis, "and" should have higher priority
@@ -591,7 +591,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(2, list.size());
    }
 
-   public void testOr1() throws Exception {
+   public void testOr1() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -606,7 +606,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       }
    }
 
-   public void testOr2() throws Exception {
+   public void testOr2() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -621,7 +621,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       }
    }
 
-   public void testOr3() throws Exception {
+   public void testOr3() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -633,7 +633,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(3, list.size());
    }
 
-   public void testOr4() throws Exception {
+   public void testOr4() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -650,7 +650,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Doe", list.get(1).getSurname());
    }
 
-   public void testOr5() throws Exception {
+   public void testOr5() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -665,7 +665,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("John", list.get(0).getName());
    }
 
-   public void testNot1() throws Exception {
+   public void testNot1() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -677,7 +677,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("John", list.get(0).getName());
    }
 
-   public void testNot2() throws Exception {
+   public void testNot2() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -689,7 +689,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("John", list.get(0).getName());
    }
 
-   public void testNot3() throws Exception {
+   public void testNot3() {
       QueryFactory qf = getQueryFactory();
 
       // NOT should have higher priority than AND
@@ -703,7 +703,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Spider", list.get(0).getName());
    }
 
-   public void testNot4() throws Exception {
+   public void testNot4() {
       QueryFactory qf = getQueryFactory();
 
       // NOT should have higher priority than AND
@@ -717,7 +717,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Spider", list.get(0).getName());
    }
 
-   public void testNot5() throws Exception {
+   public void testNot5() {
       QueryFactory qf = getQueryFactory();
 
       // NOT should have higher priority than OR
@@ -733,7 +733,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       }
    }
 
-   public void testNot6() throws Exception {
+   public void testNot6() {
       QueryFactory qf = getQueryFactory();
 
       // QueryFactory.not() test
@@ -746,7 +746,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Woman", list.get(0).getSurname());
    }
 
-   public void testNot7() throws Exception {
+   public void testNot7() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -758,7 +758,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(list.isEmpty());
    }
 
-   public void testNot8() throws Exception {
+   public void testNot8() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -773,7 +773,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Woman", list.get(0).getSurname());
    }
 
-   public void testNot9() throws Exception {
+   public void testNot9() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -791,7 +791,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Woman", list.get(1).getSurname());
    }
 
-   public void testNot10() throws Exception {
+   public void testNot10() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -805,7 +805,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertNotEquals("Woman", list.get(0).getSurname());
    }
 
-   public void testNot11() throws Exception {
+   public void testNot11() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -819,7 +819,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertNotEquals("Woman", list.get(0).getSurname());
    }
 
-   public void testEmptyQuery() throws Exception {
+   public void testEmptyQuery() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass()).build();
@@ -851,7 +851,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028503:.*")
-   public void testInvalidEmbeddedAttributeQuery() throws Exception {
+   public void testInvalidEmbeddedAttributeQuery() {
       QueryFactory qf = getQueryFactory();
 
       QueryBuilder queryBuilder = qf.from(getModelFactory().getUserImplClass())
@@ -871,7 +871,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       q.list();
    }
 
-   public void testIsNull1() throws Exception {
+   public void testIsNull1() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -882,7 +882,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(0, list.size());
    }
 
-   public void testIsNull2() throws Exception {
+   public void testIsNull2() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -893,7 +893,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(3, list.size());
    }
 
-   public void testIsNull3() throws Exception {
+   public void testIsNull3() {
       if (testNullCollections()) {
          QueryFactory qf = getQueryFactory();
 
@@ -907,7 +907,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       }
    }
 
-   public void testIsNullNumericWithProjection1() throws Exception {
+   public void testIsNullNumericWithProjection1() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -928,7 +928,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertNull(list.get(1)[2]);
    }
 
-   public void testIsNullNumericWithProjection2() throws Exception {
+   public void testIsNullNumericWithProjection2() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -942,7 +942,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(22, list.get(0)[1]);
    }
 
-   public void testContains1() throws Exception {
+   public void testContains1() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -954,7 +954,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1, list.get(0).getId());
    }
 
-   public void testContains2() throws Exception {
+   public void testContains2() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -965,7 +965,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(0, list.size());
    }
 
-   public void testContainsAll1() throws Exception {
+   public void testContainsAll1() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -977,7 +977,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1, list.get(0).getId());
    }
 
-   public void testContainsAll2() throws Exception {
+   public void testContainsAll2() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -989,7 +989,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1, list.get(0).getId());
    }
 
-   public void testContainsAll3() throws Exception {
+   public void testContainsAll3() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1000,7 +1000,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(0, list.size());
    }
 
-   public void testContainsAll4() throws Exception {
+   public void testContainsAll4() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1011,7 +1011,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(3, list.size());
    }
 
-   public void testContainsAny1() throws Exception {
+   public void testContainsAny1() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1025,7 +1025,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(2, list.get(1).getId());
    }
 
-   public void testContainsAny2() throws Exception {
+   public void testContainsAny2() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1036,7 +1036,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(0, list.size());
    }
 
-   public void testContainsAny3() throws Exception {
+   public void testContainsAny3() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1047,7 +1047,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(3, list.size());
    }
 
-   public void testIn1() throws Exception {
+   public void testIn1() {
       QueryFactory qf = getQueryFactory();
 
       List<Integer> ids = Arrays.asList(1, 3);
@@ -1062,7 +1062,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       }
    }
 
-   public void testIn2() throws Exception {
+   public void testIn2() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1074,37 +1074,35 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
-   public void testIn3() throws Exception {
+   public void testIn3() {
       QueryFactory qf = getQueryFactory();
 
       qf.from(getModelFactory().getUserImplClass()).having("id").in(Collections.emptySet());
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
-   public void testIn4() throws Exception {
+   public void testIn4() {
       QueryFactory qf = getQueryFactory();
 
-      Collection collection = null;
-      qf.from(getModelFactory().getUserImplClass()).having("id").in(collection);
+      qf.from(getModelFactory().getUserImplClass()).having("id").in((Collection) null);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
-   public void testIn5() throws Exception {
+   public void testIn5() {
       QueryFactory qf = getQueryFactory();
 
-      Object[] array = null;
-      qf.from(getModelFactory().getUserImplClass()).having("id").in(array);
+      qf.from(getModelFactory().getUserImplClass()).having("id").in((Object[]) null);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
-   public void testIn6() throws Exception {
+   public void testIn6() {
       QueryFactory qf = getQueryFactory();
 
       Object[] array = new Object[0];
       qf.from(getModelFactory().getUserImplClass()).having("id").in(array);
    }
 
-   public void testSampleDomainQuery1() throws Exception {
+   public void testSampleDomainQuery1() {
       QueryFactory qf = getQueryFactory();
 
       // all male users
@@ -1119,7 +1117,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Spider", list.get(1).getName());
    }
 
-   public void testSampleDomainQuery2() throws Exception {
+   public void testSampleDomainQuery2() {
       QueryFactory qf = getQueryFactory();
 
       // all male users, but this time retrieved in a twisted manner
@@ -1135,7 +1133,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Spider", list.get(1).getName());
    }
 
-   public void testStringLiteralEscape() throws Exception {
+   public void testStringLiteralEscape() {
       QueryFactory qf = getQueryFactory();
 
       // all transactions that have a given description. the description contains characters that need to be escaped.
@@ -1148,7 +1146,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1, list.get(0).getId());
    }
 
-   public void testSortByDate() throws Exception {
+   public void testSortByDate() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getAccountImplClass())
@@ -1162,7 +1160,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1, list.get(2).getId());
    }
 
-   public void testSampleDomainQuery3() throws Exception {
+   public void testSampleDomainQuery3() {
       QueryFactory qf = getQueryFactory();
 
       // all male users
@@ -1177,7 +1175,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Spider", list.get(1).getName());
    }
 
-   public void testSampleDomainQuery4() throws Exception {
+   public void testSampleDomainQuery4() {
       QueryFactory qf = getQueryFactory();
 
       // all users ordered descendingly by name
@@ -1192,7 +1190,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("John", list.get(2).getName());
    }
 
-   public void testSampleDomainQuery4With2SortingOptions() throws Exception {
+   public void testSampleDomainQuery4With2SortingOptions() {
       QueryFactory qf = getQueryFactory();
 
       // all users ordered descendingly by name
@@ -1213,7 +1211,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Doe", list.get(2).getSurname());
    }
 
-   public void testSampleDomainQuery5() throws Exception {
+   public void testSampleDomainQuery5() {
       QueryFactory qf = getQueryFactory();
 
       // name projection of all users ordered descendingly by name
@@ -1232,7 +1230,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("John", list.get(2)[0]);
    }
 
-   public void testSampleDomainQuery6() throws Exception {
+   public void testSampleDomainQuery6() {
       QueryFactory qf = getQueryFactory();
 
       // all users with a given name and surname
@@ -1247,7 +1245,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Doe", list.get(0).getSurname());
    }
 
-   public void testSampleDomainQuery7() throws Exception {
+   public void testSampleDomainQuery7() {
       QueryFactory qf = getQueryFactory();
 
       // all rent payments made from a given account
@@ -1302,7 +1300,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       }
    }
 
-   public void testSampleDomainQuery10() throws Exception {
+   public void testSampleDomainQuery10() {
       QueryFactory qf = getQueryFactory();
 
       // all the transactions for a an account having amount greater than a given amount
@@ -1317,7 +1315,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(list.get(1).getAmount() > 40);
    }
 
-   public void testSampleDomainQuery11() throws Exception {
+   public void testSampleDomainQuery11() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1331,7 +1329,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Doe", list.get(0).getSurname());
    }
 
-   public void testSampleDomainQuery12() throws Exception {
+   public void testSampleDomainQuery12() {
       QueryFactory qf = getQueryFactory();
 
       // all the transactions that represents credits to the account
@@ -1345,7 +1343,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertFalse(list.get(0).isDebit());
    }
 
-   public void testSampleDomainQuery13() throws Exception {
+   public void testSampleDomainQuery13() {
       QueryFactory qf = getQueryFactory();
 
       // the user that has the bank account with id 3
@@ -1358,7 +1356,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(list.get(0).getAccountIds().contains(3));
    }
 
-   public void testSampleDomainQuery14() throws Exception {
+   public void testSampleDomainQuery14() {
       QueryFactory qf = getQueryFactory();
 
       // the user that has all the specified bank accounts
@@ -1372,7 +1370,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(list.get(0).getAccountIds().contains(2));
    }
 
-   public void testSampleDomainQuery15() throws Exception {
+   public void testSampleDomainQuery15() {
       QueryFactory qf = getQueryFactory();
 
       // the user that has at least one of the specified accounts
@@ -1385,7 +1383,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(Arrays.asList(1, 2).contains(list.get(1).getId()));
    }
 
-   public void testSampleDomainQuery16() throws Exception {
+   public void testSampleDomainQuery16() {
       QueryFactory qf = getQueryFactory();
 
       // third batch of 10 transactions for a given account
@@ -1403,7 +1401,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       }
    }
 
-   public void testSampleDomainQuery17() throws Exception {
+   public void testSampleDomainQuery17() {
       QueryFactory qf = getQueryFactory();
 
       // all accounts for a user. first get the user by id and then get his account.
@@ -1421,7 +1419,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("John Doe's second bank account", list.get(1).getDescription());
    }
 
-   public void testSampleDomainQuery18() throws Exception {
+   public void testSampleDomainQuery18() {
       QueryFactory qf = getQueryFactory();
 
       // all transactions of account with id 2 which have an amount larger than 1600 or their description contains the word 'rent'
@@ -1437,7 +1435,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Feb. rent payment", list.get(1).getDescription());
    }
 
-   public void testProjectionOnOptionalField() throws Exception {
+   public void testProjectionOnOptionalField() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1455,7 +1453,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertNull(list.get(2)[1]);
    }
 
-   public void testNullOnIntegerField() throws Exception {
+   public void testNullOnIntegerField() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1468,7 +1466,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertNull(list.get(1).getAge());
    }
 
-   public void testIsNotNullOnIntegerField() throws Exception {
+   public void testIsNotNullOnIntegerField() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1482,7 +1480,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertNotNull(list.get(0).getAge());
    }
 
-   public void testSampleDomainQuery19() throws Exception {
+   public void testSampleDomainQuery19() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1494,7 +1492,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(Arrays.asList(1, 2).contains(list.get(1).getId()));
    }
 
-   public void testSampleDomainQuery20() throws Exception {
+   public void testSampleDomainQuery20() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1506,7 +1504,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(Arrays.asList(2, 3).contains(list.get(1).getId()));
    }
 
-   public void testSampleDomainQuery21() throws Exception {
+   public void testSampleDomainQuery21() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1518,7 +1516,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(Arrays.asList(1, 2).contains(list.get(1).getId()));
    }
 
-   public void testSampleDomainQuery22() throws Exception {
+   public void testSampleDomainQuery22() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1530,7 +1528,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(Arrays.asList(2, 3).contains(list.get(1).getId()));
    }
 
-   public void testSampleDomainQuery23() throws Exception {
+   public void testSampleDomainQuery23() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1542,7 +1540,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(3, list.get(0).getId());
    }
 
-   public void testSampleDomainQuery24() throws Exception {
+   public void testSampleDomainQuery24() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1556,7 +1554,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(Arrays.asList(1, 3).contains(list.get(1).getId()));
    }
 
-   public void testSampleDomainQuery25() throws Exception {
+   public void testSampleDomainQuery25() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1623,14 +1621,14 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalStateException.class)
-   public void testWrongQueryBuilding1() throws Exception {
+   public void testWrongQueryBuilding1() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.not().having("name").eq("John").build();
    }
 
    @Test(expectedExceptions = IllegalStateException.class)
-   public void testWrongQueryBuilding2() throws Exception {
+   public void testWrongQueryBuilding2() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1640,7 +1638,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalStateException.class)
-   public void testWrongQueryBuilding3() throws Exception {
+   public void testWrongQueryBuilding3() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1650,7 +1648,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalStateException.class)
-   public void testWrongQueryBuilding4() throws Exception {
+   public void testWrongQueryBuilding4() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1660,7 +1658,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalStateException.class)
-   public void testWrongQueryBuilding5() throws Exception {
+   public void testWrongQueryBuilding5() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1670,7 +1668,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
-   public void testWrongQueryBuilding6() throws Exception {
+   public void testWrongQueryBuilding6() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1679,7 +1677,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalStateException.class)
-   public void testWrongQueryBuilding7() throws Exception {
+   public void testWrongQueryBuilding7() {
       QueryFactory qf = getQueryFactory();
 
       FilterConditionEndContext q1 = qf.from(getModelFactory().getUserImplClass())
@@ -1690,7 +1688,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014823: maxResults must be greater than 0")
-   public void testPagination1() throws Exception {
+   public void testPagination1() {
       QueryFactory qf = getQueryFactory();
 
       qf.from(getModelFactory().getUserImplClass())
@@ -1698,7 +1696,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014823: maxResults must be greater than 0")
-   public void testPagination2() throws Exception {
+   public void testPagination2() {
       QueryFactory qf = getQueryFactory();
 
       qf.from(getModelFactory().getUserImplClass())
@@ -1706,14 +1704,14 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014824: startOffset cannot be less than 0")
-   public void testPagination3() throws Exception {
+   public void testPagination3() {
       QueryFactory qf = getQueryFactory();
 
       qf.from(getModelFactory().getUserImplClass())
             .startOffset(-3);
    }
 
-   public void testOrderedPagination4() throws Exception {
+   public void testOrderedPagination4() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1726,7 +1724,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(3, list.size());
    }
 
-   public void testUnorderedPagination4() throws Exception {
+   public void testUnorderedPagination4() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1738,7 +1736,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(3, list.size());
    }
 
-   public void testOrderedPagination5() throws Exception {
+   public void testOrderedPagination5() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1751,7 +1749,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(0, list.size());
    }
 
-   public void testUnorderedPagination5() throws Exception {
+   public void testUnorderedPagination5() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1763,7 +1761,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(0, list.size());
    }
 
-   public void testOrderedPagination6() throws Exception {
+   public void testOrderedPagination6() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1776,7 +1774,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(0, list.size());
    }
 
-   public void testUnorderedPagination6() throws Exception {
+   public void testUnorderedPagination6() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1788,7 +1786,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(0, list.size());
    }
 
-   public void testOrderedPagination7() throws Exception {
+   public void testOrderedPagination7() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1801,7 +1799,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(2, list.size());
    }
 
-   public void testUnorderedPagination7() throws Exception {
+   public void testUnorderedPagination7() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1813,7 +1811,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(2, list.size());
    }
 
-   public void testOrderedPagination8() throws Exception {
+   public void testOrderedPagination8() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1826,7 +1824,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(2, list.size());
    }
 
-   public void testUnorderedPagination8() throws Exception {
+   public void testUnorderedPagination8() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1838,7 +1836,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(2, list.size());
    }
 
-   public void testGroupBy1() throws Exception {
+   public void testGroupBy1() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1855,7 +1853,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Spider", list.get(1)[0]);
    }
 
-   public void testGroupBy2() throws Exception {
+   public void testGroupBy2() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -1994,7 +1992,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(149.0d, (Double) list.get(0)[1], 0.0001d);
    }
 
-   public void testSum() throws Exception {
+   public void testSum() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2502,7 +2500,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1L, list.get(0)[1]);
    }
 
-   public void testParam() throws Exception {
+   public void testParam() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2525,7 +2523,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(User.Gender.FEMALE, list.get(0).getGender());
    }
 
-   public void testWithParameterMap() throws Exception {
+   public void testWithParameterMap() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2588,7 +2586,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014805: No parameter named 'param2' was found")
-   public void testUnknownParam() throws Exception {
+   public void testUnknownParam() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2599,7 +2597,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014806: No parameters named '\\[param2\\]' were found")
-   public void testUnknownParamWithParameterMap() throws Exception {
+   public void testUnknownParamWithParameterMap() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2613,7 +2611,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014804: Query does not have parameters")
-   public void testQueryWithNoParams() throws Exception {
+   public void testQueryWithNoParams() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2623,7 +2621,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014804: Query does not have parameters")
-   public void testQueryWithNoParamsWithParameterMap() throws Exception {
+   public void testQueryWithNoParamsWithParameterMap() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2637,7 +2635,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014803: Parameter name cannot be null or empty")
-   public void testNullParamName() throws Exception {
+   public void testNullParamName() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2648,7 +2646,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014803: Parameter name cannot be null or empty")
-   public void testEmptyParamName() throws Exception {
+   public void testEmptyParamName() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2659,7 +2657,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014825: Query parameter 'param2' was not set")
-   public void testMissingParam() throws Exception {
+   public void testMissingParam() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2673,7 +2671,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014825: Query parameter 'param2' was not set")
-   public void testMissingParamWithParameterMap() throws Exception {
+   public void testMissingParamWithParameterMap() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2690,7 +2688,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014812: paramValues cannot be null")
-   public void testQueryWithNoParamsWithNullParameterMap() throws Exception {
+   public void testQueryWithNoParamsWithNullParameterMap() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2754,7 +2752,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(((Date) list.get(0)[1]).compareTo(makeDate("2013-02-27")) == 0);
    }
 
-   public void testNotIndexedProjection() throws Exception {
+   public void testNotIndexedProjection() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getTransactionImplClass())
@@ -2773,7 +2771,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(true, list.get(1)[1]);
    }
 
-   public void testNotStoredProjection() throws Exception {
+   public void testNotStoredProjection() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getTransactionImplClass())
@@ -2792,7 +2790,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Expensive shoes 49", list.get(1)[1]);
    }
 
-   public void testNotIndexedOrderBy() throws Exception {
+   public void testNotIndexedOrderBy() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getTransactionImplClass())
@@ -2812,7 +2810,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(true, list.get(1)[1]);
    }
 
-   public void testNotStoredOrderBy() throws Exception {
+   public void testNotStoredOrderBy() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getTransactionImplClass())
@@ -2989,7 +2987,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(0, q4.list().size());
    }
 
-   public void testCompareLongWithInt() throws Exception {
+   public void testCompareLongWithInt() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -3002,7 +3000,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(0, list.size());
    }
 
-   public void testCompareDoubleWithInt() throws Exception {
+   public void testCompareDoubleWithInt() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getTransactionImplClass())
@@ -3015,7 +3013,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(0, list.size());
    }
 
-   public void testFullTextTerm() throws Exception {
+   public void testFullTextTerm() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'rent'");
@@ -3024,7 +3022,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1, list.size());
    }
 
-   public void testFullTextPhrase() throws Exception {
+   public void testFullTextPhrase() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'expensive shoes'");
@@ -3033,7 +3031,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(50, list.size());
    }
 
-   public void testInstant1() throws Exception {
+   public void testInstant1() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -3044,7 +3042,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(3, list.size());
    }
 
-   public void testInstant2() throws Exception {
+   public void testInstant2() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())

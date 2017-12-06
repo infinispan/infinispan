@@ -133,7 +133,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       //Don't clear, this is destroying the index
    }
 
-   public void testAttributeQuery() throws Exception {
+   public void testAttributeQuery() {
       // get user back from remote cache and check its attributes
       User fromCache = remoteCache.get(1);
       assertNotNull(fromCache);
@@ -151,7 +151,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       assertUser1(list.get(0));
    }
 
-   public void testEmbeddedAttributeQuery() throws Exception {
+   public void testEmbeddedAttributeQuery() {
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
       Query query = qf.from(UserPB.class)
@@ -165,7 +165,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028503: Property addresses can not be selected from type sample_bank_account.User since it is an embedded entity.")
-   public void testInvalidEmbeddedAttributeQuery() throws Exception {
+   public void testInvalidEmbeddedAttributeQuery() {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
       Query q = qf.from(UserPB.class)
@@ -174,7 +174,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       q.list();  // exception expected
    }
 
-   public void testProjections() throws Exception {
+   public void testProjections() {
       // get user back from remote cache and check its attributes
       User fromCache = remoteCache.get(1);
       assertUser1(fromCache);
