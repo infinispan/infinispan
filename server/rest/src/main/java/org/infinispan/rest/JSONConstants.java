@@ -11,6 +11,7 @@ public interface JSONConstants {
    String HITS = "hits";
    String MAX_RESULTS = "max_results";
    String OFFSET = "offset";
+   String QUERY_MODE = "query_mode";
    String QUERY_STRING = "query";
    String TOTAL_RESULTS = "total_results";
    String TYPE = "_type";

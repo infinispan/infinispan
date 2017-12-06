@@ -1,11 +1,16 @@
 package org.infinispan.query;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.query.engine.spi.HSQuery;
+import org.hibernate.search.spi.CustomTypeMetadata;
+import org.hibernate.search.spi.IndexedTypeMap;
+import org.hibernate.search.spi.impl.IndexedTypeMaps;
+import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryEngine;
 import org.infinispan.query.dsl.embedded.impl.HsQueryRequest;
@@ -27,6 +32,8 @@ public class QueryDefinition {
    private HSQuery hsQuery;
    private int maxResults = 100;
    private int firstResult;
+   private Set<String> sortableFields;
+   private Class<?> indexedType;
 
    private transient Sort sort;
 
@@ -42,10 +49,24 @@ public class QueryDefinition {
       return Optional.ofNullable(queryString);
    }
 
+   private IndexedTypeMap<CustomTypeMetadata> createMetadata() {
+      return IndexedTypeMaps.singletonMapping(PojoIndexedTypeIdentifier.convertFromLegacy(indexedType), () -> sortableFields);
+   }
+
+   protected QueryEngine getQueryEngine(AdvancedCache<?, ?> cache) {
+      return cache.getComponentRegistry().getComponent(EmbeddedQueryEngine.class);
+   }
+
    public void initialize(AdvancedCache<?, ?> cache) {
       if (hsQuery == null) {
-         QueryEngine queryEngine = cache.getComponentRegistry().getComponent(EmbeddedQueryEngine.class);
-         HsQueryRequest hsQueryRequest = queryEngine.createHsQuery(queryString);
+         QueryEngine queryEngine = getQueryEngine(cache);
+         HsQueryRequest hsQueryRequest;
+         if (indexedType != null && sortableFields != null) {
+            IndexedTypeMap<CustomTypeMetadata> metadata = createMetadata();
+            hsQueryRequest = queryEngine.createHsQuery(queryString, metadata);
+         } else {
+            hsQueryRequest = queryEngine.createHsQuery(queryString, null);
+         }
          this.hsQuery = hsQueryRequest.getHsQuery();
          this.sort = hsQueryRequest.getSort();
          hsQuery.firstResult(firstResult);
@@ -95,7 +116,6 @@ public class QueryDefinition {
       this.sort = sort;
    }
 
-
    public void filter(Filter filter) {
       if (queryString != null) throw log.filterNotSupportedWithQueryString();
       hsQuery.filter(filter);
@@ -109,5 +129,21 @@ public class QueryDefinition {
    public void disableFullTextFilter(String name) {
       if (queryString != null) throw log.filterNotSupportedWithQueryString();
       hsQuery.disableFullTextFilter(name);
+   }
+
+   public Set<String> getSortableFields() {
+      return sortableFields;
+   }
+
+   public void setSortableField(Set<String> sortableField) {
+      this.sortableFields = sortableField;
+   }
+
+   public Class<?> getIndexedType() {
+      return indexedType;
+   }
+
+   public void setIndexedType(Class<?> indexedType) {
+      this.indexedType = indexedType;
    }
 }

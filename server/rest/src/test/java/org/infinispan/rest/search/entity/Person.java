@@ -1,18 +1,20 @@
 package org.infinispan.rest.search.entity;
 
+import java.io.Serializable;
 import java.util.Set;
 
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.annotations.NumericField;
+import org.infinispan.marshall.core.ExternalPojo;
 
 /**
  * @since 9.2
  */
 @Indexed
 @SuppressWarnings("unused")
-public class Person {
+public class Person implements Serializable, ExternalPojo {
 
    @Field
    private Integer id;

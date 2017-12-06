@@ -1,8 +1,10 @@
 package org.infinispan.rest.search;
 
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.testng.annotations.Test;
 
 /**
@@ -15,10 +17,10 @@ public class IndexedRestOffHeapSearch extends BaseRestSearchTest {
 
    @Override
    ConfigurationBuilder getConfigBuilder() {
-      ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+      ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configurationBuilder.indexing()
             .index(Index.PRIMARY_OWNER)
-            .addProperty("default.directory_provider", "ram");
+            .addProperty("default.indexmanager", InfinispanIndexManager.class.getName());
       configurationBuilder.memory().storageType(StorageType.OFF_HEAP);
       return configurationBuilder;
    }
