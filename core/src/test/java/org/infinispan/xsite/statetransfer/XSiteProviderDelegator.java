@@ -15,7 +15,7 @@ public class XSiteProviderDelegator implements XSiteStateProvider {
 
    protected final XSiteStateProvider xSiteStateProvider;
 
-   public XSiteProviderDelegator(XSiteStateProvider xSiteStateProvider) {
+   protected XSiteProviderDelegator(XSiteStateProvider xSiteStateProvider) {
       this.xSiteStateProvider = xSiteStateProvider;
    }
 

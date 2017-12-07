@@ -1,10 +1,12 @@
 package org.infinispan.xsite.statetransfer.failures;
 
-import static org.infinispan.test.TestingUtil.WrapFactory;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.replaceComponent;
-import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.infinispan.test.TestingUtil.wrapComponent;
+import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
+import static org.infinispan.xsite.statetransfer.XSiteStateTransferManager.STATUS_ERROR;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,8 +29,6 @@ import org.infinispan.xsite.BackupReceiverRepositoryDelegator;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
-import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -47,29 +47,24 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
     * will apply the data (test retry in NYC).
     */
    public void testExceptionWithSuccessfulRetry() {
-      takeSiteOffline(LON, NYC);
+      takeSiteOffline();
       final Object key = new MagicKey(cache(NYC, 1));
       final FailureHandler handler = FailureHandler.replaceOn(cache(NYC, 1));
       final CounterBackupReceiverRepository counterRepository = CounterBackupReceiverRepository.replaceOn(cache(NYC, 0).getCacheManager());
 
       cache(LON, 0).put(key, VALUE);
 
-      handler.fail(3); //it fails 3 times and then succeeds.
+      handler.fail(); //it fails 3 times and then succeeds.
 
-      startStateTransfer(cache(LON, 0), NYC);
+      startStateTransfer();
       assertOnline(LON, NYC);
 
       awaitXSiteStateSent(LON);
-      awaitXSiteStateReceived(NYC);
+      assertEventuallyNoStateTransferInReceivingSite(null);
 
-      AssertJUnit.assertEquals(0, handler.remainingFails());
-      AssertJUnit.assertEquals(1, counterRepository.counter.get());
-      assertInSite(NYC, new AssertCondition<Object, Object>() {
-         @Override
-         public void assertInCache(Cache<Object, Object> cache) {
-            AssertJUnit.assertEquals(VALUE, cache.get(key));
-         }
-      });
+      assertEquals(0, handler.remainingFails());
+      assertEquals(1, counterRepository.counter.get());
+      assertInSite(NYC, cache -> assertEquals(VALUE, cache.get(key)));
    }
 
    /**
@@ -77,7 +72,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
     * (test retry in NYC and LON).
     */
    public void testExceptionWithFailedRetry() {
-      takeSiteOffline(LON, NYC);
+      takeSiteOffline();
       final Object key = new MagicKey(cache(NYC, 1));
       final FailureHandler handler = FailureHandler.replaceOn(cache(NYC, 1));
       final CounterBackupReceiverRepository counterRepository = CounterBackupReceiverRepository.replaceOn(cache(NYC, 0).getCacheManager());
@@ -86,21 +81,16 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
 
       handler.failAlways();
 
-      startStateTransfer(cache(LON, 0), NYC);
+      startStateTransfer();
       assertOnline(LON, NYC);
 
       awaitXSiteStateSent(LON);
-      awaitXSiteStateReceived(NYC);
+      assertEventuallyNoStateTransferInReceivingSite(null);
 
-      assertXSiteStatus(LON, NYC, XSiteStateTransferManager.STATUS_ERROR);
+      assertXSiteErrorStatus();
 
-      AssertJUnit.assertEquals(3 /*max_retry + 1*/, counterRepository.counter.get());
-      assertInSite(NYC, new AssertCondition<Object, Object>() {
-         @Override
-         public void assertInCache(Cache<Object, Object> cache) {
-            AssertJUnit.assertNull(cache.get(key));
-         }
-      });
+      assertEquals(3 /*max_retry + 1*/, counterRepository.counter.get());
+      assertInSite(NYC, cache -> assertNull(cache.get(key)));
    }
 
    /**
@@ -108,36 +98,26 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
     * retry in NYC, from remote to local).
     */
    public void testRetryLocally() throws ExecutionException, InterruptedException {
-      takeSiteOffline(LON, NYC);
+      takeSiteOffline();
       final Object key = new MagicKey(cache(NYC, 1));
       final DiscardHandler handler = DiscardHandler.replaceOn(cache(NYC, 1));
       final CounterBackupReceiverRepository counterRepository = CounterBackupReceiverRepository.replaceOn(cache(NYC, 0).getCacheManager());
 
       cache(LON, 0).put(key, VALUE);
 
-      startStateTransfer(cache(LON, 0), NYC);
+      startStateTransfer();
       assertOnline(LON, NYC);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return handler.discarded;
-         }
-      });
+      eventually(() -> handler.discarded);
 
       triggerTopologyChange(NYC, 1).get();
 
       awaitXSiteStateSent(LON);
-      awaitXSiteStateReceived(NYC);
+      assertEventuallyNoStateTransferInReceivingSite(null);
 
-      AssertJUnit.assertEquals(1, counterRepository.counter.get());
+      assertEquals(1, counterRepository.counter.get());
 
-      assertInSite(NYC, new AssertCondition<Object, Object>() {
-         @Override
-         public void assertInCache(Cache<Object, Object> cache) {
-            AssertJUnit.assertEquals(VALUE, cache.get(key));
-         }
-      });
+      assertInSite(NYC, cache -> assertEquals(VALUE, cache.get(key)));
    }
 
    /**
@@ -145,41 +125,31 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
     * The 1st and the 2nd time will fail and only the 3rd will succeed (testing local retry)
     */
    public void testMultipleRetryLocally() throws ExecutionException, InterruptedException {
-      takeSiteOffline(LON, NYC);
+      takeSiteOffline();
       final Object key = new MagicKey(cache(NYC, 1));
       final DiscardHandler handler = DiscardHandler.replaceOn(cache(NYC, 1));
       final FailureXSiteConsumer failureXSiteConsumer = FailureXSiteConsumer.replaceOn(cache(NYC, 0));
       final CounterBackupReceiverRepository counterRepository = CounterBackupReceiverRepository.replaceOn(cache(NYC, 0).getCacheManager());
 
-      failureXSiteConsumer.fail(3);
+      failureXSiteConsumer.fail();
 
       cache(LON, 0).put(key, VALUE);
 
-      startStateTransfer(cache(LON, 0), NYC);
+      startStateTransfer();
       assertOnline(LON, NYC);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return handler.discarded;
-         }
-      });
+      eventually(() -> handler.discarded);
 
       triggerTopologyChange(NYC, 1).get();
 
       awaitXSiteStateSent(LON);
-      awaitXSiteStateReceived(NYC);
+      assertEventuallyNoStateTransferInReceivingSite(null);
 
-      AssertJUnit.assertEquals(0, failureXSiteConsumer.remainingFails());
+      assertEquals(0, failureXSiteConsumer.remainingFails());
 
-      AssertJUnit.assertEquals(1, counterRepository.counter.get());
+      assertEquals(1, counterRepository.counter.get());
 
-      assertInSite(NYC, new AssertCondition<Object, Object>() {
-         @Override
-         public void assertInCache(Cache<Object, Object> cache) {
-            AssertJUnit.assertEquals(VALUE, cache.get(key));
-         }
-      });
+      assertInSite(NYC, cache -> assertEquals(VALUE, cache.get(key)));
    }
 
    /**
@@ -187,7 +157,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
     * (test retry in the LON site).
     */
    public void testFailRetryLocally() throws ExecutionException, InterruptedException {
-      takeSiteOffline(LON, NYC);
+      takeSiteOffline();
       final Object key = new MagicKey(cache(NYC, 1));
       final DiscardHandler handler = DiscardHandler.replaceOn(cache(NYC, 1));
       final FailureXSiteConsumer failureXSiteConsumer = FailureXSiteConsumer.replaceOn(cache(NYC, 0));
@@ -197,41 +167,26 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
 
       cache(LON, 0).put(key, VALUE);
 
-      startStateTransfer(cache(LON, 0), NYC);
+      startStateTransfer();
       assertOnline(LON, NYC);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return handler.discarded;
-         }
-      });
+      eventually(() -> handler.discarded);
 
       triggerTopologyChange(NYC, 1).get();
 
       awaitXSiteStateSent(LON);
-      awaitXSiteStateReceived(NYC);
+      assertEventuallyNoStateTransferInReceivingSite(null);
 
       //tricky part. When the primary owners dies, the site master or the other node can become the primary owner
       //if the site master is enabled, it will never be able to apply the state (XSiteStateConsumer is throwing exception!)
       //otherwise, the other node will apply the state
-      if (XSiteStateTransferManager.STATUS_ERROR.equals(getXSitePushStatus(LON, NYC))) {
-         AssertJUnit.assertEquals(3 /*max_retry + 1*/, counterRepository.counter.get());
+      if (STATUS_ERROR.equals(getXSitePushStatus())) {
+         assertEquals(3 /*max_retry + 1*/, counterRepository.counter.get());
 
-         assertInSite(NYC, new AssertCondition<Object, Object>() {
-            @Override
-            public void assertInCache(Cache<Object, Object> cache) {
-               AssertJUnit.assertNull(cache.get(key));
-            }
-         });
+         assertInSite(NYC, cache -> assertNull(cache.get(key)));
       } else {
-         AssertJUnit.assertEquals(2 /*the 1st retry succeed*/, counterRepository.counter.get());
-         assertInSite(NYC, new AssertCondition<Object, Object>() {
-            @Override
-            public void assertInCache(Cache<Object, Object> cache) {
-               AssertJUnit.assertEquals(VALUE, cache.get(key));
-            }
-         });
+         assertEquals(2 /*the 1st retry succeed*/, counterRepository.counter.get());
+         assertInSite(NYC, cache -> assertEquals(VALUE, cache.get(key)));
       }
    }
 
@@ -261,7 +216,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
          };
       }
 
-      public static CounterBackupReceiverRepository replaceOn(CacheContainer cacheContainer) {
+      static CounterBackupReceiverRepository replaceOn(CacheContainer cacheContainer) {
          BackupReceiverRepository delegate = extractGlobalComponent(cacheContainer, BackupReceiverRepository.class);
          CounterBackupReceiverRepository wrapper = new CounterBackupReceiverRepository(delegate);
          replaceComponent(cacheContainer, BackupReceiverRepository.class, wrapper, true);
@@ -271,7 +226,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
 
    private static class FailureXSiteConsumer implements XSiteStateConsumer {
 
-      public static int FAIL_FOR_EVER = -1;
+      static final int FAIL_FOR_EVER = -1;
       private final XSiteStateConsumer delegate;
       //fail if > 0
       private int nFailures = 0;
@@ -311,34 +266,27 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
          return delegate.getSendingSiteName();
       }
 
-      public void fail(int nTimes) {
-         if (nTimes < 0) {
-            throw new IllegalArgumentException("nTimes should greater than zero but it is " + nTimes);
-         }
+      static FailureXSiteConsumer replaceOn(Cache<?, ?> cache) {
+         return wrapComponent(cache, XSiteStateConsumer.class, (wrapOn, current) -> new FailureXSiteConsumer(current),
+               true);
+      }
+
+      void fail() {
          synchronized (this) {
-            this.nFailures = nTimes;
+            this.nFailures = 3;
          }
       }
 
-      public void failAlways() {
+      void failAlways() {
          synchronized (this) {
             this.nFailures = FAIL_FOR_EVER;
          }
       }
 
-      public int remainingFails() {
+      int remainingFails() {
          synchronized (this) {
             return nFailures;
          }
-      }
-
-      public static FailureXSiteConsumer replaceOn(Cache<?, ?> cache) {
-         return wrapComponent(cache, XSiteStateConsumer.class, new WrapFactory<XSiteStateConsumer, FailureXSiteConsumer, Cache<?, ?>>() {
-            @Override
-            public FailureXSiteConsumer wrap(Cache<?, ?> wrapOn, XSiteStateConsumer current) {
-               return new FailureXSiteConsumer(current);
-            }
-         }, true);
       }
    }
 
@@ -350,7 +298,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
          super(delegate);
       }
 
-      public static DiscardHandler replaceOn(Cache<?, ?> cache) {
+      static DiscardHandler replaceOn(Cache<?, ?> cache) {
          return wrapInboundInvocationHandler(cache, DiscardHandler::new);
       }
 
@@ -365,7 +313,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
 
    private static class FailureHandler extends AbstractDelegatingHandler {
 
-      public static int FAIL_FOR_EVER = -1;
+      static final int FAIL_FOR_EVER = -1;
 
       //fail if > 0
       private int nFailures = 0;
@@ -374,29 +322,26 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
          super(delegate);
       }
 
-      public void fail(int nTimes) {
-         if (nTimes < 0) {
-            throw new IllegalArgumentException("nTimes should greater than zero but it is " + nTimes);
-         }
+      static FailureHandler replaceOn(Cache<?, ?> cache) {
+         return wrapInboundInvocationHandler(cache, FailureHandler::new);
+      }
+
+      void fail() {
          synchronized (this) {
-            this.nFailures = nTimes;
+            this.nFailures = 3;
          }
       }
 
-      public void failAlways() {
+      void failAlways() {
          synchronized (this) {
             this.nFailures = FAIL_FOR_EVER;
          }
       }
 
-      public int remainingFails() {
+      int remainingFails() {
          synchronized (this) {
             return nFailures;
          }
-      }
-
-      public static FailureHandler replaceOn(Cache<?, ?> cache) {
-         return wrapInboundInvocationHandler(cache, FailureHandler::new);
       }
 
       @Override

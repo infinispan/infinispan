@@ -1,6 +1,5 @@
 package org.infinispan.xsite.statetransfer;
 
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
@@ -17,15 +16,16 @@ public class DistSyncNonTxStateTransferTest extends BaseStateTransferTest {
    public DistSyncNonTxStateTransferTest() {
       super();
       implicitBackupCache = true;
+      transactional = false;
    }
 
    @Override
    protected ConfigurationBuilder getNycActiveConfig() {
-      return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      return getDefaultClusteredCacheConfig(cacheMode, transactional);
    }
 
    @Override
    protected ConfigurationBuilder getLonActiveConfig() {
-      return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      return getDefaultClusteredCacheConfig(cacheMode, transactional);
    }
 }
