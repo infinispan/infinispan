@@ -14,7 +14,7 @@
    <description>Infinispan Hibernate 5.1 Cache module</description>
 
    <properties>
-      <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
+      <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
       <version.hibernate.core>5.1.10.Final</version.hibernate.core>
    </properties>
 

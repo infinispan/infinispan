@@ -13,10 +13,9 @@ import java.util.Properties;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
-import org.infinispan.hibernate.cache.commons.collection.CollectionRegionImpl;
-import org.infinispan.hibernate.cache.commons.entity.EntityRegionImpl;
 import org.hibernate.cache.spi.CacheDataDescription;
 
+import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
 import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
 
 /**
@@ -31,8 +30,8 @@ public class NodeEnvironment {
    private StandardServiceRegistry serviceRegistry;
    private InfinispanRegionFactory regionFactory;
 
-   private Map<String, EntityRegionImpl> entityRegionMap;
-   private Map<String, CollectionRegionImpl> collectionRegionMap;
+   private Map<String, BaseRegion> entityRegionMap;
+   private Map<String, BaseRegion> collectionRegionMap;
 
    public NodeEnvironment(StandardServiceRegistryBuilder ssrb) {
       this.ssrb = ssrb;
@@ -43,20 +42,20 @@ public class NodeEnvironment {
       return serviceRegistry;
    }
 
-   public EntityRegionImpl getEntityRegion(String name, CacheDataDescription cacheDataDescription) {
+   public BaseRegion getEntityRegion(String name, CacheDataDescription cacheDataDescription) {
       if (entityRegionMap == null) {
-         entityRegionMap = new HashMap<String, EntityRegionImpl>();
+         entityRegionMap = new HashMap<>();
          return buildAndStoreEntityRegion(name, cacheDataDescription);
       }
-      EntityRegionImpl region = entityRegionMap.get(name);
+      BaseRegion region = entityRegionMap.get(name);
       if (region == null) {
          region = buildAndStoreEntityRegion(name, cacheDataDescription);
       }
       return region;
    }
 
-   private EntityRegionImpl buildAndStoreEntityRegion(String name, CacheDataDescription cacheDataDescription) {
-      EntityRegionImpl region = (EntityRegionImpl) regionFactory.buildEntityRegion(
+   private BaseRegion buildAndStoreEntityRegion(String name, CacheDataDescription cacheDataDescription) {
+      BaseRegion region = (BaseRegion) regionFactory.buildEntityRegion(
             name,
             properties,
             cacheDataDescription
@@ -65,12 +64,12 @@ public class NodeEnvironment {
       return region;
    }
 
-   public CollectionRegionImpl getCollectionRegion(String name, CacheDataDescription cacheDataDescription) {
+   public BaseRegion getCollectionRegion(String name, CacheDataDescription cacheDataDescription) {
       if (collectionRegionMap == null) {
-         collectionRegionMap = new HashMap<String, CollectionRegionImpl>();
+         collectionRegionMap = new HashMap<>();
          return buildAndStoreCollectionRegion(name, cacheDataDescription);
       }
-      CollectionRegionImpl region = collectionRegionMap.get(name);
+      BaseRegion region = collectionRegionMap.get(name);
       if (region == null) {
          region = buildAndStoreCollectionRegion(name, cacheDataDescription);
          collectionRegionMap.put(name, region);
@@ -78,9 +77,9 @@ public class NodeEnvironment {
       return region;
    }
 
-   private CollectionRegionImpl buildAndStoreCollectionRegion(String name, CacheDataDescription cacheDataDescription) {
-      CollectionRegionImpl region;
-      region = (CollectionRegionImpl) regionFactory.buildCollectionRegion(
+   private BaseRegion buildAndStoreCollectionRegion(String name, CacheDataDescription cacheDataDescription) {
+      BaseRegion region;
+      region = (BaseRegion) regionFactory.buildCollectionRegion(
             name,
             properties,
             cacheDataDescription
@@ -96,7 +95,7 @@ public class NodeEnvironment {
    public void release() throws Exception {
       try {
          if (entityRegionMap != null) {
-            for (EntityRegionImpl region : entityRegionMap.values()) {
+            for (BaseRegion region : entityRegionMap.values()) {
                try {
                   region.getCache().stop();
                } catch (Exception e) {
@@ -106,7 +105,7 @@ public class NodeEnvironment {
             entityRegionMap.clear();
          }
          if (collectionRegionMap != null) {
-            for (CollectionRegionImpl reg : collectionRegionMap.values()) {
+            for (BaseRegion reg : collectionRegionMap.values()) {
                try {
                   reg.getCache().stop();
                } catch (Exception e) {

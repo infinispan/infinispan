@@ -54,7 +54,7 @@ public abstract class InvalidationCacheAccessDelegate implements AccessDelegate 
     */
 	@Override
 	@SuppressWarnings("UnusedParameters")
-	public Object get(SessionImplementor session, Object key, long txTimestamp) throws CacheException {
+	public Object get(Object session, Object key, long txTimestamp) throws CacheException {
 		if ( !region.checkValid() ) {
 			return null;
 		}
@@ -66,7 +66,7 @@ public abstract class InvalidationCacheAccessDelegate implements AccessDelegate 
 	}
 
 	@Override
-	public boolean putFromLoad(SessionImplementor session, Object key, Object value, long txTimestamp, Object version) {
+	public boolean putFromLoad(Object session, Object key, Object value, long txTimestamp, Object version) {
 		return putFromLoad(session, key, value, txTimestamp, version, false );
 	}
 
@@ -85,7 +85,7 @@ public abstract class InvalidationCacheAccessDelegate implements AccessDelegate 
     */
 	@Override
 	@SuppressWarnings("UnusedParameters")
-	public boolean putFromLoad(SessionImplementor session, Object key, Object value, long txTimestamp, Object version, boolean minimalPutOverride)
+	public boolean putFromLoad(Object session, Object key, Object value, long txTimestamp, Object version, boolean minimalPutOverride)
 			throws CacheException {
 		if ( !region.checkValid() ) {
 			if ( TRACE_ENABLED ) {
@@ -122,7 +122,7 @@ public abstract class InvalidationCacheAccessDelegate implements AccessDelegate 
 	}
 
 	@Override
-	public void remove(SessionImplementor session, Object key) throws CacheException {
+	public void remove(Object session, Object key) throws CacheException {
 		putValidator.setCurrentSession(session);
 		try {
 			// We update whether or not the region is valid. Other nodes
@@ -170,6 +170,6 @@ public abstract class InvalidationCacheAccessDelegate implements AccessDelegate 
 	}
 
 	@Override
-	public void unlockItem(SessionImplementor session, Object key) throws CacheException {
+	public void unlockItem(Object session, Object key) throws CacheException {
 	}
 }

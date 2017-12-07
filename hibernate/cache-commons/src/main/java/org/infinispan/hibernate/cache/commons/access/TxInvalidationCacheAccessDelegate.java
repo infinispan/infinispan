@@ -9,7 +9,6 @@ package org.infinispan.hibernate.cache.commons.access;
 import org.hibernate.cache.CacheException;
 import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
 import org.hibernate.cache.spi.access.SoftLock;
-import org.hibernate.engine.spi.SessionImplementor;
 
 /**
  * Delegate for transactional caches
@@ -23,7 +22,7 @@ public class TxInvalidationCacheAccessDelegate extends InvalidationCacheAccessDe
 
 	@Override
 	@SuppressWarnings("UnusedParameters")
-	public boolean insert(SessionImplementor session, Object key, Object value, Object version) throws CacheException {
+	public boolean insert(Object session, Object key, Object value, Object version) throws CacheException {
 		if ( !region.checkValid() ) {
 			return false;
 		}
@@ -39,7 +38,7 @@ public class TxInvalidationCacheAccessDelegate extends InvalidationCacheAccessDe
 
 	@Override
 	@SuppressWarnings("UnusedParameters")
-	public boolean update(SessionImplementor session, Object key, Object value, Object currentVersion, Object previousVersion)
+	public boolean update(Object session, Object key, Object value, Object currentVersion, Object previousVersion)
 			throws CacheException {
 		// We update whether or not the region is valid. Other nodes
 		// may have already restored the region so they need to
@@ -55,13 +54,13 @@ public class TxInvalidationCacheAccessDelegate extends InvalidationCacheAccessDe
 	}
 
 	@Override
-	public boolean afterInsert(SessionImplementor session, Object key, Object value, Object version) {
+	public boolean afterInsert(Object session, Object key, Object value, Object version) {
 		// The endInvalidatingKey(...) is called from TxPutFromLoadInterceptor because we need the global transaction id.
 		return false;
 	}
 
 	@Override
-	public boolean afterUpdate(SessionImplementor session, Object key, Object value, Object currentVersion, Object previousVersion, SoftLock lock) {
+	public boolean afterUpdate(Object session, Object key, Object value, Object currentVersion, Object previousVersion, SoftLock lock) {
 		// The endInvalidatingKey(...) is called from TxPutFromLoadInterceptor because we need the global transaction id.
 		return false;
 	}

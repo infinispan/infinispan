@@ -8,10 +8,10 @@ package org.infinispan.hibernate.cache.commons.access;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
 import org.infinispan.hibernate.cache.commons.impl.BaseTransactionalDataRegion;
 import org.infinispan.hibernate.cache.commons.util.InvocationAfterCompletion;
 import org.infinispan.hibernate.cache.commons.util.VersionedEntry;
-import org.hibernate.resource.transaction.TransactionCoordinator;
 
 import org.infinispan.AdvancedCache;
 
@@ -23,7 +23,7 @@ public class RemovalSynchronization extends InvocationAfterCompletion {
 	private final Object key;
 	private final AdvancedCache cache;
 
-	public RemovalSynchronization(TransactionCoordinator tc, AdvancedCache cache, boolean requiresTransaction, BaseTransactionalDataRegion region, Object key) {
+	public RemovalSynchronization(TransactionCoordinatorAccess tc, AdvancedCache cache, boolean requiresTransaction, BaseTransactionalDataRegion region, Object key) {
 		super(tc, requiresTransaction);
 		this.cache = cache;
 		this.region = region;

@@ -20,7 +20,7 @@ import javax.persistence.PessimisticLockException;
 import org.hibernate.StaleStateException;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
-import org.infinispan.hibernate.cache.commons.entity.EntityRegionImpl;
+import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.hibernate.cache.spi.Region;
@@ -94,14 +94,14 @@ public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
       InfinispanRegionFactory regionFactory = (InfinispanRegionFactory) sessionFactory().getSettings().getRegionFactory();
       TIMEOUT = regionFactory.getPendingPutsCacheConfiguration().expiration().maxIdle();
       region = sessionFactory().getSecondLevelCacheRegion(Item.class.getName());
-      entityCache = ((EntityRegionImpl) region).getCache();
+      entityCache = ((BaseRegion) region).getCache();
    }
 
    @Before
    public void insertAndClearCache() throws Exception {
       region = sessionFactory().getSecondLevelCacheRegion(Item.class.getName());
-      entityCache = ((EntityRegionImpl) region).getCache();
-      timeout = ((EntityRegionImpl) region).getRegionFactory().getPendingPutsCacheConfiguration().expiration().maxIdle();
+      entityCache = ((BaseRegion) region).getCache();
+      timeout = ((BaseRegion) region).getRegionFactory().getPendingPutsCacheConfiguration().expiration().maxIdle();
       Item item = new Item("my item", "Original item");
       withTxSession(s -> s.persist(item));
       entityCache.clear();

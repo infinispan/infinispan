@@ -1,6 +1,6 @@
 package org.infinispan.test.hibernate.cache.commons.functional;
 
-import org.infinispan.hibernate.cache.commons.entity.EntityRegionImpl;
+import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
@@ -35,7 +35,7 @@ public class NoTenancyTest extends SingleNodeTest {
 				});
 
 		  }
-		  EntityRegionImpl region = (EntityRegionImpl) sessionFactory().getSecondLevelCacheRegion(Item.class.getName());
+		  BaseRegion region = (BaseRegion) sessionFactory().getSecondLevelCacheRegion(Item.class.getName());
 		  AdvancedCache localCache = region.getCache().withFlags(Flag.CACHE_MODE_LOCAL);
 		  assertEquals(1, localCache.size());
 		  try (CloseableIterator iterator = localCache.keySet().iterator()) {

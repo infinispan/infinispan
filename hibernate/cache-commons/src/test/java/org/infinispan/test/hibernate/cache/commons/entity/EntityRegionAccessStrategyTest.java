@@ -9,13 +9,14 @@ package org.infinispan.test.hibernate.cache.commons.entity;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.hibernate.cache.spi.EntityRegion;
 import org.infinispan.commons.test.categories.Smoke;
-import org.infinispan.hibernate.cache.commons.entity.EntityRegionImpl;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SessionImplementor;
 
+import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
 import org.infinispan.test.hibernate.cache.commons.AbstractRegionAccessStrategyTest;
 import org.infinispan.test.hibernate.cache.commons.NodeEnvironment;
 import org.infinispan.test.hibernate.cache.commons.util.TestSynchronization;
@@ -37,7 +38,7 @@ import static org.junit.Assert.assertTrue;
  */
 @Category(Smoke.class)
 public class EntityRegionAccessStrategyTest extends
-		AbstractRegionAccessStrategyTest<EntityRegionImpl, EntityRegionAccessStrategy> {
+		AbstractRegionAccessStrategyTest<BaseRegion, EntityRegionAccessStrategy> {
 	protected static int testCount;
 
 	@Override
@@ -46,13 +47,13 @@ public class EntityRegionAccessStrategyTest extends
 	}
 
 	@Override
-	protected EntityRegionImpl getRegion(NodeEnvironment environment) {
+	protected BaseRegion getRegion(NodeEnvironment environment) {
 		return environment.getEntityRegion(REGION_NAME, CACHE_DATA_DESCRIPTION);
 	}
 
 	@Override
-	protected EntityRegionAccessStrategy getAccessStrategy(EntityRegionImpl region) {
-		return region.buildAccessStrategy( accessType );
+	protected EntityRegionAccessStrategy getAccessStrategy(BaseRegion region) {
+		return ((EntityRegion) region).buildAccessStrategy( accessType );
 	}
 
 	@Test

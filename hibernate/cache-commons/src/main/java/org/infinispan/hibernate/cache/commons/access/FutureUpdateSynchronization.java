@@ -8,11 +8,11 @@ package org.infinispan.hibernate.cache.commons.access;
 
 import java.util.UUID;
 
+import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
 import org.infinispan.hibernate.cache.commons.impl.BaseTransactionalDataRegion;
 import org.infinispan.hibernate.cache.commons.util.FutureUpdate;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.commons.util.InvocationAfterCompletion;
-import org.hibernate.resource.transaction.TransactionCoordinator;
 
 import org.infinispan.AdvancedCache;
 
@@ -29,7 +29,7 @@ public class FutureUpdateSynchronization extends InvocationAfterCompletion {
 	private final long sessionTimestamp;
 	private final AdvancedCache cache;
 
-	public FutureUpdateSynchronization(TransactionCoordinator tc, AdvancedCache cache, boolean requiresTransaction,
+	public FutureUpdateSynchronization(TransactionCoordinatorAccess tc, AdvancedCache cache, boolean requiresTransaction,
 			Object key, Object value, BaseTransactionalDataRegion region, long sessionTimestamp) {
 
 		super(tc, requiresTransaction);

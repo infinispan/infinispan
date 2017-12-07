@@ -7,6 +7,7 @@
 package org.infinispan.hibernate.cache.commons.access;
 
 import org.hibernate.cache.CacheException;
+import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
 import org.infinispan.hibernate.cache.commons.impl.BaseTransactionalDataRegion;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.hibernate.cache.commons.util.FutureUpdate;
@@ -14,8 +15,6 @@ import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.commons.util.Tombstone;
 import org.infinispan.hibernate.cache.commons.util.TombstoneUpdate;
 import org.hibernate.cache.spi.access.SoftLock;
-import org.hibernate.engine.spi.SessionImplementor;
-import org.hibernate.resource.transaction.TransactionCoordinator;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
@@ -33,8 +32,10 @@ public class TombstoneAccessDelegate implements AccessDelegate {
 	protected final AdvancedCache asyncWriteCache;
 	protected final AdvancedCache putFromLoadCache;
 	protected final boolean requiresTransaction;
+   private final SessionAccess sessionAccess;
 
-	public TombstoneAccessDelegate(BaseTransactionalDataRegion region) {
+   public TombstoneAccessDelegate(SessionAccess sessionAccess, BaseTransactionalDataRegion region) {
+      this.sessionAccess = sessionAccess;
 		this.region = region;
 		this.cache = region.getCache();
 		this.writeCache = Caches.ignoreReturnValuesCache(cache);
@@ -53,7 +54,7 @@ public class TombstoneAccessDelegate implements AccessDelegate {
 	}
 
 	@Override
-	public Object get(SessionImplementor session, Object key, long txTimestamp) throws CacheException {
+	public Object get(Object session, Object key, long txTimestamp) throws CacheException {
 		if (txTimestamp < region.getLastRegionInvalidation() ) {
 			return null;
 		}
@@ -70,12 +71,12 @@ public class TombstoneAccessDelegate implements AccessDelegate {
 	}
 
 	@Override
-	public boolean putFromLoad(SessionImplementor session, Object key, Object value, long txTimestamp, Object version) {
+	public boolean putFromLoad(Object session, Object key, Object value, long txTimestamp, Object version) {
 		return putFromLoad(session, key, value, txTimestamp, version, false);
 	}
 
 	@Override
-	public boolean putFromLoad(SessionImplementor session, Object key, Object value, long txTimestamp, Object version, boolean minimalPutOverride) throws CacheException {
+	public boolean putFromLoad(Object session, Object key, Object value, long txTimestamp, Object version, boolean minimalPutOverride) throws CacheException {
 		long lastRegionInvalidation = region.getLastRegionInvalidation();
 		if (txTimestamp < lastRegionInvalidation) {
 			log.tracef("putFromLoad not executed since tx started at %d, before last region invalidation finished = %d", txTimestamp, lastRegionInvalidation);
@@ -98,36 +99,37 @@ public class TombstoneAccessDelegate implements AccessDelegate {
 		}
 		// we can't use putForExternalRead since the PFER flag means that entry is not wrapped into context
 		// when it is present in the container. TombstoneCallInterceptor will deal with this.
-		putFromLoadCache.put(key, new TombstoneUpdate(session.getTimestamp(), value));
+		putFromLoadCache.put(key, new TombstoneUpdate(sessionAccess.getTimestamp(session), value));
 		return true;
 	}
 
 	@Override
-	public boolean insert(SessionImplementor session, Object key, Object value, Object version) throws CacheException {
+	public boolean insert(Object session, Object key, Object value, Object version) throws CacheException {
 		write(session, key, value);
 		return true;
 	}
 
 	@Override
-	public boolean update(SessionImplementor session, Object key, Object value, Object currentVersion, Object previousVersion) throws CacheException {
+	public boolean update(Object session, Object key, Object value, Object currentVersion, Object previousVersion) throws CacheException {
 		write(session, key, value);
 		return true;
 	}
 
 	@Override
-	public void remove(SessionImplementor session, Object key) throws CacheException {
+	public void remove(Object session, Object key) throws CacheException {
 		write(session, key, null);
 	}
 
-	protected void write(SessionImplementor session, Object key, Object value) {
-		TransactionCoordinator tc = session.getTransactionCoordinator();
-		FutureUpdateSynchronization sync = new FutureUpdateSynchronization(tc, asyncWriteCache, requiresTransaction, key, value, region, session.getTimestamp());
+	protected void write(Object session, Object key, Object value) {
+      TransactionCoordinatorAccess tc = sessionAccess.getTransactionCoordinator(session);
+      long timestamp = sessionAccess.getTimestamp(session);
+      FutureUpdateSynchronization sync = new FutureUpdateSynchronization(tc, asyncWriteCache, requiresTransaction, key, value, region, timestamp);
 		// The update will be invalidating all putFromLoads for the duration of expiration or until removed by the synchronization
 		Tombstone tombstone = new Tombstone(sync.getUuid(), region.nextTimestamp() + region.getTombstoneExpiration());
 		// The outcome of this operation is actually defined in TombstoneCallInterceptor
 		// Metadata in PKVC are cleared and set in the interceptor, too
 		writeCache.put(key, tombstone);
-		tc.getLocalSynchronizations().registerSynchronization(sync);
+      tc.registerLocalSynchronization(sync);
 	}
 
 	@Override
@@ -158,16 +160,16 @@ public class TombstoneAccessDelegate implements AccessDelegate {
 	}
 
 	@Override
-	public void unlockItem(SessionImplementor session, Object key) throws CacheException {
+	public void unlockItem(Object session, Object key) throws CacheException {
 	}
 
 	@Override
-	public boolean afterInsert(SessionImplementor session, Object key, Object value, Object version) {
+	public boolean afterInsert(Object session, Object key, Object value, Object version) {
 		return false;
 	}
 
 	@Override
-	public boolean afterUpdate(SessionImplementor session, Object key, Object value, Object currentVersion, Object previousVersion, SoftLock lock) {
+	public boolean afterUpdate(Object session, Object key, Object value, Object currentVersion, Object previousVersion, SoftLock lock) {
 		return false;
 	}
 }

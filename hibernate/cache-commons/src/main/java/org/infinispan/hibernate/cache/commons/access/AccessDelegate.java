@@ -20,7 +20,7 @@ import org.hibernate.engine.spi.SessionImplementor;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public interface AccessDelegate {
-	Object get(SessionImplementor session, Object key, long txTimestamp) throws CacheException;
+	Object get(Object session, Object key, long txTimestamp) throws CacheException;
 
 	/**
 	 * Attempt to cache an object, after loading from the database.
@@ -32,7 +32,7 @@ public interface AccessDelegate {
 	 * @param version the item version number
 	 * @return <tt>true</tt> if the object was successfully cached
 	 */
-	boolean putFromLoad(SessionImplementor session, Object key, Object value, long txTimestamp, Object version);
+	boolean putFromLoad(Object session, Object key, Object value, long txTimestamp, Object version);
 
 	/**
 	 * Attempt to cache an object, after loading from the database, explicitly
@@ -47,7 +47,7 @@ public interface AccessDelegate {
 	 * @return <tt>true</tt> if the object was successfully cached
 	 * @throws org.hibernate.cache.CacheException Propogated from underlying {@link org.hibernate.cache.spi.Region}
 	 */
-	boolean putFromLoad(SessionImplementor session, Object key, Object value, long txTimestamp, Object version, boolean minimalPutOverride)
+	boolean putFromLoad(Object session, Object key, Object value, long txTimestamp, Object version, boolean minimalPutOverride)
 			throws CacheException;
 
 	/**
@@ -61,7 +61,7 @@ public interface AccessDelegate {
 	 * @return Were the contents of the cache actual changed by this operation?
 	 * @throws CacheException if the insert fails
 	 */
-	boolean insert(SessionImplementor session, Object key, Object value, Object version) throws CacheException;
+	boolean insert(Object session, Object key, Object value, Object version) throws CacheException;
 
 	/**
 	 * Called after an item has been updated (before the transaction completes),
@@ -75,7 +75,7 @@ public interface AccessDelegate {
 	 * @return Whether the contents of the cache actual changed by this operation
 	 * @throws CacheException if the update fails
 	 */
-	boolean update(SessionImplementor session, Object key, Object value, Object currentVersion, Object previousVersion)
+	boolean update(Object session, Object key, Object value, Object currentVersion, Object previousVersion)
 			throws CacheException;
 
 	/**
@@ -85,7 +85,7 @@ public interface AccessDelegate {
 	 * @param key The key of the item to remove
 	 * @throws CacheException if removing the cached item fails
 	 */
-	void remove(SessionImplementor session, Object key) throws CacheException;
+	void remove(Object session, Object key) throws CacheException;
 
 	/**
 	 * Called to evict data from the entire region
@@ -121,7 +121,7 @@ public interface AccessDelegate {
 	 * @param key The item key
 	 * @throws org.hibernate.cache.CacheException Propogated from underlying {@link org.hibernate.cache.spi.Region}
 	 */
-	void unlockItem(SessionImplementor session, Object key) throws CacheException;
+	void unlockItem(Object session, Object key) throws CacheException;
 
 	/**
 	 * Called after an item has been inserted (after the transaction completes),
@@ -136,7 +136,7 @@ public interface AccessDelegate {
 	 * @return Were the contents of the cache actual changed by this operation?
 	 * @throws CacheException Propagated from underlying {@link org.hibernate.cache.spi.Region}
 	 */
-	boolean afterInsert(SessionImplementor session, Object key, Object value, Object version);
+	boolean afterInsert(Object session, Object key, Object value, Object version);
 
 	/**
 	 * Called after an item has been updated (after the transaction completes),
@@ -153,5 +153,5 @@ public interface AccessDelegate {
 	 * @return Were the contents of the cache actual changed by this operation?
 	 * @throws CacheException Propagated from underlying {@link org.hibernate.cache.spi.Region}
 	 */
-	boolean afterUpdate(SessionImplementor session, Object key, Object value, Object currentVersion, Object previousVersion, SoftLock lock);
+	boolean afterUpdate(Object session, Object key, Object value, Object currentVersion, Object previousVersion, SoftLock lock);
 }
