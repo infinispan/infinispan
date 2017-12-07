@@ -29,7 +29,7 @@ import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
-import org.infinispan.remoting.transport.jgroups.SyncMapResponseCollector;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
@@ -205,7 +205,7 @@ public class MockTransport implements Transport {
       throws Exception {
       Collection<Address> targets = recipients != null ? recipients : members;
       if (mode == ResponseMode.ASYNCHRONOUS) {
-         addInvocation(rpcCommand, new SyncMapResponseCollector(false, targets.size()));
+         addInvocation(rpcCommand, MapResponseCollector.validOnly(targets.size()));
          return Collections.emptyMap();
       } else {
          return addInvocationSync(rpcCommand, targets, shouldIgnoreLeavers(mode));
@@ -219,8 +219,8 @@ public class MockTransport implements Transport {
                                                                            responseFilter, DeliverOrder
                                                                            deliverOrder, boolean anycast) {
       Collection<Address> targets = recipients != null ? recipients : members;
-      SyncMapResponseCollector collector =
-         mode.isSynchronous() ? new SyncMapResponseCollector(shouldIgnoreLeavers(mode), targets.size()) : null;
+      MapResponseCollector collector =
+         mode.isSynchronous() ? MapResponseCollector.ignoreLeavers(shouldIgnoreLeavers(mode), targets.size()) : null;
       return addInvocation(rpcCommand, collector);
    }
 
@@ -231,6 +231,11 @@ public class MockTransport implements Transport {
 
    @Override
    public void sendToMany(Collection<Address> destinations, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) {
+      addInvocation(rpcCommand, null);
+   }
+
+   @Override
+   public void sendToAll(ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
       addInvocation(rpcCommand, null);
    }
 
@@ -356,7 +361,7 @@ public class MockTransport implements Transport {
 
    @Override
    public <T> CompletionStage<T> invokeCommands(Collection<Address> targets, Function<Address, ReplicableCommand>
-      commandGenerator, ResponseCollector<T> responseCollector, long timeout, DeliverOrder deliverOrder) {
+      commandGenerator, ResponseCollector<T> responseCollector, DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
       throw new UnsupportedOperationException();
    }
 
@@ -384,7 +389,7 @@ public class MockTransport implements Transport {
       ignoreLeavers)
       throws Exception {
       try {
-         return addInvocation(command, new SyncMapResponseCollector(ignoreLeavers, targets.size()))
+         return addInvocation(command, MapResponseCollector.ignoreLeavers(ignoreLeavers, targets.size()))
             .get(10, TimeUnit.SECONDS);
       } catch (ExecutionException e) {
          throw Util.rewrapAsCacheException(e.getCause());

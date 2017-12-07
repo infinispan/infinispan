@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
@@ -21,6 +22,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -36,7 +38,7 @@ public class BiasedScatteredDistributionInterceptor extends ScatteredDistributio
    }
 
    @Override
-   protected CompletableFuture<Map<Address, Response>> singleWriteOnRemotePrimary(Address target, DataWriteCommand command) {
+   protected CompletionStage<Map<Address, Response>> singleWriteOnRemotePrimary(Address target, DataWriteCommand command) {
       Collector<Response> collector = commandAckCollector.createBiased(command.getCommandInvocationId().getId(),
             target, command.getTopologyId());
       rpcManager.sendTo(target, command, DeliverOrder.NONE);
@@ -44,26 +46,27 @@ public class BiasedScatteredDistributionInterceptor extends ScatteredDistributio
    }
 
    @Override
-   protected CompletableFuture<Map<Address, Response>> manyWriteOnRemotePrimary(Address target, WriteCommand command) {
+   protected CompletionStage<Map<Address, Response>> manyWriteOnRemotePrimary(Address target, WriteCommand command) {
       Collector<Response> collector = commandAckCollector.createMultiTargetCollector(command.getCommandInvocationId().getId(), target, command.getTopologyId());
       rpcManager.sendTo(target, command, DeliverOrder.NONE);
       return collector.getFuture().thenApply(value -> Collections.singletonMap(target, value));
    }
 
    @Override
-   protected CompletableFuture<?> completeSingleWriteOnPrimaryOriginator(DataWriteCommand command, Address backup, CompletableFuture<?> rpcFuture) {
-      CompletableFuture<?> revokeFuture = revokeBiasSync(command.getKey(), backup, command.getTopologyId());
-      return CompletableFuture.allOf(rpcFuture, revokeFuture);
+   protected CompletionStage<?> completeSingleWriteOnPrimaryOriginator(DataWriteCommand command, Address backup, CompletionStage<?> rpcFuture) {
+      CompletionStage<?> revokeFuture = revokeBiasSync(command.getKey(), backup, command.getTopologyId());
+      return CompletableFuture.allOf(rpcFuture.toCompletableFuture(), revokeFuture.toCompletableFuture());
    }
 
-   private CompletableFuture<?> revokeBiasSync(Object key, Address backup, int topologyId) {
+   private CompletionStage<?> revokeBiasSync(Object key, Address backup, int topologyId) {
       BiasManager.Revocation revocation = biasManager.startRevokingRemoteBias(key, backup);
       if (revocation == null) {
          // No need to revoke from anyone
          return CompletableFutures.completedNull();
       }
       if (revocation.shouldRevoke()) {
-         CompletableFuture<?> revocationRequest = sendRevokeBias(revocation.biased(), Collections.singleton(key), topologyId, null);
+         CompletionStage<Map<Address, Response>>
+            revocationRequest = sendRevokeBias(revocation.biased(), Collections.singleton(key), topologyId, null);
          revocationRequest.whenComplete(revocation);
          return revocationRequest;
       } else {
@@ -89,7 +92,7 @@ public class BiasedScatteredDistributionInterceptor extends ScatteredDistributio
             } else {
                future.increment();
                revocation.handleCompose(() -> {
-                  CompletableFuture<?> revokeFuture = revokeBiasSync(key, backup, topologyId);
+                  CompletionStage<?> revokeFuture = revokeBiasSync(key, backup, topologyId);
                   revokeFuture.thenRun(future::countDown);
                   return CompletableFutures.completedNull();
                });
@@ -214,7 +217,7 @@ public class BiasedScatteredDistributionInterceptor extends ScatteredDistributio
       }
    }
 
-   private CompletableFuture<?> sendRevokeBias(Collection<Address> targets, Collection<Object> keys, int topologyId, CommandInvocationId commandInvocationId) {
+   private CompletionStage<Map<Address, Response>> sendRevokeBias(Collection<Address> targets, Collection<Object> keys, int topologyId, CommandInvocationId commandInvocationId) {
       try {
          Address ackTarget = null;
          long id = 0;
@@ -223,7 +226,7 @@ public class BiasedScatteredDistributionInterceptor extends ScatteredDistributio
             id = commandInvocationId.getId();
          }
          RevokeBiasCommand revokeBiasCommand = cf.buildRevokeBiasCommand(ackTarget, id, topologyId, keys);
-         return rpcManager.invokeRemotelyAsync(targets, revokeBiasCommand, syncIgnoreLeavers);
+         return rpcManager.invokeCommand(targets, revokeBiasCommand, MapResponseCollector.ignoreLeavers(targets.size()), rpcManager.getSyncRpcOptions());
       } catch (Throwable t) {
          return CompletableFutures.completedExceptionFuture(t);
       }

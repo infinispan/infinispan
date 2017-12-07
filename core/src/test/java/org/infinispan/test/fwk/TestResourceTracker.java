@@ -101,7 +101,7 @@ public class TestResourceTracker {
     */
    public static void testFinished(String testName) {
       cleanUpResources(testName);
-      if (!testName.equals(getCurrentTestName())) {
+      if (!testName.equals(threadTestName.get())) {
          cleanUpResources(getCurrentTestName());
          throw new IllegalArgumentException("Current thread's test name was not set correctly: " + getCurrentTestName() +
                ", should have been " + testName);

@@ -14,7 +14,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Experimental
 public class ResponseCollectors {
-   private static final Log log = LogFactory.getLog(ValidResponseCollector.class);
+   private static final Log log = LogFactory.getLog(ResponseCollectors.class);
 
    public static CacheException wrapRemoteException(Address sender, Exception exception) {
       CacheException e;

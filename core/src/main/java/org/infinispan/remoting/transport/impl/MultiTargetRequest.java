@@ -121,6 +121,7 @@ public class MultiTargetRequest<T> extends AbstractRequest<T> {
                if (target != null && !members.contains(target)) {
                   targets[i] = null;
                   missingResponses--;
+                  if (trace) log.tracef("Target %s of request %d left the cluster view", target, requestId);
                   result = responseCollector.addResponse(target, CacheNotFoundResponse.INSTANCE);
                   if (result != null) {
                      isDone = true;

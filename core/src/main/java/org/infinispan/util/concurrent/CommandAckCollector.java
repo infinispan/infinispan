@@ -605,6 +605,9 @@ public class CommandAckCollector {
        */
       public synchronized void primaryResult(Address from, Object value, boolean success) {
          Collector<Response> collector = primaryCollectors.get(from);
+         if (trace) {
+            log.tracef("[Collector#%s] PutMap Primary ACK. Address=%s", id, from);
+         }
          collector.primaryResult(success ? SuccessfulResponse.create(value) : UnsuccessfulResponse.create(value), success);
          if (unsolicitedAcks != null) {
             // this should work for multiple acks from same node as well

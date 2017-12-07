@@ -5,13 +5,13 @@ import static org.infinispan.commands.VisitableCommand.LoadType.PRIMARY;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.CommandsFactory;
@@ -42,11 +42,11 @@ import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.util.concurrent.CommandAckCollector;
@@ -89,10 +89,9 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    private TriangleOrderManager triangleOrderManager;
    private Address localAddress;
 
-   private static Map<Object, Object> mergeMaps(Map<Address, Response> responses, Map<Object, Object> resultMap) {
+   private static Map<Object, Object> mergeMaps(ValidResponse response, Map<Object, Object> resultMap) {
       //noinspection unchecked
-      Map<Object, Object> remoteMap = (Map<Object, Object>) ((SuccessfulResponse) responses.values().iterator().next())
-            .getResponseValue();
+      Map<Object, Object> remoteMap = (Map<Object, Object>) response.getResponseValue();
       return InfinispanCollections.mergeMaps(resultMap, remoteMap);
    }
 
@@ -272,7 +271,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       } else {
          GetCacheEntryCommand fakeGetCommand = cf.buildGetCacheEntryCommand(key, command.getFlagsBitSet());
          fakeGetCommand.setTopologyId(command.getTopologyId());
-         futureList.add(remoteGet(ctx, fakeGetCommand, key, true));
+         futureList.add(remoteGet(ctx, fakeGetCommand, key, true).toCompletableFuture());
       }
    }
 
@@ -290,9 +289,11 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       for (Map.Entry<Address, Map<Object, Object>> entry : splitter.primaries.entrySet()) {
          PutMapCommand copy = new PutMapCommand(command, false);
          copy.setMap(entry.getValue());
-         CompletableFuture<Map<Address, Response>> remoteFuture = rpcManager
-               .invokeRemotelyAsync(Collections.singleton(entry.getKey()), copy, defaultSyncOptions);
-         future = remoteFuture.thenCombine(future, TriangleDistributionInterceptor::mergeMaps);
+         copy.setTopologyId(command.getTopologyId());
+         CompletionStage<ValidResponse> remoteFuture = rpcManager.invokeCommand(entry.getKey(), copy,
+                                                                                SingleResponseCollector.validOnly(),
+                                                                                rpcManager.getSyncRpcOptions());
+         future = remoteFuture.toCompletableFuture().thenCombine(future, TriangleDistributionInterceptor::mergeMaps);
       }
       return future;
    }
@@ -401,6 +402,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       if (trace) {
          log.tracef("Command %s got sequence %s for segment %s", id, sequenceNumber, segmentId);
       }
+      // TODO Should we use sendToAll in replicated mode?
       // we must send the message only after the collector is registered in the map
       rpcManager.sendToMany(backupOwners, backupWriteRpcCommand, DeliverOrder.NONE);
    }
@@ -427,13 +429,13 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
 
    private void forwardToPrimary(DataWriteCommand command, DistributionInfo distributionInfo,
          Collector<Object> collector) {
-      CompletableFuture<Map<Address, Response>> remoteInvocation = rpcManager
-            .invokeRemotelyAsync(Collections.singletonList(distributionInfo.primary()), command, defaultSyncOptions);
-      remoteInvocation.handle((responses, throwable) -> {
+      CompletionStage<ValidResponse> remoteInvocation =
+            rpcManager.invokeCommand(distributionInfo.primary(), command, SingleResponseCollector.validOnly(),
+                                     rpcManager.getSyncRpcOptions());
+      remoteInvocation.handle((response, throwable) -> {
          if (throwable != null) {
             collector.primaryException(CompletableFutures.extractException(throwable));
          } else {
-            ValidResponse response = (ValidResponse) responses.values().iterator().next();
             if (!response.isSuccessful()) {
                command.fail();
             }

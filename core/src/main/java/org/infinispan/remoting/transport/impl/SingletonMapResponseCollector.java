@@ -1,4 +1,4 @@
-package org.infinispan.remoting.transport.jgroups;
+package org.infinispan.remoting.transport.impl;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -13,6 +13,7 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ValidSingleResponseCollector;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -20,15 +21,25 @@ import org.infinispan.util.logging.LogFactory;
  * Response collector supporting {@link JGroupsTransport#invokeRemotelyAsync(Collection, ReplicableCommand, ResponseMode, long, ResponseFilter, DeliverOrder, boolean)}.
  *
  * @author Dan Berindei
- * @since 9.1
+ * @since 9.2
  */
-class SingletonMapResponseCollector
+public class SingletonMapResponseCollector
       extends ValidSingleResponseCollector<Map<Address, Response>> {
    private static final Log log = LogFactory.getLog(SingletonMapResponseCollector.class);
+   private static final SingletonMapResponseCollector VALID_ONLY = new SingletonMapResponseCollector(false);
+   private static final SingletonMapResponseCollector IGNORE_LEAVERS = new SingletonMapResponseCollector(true);
 
    private final boolean ignoreLeavers;
 
-   SingletonMapResponseCollector(boolean ignoreLeavers) {
+   public static SingletonMapResponseCollector validOnly() {
+      return VALID_ONLY;
+   }
+
+   public static SingletonMapResponseCollector ignoreLeavers() {
+      return IGNORE_LEAVERS;
+   }
+
+   private SingletonMapResponseCollector(boolean ignoreLeavers) {
       this.ignoreLeavers = ignoreLeavers;
    }
 

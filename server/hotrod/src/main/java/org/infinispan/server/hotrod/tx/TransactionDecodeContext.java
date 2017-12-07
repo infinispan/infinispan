@@ -88,7 +88,7 @@ abstract class TransactionDecodeContext {
    final void forgetTransaction() {
       TxCompletionNotificationCommand cmd = commandsFactory
             .buildTxCompletionNotificationCommand(xid, txState.getGlobalTransaction());
-      rpcManager.invokeRemotelyAsync(null, cmd, rpcManager.getDefaultRpcOptions(false, DeliverOrder.NONE));
+      rpcManager.sendToAll(cmd, DeliverOrder.NONE);
       serverTransactionTable.removeGlobalState(xid);
    }
 

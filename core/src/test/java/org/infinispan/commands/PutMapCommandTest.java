@@ -44,7 +44,7 @@ public class PutMapCommandTest extends MultipleCacheManagersTest {
          assert cache(3).get("key" + i) == null;
       }
 
-      Map<String, String> map = new HashMap<String, String>();
+      Map<String, String> map = new HashMap<>();
       for (int i = 0; i < numberOfKeys; ++i) {
          map.put("key" + i, "value" + i);
       }
@@ -54,24 +54,9 @@ public class PutMapCommandTest extends MultipleCacheManagersTest {
       for (int i = 0; i < numberOfKeys; ++i) {
          assertEquals("value" + i, cache(0).get("key" + i));
          final int finalI = i;
-         eventually(new Condition() {
-            @Override
-            public boolean isSatisfied() throws Exception {
-               return cache(1).get("key" + finalI).equals("value" + finalI);
-            }
-         });
-         eventually(new Condition() {
-            @Override
-            public boolean isSatisfied() throws Exception {
-               return cache(2).get("key" + finalI).equals("value" + finalI);
-            }
-         });
-         eventually(new Condition() {
-            @Override
-            public boolean isSatisfied() throws Exception {
-               return cache(3).get("key" + finalI).equals("value" + finalI);
-            }
-         });
+         eventuallyEquals("value" + i, () -> cache(1).get("key" + finalI));
+         eventuallyEquals("value" + i, () -> cache(2).get("key" + finalI));
+         eventuallyEquals("value" + i, () -> cache(3).get("key" + finalI));
       }
    }
 }

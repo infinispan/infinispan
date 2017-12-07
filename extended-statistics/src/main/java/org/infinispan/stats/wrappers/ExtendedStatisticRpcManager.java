@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -44,6 +46,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.stats.CacheStatisticManager;
 import org.infinispan.stats.container.ExtendedStatistic;
@@ -78,13 +81,79 @@ public class ExtendedStatisticRpcManager implements RpcManager {
    }
 
    @Override
+   public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
+                                               ResponseCollector<T> collector, RpcOptions rpcOptions) {
+      long start = timeService.time();
+      CompletionStage<T> request = actual.invokeCommand(target, command, collector, rpcOptions);
+      return request.thenApply(responseMap -> {
+         updateStats(command, true, timeService.timeDuration(start, NANOSECONDS), Collections.singleton(target));
+         return responseMap;
+      });
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
+                                               ResponseCollector<T> collector, RpcOptions rpcOptions) {
+      long start = timeService.time();
+      CompletionStage<T> request = actual.invokeCommand(targets, command, collector, rpcOptions);
+      return request.thenApply(responseMap -> {
+         updateStats(command, true, timeService.timeDuration(start, NANOSECONDS), targets);
+         return responseMap;
+      });
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
+                                                    RpcOptions rpcOptions) {
+      long start = timeService.time();
+      CompletionStage<T> request = actual.invokeCommandOnAll(command, collector, rpcOptions);
+      return request.thenApply(responseMap -> {
+         updateStats(command, true, timeService.timeDuration(start, NANOSECONDS), actual.getTransport().getMembers());
+         return responseMap;
+      });
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
+                                                        ResponseCollector<T> collector, RpcOptions rpcOptions) {
+      long start = timeService.time();
+      CompletionStage<T> request = actual.invokeCommandStaggered(targets, command, collector, rpcOptions);
+      return request.thenApply(responseMap -> {
+         updateStats(command, true, timeService.timeDuration(start, NANOSECONDS), targets);
+         return responseMap;
+      });
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
+                                                Function<Address, ReplicableCommand> commandGenerator,
+                                                ResponseCollector<T> collector, RpcOptions rpcOptions) {
+      long start = timeService.time();
+      CompletionStage<T> request = actual.invokeCommands(targets, commandGenerator, collector, rpcOptions);
+      return request.thenApply(responseMap -> {
+         targets.forEach(
+               target -> updateStats(commandGenerator.apply(target), true, timeService.timeDuration(start, NANOSECONDS),
+                                     Collections.singleton(target)));
+         return responseMap;
+      });
+   }
+
+   @Override
+   public <T> T blocking(CompletionStage<T> request) {
+      return actual.blocking(request);
+   }
+
+   @Override
    public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
                                                                         ReplicableCommand rpc,
                                                                         RpcOptions options) {
       long start = timeService.time();
       CompletableFuture<Map<Address, Response>> future = actual.invokeRemotelyAsync(recipients, rpc, options);
-      updateStats(rpc, options.responseMode().isSynchronous(), timeService.timeDuration(start, NANOSECONDS), recipients);
-      return future;
+      return future.thenApply(responseMap -> {
+         updateStats(rpc, options.responseMode().isSynchronous(), timeService.timeDuration(start, NANOSECONDS),
+                     recipients);
+         return responseMap;
+      });
    }
 
    @Override
@@ -115,6 +184,11 @@ public class ExtendedStatisticRpcManager implements RpcManager {
    @Override
    public void sendToMany(Collection<Address> destinations, ReplicableCommand command, DeliverOrder deliverOrder) {
       actual.sendToMany(destinations, command, deliverOrder);
+   }
+
+   @Override
+   public void sendToAll(ReplicableCommand command, DeliverOrder deliverOrder) {
+      actual.sendToAll(command, deliverOrder);
    }
 
    @Override
@@ -155,6 +229,16 @@ public class ExtendedStatisticRpcManager implements RpcManager {
    @Override
    public int getTopologyId() {
       return actual.getTopologyId();
+   }
+
+   @Override
+   public RpcOptions getSyncRpcOptions() {
+      return actual.getSyncRpcOptions();
+   }
+
+   @Override
+   public RpcOptions getTotalSyncRpcOptions() {
+      return actual.getTotalSyncRpcOptions();
    }
 
    private void updateStats(ReplicableCommand command, boolean sync, long duration, Collection<Address> recipients) {

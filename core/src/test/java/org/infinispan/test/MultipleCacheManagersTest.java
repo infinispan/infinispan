@@ -101,6 +101,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected Boolean totalOrder;
    protected BiasAcquisition biasAcquisition;
    protected IsolationLevel isolationLevel;
+   // Disables the triangle algorithm if set to Boolean.FALSE
+   protected Boolean useTriangle;
    private boolean parametrizedInstance = false;
 
    @BeforeClass(alwaysRun = true)
@@ -670,11 +672,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected String[] parameterNames() {
-      return new String[]{ null, "tx", "locking", "TO", "isolation", "bias" };
+      return new String[]{ null, "tx", "locking", "TO", "isolation", "bias", "triangle" };
    }
 
    protected Object[] parameterValues() {
-      return new Object[]{ cacheMode, transactional, lockingMode, totalOrder, isolationLevel, biasAcquisition };
+      return new Object[]{ cacheMode, transactional, lockingMode, totalOrder, isolationLevel, biasAcquisition, useTriangle };
    }
 
    protected static <T> T[] concat(T[] a1, T... a2) {
@@ -892,6 +894,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       eventually(() -> value == null
             ? null == cache(cacheIndex).get(key)
             : value.equals(cache(cacheIndex).get(key)));
+   }
+
+   public MultipleCacheManagersTest useTriangle(boolean useTriangle) {
+      this.useTriangle = useTriangle;
+      return this;
    }
 
    protected abstract static class AnnotationFilter<A extends Annotation, AM, CM> {

@@ -55,8 +55,9 @@ public class PushTransferTest extends AbstractStateTransferTest {
          RpcManager rpcManager = TestingUtil.extractComponent(c, RpcManager.class);
          TestingUtil.replaceComponent(c, RpcManager.class, new AbstractControlledRpcManager(rpcManager) {
             @Override
-            protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap, Object argument) {
-               if (command instanceof StateResponseCommand && responseMap.keySet().contains(cm4.getAddress())) {
+            protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
+               if (command instanceof StateResponseCommand &&
+                     ((Map<Address, Response>) responseObject).keySet().contains(cm4.getAddress())) {
                   // We don't have to wait for all push transfers to finish, one is enough to lose something
                   boolean pushTransfer;
                   try {
@@ -72,7 +73,7 @@ public class PushTransferTest extends AbstractStateTransferTest {
                      bltm.stopBlocking(BlockingLocalTopologyManager.LatchType.REBALANCE);
                   }
                }
-               return responseMap;
+               return responseObject;
             }
          }, true);
       });

@@ -2,9 +2,7 @@ package org.infinispan.jmx;
 
 import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -18,6 +16,7 @@ import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.Attribute;
 import javax.management.MBeanServer;
@@ -27,10 +26,10 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -125,8 +124,11 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
          when(transport.getMembers()).thenReturn(memberList);
          when(transport.getAddress()).thenReturn(mockAddress1);
          // If cache1 is the primary owner it will be a broadcast, otherwise a unicast
-         when(transport.invokeRemotelyAsync(any(), any(ReplicableCommand.class), any(ResponseMode.class),
-               anyLong(), isNull(), any(DeliverOrder.class), anyBoolean())).thenThrow(new RuntimeException());
+         when(transport.invokeCommand(any(Address.class), any(ReplicableCommand.class), any(ResponseCollector.class),
+                                      any(DeliverOrder.class), anyLong(), any(TimeUnit.class)))
+               .thenThrow(new RuntimeException());
+         when(transport.invokeCommandOnAll(any(ReplicableCommand.class), any(ResponseCollector.class),
+               any(DeliverOrder.class), anyLong(), any(TimeUnit.class))).thenThrow(new RuntimeException());
          rpcManager.setTransport(transport);
          cache1.put("a5", "b5");
          assert false : "rpc manager should have thrown an exception";

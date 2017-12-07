@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -82,13 +83,11 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferManager;
@@ -113,7 +112,6 @@ public class PrefetchInterceptor extends DDAsyncInterceptor {
    protected KeyPartitioner keyPartitioner;
    protected CommandsFactory commandsFactory;
    protected RpcManager rpcManager;
-   protected RpcOptions syncRpcOptions;
    protected Cache cache;
    protected int numSegments;
 
@@ -135,7 +133,6 @@ public class PrefetchInterceptor extends DDAsyncInterceptor {
 
    @Start
    public void start() {
-      this.syncRpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
       this.numSegments = cacheConfiguration.clustering().hash().numSegments();
    }
 
@@ -163,8 +160,9 @@ public class PrefetchInterceptor extends DDAsyncInterceptor {
             break;
          case BLOCKED:
             if (isWrite) {
-               return asyncValue(svm.getBlockingFuture(segment).thenCompose(
-                     nil -> makeStage(prefetchKeyIfNeededAndInvokeNext(ctx, command, key, true)).toCompletableFuture()));
+               return asyncValue(svm.getBlockingFuture(segment))
+                     .thenApply(ctx, command, (rCtx, rCommand, ignored) ->
+                           prefetchKeyIfNeededAndInvokeNext(ctx, command, key, true));
             }
          case KEY_TRANSFER:
          case VALUE_TRANSFER:
@@ -235,11 +233,12 @@ public class PrefetchInterceptor extends DDAsyncInterceptor {
       }
       CacheEntry entry = (CacheEntry) rv;
       Metadata metadata = entry != null ? entry.getMetadata() : null;
-      CompletableFuture<InternalCacheValue> future;
+      CompletionStage<InternalCacheValue> future;
       int segment = keyPartitioner.getSegment(cmd.getKey());
-      if (metadata != null && metadata.version() != null && svm.isVersionActual(segment, metadata.version())){
+      if (metadata != null && metadata.version() != null && svm.isVersionActual(segment, metadata.version())) {
          return null;
-      } else if ((metadata instanceof RemoteMetadata) && svm.getSegmentState(segment) == ScatteredVersionManager.SegmentState.VALUE_TRANSFER) {
+      } else if ((metadata instanceof RemoteMetadata) &&
+            svm.getSegmentState(segment) == ScatteredVersionManager.SegmentState.VALUE_TRANSFER) {
          // The RemoteMetadata is valid only during value transfer - in blocked state there shouldn't be any such
          // entry and during key transfer we could see metadata pointing to a node with outdated information.
          Address backup = ((RemoteMetadata) metadata).getAddress();
@@ -251,19 +250,28 @@ public class PrefetchInterceptor extends DDAsyncInterceptor {
          if (maxValue == null) {
             return;
          }
-         PutKeyValueCommand putKeyValueCommand = commandsFactory.buildPutKeyValueCommand(cmd.getKey(), maxValue.getValue(), maxValue.getMetadata(), STATE_TRANSFER_FLAGS);
+         PutKeyValueCommand putKeyValueCommand =
+               commandsFactory.buildPutKeyValueCommand(cmd.getKey(), maxValue.getValue(), maxValue.getMetadata(),
+                                                       STATE_TRANSFER_FLAGS);
          putKeyValueCommand.setTopologyId(cmd.getTopologyId());
          invokeNext(ctx1, putKeyValueCommand);
       }));
    }
 
-   private CompletableFuture<InternalCacheValue> retrieveRemoteValue(Collection<Address> targets, Object key, int topologyId) {
+   private CompletionStage<InternalCacheValue> retrieveRemoteValue(Collection<Address> targets, Object key,
+                                                                   int topologyId) {
       if (trace) {
          log.tracef("Prefetching entry for key %s from %s", key, targets);
       }
       ClusteredGetCommand command = commandsFactory.buildClusteredGetCommand(key, FlagBitSets.SKIP_OWNERSHIP_CHECK);
       command.setTopologyId(topologyId);
-      return rpcManager.invokeRemotelyAsync(targets, command, syncRpcOptions).thenApply(handleRemotelyPrefetchedEntry);
+      CompletionStage<Map<Address, Response>> remoteInvocation =
+            targets != null ?
+            rpcManager.invokeCommand(targets, command, MapResponseCollector.ignoreLeavers(targets.size()),
+                                     rpcManager.getSyncRpcOptions()) :
+            rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(),
+                                          rpcManager.getSyncRpcOptions());
+      return remoteInvocation.thenApply(handleRemotelyPrefetchedEntry);
    }
 
    private InternalCacheValue handleRemotelyPrefetchedEntry(Map<Address, Response> responseMap) {
@@ -305,7 +313,10 @@ public class PrefetchInterceptor extends DDAsyncInterceptor {
       }
       ClusteredGetAllCommand command = commandsFactory.buildClusteredGetAllCommand(keys, FlagBitSets.SKIP_OWNERSHIP_CHECK, null);
       command.setTopologyId(topologyId);
-      return asyncValue(rpcManager.invokeRemotelyAsync(null, command, syncRpcOptions).thenCompose(responseMap -> {
+      return asyncValue(
+            rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(),
+                                          rpcManager.getSyncRpcOptions())
+                      .thenCompose(responseMap -> {
          InternalCacheValue[] maxValues = new InternalCacheValue[keys.size()];
          for (Response response : responseMap.values()) {
             if (!response.isSuccessful()) {

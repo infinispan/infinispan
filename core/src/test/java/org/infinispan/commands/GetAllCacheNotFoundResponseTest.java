@@ -4,12 +4,12 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -25,10 +25,10 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.AbstractControlledRpcManager;
@@ -101,29 +101,29 @@ public class GetAllCacheNotFoundResponseTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
-         if (!(rpc instanceof ClusteredGetAllCommand)) {
-            return super.invokeRemotelyAsync(recipients, rpc, options);
+      public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
+                                                  ResponseCollector<T> collector, RpcOptions rpcOptions) {
+         if (!(command instanceof ClusteredGetAllCommand)) {
+            return super.invokeCommand(target, command, collector, rpcOptions);
          }
-         assertEquals(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, options.responseMode());
-         ClusteredGetAllCommand cmd = (ClusteredGetAllCommand) rpc;
-         if (hasKeys(cmd, key1, key2) && hasTarget(recipients, 0)) {
+         ClusteredGetAllCommand cmd = (ClusteredGetAllCommand) command;
+         if (hasKeys(cmd, key1, key2) && target.equals(address(cache(0)))) {
             cd1.countDown();
-            return cf1;
-         } else if (hasKeys(cmd, key3) && hasTarget(recipients, 2)) {
+            return (CompletionStage<T>) cf1;
+         } else if (hasKeys(cmd, key3) && target.equals(address(cache(2)))) {
             cd1.countDown();
-            return cf2;
-         } else if (hasKeys(cmd, key1) && hasTarget(recipients, 1)) {
+            return (CompletionStage<T>) cf2;
+         } else if (hasKeys(cmd, key1) && target.equals(address(cache(1)))) {
             cd2.countDown();
-            return cf3;
-         } else if (hasKeys(cmd, key2) && hasTarget(recipients, 2)) {
+            return (CompletionStage<T>) cf3;
+         } else if (hasKeys(cmd, key2) && target.equals(address(cache(2)))) {
             cd2.countDown();
-            return cf4;
-         } else if (hasKeys(cmd, key3) && hasTarget(recipients, 3)) {
+            return (CompletionStage<T>) cf4;
+         } else if (hasKeys(cmd, key3) && target.equals(address(cache(3)))) {
             cd2.countDown();
-            return cf5;
+            return (CompletionStage<T>) cf5;
          } else {
-            throw new IllegalArgumentException("Command " + cmd + " to " + recipients);
+            throw new IllegalArgumentException("Command " + cmd + " to " + target);
          }
       }
 
@@ -138,11 +138,5 @@ public class GetAllCacheNotFoundResponseTest extends MultipleCacheManagersTest {
          }
          return true;
       }
-
-      private boolean hasTarget(Collection<Address> recipients, int target) {
-         assertEquals(1, recipients.size());
-         return recipients.iterator().next().equals(address(cache(target)));
-      }
-
    }
 }

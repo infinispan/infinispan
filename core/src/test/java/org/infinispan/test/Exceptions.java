@@ -18,11 +18,11 @@ public class Exceptions {
 
    public static void assertException(Class<? extends Throwable> exceptionClass, Throwable t) {
       if (t == null) {
-         throw new AssertionError("Should have thrown an " + exceptionClass, null);
+         throw new AssertionError("Should have thrown an " + exceptionClass.getName(), null);
       }
       if (t.getClass() != exceptionClass) {
          throw new AssertionError(
-               "Wrong exception thrown: expected:<" + exceptionClass + ">, actual:<" + t.getClass() + ">", t);
+               "Wrong exception thrown: expected:<" + exceptionClass.getName() + ">, actual:<" + t.getClass().getName() + ">", t);
       }
    }
 

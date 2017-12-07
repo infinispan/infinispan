@@ -6,8 +6,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
@@ -17,10 +16,10 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.RemoteException;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -143,15 +142,16 @@ public class BiasRevocationTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
-         if (rpc instanceof RevokeBiasCommand) {
+      public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
+                                                  ResponseCollector<T> collector, RpcOptions rpcOptions) {
+         if (command instanceof RevokeBiasCommand) {
             if (throwBefore)
                throw new RemoteException("Induced", null);
             if (throwInFuture) {
                return CompletableFutures.completedExceptionFuture(new RemoteException("Induced", null));
             }
          }
-         return super.invokeRemotelyAsync(recipients, rpc, options);
+         return super.invokeCommand(targets, command, collector, rpcOptions);
       }
    }
 }

@@ -10,7 +10,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
@@ -492,20 +491,12 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
 
       // TODO: add more determinism by waiting for all responses
       rpcManager0.blockAfter(ClusteredGetCommand.class);
-      rpcManager0.checkResponses(responseMap -> {
+      rpcManager0.checkResponses((Response response) -> {
          int succesful = 0;
-         for (Map.Entry<Address, Response> rsp : responseMap.entrySet()) {
-            if (rsp.getValue().isSuccessful()) {
-               if (expectSuccessFrom >= 0) {
-                  assertEquals(cacheManagers.get(expectSuccessFrom).getAddress(), rsp.getKey());
-               }
-               succesful++;
-            } else {
-               assertEquals(UnsureResponse.INSTANCE, rsp.getValue());
-               if (expectSuccessFrom >= 0) {
-                  assertFalse(rsp.getKey().equals(cacheManagers.get(expectSuccessFrom).getAddress()));
-               }
-            }
+         if (response.isSuccessful()) {
+            succesful++;
+         } else {
+            assertEquals(UnsureResponse.INSTANCE, response);
          }
          assertTrue(succesful <= expectedSuccessResponses);
       });
@@ -569,11 +560,8 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
             .addInterceptor(new BlockingInterceptor(barrier1, GetCacheEntryCommand.class, false, false), 0);
 
       rpcManager0.blockAfter(ClusteredGetCommand.class);
-      rpcManager0.checkResponses(responseMap -> {
-         assertEquals(responseMap.toString(), 2, responseMap.size());
-         for (Map.Entry<Address, Response> rsp : responseMap.entrySet()) {
-            assertEquals(UnsureResponse.INSTANCE, rsp.getValue());
-         }
+      rpcManager0.checkResponses((Response response) -> {
+         assertEquals(UnsureResponse.INSTANCE, response);
       });
       Future<Object> remoteGetFuture = remoteGet(cache(0), key);
 

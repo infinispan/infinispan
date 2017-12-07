@@ -5,11 +5,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.CollectionFactory;
@@ -29,6 +30,7 @@ import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
@@ -199,41 +201,48 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    }
 
    private void completeTransaction(final TransactionInfo transactionInfo, CacheTopology cacheTopology) {
-      rpcManager.invokeRemotelyAsync(transactionInfo.getCommitNodes(cacheTopology),
-              transactionInfo.buildCommand(commandsFactory, isVersioned),
-              rpcManager.getDefaultRpcOptions(true))
-              .whenComplete((responseMap, throwable) -> {
-                 final GlobalTransaction globalTransaction = transactionInfo.getGlobalTransaction();
-                 if (throwable != null) {
-                    if (trace) {
-                       log.tracef(throwable, "Exception for transaction %s. Retry later.", globalTransaction);
-                    }
-                    return;
-                 }
+      List<Address> commitNodes = transactionInfo.getCommitNodes(cacheTopology);
+      TransactionBoundaryCommand command = transactionInfo.buildCommand(commandsFactory, isVersioned);
+      command.setTopologyId(cacheTopology.getTopologyId());
+      CompletionStage<Map<Address, Response>> remoteInvocation = commitNodes != null ?
+            rpcManager.invokeCommand(commitNodes, command, MapResponseCollector.validOnly(commitNodes.size()),
+                                     rpcManager.getSyncRpcOptions()) :
+            rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(),
+                                          rpcManager.getSyncRpcOptions());
+      remoteInvocation.whenComplete((responseMap, throwable) -> {
+         final GlobalTransaction globalTransaction = transactionInfo.getGlobalTransaction();
+         if (throwable != null) {
+            if (trace) {
+               log.tracef(throwable, "Exception for transaction %s. Retry later.", globalTransaction);
+            }
+            return;
+         }
 
-                 if (trace) {
-                    log.tracef("Future done for transaction %s. Response are %s", globalTransaction, responseMap);
-                 }
+         if (trace) {
+            log.tracef("Future done for transaction %s. Response are %s", globalTransaction, responseMap);
+         }
 
-                 for (Response response : responseMap.values()) {
-                    if (response == UnsureResponse.INSTANCE || response == CacheNotFoundResponse.INSTANCE) {
-                       if (trace) {
-                          log.tracef("Another partition or topology changed for transaction %s. Retry later.", globalTransaction);
-                       }
-                       return;
-                    }
-                 }
-                 if (trace) {
-                    log.tracef("Performing cleanup for transaction %s", globalTransaction);
-                 }
-                 lockManager.unlock(transactionInfo.getLockedKeys(), globalTransaction);
-                 partialTransactions.remove(globalTransaction);
-                 TxCompletionNotificationCommand command = commandsFactory.buildTxCompletionNotificationCommand(null, globalTransaction);
-                 //a little bit overkill, but the state transfer can happen during a merge and some nodes can receive the
-                 // transaction that aren't in the original affected nodes.
-                 //no side effects.
-                 rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(false, DeliverOrder.NONE));
-              });
+         for (Response response : responseMap.values()) {
+            if (response == UnsureResponse.INSTANCE || response == CacheNotFoundResponse.INSTANCE) {
+               if (trace) {
+                  log.tracef("Another partition or topology changed for transaction %s. Retry later.",
+                             globalTransaction);
+               }
+               return;
+            }
+         }
+         if (trace) {
+            log.tracef("Performing cleanup for transaction %s", globalTransaction);
+         }
+         lockManager.unlock(transactionInfo.getLockedKeys(), globalTransaction);
+         partialTransactions.remove(globalTransaction);
+         TxCompletionNotificationCommand completionCommand =
+               commandsFactory.buildTxCompletionNotificationCommand(null, globalTransaction);
+         // A little bit overkill, but the state transfer can happen during a merge and some nodes can receive the
+         // transaction that aren't in the original affected nodes.
+         // no side effects.
+         rpcManager.sendToAll(completionCommand, DeliverOrder.NONE);
+      });
    }
 
    private boolean isTopologyStable(CacheTopology cacheTopology) {
@@ -270,7 +279,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
 
       List<Address> getCommitNodes(CacheTopology stableTopology);
 
-      ReplicableCommand buildCommand(CommandsFactory commandsFactory, boolean isVersioned);
+      TransactionBoundaryCommand buildCommand(CommandsFactory commandsFactory, boolean isVersioned);
 
       GlobalTransaction getGlobalTransaction();
 
@@ -289,7 +298,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       }
 
       @Override
-      public ReplicableCommand buildCommand(CommandsFactory commandsFactory, boolean isVersioned) {
+      public TransactionBoundaryCommand buildCommand(CommandsFactory commandsFactory, boolean isVersioned) {
          return commandsFactory.buildRollbackCommand(getGlobalTransaction());
       }
 
@@ -310,7 +319,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       }
 
       @Override
-      public ReplicableCommand buildCommand(CommandsFactory commandsFactory, boolean isVersioned) {
+      public TransactionBoundaryCommand buildCommand(CommandsFactory commandsFactory, boolean isVersioned) {
          if (isVersioned) {
             VersionedCommitCommand commitCommand = commandsFactory.buildVersionedCommitCommand(getGlobalTransaction());
             commitCommand.setUpdatedVersions(newVersions);
@@ -336,7 +345,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       }
 
       @Override
-      public ReplicableCommand buildCommand(CommandsFactory commandsFactory, boolean isVersioned) {
+      public TransactionBoundaryCommand buildCommand(CommandsFactory commandsFactory, boolean isVersioned) {
          if (isVersioned) {
             throw new IllegalArgumentException("Cannot build a versioned one-phase-commit prepare command.");
          }

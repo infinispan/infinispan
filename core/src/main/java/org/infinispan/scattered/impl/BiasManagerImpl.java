@@ -21,7 +21,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commons.util.ByRef;
-import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
@@ -35,10 +34,9 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
@@ -54,7 +52,6 @@ public class BiasManagerImpl implements BiasManager {
    private ConcurrentMap<Object, LocalBias> localBias = new ConcurrentHashMap<>();
    private ConcurrentMap<Object, RemoteBias> remoteBias = new ConcurrentHashMap<>();
    private long renewLeasePeriod;
-   private RpcOptions syncIgnoreLeavers;
 
    private AdvancedCache cache;
    private Configuration configuration;
@@ -81,18 +78,11 @@ public class BiasManagerImpl implements BiasManager {
 
    @Start
    public void start() {
-      configuration.clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
-            .addListener((a, ignored) -> updateRpcOptions());
-      updateRpcOptions();
       // TODO: Should we add another configuration option?
       executor.scheduleAtFixedRate(this::removeOldBiasses, 0, configuration.expiration().wakeUpInterval(), TimeUnit.MILLISECONDS);
       executor.scheduleAtFixedRate(this::renewLocalBiasses, 0, configuration.expiration().wakeUpInterval(), TimeUnit.MILLISECONDS);
       renewLeasePeriod = configuration.clustering().biasLifespan() - configuration.clustering().remoteTimeout();
       cache.addListener(this);
-   }
-
-   private void updateRpcOptions() {
-      syncIgnoreLeavers = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
    }
 
    @TopologyChanged
@@ -127,7 +117,9 @@ public class BiasManagerImpl implements BiasManager {
             }
             // TODO: maybe some batching here; on the other side we don't want to block writes for too long
             RevokeBiasCommand revokeBiasCommand = commandsFactory.buildRevokeBiasCommand(null, 0, 0, Collections.singleton(key));
-            rpcManager.invokeRemotelyAsync(bias3.biased, revokeBiasCommand, syncIgnoreLeavers).whenComplete((nil, throwable) -> {
+            rpcManager.invokeCommand(bias3.biased, revokeBiasCommand, MapResponseCollector.ignoreLeavers(),
+                                     rpcManager.getSyncRpcOptions())
+                      .whenComplete((nil, throwable) -> {
                CompletableFuture<?> future = bias3.future;
                if (throwable != null) {
                   if (trace) {

@@ -1,6 +1,5 @@
 package org.infinispan.partitionhandling;
 
-import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
@@ -24,6 +23,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.StreamIteratorRequestCommand;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
@@ -172,7 +172,7 @@ public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
                   throw new AssertionError(throwable);
                }
             }, checkPoint).call()
-      ).when(spy).invokeRemotelyAsync(anyCollection(), any(StreamIteratorRequestCommand.class), any());
+      ).when(spy).invokeCommand(any(Address.class), any(StreamIteratorRequestCommand.class), any(), any());
 
       TestingUtil.replaceComponent(cache, RpcManager.class, spy, true);
    }

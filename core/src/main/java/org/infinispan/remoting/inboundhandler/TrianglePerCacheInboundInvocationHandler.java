@@ -313,8 +313,9 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       if (id.getAddress().equals(localAddress)) {
          commandAckCollector.multiKeyBackupAck(id.getId(), localAddress, segment, topologyId);
       } else {
-         rpcManager
-               .sendTo(origin, commandsFactory.buildBackupMultiKeyAckCommand(id.getId(), segment, topologyId), NONE);
+         BackupMultiKeyAckCommand command =
+               commandsFactory.buildBackupMultiKeyAckCommand(id.getId(), segment, topologyId);
+         rpcManager.sendTo(origin, command, NONE);
       }
    }
 

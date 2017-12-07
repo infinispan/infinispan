@@ -51,12 +51,14 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
+import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
@@ -977,15 +979,14 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       public void execute() {
          if (trace) log.tracef("Sending %s to remote execution at node %s", this, getExecutionTarget());
          try {
-            rpc.invokeRemotelyAsync(
-                  Collections.singletonList(getExecutionTarget()), getCommand(), rpc.getRpcOptionsBuilder(
-                        ResponseMode.SYNCHRONOUS).timeout(getOwningTask().timeout(), TimeUnit.MILLISECONDS)
-                        .build()).whenComplete((Map<Address, Response> v, Throwable t) -> {
+            rpc.invokeCommand(getExecutionTarget(), getCommand(), SingleResponseCollector.validOnly(),
+                              new RpcOptions(DeliverOrder.NONE, getOwningTask().timeout(), TimeUnit.MILLISECONDS))
+               .whenComplete((Response r, Throwable t) -> {
                if (t != null) {
                   completeExceptionally(t);
                } else {
                   try {
-                     complete(retrieveResult(v));
+                     complete(retrieveResult(r));
                   } catch (Exception e) {
                      completeExceptionally(e);
                   }
@@ -1008,27 +1009,12 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          }
       }
 
-      private V retrieveResult(Map<Address, Response> response) throws Exception {
-         V result = null;
-         // this two should never happen, mark them with IllegalStateException
-         if (response == null) {
-            throw new IllegalStateException("Invalid response received " + response);
-         }
-         if (response.size() == 1) {
-            for (Entry<Address, Response> e : response.entrySet()) {
-               Response value = e.getValue();
-               if (value instanceof SuccessfulResponse) {
-                  result = (V) ((SuccessfulResponse) value).getResponseValue();
-               } else {
-                  throw new ExecutionException(new Exception(value != null ? value.toString() : "Unknown cause"));
-               }
-            }
+      private V retrieveResult(Response response) throws Exception {
+         if (response instanceof SuccessfulResponse) {
+            return (V) ((SuccessfulResponse) response).getResponseValue();
          } else {
-            //should never happen as we send DistributedTaskPart to one node for
-            //execution only, therefore we should get only one response
-            throw new IllegalStateException("Invalid response " + response);
+            throw new ExecutionException(new Exception(response != null ? response.toString() : "Unknown cause"));
          }
-         return result;
       }
    }
 

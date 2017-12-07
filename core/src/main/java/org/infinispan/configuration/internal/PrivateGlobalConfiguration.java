@@ -1,5 +1,6 @@
 package org.infinispan.configuration.internal;
 
+import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.serializing.SerializedWith;
@@ -14,6 +15,7 @@ import org.infinispan.configuration.serializing.SerializedWith;
  * @since 9.0
  */
 @SerializedWith(PrivateGlobalConfigurationSerializer.class)
+@BuiltBy(PrivateGlobalConfigurationBuilder.class)
 public class PrivateGlobalConfiguration {
 
    static final AttributeDefinition<Boolean> SERVER_MODE = AttributeDefinition.builder("server-mode", false).immutable().build();

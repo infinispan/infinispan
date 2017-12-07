@@ -1,5 +1,6 @@
 package org.infinispan.tx;
 
+import static org.infinispan.util.concurrent.CompletableFutures.completedNull;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -8,9 +9,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -34,10 +37,10 @@ import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -54,6 +57,7 @@ import org.testng.annotations.Test;
 public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManagersTest {
    ConfigurationBuilder cb;
    ControlledConsistentHashFactory chFactory;
+   ExecutorService executor = Executors.newCachedThreadPool(getTestThreadFactory("Transport"));
 
    private static class Operation {
       final String name;
@@ -184,7 +188,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       // make sure the other key is stable
       MagicKey otherKey = new MagicKey("other", cache(0), cache(2));
       FunctionalMap.ReadWriteMap<Object, Object> rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(cache(0).getAdvancedCache()));
-      HashMap<MagicKey, Object> map = new HashMap();
+      HashMap<MagicKey, Object> map = new HashMap<>();
       map.put(key, "v" + index);
       map.put(otherKey, "something");
       Traversable<Object> traversable = rwMap.evalMany(map, (value, view) -> {
@@ -225,16 +229,47 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       }
 
       @Override
-      public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
-         CompletableFuture<Map<Address, Response>> future = realOne.invokeRemotelyAsync(recipients, rpc, options);
+      public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
+                                                  ResponseCollector<T> collector, RpcOptions rpcOptions) {
          // We have to force afterInvokeRemotely being invoked in another thread, because if the response
          // arrives too soon, we could be processing in the same thread that is about to wait for the prepare
          // command to finish without blocking
-         return future.thenApplyAsync(responses -> afterInvokeRemotely(rpc, responses, null));
+         return completedNull()
+               .thenComposeAsync(o -> super.invokeCommand(target, command, collector, rpcOptions), executor);
       }
 
       @Override
-      protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap, Object argument) {
+      public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
+                                                  ResponseCollector<T> collector, RpcOptions rpcOptions) {
+         // We have to force afterInvokeRemotely being invoked in another thread, because if the response
+         // arrives too soon, we could be processing in the same thread that is about to wait for the prepare
+         // command to finish without blocking
+         return completedNull()
+               .thenComposeAsync(o -> super.invokeCommand(targets, command, collector, rpcOptions), executor);
+      }
+
+      @Override
+      public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
+                                                       RpcOptions rpcOptions) {
+         // We have to force afterInvokeRemotely being invoked in another thread, because if the response
+         // arrives too soon, we could be processing in the same thread that is about to wait for the prepare
+         // command to finish without blocking
+         return completedNull()
+               .thenComposeAsync(o -> super.invokeCommandOnAll(command, collector, rpcOptions), executor);
+      }
+
+      @Override
+      public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
+                                                           ResponseCollector<T> collector, RpcOptions rpcOptions) {
+         // We have to force afterInvokeRemotely being invoked in another thread, because if the response
+         // arrives too soon, we could be processing in the same thread that is about to wait for the prepare
+         // command to finish without blocking
+         return completedNull()
+               .thenComposeAsync(o -> super.invokeCommandStaggered(targets, command, collector, rpcOptions), executor);
+      }
+
+      @Override
+      protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
          if (command instanceof ClusteredGetCommand) {
             ++clusterGet;
             try {
@@ -246,7 +281,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
                throw new RuntimeException(e);
             }
          }
-         return responseMap;
+         return responseObject;
       }
    }
 
