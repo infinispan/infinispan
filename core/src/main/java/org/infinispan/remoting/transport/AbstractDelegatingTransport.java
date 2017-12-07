@@ -70,6 +70,11 @@ public abstract class AbstractDelegatingTransport implements Transport {
    }
 
    @Override
+   public void sendToAll(ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
+      actual.sendToAll(rpcCommand, deliverOrder);
+   }
+
+   @Override
    public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand) throws Exception {
       beforeBackupRemotely(rpcCommand);
       BackupResponse response = actual.backupRemotely(backups, rpcCommand);
@@ -220,8 +225,9 @@ public abstract class AbstractDelegatingTransport implements Transport {
    @Override
    public <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
                                                 Function<Address, ReplicableCommand> commandGenerator,
-                                                ResponseCollector<T> responseCollector, long timeout,
-                                                DeliverOrder deliverOrder) {
-      return actual.invokeCommands(targets, commandGenerator, responseCollector, timeout, deliverOrder);
+                                                ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                long timeout,
+                                                TimeUnit timeUnit) {
+      return actual.invokeCommands(targets, commandGenerator, collector, deliverOrder, timeout, timeUnit);
    }
 }

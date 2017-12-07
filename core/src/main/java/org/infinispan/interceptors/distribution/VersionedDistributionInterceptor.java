@@ -5,7 +5,7 @@ import static org.infinispan.transaction.impl.WriteSkewHelper.readVersionsFromRe
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.container.entries.CacheEntry;
@@ -18,6 +18,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.CacheTransaction;
@@ -142,10 +143,15 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
    }
 
    @Override
-   protected CompletableFuture<Object> prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
-      // Perform the RPC
-      CompletableFuture<Map<Address, Response>>
-            remoteInvocation = rpcManager.invokeRemotelyAsync(recipients, command, createRpcOptions());
+   protected CompletionStage<Object> prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
+      CompletionStage<Map<Address, Response>> remoteInvocation;
+      if (recipients != null) {
+         MapResponseCollector collector = MapResponseCollector.ignoreLeavers(recipients.size());
+         remoteInvocation = rpcManager.invokeCommand(recipients, command, collector, rpcManager.getSyncRpcOptions());
+      } else {
+         MapResponseCollector collector = MapResponseCollector.ignoreLeavers();
+         remoteInvocation = rpcManager.invokeCommandOnAll(command, collector, rpcManager.getSyncRpcOptions());
+      }
       return remoteInvocation.handle((responses, t) -> {
          transactionRemotelyPrepared(ctx);
          CompletableFutures.rethrowException(t);

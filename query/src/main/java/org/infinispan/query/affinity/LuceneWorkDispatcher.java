@@ -3,9 +3,8 @@ package org.infinispan.query.affinity;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.indexes.spi.IndexManager;
@@ -15,8 +14,10 @@ import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.indexmanager.LuceneWorkConverter;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.LogFactory;
 
@@ -76,17 +77,17 @@ class LuceneWorkDispatcher {
       byte[] serializedModel = indexManager.getSerializer().toSerializedModel(works);
       indexUpdateCommand.setSerializedWorkList(serializedModel);
       indexUpdateCommand.setIndexName(destination.getShard());
-      List<Address> dest = Collections.singletonList(destination.getAddress());
+      Address dest = destination.getAddress();
       if (this.shouldSendSync(originLocal)) {
          log.debugf("Sending sync works %s to %s", works, dest);
-         Map<Address, Response> response = rpcManager.invokeRemotely(dest, indexUpdateCommand,
-               rpcManager.getDefaultRpcOptions(true));
+         Response response = rpcManager.blocking(rpcManager.invokeCommand(dest, indexUpdateCommand,
+                                                                          SingleResponseCollector.validOnly(),
+                                                                          rpcManager.getSyncRpcOptions()));
          log.debugf("Response %s obtained for command %s", response, works);
       } else {
          log.debugf("Sending async works %s to %s", works, dest);
-         CompletableFuture<Map<Address, Response>> result
-               = rpcManager.invokeRemotelyAsync(dest, indexUpdateCommand,
-               rpcManager.getDefaultRpcOptions(this.shouldSendSync(originLocal)));
+         CompletionStage<ValidResponse> result = rpcManager.invokeCommand(
+            dest, indexUpdateCommand, SingleResponseCollector.validOnly(), rpcManager.getSyncRpcOptions());
          result.whenComplete((responses, error) -> {
             if (error != null) {
                log.error("Error forwarding index job", error);

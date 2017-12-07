@@ -92,6 +92,14 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
    }
 
    @Override
+   protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      if (command instanceof TopologyAffectedCommand) {
+         ((TopologyAffectedCommand) command).setTopologyId(currentTopologyId());
+      }
+      return invokeNext(ctx, command);
+   }
+
+   @Override
    protected Log getLog() {
       return log;
    }

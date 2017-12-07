@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Stream;
@@ -34,9 +34,10 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
-import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
@@ -245,17 +246,14 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       return getStream(cacheEntrySet, parallelStream, segments, keysToInclude, keysToExclude);
    }
 
-   private void handleResponseError(CompletableFuture<Map<Address, Response>> completableFuture, Object requestId,
-         Address origin) {
+   private void handleResponseError(CompletionStage<ValidResponse> rpcFuture, Object requestId,
+                                    Address origin) {
       if (trace) {
-         completableFuture.whenComplete((v, e) -> {
-            if (v != null) {
-               Response response = v.values().iterator().next();
-               if (!response.isSuccessful()) {
-                  log.tracef("Unsuccessful response for %s sending response to %s", requestId, origin);
-               }
-            } else if (e != null) {
-               log.tracef(e, "Encounted exception for %s sending response to %s", requestId, origin);
+         rpcFuture.whenComplete((response, e) -> {
+            if (e != null) {
+               log.tracef(e, "Encountered exception for %s sending response to %s", requestId, origin);
+            } else if (response != null && !response.isSuccessful()) {
+               log.tracef("Unsuccessful response for %s sending response to %s", requestId, origin);
             } else {
                log.tracef("Response successfully sent for %s", requestId);
             }
@@ -273,8 +271,10 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       operation.setSupplier(() -> getStream(cacheEntrySet, parallelStream, segments, keysToInclude, keysToExclude));
       operation.handleInjection(registry);
       R value = operation.performOperation();
-      CompletableFuture<Map<Address, Response>> completableFuture = rpc.invokeRemotelyAsync(Collections.singleton(origin),
-            factory.buildStreamResponseCommand(requestId, true, Collections.emptySet(), value), rpc.getDefaultRpcOptions(true));
+      StreamResponseCommand<R> command =
+         factory.buildStreamResponseCommand(requestId, true, Collections.emptySet(), value);
+      CompletionStage<ValidResponse> completableFuture =
+         rpc.invokeCommand(origin, command, SingleResponseCollector.validOnly(), rpc.getSyncRpcOptions());
       handleResponseError(completableFuture, requestId, origin);
    }
 
@@ -321,8 +321,9 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       if (trace) {
          log.tracef("Sending response for %s", requestId);
       }
-      CompletableFuture<Map<Address, Response>> completableFuture = rpc.invokeRemotelyAsync(Collections.singleton(origin),
-            factory.buildStreamResponseCommand(requestId, true, listener.segmentsLost, value), rpc.getDefaultRpcOptions(true));
+      StreamResponseCommand<R> command = factory.buildStreamResponseCommand(requestId, true, listener.segmentsLost, value);
+      CompletionStage<ValidResponse> completableFuture =
+         this.rpc.invokeCommand(origin, command, SingleResponseCollector.validOnly(), rpc.getSyncRpcOptions());
       handleResponseError(completableFuture, requestId, origin);
    }
 
@@ -339,8 +340,10 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       operation.handleInjection(registry);
       Collection<R> value = operation.performOperation(new NonRehashIntermediateCollector<>(origin, requestId,
               parallelStream));
-      CompletableFuture<Map<Address, Response>> completableFuture = rpc.invokeRemotelyAsync(Collections.singleton(origin),
-            factory.buildStreamResponseCommand(requestId, true, Collections.emptySet(), value), rpc.getDefaultRpcOptions(true));
+      StreamResponseCommand<Collection<R>> command =
+         factory.buildStreamResponseCommand(requestId, true, Collections.emptySet(), value);
+      CompletionStage<ValidResponse> completableFuture =
+         rpc.invokeCommand(origin, command, SingleResponseCollector.validOnly(), rpc.getSyncRpcOptions());
       handleResponseError(completableFuture, requestId, origin);
    }
 
@@ -385,8 +388,10 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
          results = null;
       }
 
-      CompletableFuture<Map<Address, Response>> completableFuture = rpc.invokeRemotelyAsync(Collections.singleton(origin),
-            factory.buildStreamResponseCommand(requestId, true, listener.segmentsLost, results), rpc.getDefaultRpcOptions(true));
+      StreamResponseCommand<Collection<CacheEntry<K, R2>>> command =
+         factory.buildStreamResponseCommand(requestId, true, listener.segmentsLost, results);
+      CompletionStage<ValidResponse> completableFuture =
+         rpc.invokeCommand(origin, command, SingleResponseCollector.validOnly(), rpc.getSyncRpcOptions());
       handleResponseError(completableFuture, requestId, origin);
    }
 
@@ -454,8 +459,10 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
                throw new CacheException(e);
             }
          } else {
-            rpc.invokeRemotely(Collections.singleton(origin), new StreamResponseCommand<>(cacheName, localAddress,
-                    requestId, false, response), rpc.getDefaultRpcOptions(true));
+            StreamResponseCommand<R> command =
+               new StreamResponseCommand<>(cacheName, localAddress, requestId, false, response);
+            rpc.blocking(
+               rpc.invokeCommand(origin, command, SingleResponseCollector.validOnly(), rpc.getSyncRpcOptions()));
          }
       }
 
@@ -473,8 +480,10 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
                // This way we don't send more than 1 response to the originating node but still inside managed blocker
                // so we don't consume a thread
                synchronized (NonRehashIntermediateCollector.this) {
-                  rpc.invokeRemotely(Collections.singleton(origin), new StreamResponseCommand<>(cacheName, localAddress,
-                          requestId, false, response), rpc.getDefaultRpcOptions(true));
+                  StreamResponseCommand<R> command = new StreamResponseCommand<>(cacheName, localAddress,
+                                                                             requestId, false, response);
+                  rpc.blocking(
+                     rpc.invokeCommand(origin, command, SingleResponseCollector.validOnly(), rpc.getSyncRpcOptions()));
                }
             }
             completed = true;

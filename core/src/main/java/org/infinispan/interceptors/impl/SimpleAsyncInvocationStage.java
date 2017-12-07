@@ -14,7 +14,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * Invocation stage representing a computation that may or may not be done yet.
  *
  * It is only meant to support the simplest asynchronous invocation,
- * {@link org.infinispan.interceptors.BaseAsyncInterceptor#asyncValue(CompletableFuture)}.
+ * {@link org.infinispan.interceptors.BaseAsyncInterceptor#asyncValue(CompletionStage)}.
  *
  * @author Dan Berindei
  * @since 9.0

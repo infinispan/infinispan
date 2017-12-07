@@ -1,20 +1,16 @@
 package org.infinispan.invalidation;
 
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
@@ -28,13 +24,14 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
 
@@ -211,10 +208,9 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
          when(mockTransport.getMembers()).thenReturn(members);
          when(mockTransport.getAddress()).thenReturn(addressOne);
-         when(mockTransport.invokeRemotelyAsync(isNull(), any(ReplicableCommand.class),
-                                                eq(isSync ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.ASYNCHRONOUS),
-                                                anyLong(), isNull(), any(DeliverOrder.class), anyBoolean()))
-               .thenReturn(CompletableFuture.completedFuture(Collections.emptyMap()));
+         when(mockTransport.invokeCommandOnAll(any(ReplicableCommand.class), any(ResponseCollector.class),
+                                               any(DeliverOrder.class), anyLong(), any(TimeUnit.class)))
+               .thenReturn(CompletableFutures.completedNull());
 
          cache1.put("k", "v");
 

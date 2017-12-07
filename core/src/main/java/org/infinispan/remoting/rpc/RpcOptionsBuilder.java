@@ -9,7 +9,9 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
  *
  * @author Pedro Ruivo
  * @since 5.3
+ * @deprecated Since 9.2, please use {@link RpcOptions} directly.
  */
+@Deprecated
 public class RpcOptionsBuilder {
 
    private long timeout;
@@ -76,6 +78,7 @@ public class RpcOptionsBuilder {
     *
     * @param responseFilter
     * @return this instance
+    * @deprecated Since 9.2, ignored by {@code RpcManager.invokeCommand*()}.
     */
    public RpcOptionsBuilder responseFilter(ResponseFilter responseFilter) {
       this.responseFilter = responseFilter;
@@ -88,6 +91,7 @@ public class RpcOptionsBuilder {
     *
     * @param responseMode
     * @return this instance
+    * @deprecated Since 9.2, ignored by {@code RpcManager.invokeCommand*()}.
     */
    public RpcOptionsBuilder responseMode(ResponseMode responseMode) {
       this.responseMode = responseMode;

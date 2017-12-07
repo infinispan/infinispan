@@ -4,11 +4,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commons.util.Experimental;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 
 /**
@@ -20,6 +24,79 @@ import org.infinispan.remoting.transport.Transport;
  * @since 4.0
  */
 public interface RpcManager {
+   /**
+    * Invoke a command on a single node and pass the response to a {@link ResponseCollector}.
+    *
+    * If the target is the local node and the delivery order is not {@link DeliverOrder#TOTAL},
+    * the command is never executed, and {@link ResponseCollector#finish()} is called directly.
+    *
+    * @since 9.2
+    */
+   @Experimental
+   <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
+                                        ResponseCollector<T> collector, RpcOptions rpcOptions);
+
+   /**
+    * Invoke a command on a collection of node and pass the responses to a {@link ResponseCollector}.
+    *
+    * If one of the targets is the local nodes and the delivery order is not {@link DeliverOrder#TOTAL},
+    * the command is only executed on the remote nodes.
+    *
+    * @since 9.2
+    */
+   @Experimental
+   <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
+                                        ResponseCollector<T> collector, RpcOptions rpcOptions);
+
+   /**
+    * Invoke a command on all the nodes in the cluster and pass the responses to a {@link ResponseCollector}.
+    *
+    * The command is only executed on the local node if the delivery order is {@link DeliverOrder#TOTAL}.
+    * The command is not sent across RELAY2 bridges to remote sites.
+    *
+    * @since 9.2
+    */
+   @Experimental
+   <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
+                                             RpcOptions rpcOptions);
+
+   /**
+    * Invoke a command on a collection of nodes and pass the responses to a {@link ResponseCollector}.
+    *
+    * The command is only sent immediately to the first target, and there is an implementation-dependent
+    * delay before sending the command to each target. There is no delay if the target responds or leaves
+    * the cluster. The remaining targets are skipped if {@link ResponseCollector#addResponse(Address, Response)}
+    * returns a non-{@code null} value.
+    *
+    * If one of the targets is the local node and the delivery order is not {@link DeliverOrder#TOTAL},
+    * the command is only executed on the remote nodes.
+    *
+    * @since 9.2
+    */
+   @Experimental
+   <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
+                                                 ResponseCollector<T> collector, RpcOptions rpcOptions);
+
+   /**
+    * Invoke different commands on a collection of nodes and pass the responses to a {@link ResponseCollector}.
+    *
+    * If one of the targets is the local node and the delivery order is not {@link DeliverOrder#TOTAL},
+    * the command is only executed on the remote nodes.
+    *
+    * @since 9.2
+    */
+   @Experimental
+   <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
+                                         Function<Address, ReplicableCommand> commandGenerator,
+                                         ResponseCollector<T> collector, RpcOptions rpcOptions);
+
+   /**
+    * Block on a request and return its result.
+    *
+    * @since 9.2
+    */
+   @Experimental
+   <T> T blocking(CompletionStage<T> request);
 
    /**
     * Invokes a command on remote nodes.
@@ -42,9 +119,15 @@ public interface RpcManager {
     *                   not change it. Any change in {@link RpcOptions} during a remote invocation can lead to
     *                   unpredictable behavior.
     * @return  a map of responses from each member contacted.
+    * @deprecated Since 9.2, please use {@link #invokeCommand(Collection, ReplicableCommand, ResponseCollector, RpcOptions)} instead.
     */
+   @Deprecated
    Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options);
 
+   /**
+    * @deprecated Since 9.2, please use {@link #invokeCommands(Collection, Function, ResponseCollector, RpcOptions)} instead.
+    */
+   @Deprecated
    Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcs, RpcOptions options);
 
    /**
@@ -66,6 +149,14 @@ public interface RpcManager {
     * @param deliverOrder the {@link DeliverOrder} to use.
     */
    void sendToMany(Collection<Address> destinations, ReplicableCommand command, DeliverOrder deliverOrder);
+
+   /**
+    * Asynchronously sends the {@link ReplicableCommand} to the entire cluster.
+    *
+    * @since 9.2
+    */
+   @Experimental
+   void sendToAll(ReplicableCommand command, DeliverOrder deliverOrder);
 
    /**
     * @return a reference to the underlying transport.
@@ -94,6 +185,16 @@ public interface RpcManager {
    int getTopologyId();
 
    /**
+    * @return The default options for synchronous remote invocations.
+    */
+   RpcOptions getSyncRpcOptions();
+
+   /**
+    * @return The default options for total order remote invocations.
+    */
+   RpcOptions getTotalSyncRpcOptions();
+
+   /**
     * Creates a new {@link org.infinispan.remoting.rpc.RpcOptionsBuilder}.
     * <p/>
     * The {@link org.infinispan.remoting.rpc.RpcOptionsBuilder} is configured with the {@link org.infinispan.remoting.rpc.ResponseMode} and with
@@ -104,7 +205,9 @@ public interface RpcManager {
     * @param responseMode the {@link org.infinispan.remoting.rpc.ResponseMode}.
     * @return a new {@link RpcOptionsBuilder} with the default options. The response and deliver mode are set as
     * described.
+    * @deprecated Since 9.2, please use {@link #getSyncRpcOptions()} instead.
     */
+   @Deprecated
    RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode);
 
    /**
@@ -114,7 +217,9 @@ public interface RpcManager {
     * @param deliverOrder  the {@link org.infinispan.remoting.inboundhandler.DeliverOrder}.
     * @return a new {@link RpcOptionsBuilder} with the default options and the response mode and deliver mode set by the
     * parameters.
+    * @deprecated Since 9.2, please use {@link #getSyncRpcOptions()} instead.
     */
+   @Deprecated
    RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode, DeliverOrder deliverOrder);
 
    /**
@@ -126,7 +231,9 @@ public interface RpcManager {
     *
     * @param sync {@code true} for Synchronous RpcOptions
     * @return the default Synchronous/Asynchronous RpcOptions
+    * @deprecated Since 9.2, please use {@link #getSyncRpcOptions()} instead.
     */
+   @Deprecated
    RpcOptions getDefaultRpcOptions(boolean sync);
 
    /**
@@ -135,6 +242,8 @@ public interface RpcManager {
     * @param sync        {@code true} for Synchronous RpcOptions
     * @param deliverOrder the {@link org.infinispan.remoting.inboundhandler.DeliverOrder} to use.
     * @return the default Synchronous/Asynchronous RpcOptions with the deliver order set by the parameter.
+    * @deprecated Since 9.2, please use {@link #getSyncRpcOptions()} or {@link #getTotalSyncRpcOptions()} instead.
     */
+   @Deprecated
    RpcOptions getDefaultRpcOptions(boolean sync, DeliverOrder deliverOrder);
 }

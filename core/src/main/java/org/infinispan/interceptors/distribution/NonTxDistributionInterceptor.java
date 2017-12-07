@@ -1,7 +1,6 @@
 package org.infinispan.interceptors.distribution;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,8 +33,11 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.InvocationSuccessFunction;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.SingleResponseCollector;
+import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
@@ -199,6 +201,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          Container myItems = filterAndWrap(ctx, command, segments, helper);
 
          C localCommand = helper.copyForLocal(command, myItems);
+         localCommand.setTopologyId(command.getTopologyId());
          // Local keys are backed up in the handler, and counters on allFuture are decremented when the backup
          // calls complete.
          invokeNextAndFinally(ctx, localCommand,
@@ -208,17 +211,20 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
 
       C copy = helper.copyForPrimary(command, ch, segments);
+      copy.setTopologyId(command.getTopologyId());
       int size = helper.getItems(copy).size();
       if (size <= 0) {
          allFuture.countDown();
          return;
       }
 
-      rpcManager.invokeRemotelyAsync(Collections.singletonList(member), copy, defaultSyncOptions)
+      SingletonMapResponseCollector collector = SingletonMapResponseCollector.validOnly();
+      rpcManager.invokeCommand(member, copy, collector, rpcManager.getSyncRpcOptions())
             .whenComplete((responseMap, throwable) -> {
                if (throwable != null) {
                   allFuture.completeExceptionally(throwable);
                } else {
+                  // FIXME Dan: The response cannot be a CacheNotFoundResponse at this point
                   if (getSuccessfulResponseOrFail(responseMap, allFuture,
                         rsp -> allFuture.completeExceptionally(OutdatedTopologyException.INSTANCE)) == null) {
                      return;
@@ -321,6 +327,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       offset.value += size;
 
       C localCommand = helper.copyForLocal(command, myItems);
+      localCommand.setTopologyId(command.getTopologyId());
       InvocationFinallyAction handler =
             createLocalInvocationHandler(ch, allFuture, segments, helper, MergingCompletableFuture.moveListItemsToFuture(myOffset));
       if (retrievals == null) {
@@ -342,6 +349,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       final int myOffset = offset.value;
       // TODO: here we iterate through all entries - is the ReadOnlySegmentAwareMap really worth it?
       C copy = helper.copyForPrimary(command, ch, segments);
+      copy.setTopologyId(command.getTopologyId());
       int size = helper.getItems(copy).size();
       offset.value += size;
       if (size <= 0) {
@@ -350,11 +358,13 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
 
       // Send the command to primary owner
-      rpcManager.invokeRemotelyAsync(Collections.singletonList(member), copy, defaultSyncOptions)
+      SingletonMapResponseCollector collector = SingletonMapResponseCollector.validOnly();
+      rpcManager.invokeCommand(member, copy, collector, rpcManager.getSyncRpcOptions())
             .whenComplete((responses, throwable) -> {
                if (throwable != null) {
                   allFuture.completeExceptionally(throwable);
                } else {
+                  // FIXME Dan: The response cannot be a CacheNotFoundResponse at this point
                   SuccessfulResponse response = getSuccessfulResponseOrFail(responses, allFuture,
                         rsp -> allFuture.completeExceptionally(OutdatedTopologyException.INSTANCE));
                   if (response == null) {
@@ -402,7 +412,8 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                retrievals = new ArrayList<>();
             }
             GetCacheEntryCommand fakeGetCommand = cf.buildGetCacheEntryCommand(key, command.getFlagsBitSet());
-            CompletableFuture<?> getFuture = remoteGet(ctx, fakeGetCommand, fakeGetCommand.getKey(), true);
+            CompletableFuture<?> getFuture =
+                  remoteGet(ctx, fakeGetCommand, fakeGetCommand.getKey(), true).toCompletableFuture();
             retrievals.add(getFuture);
          }
       }
@@ -423,12 +434,14 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             for (Entry<Address, Set<Integer>> backup : backupOwners.entrySet()) {
                // rCommand is the original command
                C backupCopy = helper.copyForBackup((C) rCommand, ch, backup.getValue());
+               backupCopy.setTopologyId(((C) rCommand).getTopologyId());
                if (helper.getItems(backupCopy).isEmpty()) continue;
-               Set<Address> backupOwner = Collections.singleton(backup.getKey());
+               Address backupOwner = backup.getKey();
                if (isSynchronous(backupCopy)) {
                   allFuture.increment();
-                  rpcManager.invokeRemotelyAsync(backupOwner, backupCopy, defaultSyncOptions)
-                        .whenComplete((responseMap, remoteThrowable) -> {
+                  rpcManager.invokeCommand(backupOwner, backupCopy, SingleResponseCollector.validOnly(),
+                                           rpcManager.getSyncRpcOptions())
+                        .whenComplete((response, remoteThrowable) -> {
                            if (remoteThrowable != null) {
                               allFuture.completeExceptionally(remoteThrowable);
                            } else {
@@ -436,7 +449,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                            }
                         });
                } else {
-                  rpcManager.invokeRemotelyAsync(backupOwner, backupCopy, defaultAsyncOptions);
+                  rpcManager.sendTo(backupOwner, backupCopy, DeliverOrder.PER_SENDER);
                }
             }
             allFuture.countDown();
@@ -462,25 +475,31 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       public int value;
    }
 
-   private <C extends WriteCommand> Object writeManyRemoteCallback(WriteManyCommandHelper<C, ?, ?> helper, InvocationContext ctx, C command, Object rv) {
-      ConsistentHash ch = checkTopologyId(command).getWriteConsistentHash();
-      // We have already checked that the command topology is actual, so we can assume that we really are primary owner
-      Map<Address, Set<Integer>> backups = backupOwnersOfSegments(ch, ch.getPrimarySegmentsForOwner(rpcManager.getAddress()));
-      if (backups.isEmpty()) {
-         return rv;
-      }
-      boolean isSync = isSynchronous(command);
-      CompletableFuture[] futures = isSync ? new CompletableFuture[backups.size()] : null;
-      int future = 0;
-      for (Entry<Address, Set<Integer>> backup : backups.entrySet()) {
-         C copy = helper.copyForBackup(command, ch, backup.getValue());
-         if (isSync) {
-            futures[future++] = rpcManager.invokeRemotelyAsync(Collections.singleton(backup.getKey()), copy, defaultSyncOptions);
-         } else {
-            rpcManager.invokeRemotelyAsync(Collections.singleton(backup.getKey()), copy, defaultAsyncOptions);
+   private <C extends WriteCommand> Object writeManyRemoteCallback(WriteManyCommandHelper<C , ?, ?> helper,InvocationContext ctx, C command, Object rv) {
+         ConsistentHash ch = checkTopologyId(command).getWriteConsistentHash();
+         // We have already checked that the command topology is actual, so we can assume that we really are primary owner
+         Map<Address, Set<Integer>> backups = backupOwnersOfSegments(ch, ch.getPrimarySegmentsForOwner(rpcManager.getAddress()));
+         if (backups.isEmpty()) {
+            return rv;
          }
-      }
-      return isSync ? asyncValue(CompletableFuture.allOf(futures).thenApply(nil -> rv)) : rv;
+         boolean isSync = isSynchronous(command);
+         CompletableFuture[] futures = isSync ? new CompletableFuture[backups.size()] : null;
+         int future = 0;
+         for (Entry<Address, Set<Integer>> backup : backups.entrySet()) {
+            C copy = helper.copyForBackup(command, ch, backup.getValue());
+            copy.setTopologyId(command.getTopologyId());
+            Address backupOwner = backup.getKey();
+            if (isSync) {
+               futures[future++] = rpcManager
+                     .invokeCommand(backupOwner, copy, SingleResponseCollector.validOnly(),
+                                    rpcManager.getSyncRpcOptions())
+                     .toCompletableFuture();
+            } else {
+               rpcManager.sendTo(backupOwner, copy, DeliverOrder.PER_SENDER);
+            }
+         }
+         return isSync ? asyncValue(CompletableFuture.allOf(futures).thenApply(nil -> rv)) : rv;
+
    }
 
    private <C extends WriteCommand> InvocationSuccessFunction createRemoteCallback(WriteManyCommandHelper<C, ?, ?> helper) {

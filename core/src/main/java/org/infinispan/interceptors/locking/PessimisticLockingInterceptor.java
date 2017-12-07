@@ -8,6 +8,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -74,6 +75,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       TxInvocationContext txContext = (TxInvocationContext) ctx;
       LockControlCommand lcc = cf.buildLockControlCommand(key, command.getFlagsBitSet(),
             txContext.getGlobalTransaction());
+      lcc.setTopologyId(command.getTopologyId());
       return invokeNextThenApply(ctx, lcc, (rCtx, rCommand, rv) -> {
          acquireLocalLock(rCtx, command);
          return invokeNext(rCtx, command);
@@ -134,7 +136,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
-   protected <K> Object handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys, boolean forwarded) throws Throwable {
+   protected <K> Object handleWriteManyCommand(InvocationContext ctx, WriteCommand command, Collection<K> keys, boolean forwarded) throws Throwable {
       Object maybeStage;
       if (hasSkipLocking(command)) {
          maybeStage = invokeNext(ctx, command);
@@ -146,6 +148,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             final TxInvocationContext txContext = (TxInvocationContext) ctx;
             LockControlCommand lcc = cf.buildLockControlCommand(keys, command.getFlagsBitSet(),
                   txContext.getGlobalTransaction());
+            lcc.setTopologyId(command.getTopologyId());
             maybeStage = invokeNextThenApply(ctx, lcc, (rCtx, rCommand, rv) -> {
                acquireLocalLocks(rCtx, command, keys);
                return invokeNext(rCtx, command);
@@ -175,6 +178,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             final TxInvocationContext txContext = (TxInvocationContext) ctx;
             LockControlCommand lcc = cf.buildLockControlCommand(key, command.getFlagsBitSet(),
                   txContext.getGlobalTransaction());
+            lcc.setTopologyId(command.getTopologyId());
             return invokeNextThenApply(ctx, lcc, (rCtx, rCommand, rv) -> {
                acquireLocalLock(rCtx, command);
                return invokeNext(rCtx, command);

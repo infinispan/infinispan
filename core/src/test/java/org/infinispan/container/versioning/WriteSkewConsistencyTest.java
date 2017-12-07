@@ -232,25 +232,26 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap, Object argument) {
-         if (responseMap != null) {
-            Map<Address, Response> newResponseMap = new LinkedHashMap<>();
-            boolean containsLastResponseAddress = false;
-            for (Map.Entry<Address, Response> entry : responseMap.entrySet()) {
-               if (lastResponse.equals(entry.getKey())) {
-                  containsLastResponseAddress = true;
-                  continue;
-               }
-               newResponseMap.put(entry.getKey(), entry.getValue());
-            }
-            if (containsLastResponseAddress) {
-               newResponseMap.put(lastResponse, responseMap.get(lastResponse));
-            }
-            log.debugf("Responses for command %s are %s", command, newResponseMap.values());
-            return newResponseMap;
+      protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
+         if (!(responseObject instanceof Map)) {
+            log.debugf("Single response for command %s: %s", command, responseObject);
+            return responseObject;
          }
-         log.debugf("Responses for command %s are null", command);
-         return null;
+
+         Map<Address, Response> newResponseMap = new LinkedHashMap<>();
+         boolean containsLastResponseAddress = false;
+         for (Map.Entry<Address, Response> entry : ((Map<Address, Response>) responseObject).entrySet()) {
+            if (lastResponse.equals(entry.getKey())) {
+               containsLastResponseAddress = true;
+               continue;
+            }
+            newResponseMap.put(entry.getKey(), entry.getValue());
+         }
+         if (containsLastResponseAddress) {
+            newResponseMap.put(lastResponse, ((Map<Address, Response>) responseObject).get(lastResponse));
+         }
+         log.debugf("Responses for command %s are %s", command, newResponseMap.values());
+         return (T) newResponseMap;
       }
    }
 

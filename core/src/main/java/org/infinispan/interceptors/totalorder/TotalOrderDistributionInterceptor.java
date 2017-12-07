@@ -1,7 +1,7 @@
 package org.infinispan.interceptors.totalorder;
 
 import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -54,7 +54,7 @@ public class TotalOrderDistributionInterceptor extends TxDistributionInterceptor
    }
 
    @Override
-   protected CompletableFuture<Object> prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
+   protected CompletionStage<Object> prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
       if (trace) {
          log.tracef("Total Order Anycast transaction %s with Total Order", command.getGlobalTransaction().globalId());
       }

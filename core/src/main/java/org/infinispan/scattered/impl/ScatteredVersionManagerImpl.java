@@ -1,9 +1,26 @@
 package org.infinispan.scattered.impl;
 
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.versioning.EntryVersion;
@@ -18,12 +35,10 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.manager.OrderedUpdatesManager;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.topology.CacheTopology;
@@ -32,23 +47,6 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicIntegerArray;
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.concurrent.atomic.AtomicLongArray;
-import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -72,7 +70,6 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    private CommandsFactory commandsFactory;
    private RpcManager rpcManager;
    private DataContainer<K, ?> dataContainer;
-   private RpcOptions syncIgnoreLeavers;
    private PersistenceManager persistenceManager;
    private StateConsumer stateConsumer;
    private ClusterTopologyManager clusterTopologyManager;
@@ -135,16 +132,9 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
          segmentStates.set(i, state);
       }
       printTable();
-      configuration.clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
-            .addListener(((a, o) -> initRpcOptions()));
-      initRpcOptions();
       scheduledKeys = new ConcurrentHashMap<>(invalidationBatchSize);
       invalidationBatchSize = configuration.clustering().invalidationBatchSize();
       removedKeys = new ConcurrentHashMap<>(invalidationBatchSize);
-   }
-
-   private void initRpcOptions() {
-      syncIgnoreLeavers = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
    }
 
    @Start(priority = 57) // just after preload
@@ -462,7 +452,9 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    }
 
    private void sendRegularInvalidations(InvalidateVersionsCommand command, Object[] keys, int[] topologyIds, long[] versions, int numRemoved, boolean[] isRemoved, boolean force) {
-      CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(null, command, syncIgnoreLeavers);
+      CompletionStage<Map<Address, Response>> future =
+            rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(),
+                                          rpcManager.getSyncRpcOptions());
       future.whenComplete((r, t) -> {
          if (t != null) {
             log.failedInvalidatingRemoteCache(t);
@@ -524,7 +516,9 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    }
 
    private void sendRemoveInvalidations(InvalidateVersionsCommand removeCommand) {
-      rpcManager.invokeRemotelyAsync(null, removeCommand, syncIgnoreLeavers).whenComplete((r, t) -> {
+      rpcManager.invokeCommandOnAll(removeCommand, MapResponseCollector.ignoreLeavers(),
+                                    rpcManager.getSyncRpcOptions())
+                .whenComplete((r, t) -> {
          if (t != null) {
             log.failedInvalidatingRemoteCache(t);
             sendRemoveInvalidations(removeCommand);

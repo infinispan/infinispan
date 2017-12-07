@@ -63,7 +63,7 @@ public class WriteSkewHelper {
                } else {
                   // Write skew check detected!
                   throw new WriteSkewException("Write skew detected on key " + k + " for transaction " +
-                                                     context.getTransaction(), k);
+                                                     context.getCacheTransaction(), k);
                }
             }
          }
@@ -91,7 +91,7 @@ public class WriteSkewHelper {
                } else {
                   // Write skew check detected!
                   throw new WriteSkewException("Write skew detected on key " + k + " for transaction " +
-                                                     context.getTransaction(), k);
+                                                     context.getCacheTransaction(), k);
                }
             }
          }

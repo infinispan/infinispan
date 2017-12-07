@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -14,9 +13,7 @@ import java.util.function.Consumer;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.AbstractControlledRpcManager;
 import org.infinispan.util.concurrent.ReclosableLatch;
 
@@ -31,14 +28,14 @@ public class ControlledRpcManager extends AbstractControlledRpcManager {
    private volatile Set<Class> blockBeforeFilter = Collections.emptySet();
    private volatile Set<Class> blockAfterFilter = Collections.emptySet();
    private volatile Set<Class> failFilter = Collections.emptySet();
-   private final ArrayList<BiConsumer<ReplicableCommand, Map<Address, Response>>> responseChecks = new ArrayList<>();
+   private final ArrayList<BiConsumer<ReplicableCommand, Object>> responseChecks = new ArrayList<>();
 
    public ControlledRpcManager(RpcManager realOne) {
       super(realOne);
    }
 
    public void failFor(Class... filter) {
-      this.failFilter = new HashSet<Class>(Arrays.asList(filter));
+      this.failFilter = new HashSet<>(Arrays.asList(filter));
       blockingLatch.open();
    }
 
@@ -48,13 +45,13 @@ public class ControlledRpcManager extends AbstractControlledRpcManager {
    }
 
    public void blockBefore(Class... filter) {
-      this.blockBeforeFilter = new HashSet<Class>(Arrays.asList(filter));
+      this.blockBeforeFilter = new HashSet<>(Arrays.asList(filter));
       replicationLatch.close();
       blockingLatch.close();
    }
 
    public void blockAfter(Class... filter) {
-      this.blockAfterFilter = new HashSet<Class>(Arrays.asList(filter));
+      this.blockAfterFilter = new HashSet<>(Arrays.asList(filter));
       replicationLatch.close();
       blockingLatch.close();
    }
@@ -82,12 +79,12 @@ public class ControlledRpcManager extends AbstractControlledRpcManager {
       }
    }
 
-   public void checkResponses(Consumer<Map<Address, Response>> checker) {
-      responseChecks.add((c, rsps) -> checker.accept(rsps));
+   public <T> void checkResponses(Consumer<T> checker) {
+      responseChecks.add((c, responseObject) -> checker.accept((T) responseObject));
    }
 
-   public void checkResponses(BiConsumer<ReplicableCommand, Map<Address, Response>> checker) {
-      responseChecks.add(checker);
+   public <T> void checkResponses(BiConsumer<ReplicableCommand, T> checker) {
+      responseChecks.add((BiConsumer<ReplicableCommand, Object>) checker);
    }
 
    protected void waitBefore(ReplicableCommand rpcCommand) {
@@ -127,11 +124,11 @@ public class ControlledRpcManager extends AbstractControlledRpcManager {
    }
 
    @Override
-   protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap, Object argument) {
+   protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
       if (waitAfter(command)) {
-         responseChecks.forEach(check -> check.accept(command, responseMap));
+         responseChecks.forEach(check -> check.accept(command, responseObject));
       }
-      return responseMap;
+      return responseObject;
    }
 
    private Class getActualClass(ReplicableCommand rpcCommand) {

@@ -2,10 +2,9 @@ package org.infinispan.statetransfer;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
@@ -15,10 +14,8 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.rpc.ResponseFilter;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -86,16 +83,12 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
       GlobalConfigurationBuilder gcb2 = new GlobalConfigurationBuilder();
       gcb2.transport().transport(new JGroupsTransport() {
          @Override
-         public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
-                                                                              ReplicableCommand command,
-                                                                              ResponseMode mode,
-                                                                              long timeout,
-                                                                              ResponseFilter responseFilter,
-                                                                              DeliverOrder deliverOrder,
-                                                                              boolean anycast) {
+         public <T> CompletableFuture<T> invokeCommand(Address target, ReplicableCommand command,
+                                                       ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                       long timeout, TimeUnit unit) {
             if (command instanceof StateRequestCommand &&
                   ((StateRequestCommand) command).getType() == StateRequestCommand.Type.START_STATE_TRANSFER &&
-                  recipients.contains(address(1))) {
+                  target.equals(address(1))) {
                d1.setDiscardAll(true);
 
                fork((Callable<Void>) () -> {
@@ -104,8 +97,7 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
                   return null;
                });
             }
-            return super.invokeRemotelyAsync(recipients, command, mode, timeout, responseFilter, deliverOrder,
-                                             anycast);
+            return super.invokeCommand(target, command, collector, deliverOrder, timeout, unit);
          }
       });
 

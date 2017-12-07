@@ -13,6 +13,8 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -27,6 +29,7 @@ public class PutMapCommandNonTxTest extends MultipleCacheManagersTest {
    public Object[] factory() {
       return new Object[] {
             new PutMapCommandNonTxTest().cacheMode(CacheMode.DIST_SYNC),
+            new PutMapCommandNonTxTest().cacheMode(CacheMode.DIST_SYNC).useTriangle(false),
             new PutMapCommandNonTxTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER),
             new PutMapCommandNonTxTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE),
       };
@@ -34,6 +37,10 @@ public class PutMapCommandNonTxTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() {
+      GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      if (useTriangle == Boolean.FALSE) {
+         gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
+      }
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(cacheMode, false);
       if (!cacheMode.isScattered()) {
          dcc.clustering().hash().numOwners(3).l1().disable();
@@ -41,7 +48,7 @@ public class PutMapCommandNonTxTest extends MultipleCacheManagersTest {
       if (biasAcquisition != null) {
          dcc.clustering().biasAcquisition(biasAcquisition);
       }
-      createCluster(dcc, 3);
+      createCluster(gcb, dcc, 3);
       waitForClusterToForm();
    }
 

@@ -2,25 +2,30 @@ package org.infinispan.remoting.rpc;
 
 import java.text.NumberFormat;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeListener;
+import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -33,7 +38,9 @@ import org.infinispan.jmx.annotations.Units;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.TimeService;
@@ -58,16 +65,22 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    private static final Log log = LogFactory.getLog(RpcManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private Transport t;
+   private final Function<ReplicableCommand, ReplicableCommand> toCacheRpcCommand = this::toCacheRpcCommand;
+   private final AttributeListener<Long> updateRpcOptions = this::updateRpcOptions;
+
    private final AtomicLong replicationCount = new AtomicLong(0);
    private final AtomicLong replicationFailures = new AtomicLong(0);
    private final AtomicLong totalReplicationTime = new AtomicLong(0);
 
+   private Transport t;
    private boolean statisticsEnabled = false; // by default, don't gather statistics.
    private Configuration configuration;
    private CommandsFactory cf;
    private StateTransferManager stateTransferManager;
    private TimeService timeService;
+
+   private volatile RpcOptions syncRpcOptions;
+   private volatile RpcOptions totalSyncRpcOptions;
 
    @Inject
    public void injectDependencies(Transport t, Configuration cfg, CommandsFactory cf,
@@ -85,7 +98,25 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
       if (configuration.transaction().transactionProtocol().isTotalOrder())
          t.checkTotalOrderSupported();
+
+      configuration.clustering()
+                   .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
+                   .addListener(updateRpcOptions);
+      updateRpcOptions(configuration.clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT), null);
    }
+
+   @Stop
+   private void stop() {
+      configuration.clustering()
+                   .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
+                   .removeListener(updateRpcOptions);
+   }
+
+   private void updateRpcOptions(Attribute<Long> attribute, Long oldValue) {
+      syncRpcOptions = new RpcOptions(DeliverOrder.NONE, attribute.get(), TimeUnit.MILLISECONDS);
+      totalSyncRpcOptions = new RpcOptions(DeliverOrder.TOTAL, attribute.get(), TimeUnit.MILLISECONDS);
+   }
+
 
    @ManagedAttribute(description = "Retrieves the committed view.", displayName = "Committed view", dataType = DataType.TRAIT)
    public String getCommittedViewAsString() {
@@ -107,23 +138,161 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    }
 
    @Override
+   public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
+                                               ResponseCollector<T> collector, RpcOptions rpcOptions) {
+      CacheRpcCommand cacheRpc = toCacheRpcCommand(command);
+
+      if (!statisticsEnabled) {
+         return t.invokeCommand(target, cacheRpc, collector, rpcOptions.deliverOrder(),
+                                rpcOptions.timeout(), rpcOptions.timeUnit());
+      }
+
+      long startTimeNanos = timeService.time();
+      CompletionStage<T> invocation;
+      try {
+         invocation = t.invokeCommand(target, cacheRpc, collector, rpcOptions.deliverOrder(),
+                                      rpcOptions.timeout(), rpcOptions.timeUnit());
+      } catch (Exception e) {
+         return errorReplicating(e);
+      }
+      return invocation.handle((response, throwable) -> updateStatistics(startTimeNanos, response, throwable));
+   }
+
+   private void checkTopologyId(ReplicableCommand command) {
+      if (command instanceof TopologyAffectedCommand && ((TopologyAffectedCommand) command).getTopologyId() < 0) {
+         throw new IllegalArgumentException("Command does not have a topology id");
+      }
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
+                                               ResponseCollector<T> collector, RpcOptions rpcOptions) {
+      CacheRpcCommand cacheRpc = toCacheRpcCommand(command);
+
+      if (!statisticsEnabled) {
+         return t.invokeCommand(targets, cacheRpc, collector, rpcOptions.deliverOrder(),
+                                rpcOptions.timeout(), rpcOptions.timeUnit());
+      }
+
+      long startTimeNanos = timeService.time();
+      CompletionStage<T> invocation;
+      try {
+         invocation = t.invokeCommand(targets, cacheRpc, collector, rpcOptions.deliverOrder(),
+                                      rpcOptions.timeout(), rpcOptions.timeUnit());
+      } catch (Exception e) {
+         return errorReplicating(e);
+      }
+      return invocation.handle((response, throwable) -> updateStatistics(startTimeNanos, response, throwable));
+   }
+
+   private <T> T updateStatistics(long startTimeNanos, T response, Throwable throwable) {
+      long timeTaken = timeService.timeDuration(startTimeNanos, TimeUnit.MILLISECONDS);
+      totalReplicationTime.getAndAdd(timeTaken);
+
+      if (throwable == null) {
+         if (statisticsEnabled)
+            replicationCount.incrementAndGet();
+         return response;
+      } else {
+         if (statisticsEnabled)
+            replicationFailures.incrementAndGet();
+         return rethrowAsCacheException(throwable);
+      }
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
+                                                    RpcOptions rpcOptions) {
+      CacheRpcCommand cacheRpc = toCacheRpcCommand(command);
+
+      if (!statisticsEnabled) {
+         return t.invokeCommandOnAll(cacheRpc, collector, rpcOptions.deliverOrder(), rpcOptions.timeout(),
+                                     rpcOptions.timeUnit());
+      }
+
+      long startTimeNanos = timeService.time();
+      CompletionStage<T> invocation;
+      try {
+         invocation = t.invokeCommandOnAll(cacheRpc, collector, rpcOptions.deliverOrder(), rpcOptions.timeout(),
+                                           rpcOptions.timeUnit());
+      } catch (Exception e) {
+         return errorReplicating(e);
+      }
+      return invocation.handle((response, throwable) -> updateStatistics(startTimeNanos, response, throwable));
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
+                                                        ResponseCollector<T> collector, RpcOptions rpcOptions) {
+      CacheRpcCommand cacheRpc = toCacheRpcCommand(command);
+
+      if (!statisticsEnabled) {
+         return t.invokeCommandStaggered(targets, cacheRpc, collector, rpcOptions.deliverOrder(), rpcOptions.timeout(),
+                                         rpcOptions.timeUnit());
+      }
+
+      long startTimeNanos = timeService.time();
+      CompletionStage<T> invocation;
+      try {
+         invocation = t.invokeCommandStaggered(targets, cacheRpc, collector, rpcOptions.deliverOrder(),
+                                               rpcOptions.timeout(), rpcOptions.timeUnit());
+      } catch (Exception e) {
+         return errorReplicating(e);
+      }
+      return invocation.handle((response, throwable) -> updateStatistics(startTimeNanos, response, throwable));
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
+                                                Function<Address, ReplicableCommand> commandGenerator,
+                                                ResponseCollector<T> collector, RpcOptions rpcOptions) {
+      if (!statisticsEnabled) {
+         return t.invokeCommands(targets, commandGenerator.andThen(toCacheRpcCommand), collector,
+                                 rpcOptions.deliverOrder(), rpcOptions.timeout(), rpcOptions.timeUnit());
+      }
+
+      long startTimeNanos = timeService.time();
+      CompletionStage<T> invocation;
+      try {
+         invocation = t.invokeCommands(targets, commandGenerator.andThen(toCacheRpcCommand), collector,
+                                       rpcOptions.deliverOrder(), rpcOptions.timeout(), rpcOptions.timeUnit());
+      } catch (Exception e) {
+         return errorReplicating(e);
+      }
+      return invocation.handle((response, throwable) -> updateStatistics(startTimeNanos, response, throwable));
+   }
+
+   @Override
+   public <T> T blocking(CompletionStage<T> request) {
+      try {
+         return CompletableFutures.await(request.toCompletableFuture());
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new CacheException("Thread interrupted while invoking RPC", e);
+      } catch (ExecutionException e) {
+         Throwable cause = e.getCause();
+         if (cause instanceof CacheException) {
+            throw ((CacheException) cause);
+         } else {
+            throw new CacheException("Unexpected exception replicating command", cause);
+         }
+      }
+   }
+
+   @SuppressWarnings("deprecation")
+   @Override
    public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
                                                                         ReplicableCommand rpc,
                                                                         RpcOptions options) {
-      if (trace) log.tracef("%s invoking %s to recipient list %s with options %s", t.getAddress(), rpc, recipients, options);
-
-      if (!configuration.clustering().cacheMode().isClustered())
-         throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
-
       // Set the topology id of the command, in case we don't have it yet
       setTopologyId(rpc);
-
       CacheRpcCommand cacheRpc =
             rpc instanceof CacheRpcCommand ? (CacheRpcCommand) rpc : cf.buildSingleRpcCommand(rpc);
 
       long startTimeNanos = statisticsEnabled ? timeService.time() : 0;
       CompletableFuture<Map<Address, Response>> invocation;
       try {
+         // Using Transport.invokeCommand* would require us to duplicate the JGroupsTransport.invokeRemotelyAsync logic
          invocation = t.invokeRemotelyAsync(recipients, cacheRpc,
                options.responseMode(), options.timeUnit().toMillis(options.timeout()),
                options.responseFilter(), options.deliverOrder(),
@@ -133,19 +302,10 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
          if (statisticsEnabled) replicationFailures.incrementAndGet();
          return rethrowAsCacheException(e);
       }
-      return invocation.handle((responseMap, throwable) -> {
-         if (statisticsEnabled) {
-            long timeTaken = timeService.timeDuration(startTimeNanos, TimeUnit.MILLISECONDS);
-            totalReplicationTime.getAndAdd(timeTaken);
-         }
 
-         if (throwable == null) {
-            if (statisticsEnabled) replicationCount.incrementAndGet();
-            if (trace) log.tracef("Response(s) to %s is %s", rpc, responseMap);
-            return responseMap;
-         } else {
-            if (statisticsEnabled) replicationFailures.incrementAndGet();
-            return rethrowAsCacheException(throwable);
+      return invocation.whenComplete((responseMap, throwable) -> {
+         if (statisticsEnabled) {
+            updateStatistics(startTimeNanos, responseMap, throwable);
          }
       });
    }
@@ -165,76 +325,39 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @Override
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
-      CompletableFuture<Map<Address, Response>> future = invokeRemotelyAsync(recipients, rpc, options);
-      try {
-         return CompletableFutures.await(future);
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         throw new CacheException("Thread interrupted while invoking RPC", e);
-      } catch (ExecutionException e) {
-         Throwable cause = e.getCause();
-         if (cause instanceof CacheException) {
-            throw ((CacheException) cause);
-         } else {
-            throw new CacheException("Unexpected exception replicating command", cause);
-         }
-      }
+      return blocking(invokeRemotelyAsync(recipients, rpc, options));
    }
 
    @Override
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcs, RpcOptions options) {
-      if (trace) log.tracef("%s invoking %s with options %s", t.getAddress(), rpcs, options);
-
       // don't use replication queue as we don't want to send the command to all other nodes
       if (!configuration.clustering().cacheMode().isClustered())
          throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
 
-      Map<Address, ReplicableCommand> replacedCommands = null;
-      for (Map.Entry<Address, ReplicableCommand> entry : rpcs.entrySet()) {
-         ReplicableCommand rpc = entry.getValue();
-         // Set the topology id of the command, in case we don't have it yet
-         setTopologyId(rpc);
-         if (!(rpc instanceof CacheRpcCommand)) {
-            rpc = cf.buildSingleRpcCommand(rpc);
-            // we can't modify the map during iteration
-            if (replacedCommands == null) {
-               replacedCommands = new HashMap<>();
-            }
-            replacedCommands.put(entry.getKey(), rpc);
-         }
-      }
-      if (replacedCommands != null) {
-         rpcs.putAll(replacedCommands);
+      if (options.responseMode().isAsynchronous()) {
+         rpcs.forEach((address, command) -> sendTo(address, command, options.deliverOrder()));
       }
 
-      long startTimeNanos = 0;
-      if (statisticsEnabled) startTimeNanos = timeService.time();
       try {
-         Map<Address, Response> result = t.invokeRemotely(rpcs, options.responseMode(), options.timeUnit().toMillis(options.timeout()),
-               options.responseFilter(), options.deliverOrder(), configuration.clustering().cacheMode().isDistributed());
-         if (statisticsEnabled) replicationCount.incrementAndGet();
-         if (trace) log.tracef("Response(s) to %s is %s", rpcs, result);
-         return result;
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         throw new CacheException("Thread interrupted while invoking RPC", e);
+         Function<Address, ReplicableCommand> commandGenerator = address -> {
+            ReplicableCommand rpc = rpcs.get(address);
+            // Set the topology id of the command, in case we don't have it yet
+            setTopologyId(rpc);
+            return toCacheRpcCommand(rpc);
+         };
+         boolean ignoreLeavers = options.responseMode() == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS;
+         MapResponseCollector collector = MapResponseCollector.ignoreLeavers(ignoreLeavers, rpcs.size());
+         return blocking(invokeCommands(rpcs.keySet(), commandGenerator, collector, options));
       } catch (CacheException e) {
          log.trace("replication exception: ", e);
-         if (statisticsEnabled) replicationFailures.incrementAndGet();
          throw e;
       } catch (Throwable th) {
-         log.unexpectedErrorReplicating(th);
-         if (statisticsEnabled) replicationFailures.incrementAndGet();
-         throw new CacheException(th);
-      } finally {
-         if (statisticsEnabled) {
-            long timeTaken = timeService.timeDuration(startTimeNanos, TimeUnit.MILLISECONDS);
-            totalReplicationTime.getAndAdd(timeTaken);
-         }
+         return errorReplicating(th);
       }
    }
 
    private CacheRpcCommand toCacheRpcCommand(ReplicableCommand command) {
+      checkTopologyId(command);
       return command instanceof CacheRpcCommand ?
             (CacheRpcCommand) command :
             cf.buildSingleRpcCommand(command);
@@ -242,10 +365,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @Override
    public void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder) {
-      if (trace) {
-         log.tracef("%s invoking %s to %s ordered by %s", t.getAddress(), command, destination, deliverOrder);
-      }
-
       // Set the topology id of the command, in case we don't have it yet
       setTopologyId(command);
       CacheRpcCommand cacheRpc = toCacheRpcCommand(command);
@@ -259,10 +378,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @Override
    public void sendToMany(Collection<Address> destinations, ReplicableCommand command, DeliverOrder deliverOrder) {
-      if (trace) {
-         log.tracef("%s invoking %s to list %s ordered by %s", t.getAddress(), command, destinations, deliverOrder);
-      }
-
       // Set the topology id of the command, in case we don't have it yet
       setTopologyId(command);
       CacheRpcCommand cacheRpc = toCacheRpcCommand(command);
@@ -274,10 +389,23 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       }
    }
 
-   private void errorReplicating(Exception e) {
-      log.unexpectedErrorReplicating(e);
+   @Override
+   public void sendToAll(ReplicableCommand command, DeliverOrder deliverOrder) {
+      // Set the topology id of the command, in case we don't have it yet
+      setTopologyId(command);
+      CacheRpcCommand cacheRpc = toCacheRpcCommand(command);
+
+      try {
+         t.sendToAll(cacheRpc, deliverOrder);
+      } catch (Exception e) {
+         errorReplicating(e);
+      }
+   }
+
+   private <T> T errorReplicating(Throwable t) {
+      log.unexpectedErrorReplicating(t);
       if (statisticsEnabled) replicationFailures.incrementAndGet();
-      rethrowAsCacheException(e);
+      return rethrowAsCacheException(t);
    }
 
    @Override
@@ -392,6 +520,16 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    public int getTopologyId() {
       CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
       return cacheTopology != null ? cacheTopology.getTopologyId() : -1;
+   }
+
+   @Override
+   public RpcOptions getSyncRpcOptions() {
+      return syncRpcOptions;
+   }
+
+   @Override
+   public RpcOptions getTotalSyncRpcOptions() {
+      return totalSyncRpcOptions;
    }
 
    @Override
