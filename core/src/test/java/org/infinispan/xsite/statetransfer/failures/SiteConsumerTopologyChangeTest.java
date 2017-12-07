@@ -102,7 +102,8 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
                                                   return;
                                                }
                                                for (XSiteState state : cmd.getChunk()) {
-                                                  addressSet.add(manager.getPrimaryLocation(state.key()));
+                                                  addressSet.add(manager.getCacheTopology().getDistribution(state.key())
+                                                        .primary());
                                                }
                                             }
                                             delegate.handleStateTransferState(cmd);
@@ -126,7 +127,7 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
 
       awaitXSiteStateSent(LON);
       awaitLocalStateTransfer(NYC);
-      awaitXSiteStateReceived(NYC);
+      assertEventuallyNoStateTransferInReceivingSite(null);
 
       assertData();
    }
@@ -183,7 +184,7 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
 
       awaitXSiteStateSent(LON);
       awaitLocalStateTransfer(NYC);
-      awaitXSiteStateReceived(NYC);
+      assertEventuallyNoStateTransferInReceivingSite(null);
 
       assertData();
    }

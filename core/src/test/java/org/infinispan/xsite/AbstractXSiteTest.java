@@ -312,7 +312,9 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       }
 
       public <K, V> Cache<K, V> cache(String cacheName, int index) {
-         return cacheManagers.get(index).getCache(cacheName);
+         return cacheName == null ?
+               cache(index) :
+               cacheManagers.get(index).getCache(cacheName);
       }
 
       public List<EmbeddedCacheManager> cacheManagers() {
