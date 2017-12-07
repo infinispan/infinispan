@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.hibernate.PessimisticLockException;
 import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
-import org.infinispan.hibernate.cache.commons.entity.EntityRegionImpl;
+import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 
 import org.hibernate.testing.TestForIssue;
@@ -151,7 +151,7 @@ public class InvalidationTest extends SingleNodeTest {
    }
 
    protected AdvancedCache getPendingPutsCache(Class<Item> entityClazz) {
-      EntityRegionImpl region = (EntityRegionImpl) sessionFactory().getSecondLevelCacheRegion( entityClazz.getName() );
+      BaseRegion region = (BaseRegion) sessionFactory().getSecondLevelCacheRegion( entityClazz.getName() );
       AdvancedCache entityCache = region.getCache();
       return (AdvancedCache) entityCache.getCacheManager().getCache(
             entityCache.getName() + "-" + InfinispanRegionFactory.DEF_PENDING_PUTS_RESOURCE).getAdvancedCache();

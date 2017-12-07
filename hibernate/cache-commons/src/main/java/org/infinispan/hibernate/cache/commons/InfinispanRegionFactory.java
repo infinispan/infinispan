@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.function.Consumer;
 
 import javax.transaction.TransactionManager;
@@ -43,17 +44,11 @@ import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.hibernate.cache.commons.collection.CollectionRegionImpl;
-import org.infinispan.hibernate.cache.commons.entity.EntityRegionImpl;
 import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
-import org.infinispan.hibernate.cache.commons.naturalid.NaturalIdRegionImpl;
-import org.infinispan.hibernate.cache.commons.query.QueryResultsRegionImpl;
 import org.infinispan.hibernate.cache.commons.timestamp.ClusteredTimestampsRegionImpl;
 import org.infinispan.hibernate.cache.commons.timestamp.TimestampsRegionImpl;
 import org.infinispan.hibernate.cache.commons.tm.HibernateTransactionManagerLookup;
@@ -289,11 +284,19 @@ public class InfinispanRegionFactory implements RegionFactory {
 
 	private Boolean globalStats;
 
+	private final InternalRegionFactory internalRegionFactory;
+
 	/**
 	 * Create a new instance using the default configuration.
 	 */
 	public InfinispanRegionFactory() {
-	}
+      internalRegionFactory = findInternalRegionFactory();
+   }
+
+   private InternalRegionFactory findInternalRegionFactory() {
+      ServiceLoader<InternalRegionFactory> loader = ServiceLoader.load(InternalRegionFactory.class);
+      return loader.iterator().next();
+   }
 
 	/**
 	 * Create a new instance using conifguration properties in <code>props</code>.
@@ -302,6 +305,7 @@ public class InfinispanRegionFactory implements RegionFactory {
 	 */
 	@SuppressWarnings("UnusedParameters")
 	public InfinispanRegionFactory(Properties props) {
+      this();
 	}
 
 	@Override
@@ -310,8 +314,8 @@ public class InfinispanRegionFactory implements RegionFactory {
 			log.debug( "Building collection cache region [" + regionName + "]" );
 		}
 		final AdvancedCache cache = getCache( regionName, DataType.COLLECTION, metadata);
-		final CollectionRegionImpl region = new CollectionRegionImpl( cache, regionName, transactionManager, metadata, this, getCacheKeysFactory() );
-		startRegion( region );
+      final CollectionRegion region = internalRegionFactory.createCollectionRegion( cache, regionName, transactionManager, metadata, this, getCacheKeysFactory() );
+      startRegion((BaseRegion) region);
 		return region;
 	}
 
@@ -326,8 +330,8 @@ public class InfinispanRegionFactory implements RegionFactory {
 			);
 		}
 		final AdvancedCache cache = getCache( regionName, metadata.isMutable() ? DataType.ENTITY : DataType.IMMUTABLE_ENTITY, metadata );
-		final EntityRegionImpl region = new EntityRegionImpl( cache, regionName, transactionManager, metadata, this, getCacheKeysFactory() );
-		startRegion( region );
+      final EntityRegion region = internalRegionFactory.createEntityRegion( cache, regionName, transactionManager, metadata, this, getCacheKeysFactory() );
+      startRegion((BaseRegion) region);
 		return region;
 	}
 
@@ -337,8 +341,8 @@ public class InfinispanRegionFactory implements RegionFactory {
 			log.debug("Building natural id cache region [" + regionName + "]");
 		}
 		final AdvancedCache cache = getCache( regionName, DataType.NATURAL_ID, metadata);
-		final NaturalIdRegionImpl region = new NaturalIdRegionImpl( cache, regionName, transactionManager, metadata, this, getCacheKeysFactory());
-		startRegion( region );
+      NaturalIdRegion region = internalRegionFactory.createNaturalIdRegion( cache, regionName, transactionManager, metadata, this, getCacheKeysFactory());
+      startRegion((BaseRegion) region);
 		return region;
 	}
 
@@ -349,8 +353,8 @@ public class InfinispanRegionFactory implements RegionFactory {
 		}
 
 		final AdvancedCache cache = getCache( regionName, DataType.QUERY, null);
-		final QueryResultsRegionImpl region = new QueryResultsRegionImpl( cache, regionName, transactionManager, this );
-		startRegion( region );
+      final QueryResultsRegion region = internalRegionFactory.createQueryResultsRegion( cache, regionName, transactionManager, this );
+      startRegion((BaseRegion) region);
 		return region;
 	}
 
@@ -379,7 +383,7 @@ public class InfinispanRegionFactory implements RegionFactory {
 		return dataTypeConfigurations.get(DataType.PENDING_PUTS);
 	}
 
-	private CacheKeysFactory getCacheKeysFactory() {
+	protected CacheKeysFactory getCacheKeysFactory() {
 		return cacheKeysFactory;
 	}
 

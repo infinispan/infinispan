@@ -14,14 +14,12 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.hibernate.cache.CacheException;
-import org.hibernate.resource.transaction.TransactionCoordinator;
 import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
+import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
 import org.infinispan.hibernate.cache.commons.impl.BaseTransactionalDataRegion;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.commons.util.InvocationAfterCompletion;
-import org.hibernate.cache.spi.QueryResultsRegion;
-import org.hibernate.engine.spi.SessionImplementor;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.TransactionConfiguration;
@@ -35,13 +33,13 @@ import org.infinispan.transaction.TransactionMode;
  * @author Galder Zamarreño
  * @since 3.5
  */
-public class QueryResultsRegionImpl extends BaseTransactionalDataRegion implements QueryResultsRegion {
+public class QueryResultsRegionImpl extends BaseTransactionalDataRegion {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( QueryResultsRegionImpl.class );
 
 	private final AdvancedCache evictCache;
 	private final AdvancedCache putCache;
 	private final AdvancedCache getCache;
-	private final ConcurrentMap<SessionImplementor, Map> transactionContext = new ConcurrentHashMap<SessionImplementor, Map>();
+	private final ConcurrentMap<Object, Map> transactionContext = new ConcurrentHashMap<>();
 	private final boolean putCacheRequiresTransaction;
 
 	/**
@@ -80,7 +78,6 @@ public class QueryResultsRegionImpl extends BaseTransactionalDataRegion implemen
 		return false;
 	}
 
-	@Override
 	public void evict(Object key) throws CacheException {
 		for (Map map : transactionContext.values()) {
 			map.remove(key);
@@ -88,7 +85,6 @@ public class QueryResultsRegionImpl extends BaseTransactionalDataRegion implemen
 		evictCache.remove( key );
 	}
 
-	@Override
 	public void evictAll() throws CacheException {
 		transactionContext.clear();
 		final Transaction tx = suspend();
@@ -102,8 +98,7 @@ public class QueryResultsRegionImpl extends BaseTransactionalDataRegion implemen
 		}
 	}
 
-	@Override
-	public Object get(SessionImplementor session, Object key) throws CacheException {
+	public Object getItem(Object session, Object key) throws CacheException {
 		if ( !checkValid() ) {
 			return null;
 		}
@@ -124,18 +119,17 @@ public class QueryResultsRegionImpl extends BaseTransactionalDataRegion implemen
 		return result;
 	}
 
-	@Override
 	@SuppressWarnings("unchecked")
-	public void put(SessionImplementor session, Object key, Object value) throws CacheException {
+	public void putItem(Object session, Object key, Object value) throws CacheException {
 		if ( checkValid() ) {
 			// See HHH-7898: Even with FAIL_SILENTLY flag, failure to write in transaction
 			// fails the whole transaction. It is an Infinispan quirk that cannot be fixed
 			// ISPN-5356 tracks that. This is because if the transaction continued the
 			// value could be committed on backup owners, including the failed operation,
 			// and the result would not be consistent.
-			TransactionCoordinator tc = session.getTransactionCoordinator();
+         TransactionCoordinatorAccess tc = sessionAccess.getTransactionCoordinator(session);
 			if (tc != null && tc.isJoined()) {
-				tc.getLocalSynchronizations().registerSynchronization(new PostTransactionQueryUpdate(tc, session, key, value));
+            tc.registerLocalSynchronization(new PostTransactionQueryUpdate(tc, session, key, value));
 				// no need to synchronize as the transaction will be accessed by only one thread
 				Map map = transactionContext.get(session);
 				if (map == null) {
@@ -164,11 +158,11 @@ public class QueryResultsRegionImpl extends BaseTransactionalDataRegion implemen
 	}
 
 	private class PostTransactionQueryUpdate extends InvocationAfterCompletion {
-		private final SessionImplementor session;
+		private final Object session;
 		private final Object key;
 		private final Object value;
 
-		public PostTransactionQueryUpdate(TransactionCoordinator tc, SessionImplementor session, Object key, Object value) {
+		public PostTransactionQueryUpdate(TransactionCoordinatorAccess tc, Object session, Object key, Object value) {
 			super(tc, putCacheRequiresTransaction);
 			this.session = session;
 			this.key = key;

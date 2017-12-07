@@ -6,6 +6,7 @@
  */
 package org.infinispan.test.hibernate.cache.commons.entity;
 
+import org.hibernate.cache.spi.EntityRegion;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
 import org.infinispan.test.hibernate.cache.commons.AbstractExtraAPITest;
@@ -29,7 +30,8 @@ public class EntityRegionExtraAPITest extends AbstractExtraAPITest<EntityRegionA
 
 	@Override
 	protected EntityRegionAccessStrategy getAccessStrategy() {
-		return environment.getEntityRegion( REGION_NAME, CACHE_DATA_DESCRIPTION).buildAccessStrategy( accessType );
+		return ((EntityRegion) environment.getEntityRegion( REGION_NAME, CACHE_DATA_DESCRIPTION))
+         .buildAccessStrategy( accessType );
 	}
 
 	@Test

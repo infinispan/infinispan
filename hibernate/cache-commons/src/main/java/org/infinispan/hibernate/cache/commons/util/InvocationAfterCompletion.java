@@ -14,7 +14,7 @@ import javax.transaction.Synchronization;
 import org.hibernate.HibernateException;
 import org.hibernate.jdbc.WorkExecutor;
 import org.hibernate.jdbc.WorkExecutorVisitable;
-import org.hibernate.resource.transaction.TransactionCoordinator;
+import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -22,10 +22,10 @@ import org.hibernate.resource.transaction.TransactionCoordinator;
 public abstract class InvocationAfterCompletion implements Synchronization {
 	protected static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( InvocationAfterCompletion.class );
 
-	protected final TransactionCoordinator tc;
+	protected final TransactionCoordinatorAccess tc;
 	protected final boolean requiresTransaction;
 
-	public InvocationAfterCompletion(TransactionCoordinator tc, boolean requiresTransaction) {
+   public InvocationAfterCompletion(TransactionCoordinatorAccess tc, boolean requiresTransaction) {
 		this.tc = tc;
 		this.requiresTransaction = requiresTransaction;
 	}

@@ -12,16 +12,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.hibernate.cache.spi.CollectionRegion;
 import org.infinispan.commons.test.categories.Smoke;
 import org.infinispan.hibernate.cache.commons.access.AccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.NonTxInvalidationCacheAccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
 import org.infinispan.hibernate.cache.commons.access.TxInvalidationCacheAccessDelegate;
-import org.infinispan.hibernate.cache.commons.collection.CollectionRegionImpl;
 import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SessionImplementor;
 
+import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
 import org.infinispan.test.hibernate.cache.commons.AbstractRegionAccessStrategyTest;
 import org.infinispan.test.hibernate.cache.commons.NodeEnvironment;
 import org.infinispan.test.hibernate.cache.commons.util.TestSynchronization;
@@ -44,7 +45,7 @@ import static org.mockito.Mockito.spy;
  */
 @Category(Smoke.class)
 public class CollectionRegionAccessStrategyTest extends
-		AbstractRegionAccessStrategyTest<CollectionRegionImpl, CollectionRegionAccessStrategy> {
+		AbstractRegionAccessStrategyTest<BaseRegion, CollectionRegionAccessStrategy> {
 	protected static int testCount;
 
 	@Override
@@ -53,13 +54,13 @@ public class CollectionRegionAccessStrategyTest extends
 	}
 
 	@Override
-	protected CollectionRegionImpl getRegion(NodeEnvironment environment) {
+	protected BaseRegion getRegion(NodeEnvironment environment) {
 		return environment.getCollectionRegion( REGION_NAME, CACHE_DATA_DESCRIPTION );
 	}
 
 	@Override
-	protected CollectionRegionAccessStrategy getAccessStrategy(CollectionRegionImpl region) {
-		return region.buildAccessStrategy( accessType );
+	protected CollectionRegionAccessStrategy getAccessStrategy(BaseRegion region) {
+		return ((CollectionRegion) region).buildAccessStrategy( accessType );
 	}
 
 	@Test
