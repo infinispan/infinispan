@@ -675,17 +675,19 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
       Collections.sort(stopMethods);
 
-      // fire all STOP methods according to priority
-      boolean traceEnabled = getLog().isTraceEnabled();
-      for (PrioritizedMethod em : stopMethods) {
-         if (traceEnabled)
-            getLog().tracef("Invoking stop method %s on component %s", em.metadata, em.component.getName());
-         try {
-            em.invoke();
-         } catch (Throwable t) {
-            getLog().componentFailedToStop(t);
+      SecurityActions.run(() -> {
+         // fire all STOP methods according to priority
+         boolean traceEnabled = getLog().isTraceEnabled();
+         for (PrioritizedMethod em : stopMethods) {
+            if (traceEnabled)
+               getLog().tracef("Invoking stop method %s on component %s", em.metadata, em.component.getName());
+            try {
+               em.invoke();
+            } catch (Throwable t) {
+               getLog().componentFailedToStop(t);
+            }
          }
-      }
+      });
 
       resetVolatileComponents();
    }
