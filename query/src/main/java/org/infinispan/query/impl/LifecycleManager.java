@@ -69,6 +69,7 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.query.impl.externalizers.LuceneBooleanQueryExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneBytesRefExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneFieldDocExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneFuzzyQueryExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneMatchAllQueryExternalizer;
 import org.infinispan.query.impl.externalizers.LucenePrefixQueryExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneScoreDocExternalizer;
@@ -442,6 +443,7 @@ public class LifecycleManager implements ModuleLifecycle {
       externalizerMap.put(ExternalizerIds.LUCENE_BYTES_REF, new LuceneBytesRefExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_PREFIX, new LucenePrefixQueryExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_WILDCARD, new LuceneWildcardQueryExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_QUERY_FUZZY, new LuceneFuzzyQueryExternalizer());
    }
 
 }

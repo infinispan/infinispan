@@ -14,6 +14,7 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.SortField.Type;
@@ -146,11 +147,11 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
       final SearchManager searchManager1 = Search.getSearchManager(cacheAMachine1);
       final CacheQuery<Person> localQuery1 = searchManager1.getQuery(createLuceneQuery());
-      List<Person> results1 =  localQuery1.list();
+      List<Person> results1 = localQuery1.list();
 
       final SearchManager searchManager2 = Search.getSearchManager(cacheAMachine2);
       final CacheQuery<Person> localQuery2 = searchManager2.getQuery(createLuceneQuery());
-      List<Person> results2 =  localQuery2.list();
+      List<Person> results2 = localQuery2.list();
 
       assertEquals(10, results1.size() + results2.size());
 
@@ -308,6 +309,18 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       populateCache();
       CacheQuery<Person> clusteredQuery = Search.getSearchManager(cacheAMachine1)
             .getClusteredQuery(new MatchAllDocsQuery(), Person.class);
+
+      assertEquals(NUM_ENTRIES, clusteredQuery.list().size());
+      StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
+   }
+
+   public void testFuzzyQuery() throws ParseException {
+      populateCache();
+
+      Query query = queryParser.parse("name:name1~2");
+
+      CacheQuery<Person> clusteredQuery = Search.getSearchManager(cacheAMachine1)
+            .getClusteredQuery(query, Person.class);
 
       assertEquals(NUM_ENTRIES, clusteredQuery.list().size());
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
