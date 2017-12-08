@@ -957,20 +957,24 @@ List<Restaurant> nearBy = cacheQuery.list();
 More info on http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#spatial[Hibernate Search manual]
 
 
-===== Clustered Query API [[query.clustered-query-api]]
+====== IndexedQueryMode [[query.clustered-query-api]]
 
-The Clustered Query API allows to broadcast a query to each node of the cluster, retrieve the results and combine them before returning to the caller.
+It's possible to specify a query mode for indexed queries. IndexedQueryMode.BROADCAST allows to broadcast a query to each node of the cluster, retrieve the results and combine them before returning to the caller.
+It is suitable for use in conjunction with <<query.non-shared-index,non-shared indexes>>, since each node's local index will have only a subset of the data indexed.
 
-It supports only Lucene Queries at the moment (no Ickle and Infinispan Query DSL) and is suitable for use in conjunction with <<query.non-shared-index,non-shared indexes>>, since each node's local index will have only a subset of the data indexed.
+IndexedQueryMode.FETCH will execute the query in the caller. If all the indexes for the cluster wide data are available locally, performance will be optimal, otherwise this query mode
+may involve fetching indexes data from remote nodes.
 
-A clustered query can be obtained from the `Search` object, and then used the same way as a `CacheQuery` obtained from the <<query.hibernatesearch, Hibernate Search Query API>>
+The IndexedQueryMode is supported for Lucene Queries and Ickle String queries at the moment (no Infinispan Query DSL).
+
+Example:
 
 [source,java]
 ----
 
-CacheQuery<Person> clusteredQuery = Search.getSearchManager(cache).getClusteredQuery(new MatchAllDocsQuery(), Person.class);
+CacheQuery<Person> broadcastQuery = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), IndexedQueryMode.BROADCAST);
 
-List<Person> result = clusteredQuery.list();
+List<Person> result = broadcastQuery.list();
 
 ----
 
