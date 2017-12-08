@@ -248,7 +248,8 @@
       <version.jcipannotations>1.0</version.jcipannotations>
       <version.jetty.http.client>9.4.5.v20170502</version.jetty.http.client>
       <version.jgoodies.forms>1.0.7</version.jgoodies.forms>
-      <version.jgroups>4.0.8.Final</version.jgroups>
+      <!-- Make sure you also update the BOM -->
+      <version.jgroups>4.0.9.Final</version.jgroups>
       <version.jmh>1.12</version.jmh>
       <version.jsap>2.1</version.jsap>
       <version.jstl>1.2</version.jstl>

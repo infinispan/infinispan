@@ -89,7 +89,8 @@
       <version.javax.cache>1.0.0</version.javax.cache>
       <version.jboss.logging>3.3.0.Final</version.jboss.logging>
       <version.jboss.marshalling>2.0.2.Final</version.jboss.marshalling>
-      <version.jgroups>4.0.8.Final</version.jgroups>
+      <!-- Make sure you also update the parent -->
+      <version.jgroups>4.0.9.Final</version.jgroups>
       <version.jgroups.kubernetes>1.0.5.Final</version.jgroups.kubernetes>
       <version.jta>1.0.1.Final</version.jta>
       <version.kryo>4.0.1</version.kryo>
