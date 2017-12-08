@@ -45,8 +45,6 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
          builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
          builderUsed.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       }
-      // Due to ISPN-5507 we can end up waiting 30 seconds for the test to complete with expiration tests
-      builderUsed.transaction().cacheStopTimeout(100, TimeUnit.MILLISECONDS);
       builderUsed.expiration().disableReaper();
       createClusteredCaches(3, CACHE_NAME, builderUsed);
       injectTimeServices();
