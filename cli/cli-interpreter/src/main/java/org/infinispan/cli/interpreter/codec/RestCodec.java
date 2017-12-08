@@ -17,7 +17,7 @@ public class RestCodec extends AbstractCodec {
 
    public RestCodec() {
       try {
-         Class.forName("org.infinispan.rest.Server");
+         Class.forName("org.infinispan.rest.RestServer");
       } catch (ClassNotFoundException e) {
          throw new RuntimeException(e);
       }
