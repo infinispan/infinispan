@@ -20,7 +20,8 @@ import io.netty.buffer.ByteBuf;
  * @since 4.1
  */
 public class TextProtocolUtil {
-   private TextProtocolUtil() { }
+   private TextProtocolUtil() {
+   }
    // todo: refactor name once old code has been removed?
 
    public static final String CRLF = "\r\n";
@@ -56,7 +57,7 @@ public class TextProtocolUtil {
     * found instead of end of operation character, then it'd return the element and false.
     */
    static boolean readElement(ByteBuf buffer, OutputStream byteBuffer) throws IOException {
-      for (;;) {
+      for (; ; ) {
          byte next = buffer.readByte();
          if (next == SP) { // Space
             return false;
@@ -80,7 +81,7 @@ public class TextProtocolUtil {
    }
 
    static KeyValuePair<String, Boolean> readElement(ByteBuf buffer, StringBuilder sb) {
-      for(;;) {
+      for (; ; ) {
          byte next = buffer.readByte();
          if (next == SP) { // Space
             return new KeyValuePair<>(sb.toString().trim(), false);
@@ -109,7 +110,7 @@ public class TextProtocolUtil {
    }
 
    private static String readDiscardedLine(ByteBuf buffer, StringBuilder sb) {
-      for(;;) {
+      for (; ; ) {
          byte next = buffer.readByte();
          if (next == CR) { // CR
             next = buffer.readByte();
@@ -128,7 +129,7 @@ public class TextProtocolUtil {
    }
 
    static void skipLine(ByteBuf buffer) {
-      for (;;) {
+      for (; ; ) {
          byte next = buffer.readByte();
          if (next == CR) { // CR
             next = buffer.readByte();
@@ -142,33 +143,32 @@ public class TextProtocolUtil {
    }
 
    static byte[] concat(byte[] a, byte[] b) {
-       byte[] data = new byte[a.length + b.length];
-       System.arraycopy(a, 0, data, 0, a.length);
-       System.arraycopy(b, 0, data, a.length, b.length);
-       return data;
+      byte[] data = new byte[a.length + b.length];
+      System.arraycopy(a, 0, data, 0, a.length);
+      System.arraycopy(b, 0, data, a.length, b.length);
+      return data;
    }
 
    static List<String> readSplitLine(ByteBuf buffer) {
       List<String> r = new ArrayList<>(3);
-      StringBuilder sb = new StringBuilder();
-      for(;;) {
+      ByteArrayOutputStream sb = new ByteArrayOutputStream();
+      for (; ; ) {
          byte next = buffer.readByte();
          if (next == CR) { // CR
             next = buffer.readByte();
             if (next == LF) { // LF
-               r.add(sb.toString());
+               r.add(extractString(sb));
                return r;
             } else {
-               sb.append((char) next);
+               sb.write(next);
             }
          } else if (next == LF) { // LF
-            r.add(sb.toString());
+            r.add(extractString(sb));
             return r;
          } else if (next == SP) {
-            r.add(sb.toString());
-            sb = new StringBuilder();
+            r.add(extractString(sb));
          } else {
-            sb.append((char) next);
+            sb.write(next);
          }
       }
    }
