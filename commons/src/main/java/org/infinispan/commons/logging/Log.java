@@ -166,6 +166,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Unsupported content '%s'", id = 934)
    EncodingException unsupportedContent(Object content);
 
+   @Message(value = "Invalid Weight '%s'. Supported values are between 0 and 1.0", id = 935)
+   EncodingException invalidWeight(Object weight);
+
    //----- counters exceptions ------
 
    @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 28001)
