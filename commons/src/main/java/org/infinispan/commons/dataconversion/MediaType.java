@@ -1,12 +1,20 @@
 package org.infinispan.commons.dataconversion;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.stream;
+import static java.util.Collections.emptyMap;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.nio.charset.Charset;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
@@ -34,6 +42,7 @@ public final class MediaType {
    public static final String APPLICATION_ZIP_TYPE = "application/zip";
    public static final String APPLICATION_JBOSS_MARSHALLING_TYPE = "application/x-jboss-marshalling";
    public static final String APPLICATION_PROTOSTREAM_TYPE = "application/x-protostream";
+   public static final String WWW_FORM_URLENCODED_TYPE = "application/x-www-form-urlencoded";
    public static final String IMAGE_GIF_TYPE = "image/gif";
    public static final String IMAGE_JPEG_TYPE = "image/jpeg";
    public static final String IMAGE_PNG_TYPE = "image/png";
@@ -45,6 +54,7 @@ public final class MediaType {
    public static final String APPLICATION_INFINISPAN_BINARY_TYPE = "application/x-infinispan-binary";
    public static final String APPLICATION_PROTOSTUFF_TYPE = "application/x-protostuff";
    public static final String APPLICATION_KRYO_TYPE = "application/x-kryo";
+   public static final String MATCH_ALL_TYPE = "*/*";
 
    public static MediaType APPLICATION_JSON = fromString(APPLICATION_JSON_TYPE);
    public static MediaType APPLICATION_OCTET_STREAM = fromString(APPLICATION_OCTET_STREAM_TYPE);
@@ -54,29 +64,42 @@ public final class MediaType {
    public static MediaType APPLICATION_PROTOSTREAM = fromString(APPLICATION_PROTOSTREAM_TYPE);
    public static MediaType APPLICATION_JBOSS_MARSHALLED = fromString(APPLICATION_JBOSS_MARSHALLING_TYPE);
    public static MediaType APPLICATION_INFINISPAN_MARSHALLED = fromString(APPLICATION_INFINISPAN_MARSHALLING_TYPE);
+   public static MediaType APPLICATION_WWW_FORM_URLENCODED = fromString(WWW_FORM_URLENCODED_TYPE);
    public static MediaType IMAGE_PNG = fromString(IMAGE_PNG_TYPE);
    public static MediaType TEXT_PLAIN = fromString(TEXT_PLAIN_TYPE);
    public static MediaType TEXT_HTML = fromString(TEXT_HTML_TYPE);
    public static MediaType APPLICATION_PROTOSTUFF = fromString(APPLICATION_PROTOSTUFF_TYPE);
    public static MediaType APPLICATION_KRYO = fromString(APPLICATION_KRYO_TYPE);
    public static MediaType APPLICATION_INFINISPAN_BINARY = fromString(APPLICATION_INFINISPAN_BINARY_TYPE);
+   public static MediaType MATCH_ALL = fromString(MATCH_ALL_TYPE);
 
    private static final String INVALID_TOKENS = "()<>@,;:/[]?=\\\"";
+   private static final String WEIGHT_PARAM_NAME = "q";
+   private static final String CHARSET_PARAM_NAME = "charset";
+   private static final double DEFAULT_WEIGHT = 1.0;
+   private static final Charset DEFAULT_CHARSET = UTF_8;
 
    private final Map<String, String> params = new HashMap<>(2);
    private final String type;
    private final String subType;
    private final String typeSubtype;
-
-   public MediaType(String type, String subtype, Map<String, String> params) {
-      this(type, subtype);
-      params.forEach(this.params::put);
-   }
+   private final transient double weight;
 
    public MediaType(String type, String subtype) {
+      this(type, subtype, emptyMap());
+   }
+
+   public MediaType(String type, String subtype, Map<String, String> params) {
       this.type = validate(type);
       this.subType = validate(subtype);
       this.typeSubtype = type + "/" + subtype;
+      if (params != null) {
+         this.params.putAll(params);
+         String weight = params.get(WEIGHT_PARAM_NAME);
+         this.weight = weight != null ? parseWeight(weight) : DEFAULT_WEIGHT;
+      } else {
+         this.weight = DEFAULT_WEIGHT;
+      }
    }
 
    public static MediaType fromString(String mediaType) {
@@ -99,6 +122,20 @@ public final class MediaType {
       String[] typeSubType = types.split("/");
       Map<String, String> paramMap = parseParams(params);
       return new MediaType(typeSubType[0].trim(), typeSubType[1].trim(), paramMap);
+   }
+
+   public static Stream<MediaType> parseList(String mediaTypeList) {
+      return stream(mediaTypeList.split(","))
+            .map(MediaType::parse)
+            .sorted(Comparator.comparingDouble((MediaType m) -> m.weight).reversed());
+   }
+
+   private static double parseWeight(String weightValue) {
+      try {
+         return Double.valueOf(weightValue);
+      } catch (NumberFormatException nf) {
+         throw log.invalidWeight(weightValue);
+      }
    }
 
    private static Map<String, String> parseParams(String params) {
@@ -133,13 +170,24 @@ public final class MediaType {
    }
 
    public boolean match(MediaType other) {
-      return other != null &&
-            other.type.equals(this.type) &&
-            other.subType.equals(this.subType);
+      return other != null && (other.matchesAll() || this.matchesAll() || (other.typeSubtype.equals(this.typeSubtype))
+      );
+   }
+
+   public boolean matchesAll() {
+      return this.typeSubtype.equals(MATCH_ALL_TYPE);
    }
 
    public String getTypeSubtype() {
       return typeSubtype;
+   }
+
+   public double getWeight() {
+      return weight;
+   }
+
+   public Charset getCharset() {
+      return getParameter(CHARSET_PARAM_NAME).map(Charset::forName).orElse(DEFAULT_CHARSET);
    }
 
    @Override
@@ -174,6 +222,7 @@ public final class MediaType {
    }
 
    private static String validate(String token) {
+      if(token == null) throw new NullPointerException("type and subtype cannot be null");
       for (char c : token.toCharArray()) {
          if (c < 0x20 || c > 0x7F || INVALID_TOKENS.indexOf(c) > 0) {
             throw log.invalidCharMediaType(c, token);
@@ -182,18 +231,22 @@ public final class MediaType {
       return token;
    }
 
+   public String toStringExcludingParam(String... params) {
+      if (!hasParameters()) return typeSubtype;
+      StringBuilder builder = new StringBuilder().append(typeSubtype);
+
+      String strParams = this.params.entrySet().stream()
+            .filter(e -> stream(params).noneMatch(p -> p.equals(e.getKey())))
+            .map(e -> e.getKey() + "=" + e.getValue())
+            .collect(Collectors.joining("; "));
+
+      if (strParams.isEmpty()) return builder.toString();
+      return builder.append("; ").append(strParams).toString();
+   }
+
    @Override
    public String toString() {
-      StringBuilder builder = new StringBuilder().append(type).append('/').append(subType);
-      if (hasParameters()) {
-         builder.append("; ");
-         int i = 0;
-         for (Map.Entry<String, String> param : params.entrySet()) {
-            builder.append(param.getKey()).append("=").append(param.getValue());
-            if (i++ < params.size() - 1) builder.append("; ");
-         }
-      }
-      return builder.toString();
+      return toStringExcludingParam(WEIGHT_PARAM_NAME);
    }
 
    public static final class MediaTypeExternalizer implements Externalizer<MediaType> {

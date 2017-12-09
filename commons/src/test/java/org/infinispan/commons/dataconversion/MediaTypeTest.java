@@ -6,8 +6,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.junit.Test;
 
@@ -17,94 +19,95 @@ import org.junit.Test;
 public class MediaTypeTest {
 
    @Test
-   public void testParsingTypeSubType() throws Exception {
+   public void testParsingTypeSubType() {
       MediaType appJson = MediaType.fromString("application/json");
 
       assertMediaTypeNoParams(appJson, "application", "json");
    }
 
    @Test(expected = EncodingException.class)
-   public void testParsingEmpty() throws Exception {
+   public void testParsingEmpty() {
       MediaType.fromString("");
    }
 
    @Test(expected = EncodingException.class)
-   public void testParsingNoSubType() throws Exception {
+   public void testParsingNoSubType() {
       MediaType.fromString("something");
    }
 
    @Test(expected = EncodingException.class)
-   public void testParsingNoSubType2() throws Exception {
+   public void testParsingNoSubType2() {
       MediaType.fromString("application; charset=utf-8");
    }
 
    @Test(expected = EncodingException.class)
-   public void testParsingNull() throws Exception {
+   public void testParsingNull() {
       MediaType.fromString(null);
    }
 
    @Test
-   public void testParsingEmptySpaces() throws Exception {
+   public void testParsingEmptySpaces() {
       MediaType appJson = MediaType.fromString("application /json");
       assertMediaTypeNoParams(appJson, "application", "json");
    }
 
    @Test
-   public void testParsingEmptySpaces2() throws Exception {
+   public void testParsingEmptySpaces2() {
       MediaType appJson = MediaType.fromString("application/ json");
       assertMediaTypeNoParams(appJson, "application", "json");
    }
 
    @Test
-   public void testParsingEmptySpaces3() throws Exception {
+   public void testParsingEmptySpaces3() {
       MediaType appJson = MediaType.fromString("application  / json");
       assertMediaTypeNoParams(appJson, "application", "json");
    }
 
    @Test
-   public void testQuotedParams() throws Exception {
+   public void testQuotedParams() {
       MediaType mediaType = MediaType.fromString("application/json; charset=\"UTF-8\"");
 
       assertMediaTypeWithParam(mediaType, "application", "json", "charset", "UTF-8");
    }
 
    @Test
-   public void testQuotedParams2() throws Exception {
+   public void testQuotedParams2() {
       MediaType mediaType = MediaType.fromString("application/json; charset='UTF-8'");
 
       assertMediaTypeWithParam(mediaType, "application", "json", "charset", "UTF-8");
    }
 
    @Test
-   public void testUnQuotedParam() throws Exception {
+   public void testUnQuotedParam() {
       MediaType mediaType = MediaType.fromString("application/json; charset=UTF-8");
 
       assertMediaTypeWithParam(mediaType, "application", "json", "charset", "UTF-8");
    }
 
    @Test
-   public void testToString() throws Exception {
+   public void testToString() {
+      assertEquals("application/xml", new MediaType("application", "xml", createMap(new MapEntry("q", "0.9"))).toString());
       assertEquals("text/csv", new MediaType("text", "csv").toString());
       assertEquals("foo/bar; a=2", new MediaType("foo", "bar", createMap(new MapEntry("a", "2"))).toString());
       assertEquals("foo/bar; a=2; b=1; c=2", new MediaType("foo", "bar",
             createMap(new MapEntry("a", "2"), new MapEntry("b", "1"), new MapEntry("c", "2"))).toString());
-
+      assertEquals("a/b; p=1", MediaType.fromString("a/b; p=1; q=2;").toStringExcludingParam("q"));
    }
 
    @Test
-   public void testUnQuotedParamWithSpaces() throws Exception {
+   public void testUnQuotedParamWithSpaces() {
       MediaType mediaType = MediaType.fromString("application/json ; charset= UTF-8");
 
       assertMediaTypeWithParam(mediaType, "application", "json", "charset", "UTF-8");
    }
 
    @Test(expected = EncodingException.class)
-   public void testWrongQuoting() throws Exception {
+   public void testWrongQuoting() {
       MediaType.fromString("application/json ; charset= \"UTF-8");
    }
 
    @Test
-   public void testMultipleParameters() throws Exception {
+   public void testMultipleParameters() {
       MediaType mediaType = MediaType.fromString("application/json ; charset=UTF-8; param1=value1; param2 = value2");
       assertMediaTypeWithParams(mediaType, "application", "json",
             new String[]{"charset", "param1", "param2"},
@@ -112,8 +115,72 @@ public class MediaTypeTest {
    }
 
    @Test(expected = EncodingException.class)
-   public void testMultipleParametersWrongSeparator() throws Exception {
+   public void testMultipleParametersWrongSeparator() {
       MediaType.fromString("application/json ; charset=UTF-8; param1=value1, param2 = value2");
+   }
+
+   @Test
+   public void testParseWeight() {
+      MediaType mediaType = MediaType.fromString("application/json ; q=0.8");
+      assertEquals(0.8, mediaType.getWeight(), 0.0);
+   }
+
+   @Test(expected = EncodingException.class)
+   public void testParseInvalidWeight() {
+      MediaType.fromString("application/json ; q=high");
+   }
+
+   @Test
+   public void testDefaultWeight() {
+      MediaType mediaType = MediaType.fromString("application/json");
+      assertEquals(1.0, mediaType.getWeight(), 0.0);
+   }
+
+   @Test
+   public void testWildCard() {
+      MediaType mediaType = MediaType.fromString("*/*");
+
+      assertEquals("*", mediaType.getType());
+      assertEquals("*", mediaType.getSubType());
+      assertTrue(mediaType.match(MediaType.TEXT_PLAIN));
+      assertTrue(mediaType.match(MediaType.APPLICATION_PROTOSTREAM));
+   }
+
+   @Test
+   public void testParseList() {
+      Stream<MediaType> mediaTypes = MediaType.parseList("text/html, image/png,*/*");
+      Iterator<MediaType> mediaTypeIterator = mediaTypes.iterator();
+
+      assertEquals(MediaType.TEXT_HTML, mediaTypeIterator.next());
+      assertEquals(MediaType.IMAGE_PNG, mediaTypeIterator.next());
+      assertEquals(MediaType.MATCH_ALL, mediaTypeIterator.next());
+      assertFalse(mediaTypeIterator.hasNext());
+   }
+
+   @Test
+   public void testParseBrowserRequest() {
+      Stream<MediaType> list = MediaType.parseList("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+      Iterator<MediaType> iterator = list.iterator();
+
+      assertEquals("text/html", iterator.next().getTypeSubtype());
+      assertEquals("application/xhtml+xml", iterator.next().getTypeSubtype());
+      assertEquals("application/xml", iterator.next().getTypeSubtype());
+      assertEquals("*/*", iterator.next().getTypeSubtype());
+   }
+
+   @Test
+   public void testNegotiations() {
+      Stream<MediaType> mediaTypes = MediaType.parseList("text/html; q=0.8,*/*;q=0.2,application/json");
+
+      Iterator<MediaType> iterator = mediaTypes.iterator();
+
+      MediaType preferred = iterator.next();
+      MediaType secondChoice = iterator.next();
+      MediaType everythingElse = iterator.next();
+
+      assertEquals(MediaType.APPLICATION_JSON, preferred);
+      assertEquals("text/html", secondChoice.getTypeSubtype());
+      assertEquals("*/*", everythingElse.getTypeSubtype());
    }
 
    private void assertMediaTypeNoParams(MediaType mediaType, String type, String subType) {
