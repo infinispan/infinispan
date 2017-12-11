@@ -49,6 +49,7 @@ import com.github.benmanes.caffeine.cache.CacheWriter;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Policy;
 import com.github.benmanes.caffeine.cache.RemovalCause;
+import com.github.benmanes.caffeine.cache.Weigher;
 
 import net.jcip.annotations.ThreadSafe;
 
@@ -146,13 +147,27 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
     */
    protected DefaultDataContainer(int concurrencyLevel, long thresholdSize,
                                   EntrySizeCalculator<? super K, ? super V> sizeCalculator) {
+      this(thresholdSize, toWeigher(new CacheEntrySizeCalculator<>(sizeCalculator)));
+   }
+
+   /**
+    * Transforms the specified {@link EntrySizeCalculator} into a {@link Weigher}.
+    */
+   private static <K, V> Weigher<K, V> toWeigher(EntrySizeCalculator<K, V> calc) {
+      return (key, value) -> (int) calc.calculateSize(key, value);
+   }
+
+   /**
+    * Constructs a new DefaultDataContainer using a Caffeine {@link Weigher}.
+    * @param thresholdSize
+    * @param weigher
+    */
+   protected DefaultDataContainer(long thresholdSize, Weigher<K, InternalCacheEntry<K, V>> weigher) {
       DefaultEvictionListener evictionListener = new DefaultEvictionListener();
 
-      EntrySizeCalculator<K, InternalCacheEntry<K, V>> calc = new CacheEntrySizeCalculator<>(sizeCalculator);
-
-      evictionCache = applyListener(Caffeine.newBuilder()
-            .weigher((K k, InternalCacheEntry<K, V> v) -> (int) calc.calculateSize(k, v))
-            .maximumWeight(thresholdSize), evictionListener)
+      evictionCache = applyListener(caffeineBuilder(), evictionListener)
+            .weigher(weigher)
+            .maximumWeight(thresholdSize)
             .build();
 
       entries = evictionCache.asMap();
