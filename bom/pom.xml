@@ -65,12 +65,38 @@
    </distributionManagement>
 
    <properties>
-      <version.aesh>0.66.13</version.aesh>
+      <!-- Java source/target version -->
+      <version.java>1.8</version.java>
+
+      <!-- Dependency versions duplicated in the parent POM -->
       <version.antlr>3.4</version.antlr>
-      <version.antlr.runtime>3.5.2</version.antlr.runtime>
       <version.c3p0>0.9.5-pre8</version.c3p0>
       <version.caffeine>2.4.0</version.caffeine>
       <version.cdi>1.2</version.cdi>
+      <version.commons.pool>1.6</version.commons.pool>
+      <version.groovy>2.4.8</version.groovy>
+      <version.hibernate.core>5.2.11.Final</version.hibernate.core>
+      <version.hibernate.javax.persistence>1.0.0.Final</version.hibernate.javax.persistence>
+      <version.hibernate.search>5.8.1.Final</version.hibernate.search>
+      <version.hikaricp>2.4.6</version.hikaricp>
+      <version.javax.cache>1.0.0</version.javax.cache>
+      <version.jboss.logging>3.3.0.Final</version.jboss.logging>
+      <version.jboss.marshalling>2.0.2.Final</version.jboss.marshalling>
+      <version.jgroups>4.0.9.Final</version.jgroups>
+      <version.jta>1.0.1.Final</version.jta>
+      <version.lucene>5.5.5</version.lucene>
+      <version.maven-compiler-plugin>3.6.1</version.maven-compiler-plugin>
+      <version.maven.source>3.0.1</version.maven.source>
+      <version.osgi>4.3.1</version.osgi>
+      <version.protostream>4.2.0.Alpha6</version.protostream>
+      <version.reactivestreams>1.0.1</version.reactivestreams>
+      <version.rocksdb>5.8.0</version.rocksdb>
+      <version.rxjava>2.1.3</version.rxjava>
+      <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
+
+      <!-- Dependency versions *not* duplicated in the parent POM -->
+      <version.aesh>0.66.13</version.aesh>
+      <version.antlr.runtime>3.5.2</version.antlr.runtime>
       <version.commons.codec>1.4</version.commons.codec>
       <version.commons.compress>1.4</version.commons.compress>
       <version.commons.dbcp>1.4</version.commons.dbcp>
@@ -78,34 +104,12 @@
       <version.commons.io>2.5</version.commons.io>
       <version.commons.logging>1.2</version.commons.logging>
       <version.commons.math>2.2</version.commons.math>
-      <version.commons.pool>1.6</version.commons.pool>
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
-      <version.groovy>2.4.8</version.groovy>
-      <version.hibernate.javax.persistence>1.0.0.Final</version.hibernate.javax.persistence>
-      <version.hibernate.core>5.2.11.Final</version.hibernate.core>
-      <version.hibernate.search>5.8.1.Final</version.hibernate.search>
-      <version.hikaricp>2.4.6</version.hikaricp>
-      <version.java>1.8</version.java>
-      <version.javax.cache>1.0.0</version.javax.cache>
-      <version.jboss.logging>3.3.0.Final</version.jboss.logging>
-      <version.jboss.marshalling>2.0.2.Final</version.jboss.marshalling>
-      <!-- Make sure you also update the parent -->
-      <version.jgroups>4.0.9.Final</version.jgroups>
       <version.jgroups.kubernetes>1.0.5.Final</version.jgroups.kubernetes>
-      <version.jta>1.0.1.Final</version.jta>
       <version.kryo>4.0.1</version.kryo>
-      <version.lucene>5.5.5</version.lucene>
-      <version.maven-compiler-plugin>3.6.1</version.maven-compiler-plugin>
-      <version.maven.source>3.0.1</version.maven.source>
-      <version.netty>4.1.9.Final</version.netty>
       <version.netty.tcp.native>2.0.0.Final</version.netty.tcp.native>
-      <version.osgi>4.3.1</version.osgi>
-      <version.protostream>4.2.0.Alpha6</version.protostream>
+      <version.netty>4.1.9.Final</version.netty>
       <version.protostuff>1.6.0</version.protostuff>
-      <version.rocksdb>5.8.0</version.rocksdb>
-      <version.reactivestreams>1.0.1</version.reactivestreams>
-      <version.rxjava>2.1.3</version.rxjava>
-      <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
       <version.xstream>1.4.9</version.xstream>
    </properties>
 
