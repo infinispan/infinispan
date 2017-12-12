@@ -187,7 +187,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       return this;
    }
 
-   Set<Class<?>> indexedEntities() {
+   private Set<Class<?>> indexedEntities() {
       return attributes.attribute(INDEXED_ENTITIES).get();
    }
 
