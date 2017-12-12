@@ -6,6 +6,7 @@ final class SessionThreadLocal {
 
    private final ThreadLocal<Object> currentSession = new ThreadLocal<>();
 
+   // TODO: Make static
    private final SessionAccess sessionAccess;
 
    public SessionThreadLocal() {

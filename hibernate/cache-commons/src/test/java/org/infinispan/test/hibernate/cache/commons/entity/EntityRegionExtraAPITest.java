@@ -37,7 +37,7 @@ public class EntityRegionExtraAPITest extends AbstractExtraAPITest<EntityRegionA
 	@Test
 	@SuppressWarnings( {"UnnecessaryBoxing"})
 	public void testAfterInsert() {
-		boolean retval = accessStrategy.afterInsert(SESSION,	KEY, VALUE1, Integer.valueOf( 1 ));
+		boolean retval = testAccessStrategy.afterInsert(SESSION,	KEY, VALUE1, Integer.valueOf( 1 ));
 		assertEquals(accessType == AccessType.NONSTRICT_READ_WRITE, retval);
 	}
 
@@ -47,7 +47,7 @@ public class EntityRegionExtraAPITest extends AbstractExtraAPITest<EntityRegionA
 		if (accessType == AccessType.READ_ONLY) {
 			return;
 		}
-		boolean retval = accessStrategy.afterUpdate(SESSION,	KEY, VALUE2, Integer.valueOf( 1 ), Integer.valueOf( 2 ),	new MockSoftLock());
+		boolean retval = testAccessStrategy.afterUpdate(SESSION,	KEY, VALUE2, Integer.valueOf( 1 ), Integer.valueOf( 2 ),	new MockSoftLock());
 		assertEquals(accessType == AccessType.NONSTRICT_READ_WRITE, retval);
 	}
 }

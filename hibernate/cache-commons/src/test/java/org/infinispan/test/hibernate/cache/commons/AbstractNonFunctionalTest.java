@@ -12,13 +12,11 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import javax.transaction.TransactionManager;
 
-import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
-import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 import org.hibernate.resource.transaction.spi.TransactionStatus;
 
@@ -28,6 +26,7 @@ import org.infinispan.test.hibernate.cache.commons.util.CacheTestSupport;
 import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
 import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
 import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -51,6 +50,8 @@ public abstract class AbstractNonFunctionalTest extends org.hibernate.testing.ju
 
 	@Rule
 	public InfinispanTestingSetup infinispanTestIdentifier = new InfinispanTestingSetup();
+
+   protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
 
 	@CustomParameterized.Order(0)
 	@Parameterized.Parameters(name = "{0}")
@@ -140,12 +141,12 @@ public abstract class AbstractNonFunctionalTest extends org.hibernate.testing.ju
 		return true;
 	}
 
-	protected <T> T withTx(NodeEnvironment environment, SessionImplementor session, Callable<T> callable) throws Exception {
+	protected <T> T withTx(NodeEnvironment environment, Object session, Callable<T> callable) throws Exception {
 		if (jtaPlatform != null) {
 			TransactionManager tm = environment.getServiceRegistry().getService(JtaPlatform.class).retrieveTransactionManager();
 			return Caches.withinTx(tm, callable);
 		} else {
-			Transaction transaction = ((Session) session).beginTransaction();
+			Transaction transaction = TEST_SESSION_ACCESS.beginTransaction(session);
 			boolean rollingBack = false;
 			try {
 				T retval = callable.call();

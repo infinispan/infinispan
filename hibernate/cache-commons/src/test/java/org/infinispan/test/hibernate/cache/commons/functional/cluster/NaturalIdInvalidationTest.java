@@ -25,6 +25,7 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
+import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.jboss.util.collection.ConcurrentSet;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,6 +46,8 @@ import static org.junit.Assert.fail;
 public class NaturalIdInvalidationTest extends DualNodeTest {
 
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(NaturalIdInvalidationTest.class);
+
+   protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
 
 	@Rule
    public TestName name = new TestName();
@@ -141,9 +144,9 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
             removeAfterEndInvalidationHandler(remoteNaturalIdCache.getAdvancedCache());
 
 			withTxSession(localFactory, s -> {
-				s.createQuery( "delete NaturalIdOnManyToOne" ).executeUpdate();
-				s.createQuery( "delete Citizen" ).executeUpdate();
-				s.createQuery( "delete State" ).executeUpdate();
+            TEST_SESSION_ACCESS.execQueryUpdate(s, "delete NaturalIdOnManyToOne");
+            TEST_SESSION_ACCESS.execQueryUpdate(s, "delete Citizen");
+            TEST_SESSION_ACCESS.execQueryUpdate(s, "delete State");
 			});
 		}
 	}

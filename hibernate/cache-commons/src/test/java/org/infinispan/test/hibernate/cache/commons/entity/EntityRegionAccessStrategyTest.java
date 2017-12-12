@@ -14,11 +14,11 @@ import org.infinispan.commons.test.categories.Smoke;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
 import org.hibernate.cache.spi.access.SoftLock;
-import org.hibernate.engine.spi.SessionImplementor;
 
 import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
 import org.infinispan.test.hibernate.cache.commons.AbstractRegionAccessStrategyTest;
 import org.infinispan.test.hibernate.cache.commons.NodeEnvironment;
+import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess.TestRegionAccessStrategy;
 import org.infinispan.test.hibernate.cache.commons.util.TestSynchronization;
 import org.infinispan.test.hibernate.cache.commons.util.TestingKeyFactory;
 import org.junit.Ignore;
@@ -91,11 +91,11 @@ public class EntityRegionAccessStrategyTest extends
 
 		Thread inserter = new Thread(() -> {
 				try {
-					SessionImplementor session = mockedSession();
+               Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
 					withTx(localEnvironment, session, () -> {
-						assertNull("Correct initial value", localAccessStrategy.get(session, KEY, session.getTimestamp()));
+						assertNull("Correct initial value", testLocalAccessStrategy.get(session, KEY, SESSION_ACCESS.getTimestamp(session)));
 
-						doInsert(localAccessStrategy, session, KEY, VALUE1, 1);
+						doInsert(testLocalAccessStrategy, session, KEY, VALUE1, 1);
 
 						readLatch.countDown();
 						commitLatch.await();
@@ -114,11 +114,11 @@ public class EntityRegionAccessStrategyTest extends
 
 		Thread reader = new Thread(() -> {
 				try {
-					SessionImplementor session = mockedSession();
+					Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
 					withTx(localEnvironment, session, () -> {
 						readLatch.await();
 
-						assertNull("Correct initial value", localAccessStrategy.get(session, KEY, session.getTimestamp()));
+						assertNull("Correct initial value", testLocalAccessStrategy.get(session, KEY, SESSION_ACCESS.getTimestamp(session)));
 						return null;
 					});
 				} catch (Exception e) {
@@ -141,18 +141,18 @@ public class EntityRegionAccessStrategyTest extends
 
 		assertThreadsRanCleanly();
 
-		SessionImplementor s1 = mockedSession();
-		assertEquals("Correct node1 value", VALUE1, localAccessStrategy.get(s1, KEY, s1.getTimestamp()));
+		Object s1 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+		assertEquals("Correct node1 value", VALUE1, testLocalAccessStrategy.get(s1, KEY, SESSION_ACCESS.getTimestamp(s1)));
 
 		assertTrue(asyncInsertLatch.await(10, TimeUnit.SECONDS));
 		Object expected = isUsingInvalidation() ? null : VALUE1;
-		SessionImplementor s2 = mockedSession();
-		assertEquals("Correct node2 value", expected, remoteAccessStrategy.get(s2, KEY, s2.getTimestamp()));
+		Object s2 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+		assertEquals("Correct node2 value", expected, testRemoteAccessStrategy.get(s2, KEY, SESSION_ACCESS.getTimestamp(s2)));
 	}
 
-	protected void doInsert(EntityRegionAccessStrategy strategy, SessionImplementor session, Object key, String value, Object version) {
+	protected void doInsert(TestRegionAccessStrategy strategy, Object session, Object key, String value, Object version) {
 		strategy.insert(session, key, value, null);
-		session.getTransactionCoordinator().getLocalSynchronizations().registerSynchronization(
+      SESSION_ACCESS.getTransactionCoordinator(session).registerLocalSynchronization(
 				new TestSynchronization.AfterInsert(strategy, session, key, value, version));
 	}
 
@@ -161,19 +161,19 @@ public class EntityRegionAccessStrategyTest extends
 
 		CountDownLatch remotePutFromLoadLatch = expectPutFromLoad();
 
-		SessionImplementor session = mockedSession();
+		Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
 		withTx(localEnvironment, session, () -> {
-			assertNull(localAccessStrategy.get(session, KEY, session.getTimestamp()));
+			assertNull(testLocalAccessStrategy.get(session, KEY, SESSION_ACCESS.getTimestamp(session)));
 			if (minimal)
-				localAccessStrategy.putFromLoad(session, KEY, VALUE1, session.getTimestamp(), 1, true);
+            testLocalAccessStrategy.putFromLoad(session, KEY, VALUE1, SESSION_ACCESS.getTimestamp(session), 1, true);
 			else
-				localAccessStrategy.putFromLoad(session, KEY, VALUE1, session.getTimestamp(), 1);
+            testLocalAccessStrategy.putFromLoad(session, KEY, VALUE1, SESSION_ACCESS.getTimestamp(session), 1);
 			return null;
 		});
 
-		SessionImplementor s2 = mockedSession();
-		assertEquals(VALUE1, localAccessStrategy.get(s2, KEY, s2.getTimestamp()));
-		SessionImplementor s3 = mockedSession();
+		Object s2 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+		assertEquals(VALUE1, testLocalAccessStrategy.get(s2, KEY, SESSION_ACCESS.getTimestamp(s2)));
+		Object s3 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
 		Object expected;
 		if (isUsingInvalidation()) {
 			expected = null;
@@ -183,7 +183,7 @@ public class EntityRegionAccessStrategyTest extends
 			}
 			expected = VALUE1;
 		}
-		assertEquals(expected, remoteAccessStrategy.get(s3, KEY, s3.getTimestamp()));
+		assertEquals(expected, testRemoteAccessStrategy.get(s3, KEY, SESSION_ACCESS.getTimestamp(s3)));
 	}
 
 	@Test
@@ -195,10 +195,10 @@ public class EntityRegionAccessStrategyTest extends
 		final Object KEY = generateNextKey();
 
 		// Set up initial state
-		SessionImplementor s1 = mockedSession();
-		localAccessStrategy.putFromLoad(s1, KEY, VALUE1, s1.getTimestamp(), 1);
-		SessionImplementor s2 = mockedSession();
-		remoteAccessStrategy.putFromLoad(s2, KEY, VALUE1, s2.getTimestamp(), 1);
+		Object s1 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      testLocalAccessStrategy.putFromLoad(s1, KEY, VALUE1, SESSION_ACCESS.getTimestamp(s1), 1);
+		Object s2 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      testRemoteAccessStrategy.putFromLoad(s2, KEY, VALUE1, SESSION_ACCESS.getTimestamp(s2), 1);
 
 		// both nodes are updated, we don't have to wait for any async replication of putFromLoad
 		CountDownLatch asyncUpdateLatch = expectAfterUpdate();
@@ -209,12 +209,12 @@ public class EntityRegionAccessStrategyTest extends
 
 		Thread updater = new Thread(() -> {
 				try {
-					SessionImplementor session = mockedSession();
+					Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
 					withTx(localEnvironment, session, () -> {
 						log.debug("Transaction began, get initial value");
-						assertEquals("Correct initial value", VALUE1, localAccessStrategy.get(session, KEY, session.getTimestamp()));
+						assertEquals("Correct initial value", VALUE1, testLocalAccessStrategy.get(session, KEY, SESSION_ACCESS.getTimestamp(session)));
 						log.debug("Now update value");
-						doUpdate(localAccessStrategy, session, KEY, VALUE2, 2);
+						doUpdate(testLocalAccessStrategy, session, KEY, VALUE2, 2);
 						log.debug("Notify the read latch");
 						readLatch.countDown();
 						log.debug("Await commit");
@@ -237,7 +237,7 @@ public class EntityRegionAccessStrategyTest extends
 
 		Thread reader = new Thread(() -> {
 				try {
-					SessionImplementor session = mockedSession();
+					Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
 					withTx(localEnvironment, session, () -> {
 						log.debug("Transaction began, await read latch");
 						readLatch.await();
@@ -247,7 +247,7 @@ public class EntityRegionAccessStrategyTest extends
 						// is not being committed yet, or if non-strict as we do the actual update only after transaction)
 						// or null if non-transactional
 						Object expected = isTransactional() || accessType == AccessType.NONSTRICT_READ_WRITE ? VALUE1 : null;
-						assertEquals("Correct value", expected, localAccessStrategy.get(session, KEY, session.getTimestamp()));
+						assertEquals("Correct value", expected, testLocalAccessStrategy.get(session, KEY, SESSION_ACCESS.getTimestamp(session)));
 						return null;
 					});
 				} catch (Exception e) {
@@ -271,19 +271,19 @@ public class EntityRegionAccessStrategyTest extends
 
 		assertThreadsRanCleanly();
 
-		SessionImplementor s3 = mockedSession();
-		assertEquals("Correct node1 value", VALUE2, localAccessStrategy.get(s3, KEY, s3.getTimestamp()));
+		Object s3 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+		assertEquals("Correct node1 value", VALUE2, testLocalAccessStrategy.get(s3, KEY, SESSION_ACCESS.getTimestamp(s3)));
 		assertTrue(asyncUpdateLatch.await(10, TimeUnit.SECONDS));
 		Object expected = isUsingInvalidation() ? null : VALUE2;
-		SessionImplementor s4 = mockedSession();
-		assertEquals("Correct node2 value", expected, remoteAccessStrategy.get(s4, KEY, s4.getTimestamp()));
+		Object s4 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+		assertEquals("Correct node2 value", expected, testRemoteAccessStrategy.get(s4, KEY, SESSION_ACCESS.getTimestamp(s4)));
 	}
 
 	@Override
-	protected void doUpdate(EntityRegionAccessStrategy strategy, SessionImplementor session, Object key, Object value, Object version) throws javax.transaction.RollbackException, javax.transaction.SystemException {
+	protected void doUpdate(TestRegionAccessStrategy strategy, Object session, Object key, Object value, Object version) throws javax.transaction.RollbackException, javax.transaction.SystemException {
 		SoftLock softLock = strategy.lockItem(session, key, null);
 		strategy.update(session, key, value, null, null);
-		session.getTransactionCoordinator().getLocalSynchronizations().registerSynchronization(
+      SESSION_ACCESS.getTransactionCoordinator(session).registerLocalSynchronization(
 				new TestSynchronization.AfterUpdate(strategy, session, key, value, version, softLock));
 	}
 
@@ -303,8 +303,8 @@ public class EntityRegionAccessStrategyTest extends
 
 		final Object KEY = TestingKeyFactory.generateEntityCacheKey(KEY_BASE + testCount++);
 
-		SessionImplementor s1 = mockedSession();
-		localAccessStrategy.putFromLoad(s1, KEY, VALUE1, s1.getTimestamp(), 1);
+		Object s1 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      testLocalAccessStrategy.putFromLoad(s1, KEY, VALUE1, SESSION_ACCESS.getTimestamp(s1), 1);
 
 		final CountDownLatch pferLatch = new CountDownLatch(1);
 		final CountDownLatch pferCompletionLatch = new CountDownLatch(1);
@@ -315,11 +315,11 @@ public class EntityRegionAccessStrategyTest extends
 			@Override
 			public void run() {
 				try {
-					SessionImplementor session = mockedSession();
+					Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
 					withTx(localEnvironment, session, () -> {
-						assertEquals("Correct initial value", VALUE1, localAccessStrategy.get(session, KEY, session.getTimestamp()));
+						assertEquals("Correct initial value", VALUE1, testLocalAccessStrategy.get(session, KEY, SESSION_ACCESS.getTimestamp(session)));
 
-						doUpdate(localAccessStrategy, session, KEY, VALUE2, 2);
+						doUpdate(testLocalAccessStrategy, session, KEY, VALUE2, 2);
 
 						pferLatch.countDown();
 						commitLatch.await();
@@ -340,9 +340,9 @@ public class EntityRegionAccessStrategyTest extends
 			@Override
 			public void run() {
 				try {
-					SessionImplementor session = mockedSession();
+					Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
 					withTx(localEnvironment, session, () -> {
-						localAccessStrategy.putFromLoad(session, KEY, VALUE1, session.getTimestamp(), 1);
+                  testLocalAccessStrategy.putFromLoad(session, KEY, VALUE1, SESSION_ACCESS.getTimestamp(session), 1);
 						return null;
 					});
 				} catch (Exception e) {
@@ -367,7 +367,7 @@ public class EntityRegionAccessStrategyTest extends
 
 		assertThreadsRanCleanly();
 
-		SessionImplementor session = mockedSession();
-		assertEquals("Correct node1 value", VALUE2, localAccessStrategy.get(session, KEY, session.getTimestamp()));
+		Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+		assertEquals("Correct node1 value", VALUE2, testLocalAccessStrategy.get(session, KEY, SESSION_ACCESS.getTimestamp(session)));
 	}
 }

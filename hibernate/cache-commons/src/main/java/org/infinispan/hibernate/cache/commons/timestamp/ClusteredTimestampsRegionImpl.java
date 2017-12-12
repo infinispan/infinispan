@@ -13,7 +13,6 @@ import javax.transaction.Transaction;
 import org.hibernate.cache.CacheException;
 import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
 import org.infinispan.hibernate.cache.commons.util.Caches;
-import org.hibernate.engine.spi.SessionImplementor;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
@@ -31,7 +30,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
  * @since 4.1
  */
 @Listener
-public class ClusteredTimestampsRegionImpl extends TimestampsRegionImpl {
+public abstract class ClusteredTimestampsRegionImpl extends TimestampsRegionImpl {
 
 	/**
 	 * Maintains a local (authoritative) cache of timestamps along with the
@@ -63,7 +62,7 @@ public class ClusteredTimestampsRegionImpl extends TimestampsRegionImpl {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object get(SessionImplementor session, Object key) throws CacheException {
+	public Object getItem(Object session, Object key) throws CacheException {
 		Object value = localCache.get( key );
 
 		if ( value == null && checkValid() ) {
@@ -77,9 +76,9 @@ public class ClusteredTimestampsRegionImpl extends TimestampsRegionImpl {
 	}
 
 	@Override
-	public void put(SessionImplementor session, Object key, Object value) throws CacheException {
+	public void putItem(Object session, Object key, Object value) throws CacheException {
 		updateLocalCache(key, value);
-		super.put(session, key, value);
+		super.putItem(session, key, value);
 	}
 
 	@Override

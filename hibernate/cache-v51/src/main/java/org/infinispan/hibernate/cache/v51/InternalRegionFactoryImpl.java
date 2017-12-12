@@ -9,6 +9,8 @@ import org.infinispan.hibernate.cache.v51.collection.CollectionRegionImpl;
 import org.infinispan.hibernate.cache.v51.entity.EntityRegionImpl;
 import org.infinispan.hibernate.cache.v51.naturalid.NaturalIdRegionImpl;
 import org.infinispan.hibernate.cache.v51.query.QueryResultsRegionImpl;
+import org.infinispan.hibernate.cache.v51.timestamp.ClusteredTimestampsRegionImpl;
+import org.infinispan.hibernate.cache.v51.timestamp.TimestampsRegionImpl;
 
 import javax.transaction.TransactionManager;
 
@@ -36,6 +38,18 @@ public class InternalRegionFactoryImpl implements InternalRegionFactory {
    @SuppressWarnings("unchecked")
    public QueryResultsRegionImpl createQueryResultsRegion(AdvancedCache cache, String regionName, TransactionManager transactionManager, InfinispanRegionFactory regionFactory) {
       return new QueryResultsRegionImpl(cache, regionName, transactionManager, regionFactory);
+   }
+
+   @Override
+   @SuppressWarnings("unchecked")
+   public TimestampsRegionImpl createTimestampsRegion(AdvancedCache cache, String regionName, InfinispanRegionFactory regionFactory) {
+      return new TimestampsRegionImpl(cache, regionName, regionFactory);
+   }
+
+   @Override
+   @SuppressWarnings("unchecked")
+   public ClusteredTimestampsRegionImpl createClusteredTimestampsRegion(AdvancedCache cache, String regionName, InfinispanRegionFactory regionFactory) {
+      return new ClusteredTimestampsRegionImpl(cache, regionName, regionFactory);
    }
 
 }

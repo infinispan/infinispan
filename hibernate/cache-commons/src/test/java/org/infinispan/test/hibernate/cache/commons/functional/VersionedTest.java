@@ -16,11 +16,11 @@ import javax.transaction.Synchronization;
 import org.hibernate.PessimisticLockException;
 import org.hibernate.Session;
 import org.hibernate.StaleStateException;
+import org.infinispan.hibernate.cache.commons.access.SessionAccess;
 import org.infinispan.hibernate.cache.commons.access.VersionedCallInterceptor;
 import org.infinispan.hibernate.cache.commons.impl.BaseTransactionalDataRegion;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.hibernate.cache.commons.util.VersionedEntry;
-import org.hibernate.engine.spi.SessionImplementor;
 
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.OtherItem;
@@ -50,6 +50,9 @@ import static org.junit.Assert.assertTrue;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class VersionedTest extends AbstractNonInvalidationTest {
+
+   protected static final SessionAccess SESSION_ACCESS = SessionAccess.findSessionAccess();
+
    @Override
    public List<Object[]> getParameters() {
       return Arrays.asList(NONSTRICT_REPLICATED, NONSTRICT_DISTRIBUTED);
@@ -144,7 +147,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
 
       Future<Boolean> action = executor.submit(() -> withTxSessionApply(s -> {
          try {
-            ((SessionImplementor) s).getTransactionCoordinator().getLocalSynchronizations().registerSynchronization(new Synchronization() {
+            SESSION_ACCESS.getTransactionCoordinator(s).registerLocalSynchronization(new Synchronization() {
                @Override
                public void beforeCompletion() {
                }

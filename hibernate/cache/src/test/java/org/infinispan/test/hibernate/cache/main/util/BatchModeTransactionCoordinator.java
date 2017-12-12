@@ -1,11 +1,4 @@
-package org.infinispan.test.hibernate.cache.commons.util;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import javax.transaction.RollbackException;
-import javax.transaction.Status;
-import javax.transaction.Synchronization;
-import javax.transaction.SystemException;
+package org.infinispan.test.hibernate.cache.main.util;
 
 import org.hibernate.HibernateException;
 import org.hibernate.Transaction;
@@ -15,20 +8,26 @@ import org.hibernate.engine.transaction.spi.IsolationDelegate;
 import org.hibernate.engine.transaction.spi.TransactionObserver;
 import org.hibernate.resource.transaction.backend.jta.internal.JtaIsolationDelegate;
 import org.hibernate.resource.transaction.backend.jta.internal.StatusTranslator;
-import org.hibernate.resource.transaction.SynchronizationRegistry;
-import org.hibernate.resource.transaction.TransactionCoordinator;
-import org.hibernate.resource.transaction.TransactionCoordinatorBuilder;
+import org.hibernate.resource.transaction.spi.SynchronizationRegistry;
+import org.hibernate.resource.transaction.spi.TransactionCoordinator;
+import org.hibernate.resource.transaction.spi.TransactionCoordinatorBuilder;
 import org.hibernate.resource.transaction.spi.TransactionStatus;
-
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
+
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.Synchronization;
+import javax.transaction.SystemException;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * Mocks transaction coordinator when {@link org.hibernate.engine.spi.SessionImplementor} is only mocked
- * and {@link org.infinispan.transaction.tm.BatchModeTransactionManager} is used.
+ * and {@link BatchModeTransactionManager} is used.
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
@@ -176,7 +175,21 @@ public class BatchModeTransactionCoordinator implements TransactionCoordinator {
 			transactionDriver.rollback();
 		}
 
-		public TransactionStatus getStatus() {
+      @Override
+      public void setRollbackOnly() {
+      }
+
+      @Override
+      public boolean getRollbackOnly() {
+         return false;
+      }
+
+      @Override
+      public boolean isActive() {
+         return false;
+      }
+
+      public TransactionStatus getStatus() {
 			return transactionDriver.getStatus();
 		}
 

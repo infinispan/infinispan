@@ -6,6 +6,7 @@ import org.hibernate.cache.spi.CollectionRegion;
 import org.hibernate.cache.spi.EntityRegion;
 import org.hibernate.cache.spi.NaturalIdRegion;
 import org.hibernate.cache.spi.QueryResultsRegion;
+import org.hibernate.cache.spi.TimestampsRegion;
 import org.infinispan.AdvancedCache;
 import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
 
@@ -31,5 +32,11 @@ public interface InternalRegionFactory {
    <T extends BaseRegion & QueryResultsRegion> T createQueryResultsRegion(
       AdvancedCache cache, String regionName, TransactionManager transactionManager,
       InfinispanRegionFactory regionFactory);
+
+   <T extends BaseRegion & TimestampsRegion> T createTimestampsRegion(
+      AdvancedCache cache, String regionName, InfinispanRegionFactory regionFactory);
+
+   <T extends BaseRegion & TimestampsRegion> T createClusteredTimestampsRegion(
+      AdvancedCache cache, String regionName, InfinispanRegionFactory regionFactory);
 
 }

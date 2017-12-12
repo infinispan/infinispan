@@ -31,6 +31,7 @@ import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.infinispan.util.ControlledTimeService;
 import org.junit.After;
 import org.junit.Before;
@@ -49,6 +50,7 @@ import static org.junit.Assert.assertTrue;
 public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
    protected static final int WAIT_TIMEOUT = 2000;
    protected static final ControlledTimeService TIME_SERVICE = new ControlledTimeService();
+   protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
 
    protected long TIMEOUT;
    protected ExecutorService executor;
@@ -115,7 +117,7 @@ public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
       cleanup.forEach(Runnable::run);
       cleanup.clear();
       withTxSession(s -> {
-         s.createQuery("delete from Item").executeUpdate();
+         TEST_SESSION_ACCESS.execQueryUpdate(s, "delete from Item");
       });
    }
 
@@ -163,6 +165,10 @@ public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
             }
             s.flush();
          } catch (StaleStateException e) {
+            log.info("Exception thrown: ", e);
+            markRollbackOnly(s);
+            return false;
+         } catch (OptimisticLockException e) {
             log.info("Exception thrown: ", e);
             markRollbackOnly(s);
             return false;
