@@ -72,6 +72,7 @@ public abstract class BaseTransactionalDataRegion
 	private AccessType accessType;
 	private Strategy strategy;
 
+	// TODO: Make static
    public final SessionAccess sessionAccess;
 
 	protected enum Strategy {

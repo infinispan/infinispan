@@ -23,9 +23,7 @@ import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
 import org.infinispan.hibernate.cache.commons.query.QueryResultsRegionImpl;
 import org.hibernate.cache.internal.StandardQueryCache;
 import org.hibernate.cache.spi.CacheDataDescription;
-import org.hibernate.cache.spi.QueryResultsRegion;
 import org.hibernate.cache.spi.Region;
-import org.hibernate.engine.spi.SessionImplementor;
 
 import org.hibernate.testing.TestForIssue;
 import org.infinispan.test.hibernate.cache.commons.AbstractGeneralDataRegionTest;
@@ -85,18 +83,18 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 	}
 
 	private interface RegionConsumer {
-		void accept(SessionFactory sessionFactory, QueryResultsRegion region) throws Exception;
+		void accept(SessionFactory sessionFactory, QueryResultsRegionImpl region) throws Exception;
 	}
 
 	private void withQueryRegion(RegionConsumer callable) throws Exception {
-		withSessionFactoriesAndRegions(1, (sessionFactories, regions) ->  callable.accept(sessionFactories.get(0), (QueryResultsRegion) regions.get(0)));
+		withSessionFactoriesAndRegions(1, (sessionFactories, regions) ->  callable.accept(sessionFactories.get(0), (QueryResultsRegionImpl) regions.get(0)));
 	}
 
 	@Test
 	public void testPutDoesNotBlockGet() throws Exception {
 		withQueryRegion((sessionFactory, region) -> {
-			withSession(sessionFactory, session -> region.put(session, KEY, VALUE1));
-			assertEquals(VALUE1, callWithSession(sessionFactory, session -> region.get(session, KEY)));
+			withSession(sessionFactory, session -> region.putItem(session, KEY, VALUE1));
+			assertEquals(VALUE1, callWithSession(sessionFactory, session -> region.getItem(session, KEY)));
 
 			final CountDownLatch readerLatch = new CountDownLatch(1);
 			final CountDownLatch writerLatch = new CountDownLatch(1);
@@ -107,7 +105,7 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 				@Override
 				public void run() {
 					try {
-						assertNotEquals(VALUE2, callWithSession(sessionFactory, session -> region.get(session, KEY)));
+						assertNotEquals(VALUE2, callWithSession(sessionFactory, session -> region.getItem(session, KEY)));
 					} catch (AssertionFailedError e) {
 						holder.addAssertionFailure(e);
 					} catch (Exception e) {
@@ -123,7 +121,7 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 				public void run() {
 					try {
 						withSession(sessionFactory, session -> {
-							region.put(session, KEY, VALUE2);
+							region.putItem(session, KEY, VALUE2);
 							writerLatch.await();
 						});
 					} catch (Exception e) {
@@ -148,15 +146,15 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 
 			assertTrue("Reader finished promptly", completionLatch.await(100, TimeUnit.MILLISECONDS));
 
-			assertEquals(VALUE2, callWithSession(sessionFactory, session -> region.get(session, KEY)));
+			assertEquals(VALUE2, callWithSession(sessionFactory, session -> region.getItem(session, KEY)));
 		});
 	}
 
 	@Test
 	public void testGetDoesNotBlockPut() throws Exception {
 		withQueryRegion((sessionFactory, region) -> {
-			withSession(sessionFactory, session -> region.put( session, KEY, VALUE1 ));
-			assertEquals(VALUE1, callWithSession(sessionFactory, session -> region.get( session, KEY )));
+			withSession(sessionFactory, session -> region.putItem( session, KEY, VALUE1 ));
+			assertEquals(VALUE1, callWithSession(sessionFactory, session -> region.getItem( session, KEY )));
 
 			final AdvancedCache cache = ((QueryResultsRegionImpl) region).getCache();
 			final CountDownLatch blockerLatch = new CountDownLatch( 1 );
@@ -170,7 +168,7 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 					GetBlocker blocker = new GetBlocker( blockerLatch, KEY );
 					try {
 						cache.addListener( blocker );
-						withSession(sessionFactory, session -> region.get(session, KEY ));
+						withSession(sessionFactory, session -> region.getItem(session, KEY ));
 					}
 					catch (Exception e) {
 						holder.addException(e);
@@ -186,7 +184,7 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 				public void run() {
 					try {
 						writerLatch.await();
-						withSession(sessionFactory, session -> region.put( session, KEY, VALUE2 ));
+						withSession(sessionFactory, session -> region.putItem( session, KEY, VALUE2 ));
 					}
 					catch (Exception e) {
 						holder.addException(e);
@@ -214,10 +212,10 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 				unblocked = true;
 
 				if ( IsolationLevel.REPEATABLE_READ.equals( cache.getCacheConfiguration().locking().isolationLevel() ) ) {
-					assertEquals( VALUE1, callWithSession(sessionFactory, session -> region.get( session, KEY )) );
+					assertEquals( VALUE1, callWithSession(sessionFactory, session -> region.getItem( session, KEY )) );
 				}
 				else {
-					assertEquals( VALUE2, callWithSession(sessionFactory, session -> region.get( session, KEY )) );
+					assertEquals( VALUE2, callWithSession(sessionFactory, session -> region.getItem( session, KEY )) );
 				}
 
 				holder.checkExceptions();
@@ -231,11 +229,11 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 	}
 
 	protected interface SessionConsumer {
-		void accept(SessionImplementor session) throws Exception;
+		void accept(Object session) throws Exception;
 	}
 
 	protected interface SessionCallable<T> {
-		T call(SessionImplementor session) throws Exception;
+		T call(Object session) throws Exception;
 	}
 
 	protected <T> T callWithSession(SessionFactory sessionFactory, SessionCallable<T> callable) throws Exception {
@@ -243,7 +241,7 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 		Transaction tx = session.getTransaction();
 		tx.begin();
 		try {
-			T retval = callable.call((SessionImplementor) session);
+			T retval = callable.call(session);
 			tx.commit();
 			return retval;
 		} catch (Exception e) {
@@ -262,8 +260,8 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 	@TestForIssue(jiraKey = "HHH-7898")
 	public void testPutDuringPut() throws Exception {
 		withQueryRegion((sessionFactory, region) -> {
-			withSession(sessionFactory, session -> region.put(session, KEY, VALUE1));
-			assertEquals(VALUE1, callWithSession(sessionFactory, session -> region.get(session, KEY) ));
+			withSession(sessionFactory, session -> region.putItem(session, KEY, VALUE1));
+			assertEquals(VALUE1, callWithSession(sessionFactory, session -> region.getItem(session, KEY) ));
 
 			final AdvancedCache cache = ((QueryResultsRegionImpl) region).getCache();
 			CountDownLatch blockerLatch = new CountDownLatch(1);
@@ -277,7 +275,7 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 					try {
 						blocker = new PutBlocker(blockerLatch, triggerLatch, KEY);
 						cache.addListener(blocker);
-						withSession(sessionFactory, session -> region.put(session, KEY, VALUE2));
+						withSession(sessionFactory, session -> region.putItem(session, KEY, VALUE2));
 					} catch (Exception e) {
 						holder.addException(e);
 					} finally {
@@ -297,7 +295,7 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 					try {
 						triggerLatch.await();
 						// this should silently fail
-						withSession(sessionFactory, session -> region.put(session, KEY, VALUE3));
+						withSession(sessionFactory, session -> region.putItem(session, KEY, VALUE3));
 					} catch (Exception e) {
 						holder.addException(e);
 					}
@@ -314,7 +312,7 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 
 			holder.checkExceptions();
 
-			assertEquals(VALUE2, callWithSession(sessionFactory, session -> region.get(session, KEY)));
+			assertEquals(VALUE2, callWithSession(sessionFactory, session -> region.getItem(session, KEY)));
 		});
 	}
 
@@ -323,20 +321,20 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 		withQueryRegion((sessionFactory, region) -> {
 			ExceptionHolder holder = new ExceptionHolder();
 			CyclicBarrier barrier = new CyclicBarrier(2);
-			withSession(sessionFactory, session -> region.put(session, KEY, VALUE1));
+			withSession(sessionFactory, session -> region.putItem(session, KEY, VALUE1));
 
 			Thread updater = new Thread() {
 				@Override
 				public void run() {
 					try {
 						withSession(sessionFactory, (session) -> {
-							assertEquals(VALUE1, region.get(session, KEY));
-							region.put(session, KEY, VALUE2);
-							assertEquals(VALUE2, region.get(session, KEY));
+							assertEquals(VALUE1, region.getItem(session, KEY));
+							region.putItem(session, KEY, VALUE2);
+							assertEquals(VALUE2, region.getItem(session, KEY));
 							barrier.await(5, TimeUnit.SECONDS);
 							barrier.await(5, TimeUnit.SECONDS);
-							region.put(session, KEY, VALUE3);
-							assertEquals(VALUE3, region.get(session, KEY));
+							region.putItem(session, KEY, VALUE3);
+							assertEquals(VALUE3, region.getItem(session, KEY));
 							barrier.await(5, TimeUnit.SECONDS);
 							barrier.await(5, TimeUnit.SECONDS);
 						});
@@ -355,12 +353,12 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 				public void run() {
 					try {
 						withSession(sessionFactory, (session) -> {
-							assertEquals(VALUE1, region.get(session, KEY));
+							assertEquals(VALUE1, region.getItem(session, KEY));
 							barrier.await(5, TimeUnit.SECONDS);
-							assertEquals(VALUE1, region.get(session, KEY));
+							assertEquals(VALUE1, region.getItem(session, KEY));
 							barrier.await(5, TimeUnit.SECONDS);
 							barrier.await(5, TimeUnit.SECONDS);
-							assertEquals(VALUE1, region.get(session, KEY));
+							assertEquals(VALUE1, region.getItem(session, KEY));
 							barrier.await(5, TimeUnit.SECONDS);
 						});
 					} catch (AssertionFailedError e) {
@@ -379,7 +377,7 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 			reader.join();
 			holder.checkExceptions();
 
-			assertEquals(VALUE3, callWithSession(sessionFactory, session -> region.get(session, KEY)));
+			assertEquals(VALUE3, callWithSession(sessionFactory, session -> region.getItem(session, KEY)));
 		});
 	}
 
@@ -387,10 +385,10 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 	@TestForIssue(jiraKey = "HHH-10163")
 	public void testEvictAll() throws Exception {
 		withQueryRegion((sessionFactory, region) -> {
-			withSession(sessionFactory, s -> region.put(s, KEY, VALUE1));
-			withSession(sessionFactory, s -> assertEquals(VALUE1, region.get(s, KEY)));
+			withSession(sessionFactory, s -> region.putItem(s, KEY, VALUE1));
+			withSession(sessionFactory, s -> assertEquals(VALUE1, region.getItem(s, KEY)));
 			region.evictAll();
-			withSession(sessionFactory, s -> assertNull(region.get(s, KEY)));
+			withSession(sessionFactory, s -> assertNull(region.getItem(s, KEY)));
 			assertEquals(Collections.EMPTY_MAP, region.toMap());
 		});
 	}

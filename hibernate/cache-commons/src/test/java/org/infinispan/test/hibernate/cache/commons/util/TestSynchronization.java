@@ -1,20 +1,18 @@
 package org.infinispan.test.hibernate.cache.commons.util;
 
-import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
-import org.hibernate.cache.spi.access.RegionAccessStrategy;
 import org.hibernate.cache.spi.access.SoftLock;
-import org.hibernate.engine.spi.SessionImplementor;
+import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess.TestRegionAccessStrategy;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public abstract class TestSynchronization implements javax.transaction.Synchronization {
-	protected final SessionImplementor session;
+	protected final Object session;
 	protected final Object key;
 	protected final Object value;
 	protected final Object version;
 
-	public TestSynchronization(SessionImplementor session, Object key, Object value, Object version) {
+	public TestSynchronization(Object session, Object key, Object value, Object version) {
 		this.session = session;
 		this.key = key;
 		this.value = value;
@@ -27,9 +25,9 @@ public abstract class TestSynchronization implements javax.transaction.Synchroni
 
 
 	public static class AfterInsert extends TestSynchronization {
-		private final EntityRegionAccessStrategy strategy;
+		private final TestRegionAccessStrategy strategy;
 
-		public AfterInsert(EntityRegionAccessStrategy strategy, SessionImplementor session, Object key, Object value, Object version) {
+		public AfterInsert(TestRegionAccessStrategy strategy, Object session, Object key, Object value, Object version) {
 			super(session, key, value, version);
 			this.strategy = strategy;
 		}
@@ -41,10 +39,10 @@ public abstract class TestSynchronization implements javax.transaction.Synchroni
 	}
 
 	public static class AfterUpdate extends TestSynchronization {
-		private final EntityRegionAccessStrategy strategy;
+		private final TestRegionAccessStrategy strategy;
 		private final SoftLock lock;
 
-		public AfterUpdate(EntityRegionAccessStrategy strategy, SessionImplementor session, Object key, Object value, Object version, SoftLock lock) {
+		public AfterUpdate(TestRegionAccessStrategy strategy, Object session, Object key, Object value, Object version, SoftLock lock) {
 			super(session, key, value, version);
 			this.strategy = strategy;
 			this.lock = lock;
@@ -57,10 +55,10 @@ public abstract class TestSynchronization implements javax.transaction.Synchroni
 	}
 
 	public static class UnlockItem extends TestSynchronization {
-		private final RegionAccessStrategy strategy;
+		private final TestRegionAccessStrategy strategy;
 		private final SoftLock lock;
 
-		public UnlockItem(RegionAccessStrategy strategy, SessionImplementor session, Object key, SoftLock lock) {
+		public UnlockItem(TestRegionAccessStrategy strategy, Object session, Object key, SoftLock lock) {
 			super(session, key, null, null);
 			this.strategy = strategy;
 			this.lock = lock;

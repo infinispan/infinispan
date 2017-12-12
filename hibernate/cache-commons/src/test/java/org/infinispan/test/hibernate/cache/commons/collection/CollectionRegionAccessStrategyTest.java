@@ -20,11 +20,11 @@ import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
 import org.infinispan.hibernate.cache.commons.access.TxInvalidationCacheAccessDelegate;
 import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
 import org.hibernate.cache.spi.access.SoftLock;
-import org.hibernate.engine.spi.SessionImplementor;
 
 import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
 import org.infinispan.test.hibernate.cache.commons.AbstractRegionAccessStrategyTest;
 import org.infinispan.test.hibernate.cache.commons.NodeEnvironment;
+import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess.TestRegionAccessStrategy;
 import org.infinispan.test.hibernate.cache.commons.util.TestSynchronization;
 import org.infinispan.test.hibernate.cache.commons.util.TestingKeyFactory;
 import org.junit.Test;
@@ -113,14 +113,14 @@ public class CollectionRegionAccessStrategyTest extends
 
 		final String KEY = "k1";
 		Future<Void> pferFuture = executorService.submit(() -> {
-			SessionImplementor session = mockedSession();
-			delegate.putFromLoad(session, KEY, "v1", session.getTimestamp(), null);
+         Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+			delegate.putFromLoad(session, KEY, "v1", SESSION_ACCESS.getTimestamp(session), null);
 			return null;
 		});
 
 		Future<Void> removeFuture = executorService.submit(() -> {
 			removeLatch.await();
-			SessionImplementor session = mockedSession();
+         Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
 			withTx(localEnvironment, session, () -> {
 				delegate.remove(session, KEY);
 				return null;
@@ -147,10 +147,10 @@ public class CollectionRegionAccessStrategyTest extends
 	}
 
 	@Override
-	protected void doUpdate(CollectionRegionAccessStrategy strategy, SessionImplementor session, Object key, Object value, Object version) throws javax.transaction.RollbackException, javax.transaction.SystemException {
+	protected void doUpdate(TestRegionAccessStrategy strategy, Object session, Object key, Object value, Object version) throws javax.transaction.RollbackException, javax.transaction.SystemException {
 		SoftLock softLock = strategy.lockItem(session, key, version);
 		strategy.remove(session, key);
-		session.getTransactionCoordinator().getLocalSynchronizations().registerSynchronization(
+      SESSION_ACCESS.getTransactionCoordinator(session).registerLocalSynchronization(
 			new TestSynchronization.UnlockItem(strategy, session, key, softLock));
 	}
 }

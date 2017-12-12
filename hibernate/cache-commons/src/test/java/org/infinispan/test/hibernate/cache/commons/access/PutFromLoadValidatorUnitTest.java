@@ -25,7 +25,6 @@ import javax.transaction.TransactionManager;
 import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
 import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
-import org.hibernate.engine.spi.SessionImplementor;
 
 import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
 import org.hibernate.testing.AfterClassOnce;
@@ -36,6 +35,7 @@ import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
 import org.hibernate.testing.junit4.CustomRunner;
 import org.infinispan.AdvancedCache;
 import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.infinispan.util.ControlledTimeService;
 import org.junit.After;
 import org.junit.Test;
@@ -69,6 +69,7 @@ public class PutFromLoadValidatorUnitTest {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(
 			PutFromLoadValidatorUnitTest.class);
 	private static final ControlledTimeService TIME_SERVICE = new ControlledTimeService();
+   protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
 
 	private Object KEY1 = "KEY1";
 
@@ -222,8 +223,8 @@ public class PutFromLoadValidatorUnitTest {
 			if (transactional) {
 				tm.begin();
 			}
-			SessionImplementor session1 = mock(SessionImplementor.class);
-			SessionImplementor session2 = mock(SessionImplementor.class);
+			Object session1 = TEST_SESSION_ACCESS.mockSessionImplementor();
+			Object session2 = TEST_SESSION_ACCESS.mockSessionImplementor();
 			testee.registerPendingPut(session1, KEY1, txTimestamp);
 			if (removeRegion) {
 				testee.beginInvalidatingRegion();
@@ -273,7 +274,7 @@ public class PutFromLoadValidatorUnitTest {
 				if (transactional) {
 					tm.begin();
 				}
-				SessionImplementor session = mock(SessionImplementor.class);
+				Object session = TEST_SESSION_ACCESS.mockSessionImplementor();
 				testee.registerPendingPut(session, KEY1, txTimestamp);
 				registeredLatch.countDown();
 				registeredLatch.await(5, TimeUnit.SECONDS);
@@ -332,7 +333,7 @@ public class PutFromLoadValidatorUnitTest {
 
 		Callable<Boolean> pferCallable = () -> {
 			long txTimestamp = TIME_SERVICE.wallClockTime();
-			SessionImplementor session = mock (SessionImplementor.class);
+			Object session = TEST_SESSION_ACCESS.mockSessionImplementor();
 			testee.registerPendingPut(session, KEY1, txTimestamp);
 			PutFromLoadValidator.Lock lock = testee.acquirePutFromLoadLock(session, KEY1, txTimestamp);
 			if (lock != null) {
@@ -352,7 +353,7 @@ public class PutFromLoadValidatorUnitTest {
 		Callable<Void> invalidateCallable = () -> {
          removeLatch.await();
          if (keyOnly) {
-            SessionImplementor session = mock (SessionImplementor.class);
+            Object session = TEST_SESSION_ACCESS.mockSessionImplementor();
             testee.beginInvalidatingKey(session, KEY1);
          } else {
             testee.beginInvalidatingRegion();
@@ -410,7 +411,7 @@ public class PutFromLoadValidatorUnitTest {
 				assertTrue(success);
 				putFromLoadValidator.endInvalidatingRegion();
 			} else {
-				SessionImplementor session = mock (SessionImplementor.class);
+            Object session = TEST_SESSION_ACCESS.mockSessionImplementor();
 				boolean success = putFromLoadValidator.beginInvalidatingKey(session, KEY1);
 				assertTrue(success);
 				success = putFromLoadValidator.endInvalidatingKey(session, KEY1);
@@ -434,7 +435,7 @@ public class PutFromLoadValidatorUnitTest {
 		public Void call() throws Exception {
 			try {
 				long txTimestamp = TIME_SERVICE.wallClockTime(); // this should be acquired before UserTransaction.begin()
-				SessionImplementor session = mock (SessionImplementor.class);
+            Object session = TEST_SESSION_ACCESS.mockSessionImplementor();
 				putFromLoadValidator.registerPendingPut(session, KEY1, txTimestamp);
 
 				PutFromLoadValidator.Lock lock = putFromLoadValidator.acquirePutFromLoadLock(session, KEY1, txTimestamp);
@@ -465,7 +466,7 @@ public class PutFromLoadValidatorUnitTest {
 		public Void call() throws Exception {
 			try {
 				long txTimestamp = TIME_SERVICE.wallClockTime(); // this should be acquired before UserTransaction.begin()
-				SessionImplementor session = mock (SessionImplementor.class);
+            Object session = TEST_SESSION_ACCESS.mockSessionImplementor();
 				PutFromLoadValidator.Lock lock = testee.acquirePutFromLoadLock(session, KEY1, txTimestamp);
 				try {
 					if (expectSuccess) {
@@ -502,7 +503,7 @@ public class PutFromLoadValidatorUnitTest {
 		for (int i = 0; i < 100; ++i) {
 			try {
 				withTx(tm, () -> {
-					SessionImplementor session = mock (SessionImplementor.class);
+               Object session = TEST_SESSION_ACCESS.mockSessionImplementor();
 					testee.registerPendingPut(session, KEY1, 0);
 					return null;
 				});

@@ -51,6 +51,7 @@ public class QueryStalenessTest {
             .setProperty(Environment.USE_QUERY_CACHE, "true")
             .setProperty(Environment.CACHE_REGION_FACTORY, TestInfinispanRegionFactory.class.getName())
             .setProperty(Environment.DEFAULT_CACHE_CONCURRENCY_STRATEGY, "transactional")
+            .setProperty("hibernate.allow_update_outside_transaction", "true") // only applies in 5.2
             .setProperty(AvailableSettings.SHARED_CACHE_MODE, "ALL")
             .setProperty(Environment.HBM2DDL_AUTO, "create-drop");
       Properties testProperties = new Properties();

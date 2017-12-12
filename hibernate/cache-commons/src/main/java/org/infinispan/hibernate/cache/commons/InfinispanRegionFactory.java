@@ -364,18 +364,18 @@ public class InfinispanRegionFactory implements RegionFactory {
 			log.debug( "Building timestamps cache region [" + regionName + "]" );
 		}
 		final AdvancedCache cache = getCache( regionName, DataType.TIMESTAMPS, null);
-		final TimestampsRegionImpl region = createTimestampsRegion( cache, regionName );
-		startRegion( region );
+      final TimestampsRegion region = createTimestampsRegion( cache, regionName );
+      startRegion((BaseRegion) region);
 		return region;
 	}
 
-	protected TimestampsRegionImpl createTimestampsRegion(
+	protected TimestampsRegion createTimestampsRegion(
 			AdvancedCache cache, String regionName) {
 		if ( Caches.isClustered(cache) ) {
-			return new ClusteredTimestampsRegionImpl( cache, regionName, this );
+			return internalRegionFactory.createClusteredTimestampsRegion(cache, regionName, this);
 		}
 		else {
-			return new TimestampsRegionImpl( cache, regionName, this );
+			return internalRegionFactory.createTimestampsRegion(cache, regionName, this);
 		}
 	}
 

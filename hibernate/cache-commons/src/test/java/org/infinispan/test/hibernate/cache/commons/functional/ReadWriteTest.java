@@ -29,6 +29,7 @@ import org.infinispan.test.hibernate.cache.commons.functional.entities.NaturalId
 import org.infinispan.test.hibernate.cache.commons.functional.entities.OtherItem;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.State;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.VersionedItem;
+import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.junit.After;
 import org.junit.Test;
 
@@ -48,6 +49,9 @@ import static org.junit.Assert.fail;
  * @since 3.5
  */
 public class ReadWriteTest extends ReadOnlyTest {
+
+   protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
+
 	@Override
 	public List<Object[]> getParameters() {
 		return getParameters(true, true, false, true);
@@ -65,9 +69,9 @@ public class ReadWriteTest extends ReadOnlyTest {
 	public void cleanupData() throws Exception {
 		super.cleanupCache();
 		withTxSession(s -> {
-			s.createQuery( "delete NaturalIdOnManyToOne" ).executeUpdate();
-			s.createQuery( "delete Citizen" ).executeUpdate();
-			s.createQuery( "delete State" ).executeUpdate();
+         TEST_SESSION_ACCESS.execQueryUpdate(s, "delete NaturalIdOnManyToOne");
+         TEST_SESSION_ACCESS.execQueryUpdate(s, "delete Citizen");
+         TEST_SESSION_ACCESS.execQueryUpdate(s, "delete State" );
 		});
 	}
 
@@ -441,12 +445,12 @@ public class ReadWriteTest extends ReadOnlyTest {
 		// query happening simultaneously.
 		TIME_SERVICE.advance(60001);
 
-		withTxSession(s -> s.createQuery( "from Item" ).setCacheable( true ).list());
+		withTxSession(s -> TEST_SESSION_ACCESS.execQueryListCacheable(s, "from Item"));
 
 		withTxSession(s -> {
-			s.createQuery( "from Item" ).setCacheable( true ).list();
+         TEST_SESSION_ACCESS.execQueryListCacheable(s, "from Item" );
 			assertEquals( 1, stats.getQueryCacheHitCount() );
-			s.createQuery( "delete from Item" ).executeUpdate();
+         TEST_SESSION_ACCESS.execQueryUpdate(s, "delete from Item");
 		});
 	}
 
@@ -465,12 +469,12 @@ public class ReadWriteTest extends ReadOnlyTest {
 		TIME_SERVICE.advance(60001);
 
 		withTxSession(s -> {
-			s.createQuery("from Item").setCacheable(true).list();
-			s.createQuery("from Item").setCacheable(true).list();
+         TEST_SESSION_ACCESS.execQueryListCacheable(s, "from Item" );
+         TEST_SESSION_ACCESS.execQueryListCacheable(s, "from Item" );
 			assertEquals(1, stats.getQueryCacheHitCount());
 		});
 
-		withTxSession(s -> s.createQuery( "delete from Item" ).executeUpdate());
+		withTxSession(s -> TEST_SESSION_ACCESS.execQueryUpdate(s, "delete from Item"));
 	}
 
 	@Test

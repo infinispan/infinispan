@@ -23,6 +23,7 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
+import org.infinispan.hibernate.cache.commons.access.SessionAccess;
 import org.infinispan.hibernate.cache.commons.impl.BaseGeneralDataRegion;
 import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
 import org.hibernate.cache.spi.GeneralDataRegion;
@@ -31,7 +32,6 @@ import org.hibernate.cache.spi.Region;
 import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cfg.AvailableSettings;
-import org.hibernate.engine.spi.SessionImplementor;
 
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
@@ -40,7 +40,8 @@ import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFact
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.configuration.cache.CacheMode;
-import org.junit.Ignore;
+import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
+import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess.TestGeneralDataRegion;
 import org.junit.Test;
 
 import org.infinispan.AdvancedCache;
@@ -62,7 +63,10 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
 	protected static final String VALUE2 = "value2";
 	protected static final String VALUE3 = "value3";
 
-	@Override
+   protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
+   protected static final SessionAccess SESSION_ACCESS = SessionAccess.findSessionAccess();
+
+   @Override
 	public List<Object[]> getCacheModeParameters() {
 		// the actual cache mode and access type is irrelevant for the general data regions
 		return Arrays.<Object[]>asList(new Object[]{ CacheMode.INVALIDATION_SYNC, AccessType.TRANSACTIONAL });
@@ -131,14 +135,16 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
 	public void testEvict() throws Exception {
 		withSessionFactoriesAndRegions(2, ((sessionFactories, regions) -> {
 			GeneralDataRegion localRegion = regions.get(0);
-			GeneralDataRegion remoteRegion = regions.get(1);
-			SessionImplementor localSession = (SessionImplementor) sessionFactories.get(0).openSession();
-			SessionImplementor remoteSession = (SessionImplementor) sessionFactories.get(1).openSession();
+         TestGeneralDataRegion testLocalRegion = TEST_SESSION_ACCESS.fromGeneralDataRegion(localRegion);
+         GeneralDataRegion remoteRegion = regions.get(1);
+         TestGeneralDataRegion testRemoteRegion = TEST_SESSION_ACCESS.fromGeneralDataRegion(remoteRegion);
+         Object localSession = sessionFactories.get(0).openSession();
+         Object remoteSession = sessionFactories.get(1).openSession();
 			AdvancedCache localCache = ((BaseRegion) localRegion).getCache();
 			AdvancedCache remoteCache = ((BaseRegion) remoteRegion).getCache();
 			try {
-				assertNull("local is clean", localRegion.get(localSession, KEY));
-				assertNull("remote is clean", remoteRegion.get(remoteSession, KEY));
+				assertNull("local is clean", testLocalRegion.get(localSession, KEY));
+				assertNull("remote is clean", testRemoteRegion.get(remoteSession, KEY));
 
 				// If this node is backup owner, it will see the update once as originator and then when getting the value from primary
 				boolean isLocalNodeBackupOwner = localCache.getDistributionManager().locate(KEY).indexOf(localCache.getCacheManager().getAddress()) > 0;
@@ -149,7 +155,7 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
 				Transaction tx = ( (SharedSessionContract) localSession ).getTransaction();
 				tx.begin();
 				try {
-					localRegion.put(localSession, KEY, VALUE1);
+               testLocalRegion.put(localSession, KEY, VALUE1);
 					tx.commit();
 				} catch (Exception e) {
 					tx.rollback();
@@ -157,8 +163,8 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
 				}
 
 				assertTrue(insertLatch.await(2, TimeUnit.SECONDS));
-				assertEquals(VALUE1, localRegion.get(localSession, KEY));
-				assertEquals(VALUE1, remoteRegion.get(remoteSession, KEY));
+				assertEquals(VALUE1, testLocalRegion.get(localSession, KEY));
+				assertEquals(VALUE1, testRemoteRegion.get(remoteSession, KEY));
 
 				CountDownLatch removeLatch = new CountDownLatch(isLocalNodeBackupOwner ? 3 : 2);
 				ExpectingInterceptor.get(localCache).when((ctx, cmd) -> cmd instanceof RemoveCommand).countDown(removeLatch);
@@ -167,8 +173,8 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
 				regionEvict(localRegion);
 
 				assertTrue(removeLatch.await(2, TimeUnit.SECONDS));
-				assertEquals(null, localRegion.get(localSession, KEY));
-				assertEquals(null, remoteRegion.get(remoteSession, KEY));
+				assertEquals(null, testLocalRegion.get(localSession, KEY));
+				assertEquals(null, testRemoteRegion.get(remoteSession, KEY));
 			} finally {
 				( (Session) localSession ).close();
 				( (Session) remoteSession ).close();
@@ -193,11 +199,13 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
 	public void testEvictAll() throws Exception {
 		withSessionFactoriesAndRegions(2, (sessionFactories, regions) -> {
 			GeneralDataRegion localRegion = regions.get(0);
+         TestGeneralDataRegion testLocalRegion = TEST_SESSION_ACCESS.fromGeneralDataRegion(localRegion);
 			GeneralDataRegion remoteRegion = regions.get(1);
+         TestGeneralDataRegion testRemoteRegion = TEST_SESSION_ACCESS.fromGeneralDataRegion(remoteRegion);
 			AdvancedCache localCache = ((BaseGeneralDataRegion) localRegion).getCache();
 			AdvancedCache remoteCache = ((BaseGeneralDataRegion) remoteRegion).getCache();
-			SessionImplementor localSession = (SessionImplementor) sessionFactories.get(0).openSession();
-			SessionImplementor remoteSession = (SessionImplementor) sessionFactories.get(1).openSession();
+			Object localSession = sessionFactories.get(0).openSession();
+         Object remoteSession = sessionFactories.get(1).openSession();
 
 			try {
 				Set localKeys = localCache.keySet();
@@ -209,10 +217,10 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
 				assertNull( "local is clean", localRegion.get(null, KEY ) );
 				assertNull( "remote is clean", remoteRegion.get(null, KEY ) );
 
-				localRegion.put(localSession, KEY, VALUE1);
+				testLocalRegion.put(localSession, KEY, VALUE1);
 				assertEquals( VALUE1, localRegion.get(null, KEY ) );
 
-				remoteRegion.put(remoteSession, KEY, VALUE1);
+				testRemoteRegion.put(remoteSession, KEY, VALUE1);
 				assertEquals( VALUE1, remoteRegion.get(null, KEY ) );
 
 				localRegion.evictAll();

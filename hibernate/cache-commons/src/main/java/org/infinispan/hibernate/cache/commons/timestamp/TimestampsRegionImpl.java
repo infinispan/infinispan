@@ -12,8 +12,6 @@ import org.hibernate.cache.CacheException;
 import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
 import org.infinispan.hibernate.cache.commons.impl.BaseGeneralDataRegion;
 import org.infinispan.hibernate.cache.commons.util.Caches;
-import org.hibernate.cache.spi.TimestampsRegion;
-import org.hibernate.engine.spi.SessionImplementor;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
@@ -25,7 +23,7 @@ import org.infinispan.context.Flag;
  * @author Galder Zamarreño
  * @since 3.5
  */
-public class TimestampsRegionImpl extends BaseGeneralDataRegion implements TimestampsRegion {
+public abstract class TimestampsRegionImpl extends BaseGeneralDataRegion {
 
 	private final AdvancedCache removeCache;
 	private final AdvancedCache timestampsPutCache;
@@ -80,8 +78,7 @@ public class TimestampsRegionImpl extends BaseGeneralDataRegion implements Times
 	}
 
 
-	@Override
-	public Object get(SessionImplementor session, Object key) throws CacheException {
+	public Object getItem(Object session, Object key) throws CacheException {
 		if ( checkValid() ) {
 			return cache.get( key );
 		}
@@ -89,9 +86,8 @@ public class TimestampsRegionImpl extends BaseGeneralDataRegion implements Times
 		return null;
 	}
 
-	@Override
 	@SuppressWarnings("unchecked")
-	public void put(SessionImplementor session, final Object key, final Object value) throws CacheException {
+	public void putItem(Object session, final Object key, final Object value) throws CacheException {
 		try {
 			// We ensure ASYNC semantics (JBCACHE-1175) and make sure previous
 			// value is not loaded from cache store cos it's not needed.

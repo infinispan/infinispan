@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.hibernate.FlushMode;
 import org.hibernate.stat.SecondLevelCacheStatistics;
 
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
@@ -19,6 +18,7 @@ import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Contact;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
 import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.infinispan.util.ControlledTimeService;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -39,6 +39,7 @@ public class BulkOperationsTest extends SingleNodeTest {
 
    private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(BulkOperationsTest.class);
    private static final ControlledTimeService TIME_SERVICE = new AlwaysMoveForwardTimeService();
+   protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
 
    @Rule
    public TestName name = new TestName();
@@ -160,8 +161,7 @@ public class BulkOperationsTest extends SingleNodeTest {
 			+ " (select customer FROM Customer as customer where customer.name = :cName)";
 
 		int rowsAffected = withTxSessionApply(s ->
-				s.createQuery( deleteHQL ).setFlushMode( FlushMode.AUTO )
-					.setParameter( "cName", "Red Hat" ).executeUpdate());
+				TEST_SESSION_ACCESS.execQueryUpdateAutoFlush(s, deleteHQL, new String[]{"cName", "Red Hat"}));
 		return rowsAffected;
 	}
 
@@ -170,10 +170,8 @@ public class BulkOperationsTest extends SingleNodeTest {
 		String selectHQL = "select contact.id from Contact contact"
 			+ " where contact.customer.name = :cName";
 
-		return (List<Integer>) withTxSessionApply(s -> s.createQuery(selectHQL)
-				.setFlushMode(FlushMode.AUTO)
-				.setParameter("cName", customerName)
-				.list());
+		return (List<Integer>) withTxSessionApply(s ->
+         TEST_SESSION_ACCESS.execQueryListAutoFlush(s, selectHQL, new String[]{"cName", customerName}));
 	}
 
 	@SuppressWarnings( {"unchecked"})
@@ -181,32 +179,27 @@ public class BulkOperationsTest extends SingleNodeTest {
 		String selectHQL = "select contact.id from Contact contact"
 			+ " where contact.tlf = :cTLF";
 
-		return (List<Integer>) withTxSessionApply(s -> s.createQuery(selectHQL)
-				.setFlushMode(FlushMode.AUTO)
-				.setParameter("cTLF", tlf)
-				.list());
+		return (List<Integer>) withTxSessionApply(s ->
+         TEST_SESSION_ACCESS.execQueryListAutoFlush(s, selectHQL, new String[]{"cTLF", tlf}));
 	}
 
 	public int updateContacts(String name, String newTLF) throws Exception {
 		String updateHQL = "update Contact set tlf = :cNewTLF where name = :cName";
-		return withTxSessionApply(s -> s.createQuery( updateHQL )
-					.setFlushMode( FlushMode.AUTO )
-					.setParameter( "cNewTLF", newTLF )
-					.setParameter( "cName", name )
-					.executeUpdate());
+		return withTxSessionApply(s ->
+         TEST_SESSION_ACCESS.execQueryUpdateAutoFlush(s, updateHQL,
+            new String[]{"cNewTLF", newTLF},
+            new String[]{"cName", name}));
 	}
 
 	public int updateContactsWithOneManual(String name, String newTLF) throws Exception {
 		String queryHQL = "from Contact c where c.name = :cName";
 		String updateHQL = "update Contact set tlf = :cNewTLF where name = :cName";
 		return withTxSessionApply(s -> {
-			List<Contact> list = s.createQuery(queryHQL).setParameter("cName", name).list();
+			List<Contact> list = TEST_SESSION_ACCESS.execQueryList(s, queryHQL, new String[]{"cName", name});
 			list.get(0).setTlf(newTLF);
-			return s.createQuery(updateHQL)
-					.setFlushMode(FlushMode.AUTO)
-					.setParameter("cNewTLF", newTLF)
-					.setParameter("cName", name)
-					.executeUpdate();
+			return TEST_SESSION_ACCESS.execQueryUpdateAutoFlush(s, updateHQL,
+               new String[]{"cNewTLF", newTLF},
+               new String[]{"cName", name});
 		});
 	}
 
@@ -218,8 +211,8 @@ public class BulkOperationsTest extends SingleNodeTest {
 		String deleteContactHQL = "delete from Contact";
 		String deleteCustomerHQL = "delete from Customer";
 		withTxSession(s -> {
-			s.createQuery(deleteContactHQL).setFlushMode(FlushMode.AUTO).executeUpdate();
-			s.createQuery(deleteCustomerHQL).setFlushMode(FlushMode.AUTO).executeUpdate();
+         TEST_SESSION_ACCESS.execQueryUpdateAutoFlush(s, deleteContactHQL);
+         TEST_SESSION_ACCESS.execQueryUpdateAutoFlush(s, deleteCustomerHQL);
 		});
 	}
 

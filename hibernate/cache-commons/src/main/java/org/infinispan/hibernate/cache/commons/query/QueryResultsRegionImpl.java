@@ -33,7 +33,7 @@ import org.infinispan.transaction.TransactionMode;
  * @author Galder Zamarreño
  * @since 3.5
  */
-public class QueryResultsRegionImpl extends BaseTransactionalDataRegion {
+public abstract class QueryResultsRegionImpl extends BaseTransactionalDataRegion {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( QueryResultsRegionImpl.class );
 
 	private final AdvancedCache evictCache;

@@ -21,7 +21,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.hibernate.FlushMode;
 import org.hibernate.LockMode;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.hibernate.stat.SecondLevelCacheStatistics;
@@ -29,6 +28,7 @@ import org.hibernate.stat.SecondLevelCacheStatistics;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Contact;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
 import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.infinispan.util.ControlledTimeService;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -58,6 +58,8 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 	 * kill switch used to stop all users when one fails
 	 */
 	private static volatile boolean TERMINATE_ALL_USERS = false;
+
+   protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
 
 	/**
 	 * collection of IDs of all customers participating in this test
@@ -93,7 +95,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 
 	@Test
 	public void testPingDb() throws Exception {
-		withTxSession(s -> s.createQuery( "from " + Customer.class.getName() ).list());
+		withTxSession(s -> TEST_SESSION_ACCESS.execQueryList(s, "from " + Customer.class.getName()));
 	}
 
 	@Test
@@ -185,8 +187,8 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 		String deleteContactHQL = "delete from Contact";
 		String deleteCustomerHQL = "delete from Customer";
 		withTxSession(s -> {
-			s.createQuery(deleteContactHQL).setFlushMode(FlushMode.AUTO).executeUpdate();
-			s.createQuery(deleteCustomerHQL).setFlushMode(FlushMode.AUTO).executeUpdate();
+         TEST_SESSION_ACCESS.execQueryUpdateAutoFlush(s, deleteContactHQL);
+         TEST_SESSION_ACCESS.execQueryUpdateAutoFlush(s, deleteCustomerHQL);
 		});
 	}
 
