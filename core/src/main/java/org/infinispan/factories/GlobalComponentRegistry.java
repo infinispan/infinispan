@@ -252,8 +252,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
             log.version(Version.printVersion());
          }
 
-         super.postStart();
-
          if (needToNotify && state == ComponentStatus.RUNNING) {
             for (ModuleLifecycle l : moduleLifecycles) {
                if (log.isTraceEnabled()) {
@@ -262,6 +260,10 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
                l.cacheManagerStarted(this);
             }
          }
+
+         // Now invoke all post start events
+         super.postStart();
+
          warnAboutUberJarDuplicates();
       } catch (RuntimeException rte) {
          EmbeddedCacheManagerStartupException exception = new EmbeddedCacheManagerStartupException(rte);
