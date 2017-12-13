@@ -4,6 +4,7 @@ import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -107,5 +108,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot find resource '%s'", id = 918)
    IOException cannotFindResource(String fileName);
+
+   @Message(value = "Class '%s' blocked by deserialization white list. Adjust the client configuration serialization white list regular expression to include this class.", id = 28023)
+   CacheException classNotInWhitelist(String className);
+
 }
 
