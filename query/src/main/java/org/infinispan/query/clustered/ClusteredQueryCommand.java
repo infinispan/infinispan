@@ -91,21 +91,13 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
       return clQuery;
    }
 
-   public void initialize(Cache<?, ?> localInstance) {
-      setCache(localInstance);
-   }
-
-   public void setCache(Cache<?, ?> cache) {
-      this.cache = cache;
-   }
-
    /**
     * Invokes a query on a (remote) cache and returns results (list of keys).
     *
     * @return returns a <code>CompletableFuture</code> with a <code>List<Object></code>.
     */
    @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
+   public CompletableFuture<Object> invokeAsync() {
       return CompletableFuture.completedFuture(perform(cache));
    }
 

@@ -42,9 +42,7 @@ public class InfinispanSearchRequest extends InfinispanRequest {
          throw new NoCacheFoundException("Cache name must be provided");
       }
       try {
-         QueryRequest queryRequest;
-         queryRequest = getQueryRequest();
-
+         QueryRequest queryRequest = getQueryRequest();
          String queryString = queryRequest.getQuery();
          if (queryString == null || queryString.isEmpty()) {
             return InfinispanSearchResponse.badRequest(this, "Invalid search request, missing 'query' parameter", null);
@@ -66,16 +64,14 @@ public class InfinispanSearchRequest extends InfinispanRequest {
    }
 
    private QueryRequest getQueryFromString() {
-      QueryRequest queryRequest;
       String queryString = getParameterValue(QUERY_STRING);
       String strOffset = getParameterValue(OFFSET);
       String queryMode = getParameterValue(QUERY_MODE);
-      Integer offset = strOffset != null ? Integer.valueOf(strOffset) : null;
       String strMaxResults = getParameterValue(MAX_RESULTS);
+      Integer offset = strOffset != null ? Integer.valueOf(strOffset) : null;
       Integer maxResults = strMaxResults != null ? Integer.valueOf(strMaxResults) : null;
       IndexedQueryMode qm = queryMode == null ? IndexedQueryMode.FETCH : IndexedQueryMode.valueOf(queryMode);
-      queryRequest = new QueryRequest(queryString, offset, maxResults, qm);
-      return queryRequest;
+      return new QueryRequest(queryString, offset, maxResults, qm);
    }
 
    private QueryRequest getQueryFromJSON() throws IOException {

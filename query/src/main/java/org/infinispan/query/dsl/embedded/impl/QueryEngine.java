@@ -150,7 +150,6 @@ public class QueryEngine<TypeMetadata> {
       return buildQuery(queryFactory, parsingResult, namedParameters, startOffset, maxResults, IndexedQueryMode.FETCH);
    }
 
-
    protected BaseQuery buildQuery(QueryFactory queryFactory, IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults, IndexedQueryMode queryMode) {
       if (log.isDebugEnabled()) {
          log.debugf("Building query '%s' with parameters %s", parsingResult.getQueryString(), namedParameters);
@@ -742,7 +741,6 @@ public class QueryEngine<TypeMetadata> {
       return new HsQueryRequest(hsQuery, sort, projections);
    }
 
-
    public <E> CacheQuery<E> buildCacheQuery(QueryDefinition queryDefinition, IndexedQueryMode indexedQueryMode, KeyTransformationHandler keyTransformationHandler, TimeoutExceptionFactory timeoutExceptionFactory, ExecutorService asyncExecutor, IndexedTypeMap<CustomTypeMetadata> indexedTypeMap) {
       if (!isIndexed) {
          throw log.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
@@ -755,7 +753,6 @@ public class QueryEngine<TypeMetadata> {
          return new CacheQueryImpl<>(hsQuery, cache, keyTransformationHandler);
       }
    }
-
 
    public <E> CacheQuery<E> buildCacheQuery(String queryString, IndexedQueryMode indexedQueryMode,
                                             KeyTransformationHandler keyTransformationHandler,

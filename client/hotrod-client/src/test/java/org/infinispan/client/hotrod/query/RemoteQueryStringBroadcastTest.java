@@ -5,7 +5,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -32,7 +31,6 @@ public class RemoteQueryStringBroadcastTest extends RemoteQueryStringTest {
 
    @Override
    protected Query createQueryFromString(String q) {
-      QueryFactory queryFactory = getQueryFactory();
-      return queryFactory.create(q, IndexedQueryMode.BROADCAST);
+      return getQueryFactory().create(q, IndexedQueryMode.BROADCAST);
    }
 }
