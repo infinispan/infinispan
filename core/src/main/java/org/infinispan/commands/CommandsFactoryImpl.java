@@ -91,6 +91,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
@@ -193,6 +194,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Inject private RpcManager rpcManager;
    @Inject @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS)
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
+   @Inject private VersionGenerator versionGenerator;
 
    private ByteString cacheName;
    private boolean transactional;
@@ -241,8 +243,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, Long lifespan) {
-      return new RemoveExpiredCommand(key, value, lifespan, notifier,
-                                      generateUUID(transactional));
+      return new RemoveExpiredCommand(key, value, lifespan, notifier, generateUUID(transactional),
+            versionGenerator.nonExistingVersion());
    }
 
    @Override
@@ -501,7 +503,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case RemoveExpiredCommand.COMMAND_ID:
             RemoveExpiredCommand removeExpiredCommand = (RemoveExpiredCommand) c;
-            removeExpiredCommand.init(notifier);
+            removeExpiredCommand.init(notifier, versionGenerator.nonExistingVersion());
             break;
          case BackupAckCommand.COMMAND_ID:
             BackupAckCommand command = (BackupAckCommand) c;
@@ -509,7 +511,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case BackupWriteRpcCommand.COMMAND_ID:
             BackupWriteRpcCommand bwc = (BackupWriteRpcCommand) c;
-            bwc.init(icf, interceptorChain, notifier, componentRegistry);
+            bwc.init(icf, interceptorChain, notifier, componentRegistry, versionGenerator);
             break;
          case BackupMultiKeyAckCommand.COMMAND_ID:
             ((BackupMultiKeyAckCommand) c).setCommandAckCollector(commandAckCollector);

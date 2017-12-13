@@ -227,6 +227,10 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       return this;
    }
 
+   public boolean use1PcForAutoCommitTransactions() {
+      return attributes.attribute(USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS).get();
+   }
+
    /**
     *The time interval (millis) at which the thread that cleans up transaction completion information kicks in. Defaults to 30000.
     */

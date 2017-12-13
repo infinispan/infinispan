@@ -140,19 +140,27 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    }
 
    /**
-    * Method invoked when memory policy is used
+    * Method invoked when memory policy is used. This calculator only calculates the given key and value.
     * @param concurrencyLevel
     * @param thresholdSize
     * @param sizeCalculator
     */
    protected DefaultDataContainer(int concurrencyLevel, long thresholdSize,
                                   EntrySizeCalculator<? super K, ? super V> sizeCalculator) {
+      this(thresholdSize, new CacheEntrySizeCalculator<>(sizeCalculator));
+   }
+
+   /**
+    * Constructor that allows user to provide a size calculator that also handles the cache entry and metadata.
+    * @param thresholdSize
+    * @param sizeCalculator
+    */
+   protected DefaultDataContainer(long thresholdSize,
+         EntrySizeCalculator<? super K, ? super InternalCacheEntry<K, V>> sizeCalculator) {
       DefaultEvictionListener evictionListener = new DefaultEvictionListener();
 
-      EntrySizeCalculator<K, InternalCacheEntry<K, V>> calc = new CacheEntrySizeCalculator<>(sizeCalculator);
-
       evictionCache = applyListener(Caffeine.newBuilder()
-            .weigher((K k, InternalCacheEntry<K, V> v) -> (int) calc.calculateSize(k, v))
+            .weigher((K k, InternalCacheEntry<K, V> v) -> (int) sizeCalculator.calculateSize(k, v))
             .maximumWeight(thresholdSize), evictionListener)
             .build();
 

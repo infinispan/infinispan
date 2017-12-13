@@ -1,6 +1,7 @@
 package org.infinispan.container.offheap;
 
 import org.infinispan.commons.marshall.WrappedBytes;
+import org.infinispan.container.KeyValueMetadataSizeCalculator;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.metadata.Metadata;
 
@@ -10,7 +11,7 @@ import org.infinispan.metadata.Metadata;
  * @author wburns
  * @since 9.0
  */
-public interface OffHeapEntryFactory {
+public interface OffHeapEntryFactory extends KeyValueMetadataSizeCalculator<WrappedBytes, WrappedBytes> {
    /**
     * Creates an off heap entry using the provided key value and metadata
     * @param key the key to use

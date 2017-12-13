@@ -9,6 +9,7 @@ import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.util.MemoryUnit;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.container.KeyValueMetadataSizeCalculator;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.eviction.EvictionType;
@@ -35,7 +36,7 @@ public class OffHeapSizeTest extends SingleCacheManagerTest {
             .memory()
                .storageType(StorageType.OFF_HEAP)
                .size(MemoryUnit.MEGABYTES.toBytes(10))
-               .evictionType(EvictionType.MEMORY)
+               .evictionType(EvictionType.MEMORY_EXCEPTION)
             .transaction()
                .transactionMode(TransactionMode.TRANSACTIONAL);
       return TestCacheManagerFactory.createCacheManager(builder);
@@ -84,7 +85,8 @@ public class OffHeapSizeTest extends SingleCacheManagerTest {
 
       Metadata metadata = metadataBuilder.build();
 
-      OffHeapEntryFactory calculator = TestingUtil.extractComponent(cache, OffHeapEntryFactory.class);
+      KeyValueMetadataSizeCalculator<WrappedBytes, WrappedBytes> calculator =
+            TestingUtil.extractComponent(cache, KeyValueMetadataSizeCalculator.class);
 
       long estimateSize = calculator.calculateSize(key, value, metadata);
 
