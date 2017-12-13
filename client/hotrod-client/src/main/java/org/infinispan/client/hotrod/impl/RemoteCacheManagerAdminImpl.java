@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteCacheManagerAdmin;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
@@ -16,35 +18,47 @@ import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
  * @author Tristan Tarrant
  * @since 9.1
  */
-
 public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    public static final String CACHE_NAME = "name";
    public static final String CACHE_TEMPLATE = "template";
    public static final String FLAGS = "flags";
+   private final RemoteCacheManager cacheManager;
    private final OperationsFactory operationsFactory;
    private final EnumSet<AdminFlag> flags;
    private final Consumer<String> remover;
 
-   public RemoteCacheManagerAdminImpl(OperationsFactory operationsFactory, EnumSet<AdminFlag> flags, Consumer<String> remover) {
+   public RemoteCacheManagerAdminImpl(RemoteCacheManager cacheManager, OperationsFactory operationsFactory, EnumSet<AdminFlag> flags, Consumer<String> remover) {
+      this.cacheManager = cacheManager;
       this.operationsFactory = operationsFactory;
       this.flags = flags;
       this.remover = remover;
    }
 
    @Override
-   public void createCache(String name, String template) {
+   public <K, V> RemoteCache<K, V> createCache(String name, String template) throws HotRodClientException {
       Map<String, byte[]> params = new HashMap<>(2);
       params.put(CACHE_NAME, string(name));
       if (template != null) params.put(CACHE_TEMPLATE, string(template));
       if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
       operationsFactory.newExecuteOperation("@@cache@create", params).execute();
+      return cacheManager.getCache(name);
+   }
+
+   @Override
+   public <K, V> RemoteCache<K, V> getOrCreateCache(String name, String template) throws HotRodClientException {
+      Map<String, byte[]> params = new HashMap<>(2);
+      params.put(CACHE_NAME, string(name));
+      if (template != null) params.put(CACHE_TEMPLATE, string(template));
+      if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
+      operationsFactory.newExecuteOperation("@@cache@getorcreate", params).execute();
+      return cacheManager.getCache(name);
    }
 
    @Override
    public void createCache(String name, String template, EnumSet<org.infinispan.client.hotrod.AdminFlag> flags) {
       EnumSet<AdminFlag> newFlags = EnumSet.noneOf(AdminFlag.class);
       for(org.infinispan.client.hotrod.AdminFlag flag : flags) newFlags.add(flag.upgrade());
-      new RemoteCacheManagerAdminImpl(operationsFactory, newFlags, remover).createCache(name, template);
+      new RemoteCacheManagerAdminImpl(cacheManager, operationsFactory, newFlags, remover).createCache(name, template);
    }
 
    @Override
@@ -58,14 +72,14 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       EnumSet<AdminFlag> newFlags = EnumSet.copyOf(this.flags);
       for(AdminFlag flag : flags)
          newFlags.add(flag);
-      return new RemoteCacheManagerAdminImpl(operationsFactory, newFlags, remover);
+      return new RemoteCacheManagerAdminImpl(cacheManager, operationsFactory, newFlags, remover);
    }
 
    @Override
    public RemoteCacheManagerAdmin withFlags(EnumSet<AdminFlag> flags) {
       EnumSet<AdminFlag> newFlags = EnumSet.copyOf(this.flags);
       newFlags.addAll(flags);
-      return new RemoteCacheManagerAdminImpl(operationsFactory, newFlags, remover);
+      return new RemoteCacheManagerAdminImpl(cacheManager, operationsFactory, newFlags, remover);
    }
 
    @Override

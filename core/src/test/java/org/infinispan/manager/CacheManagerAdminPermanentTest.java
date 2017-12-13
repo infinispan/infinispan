@@ -12,9 +12,9 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
-@Test(testName = "manager.CacheManagerAdminPersistentTest", groups = "functional")
+@Test(testName = "manager.CacheManagerAdminPermanentTest", groups = "functional")
 @CleanupAfterMethod
-public class CacheManagerAdminPersistentTest extends CacheManagerAdminTest {
+public class CacheManagerAdminPermanentTest extends CacheManagerAdminTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       Util.recursiveFileRemove(TestingUtil.tmpDirectory(this.getClass().getSimpleName()));
@@ -41,7 +41,7 @@ public class CacheManagerAdminPersistentTest extends CacheManagerAdminTest {
       Configuration configuration = builder.build();
 
       // Create a persistent cache
-      manager(0).administration().withFlags(CacheContainerAdmin.AdminFlag.PERSISTENT).createCache("a", configuration);
+      manager(0).administration().withFlags(CacheContainerAdmin.AdminFlag.PERMANENT).createCache("a", configuration);
 
       waitForClusterToForm("a");
 
@@ -62,7 +62,7 @@ public class CacheManagerAdminPersistentTest extends CacheManagerAdminTest {
 
       checkCacheExistenceAcrossCluster("b", false);
 
-      manager(0).administration().withFlags(CacheContainerAdmin.AdminFlag.PERSISTENT).createCache("c", configuration);
+      manager(0).administration().withFlags(CacheContainerAdmin.AdminFlag.PERMANENT).createCache("c", configuration);
 
       checkConsistencyAcrossCluster("c", configuration);
 

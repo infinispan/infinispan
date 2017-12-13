@@ -19,10 +19,10 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin> {
     */
    enum AdminFlag {
       /**
-       * If the operation affects configuration, make it persistent. If the server cannot honor this flag an error will
-       * be returned
+       * If the operation affects configuration, make it permanent, which means it will survive restarts.
+       * If the server cannot honor this flag an error will be returned
        */
-      PERSISTENT;
+      PERMANENT;
 
       private static final AdminFlag[] CACHED_VALUES = AdminFlag.values();
 
@@ -50,8 +50,21 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin> {
     * @param name     the name of the cache to create
     * @param template the template to use for the cache. If null, the configuration marked as default on the container
     *                 will be used
+    * @return the cache
+    *
+    * @throws org.infinispan.commons.CacheException if a cache with the same name already exists
     */
-   void createCache(String name, String template);
+   <K, V> BasicCache<K, V> createCache(String name, String template);
+
+   /**
+    * Retrieves an existing cache or creates one using the specified template if it doesn't exist
+    *
+    * @param name     the name of the cache to create
+    * @param template the template to use for the cache. If null, the configuration marked as default on the container
+    *                 will be used
+    * @return the cache
+    */
+   <K, V> BasicCache<K, V> getOrCreateCache(String name, String template);
 
    /**
     * Removes a cache from the cache container. Any persisted data will be cleared.

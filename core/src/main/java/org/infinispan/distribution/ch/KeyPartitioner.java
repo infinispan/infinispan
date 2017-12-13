@@ -1,5 +1,6 @@
 package org.infinispan.distribution.ch;
 
+import org.infinispan.commons.configuration.attributes.Matchable;
 import org.infinispan.configuration.cache.HashConfiguration;
 
 /**
@@ -8,7 +9,7 @@ import org.infinispan.configuration.cache.HashConfiguration;
  * @author Dan Berindei
  * @since 8.2
  */
-public interface KeyPartitioner {
+public interface KeyPartitioner extends Matchable<KeyPartitioner> {
    /**
     * Initialization.
     *
@@ -28,4 +29,13 @@ public interface KeyPartitioner {
     * Must be thread-safe.
     */
    int getSegment(Object key);
+
+   @Override
+   default boolean matches(KeyPartitioner other) {
+      if (this == other)
+         return true;
+      if (other == null || getClass() != other.getClass())
+         return false;
+      return true;
+   }
 }

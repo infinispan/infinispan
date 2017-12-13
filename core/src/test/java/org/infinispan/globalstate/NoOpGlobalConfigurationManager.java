@@ -17,7 +17,17 @@ public class NoOpGlobalConfigurationManager implements GlobalConfigurationManage
    }
 
    @Override
+   public Configuration getOrCreateCache(String cacheName, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      return null;
+   }
+
+   @Override
    public Configuration createCache(String cacheName, String template, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      return null;
+   }
+
+   @Override
+   public Configuration getOrCreateCache(String cacheName, String template, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       return null;
    }
 

@@ -2704,7 +2704,7 @@ The following table lists all currently available flags
 [cols="3,10",options="header"]
 |==============================================================================
 | Flag | Description
-| persistent | Requests that the command's effect be made persistent into the server's configuration. If the server cannot comply with the request, the entire operation will fail with an error
+| permanent | Requests that the command's effect be made permanent into the server's configuration. If the server cannot comply with the request, the entire operation will fail with an error
 |==============================================================================
 
 ===== Admin tasks

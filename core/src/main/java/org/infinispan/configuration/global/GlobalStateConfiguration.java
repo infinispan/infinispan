@@ -3,6 +3,8 @@ package org.infinispan.configuration.global;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.globalstate.LocalConfigurationManager;
+import org.infinispan.globalstate.impl.EmbeddedLocalConfigurationManager;
 
 /**
  *
@@ -20,21 +22,26 @@ public class GlobalStateConfiguration {
    public static final AttributeDefinition<String> TEMPORARY_LOCATION = AttributeDefinition
          .builder("temporaryLocation", null, String.class)
             .initializer(() -> SecurityActions.getSystemProperty("java.io.tmpdir")).immutable().build();
+   public static final AttributeDefinition<LocalConfigurationManager> LOCAL_CONFIGURATION_MANAGER = AttributeDefinition
+         .builder("localConfigurationManager", null, LocalConfigurationManager.class)
+         .initializer(EmbeddedLocalConfigurationManager::new).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(GlobalStateConfiguration.class, ENABLED, PERSISTENT_LOCATION, TEMPORARY_LOCATION);
+      return new AttributeSet(GlobalStateConfiguration.class, ENABLED, PERSISTENT_LOCATION, TEMPORARY_LOCATION, LOCAL_CONFIGURATION_MANAGER);
    }
 
    private final AttributeSet attributes;
    private final Attribute<Boolean> enabled;
    private Attribute<String> persistentLocation;
    private Attribute<String> temporaryLocation;
+   private Attribute<LocalConfigurationManager> localConfigurationManager;
 
    public GlobalStateConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
       this.enabled = attributes.attribute(ENABLED);
       this.persistentLocation = attributes.attribute(PERSISTENT_LOCATION);
       this.temporaryLocation = attributes.attribute(TEMPORARY_LOCATION);
+      this.localConfigurationManager = attributes.attribute(LOCAL_CONFIGURATION_MANAGER);
    }
 
    public boolean enabled() {
@@ -58,6 +65,13 @@ public class GlobalStateConfiguration {
       return temporaryLocation.get();
    }
 
+   /**
+    * Returns the @{@link LocalConfigurationManager}
+    */
+   public LocalConfigurationManager localConfigurationManager() {
+      return localConfigurationManager.get();
+   }
+
    public AttributeSet attributes() {
       return attributes;
    }
@@ -66,4 +80,6 @@ public class GlobalStateConfiguration {
    public String toString() {
       return "GlobalStateConfiguration [attributes=" + attributes + "]";
    }
+
+
 }

@@ -19,9 +19,9 @@ import org.infinispan.server.core.admin.AdminServerTask;
  * </ul>
  *
  * @author Tristan Tarrant
- * @since 9.1
+ * @since 9.2
  */
-public class CacheCreateTask extends AdminServerTask<Void> {
+public class CacheGetOrCreateTask extends AdminServerTask<Void> {
    private static final Set<String> PARAMETERS;
 
    static {
@@ -38,7 +38,7 @@ public class CacheCreateTask extends AdminServerTask<Void> {
 
    @Override
    public String getTaskOperationName() {
-      return "create";
+      return "getorcreate";
    }
 
    @Override
@@ -50,7 +50,7 @@ public class CacheCreateTask extends AdminServerTask<Void> {
    protected Void execute(EmbeddedCacheManager cacheManager, Map<String, String> parameters, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       String name = requireParameter(parameters, "name");
       String template = getParameter(parameters, "template");
-      cacheManager.administration().withFlags(flags).createCache(name, template);
+      cacheManager.administration().withFlags(flags).getOrCreateCache(name, template);
       return null;
    }
 }

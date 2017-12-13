@@ -46,6 +46,8 @@ public abstract class AdminOperationsHandler implements TaskEngine {
       return CompletableFuture.supplyAsync(() -> {
          try {
             return task.execute(context);
+         } catch (CacheException e) {
+            throw e;
          } catch (Exception e) {
             throw new CacheException(e);
          }

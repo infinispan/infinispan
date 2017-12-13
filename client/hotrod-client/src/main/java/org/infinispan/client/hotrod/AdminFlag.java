@@ -11,17 +11,17 @@ import org.infinispan.commons.api.CacheContainerAdmin;
 @Deprecated
 public enum AdminFlag {
    /**
-    * If the operation affects configuration, make it persistent. If the server cannot honor this flag an error will
+    * If the operation affects configuration, make it permanent. If the server cannot honor this flag an error will
     * be returned
     */
-   PERSISTENT("persistent", CacheContainerAdmin.AdminFlag.PERSISTENT);
+   PERSISTENT(CacheContainerAdmin.AdminFlag.PERMANENT);
 
 
    private final String value;
    private final CacheContainerAdmin.AdminFlag newFlag;
 
-   AdminFlag(String value, CacheContainerAdmin.AdminFlag newFlag) {
-      this.value = value;
+   AdminFlag(CacheContainerAdmin.AdminFlag newFlag) {
+      this.value = newFlag.name().toLowerCase();
       this.newFlag = newFlag;
    }
 

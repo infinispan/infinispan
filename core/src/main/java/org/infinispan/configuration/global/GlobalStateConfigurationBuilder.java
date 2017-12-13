@@ -1,6 +1,7 @@
 package org.infinispan.configuration.global;
 
 import static org.infinispan.configuration.global.GlobalStateConfiguration.ENABLED;
+import static org.infinispan.configuration.global.GlobalStateConfiguration.LOCAL_CONFIGURATION_MANAGER;
 import static org.infinispan.configuration.global.GlobalStateConfiguration.PERSISTENT_LOCATION;
 import static org.infinispan.configuration.global.GlobalStateConfiguration.TEMPORARY_LOCATION;
 
@@ -8,6 +9,7 @@ import java.lang.invoke.MethodHandles;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.globalstate.LocalConfigurationManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -64,6 +66,14 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
     */
    public GlobalStateConfigurationBuilder temporaryLocation(String location) {
       attributes.attribute(TEMPORARY_LOCATION).set(location);
+      return this;
+   }
+
+   /**
+    * Defines the @{@link LocalConfigurationManager}. Defaults to @{@link org.infinispan.globalstate.impl.EmbeddedLocalConfigurationManager}
+    */
+   public GlobalStateConfigurationBuilder localConfigurationManager(LocalConfigurationManager localConfigurationManager) {
+      attributes.attribute(LOCAL_CONFIGURATION_MANAGER).set(localConfigurationManager);
       return this;
    }
 

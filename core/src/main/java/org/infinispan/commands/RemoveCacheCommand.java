@@ -26,6 +26,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
  *
  * @author Galder Zamarreño
  * @since 5.0
+ * @deprecated Use {@link org.infinispan.commons.api.CacheContainerAdmin#removeCache(String)} instead
  */
 @Deprecated // TODO remove in 10.0
 public class RemoveCacheCommand extends BaseRpcCommand {

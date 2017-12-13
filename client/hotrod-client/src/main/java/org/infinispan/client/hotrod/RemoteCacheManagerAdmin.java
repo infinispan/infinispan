@@ -19,10 +19,24 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     * @param name the name of the cache to create
     * @param template the template to use for the cache. If null, the configuration marked as default on the server
     *                 will be used
+    * @return the cache
     * @throws HotRodClientException
     */
    @Override
-   void createCache(String name, String template) throws HotRodClientException;
+   <K, V> RemoteCache<K, V> createCache(String name, String template) throws HotRodClientException;
+
+   /**
+    * Retrieves a an existing cache on the remote server cluster. If it doesn't exist, it will be created using the
+    * specified template.
+    *
+    * @param name the name of the cache to create
+    * @param template the template to use for the cache. If null, the configuration marked as default on the server
+    *                 will be used
+    * @return the cache
+    * @throws HotRodClientException
+    */
+   @Override
+   <K, V> RemoteCache<K, V> getOrCreateCache(String name, String template) throws HotRodClientException;
 
    /**
     * Creates a cache on the remote server cluster using the specified template and flags.

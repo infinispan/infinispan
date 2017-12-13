@@ -75,10 +75,7 @@ public class JCacheManager extends AbstractJCacheManager {
    @Override
    protected <K, V, C extends Configuration<K, V>> AbstractJCache<K, V> create(String cacheName, C configuration) {
       ConfigurationAdapter<K, V> adapter = ConfigurationAdapter.create(configuration);
-      RemoteCache<Object, Object> existing = cm.getCache(cacheName);
-      if (existing == null) {
-         cm.administration().createCache(cacheName, null);
-      }
+      cm.administration().getOrCreateCache(cacheName, null);
       return createJCache(cacheName, adapter);
    }
 

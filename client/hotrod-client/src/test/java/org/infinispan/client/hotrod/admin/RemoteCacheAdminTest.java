@@ -6,12 +6,14 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
@@ -33,8 +35,8 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "client.hotrod.admin.CacheAdminTest")
-public class CacheAdminTest extends MultiHotRodServersTest {
+@Test(groups = "functional", testName = "client.hotrod.admin.RemoteCacheAdminTest")
+public class RemoteCacheAdminTest extends MultiHotRodServersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -54,6 +56,7 @@ public class CacheAdminTest extends MultiHotRodServersTest {
    @Override
    protected HotRodServer addHotRodServer(ConfigurationBuilder builder) {
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      gcb.defaultCacheName("default");
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
 
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(gcb, builder);
@@ -65,16 +68,41 @@ public class CacheAdminTest extends MultiHotRodServersTest {
       return server;
    }
 
-   public void cacheCreateRemoveTest() {
-      client(0).administration().createCache("newCache", "template");
-      assertTrue(manager(0).cacheExists("newCache"));
-      assertTrue(manager(1).cacheExists("newCache"));
-      client(1).administration().removeCache("newCache");
-      assertFalse(manager(0).cacheExists("newCache"));
-      assertFalse(manager(1).cacheExists("newCache"));
+   public void cacheCreateRemoveTest(Method m) {
+      String cacheName = m.getName();
+      client(0).administration().createCache(cacheName, "template");
+      assertTrue(manager(0).cacheExists(cacheName));
+      assertTrue(manager(1).cacheExists(cacheName));
+      client(1).administration().removeCache(cacheName);
+      assertFalse(manager(0).cacheExists(cacheName));
+      assertFalse(manager(1).cacheExists(cacheName));
    }
 
-   public void cacheReindexTest() throws IOException {
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000374.*")
+   public void nonExistentTemplateTest(Method m) {
+      String cacheName = m.getName();
+      client(0).administration().createCache(cacheName, "nonExistentTemplate");
+   }
+
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000507.*")
+   public void alreadyExistingCacheTest(Method m) {
+      String cacheName = m.getName();
+      client(0).administration().createCache(cacheName, "template");
+      client(0).administration().createCache(cacheName, "template");
+   }
+
+   public void getOrCreateWithTemplateTest(Method m) {
+      String cacheName = m.getName();
+      client(0).administration().createCache(cacheName, "template");
+      client(0).administration().getOrCreateCache(cacheName, "template");
+   }
+
+   public void getOrCreateWithoutTemplateTest() {
+      client(0).administration().getOrCreateCache("default", null);
+   }
+
+   public void cacheReindexTest(Method m) throws IOException {
+      String cacheName = m.getName();
       //initialize server-side serialization
       RemoteCache<String, String> metadataCache = client(0).getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
       metadataCache.put("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
@@ -83,8 +111,8 @@ public class CacheAdminTest extends MultiHotRodServersTest {
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(client(0)));
 
       // Create the cache
-      client(0).administration().createCache("newCache", "template");
-      RemoteCache<Object, Object> cache = client(0).getCache("newCache");
+      client(0).administration().createCache(cacheName, "template");
+      RemoteCache<Object, Object> cache = client(0).getCache(cacheName);
       User user1 = new UserPB();
       user1.setId(1);
       user1.setName("Tom");
@@ -97,9 +125,9 @@ public class CacheAdminTest extends MultiHotRodServersTest {
       user1.setAddresses(Collections.singletonList(address1));
       cache.withFlags(Flag.SKIP_INDEXING).put(0, user1);
       verifyUserQuery(cache, 0);
-      client(0).administration().reindexCache("newCache");
+      client(0).administration().reindexCache(cacheName);
       verifyUserQuery(cache, 1);
-      client(0).administration().removeCache("newCache");
+      client(0).administration().removeCache(cacheName);
    }
 
    private void verifyUserQuery(RemoteCache<Object, Object> cache, int count) {

@@ -69,7 +69,6 @@ public class HashFunctionPartitioner implements KeyPartitioner, Cloneable {
       if (numSegments != that.numSegments)
          return false;
       return Objects.equals(hashFunction, that.hashFunction);
-
    }
 
    @Override
