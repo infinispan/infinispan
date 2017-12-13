@@ -33,6 +33,7 @@ import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
@@ -562,7 +563,11 @@ public class RemoteCacheManager implements BasicCacheContainer {
       if (marshaller == null) {
          marshaller = configuration.marshaller();
          if (marshaller == null) {
-            marshaller = Util.getInstance(configuration.marshallerClass());
+            Class<? extends Marshaller> clazz = configuration.marshallerClass();
+            if (clazz == GenericJBossMarshaller.class && !configuration.serialWhitelist().isEmpty())
+               marshaller = new GenericJBossMarshaller(configuration.serialWhitelist());
+            else
+               marshaller = Util.getInstance(clazz);
          }
       }
 
