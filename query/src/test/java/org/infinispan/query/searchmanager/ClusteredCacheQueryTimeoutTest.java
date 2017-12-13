@@ -15,6 +15,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -48,7 +49,7 @@ public class ClusteredCacheQueryTimeoutTest extends MultipleCacheManagersTest {
       QueryParser queryParser = createQueryParser("bar");
 
       org.apache.lucene.search.Query luceneQuery = queryParser.parse("fakebar");
-      CacheQuery<?> query = searchManager.getClusteredQuery(luceneQuery, Foo.class);
+      CacheQuery<?> query = searchManager.getQuery(luceneQuery, IndexedQueryMode.BROADCAST, Foo.class);
       query.timeout(1, TimeUnit.NANOSECONDS);
    }
 

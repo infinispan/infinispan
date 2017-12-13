@@ -4,8 +4,9 @@ import java.util.List;
 
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.objectfilter.Matcher;
+import org.infinispan.query.dsl.IndexedQueryMode;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
-import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.client.QueryResponse;
@@ -62,11 +63,11 @@ public interface RemoteQueryManager {
       return results;
    }
 
-   default RemoteQueryResult executeQuery(String q, Integer offset, Integer maxResults) {
-      BaseQuery baseQuery = getQueryEngine().makeQuery(q, null, offset, maxResults);
-      List<Object> results = baseQuery.list();
-      String[] projection = baseQuery.getProjection();
-      int totalResults = baseQuery.getResultSize();
+   default RemoteQueryResult executeQuery(String q, Integer offset, Integer maxResults, IndexedQueryMode queryMode) {
+      Query query = getQueryEngine().makeQuery(q, null, offset, maxResults, queryMode);
+      List<Object> results = query.list();
+      String[] projection = query.getProjection();
+      int totalResults = query.getResultSize();
       if (projection == null) {
          return new RemoteQueryResult(null, totalResults, encodeQueryResults(results));
       } else {

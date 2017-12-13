@@ -1,11 +1,19 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import static java.util.Collections.emptyMap;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
+import org.apache.lucene.search.Sort;
+import org.hibernate.search.query.engine.spi.HSQuery;
+import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
+import org.hibernate.search.spi.CustomTypeMetadata;
+import org.hibernate.search.spi.IndexedTypeMap;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
@@ -42,13 +50,19 @@ import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.syntax.parser.RowPropertyHelper;
 import org.infinispan.query.CacheQuery;
+import org.infinispan.query.QueryDefinition;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.backend.KeyTransformationHandler;
+import org.infinispan.query.clustered.ClusteredCacheQueryImpl;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.dsl.impl.QueryStringCreator;
+import org.infinispan.query.impl.CacheQueryImpl;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.logging.Log;
+import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -84,7 +98,7 @@ public class QueryEngine<TypeMetadata> {
    /**
     * Optional, lazily acquired. This is {@code null} if the cache is not indexed.
     */
-   private SearchManager searchManager;
+   private SearchManagerImplementor searchManager;
 
    /**
     * Optional, lazily acquired form the {@link SearchManager}. This is {@code null} if the cache is not indexed.
@@ -115,12 +129,12 @@ public class QueryEngine<TypeMetadata> {
       return cache;
    }
 
-   protected SearchManager getSearchManager() {
+   protected SearchManagerImplementor getSearchManager() {
       if (!isIndexed) {
          throw new IllegalStateException("Cache is not indexed");
       }
       if (searchManager == null) {
-         searchManager = SecurityActions.getCacheSearchManager(cache);
+         searchManager = SecurityActions.getCacheSearchManager(cache).unwrap(SearchManagerImplementor.class);
       }
       return searchManager;
    }
@@ -133,17 +147,22 @@ public class QueryEngine<TypeMetadata> {
    }
 
    protected BaseQuery buildQuery(QueryFactory queryFactory, IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults) {
+      return buildQuery(queryFactory, parsingResult, namedParameters, startOffset, maxResults, IndexedQueryMode.FETCH);
+   }
+
+
+   protected BaseQuery buildQuery(QueryFactory queryFactory, IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults, IndexedQueryMode queryMode) {
       if (log.isDebugEnabled()) {
          log.debugf("Building query '%s' with parameters %s", parsingResult.getQueryString(), namedParameters);
       }
       BaseQuery query = parsingResult.hasGroupingOrAggregations() ?
-            buildQueryWithAggregations(queryFactory, parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult) :
-            buildQueryNoAggregations(queryFactory, parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult);
+            buildQueryWithAggregations(queryFactory, parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult, queryMode) :
+            buildQueryNoAggregations(queryFactory, parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult, queryMode);
       query.validateNamedParameters();
       return query;
    }
 
-   private BaseQuery buildQueryWithAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult) {
+   private BaseQuery buildQueryWithAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, IndexedQueryMode queryMode) {
       if (parsingResult.getProjectedPaths() == null) {
          throw log.groupingAndAggregationQueriesMustUseProjections();
       }
@@ -219,7 +238,7 @@ public class QueryEngine<TypeMetadata> {
       for (PropertyPath<?> p : columns.keySet()) {
          if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityMetadata(), p.asArrayPath())) {
             return buildQueryWithRepeatedAggregations(queryFactory, queryString, namedParameters, startOffset, maxResults,
-                  parsingResult, havingClause, columns, noOfGroupingColumns);
+                  parsingResult, havingClause, columns, noOfGroupingColumns, queryMode);
          }
       }
 
@@ -298,7 +317,7 @@ public class QueryEngine<TypeMetadata> {
 
       // first phase: gather rows matching the 'where' clause
       String firstPhaseQueryStr = firstPhaseQuery.toString();
-      BaseQuery baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr));
+      BaseQuery baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr), queryMode);
 
       // second phase: grouping, aggregation, 'having' clause filtering, sorting and pagination
       String secondPhaseQueryStr = secondPhaseQuery.toString();
@@ -393,7 +412,7 @@ public class QueryEngine<TypeMetadata> {
 
    private BaseQuery buildQueryWithRepeatedAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults,
                                                         IckleParsingResult<TypeMetadata> parsingResult, String havingClause,
-                                                        LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns, int noOfGroupingColumns) {
+                                                        LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns, int noOfGroupingColumns, IndexedQueryMode queryMode) {
       // these types of aggregations can only be computed in memory
 
       StringBuilder firstPhaseQuery = new StringBuilder();
@@ -409,7 +428,7 @@ public class QueryEngine<TypeMetadata> {
          }
       }
       String firstPhaseQueryStr = firstPhaseQuery.toString();
-      BaseQuery baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr));
+      BaseQuery baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr), queryMode);
 
       List<FieldAccumulator> secondPhaseAccumulators = new LinkedList<>();
       List<FieldAccumulator> thirdPhaseAccumulators = new LinkedList<>();
@@ -484,7 +503,7 @@ public class QueryEngine<TypeMetadata> {
    }
 
    private BaseQuery buildQueryNoAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters,
-                                              long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult) {
+                                              long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, IndexedQueryMode queryMode) {
       if (parsingResult.hasGroupingOrAggregations()) {
          throw log.queryMustNotUseGroupingOrAggregation(); // may happen only due to internal programming error
       }
@@ -609,23 +628,23 @@ public class QueryEngine<TypeMetadata> {
                      };
                      PropertyPath[] deduplicatedProjection = projectionsMap.keySet().toArray(new PropertyPath[projectionsMap.size()]);
                      IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, deduplicatedProjection, projectedTypes, deduplicatedProjectedNullMarkers, sortFields);
-                     return new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, parsingResult.getProjections(), rowProcessor, startOffset, maxResults);
+                     return new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, parsingResult.getProjections(), rowProcessor, startOffset, maxResults, queryMode);
                   } else {
                      // happy case: no projections are duplicated
                      rowProcessor = makeProjectionProcessor(parsingResult.getProjectedTypes(), parsingResult.getProjectedNullMarkers());
                   }
                }
-               return new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, parsingResult, parsingResult.getProjections(), rowProcessor, startOffset, maxResults);
+               return new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, parsingResult, parsingResult.getProjections(), rowProcessor, startOffset, maxResults, queryMode);
             } else {
                IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, null, null, null, sortFields);
-               Query indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, startOffset, maxResults);
+               Query indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, startOffset, maxResults, queryMode);
                String projectionQueryStr = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, null);
                return new HybridQuery(queryFactory, cache, projectionQueryStr, null, getObjectFilter(matcher, projectionQueryStr, null, null), -1, -1, indexQuery);
             }
          } else {
             // projections may be stored but some sort fields are not so we need to query the index and then execute in-memory sorting and projecting in a second phase
             IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, null, null, null, null);
-            Query indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, -1, -1);
+            Query indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, -1, -1, queryMode);
             String projectionQueryStr = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, sortFields);
             return new HybridQuery(queryFactory, cache, projectionQueryStr, null, getObjectFilter(matcher, projectionQueryStr, null, null), startOffset, maxResults, indexQuery);
          }
@@ -638,7 +657,7 @@ public class QueryEngine<TypeMetadata> {
 
       // some fields are indexed, run a hybrid query
       IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, expansion, null, null, null, null);
-      Query expandedQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, -1, -1);
+      Query expandedQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, -1, -1, queryMode);
       return new HybridQuery(queryFactory, cache, queryString, namedParameters, getObjectFilter(matcher, queryString, namedParameters, null), startOffset, maxResults, expandedQuery);
    }
 
@@ -687,10 +706,107 @@ public class QueryEngine<TypeMetadata> {
       return new IckleFilterAndConverter(queryString, namedParameters, matcherImplClass);
    }
 
+   public <E> CacheQuery<E> buildCacheQuery(org.apache.lucene.search.Query luceneQuery, IndexedQueryMode indexedQueryMode,
+                                            KeyTransformationHandler keyTransformationHandler,
+                                            TimeoutExceptionFactory timeoutExceptionFactory,
+                                            ExecutorService asyncExecutor,
+                                            Class<?>... classes) {
+      CacheQuery cacheQuery;
+      if (indexedQueryMode == IndexedQueryMode.BROADCAST) {
+         cacheQuery = new ClusteredCacheQueryImpl<>(luceneQuery, getSearchFactory(), asyncExecutor, cache,
+               keyTransformationHandler, classes);
+      } else {
+         cacheQuery = new CacheQueryImpl<>(luceneQuery, getSearchFactory(), cache, keyTransformationHandler,
+               timeoutExceptionFactory, classes);
+      }
+      return (CacheQuery<E>) cacheQuery;
+   }
+
+   public HsQueryRequest createHsQuery(String queryString, IndexedTypeMap<CustomTypeMetadata> metadata, Map<String, Object> nameParameters) {
+      IckleParsingResult<TypeMetadata> parsingResult = parse(queryString);
+      if (parsingResult.hasGroupingOrAggregations()) {
+         throw log.groupAggregationsNotSupported();
+      }
+      LuceneQueryParsingResult luceneParsingResult = transformParsingResult(parsingResult, nameParameters);
+      org.apache.lucene.search.Query luceneQuery = makeTypeQuery(luceneParsingResult.getQuery(), luceneParsingResult.getTargetEntityName());
+      SearchIntegrator searchFactory = getSearchFactory();
+      HSQuery hsQuery = metadata == null ? searchFactory.createHSQuery(luceneQuery) : searchFactory.createHSQuery(luceneQuery);
+      Sort sort = luceneParsingResult.getSort();
+      String[] projections = luceneParsingResult.getProjections();
+      if (sort != null) {
+         hsQuery.sort(sort);
+      }
+      if (projections != null) {
+         hsQuery.projection(projections);
+      }
+      return new HsQueryRequest(hsQuery, sort, projections);
+   }
+
+
+   public <E> CacheQuery<E> buildCacheQuery(QueryDefinition queryDefinition, IndexedQueryMode indexedQueryMode, KeyTransformationHandler keyTransformationHandler, TimeoutExceptionFactory timeoutExceptionFactory, ExecutorService asyncExecutor, IndexedTypeMap<CustomTypeMetadata> indexedTypeMap) {
+      if (!isIndexed) {
+         throw log.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
+      }
+      if (indexedQueryMode == IndexedQueryMode.BROADCAST) {
+         return new ClusteredCacheQueryImpl<>(queryDefinition, asyncExecutor, cache, keyTransformationHandler, indexedTypeMap);
+      } else {
+         queryDefinition.initialize(cache);
+         HSQuery hsQuery = queryDefinition.getHsQuery();
+         return new CacheQueryImpl<>(hsQuery, cache, keyTransformationHandler);
+      }
+   }
+
+
+   public <E> CacheQuery<E> buildCacheQuery(String queryString, IndexedQueryMode indexedQueryMode,
+                                            KeyTransformationHandler keyTransformationHandler,
+                                            TimeoutExceptionFactory timeoutExceptionFactory,
+                                            ExecutorService asyncExecutor,
+                                            Class<?>... classes) {
+      if (!isIndexed) {
+         throw log.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
+      }
+
+      if (log.isDebugEnabled()) {
+         log.debugf("Building Lucene query for : %s", queryString);
+      }
+
+      IckleParsingResult<TypeMetadata> parsingResult = parse(queryString);
+      if (parsingResult.hasGroupingOrAggregations()) {
+         throw log.groupAggregationsNotSupported();
+      }
+      LuceneQueryParsingResult luceneParsingResult = transformParsingResult(parsingResult, emptyMap());
+      org.apache.lucene.search.Query luceneQuery = makeTypeQuery(luceneParsingResult.getQuery(), luceneParsingResult.getTargetEntityName());
+
+      if (indexedQueryMode == IndexedQueryMode.BROADCAST) {
+         return new ClusteredCacheQueryImpl<>(new QueryDefinition(queryString), asyncExecutor, cache, keyTransformationHandler, null);
+      } else {
+
+         if (log.isDebugEnabled()) {
+            log.debugf("The resulting Lucene query is : %s", luceneQuery.toString());
+         }
+
+         CacheQuery cacheQuery = new CacheQueryImpl<>(luceneQuery, searchFactory, cache, keyTransformationHandler,
+               timeoutExceptionFactory, classes);
+
+         if (luceneParsingResult.getSort() != null) {
+            cacheQuery = cacheQuery.sort(luceneParsingResult.getSort());
+         }
+         if (luceneParsingResult.getProjections() != null) {
+            cacheQuery = cacheQuery.projection(luceneParsingResult.getProjections());
+         }
+         return (CacheQuery<E>) cacheQuery;
+      }
+   }
+
+   protected <E> CacheQuery<E> buildLuceneQuery(IckleParsingResult<TypeMetadata> ickleParsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults) {
+      return buildLuceneQuery(ickleParsingResult, namedParameters, startOffset, maxResults, IndexedQueryMode.FETCH);
+   }
+
+
    /**
     * Build a Lucene index query.
     */
-   protected <E> CacheQuery<E> buildLuceneQuery(IckleParsingResult<TypeMetadata> ickleParsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults) {
+   protected <E> CacheQuery<E> buildLuceneQuery(IckleParsingResult<TypeMetadata> ickleParsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults, IndexedQueryMode queryMode) {
       if (log.isDebugEnabled()) {
          log.debugf("Building Lucene query for : %s", ickleParsingResult.getQueryString());
       }
@@ -706,12 +822,15 @@ public class QueryEngine<TypeMetadata> {
          log.debugf("The resulting Lucene query is : %s", luceneQuery.toString());
       }
 
-      CacheQuery<?> cacheQuery = makeCacheQuery(ickleParsingResult, luceneQuery);
-      if (luceneParsingResult.getSort() != null) {
-         cacheQuery = cacheQuery.sort(luceneParsingResult.getSort());
-      }
-      if (luceneParsingResult.getProjections() != null) {
-         cacheQuery = cacheQuery.projection(luceneParsingResult.getProjections());
+      CacheQuery<?> cacheQuery = makeCacheQuery(ickleParsingResult, luceneQuery, queryMode, namedParameters);
+      // No need to set sort and projection if BROADCAST, as both are part of the query string already.
+      if (queryMode != IndexedQueryMode.BROADCAST) {
+         if (luceneParsingResult.getSort() != null) {
+            cacheQuery = cacheQuery.sort(luceneParsingResult.getSort());
+         }
+         if (luceneParsingResult.getProjections() != null) {
+            cacheQuery = cacheQuery.projection(luceneParsingResult.getProjections());
+         }
       }
       if (startOffset >= 0) {
          cacheQuery = cacheQuery.firstResult((int) startOffset);
@@ -742,7 +861,12 @@ public class QueryEngine<TypeMetadata> {
       return (Class<?>) parsingResult.getTargetEntityMetadata();
    }
 
-   protected CacheQuery<?> makeCacheQuery(IckleParsingResult<TypeMetadata> ickleParsingResult, org.apache.lucene.search.Query luceneQuery) {
-      return getSearchManager().getQuery(luceneQuery, getTargetedClass(ickleParsingResult));
+   protected CacheQuery<?> makeCacheQuery(IckleParsingResult<TypeMetadata> ickleParsingResult, org.apache.lucene.search.Query luceneQuery, IndexedQueryMode queryMode, Map<String, Object> namedParameters) {
+      if (queryMode == IndexedQueryMode.BROADCAST) {
+         QueryDefinition queryDefinition = new QueryDefinition(ickleParsingResult.getQueryString());
+         queryDefinition.setNamedParameters(namedParameters);
+         return getSearchManager().getQuery(queryDefinition, queryMode, null);
+      }
+      return getSearchManager().getQuery(luceneQuery, queryMode, getTargetedClass(ickleParsingResult));
    }
 }

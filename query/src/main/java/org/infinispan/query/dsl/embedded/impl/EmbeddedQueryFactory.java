@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import org.infinispan.query.dsl.IndexedQueryMode;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.dsl.impl.BaseQueryFactory;
@@ -21,7 +23,12 @@ public final class EmbeddedQueryFactory extends BaseQueryFactory {
 
    @Override
    public BaseQuery create(String queryString) {
-      return new DelegatingQuery<>(queryEngine, this, queryString);
+      return new DelegatingQuery<>(queryEngine, this, queryString, IndexedQueryMode.FETCH);
+   }
+
+   @Override
+   public Query create(String queryString, IndexedQueryMode queryMode) {
+      return new DelegatingQuery<>(queryEngine, this, queryString, queryMode);
    }
 
    @Override

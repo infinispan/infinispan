@@ -169,6 +169,7 @@ public abstract class BaseQuery implements Query {
       }
    }
 
+   @Override
    public String[] getProjection() {
       return projection;
    }

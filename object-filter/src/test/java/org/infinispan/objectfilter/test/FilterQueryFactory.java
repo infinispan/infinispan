@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
@@ -32,6 +33,11 @@ final class FilterQueryFactory extends BaseQueryFactory {
 
    @Override
    public Query create(String queryString) {
+      return new FilterQuery(this, queryString, null, null, -1, -1);
+   }
+
+   @Override
+   public Query create(String queryString, IndexedQueryMode queryMode) {
       return new FilterQuery(this, queryString, null, null, -1, -1);
    }
 

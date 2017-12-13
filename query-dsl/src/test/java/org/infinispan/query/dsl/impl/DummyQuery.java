@@ -38,6 +38,11 @@ class DummyQuery implements Query {
    }
 
    @Override
+   public String[] getProjection() {
+      return new String[0];
+   }
+
+   @Override
    public Query startOffset(long startOffset) {
       return this;
    }

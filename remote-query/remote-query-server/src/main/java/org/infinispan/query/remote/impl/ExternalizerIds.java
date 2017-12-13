@@ -25,4 +25,6 @@ public interface ExternalizerIds {
    Integer ICKLE_CONTINUOUS_QUERY_RESULT = 1705;
 
    Integer ICKLE_FILTER_RESULT = 1706;
+
+   Integer REMOTE_QUERY_DEFINITION = 1707;
 }

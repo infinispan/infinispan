@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.CacheQuery;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
 
@@ -34,16 +35,18 @@ final class EmbeddedLuceneQuery<TypeMetadata> extends BaseQuery {
     * The cached results, lazily evaluated.
     */
    private List<Object> results;
+   private final IndexedQueryMode queryMode;
 
    EmbeddedLuceneQuery(QueryEngine<TypeMetadata> queryEngine, QueryFactory queryFactory,
                        Map<String, Object> namedParameters, IckleParsingResult<TypeMetadata> parsingResult,
                        String[] projection, ResultProcessor resultProcessor,
-                       long startOffset, int maxResults) {
+                       long startOffset, int maxResults, IndexedQueryMode queryMode) {
       super(queryFactory, parsingResult.getQueryString(), namedParameters, projection, startOffset, maxResults);
       if (resultProcessor instanceof RowProcessor && (projection == null || projection.length == 0)) {
          throw new IllegalArgumentException("A RowProcessor can only be specified with projections");
       }
       this.queryEngine = queryEngine;
+      this.queryMode = queryMode;
       this.resultProcessor = resultProcessor;
       this.parsingResult = parsingResult;
    }
@@ -58,7 +61,7 @@ final class EmbeddedLuceneQuery<TypeMetadata> extends BaseQuery {
       // query is created first time only
       if (cacheQuery == null) {
          validateNamedParameters();
-         cacheQuery = queryEngine.buildLuceneQuery(parsingResult, namedParameters, startOffset, maxResults);
+         cacheQuery = queryEngine.buildLuceneQuery(parsingResult, namedParameters, startOffset, maxResults, queryMode);
       }
       return cacheQuery;
    }

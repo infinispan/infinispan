@@ -2,6 +2,7 @@ package org.infinispan.query.clustered.commandworkers;
 
 import org.apache.lucene.search.TopDocs;
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
+import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryBox;
 import org.infinispan.query.clustered.QueryResponse;
@@ -18,6 +19,7 @@ public class CQCreateLazyQuery extends ClusteredQueryCommandWorker {
 
    @Override
    public QueryResponse perform() {
+      HSQuery query = queryDefinition.getHsQuery();
       query.afterDeserialise(getSearchFactory());
       DocumentExtractor extractor = query.queryDocumentExtractor();
       int resultSize = query.queryResultSize();

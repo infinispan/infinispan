@@ -4,6 +4,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.stat.Statistics;
+import org.infinispan.query.dsl.IndexedQueryMode;
 
 /**
  * The SearchManager is the entry point to create full text queries on top of a cache.
@@ -18,27 +19,40 @@ public interface SearchManager {
     * in.  If no classes are passed in, it is assumed that no type filtering is performed and so all known types will
     * be searched.
     *
-    * @param luceneQuery - {@link org.apache.lucene.search.Query}
-    * @param classes - optionally only return results of type that matches this list of acceptable types
-    * @return the CacheQuery object which can be used to iterate through results
+    * @param luceneQuery      {@link org.apache.lucene.search.Query}
+    * @param indexedQueryMode The {@link IndexedQueryMode} used when executing the query.
+    * @param classes          Optionally only return results of type that matches this list of acceptable types.
+    * @return the CacheQuery object which can be used to iterate through results.
+    */
+   <E> CacheQuery<E> getQuery(Query luceneQuery, IndexedQueryMode indexedQueryMode, Class<?>... classes);
+
+   /**
+    * Builds a {@link CacheQuery} from a query string.
+    *
+    * @throws org.hibernate.search.exception.SearchException if the queryString cannot be converted to an indexed query,
+    *                                                        due to lack of indexes to resolve it fully or if contains
+    *                                                        aggregations and grouping.
+    * @see #getQuery(Query, IndexedQueryMode, Class[])
+    */
+   <E> CacheQuery<E> getQuery(String queryString, IndexedQueryMode indexedQueryMode, Class<?>... classes);
+
+   /**
+    * @see #getQuery(Query, IndexedQueryMode, Class[])
     */
    <E> CacheQuery<E> getQuery(Query luceneQuery, Class<?>... classes);
 
-   /**
-    * Experimental.
-    * Provides Hibernate Search DSL to build full text queries
-    * @return
+   /***
+    * @return {@link EntityContext}
     */
    EntityContext buildQueryBuilderForClass(Class<?> entityType);
 
-   /**
-    * Experimental!
-    * Use it to try out the newly introduced distributed queries.
-    *
+   /***
     * @param luceneQuery
     * @param classes
     * @return
+    * @deprecated since 9.2, use {@link #getQuery(Query, IndexedQueryMode, Class[])} with QueryMode.BROADCAST
     */
+   @Deprecated
    <E> CacheQuery<E> getClusteredQuery(Query luceneQuery, Class<?>... classes);
 
    /**

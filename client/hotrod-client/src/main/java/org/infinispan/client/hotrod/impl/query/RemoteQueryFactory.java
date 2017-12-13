@@ -5,6 +5,7 @@ import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.impl.BaseQueryFactory;
@@ -40,7 +41,12 @@ public final class RemoteQueryFactory extends BaseQueryFactory {
 
    @Override
    public Query create(String queryString) {
-      return new RemoteQuery(this, cache, serializationContext, queryString);
+      return new RemoteQuery(this, cache, serializationContext, queryString, IndexedQueryMode.FETCH);
+   }
+
+   @Override
+   public Query create(String queryString, IndexedQueryMode queryMode) {
+      return new RemoteQuery(this, cache, serializationContext, queryString, queryMode);
    }
 
    @Override

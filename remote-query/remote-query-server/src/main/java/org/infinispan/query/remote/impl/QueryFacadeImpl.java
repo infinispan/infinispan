@@ -6,7 +6,8 @@ import java.util.List;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.WrappedMessage;
-import org.infinispan.query.dsl.impl.BaseQuery;
+import org.infinispan.query.dsl.IndexedQueryMode;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.client.QueryResponse;
 import org.infinispan.query.remote.impl.logging.Log;
@@ -51,7 +52,11 @@ public final class QueryFacadeImpl implements QueryFacade {
          int maxResults = request.getMaxResults() == null ? -1 : request.getMaxResults();
 
          // create the query
-         BaseQuery q = queryEngine.makeQuery(request.getQueryString(), request.getNamedParametersMap(), startOffset, maxResults);
+         IndexedQueryMode queryMode = IndexedQueryMode.FETCH;
+         if (request.getIndexedQueryMode() != null) {
+            queryMode = IndexedQueryMode.valueOf(request.getIndexedQueryMode());
+         }
+         Query q = queryEngine.makeQuery(request.getQueryString(), request.getNamedParametersMap(), startOffset, maxResults, queryMode);
 
          // execute query and make the response object
          QueryResponse response = makeResponse(q);
@@ -64,7 +69,7 @@ public final class QueryFacadeImpl implements QueryFacade {
       }
    }
 
-   private QueryResponse makeResponse(BaseQuery query) {
+   private QueryResponse makeResponse(Query query) {
       List<?> list = query.list();
       int numResults = list.size();
       String[] projection = query.getProjection();

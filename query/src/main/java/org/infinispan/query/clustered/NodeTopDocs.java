@@ -14,14 +14,17 @@ public class NodeTopDocs {
 
    public final TopDocs topDocs;
    public final Object[] keys;
+   public final Object[] projections;
 
-   public NodeTopDocs(TopDocs topDocs, Object[] keys) {
+   public NodeTopDocs(TopDocs topDocs, Object[] keys, Object[] projections) {
       this.topDocs = topDocs;
       this.keys = keys;
+      this.projections = projections;
    }
 
    public NodeTopDocs(TopDocs topDocs) {
       this.topDocs = topDocs;
       this.keys = null;
+      this.projections = null;
    }
 }

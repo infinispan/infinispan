@@ -1,6 +1,7 @@
 package org.infinispan.query.clustered.commandworkers;
 
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
+import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.query.clustered.QueryResponse;
 
 /**
@@ -15,14 +16,11 @@ public class CQGetResultSize extends ClusteredQueryCommandWorker {
 
    @Override
    public QueryResponse perform() {
+      HSQuery query = queryDefinition.getHsQuery();
       query.afterDeserialise(getSearchFactory());
-      DocumentExtractor extractor = query.queryDocumentExtractor();
-      try {
+      try (DocumentExtractor ignored = query.queryDocumentExtractor()) {
          int resultSize = query.queryResultSize();
-         QueryResponse queryResponse = new QueryResponse(resultSize);
-         return queryResponse;
-      } finally {
-         extractor.close();
+         return new QueryResponse(resultSize);
       }
    }
 

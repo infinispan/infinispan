@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.impl.operations.QueryOperation;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.QueryResponse;
@@ -25,22 +26,25 @@ public final class RemoteQuery extends BaseQuery {
 
    private final RemoteCacheImpl<?, ?> cache;
    private final SerializationContext serializationContext;
+   private final IndexedQueryMode indexedQueryMode;
 
    private List<?> results = null;
    private int totalResults;
 
    RemoteQuery(QueryFactory queryFactory, RemoteCacheImpl<?, ?> cache, SerializationContext serializationContext,
-               String queryString) {
+               String queryString, IndexedQueryMode indexQueryMode) {
       super(queryFactory, queryString);
       this.cache = cache;
       this.serializationContext = serializationContext;
+      this.indexedQueryMode = indexQueryMode;
    }
 
-   RemoteQuery(QueryFactory queryFactory, RemoteCacheImpl cache, SerializationContext serializationContext,
+   RemoteQuery(QueryFactory queryFactory, RemoteCacheImpl<?, ?> cache, SerializationContext serializationContext,
                String queryString, Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults) {
       super(queryFactory, queryString, namedParameters, projection, startOffset, maxResults);
       this.cache = cache;
       this.serializationContext = serializationContext;
+      this.indexedQueryMode = IndexedQueryMode.FETCH;
    }
 
    @Override
@@ -110,6 +114,10 @@ public final class RemoteQuery extends BaseQuery {
 
    public RemoteCache<?, ?> getCache() {
       return cache;
+   }
+
+   public IndexedQueryMode getIndexedQueryMode() {
+      return indexedQueryMode;
    }
 
    @Override
