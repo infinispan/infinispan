@@ -35,6 +35,7 @@ import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.uberjar.ManifestUberJarDuplicatedJarsWarner;
@@ -201,7 +202,11 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
       if (marshaller == null) {
          marshaller = configuration.marshaller();
          if (marshaller == null) {
-            marshaller = Util.getInstance(configuration.marshallerClass());
+            Class<? extends Marshaller> clazz = configuration.marshallerClass();
+            if (clazz == GenericJBossMarshaller.class && !configuration.serialWhitelist().isEmpty())
+               marshaller = new GenericJBossMarshaller(configuration.serialWhitelist());
+            else
+               marshaller = Util.getInstance(clazz);
          }
       }
 
