@@ -2,7 +2,7 @@ package org.infinispan.globalstate;
 
 import java.util.EnumSet;
 
-import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -24,7 +24,15 @@ public interface GlobalConfigurationManager {
     * @param configuration the configuration object
     * @param flags the flags to apply
     */
-   Configuration createCache(String cacheName, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags);
+   Configuration createCache(String cacheName, Configuration configuration, EnumSet<AdminFlag> flags);
+
+   /**
+    * Defines a cluster-wide cache configuration or retrieves an existing one
+    * @param cacheName the name of the configuration
+    * @param configuration the configuration object
+    * @param flags the flags to apply
+    */
+   Configuration getOrCreateCache(String cacheName, Configuration configuration, EnumSet<AdminFlag> flags);
 
    /**
     * Defines a cluster-wide cache configuration using the supplied template
@@ -32,12 +40,22 @@ public interface GlobalConfigurationManager {
     * @param template the template name to use
     * @param flags the flags to apply
     */
-   Configuration createCache(String cacheName, String template, EnumSet<CacheContainerAdmin.AdminFlag> flags);
+   Configuration createCache(String cacheName, String template, EnumSet<AdminFlag> flags);
+
+   /**
+    * Defines a cluster-wide cache configuration using the supplied template or retrieves an existing one
+    * @param cacheName the name of the configuration
+    * @param template the template name to use
+    * @param flags the flags to apply
+    */
+   Configuration getOrCreateCache(String cacheName, String template, EnumSet<AdminFlag> flags);
 
    /**
     * Removes a cluster-wide cache and its configuration
     * @param cacheName the name of the cache
     * @param flags
     */
-   void removeCache(String cacheName, EnumSet<CacheContainerAdmin.AdminFlag> flags);
+   void removeCache(String cacheName, EnumSet<AdminFlag> flags);
+
+
 }

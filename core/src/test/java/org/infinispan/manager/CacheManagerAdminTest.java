@@ -6,9 +6,11 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
@@ -30,22 +32,31 @@ public class CacheManagerAdminTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       Configuration configuration = builder.build();
-      manager(0).administration().createCache("a", configuration);
+      Cache<Object, Object> cache = manager(0).administration().createCache("a", configuration);
 
       waitForClusterToForm("a");
-
+      assertEquals(cacheManagers.size(), cache.getAdvancedCache().getRpcManager().getMembers().size());
       checkConsistencyAcrossCluster("a", configuration);
 
       addClusterEnabledCacheManager();
-
       checkConsistencyAcrossCluster("a", configuration);
 
-      manager(1).administration().removeCache("a");
+      Exceptions.expectException(CacheConfigurationException.class,
+            "ISPN000374: No such template 'b' when declaring 'nonExistingTemplate'",
+            () -> manager(0).administration().createCache("b", "nonExistingTemplate"));
 
+      // attempt to create an existing cache
+      Exceptions.expectException(CacheConfigurationException.class,
+            "ISPN000507: Cache a already exists",
+            () -> manager(0).administration().createCache("a", configuration));
+
+      // getOrCreate should work
+      manager(0).administration().getOrCreateCache("a", configuration);
+
+      manager(1).administration().removeCache("a");
       checkCacheExistenceAcrossCluster("a", false);
 
-      EmbeddedCacheManager m = addClusterEnabledCacheManager();
-
+      addClusterEnabledCacheManager();
       checkCacheExistenceAcrossCluster("a", false);
    }
 

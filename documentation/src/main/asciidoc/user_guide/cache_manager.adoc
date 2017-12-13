@@ -74,6 +74,20 @@ Cache<String, String> myCache = manager.administration().createCache("myCache");
 
 ----
 
+Caches created using the above API will also be automatically created on any new nodes which subsequently join the cluster.
+The configuration of such caches, however, will be ephemeral: shutting down the entire cluster and restarting it will not
+automatically recreate them. To make these caches permanent, i.e. ensure that they are recreated after a cluster is
+shutdown and restarted, use the +PERMANENT+ flag as follows:
+
+[source,java]
+----
+
+Cache<String, String> myCache = manager.administration().withFlags(AdminFlags.PERMANENT).createCache("myCache");
+
+----
+
+In order for the above to work, global state must be enabled and a persistent path configured. +PERMANENT+ cache
+configurations will be stored in a file named _caches.xml_.
 
 === Clustering Information
 The `EmbeddedCacheManager` has quite a few methods to provide information

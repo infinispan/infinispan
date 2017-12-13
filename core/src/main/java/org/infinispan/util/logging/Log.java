@@ -1730,4 +1730,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Biased reads are supported only in scattered cache. Maybe you were looking for L1?", id = 506)
    CacheConfigurationException biasedReadsAppliesOnlyToScattered();
+
+   @Message(value = "Cache %s already exists", id = 507)
+   CacheConfigurationException cacheExists(String cacheName);
+
+   @Message(value = "Cannot rename file %s to %s", id = 508)
+   CacheConfigurationException cannotRenamePersistentFile(String absolutePath, File persistentFile);
 }

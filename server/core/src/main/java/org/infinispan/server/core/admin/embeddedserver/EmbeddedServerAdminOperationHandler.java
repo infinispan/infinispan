@@ -14,6 +14,7 @@ public class EmbeddedServerAdminOperationHandler extends AdminOperationsHandler 
    public EmbeddedServerAdminOperationHandler() {
       super(
             CacheCreateTask.class,
+            CacheGetOrCreateTask.class,
             CacheRemoveTask.class,
             CacheReindexTask.class
       );

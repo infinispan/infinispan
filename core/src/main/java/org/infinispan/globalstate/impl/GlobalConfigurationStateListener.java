@@ -24,13 +24,13 @@ public class GlobalConfigurationStateListener {
    @CacheEntryCreated
    public void createCache(CacheEntryCreatedEvent<ScopedState, CacheState> event) {
       String cacheName = event.getKey().getName();
-      CacheState cacheConfiguration = event.getCache().get(event.getKey());
-      gcm.localCreateCache(cacheName, cacheConfiguration);
+      CacheState state = event.getCache().get(event.getKey());
+      gcm.createCacheLocally(cacheName, state);
    }
 
    @CacheEntryRemoved
    public void removeCache(CacheEntryRemovedEvent<ScopedState, CacheState> event) {
       String cacheName = event.getKey().getName();
-      gcm.localRemoveCache(cacheName);
+      gcm.removeCacheLocally(cacheName, event.getValue());
    }
 }

@@ -137,6 +137,16 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
    }
 
    @Override
+   public boolean matches(ClusteringConfiguration other) {
+      return (attributes.matches(other.attributes) &&
+            hashConfiguration.matches(other.hashConfiguration) &&
+            l1Configuration.matches(other.l1Configuration) &&
+            partitionHandlingConfiguration.matches(other.partitionHandlingConfiguration) &&
+            stateTransferConfiguration.matches(other.stateTransferConfiguration) &&
+            syncConfiguration.matches(other.syncConfiguration));
+   }
+
+   @Override
    public String toString() {
       return "ClusteringConfiguration [hashConfiguration=" + hashConfiguration +
             ", l1Configuration=" + l1Configuration +

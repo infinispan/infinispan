@@ -1,7 +1,7 @@
 package org.infinispan.server.core.admin.embeddedserver;
 
+import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,12 +23,7 @@ import org.infinispan.server.core.admin.AdminServerTask;
  * @since 9.1
  */
 public class CacheReindexTask extends AdminServerTask<Void> {
-   private static Set<String> PARAMETERS;
-
-   static {
-      PARAMETERS = new HashSet<>();
-      PARAMETERS.add("name");
-   }
+   private static final Set<String> PARAMETERS = Collections.singleton("name");
 
    @Override
    public String getTaskContextName() {

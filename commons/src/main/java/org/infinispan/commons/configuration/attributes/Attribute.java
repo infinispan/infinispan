@@ -2,6 +2,7 @@ package org.infinispan.commons.configuration.attributes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
@@ -198,8 +199,13 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
          return false;
       if (!this.definition.equals(other.definition))
          return false;
-      if (this.definition.isGlobal())
-         return value.equals(other.value);
+      if (this.definition.isGlobal()) {
+         if (Matchable.class.isAssignableFrom(this.definition.getType())) {
+            return ((Matchable)value).matches(other.value);
+         } else {
+            return Objects.equals(value, other.value);
+         }
+      }
       return true;
    }
 

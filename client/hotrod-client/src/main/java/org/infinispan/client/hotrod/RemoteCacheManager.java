@@ -356,7 +356,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
 
    public RemoteCacheManagerAdmin administration() {
       OperationsFactory operationsFactory = new OperationsFactory(transportFactory, codec, asyncExecutorService, configuration);
-      return new RemoteCacheManagerAdminImpl(operationsFactory, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
+      return new RemoteCacheManagerAdminImpl(this, operationsFactory, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
             name -> {
                synchronized (cacheName2RemoteCache) {
                   // Remove any mappings
