@@ -16,6 +16,7 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.ExpiryHelper;
@@ -61,6 +62,8 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
 
    @Start
    public void start() {
+      // Data container entries are retrieved directly, so we don't need to worry about an encodings
+      this.cache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache();
       needTransaction = configuration.transaction().transactionMode().isTransactional();
    }
 

@@ -12,6 +12,7 @@ import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
@@ -51,6 +52,7 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
    private AsyncInterceptorChain interceptorChain;
    private CacheNotifier cacheNotifier;
    private ComponentRegistry componentRegistry;
+   private VersionGenerator versionGenerator;
 
    //for org.infinispan.commands.CommandIdUniquenessTest
    public BackupWriteRpcCommand() {
@@ -108,11 +110,12 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
    }
 
    public void init(InvocationContextFactory invocationContextFactory, AsyncInterceptorChain interceptorChain,
-         CacheNotifier cacheNotifier, ComponentRegistry componentRegistry) {
+         CacheNotifier cacheNotifier, ComponentRegistry componentRegistry, VersionGenerator versionGenerator) {
       this.invocationContextFactory = invocationContextFactory;
       this.interceptorChain = interceptorChain;
       this.cacheNotifier = cacheNotifier;
       this.componentRegistry = componentRegistry;
+      this.versionGenerator = versionGenerator;
    }
 
    @Override
@@ -123,7 +126,8 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
             command = new RemoveCommand(key, null, cacheNotifier, flags, commandInvocationId);
             break;
          case REMOVE_EXPIRED:
-            command = new RemoveExpiredCommand(key, value, null, cacheNotifier, commandInvocationId);
+            command = new RemoveExpiredCommand(key, value, null, cacheNotifier, commandInvocationId,
+                  versionGenerator.nonExistingVersion());
             break;
          case WRITE:
             command = new PutKeyValueCommand(key, value, false, cacheNotifier, metadata, flags,

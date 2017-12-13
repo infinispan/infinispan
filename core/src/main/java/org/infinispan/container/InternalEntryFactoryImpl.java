@@ -366,7 +366,7 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
     * @return true if the entire metadata object needs to be stored, otherwise
     * simply store lifespan and/or maxIdle in existing cache entries
     */
-   private boolean isStoreMetadata(Metadata metadata, InternalCacheEntry ice) {
+   public static boolean isStoreMetadata(Metadata metadata, InternalCacheEntry ice) {
       return metadata != null
             && (ice == null || isEntryMetadataAware(ice))
             && (metadata.version() != null
@@ -374,7 +374,7 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
    }
 
 
-   private boolean isEntryMetadataAware(InternalCacheEntry ice) {
+   private static boolean isEntryMetadataAware(InternalCacheEntry ice) {
       return ice instanceof MetadataImmortalCacheEntry
             || ice instanceof MetadataMortalCacheEntry
             || ice instanceof MetadataTransientCacheEntry

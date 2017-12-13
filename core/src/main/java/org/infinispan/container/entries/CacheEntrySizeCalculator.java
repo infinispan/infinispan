@@ -2,6 +2,8 @@ package org.infinispan.container.entries;
 
 import org.infinispan.commons.util.AbstractEntrySizeCalculatorHelper;
 import org.infinispan.commons.util.EntrySizeCalculator;
+import org.infinispan.container.InternalEntryFactoryImpl;
+import org.infinispan.container.KeyValueMetadataSizeCalculator;
 import org.infinispan.container.entries.metadata.MetadataImmortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataMortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientCacheEntry;
@@ -18,7 +20,8 @@ import org.infinispan.metadata.Metadata;
  * @author William Burns
  * @since 8.0
  */
-public class CacheEntrySizeCalculator<K, V> extends AbstractEntrySizeCalculatorHelper<K, InternalCacheEntry<K, V>> {
+public class CacheEntrySizeCalculator<K, V> extends AbstractEntrySizeCalculatorHelper<K, InternalCacheEntry<K, V>>
+      implements KeyValueMetadataSizeCalculator<K, V> {
    public CacheEntrySizeCalculator(EntrySizeCalculator<? super K, ? super V> calculator) {
       this.calculator = calculator;
    }
@@ -27,76 +30,81 @@ public class CacheEntrySizeCalculator<K, V> extends AbstractEntrySizeCalculatorH
 
    @Override
    public long calculateSize(K key, InternalCacheEntry<K, V> ice) {
-      long objSize = calculator.calculateSize(key, ice.getValue());
-      long iceSize = 0;
-      long metadataSize = 0;
-      // ICE itself is an object and has a reference to it's class
-      iceSize += OBJECT_SIZE + POINTER_SIZE;
-      // Each ICE references key and value
-      iceSize += 2 * POINTER_SIZE;
-      boolean mortalEntry;
-      boolean transientEntry;
+      // This will be non zero when use expiration, but don't want to store the metadata
+      long noMetadataSize = 0;
       boolean metadataAware;
       // We want to put immortal entries first as they are very common.  Also MetadataImmortalCacheEntry extends
       // ImmortalCacheEntry so it has to come before
       if (ice instanceof MetadataImmortalCacheEntry) {
-         mortalEntry = false;
-         transientEntry = false;
          metadataAware = true;
       } else if (ice instanceof ImmortalCacheEntry) {
-         mortalEntry = false;
-         transientEntry = false;
          metadataAware = false;
       } else if (ice instanceof MortalCacheEntry) {
-         mortalEntry = true;
-         transientEntry = false;
+         noMetadataSize += 16;
          metadataAware = false;
       } else if (ice instanceof TransientCacheEntry) {
-         mortalEntry = false;
-         transientEntry = true;
+         noMetadataSize += 16;
          metadataAware = false;
       } else if (ice instanceof TransientMortalCacheEntry) {
-         mortalEntry = true;
-         transientEntry = true;
+         noMetadataSize += 32;
          metadataAware = false;
       } else if (ice instanceof MetadataMortalCacheEntry) {
-         mortalEntry = true;
-         transientEntry = false;
          metadataAware = true;
       } else if (ice instanceof MetadataTransientCacheEntry) {
-         mortalEntry = false;
-         transientEntry = true;
          metadataAware = true;
       } else if (ice instanceof MetadataTransientMortalCacheEntry) {
-         mortalEntry = true;
-         transientEntry = true;
          metadataAware = true;
       } else {
-         mortalEntry = false;
-         transientEntry = false;
          metadataAware = false;
       }
+      Metadata metadata;
       if (metadataAware) {
-         // Assume it has a pointer for the metadata
-         iceSize += POINTER_SIZE;
-         // The metadata has itself and the class reference
-         metadataSize += OBJECT_SIZE + POINTER_SIZE;
-         Metadata metadata = ice.getMetadata();
-         if (metadata instanceof EmbeddedMetadata) {
-            // The embedded metadata has a reference and NumericVersion instance
+         metadata = ice.getMetadata();
+         // We don't support other metadata types currently
+         if (!(metadata instanceof EmbeddedMetadata)) {
+            metadata = null;
+         }
+      } else {
+         metadata = null;
+      }
+      long keyValueMetadataSize = calculateSize(key, ice.getValue(), metadata);
+      return keyValueMetadataSize + noMetadataSize;
+   }
+
+   @Override
+   public long calculateSize(K key, V value, Metadata metadata) {
+      long objSize = calculator.calculateSize(key, value);
+
+      // This is for the surrounding ICE
+      long iceSize = 0;
+      // ICE itself is an object and has a reference to it's class
+      iceSize += OBJECT_SIZE + POINTER_SIZE;
+      // Each ICE references key and value
+      iceSize += 2 * POINTER_SIZE;
+
+      long metadataSize = 0;
+      if (metadata != null) {
+         // Mortal uses 2 longs to keep track of created and lifespan
+         if (metadata.lifespan() != -1) {
+            iceSize += 16;
+         }
+         // Transient uses 2 longs to keep track of last access and max idle
+         if (metadata.maxIdle() != -1) {
+            iceSize += 16;
+         }
+         if (InternalEntryFactoryImpl.isStoreMetadata(metadata, null)) {
+            // Assume it has a pointer for the metadata
+            iceSize += POINTER_SIZE;
+            // The metadata has itself and the class reference
+            metadataSize += OBJECT_SIZE + POINTER_SIZE;
+            // We only support embedded metadata that has a reference and NumericVersion instance
             metadataSize += POINTER_SIZE;
             metadataSize = roundUpToNearest8(metadataSize);
             // This is for the NumericVersion and the long inside of it
             metadataSize += OBJECT_SIZE + POINTER_SIZE + 8;
             metadataSize = roundUpToNearest8(metadataSize);
-         } else {
-            metadataSize = roundUpToNearest8(metadataSize);
          }
       }
-      // Mortal uses 2 longs to keep track of created and lifespan
-      iceSize += mortalEntry ? 16 : 0;
-      // Transient uses 2 longs to keep track of last access and max idle
-      iceSize += transientEntry ? 16 : 0;
       return objSize + roundUpToNearest8(iceSize) + metadataSize;
    }
 }
