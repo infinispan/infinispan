@@ -359,15 +359,14 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          if (cacheNames.length == 0) {
             Cache<K, V> cache = cm.getCache();
             caches.add(cache);
-            waitForClusterToForm();
          } else {
             for (String cacheName : cacheNames) {
                cm.defineConfiguration(cacheName, defaultConfigBuilder.build());
                caches.add(cm.getCache(cacheName));
             }
-            waitForClusterToForm(cacheNames);
          }
       }
+      waitForClusterToForm(cacheNames);
       return caches;
    }
 
