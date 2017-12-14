@@ -729,7 +729,7 @@ public class QueryEngine<TypeMetadata> {
       LuceneQueryParsingResult luceneParsingResult = transformParsingResult(parsingResult, nameParameters);
       org.apache.lucene.search.Query luceneQuery = makeTypeQuery(luceneParsingResult.getQuery(), luceneParsingResult.getTargetEntityName());
       SearchIntegrator searchFactory = getSearchFactory();
-      HSQuery hsQuery = metadata == null ? searchFactory.createHSQuery(luceneQuery) : searchFactory.createHSQuery(luceneQuery);
+      HSQuery hsQuery = metadata == null ? searchFactory.createHSQuery(luceneQuery) : searchFactory.createHSQuery(luceneQuery, metadata);
       Sort sort = luceneParsingResult.getSort();
       String[] projections = luceneParsingResult.getProjections();
       if (sort != null) {
