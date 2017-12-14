@@ -1221,7 +1221,7 @@
                         <executions>
                             <execution>
                                 <id>infinispan-server-startup</id>
-                                <phase>generate-test-resources</phase>
+                                <phase>pre-integration-test</phase>
                                 <goals>
                                     <goal>run</goal>
                                 </goals>
@@ -1280,7 +1280,7 @@
                         <executions>
                             <execution>
                                 <id>infinispan-server-startup-200</id>
-                                <phase>generate-test-resources</phase>
+                                <phase>pre-integration-test</phase>
                                 <goals>
                                     <goal>run</goal>
                                 </goals>
@@ -1303,7 +1303,7 @@
                             </execution>
                             <execution>
                                 <id>infinispan-server-startup-300</id>
-                                <phase>generate-test-resources</phase>
+                                <phase>pre-integration-test</phase>
                                 <goals>
                                     <goal>run</goal>
                                 </goals>
@@ -1390,7 +1390,7 @@
                         <executions>
                             <execution>
                                 <id>infinispan-server-startup</id>
-                                <phase>generate-test-resources</phase>
+                                <phase>pre-integration-test</phase>
                                 <goals>
                                     <goal>run</goal>
                                 </goals>
