@@ -20,6 +20,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Phaser;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -62,6 +64,7 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -91,11 +94,14 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    private String cacheName;
    private Address localAddress;
    private RpcOptions rpcOptions;
+   private TimeService timeService;
+   private long conflictTimeout;
    private final AtomicBoolean streamInProgress = new AtomicBoolean();
    private final Map<K, VersionRequest> versionRequestMap = new HashMap<>();
    private final Queue<VersionRequest> retryQueue = new ConcurrentLinkedQueue<>();
    private volatile LocalizedCacheTopology installedTopology;
    private volatile boolean running = false;
+   private volatile ReplicaSpliterator conflictSpliterator;
 
    @Inject
    public void init(AsyncInterceptorChain interceptorChain,
@@ -107,7 +113,8 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
                     RpcManager rpcManager,
                     StateConsumer stateConsumer,
                     StateReceiver<K, V> stateReceiver,
-                    EntryMergePolicyFactoryRegistry mergePolicyRegistry) {
+                    EntryMergePolicyFactoryRegistry mergePolicyRegistry,
+                    TimeService timeService) {
       this.interceptorChain = interceptorChain;
       this.cache = cache;
       this.commandsFactory = commandsFactory;
@@ -118,6 +125,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       this.stateConsumer = stateConsumer;
       this.stateReceiver = stateReceiver;
       this.mergePolicyRegistry = mergePolicyRegistry;
+      this.timeService = timeService;
    }
 
    @Start
@@ -133,18 +141,24 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       cache.getCacheConfiguration().clustering()
             .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
             .addListener(((a, o) -> initRpcOptions()));
+      // TODO make this an explicit configuration param in PartitionHandlingConfiguration
+      this.conflictTimeout = cache.getCacheConfiguration().clustering().stateTransfer().timeout();
       this.running = true;
       if (trace) log.tracef("Starting %s. isRunning=%s", this.getClass().getSimpleName(), !running);
    }
 
    @Stop(priority = 0)
    public void stop() {
+      if (trace) log.tracef("Stopping %s", this.getClass().getSimpleName());
+      this.running = false;
       synchronized (versionRequestMap) {
          if (trace) log.tracef("Stopping %s. isRunning=%s. %s", this.getClass().getSimpleName(), running, Arrays.toString(Thread.currentThread().getStackTrace()));
          cancelVersionRequests();
          versionRequestMap.clear();
       }
-      this.running = false;
+
+      if (isConflictResolutionInProgress() && conflictSpliterator != null)
+         conflictSpliterator.stop();
    }
 
    private void initRpcOptions() {
@@ -221,6 +235,11 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       if (!streamInProgress.compareAndSet(false, true))
          throw log.getConflictsAlreadyInProgress();
 
+      conflictSpliterator = new ReplicaSpliterator(topology);
+      if (!running) {
+         conflictSpliterator.stop();
+         return Stream.empty();
+      }
       return StreamSupport
             .stream(new ReplicaSpliterator(topology), false)
             .filter(filterConsistentEntries());
@@ -441,13 +460,16 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    private class ReplicaSpliterator extends Spliterators.AbstractSpliterator<Map<Address, CacheEntry<K, V>>> {
       private final LocalizedCacheTopology topology;
       private final int totalSegments;
+      private final long endTime;
       private int nextSegment = 0;
       private Iterator<Map<Address, CacheEntry<K, V>>> iterator = Collections.emptyIterator();
+      private volatile CompletableFuture<List<Map<Address, CacheEntry<K, V>>>> segmentRequestFuture;
 
       ReplicaSpliterator(LocalizedCacheTopology topology) {
          super(Long.MAX_VALUE, DISTINCT | NONNULL);
          this.topology = topology;
          this.totalSegments = topology.getWriteConsistentHash().getNumSegments();
+         this.endTime = timeService.expectedEndTime(conflictTimeout, TimeUnit.MILLISECONDS);
       }
 
 
@@ -458,16 +480,26 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
                try {
                   if (trace)
                      log.tracef("Attempting to receive all replicas for segment %s with topology %s", nextSegment, topology);
-                  List<Map<Address, CacheEntry<K, V>>> segmentEntries = stateReceiver.getAllReplicasForSegment(nextSegment, topology).get();
+                  segmentRequestFuture = stateReceiver.getAllReplicasForSegment(nextSegment, topology);
+                  long remainingTime = timeService.remainingTime(endTime, TimeUnit.MILLISECONDS);
+                  List<Map<Address, CacheEntry<K, V>>> segmentEntries = segmentRequestFuture.get(remainingTime, TimeUnit.MILLISECONDS);
                   if (trace && !segmentEntries.isEmpty())
                      log.tracef("Segment %s entries received: %s", nextSegment, segmentEntries);
-                  iterator = segmentEntries.iterator();
                   nextSegment++;
+                  iterator = segmentEntries.iterator();
+               } catch (CancellationException e) {
+                  if (trace) log.tracef("ReplicaSpliterator caught %s", e);
+                  streamInProgress.set(false);
+                  return false;
                } catch (InterruptedException e) {
+                  if (trace) log.tracef("ReplicaSpliterator caught %s", e);
                   stateReceiver.stop();
+                  streamInProgress.set(false);
                   Thread.currentThread().interrupt();
                   throw new CacheException(e);
-               } catch (ExecutionException | CancellationException e) {
+               } catch (ExecutionException | TimeoutException e) {
+                  if (trace) log.tracef("ReplicaSpliterator caught %s", e);
+                  streamInProgress.set(false);
                   throw new CacheException(e.getMessage(), e.getCause());
                }
             } else {
@@ -477,6 +509,12 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
          }
          action.accept(iterator.next());
          return true;
+      }
+
+      void stop() {
+         if (trace) log.tracef("Stop called on ReplicaSpliterator. Current segment %s", nextSegment);
+         if (segmentRequestFuture != null)
+            segmentRequestFuture.cancel(true);
       }
    }
 }

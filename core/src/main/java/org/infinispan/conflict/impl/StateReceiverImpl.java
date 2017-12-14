@@ -31,8 +31,6 @@ import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.topology.CacheTopology;
 
-import net.jcip.annotations.GuardedBy;
-
 /**
  * @author Ryan Emerson
  * @since 9.1
@@ -72,7 +70,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
 
    @Override
    @Stop
-   public synchronized void stop() {
+   public void stop() {
       if (trace) log.tracef("Stop called on StateReceiverImpl for cache %s", cacheName);
       for (SegmentRequest request : requestMap.values())
          request.cancel(null);
@@ -80,7 +78,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
 
    @DataRehashed
    @SuppressWarnings("WeakerAccess")
-   public synchronized void onDataRehash(DataRehashedEvent dataRehashedEvent) {
+   public void onDataRehash(DataRehashedEvent dataRehashedEvent) {
       if (dataRehashedEvent.isPre()) {
          for (SegmentRequest request : requestMap.values())
             request.cancel(new CacheException("Cancelling replica request as the owners of the requested " +
@@ -89,7 +87,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    }
 
    @Override
-   public synchronized CompletableFuture<List<Map<Address, CacheEntry<K, V>>>> getAllReplicasForSegment(int segmentId, LocalizedCacheTopology topology) {
+   public CompletableFuture<List<Map<Address, CacheEntry<K, V>>>> getAllReplicasForSegment(int segmentId, LocalizedCacheTopology topology) {
       return requestMap.computeIfAbsent(segmentId, id -> new SegmentRequest(id, topology)).requestState();
    }
 
@@ -164,25 +162,20 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
          // If an exception is thrown by any of the inboundTransferTasks, then remove all segment results and cancel all tasks
          allSegmentRequests.exceptionally(throwable -> {
             if (trace) log.tracef(throwable, "Exception when processing InboundTransferTask for cache %s", cacheName);
-            synchronized (StateReceiverImpl.this) {
-               cancel(throwable);
-               return null;
-            }
+            cancel(throwable);
+            return null;
          });
 
          future = allSegmentRequests.thenApply(aVoid -> {
             List<Map<Address, CacheEntry<K, V>>> retVal = keyReplicaMap.entrySet().stream()
                   .map(Map.Entry::getValue)
                   .collect(Collectors.toList());
-            synchronized (StateReceiverImpl.this) {
-               clear();
-               return Collections.unmodifiableList(retVal);
-            }
+            clear();
+            return Collections.unmodifiableList(retVal);
          });
          return future;
       }
 
-      @GuardedBy("StateReceiverImpl.this")
       synchronized void clear() {
          keyReplicaMap.clear();
          transferTaskMap.clear();
