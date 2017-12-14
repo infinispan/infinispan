@@ -313,6 +313,13 @@
                   </configuration>
                </execution>
             </executions>
+            <dependencies>
+               <dependency>
+                  <groupId>org.infinispan</groupId>
+                  <artifactId>infinispan-tools</artifactId>
+                  <version>${project.version}</version>
+               </dependency>
+            </dependencies>
          </plugin>
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
