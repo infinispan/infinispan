@@ -158,7 +158,7 @@ In order to properly configure the routing, `socket-binding` attributes of other
 <rest-connector name="rest-1" cache-container="local"/>
 <rest-connector name="rest-2" cache-container="local"/>
 <hotrod-connector name="hotrod-1" cache-container="local" />
-<hotrod-connector name="hotrod-1" cache-container="local" />
+<hotrod-connector name="hotrod-2" cache-container="local" />
 
 ----
 
