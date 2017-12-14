@@ -1282,6 +1282,15 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-javadoc-plugin</artifactId>
                <version>3.0.0-M1</version>
+               <configuration>
+                  <!--
+                  The javadoc plugin only runs in the javadoc and rhq-plugin modules.
+                  But with the default configuration it tries to run a new maven instance
+                  in every dependency, in order to generate the apidocs there as well.
+                  (http://maven.apache.org/plugins-archives/maven-javadoc-plugin-2.10.3/javadoc-mojo.html#detectOfflineLinks)
+                  -->
+                  <detectOfflineLinks>false</detectOfflineLinks>
+               </configuration>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
