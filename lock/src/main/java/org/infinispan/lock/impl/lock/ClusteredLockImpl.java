@@ -278,7 +278,7 @@ public class ClusteredLockImpl implements ClusteredLock {
 
    @Override
    public CompletableFuture<Boolean> tryLock(long time, TimeUnit unit) {
-      log.tracef("tryLock with timeout (%l, %s) called from %s", time, unit, originator);
+      log.tracef("tryLock with timeout (%d, %s) called from %s", time, unit, originator);
       CompletableFuture<Boolean> tryLockRequest = new CompletableFuture<>();
       tryLock(new TryLockRequestHolder(originator, tryLockRequest, time, unit));
       return tryLockRequest;
