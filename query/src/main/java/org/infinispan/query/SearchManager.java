@@ -41,12 +41,12 @@ public interface SearchManager {
     */
    <E> CacheQuery<E> getQuery(Query luceneQuery, Class<?>... classes);
 
-   /***
+   /**
     * @return {@link EntityContext}
     */
    EntityContext buildQueryBuilderForClass(Class<?> entityType);
 
-   /***
+   /**
     * @param luceneQuery
     * @param classes
     * @return

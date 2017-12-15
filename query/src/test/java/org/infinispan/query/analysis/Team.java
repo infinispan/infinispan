@@ -110,7 +110,7 @@ import org.hibernate.search.annotations.TokenizerDef;
             @CharFilterDef(factory = HTMLStripCharFilterFactory.class)
       },
       tokenizer = @TokenizerDef(factory = StandardTokenizerFactory.class)
-      )
+)
 @AnalyzerDef(name = "mapping_char_analyzer",
       charFilters = {
             @CharFilterDef(factory = MappingCharFilterFactory.class, params = {

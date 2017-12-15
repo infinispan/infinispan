@@ -1,5 +1,5 @@
 /**
- * Hot Rod query API
+ * Hot Rod query API.
  * @public
  */
 package org.infinispan.query.remote.client;
