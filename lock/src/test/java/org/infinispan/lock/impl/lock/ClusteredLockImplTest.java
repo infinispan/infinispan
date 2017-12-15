@@ -89,9 +89,7 @@ public class ClusteredLockImplTest extends BaseClusteredLockTest {
 
    public void testTryLockWithTimeoutAfterLockWithSmallTimeout() throws Throwable {
       assertTrue(await(lock.tryLock()));
-      CompletableFuture<Boolean> tryLock = lock.tryLock(1, TimeUnit.NANOSECONDS);
-      await(lock.unlock());
-      assertFalse(await(tryLock));
+      assertFalse(await(lock.tryLock(1, TimeUnit.NANOSECONDS)));
    }
 
    public void testTryLockWithTimeoutAfterLockWithBigTimeout() throws Throwable {
