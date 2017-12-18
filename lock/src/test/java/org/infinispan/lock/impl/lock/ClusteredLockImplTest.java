@@ -121,7 +121,6 @@ public class ClusteredLockImplTest extends BaseClusteredLockTest {
       await(call
             .exceptionally(e -> {
                assertException(ClusteredLockException.class, e);
-               //assertEquals(Log.LOCK_DELETE_MSG, e.getMessage());
                return null;
             }));
       assertTrue(call.isCompletedExceptionally());
@@ -134,7 +133,6 @@ public class ClusteredLockImplTest extends BaseClusteredLockTest {
       await(call
             .exceptionally(e -> {
                assertException(ClusteredLockException.class, e);
-               //assertEquals(Log.LOCK_DELETE_MSG, e.getMessage());
                return null;
             }));
       assertTrue(call.isCompletedExceptionally());
@@ -147,7 +145,6 @@ public class ClusteredLockImplTest extends BaseClusteredLockTest {
       await(call
             .exceptionally(e -> {
                assertException(ClusteredLockException.class, e);
-               //assertEquals(Log.LOCK_DELETE_MSG, e.getMessage());
                return null;
             }));
       assertTrue(call.isCompletedExceptionally());
@@ -160,7 +157,6 @@ public class ClusteredLockImplTest extends BaseClusteredLockTest {
       await(call
             .exceptionally(e -> {
                assertException(ClusteredLockException.class, e);
-               //assertEquals(Log.LOCK_DELETE_MSG, e.getMessage());
                return null;
             }));
       assertTrue(call.isCompletedExceptionally());
@@ -173,7 +169,19 @@ public class ClusteredLockImplTest extends BaseClusteredLockTest {
       await(call
             .exceptionally(e -> {
                assertException(ClusteredLockException.class, e);
-               //assertEquals(Log.LOCK_DELETE_MSG, e.getMessage());
+               return null;
+            }));
+      assertTrue(call.isCompletedExceptionally());
+   }
+
+   public void testRemoveHoldLock() throws Throwable {
+      await(lock.lock());
+      assertTrue(await(cm.remove(LOCK_NAME)));
+
+      CompletableFuture<Boolean> call = lock.isLocked();
+      await(call
+            .exceptionally(e -> {
+               assertException(ClusteredLockException.class, e);
                return null;
             }));
       assertTrue(call.isCompletedExceptionally());

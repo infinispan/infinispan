@@ -4,6 +4,7 @@ import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.test.Exceptions.assertException;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
@@ -76,26 +77,26 @@ public class ClusteredLockSplitBrainTest extends BasePartitionHandlingTest {
 
       splitCluster(new int[]{0, 1}, new int[]{2, 3});
 
-      await(lock0.tryLock(5, TimeUnit.SECONDS).exceptionally(ex -> {
+      assertNull(await(lock0.tryLock(5, TimeUnit.SECONDS).exceptionally(ex -> {
          assertException(ClusteredLockException.class, ex);
          assertException(AvailabilityException.class, ex.getCause());
          return null;
-      }));
-      await(lock1.tryLock(5, TimeUnit.SECONDS).exceptionally(ex -> {
+      })));
+      assertNull(await(lock1.tryLock(5, TimeUnit.SECONDS).exceptionally(ex -> {
          assertException(ClusteredLockException.class, ex);
          assertException(AvailabilityException.class, ex.getCause());
          return null;
-      }));
-      await(lock2.tryLock(5, TimeUnit.SECONDS).exceptionally(ex -> {
+      })));
+      assertNull(await(lock2.tryLock(5, TimeUnit.SECONDS).exceptionally(ex -> {
          assertException(ClusteredLockException.class, ex);
          assertException(AvailabilityException.class, ex.getCause());
          return null;
-      }));
-      await(lock3.tryLock(5, TimeUnit.SECONDS).exceptionally(ex -> {
+      })));
+      assertNull(await(lock3.tryLock(5, TimeUnit.SECONDS).exceptionally(ex -> {
          assertException(ClusteredLockException.class, ex);
          assertException(AvailabilityException.class, ex.getCause());
          return null;
-      }));
+      })));
    }
 
    @Test

@@ -4,6 +4,7 @@ import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.test.Exceptions.assertException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
@@ -117,46 +118,87 @@ public class ClusteredLockTest extends BaseClusteredLockTest {
       assertFalse(lock1Request.isDone());
       assertFalse(lock2Request.isDone());
 
-      await(cm0.remove(LOCK_NAME));
-      await(lock1Request
+      assertTrue(await(cm0.remove(LOCK_NAME)));
+      assertNull(await(lock1Request
             .exceptionally(e -> {
                assertException(ClusteredLockException.class, e);
                assertTrue(e.getMessage().contains(Log.LOCK_DELETE_MSG));
                return null;
-            }));
-      await(lock2Request
+            })));
+      assertNull(await(lock2Request
             .exceptionally(e -> {
                assertException(ClusteredLockException.class, e);
                assertTrue(e.getMessage().contains(Log.LOCK_DELETE_MSG));
                return null;
-            }));
+            })));
    }
 
    @Test
-   public void testTryLockWithTimeoutWithCountersInParallel() throws Throwable {
+   public void testTryLockWithTimeoutWithCountersInParallelOnSingleLock() throws Throwable {
       AtomicInteger counter = new AtomicInteger();
 
       ClusteredLock lock = clusteredLockManager(0).get(LOCK_NAME);
 
-      await(CompletableFuture.allOf(
-            lock.tryLock(1000, TimeUnit.MILLISECONDS ).thenAccept(r -> {
-               if (r) {
-                  counter.incrementAndGet();
-                  lock.unlock();
-               }
-            }),
-            lock.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
-               if (r) {
-                  counter.incrementAndGet();
-                  lock.unlock();
-               }
-            }),
-            lock.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
-               if (r) {
-                  counter.incrementAndGet();
-                  lock.unlock();
-               }
-            })));
+      CompletableFuture<Void> lockRes0 = lock.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
+         if (r) {
+            counter.incrementAndGet();
+            lock.unlock();
+         }
+      });
+
+      CompletableFuture<Void> lockRes1 = lock.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
+         if (r) {
+            counter.incrementAndGet();
+            lock.unlock();
+         }
+      });
+
+      CompletableFuture<Void> lockRes2 = lock.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
+         if (r) {
+            counter.incrementAndGet();
+            lock.unlock();
+         }
+      });
+
+      await(lockRes0);
+      await(lockRes1);
+      await(lockRes2);
+
+      assertEquals(3, counter.get());
+   }
+
+   @Test
+   public void testTryLockWithTimeoutWithCountersInParallelOnMultiLocks() throws Throwable {
+      AtomicInteger counter = new AtomicInteger();
+
+      ClusteredLock lock0 = clusteredLockManager(0).get(LOCK_NAME);
+      ClusteredLock lock1 = clusteredLockManager(1).get(LOCK_NAME);
+      ClusteredLock lock2 = clusteredLockManager(2).get(LOCK_NAME);
+
+      CompletableFuture<Void> lockRes0 = lock0.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
+         if (r) {
+            counter.incrementAndGet();
+            lock0.unlock();
+         }
+      });
+
+      CompletableFuture<Void> lockRes1 = lock1.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
+         if (r) {
+            counter.incrementAndGet();
+            lock1.unlock();
+         }
+      });
+
+      CompletableFuture<Void> lockRes2 = lock2.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
+         if (r) {
+            counter.incrementAndGet();
+            lock2.unlock();
+         }
+      });
+
+      await(lockRes0);
+      await(lockRes1);
+      await(lockRes2);
 
       assertEquals(3, counter.get());
    }
@@ -165,40 +207,40 @@ public class ClusteredLockTest extends BaseClusteredLockTest {
    public void testTryLockWithCountersInParallel() throws Throwable {
       AtomicInteger counter = new AtomicInteger();
 
-      ClusteredLock lock = clusteredLockManager(0).get(LOCK_NAME);
+      ClusteredLock lock0 = clusteredLockManager(0).get(LOCK_NAME);
+      ClusteredLock lock1 = clusteredLockManager(1).get(LOCK_NAME);
+      ClusteredLock lock2 = clusteredLockManager(2).get(LOCK_NAME);
 
-      await(CompletableFuture.allOf(
-            lock.tryLock()
-                  .thenApply(result -> {
-                     if (result) {
-                        new Counter(counter, 1, 100).run();
-                        return lock.unlock();
-                     }
-                     return CompletableFuture.completedFuture(null);
-                  })
-            ,
-            lock.tryLock()
-                  .thenCompose(result -> {
-                     if (result) {
-                        new Counter(counter, 1, 100).run();
-                        return lock.unlock();
-                     }
-                     return CompletableFuture.completedFuture(null);
-                  })
-            ,
-            lock.tryLock()
-                  .thenCompose(result -> {
-                     if (result) {
-                        try {
-                           new Counter(counter, 1, 100).run();
-                        } finally {
-                           return lock.unlock();
-                        }
-                     } else {
-                        return CompletableFuture.completedFuture(null);
-                     }
-                  })
-      ));
+      CompletableFuture<Void> lockRes0 = lock0.tryLock()
+            .thenCompose(result -> {
+               if (result) {
+                  new Counter(counter, 1, 100).run();
+                  return lock0.unlock();
+               }
+               return CompletableFuture.completedFuture(null);
+            });
+
+      CompletableFuture<Void> lockRes1 = lock1.tryLock()
+            .thenCompose(result -> {
+               if (result) {
+                  new Counter(counter, 1, 100).run();
+                  return lock1.unlock();
+               }
+               return CompletableFuture.completedFuture(null);
+            });
+
+      CompletableFuture<Void> lockRes2 = lock2.tryLock()
+            .thenCompose(result -> {
+               if (result) {
+                  new Counter(counter, 1, 100).run();
+                  return lock2.unlock();
+               }
+               return CompletableFuture.completedFuture(null);
+            });
+
+      await(lockRes0);
+      await(lockRes1);
+      await(lockRes2);
 
       assertEquals(1, counter.get());
    }
