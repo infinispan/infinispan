@@ -5,7 +5,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -27,6 +27,7 @@ import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.ManagerStatusResponse;
+import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -139,7 +140,7 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       return caches;
    }
 
-   protected <A, B> AdvancedCache<A, B> getCacheFromNonPreferredPartition(AdvancedCache preferredCache) {
+   protected <K, V> AdvancedCache<K, V> getCacheFromNonPreferredPartition(AdvancedCache preferredCache) {
       for (Cache c : caches()) {
          AdvancedCache cache = (AdvancedCache) c;
          if (!cache.getDistributionManager().getWriteConsistentHash().equals(preferredCache.getDistributionManager().getWriteConsistentHash()))
@@ -148,21 +149,22 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       return null;
    }
 
-   protected <A, B> AdvancedCache<A, B> getCacheFromPreferredPartition() {
-      List<AdvancedCache> caches = caches().stream().map(AdvancedCache.class::cast).collect(Collectors.toList());
-      return getCacheFromPreferredPartition(caches.toArray(new AdvancedCache[caches.size()]));
+   protected <K, V> AdvancedCache<K, V> getCacheFromPreferredPartition() {
+      AdvancedCache[] caches = caches().stream().map(AdvancedCache.class::cast).toArray(AdvancedCache[]::new);
+      return getCacheFromPreferredPartition(caches);
    }
 
-   protected <A, B> AdvancedCache<A, B> getCacheFromPreferredPartition(AdvancedCache... caches) {
-      List<CacheStatusResponse> statusResponses = Arrays.stream(caches)
-            .map(this::getCacheStatus)
-            .flatMap(Collection::stream)
-            .sorted(PreferAvailabilityStrategy.RESPONSE_COMPARATOR)
-            .collect(Collectors.toList());
+   protected <K, V> AdvancedCache<K, V> getCacheFromPreferredPartition(AdvancedCache... caches) {
+      // Emulate the algorithm in PreferAvailabilityStrategy/PreferConsistencyStrategy to determine the
+      // preferred topology and pick the cache on the node that will send it during cluster status recovery.
+      List<KeyValuePair<AdvancedCache, CacheStatusResponse>> statusResponses =
+         Arrays.stream(caches).map(c -> new KeyValuePair<>(c, getCacheStatus(c)))
+               .sorted(Comparator.comparing(KeyValuePair::getValue, PreferAvailabilityStrategy.RESPONSE_COMPARATOR))
+               .collect(Collectors.toList());
 
       CacheTopology maxStableTopology = null;
-      for (CacheStatusResponse response : statusResponses) {
-         CacheTopology stableTopology = response.getStableTopology();
+      for (KeyValuePair<AdvancedCache, CacheStatusResponse> response : statusResponses) {
+         CacheTopology stableTopology = response.getValue().getStableTopology();
          if (stableTopology == null) continue;
 
          if (maxStableTopology == null || maxStableTopology.getMembers().size() < stableTopology.getMembers().size()) {
@@ -170,31 +172,30 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
          }
       }
 
-      int cacheIndex = -1;
-      int count = -1;
+      AdvancedCache<K, V> maxTopologySender = null;
       CacheTopology maxTopology = null;
-      for (CacheStatusResponse response : statusResponses) {
-         count++;
-         CacheTopology stableTopology = response.getStableTopology();
+
+      for (KeyValuePair<AdvancedCache, CacheStatusResponse> response : statusResponses) {
+         CacheTopology stableTopology = response.getValue().getStableTopology();
          if (!Objects.equals(stableTopology, maxStableTopology)) continue;
 
-         CacheTopology topology = response.getCacheTopology();
+         CacheTopology topology = response.getValue().getCacheTopology();
          if (topology == null) continue;
 
          if (maxTopology == null || maxTopology.getMembers().size() < topology.getMembers().size()) {
             maxTopology = topology;
-            cacheIndex = count;
+            maxTopologySender = response.getKey();
          }
       }
       if (trace) log.tracef("getCacheFromPreferredPartition: partition=%s", maxTopology != null ? maxTopology.getCurrentCH().getMembers() : null);
-      return caches[cacheIndex];
+      return maxTopologySender;
    }
 
-   private Collection<CacheStatusResponse> getCacheStatus(AdvancedCache cache) {
+   private CacheStatusResponse getCacheStatus(AdvancedCache cache) {
       LocalTopologyManager localTopologyManager = cache.getComponentRegistry().getComponent(LocalTopologyManager.class);
       int viewId = cache.getRpcManager().getTransport().getViewId();
       ManagerStatusResponse statusResponse = localTopologyManager.handleStatusRequest(viewId);
-      return statusResponse.getCaches().values();
+      return statusResponse.getCaches().get(cache.getName());
    }
 
    protected void assertCacheGet(Object key, Object value, int... caches) {
