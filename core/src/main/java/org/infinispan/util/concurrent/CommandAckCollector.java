@@ -1,5 +1,7 @@
 package org.infinispan.util.concurrent;
 
+import static java.lang.String.format;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -85,9 +87,11 @@ public class CommandAckCollector {
       if (backupOwners.isEmpty()) {
          return new PrimaryOwnerOnlyCollector<>();
       }
-      SingleKeyCollector collector = new SingleKeyCollector(id, backupOwners, topologyId);
+      SingleKeyCollector<T> collector = new SingleKeyCollector<>(id, backupOwners, topologyId);
       BaseAckTarget prev = collectorMap.put(id, collector);
-      assert prev == null : prev.toString();
+      //is it possible the have a previous collector when the topology changes after the first collector is created
+      //in that case, the previous collector must have a lower topology id
+      assert prev == null || prev.topologyId < topologyId : format("replaced old collector '%s' by '%s'", prev, collector);
       if (trace) {
          log.tracef("Created new collector for %s. BackupOwners=%s", id, backupOwners);
       }
@@ -95,7 +99,7 @@ public class CommandAckCollector {
    }
 
    public <T> Collector<T> createBiased(long id, Address primaryOwner, int topologyId) {
-      SingleKeyCollector collector = new BiasedKeyCollector<>(id, primaryOwner, topologyId);
+      SingleKeyCollector<T> collector = new BiasedKeyCollector<>(id, primaryOwner, topologyId);
       BaseAckTarget prev = collectorMap.put(id, collector);
       assert prev == null : prev.toString();
       if (trace) {
@@ -129,7 +133,9 @@ public class CommandAckCollector {
       }
       SegmentBasedCollector collector = new SegmentBasedCollector(id, backups, topologyId);
       BaseAckTarget prev = collectorMap.put(id, collector);
-      assert prev == null : prev.toString();
+      //is it possible the have a previous collector when the topology changes after the first collector is created
+      //in that case, the previous collector must have a lower topology id
+      assert prev == null || prev.topologyId < topologyId : format("replaced old collector '%s' by '%s'", prev, collector);
       if (trace) {
          log.tracef("Created new collector for %s. Primary=%s. BackupSegments=%s", id, primary, backups);
       }
@@ -174,9 +180,9 @@ public class CommandAckCollector {
          if (trace) {
             log.tracef("No collector for %d", id);
          }
-         return;
       } else if (ackTarget instanceof BiasedKeyCollector) {
-         BiasedKeyCollector collector = (BiasedKeyCollector) ackTarget;
+         //noinspection unchecked
+         BiasedKeyCollector<Response> collector = (BiasedKeyCollector) ackTarget;
          collector.addPendingAcks(success, waitFor);
          // TODO: Using response here is suboptimal but we can't signal non-success through CF in any other way
          collector.primaryResult(success ? SuccessfulResponse.create(value) : UnsuccessfulResponse.create(value), success);
@@ -219,6 +225,7 @@ public class CommandAckCollector {
     * @return {@code true} if there are acknowledges pending from the backup owners, {@code false} otherwise. (testing
     * purposes only)
     */
+   @SuppressWarnings("BooleanMethodIsAlwaysInverted") //testing only
    public boolean hasPendingBackupAcks(long id) {
       BaseAckTarget ackTarget = collectorMap.get(id);
       return ackTarget != null && ackTarget.hasPendingBackupAcks();
@@ -276,7 +283,7 @@ public class CommandAckCollector {
        * It completes the future with the timeout exception.
        */
       @Override
-      public final synchronized Void call() throws Exception {
+      public final synchronized Void call() {
          future.completeExceptionally(createTimeoutException(id));
          return null;
       }
@@ -323,7 +330,7 @@ public class CommandAckCollector {
    }
 
    private class SingleKeyCollector<T> extends BaseCollector<T> {
-      protected final Collection<Address> backupOwners;
+      final Collection<Address> backupOwners;
 
       private SingleKeyCollector(long id, Collection<Address> backupOwners, int topologyId) {
          super(id, topologyId);
@@ -331,12 +338,12 @@ public class CommandAckCollector {
       }
 
       @Override
-      public synchronized boolean hasPendingBackupAcks() {
+      synchronized boolean hasPendingBackupAcks() {
          return !backupOwners.isEmpty();
       }
 
       @Override
-      public void onMembersChange(Collection<Address> members) {
+      void onMembersChange(Collection<Address> members) {
          boolean empty;
          synchronized (this) {
             empty = backupOwners.retainAll(members) && backupOwners.isEmpty();
@@ -375,7 +382,7 @@ public class CommandAckCollector {
          }
       }
 
-      protected void markReady() {
+      void markReady() {
          if (trace) {
             log.tracef("[Collector#%s] Ready!", id);
          }
@@ -385,6 +392,7 @@ public class CommandAckCollector {
 
    private class BiasedKeyCollector<T> extends SingleKeyCollector<T> {
       private final Address primaryOwner;
+      @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
       private Collection<Address> unsolicitedAcks;
 
       private BiasedKeyCollector(long id, Address primaryOwner, int topologyId) {
@@ -424,7 +432,7 @@ public class CommandAckCollector {
          }
       }
 
-      public synchronized void addPendingAcks(boolean success, Address[] waitFor) {
+      synchronized void addPendingAcks(boolean success, Address[] waitFor) {
          if (success && waitFor != null) {
             Collection<Address> members = currentMembers;
             for (Address address : waitFor) {
@@ -514,7 +522,7 @@ public class CommandAckCollector {
    }
 
    private static class ExceptionCollector<T> extends CompletableFuture<T> implements Collector<T> {
-      public ExceptionCollector(Throwable throwable) {
+      ExceptionCollector(Throwable throwable) {
          completeExceptionally(throwable);
       }
 
@@ -569,14 +577,15 @@ public class CommandAckCollector {
       // Note that this is a list, since we may expect multiple acks from single node.
       private final List<Address> pendingAcks = new ArrayList<>();
       private final CompletableFuture<Void> acksFuture = new CompletableFuture<>();
+      @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
       private List<Address> unsolicitedAcks;
       private Throwable throwable;
 
-      public MultiAckTarget(long id, int topologyId) {
+      MultiAckTarget(long id, int topologyId) {
          super(id, topologyId);
       }
 
-      public synchronized Collector<Response> collectorFor(Address target) {
+      synchronized Collector<Response> collectorFor(Address target) {
          if (throwable != null) {
             return new ExceptionCollector<>(throwable);
          } else {
@@ -587,7 +596,7 @@ public class CommandAckCollector {
          }
       }
 
-      public synchronized void addPendingAcks(Address[] waitFor) {
+      synchronized void addPendingAcks(Address[] waitFor) {
          if (trace) {
             log.tracef("[Collector#%s] Adding pending acks from %s, existing are %s",
                   id, Arrays.toString(waitFor), pendingAcks);
@@ -603,7 +612,7 @@ public class CommandAckCollector {
       /**
        * This method must be called after {@link #addPendingAcks(Address[])}
        */
-      public synchronized void primaryResult(Address from, Object value, boolean success) {
+      synchronized void primaryResult(Address from, Object value, boolean success) {
          Collector<Response> collector = primaryCollectors.get(from);
          if (trace) {
             log.tracef("[Collector#%s] PutMap Primary ACK. Address=%s", id, from);
@@ -618,7 +627,7 @@ public class CommandAckCollector {
          }
       }
 
-      public synchronized void backupAck(int topologyId, Address from) {
+      synchronized void backupAck(int topologyId, Address from) {
          if (trace) {
             log.tracef("[Collector#%s] PutMap Backup ACK. Address=%s. TopologyId=%s (expected=%s).",
                   id, from, topologyId, this.topologyId);
@@ -659,7 +668,7 @@ public class CommandAckCollector {
       }
 
       @Override
-      public Void call() throws Exception {
+      public Void call() {
          completeExceptionally(createTimeoutException(id), topologyId);
          return null;
       }
