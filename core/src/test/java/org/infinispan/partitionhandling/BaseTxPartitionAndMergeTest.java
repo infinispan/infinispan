@@ -61,7 +61,8 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
       controlledInboundHandler.filter = filter;
    }
 
-   protected FilterCollection createFilters(String cacheName, boolean discard, Class<? extends CacheRpcCommand> commandClass, SplitMode splitMode) {
+   FilterCollection createFilters(String cacheName, boolean discard, Class<? extends CacheRpcCommand> commandClass,
+         SplitMode splitMode) {
       Collection<AwaitAndUnblock> collection = new ArrayList<>(2);
       if (splitMode == SplitMode.ORIGINATOR_ISOLATED) {
          if (discard) {
@@ -84,7 +85,7 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
 
    protected abstract Log getLog();
 
-   protected void mergeCluster(String cacheName) {
+   void mergeCluster(String cacheName) {
       getLog().debugf("Merging cluster");
       partition(0).merge(partition(1));
       waitForNoRebalance(caches(cacheName));
@@ -95,7 +96,7 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
       getLog().debugf("Cluster merged");
    }
 
-   protected void finalAsserts(String cacheName, KeyInfo keyInfo, String value) {
+   void finalAsserts(String cacheName, KeyInfo keyInfo, String value) {
       assertNoTransactions(cacheName);
       assertNoTransactionsInPartitionHandler(cacheName);
       assertNoLocks(cacheName);
@@ -124,7 +125,7 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
       }
    }
 
-   protected KeyInfo createKeys(String cacheName) {
+   KeyInfo createKeys(String cacheName) {
       final Object key1 = new MagicKey("k1", cache(1, cacheName), cache(2, cacheName));
       final Object key2 = new MagicKey("k2", cache(2, cacheName), cache(1, cacheName));
       cache(1, cacheName).put(key1, INITIAL_VALUE);
@@ -289,16 +290,18 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
 
       private final Class<? extends CacheRpcCommand> aClass;
       private final ReclosableLatch notifier;
+      private volatile boolean discard;
 
       private DiscardFilter(Class<? extends CacheRpcCommand> aClass) {
          this.aClass = aClass;
          notifier = new ReclosableLatch(false);
+         discard = true; //discard everything by default. change if needed in the future.
       }
 
       @Override
       public boolean before(CacheRpcCommand command, Reply reply, DeliverOrder order) {
-         log.tracef("[Discard] Checking command %s.", command);
-         if (!notifier.isOpened() && aClass.isAssignableFrom(command.getClass())) {
+         log.tracef("[Discard] Checking command %s. (discard enabled=%s)", command, discard);
+         if (discard && aClass.isAssignableFrom(command.getClass())) {
             log.tracef("[Discard] Discarding command %s.", command);
             notifier.open();
             return false;
@@ -315,6 +318,10 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
       @Override
       public void unblock() {
          /*no-op*/
+      }
+
+      private void stopDiscard() {
+         discard = false;
       }
    }
 
@@ -357,6 +364,13 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
 
       public void unblock() {
          collection.forEach(BaseTxPartitionAndMergeTest.AwaitAndUnblock::unblock);
+      }
+
+      public void stopDiscard() {
+         collection.stream()
+               .filter(DiscardFilter.class::isInstance)
+               .map(DiscardFilter.class::cast)
+               .forEach(DiscardFilter::stopDiscard);
       }
    }
 }

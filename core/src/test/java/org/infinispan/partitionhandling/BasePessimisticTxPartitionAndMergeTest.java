@@ -26,7 +26,7 @@ import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
  */
 public abstract class BasePessimisticTxPartitionAndMergeTest extends BaseTxPartitionAndMergeTest {
 
-   protected static final String PESSIMISTIC_TX_CACHE_NAME = "pes-cache";
+   static final String PESSIMISTIC_TX_CACHE_NAME = "pes-cache";
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -77,6 +77,7 @@ public abstract class BasePessimisticTxPartitionAndMergeTest extends BaseTxParti
       }
 
       checkLocksDuringPartition(splitMode, keyInfo, discard);
+      filterCollection.stopDiscard();
 
       mergeCluster(PESSIMISTIC_TX_CACHE_NAME);
       finalAsserts(PESSIMISTIC_TX_CACHE_NAME, keyInfo, txFail ? INITIAL_VALUE : FINAL_VALUE);
