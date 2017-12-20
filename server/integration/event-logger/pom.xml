@@ -13,6 +13,7 @@
     <packaging>jar</packaging>
 
     <name>Infinispan Server - Event Logger</name>
+    <description>Infinispan Server - Infinispan Server Event Logger</description>
 
     <dependencies>
         <dependency>
@@ -80,26 +81,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <description>Infinispan Server - Infinispan Server Event Logger</description>
-
-    <profiles>
-       <profile>
-          <id>smoke</id>
-          <build>
-             <plugins>
-                <plugin>
-                   <groupId>org.apache.maven.plugins</groupId>
-                   <artifactId>maven-surefire-plugin</artifactId>
-                   <executions>
-                      <execution>
-                         <id>default-test</id>
-                         <phase>none</phase>
-                      </execution>
-                   </executions>
-                </plugin>
-             </plugins>
-          </build>
-       </profile>
-    </profiles>
 </project>

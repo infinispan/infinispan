@@ -184,6 +184,7 @@
       <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
       <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
       <module.skipTestComponentMetaDataProcessing>true</module.skipTestComponentMetaDataProcessing>
+      <module.skipMavenRemoteResource>false</module.skipMavenRemoteResource>
       <packaging>jar</packaging>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -282,6 +283,7 @@
       <version.maven.invoker>1.8</version.maven.invoker>
       <version.maven.jar>3.0.2</version.maven.jar>
       <version.maven.plugin>3.5</version.maven.plugin>
+      <version.maven.remote.resource>1.1</version.maven.remote.resource>
       <version.maven.shade>2.4.3</version.maven.shade>
       <version.maven.surefire>2.20.1</version.maven.surefire>
       <version.mc4j>1.2.6</version.mc4j>
@@ -1490,7 +1492,7 @@
          </plugin>
          <plugin>
             <artifactId>maven-remote-resources-plugin</artifactId>
-            <version>1.1</version>
+            <version>${version.maven.remote.resource}</version>
             <executions>
                <execution>
                   <id>attach-license</id>
@@ -1502,6 +1504,7 @@
                      <resourceBundles>
                         <resourceBundle>org.infinispan:infinispan-license:${project.version}</resourceBundle>
                      </resourceBundles>
+                     <skip>${module.skipMavenRemoteResource}</skip>
                   </configuration>
                </execution>
             </executions>
