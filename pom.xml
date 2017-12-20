@@ -320,165 +320,165 @@
    <dependencyManagement>
       <dependencies>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-bom</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
             <scope>import</scope>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-jcache</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring4-common</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring4-embedded</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-jdbc</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-jpa</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cdi-common</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cdi-remote</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cdi-embedded</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-client-hotrod</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-compatibility-mode-it</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-core</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-lucene-directory</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-marshaller-tests</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-query</artifactId>
             <classifier>tests</classifier>
             <version>${project.version}</version>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-scripting</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-core</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-hotrod</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-memcached</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-rest</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-jcache-remote</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring4-common</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring4-remote</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring4-embedded</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-embedded</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-embedded-query</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-remote</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-multimap</artifactId>
             <version>${project.version}</version>
          </dependency>
@@ -1127,7 +1127,7 @@
             <scope>test</scope>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cli</artifactId>
             <version>${project.version}</version>
          </dependency>

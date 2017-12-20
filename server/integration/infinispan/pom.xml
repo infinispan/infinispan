@@ -16,11 +16,11 @@
 
     <dependencies>
         <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-jgroups</artifactId>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-event-logger</artifactId>
         </dependency>
         <dependency>
@@ -130,7 +130,7 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-jgroups</artifactId>
             <type>test-jar</type>
             <scope>test</scope>

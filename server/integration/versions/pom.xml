@@ -228,51 +228,51 @@
          </dependency>
 
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-cli</artifactId>
             <version>${project.version}</version>
          </dependency>
 
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-commons</artifactId>
             <version>${project.version}</version>
          </dependency>
 
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-commons</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
 
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-event-logger</artifactId>
             <version>${project.version}</version>
          </dependency>
 
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-jgroups</artifactId>
             <version>${project.version}</version>
          </dependency>
 
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-jgroups</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
 
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-infinispan</artifactId>
             <version>${project.version}</version>
          </dependency>
 
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-infinispan</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
@@ -285,19 +285,19 @@
          </dependency>
 
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-common</artifactId>
             <version>${project.version}</version>
          </dependency>
 
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-endpoints</artifactId>
             <version>${project.version}</version>
          </dependency>
 
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-feature-pack</artifactId>
             <version>${project.version}</version>
             <type>zip</type>

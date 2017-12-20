@@ -29,12 +29,12 @@
       </dependency>
 
       <dependency>
-        <groupId>${project.groupId}</groupId>
+        <groupId>org.infinispan</groupId>
         <artifactId>infinispan-server-core</artifactId>
       </dependency>
 
       <dependency>
-         <groupId>${project.groupId}</groupId>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-remote-query-server</artifactId>
       </dependency>
 

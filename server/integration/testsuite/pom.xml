@@ -1492,7 +1492,7 @@
                                 <stripVersion>true</stripVersion>
                                 <artifactItems>
                                     <artifactItem>
-                                        <groupId>${project.groupId}</groupId>
+                                        <groupId>org.infinispan.server</groupId>
                                         <artifactId>infinispan-server-build</artifactId>
                                         <type>zip</type>
                                         <overWrite>true</overWrite>
