@@ -29,6 +29,7 @@ public class PessimisticTxPartitionAndMergeDuringRollbackTest extends BasePessim
       doTest(SplitMode.BOTH_DEGRADED, true, false);
    }
 
+   @Test(groups = "unstable", description = "https://issues.jboss.org/browse/ISPN-8232")
    public void testOriginatorIsolatedPartitionWithDiscard() throws Exception {
       doTest(SplitMode.ORIGINATOR_ISOLATED, true, true);
    }
