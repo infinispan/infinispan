@@ -14,7 +14,7 @@
 
    <dependencies>
       <dependency>
-         <groupId>${project.groupId}</groupId>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-core</artifactId>
       </dependency>
       <dependency>
@@ -22,12 +22,12 @@
          <artifactId>netty-all</artifactId>
       </dependency>
       <dependency>
-         <groupId>${project.groupId}</groupId>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-rest</artifactId>
          <optional>true</optional>
       </dependency>
       <dependency>
-         <groupId>${project.groupId}</groupId>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-rest</artifactId>
          <type>test-jar</type>
          <scope>test</scope>
@@ -105,7 +105,7 @@
             </configuration>
          </plugin>
          <plugin>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-defaults-maven-plugin</artifactId>
             <version>${project.version}</version>
             <executions>

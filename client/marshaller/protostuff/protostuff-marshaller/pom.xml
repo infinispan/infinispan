@@ -32,7 +32,7 @@
         </dependency>
         <!-- Test dependencies -->
         <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-marshaller-tests</artifactId>
             <scope>test</scope>
             <type>test-jar</type>

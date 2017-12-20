@@ -16,7 +16,7 @@
 
    <dependencies>
       <dependency>
-         <groupId>${project.groupId}</groupId>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-embedded</artifactId>
       </dependency>
       <dependency>

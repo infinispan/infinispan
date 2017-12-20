@@ -121,7 +121,7 @@
             </executions>
          </plugin>
          <plugin>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-defaults-maven-plugin</artifactId>
             <version>${project.version}</version>
             <executions>
