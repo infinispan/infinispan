@@ -17,28 +17,31 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
 import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.write.BackupAckCommand;
+import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateConsumer;
+import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.topology.ClusterTopologyManager;
-import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.ControlledRpcManager;
 import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
@@ -78,7 +81,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       return PrepareCommand.class;
    }
 
-   protected Callable<Object> runWithTx(final TransactionManager tm, final Callable<? extends Object> callable) {
+   protected Callable<Object> runWithTx(final TransactionManager tm, final Callable<?> callable) {
       return () -> TestingUtil.withTx(tm, callable);
    }
 
@@ -320,7 +323,13 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
       // Block any state response commands on cache0
       CheckPoint checkPoint = new CheckPoint();
-      ControlledRpcManager blockingRpcManager0 = blockStateResponseCommand(primaryOwnerCache);
+      ControlledRpcManager blockingRpcManager0 = ControlledRpcManager.replaceRpcManager(primaryOwnerCache);
+      ControlledRpcManager blockingRpcManager2 = ControlledRpcManager.replaceRpcManager(nonOwnerCache);
+      // The execution of the write/prepare/commit commands is controlled with the BlockingInterceptor
+      blockingRpcManager0.excludeCommands(BackupWriteRpcCommand.class, PrepareCommand.class, CommitCommand.class,
+                                          TxCompletionNotificationCommand.class
+      );
+      blockingRpcManager2.excludeCommands(BackupAckCommand.class);
 
       // Block the rebalance confirmation on cache0
       int rebalanceTopologyId = preJoinTopologyId + 2;
@@ -338,8 +347,22 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
       assertEquals(primaryOwnerCache.getCacheManager().getCoordinator(), primaryOwnerCache.getCacheManager().getAddress());
 
-      // Wait for cache0 to collect the state to send to cache1 (including our previous value).
-      blockingRpcManager0.waitForCommandToBlock();
+      // Wait for both nodes to start state transfer
+      // If the cache is transactional, there's a GET_TRANSACTIONS request before the START_STATE_TRANSFER request
+      if (transactional) {
+         blockingRpcManager0.expectCommand(StateRequestCommand.class).send().receiveAll();
+         blockingRpcManager2.expectCommand(StateRequestCommand.class).send().receiveAll();
+      }
+      ControlledRpcManager.BlockedRequest blockedStateRequest0 =
+         blockingRpcManager0.expectCommand(StateRequestCommand.class);
+      ControlledRpcManager.BlockedRequest blockedStateRequest2 =
+         blockingRpcManager2.expectCommand(StateRequestCommand.class);
+
+      // Unblock the state request from node 2
+      blockedStateRequest2.send().receiveAll();
+      // Wait for cache0 to collect the state to send to node 2 (including our previous value).
+      ControlledRpcManager.BlockedRequest blockedStateResponse0 =
+         blockingRpcManager0.expectCommand(StateResponseCommand.class);
 
       // Every PutKeyValueCommand will be blocked before committing the entry on cache1
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
@@ -351,17 +374,20 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       // The put command will be blocked on cache1 just before committing the entry.
       Future<Object> future = fork(() -> op.perform(primaryOwnerCache, key));
 
-      // Wait for the entry to be wrapped on cache1
+      // Wait for the entry to be wrapped on node 2
+      // The replicated command could be either a non-tx BackupWriteRpcCommand or a PrepareCommand
       beforeCommitCache1Barrier.await(10, TimeUnit.SECONDS);
 
       // Remove the interceptor so we don't mess up any other state transfer puts
       removeAllBlockingInterceptorsFromCache(nonOwnerCache);
 
       // Allow the state to be applied on cache1 (writing the old value for our entry)
-      blockingRpcManager0.stopBlocking();
+      blockedStateResponse0.send().receiveAll();
 
       // Wait for second in line to finish applying the state, but don't allow the rebalance confirmation to be processed.
       // (It would change the topology and it would trigger a retry for the command.)
+      blockedStateRequest0.send().receiveAll();
+      blockingRpcManager2.expectCommand(StateResponseCommand.class).send().receiveAll();
       checkPoint.awaitStrict("pre_rebalance_confirmation_" + rebalanceTopologyId + "_from_" +
                                    primaryOwnerCache.getCacheManager().getAddress(), 10, SECONDS);
 
@@ -470,14 +496,6 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       assertEquals(op.getValue(), nonOwnerCache.get(key));
    }
 
-   private ControlledRpcManager blockStateResponseCommand(final Cache cache) throws InterruptedException {
-      RpcManager rpcManager = TestingUtil.extractComponent(cache, RpcManager.class);
-      ControlledRpcManager controlledRpcManager = new ControlledRpcManager(rpcManager);
-      controlledRpcManager.blockBefore(StateResponseCommand.class);
-      TestingUtil.replaceComponent(cache, RpcManager.class, controlledRpcManager, true);
-      return controlledRpcManager;
-   }
-
    private void blockRebalanceConfirmation(final EmbeddedCacheManager manager, final CheckPoint checkPoint, int rebalanceTopologyId)
          throws Exception {
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
@@ -489,7 +507,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
          int topologyId = (Integer) arguments[2];
          if (topologyId == rebalanceTopologyId) {
             checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
-            checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
+            checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 20, SECONDS);
          }
          return forwardedAnswer.answer(invocation);
       }).when(mockManager).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), isNull(), anyInt());
@@ -504,7 +522,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
          // Wait for main thread to sync up
          checkPoint.trigger("pre_state_apply_invoked_for_" + cache);
          // Now wait until main thread lets us through
-         checkPoint.awaitStrict("pre_state_apply_release_for_" + cache, 10, TimeUnit.SECONDS);
+         checkPoint.awaitStrict("pre_state_apply_release_for_" + cache, 20, TimeUnit.SECONDS);
 
          return forwardedAnswer.answer(invocation);
       }).when(mockConsumer).applyState(any(Address.class), anyInt(), anyBoolean(), anyCollection());

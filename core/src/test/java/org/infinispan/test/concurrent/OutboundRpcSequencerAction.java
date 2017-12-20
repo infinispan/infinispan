@@ -1,13 +1,18 @@
 package org.infinispan.test.concurrent;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.AbstractControlledRpcManager;
+import org.infinispan.util.AbstractDelegatingRpcManager;
 
 /**
  * Replaces the {@link RpcManager} with a wrapper that can interact with a {@link StateSequencer} when a
@@ -59,7 +64,7 @@ public class OutboundRpcSequencerAction {
       return this;
    }
 
-   public static class SequencerRpcManager extends AbstractControlledRpcManager {
+   public static class SequencerRpcManager extends AbstractDelegatingRpcManager {
       private final StateSequencer stateSequencer;
       private final CommandMatcher matcher;
       private volatile List<String> statesBefore;
@@ -72,24 +77,32 @@ public class OutboundRpcSequencerAction {
       }
 
       @Override
-      protected Object beforeInvokeRemotely(ReplicableCommand command) {
+      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+                                                      ResponseCollector<T> collector,
+                                                      Function<ResponseCollector<T>, CompletionStage<T>>
+                                                            invoker) {
+         boolean accept;
          try {
-            boolean accept = matcher.accept(command);
+            accept = matcher.accept(command);
             StateSequencerUtil.advanceMultiple(stateSequencer, accept, statesBefore);
-            return accept;
          } catch (Exception e) {
             throw new RuntimeException(e);
+         }
+         CompletionStage<T> stage = super.performRequest(targets, command, collector, invoker);
+         if (stage != null) {
+            return stage.whenComplete((result, throwable) -> advanceNoThrow(accept));
+         } else {
+            advanceNoThrow(accept);
+            return null;
          }
       }
 
-      @Override
-      protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
+      private void advanceNoThrow(boolean accept) {
          try {
-            StateSequencerUtil.advanceMultiple(stateSequencer, (Boolean) argument, statesAfter);
+            StateSequencerUtil.advanceMultiple(stateSequencer, accept, statesAfter);
          } catch (Exception e) {
             throw new RuntimeException(e);
          }
-         return responseObject;
       }
 
       public void beforeStates(List<String> states) {

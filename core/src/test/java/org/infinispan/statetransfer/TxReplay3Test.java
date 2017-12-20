@@ -4,11 +4,14 @@ import static org.infinispan.test.TestingUtil.wrapComponent;
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -25,10 +28,11 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
-import org.infinispan.util.AbstractControlledRpcManager;
+import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
@@ -112,7 +116,7 @@ public class TxReplay3Test extends MultipleCacheManagersTest {
       return builder;
    }
 
-   private static class UnsureResponseRpcManager extends AbstractControlledRpcManager {
+   private static class UnsureResponseRpcManager extends AbstractDelegatingRpcManager {
 
       private static final Log log = LogFactory.getLog(UnsureResponseRpcManager.class);
       private final StateSequencer sequencer;
@@ -124,31 +128,28 @@ public class TxReplay3Test extends MultipleCacheManagersTest {
       }
 
       @Override
-      protected Object beforeInvokeRemotely(ReplicableCommand command) {
-         Object arg = super.beforeInvokeRemotely(command);
-         log.debugf("Before invoke remotely %s", command);
-         return arg;
-      }
+      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+                                                      ResponseCollector<T> collector,
+                                                      Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
+         return super.performRequest(targets, command, collector, invoker)
+            .thenApply(result -> {
+               log.debugf("After invoke remotely %s. Responses=%s", command, result);
+               if (triggered || !(command instanceof PrepareCommand))
+                  return result;
 
-      @Override
-      protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
-         T result = super.afterInvokeRemotely(command, responseObject, argument);
-         log.debugf("After invoke remotely %s. Responses=%s", command, result);
-         if (triggered || !(command instanceof PrepareCommand))
-            return result;
-
-         log.debugf("Triggering %s and %s", TX1_LOCKED, TX1_UNSURE);
-         triggered = true;
-         try {
-            sequencer.advance(TX1_LOCKED);
-            sequencer.advance(TX1_UNSURE);
-         } catch (TimeoutException | InterruptedException e) {
-            throw new CacheException(e);
-         }
-         Map<Address, Response> newResult = new HashMap<>();
-         ((Map<Address, Response>) result).forEach((address, response) -> newResult.put(address, UnsureResponse.INSTANCE));
-         log.debugf("After invoke remotely %s. New Responses=%s", command, newResult);
-         return (T) newResult;
+               log.debugf("Triggering %s and %s", TX1_LOCKED, TX1_UNSURE);
+               triggered = true;
+               try {
+                  sequencer.advance(TX1_LOCKED);
+                  sequencer.advance(TX1_UNSURE);
+               } catch (TimeoutException | InterruptedException e) {
+                  throw new CacheException(e);
+               }
+               Map<Address, Response> newResult = new HashMap<>();
+               ((Map<Address, Response>) result).forEach((address, response) -> newResult.put(address, UnsureResponse.INSTANCE));
+               log.debugf("After invoke remotely %s. New Responses=%s", command, newResult);
+               return (T) newResult;
+            });
       }
    }
 

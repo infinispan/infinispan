@@ -1,9 +1,12 @@
 package org.infinispan.lock.singlelock;
 
 import java.util.Collection;
-import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.function.Function;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -12,17 +15,16 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
-import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 
 /**
@@ -62,8 +64,8 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
       return c;
    }
 
-   protected Object beginAndPrepareTx(final Object k, final int cacheIndex) {
-      fork(() -> {
+   protected Future<Void> beginAndPrepareTx(final Object k, final int cacheIndex) {
+      return fork(() -> {
          try {
             tm(cacheIndex).begin();
             cache(cacheIndex).put(k,"v");
@@ -73,11 +75,10 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
             log.errorf(e, "Error preparing transaction for key %s on cache %s", k, cache(cacheIndex));
          }
       });
-      return k;
    }
 
-   protected Object beginAndCommitTx(final Object k, final int cacheIndex) {
-      fork(() -> {
+   protected Future<Void> beginAndCommitTx(final Object k, final int cacheIndex) {
+      return fork(() -> {
          try {
             tm(cacheIndex).begin();
             cache(cacheIndex).put(k, "v");
@@ -86,7 +87,6 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
             log.errorf(e, "Error committing transaction for key %s on cache %s", k, cache(cacheIndex));
          }
       });
-      return k;
    }
 
    public static class TxControlInterceptor extends CommandInterceptor {
@@ -113,16 +113,16 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
       }
    }
 
-   protected void prepareCache(final CountDownLatch releaseLocksLatch) {
-      RpcManager rpcManager = new ControlledRpcManager(advancedCache(1).getRpcManager()) {
+   protected void skipTxCompletion(final AdvancedCache<Object, Object> cache, final CountDownLatch releaseLocksLatch) {
+      RpcManager rpcManager = new AbstractDelegatingRpcManager(cache.getRpcManager()) {
          @Override
-         public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc,
-                                                      RpcOptions options) {
-            if (rpc instanceof TxCompletionNotificationCommand) {
+         protected <T> void performSend(Collection<Address> targets, ReplicableCommand command,
+                                        Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
+            if (command instanceof TxCompletionNotificationCommand) {
                releaseLocksLatch.countDown();
-               return null;
+               log.tracef("Skipping TxCompletionNotificationCommand");
             } else {
-               return realOne.invokeRemotely(recipients, rpc, options);
+               super.performSend(targets, command, invoker);
             }
          }
       };

@@ -8,9 +8,12 @@ import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
@@ -31,11 +34,12 @@ import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.InCacheMode;
-import org.infinispan.util.AbstractControlledRpcManager;
+import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -222,7 +226,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       }
    }
 
-   private class ReorderResponsesRpcManager extends AbstractControlledRpcManager {
+   private class ReorderResponsesRpcManager extends AbstractDelegatingRpcManager {
 
       private final Address lastResponse;
 
@@ -232,26 +236,34 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
-         if (!(responseObject instanceof Map)) {
-            log.debugf("Single response for command %s: %s", command, responseObject);
-            return responseObject;
-         }
+      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+                                                      ResponseCollector<T> collector,
+                                                      Function<ResponseCollector<T>, CompletionStage<T>>
+                                                            invoker) {
+         return super.performRequest(targets, command, collector, invoker)
+                     .thenApply(responseObject -> {
+                        if (!(responseObject instanceof Map)) {
+                           log.debugf("Single response for command %s: %s", command, responseObject);
+                           return responseObject;
+                        }
 
-         Map<Address, Response> newResponseMap = new LinkedHashMap<>();
-         boolean containsLastResponseAddress = false;
-         for (Map.Entry<Address, Response> entry : ((Map<Address, Response>) responseObject).entrySet()) {
-            if (lastResponse.equals(entry.getKey())) {
-               containsLastResponseAddress = true;
-               continue;
-            }
-            newResponseMap.put(entry.getKey(), entry.getValue());
-         }
-         if (containsLastResponseAddress) {
-            newResponseMap.put(lastResponse, ((Map<Address, Response>) responseObject).get(lastResponse));
-         }
-         log.debugf("Responses for command %s are %s", command, newResponseMap.values());
-         return (T) newResponseMap;
+                        Map<Address, Response> newResponseMap = new LinkedHashMap<>();
+                        boolean containsLastResponseAddress = false;
+                        for (Map.Entry<Address, Response> entry : ((Map<Address, Response>) responseObject)
+                                                                     .entrySet()) {
+                           if (lastResponse.equals(entry.getKey())) {
+                              containsLastResponseAddress = true;
+                              continue;
+                           }
+                           newResponseMap.put(entry.getKey(), entry.getValue());
+                        }
+                        if (containsLastResponseAddress) {
+                           newResponseMap.put(lastResponse,
+                                              ((Map<Address, Response>) responseObject).get(lastResponse));
+                        }
+                        log.debugf("Responses for command %s are %s", command, newResponseMap.values());
+                        return (T) newResponseMap;
+                     });
       }
    }
 

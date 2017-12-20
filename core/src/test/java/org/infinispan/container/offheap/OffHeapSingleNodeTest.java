@@ -63,24 +63,20 @@ public class OffHeapSingleNodeTest extends OffHeapMultiNodeTest {
 
       CyclicBarrier barrier = new CyclicBarrier(2);
 
-      Future<?> future = fork(() -> {
-         try {
-            // There is only 1 key so it should be the same lock
-            castDC(cache.getAdvancedCache().getDataContainer()).executeTask(KeyFilter.ACCEPT_ALL_FILTER,
-                  (k, ice) -> {
-                     try {
-                        barrier.await(10, TimeUnit.SECONDS);
-                        barrier.await(10, TimeUnit.SECONDS);
-                        assertTrue(keyWB.equalsWrappedBytes(k));
-                        assertTrue(keyWB.equalsWrappedBytes(ice.getKey()));
-                        assertTrue(valueWB.equalsWrappedBytes(ice.getValue()));
-                     } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
-                        throw new RuntimeException(e);
-                     }
-                  });
-         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-         }
+      Future<Void> future = fork(() -> {
+         // There is only 1 key so it should be the same lock
+         castDC(cache.getAdvancedCache().getDataContainer()).executeTask(KeyFilter.ACCEPT_ALL_FILTER,
+               (k, ice) -> {
+                  try {
+                     barrier.await(10, TimeUnit.SECONDS);
+                     barrier.await(10, TimeUnit.SECONDS);
+                     assertTrue(keyWB.equalsWrappedBytes(k));
+                     assertTrue(keyWB.equalsWrappedBytes(ice.getKey()));
+                     assertTrue(valueWB.equalsWrappedBytes(ice.getValue()));
+                  } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
+                     throw new RuntimeException(e);
+                  }
+               });
       });
 
       barrier.await(10, TimeUnit.SECONDS);

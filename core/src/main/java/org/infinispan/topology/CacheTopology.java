@@ -204,11 +204,11 @@ public class CacheTopology {
    public String toString() {
       return "CacheTopology{" +
             "id=" + topologyId +
+            ", phase=" + phase +
             ", rebalanceId=" + rebalanceId +
             ", currentCH=" + currentCH +
             ", pendingCH=" + pendingCH +
             ", unionCH=" + unionCH +
-            ", phase=" + phase    +
             ", actualMembers=" + actualMembers +
             ", persistentUUIDs=" + persistentUUIDs +
             '}';
@@ -260,7 +260,7 @@ public class CacheTopology {
 
       @Override
       public Set<Class<? extends CacheTopology>> getTypeClasses() {
-         return Collections.<Class<? extends CacheTopology>>singleton(CacheTopology.class);
+         return Collections.singleton(CacheTopology.class);
       }
    }
 

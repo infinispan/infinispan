@@ -255,7 +255,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
          Object keyValue = new Object();
          InternalCacheEntry ice = new ImmortalCacheEntry(keyValue, keyValue);
          sync.runL1UpdateIfPossible(ice);
-      }, null);
+      });
 
       // wait for the thread to try updating
       barrier.await(1, TimeUnit.SECONDS);

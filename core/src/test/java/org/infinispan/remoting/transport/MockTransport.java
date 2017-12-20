@@ -3,7 +3,6 @@ package org.infinispan.remoting.transport;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collection;
@@ -49,8 +48,7 @@ public class MockTransport implements Transport {
    private static final Log log = LogFactory.getLog(MockTransport.class);
 
    private final Address localAddress;
-   private final BlockingQueue<FutureRemoteInvocation> expectedInvocations = new LinkedBlockingDeque<>();
-   private final BlockingQueue<RecordedRemoteInvocation> recordedInvocations = new LinkedBlockingDeque<>();
+   private final BlockingQueue<BlockedRequest> blockedRequests = new LinkedBlockingDeque<>();
 
    private int viewId;
    private List<Address> members;
@@ -76,167 +74,97 @@ public class MockTransport implements Transport {
    }
 
    /**
-    * Expect a command to be invoked remotely in the future.
-    * <p>
-    * The operations on the {@link FutureRemoteInvocation} return value are queued and they run on the
-    * actual {@link ResponseCollector} the command is invoked with.
-    * The test must still call {@link #verifyRemoteCommand(Class)}, and any exceptions thrown by the checker will be
-    * rethrown when calling a {@link RecordedRemoteInvocation} method.
+    * Expect a command to be invoked remotely and send replies using the {@link BlockedRequest} methods.
     */
-   public <T extends ReplicableCommand> FutureRemoteInvocation expectRemoteCommand(Class<T> expectedCommandClass,
-                                                                                   Consumer<T> checker) {
-      verifyNoMoreCommands();
-      FutureRemoteInvocation collector = new FutureRemoteInvocation(c -> {
-         T command = expectedCommandClass.cast(c);
-         checker.accept(command);
-      });
-      expectedInvocations.add(collector);
-      return collector;
-   }
-
-   /**
-    * Expect a command to be invoked remotely in the future.
-    * <p>
-    *
-    * @see #expectRemoteCommand(Class, Consumer)
-    */
-   public <T extends ReplicableCommand> FutureRemoteInvocation expectRemoteCommand(Class<T> expectedCommandClass) {
-      verifyNoMoreCommands();
-      FutureRemoteInvocation collector = new FutureRemoteInvocation(expectedCommandClass::cast);
-      expectedInvocations.add(collector);
-      return collector;
-   }
-
-   /**
-    * Expect a {@link CacheTopologyControlCommand} to be invoked remotely in the future.
-    *
-    * @see #expectRemoteCommand(Class, Consumer)
-    */
-   public FutureRemoteInvocation expectTopologyCommand(CacheTopologyControlCommand.Type type,
-                                                       Consumer<CacheTopologyControlCommand> checker) {
-      verifyNoMoreCommands();
-      FutureRemoteInvocation collector = new FutureRemoteInvocation(c -> {
-         CacheTopologyControlCommand topologyCommand = (CacheTopologyControlCommand) c;
-         assertEquals(type, topologyCommand.getType());
-         checker.accept(topologyCommand);
-      });
-      expectedInvocations.add(collector);
-      return collector;
-   }
-
-   /**
-    * Expect a {@link CacheTopologyControlCommand} to be invoked remotely in the future.
-    *
-    * @see #expectRemoteCommand(Class, Consumer)
-    */
-   public FutureRemoteInvocation expectTopologyCommand(CacheTopologyControlCommand.Type type) {
-      verifyNoMoreCommands();
-      FutureRemoteInvocation collector = new FutureRemoteInvocation(c -> {
-         CacheTopologyControlCommand topologyCommand = (CacheTopologyControlCommand) c;
-         assertEquals(type, topologyCommand.getType());
-      });
-      expectedInvocations.add(collector);
-      return collector;
-   }
-
-   /**
-    * Verify that a command was invoked remotely and send replies using the {@link RecordedRemoteInvocation} methods.
-    */
-   public <T extends ReplicableCommand> RecordedRemoteInvocation verifyRemoteCommand(Class<T> expectedCommandClass,
-                                                                                     Consumer<T> checker)
+   public <T extends ReplicableCommand> BlockedRequest expectCommand(Class<T> expectedCommandClass)
       throws InterruptedException {
-      RecordedRemoteInvocation invocation = recordedInvocations.poll(10, TimeUnit.SECONDS);
-      assertNotNull("Timed out waiting for invocation", invocation);
-      T command = expectedCommandClass.cast(invocation.getCommand());
+      return expectCommand(expectedCommandClass, c -> {});
+   }
+
+   /**
+    * Expect a command to be invoked remotely and send replies using the {@link BlockedRequest} methods.
+    */
+   public <T extends ReplicableCommand> BlockedRequest expectCommand(Class<T> expectedCommandClass,
+                                                                     Consumer<T> checker)
+      throws InterruptedException {
+      BlockedRequest request = blockedRequests.poll(10, TimeUnit.SECONDS);
+      assertNotNull("Timed out waiting for invocation", request);
+      T command = expectedCommandClass.cast(request.getCommand());
       checker.accept(command);
-      return invocation;
+      return request;
    }
 
    /**
-    * Verify that a command was invoked remotely and send replies using the {@link RecordedRemoteInvocation} methods.
+    * Expect a topology command to be invoked remotely and send replies using the {@link BlockedRequest} methods.
     */
-   public <T extends ReplicableCommand> RecordedRemoteInvocation verifyRemoteCommand(Class<T> expectedCommandClass)
+   public BlockedRequest expectTopologyCommand(CacheTopologyControlCommand.Type type)
       throws InterruptedException {
-      return verifyRemoteCommand(expectedCommandClass, c -> {});
+      return expectTopologyCommand(type, c -> {});
    }
 
    /**
-    * Verify that a command was invoked remotely and send replies using the {@link RecordedRemoteInvocation} methods.
+    * Expect a topology command to be invoked remotely and send replies using the {@link BlockedRequest} methods.
     */
-   public RecordedRemoteInvocation verifyRemoteCommand() throws InterruptedException {
-      return verifyRemoteCommand(ReplicableCommand.class);
-   }
-
-   /**
-    * Verify that a command was invoked remotely and send replies using the {@link RecordedRemoteInvocation} methods.
-    */
-   public RecordedRemoteInvocation verifyTopologyCommand(CacheTopologyControlCommand.Type type)
+   public BlockedRequest expectTopologyCommand(CacheTopologyControlCommand.Type type,
+                                               Consumer<CacheTopologyControlCommand> checker)
       throws InterruptedException {
-      return verifyTopologyCommand(type, c -> {});
+      return expectCommand(CacheTopologyControlCommand.class, c -> {
+         assertEquals(type, c.getType());
+         checker.accept(c);
+      });
    }
 
    /**
-    * Verify that a command was invoked remotely and send replies using the {@link RecordedRemoteInvocation} methods.
+    * Assert that all the commands already invoked remotely have been verified and there were no errors.
     */
-   public RecordedRemoteInvocation verifyTopologyCommand(CacheTopologyControlCommand.Type type,
-                                                         Consumer<CacheTopologyControlCommand> checker)
-      throws InterruptedException {
-      RecordedRemoteInvocation invocation = recordedInvocations.poll(10, TimeUnit.SECONDS);
-      assertNotNull("Timed out waiting for invocation", invocation);
-      CacheTopologyControlCommand command = (CacheTopologyControlCommand) invocation.getCommand();
-      assertEquals(type, command.getType());
-      checker.accept(command);
-      return invocation;
-   }
-
-   /**
-    * Assert that all the commands already invoked remotely have been verified.
-    */
-   public void verifyNoMoreCommands() {
+   public void verifyNoErrors() {
       assertTrue("Unexpected remote invocations: " +
-                    recordedInvocations.stream().map(i -> i.getCommand().toString()).collect(Collectors.joining(", ")),
-                 recordedInvocations.isEmpty());
+                    blockedRequests.stream().map(i -> i.getCommand().toString()).collect(Collectors.joining(", ")),
+                 blockedRequests.isEmpty());
    }
 
    @Override
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand,
                                                 ResponseMode mode, long timeout, ResponseFilter responseFilter,
-                                                DeliverOrder deliverOrder, boolean anycast)
-      throws Exception {
+                                                DeliverOrder deliverOrder, boolean anycast) throws Exception {
       Collection<Address> targets = recipients != null ? recipients : members;
-      if (mode == ResponseMode.ASYNCHRONOUS) {
-         addInvocation(rpcCommand, MapResponseCollector.validOnly(targets.size()));
+      MapResponseCollector collector = MapResponseCollector.ignoreLeavers(shouldIgnoreLeavers(mode), targets.size());
+      CompletableFuture<Map<Address, Response>> rpcFuture = blockRequest(rpcCommand, collector);
+      if (mode.isAsynchronous()) {
          return Collections.emptyMap();
       } else {
-         return addInvocationSync(rpcCommand, targets, shouldIgnoreLeavers(mode));
+         try {
+            return rpcFuture.get(10, TimeUnit.SECONDS);
+         } catch (ExecutionException e) {
+            throw Util.rewrapAsCacheException(e.getCause());
+         }
       }
    }
 
    @Override
    public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
-                                                                        ReplicableCommand rpcCommand, ResponseMode
-                                                                           mode, long timeout, ResponseFilter
-                                                                           responseFilter, DeliverOrder
-                                                                           deliverOrder, boolean anycast) {
+                                                                        ReplicableCommand rpcCommand, ResponseMode mode,
+                                                                        long timeout, ResponseFilter responseFilter,
+                                                                        DeliverOrder deliverOrder, boolean anycast) {
       Collection<Address> targets = recipients != null ? recipients : members;
       MapResponseCollector collector =
          mode.isSynchronous() ? MapResponseCollector.ignoreLeavers(shouldIgnoreLeavers(mode), targets.size()) : null;
-      return addInvocation(rpcCommand, collector);
+      return blockRequest(rpcCommand, collector);
    }
 
    @Override
    public void sendTo(Address destination, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) {
-      addInvocation(rpcCommand, null);
+      blockRequest(rpcCommand, null);
    }
 
    @Override
    public void sendToMany(Collection<Address> destinations, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) {
-      addInvocation(rpcCommand, null);
+      blockRequest(rpcCommand, null);
    }
 
    @Override
    public void sendToAll(ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
-      addInvocation(rpcCommand, null);
+      blockRequest(rpcCommand, null);
    }
 
    @Override
@@ -336,27 +264,27 @@ public class MockTransport implements Transport {
    @Override
    public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command, ResponseCollector<T>
       collector, DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
-      return addInvocation(command, collector);
+      return blockRequest(command, collector);
    }
 
    @Override
    public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
                                                ResponseCollector<T> collector, DeliverOrder deliverOrder, long
                                                   timeout, TimeUnit unit) {
-      return addInvocation(command, collector);
+      return blockRequest(command, collector);
    }
 
    @Override
    public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
                                                     DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
-      return addInvocation(command, collector);
+      return blockRequest(command, collector);
    }
 
    @Override
    public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
                                                         ResponseCollector<T> collector, DeliverOrder deliverOrder,
                                                         long timeout, TimeUnit unit) {
-      return addInvocation(command, collector);
+      return blockRequest(command, collector);
    }
 
    @Override
@@ -365,61 +293,57 @@ public class MockTransport implements Transport {
       throw new UnsupportedOperationException();
    }
 
-   private <T> CompletableFuture<T> addInvocation(ReplicableCommand command, ResponseCollector<T> collector) {
-      FutureRemoteInvocation expectedInvocation = expectedInvocations.poll();
-      if (expectedInvocation != null) {
-         log.debugf("Intercepted expected command %s", command);
-         try {
-            RecordedRemoteInvocation invocation = new CompletedRemoteInvocation(command);
-            recordedInvocations.add(invocation);
-            return expectedInvocation.apply(command, collector);
-         } catch (Throwable t) {
-            recordedInvocations.add(new RemoteInvocationException(t));
-            throw t;
-         }
-      } else {
-         log.debugf("Intercepted command %s", command);
-         RecordedRemoteInvocation remoteInvocation = new RecordedRemoteInvocation(command, collector);
-         recordedInvocations.add(remoteInvocation);
-         return remoteInvocation.getResultFuture();
-      }
-   }
-
-   private Map<Address, Response> addInvocationSync(ReplicableCommand command, Collection<Address> targets, boolean
-      ignoreLeavers)
-      throws Exception {
-      try {
-         return addInvocation(command, MapResponseCollector.ignoreLeavers(ignoreLeavers, targets.size()))
-            .get(10, TimeUnit.SECONDS);
-      } catch (ExecutionException e) {
-         throw Util.rewrapAsCacheException(e.getCause());
-      }
+   private <T> CompletableFuture<T> blockRequest(ReplicableCommand command, ResponseCollector<T> collector) {
+      log.debugf("Intercepted command %s", command);
+      BlockedRequest request = new BlockedRequest(command, collector);
+      blockedRequests.add(request);
+      return request.getResultFuture();
    }
 
    private boolean shouldIgnoreLeavers(ResponseMode mode) {
-      return mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS;
+      return mode != ResponseMode.SYNCHRONOUS;
    }
 
    /**
-    * Mock responses for a remote invocation.
+    * Receive responses for a blocked remote invocation.
     * <p>
     * For example, {@code remoteInvocation.addResponse(a1, r1).addResponse(a2, r2).finish()},
     * or {@code remoteInvocation.singleResponse(a, r)}
     */
-   private static abstract class RemoteInvocation<T extends RemoteInvocation> {
+   public static class BlockedRequest {
+      private final ReplicableCommand command;
+      private final ResponseCollector<?> collector;
       private final CompletableFuture<Object> resultFuture = new CompletableFuture<>();
 
-      public abstract T addResponse(Address sender, Response response);
+      private BlockedRequest(
+         ReplicableCommand command, ResponseCollector collector) {
+         this.command = command;
+         this.collector = collector;
+      }
 
-      public T addLeaver(Address a) {
+      public BlockedRequest addResponse(Address sender, Response response) {
+         assertFalse(isDone());
+
+         log.debugf("Replying to remote invocation %s with %s from %s", getCommand(), response, sender);
+         Object result = collector.addResponse(sender, response);
+         if (result != null) {
+            complete(result);
+         }
+         return this;
+      }
+
+      public BlockedRequest addLeaver(Address a) {
          return addResponse(a, CacheNotFoundResponse.INSTANCE);
       }
 
-      public T addException(Address a, Exception e) {
+      public BlockedRequest addException(Address a, Exception e) {
          return addResponse(a, new ExceptionResponse(e));
       }
 
-      public abstract void finish();
+      public void finish() {
+         Object result = collector.finish();
+         complete(result);
+      }
 
       public void singleResponse(Address sender, Response response) {
          addResponse(sender, response);
@@ -428,146 +352,21 @@ public class MockTransport implements Transport {
          }
       }
 
-      public boolean isDone() {
+      public ReplicableCommand getCommand() {
+         return command;
+      }
+
+      boolean isDone() {
          return resultFuture.isDone();
       }
 
-      public void complete(Object result) {
+      void complete(Object result) {
          resultFuture.complete(result);
-      }
-
-      public void assertDone() {
-         assertTrue(resultFuture.isDone());
       }
 
       @SuppressWarnings("unchecked")
       <U> CompletableFuture<U> getResultFuture() {
          return (CompletableFuture<U>) resultFuture;
-      }
-   }
-
-   public static class RecordedRemoteInvocation extends RemoteInvocation<RecordedRemoteInvocation> {
-      private final ReplicableCommand command;
-      private final ResponseCollector<?> collector;
-
-      private RecordedRemoteInvocation(ReplicableCommand command, ResponseCollector collector) {
-         this.command = command;
-         this.collector = collector;
-      }
-
-      @Override
-      public RecordedRemoteInvocation addResponse(Address sender, Response response) {
-         assertFalse(isDone());
-
-         log.debugf("Replying to remote invocation %s with %s from %s", command, response, sender);
-         Object result = collector.addResponse(sender, response);
-         if (result != null) {
-            complete(result);
-         }
-         return this;
-      }
-
-      @Override
-      public void finish() {
-         Object result = collector.finish();
-         complete(result);
-      }
-
-      public ReplicableCommand getCommand() {
-         return command;
-      }
-   }
-
-   private static class CompletedRemoteInvocation extends RecordedRemoteInvocation {
-      private CompletedRemoteInvocation(ReplicableCommand command) {
-         super(command, null);
-         complete(null);
-      }
-
-      @Override
-      public CompletedRemoteInvocation addResponse(Address sender, Response response) {
-         throw new UnsupportedOperationException("No responses expected");
-      }
-
-      @Override
-      public void finish() {
-         throw new UnsupportedOperationException("No responses expected");
-      }
-   }
-
-   private static class RemoteInvocationException extends RecordedRemoteInvocation {
-      private final RuntimeException exception;
-
-      private RemoteInvocationException(Throwable throwable) {
-         super(null, null);
-         this.exception = new RuntimeException(throwable);
-      }
-
-      @Override
-      public RemoteInvocationException addResponse(Address sender, Response response) {
-         throw exception;
-      }
-
-      @Override
-      public void finish() {
-         throw exception;
-      }
-
-      @Override
-      public void assertDone() {
-         throw exception;
-      }
-   }
-
-   public static class FutureRemoteInvocation extends RemoteInvocation<FutureRemoteInvocation> {
-      private final Consumer<ReplicableCommand> checker;
-      private final CompletableFuture<ReplicableCommand> commandFuture;
-      private final CompletableFuture<ResponseCollector<?>> collectorFuture;
-      private CompletableFuture<Object> operationsFuture;
-
-      private FutureRemoteInvocation(Consumer<ReplicableCommand> checker) {
-         this.checker = checker;
-         this.collectorFuture = new CompletableFuture<>();
-         this.commandFuture = new CompletableFuture<>();
-         this.operationsFuture = collectorFuture.thenApply(r -> null);
-      }
-
-      @Override
-      public FutureRemoteInvocation addResponse(Address sender, Response response) {
-         operationsFuture = operationsFuture.thenApply(result -> {
-            assertFalse(isDone());
-            assertNull(result);
-
-            // join() won't block
-            log.debugf("Replying to remote invocation %s with %s from %s", commandFuture.join(), response, sender);
-            result = collectorFuture.join().addResponse(sender, response);
-            if (result != null) {
-               complete(result);
-            }
-            return result;
-         });
-         return this;
-      }
-
-      @Override
-      public void finish() {
-         operationsFuture = operationsFuture.thenApply(result -> {
-            assertFalse(isDone());
-            assertNull(result);
-
-            // join() won't block
-            result = collectorFuture.join().finish();
-            complete(result);
-            return result;
-         });
-      }
-
-      @SuppressWarnings("unchecked")
-      private <T> CompletableFuture<T> apply(ReplicableCommand command, ResponseCollector<T> responseCollector) {
-         checker.accept(command);
-         commandFuture.complete(command);
-         collectorFuture.complete(responseCollector);
-         return (CompletableFuture<T>) operationsFuture;
       }
    }
 }

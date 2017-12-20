@@ -78,23 +78,20 @@ public class MergeTest extends MultipleCacheManagersTest {
       final Random random = new Random();
 
       for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-         futures.add(fork(new Runnable() {
-            @Override
-            public void run() {
-               try {
-                  waitFor.await();
-                  Thread.sleep(random.nextInt(3000));
-                  for (int j = 0; j < OBJECT_COUNT; j++) {
-                     Cache<Long, Person> cache = (j % 2 == 0) ? cache1 : cache2;
-                     long key = id.incrementAndGet();
-                     cache.put(key, new Person("name" + key, "blurb", 30));
-                     if (j % 100 == 0) {
-                        System.out.println(j + " in " + (System.currentTimeMillis() - start) / 1000 + "s ");
-                     }
+         futures.add(fork(() -> {
+            try {
+               waitFor.await();
+               Thread.sleep(random.nextInt(3000));
+               for (int j = 0; j < OBJECT_COUNT; j++) {
+                  Cache<Long, Person> cache = (j % 2 == 0) ? cache1 : cache2;
+                  long key = id.incrementAndGet();
+                  cache.put(key, new Person("name" + key, "blurb", 30));
+                  if (j % 100 == 0) {
+                     System.out.println(j + " in " + (System.currentTimeMillis() - start) / 1000 + "s ");
                   }
-               } catch (InterruptedException e) {
-                  e.printStackTrace();
                }
+            } catch (InterruptedException e) {
+               e.printStackTrace();
             }
          }));
       }
@@ -109,12 +106,7 @@ public class MergeTest extends MultipleCacheManagersTest {
       SearchManager searchManager = Search.getSearchManager(cache1);
       final CacheQuery<Person> query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
       final int total = NUMBER_OF_THREADS * OBJECT_COUNT;
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return query.list().size() == total;
-         }
-      });
+      eventuallyEquals(total, () -> query.list().size());
       System.out.println("Indexing finished: " + query.list().size());
       killCacheManagers(cacheManagers);
    }

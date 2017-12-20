@@ -102,7 +102,7 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
    }
 
    private void test(int c1, int c2, int a1, int a2, boolean mergeInSplitOrder) throws Exception {
-      MagicKey[] keys = IntStream.range(0, numMembersInCluster).mapToObj(node -> {
+      Object[] keys = IntStream.range(0, numMembersInCluster).mapToObj(node -> {
          MagicKey key = new MagicKey(cache(node));
          cache(node).put(key, "v0");
          return key;

@@ -2,7 +2,6 @@ package org.infinispan.xsite.statetransfer.failures;
 
 import static org.infinispan.test.TestingUtil.WrapFactory;
 import static org.infinispan.test.TestingUtil.wrapGlobalComponent;
-import static org.infinispan.util.BlockingLocalTopologyManager.replaceTopologyManager;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -16,6 +15,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverDelegator;
@@ -143,7 +143,8 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
       final TestCaches<Object, Object> testCaches = createTestCache(event, NYC);
       printTestCaches(testCaches);
 
-      final BlockingLocalTopologyManager topologyManager = replaceTopologyManager(testCaches.controllerCache.getCacheManager());
+      final BlockingLocalTopologyManager topologyManager =
+         BlockingLocalTopologyManager.replaceTopologyManagerDefaultCache(testCaches.controllerCache.getCacheManager());
       final CheckPoint checkPoint = new CheckPoint();
 
       wrapGlobalComponent(cache(NYC, 0).getCacheManager(),
@@ -166,11 +167,12 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
                              }
                           }, true);
 
-      topologyManager.startBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
-
       final Future<Void> topologyEventFuture = triggerTopologyChange(NYC, testCaches.removeIndex);
 
-      topologyManager.waitToBlock(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+      if (event == TopologyEvent.LEAVE) {
+         topologyManager.confirmTopologyUpdate(CacheTopology.Phase.NO_REBALANCE);
+      }
+      topologyManager.confirmTopologyUpdate(CacheTopology.Phase.READ_OLD_WRITE_ALL);
 
       log.debug("Start x-site state transfer");
       startStateTransfer(testCaches.coordinator, NYC);
@@ -178,7 +180,10 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
 
       //in the current implementation, the x-site state transfer is not triggered while the rebalance is in progress.
       checkPoint.awaitStrict("before-chunk", 30, TimeUnit.SECONDS);
-      topologyManager.stopBlockingAll();
+
+      topologyManager.confirmTopologyUpdate(CacheTopology.Phase.READ_ALL_WRITE_ALL);
+      topologyManager.confirmTopologyUpdate(CacheTopology.Phase.READ_NEW_WRITE_ALL);
+      topologyManager.confirmTopologyUpdate(CacheTopology.Phase.NO_REBALANCE);
 
       topologyEventFuture.get();
 

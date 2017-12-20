@@ -1,6 +1,8 @@
 package org.infinispan.lock.singlelock;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.transaction.LockingMode;
@@ -21,11 +23,11 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
    public void testInitiatorCrashesBeforeReleasingLock() throws Exception {
       final CountDownLatch releaseLocksLatch = new CountDownLatch(1);
 
-      prepareCache(releaseLocksLatch);
+      skipTxCompletion(advancedCache(1), releaseLocksLatch);
 
       Object k = getKeyForCache(2);
-      beginAndCommitTx(k, 1);
-      releaseLocksLatch.await();
+      Future<Void> future = beginAndCommitTx(k, 1);
+      releaseLocksLatch.await(30, TimeUnit.SECONDS);
 
       assert checkTxCount(0, 0, 1);
       assert checkTxCount(1, 0, 0);
@@ -39,6 +41,7 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
 
       eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
       assertNotLocked(k);
+      future.get(30, TimeUnit.SECONDS);
    }
 
    public void testInitiatorNodeCrashesBeforeCommit() throws Exception {

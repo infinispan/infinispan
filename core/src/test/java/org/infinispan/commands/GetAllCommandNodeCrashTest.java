@@ -2,7 +2,6 @@ package org.infinispan.commands;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.replaceComponent;
-import static org.infinispan.test.TestingUtil.wrapComponent;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
@@ -22,11 +21,10 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.ControlledRpcManager;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "commands.GetAllCommandNodeCrashTest")
@@ -40,8 +38,7 @@ public class GetAllCommandNodeCrashTest extends MultipleCacheManagersTest {
       MagicKey key = new MagicKey(cache(0), cache(1));
       cache(2).put(key, "value");
 
-      ControlledRpcManager rpcManager = wrapComponent(cache(2), RpcManager.class, ControlledRpcManager::new);
-      rpcManager.blockBefore(ClusteredGetAllCommand.class);
+      ControlledRpcManager rpcManager = ControlledRpcManager.replaceRpcManager(cache(2));
 
       CountDownLatch blockTopologyUpdate = new CountDownLatch(1);
       StateConsumer stateConsumerMock = spy(extractComponent(cache(2), StateConsumer.class));
@@ -60,11 +57,14 @@ public class GetAllCommandNodeCrashTest extends MultipleCacheManagersTest {
 
       Future<Map<Object, Object>> f = fork(() -> cache(2).getAdvancedCache().getAll(Collections.singleton(key)));
 
-      rpcManager.waitForCommandToBlock();
+      ControlledRpcManager.BlockedRequest blockedGetAll = rpcManager.expectCommand(ClusteredGetAllCommand.class);
       // it's necessary to stop whole cache manager, not just cache, because otherwise the exception would have
       // suspect node defined
       cacheManagers.get(0).stop();
-      rpcManager.stopBlocking();
+
+      // Send the blocked GetAllCommand and the retried one
+      blockedGetAll.send().receiveAll();
+      rpcManager.expectCommand(ClusteredGetAllCommand.class).send().receiveAll();
 
       try {
          Map<Object, Object> map = f.get(10, TimeUnit.SECONDS);
@@ -73,6 +73,7 @@ public class GetAllCommandNodeCrashTest extends MultipleCacheManagersTest {
          assertEquals("value", map.get(key));
       } finally {
          blockTopologyUpdate.countDown();
+         rpcManager.stopBlocking();
       }
    }
 }

@@ -13,11 +13,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
@@ -216,31 +214,18 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
       assertSize(cache1, 0);
       final Map<String, String> map = createAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
       assertSize(map, 0);
-      Callable<Void> c1 = () -> {
+      runConcurrently(1, TimeUnit.MINUTES, () -> {
          Map<String, String> map1 = createAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
          for (int i = 0; i < 250; i++) {
             map1.put("key-" + i, "value-" + i);
          }
-         return null;
-      };
-
-      Callable<Void> c2 = () -> {
+      },
+                      () -> {
          Map<String, String> map12 = createAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
          for (int i = 0; i < 250; i++) {
             map12.keySet();
          }
-         return null;
-      };
-      CompletionService<Void> cs = runConcurrentlyWithCompletionService(c1, c2);
-
-      for (int i = 0; i < 2; i++) {
-         Future<Void> future = cs.poll(1, TimeUnit.MINUTES);
-         // No timeout since it is guaranteed to be done
-         if (future == null) {
-            fail("Execution of forked tasks didn't complete within 1 minute");
-         }
-         future.get();
-      }
+      });
    }
 
    public void testRollback() throws Exception {

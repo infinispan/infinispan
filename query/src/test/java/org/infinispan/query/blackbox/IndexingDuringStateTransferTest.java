@@ -5,14 +5,17 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
@@ -27,11 +30,13 @@ import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.util.AbstractControlledRpcManager;
+import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
@@ -130,9 +135,11 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
       // block state response commands
       AtomicReference<Exception> exception = new AtomicReference<>();
       CountDownLatch allowStateResponse = new CountDownLatch(1);
-      caches().forEach(c -> TestingUtil.wrapComponent(c, RpcManager.class, original -> new AbstractControlledRpcManager(original) {
+      caches().forEach(c -> TestingUtil.wrapComponent(c, RpcManager.class, original -> new AbstractDelegatingRpcManager(original) {
          @Override
-         protected Object beforeInvokeRemotely(ReplicableCommand command) {
+         protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+                                                         ResponseCollector<T> collector,
+                                                         Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
             if (command instanceof StateResponseCommand) {
                try {
                   assertTrue(allowStateResponse.await(10, TimeUnit.SECONDS));
@@ -140,7 +147,7 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
                   exception.set(e);
                }
             }
-            return null;
+            return super.performRequest(targets, command, collector, invoker);
          }
       }));
 

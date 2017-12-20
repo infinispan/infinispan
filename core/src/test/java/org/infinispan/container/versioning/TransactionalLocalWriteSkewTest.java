@@ -12,6 +12,7 @@ import javax.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.ExceptionRunnable;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -56,8 +57,8 @@ public class TransactionalLocalWriteSkewTest extends SingleCacheManagerTest {
       ConcurrentSkipListSet<Integer> uniqueValuesIncremented = new ConcurrentSkipListSet<>();
 
       // create both threads (simulate a node)
-      Future<Void> ict1 = fork(new IncrementCounterTask(c1, uniqueValuesIncremented, counterMaxValue), null);
-      Future<Void> ict2 = fork(new IncrementCounterTask(c1, uniqueValuesIncremented, counterMaxValue), null);
+      Future<Void> ict1 = fork(new IncrementCounterTask(c1, uniqueValuesIncremented, counterMaxValue));
+      Future<Void> ict2 = fork(new IncrementCounterTask(c1, uniqueValuesIncremented, counterMaxValue));
 
       try {
          // wait to finish
@@ -72,7 +73,7 @@ public class TransactionalLocalWriteSkewTest extends SingleCacheManagerTest {
       }
    }
 
-   private class IncrementCounterTask implements Runnable {
+   private class IncrementCounterTask implements ExceptionRunnable {
       private Cache<String, Integer> cache;
       private ConcurrentSkipListSet<Integer> uniqueValuesSet;
       private TransactionManager transactionManager;

@@ -21,6 +21,7 @@ import org.infinispan.counter.api.CounterEvent;
 import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.Handle;
 import org.infinispan.server.hotrod.counter.impl.BaseCounterImplTest;
+import org.infinispan.test.ExceptionRunnable;
 import org.testng.annotations.Test;
 
 /**
@@ -182,7 +183,7 @@ public abstract class BaseCounterAPITest<T> extends AbstractCounterTest {
    }
 
 
-   private class IncrementTask implements Runnable {
+   private class IncrementTask implements ExceptionRunnable {
 
       private final T counter;
       private volatile boolean run;

@@ -32,43 +32,25 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
       advancedCache(0).addInterceptor(interceptor, 1);
       final Object k = getKeyForCache(0);
 
-      fork(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               tm(1).begin();
-               advancedCache(1).lock(k);
-               tm(1).suspend();
-            } catch (Exception e) {
-               log.error(e);
-            }
+      fork(() -> {
+         try {
+            tm(1).begin();
+            advancedCache(1).lock(k);
+            tm(1).suspend();
+         } catch (Exception e) {
+            log.error(e);
          }
       });
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return interceptor.receivedReplRequest;
-         }
-      });
+      eventually(() -> interceptor.receivedReplRequest);
 
       TestingUtil.killCacheManagers(manager(1));
       TestingUtil.blockUntilViewsReceived(60000, false, cache(0));
       TestingUtil.waitForNoRebalance(cache(0));
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return interceptor.lockAcquired;
-         }
-      });
+      eventually(() -> interceptor.lockAcquired);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return !TestingUtil.extractLockManager(cache(0)).isLocked("k");
-         }
-      });
+      assertEventuallyNotLocked(cache(0), "k");
    }
 
 

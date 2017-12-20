@@ -1,27 +1,24 @@
 package org.infinispan.scattered.statetransfer;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
-import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.DelegatingStateTransferLock;
+import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.statetransfer.StateResponseCommand;
-import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.topology.LocalTopologyManager;
-import org.infinispan.util.AbstractControlledRpcManager;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.BlockingLocalTopologyManager;
 import org.testng.annotations.Test;
 
@@ -38,63 +35,47 @@ public class PushTransferTest extends AbstractStateTransferTest {
             new PushTransferTest().biasAcquisition(BiasAcquisition.NEVER),
             new PushTransferTest().biasAcquisition(BiasAcquisition.ON_WRITE)
       };
-   };
+   }
 
    public void testNodeJoin() throws Exception {
       List<MagicKey> keys = init();
       EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(defaultConfig, TRANSPORT_FLAGS);
-      LocalTopologyManager ltm4 = TestingUtil.extractGlobalComponent(cm4, LocalTopologyManager.class);
-      int currentTopologyId = TestingUtil.extractComponent(c1, StateTransferManager.class).getCacheTopology().getTopologyId();
+      int startTopologyId = TestingUtil.extractComponent(c1, StateTransferManager.class).getCacheTopology().getTopologyId();
 
-      BlockingLocalTopologyManager bltm = new BlockingLocalTopologyManager(ltm4);
-      bltm.startBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
-      bltm.startBlocking(BlockingLocalTopologyManager.LatchType.REBALANCE);
-      TestingUtil.replaceComponent(cm4, LocalTopologyManager.class, bltm, true);
+      BlockingLocalTopologyManager bltm = BlockingLocalTopologyManager.replaceTopologyManager(cm4, CACHE_NAME);
 
-      Stream.of(c1, c2, c3).forEach(c -> {
-         RpcManager rpcManager = TestingUtil.extractComponent(c, RpcManager.class);
-         TestingUtil.replaceComponent(c, RpcManager.class, new AbstractControlledRpcManager(rpcManager) {
-            @Override
-            protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
-               if (command instanceof StateResponseCommand &&
-                     ((Map<Address, Response>) responseObject).keySet().contains(cm4.getAddress())) {
-                  // We don't have to wait for all push transfers to finish, one is enough to lose something
-                  boolean pushTransfer;
-                  try {
-                     Field pushTransferField = StateResponseCommand.class.getDeclaredField("pushTransfer");
-                     pushTransferField.setAccessible(true);
-                     pushTransfer = pushTransferField.getBoolean(command);
-                  } catch (Exception e) {
-                     throw new IllegalStateException();
-                  }
-                  if (pushTransfer) {
-                     log.info("Push transfer response received, unblocking");
-                     bltm.stopBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
-                     bltm.stopBlocking(BlockingLocalTopologyManager.LatchType.REBALANCE);
-                  }
-               }
-               return responseObject;
-            }
-         }, true);
-      });
-
+      CountDownLatch statePushedLatch = new CountDownLatch(1);
+      CountDownLatch stateAppliedLatch = new CountDownLatch(1);
       TestingUtil.addCacheStartingHook(cm4, (name, cr) -> {
-         StateTransferLock stateTransferLock = cr.getComponent(StateTransferLock.class);
-         cr.registerComponent(new DelegatingStateTransferLock(stateTransferLock) {
-            @Override
-            public boolean transactionDataReceived(int expectedTopologyId) {
-               if (expectedTopologyId == currentTopologyId  + 1) {
-                  // Let the topology update be processed - otherwise we would be blocked forever
-                  bltm.stopBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
-                  bltm.stopBlocking(BlockingLocalTopologyManager.LatchType.REBALANCE);
-               }
-               return super.transactionDataReceived(expectedTopologyId);
+         PerCacheInboundInvocationHandler originalHandler = cr.getComponent(PerCacheInboundInvocationHandler.class);
+         cr.registerComponent((PerCacheInboundInvocationHandler) (command, reply, order) -> {
+            // StateResponseCommand is topology-aware, so handle() just queues it on the remote executor
+            if (command instanceof StateResponseCommand) {
+               log.tracef("State received on %s", cm4.getAddress());
+               statePushedLatch.countDown();
             }
-         }, StateTransferLock.class);
+            originalHandler.handle(command, response -> {
+               log.tracef("State applied on %s", cm4.getAddress());
+               stateAppliedLatch.countDown();
+               reply.reply(response);
+            }, order);
+         }, PerCacheInboundInvocationHandler.class);
          cr.rewire();
+         cr.cacheComponents();
       });
 
-      Cache c4 = cm4.getCache(CACHE_NAME);
+      Future<Cache> c4Future = fork(() -> cm4.getCache(CACHE_NAME));
+
+      // Any StateResponseCommand should be delayed until node 4 has the TRANSITORY topology
+      assertTrue(statePushedLatch.await(10, TimeUnit.SECONDS));
+      assertFalse(stateAppliedLatch.await(100, TimeUnit.MILLISECONDS));
+
+      // Finish the rebalance, unblocking the StateResponseCommand(s)
+      bltm.confirmTopologyUpdate(CacheTopology.Phase.TRANSITORY);
+      assertEquals(0, stateAppliedLatch.getCount());
+      bltm.confirmTopologyUpdate(CacheTopology.Phase.NO_REBALANCE);
+
+      Cache c4 = c4Future.get(30, TimeUnit.SECONDS);
       TestingUtil.blockUntilViewsReceived(30000, false, c1, c2, c3, c4);
       TestingUtil.waitForNoRebalance(c1, c2, c3, c4);
 

@@ -7,6 +7,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
@@ -17,13 +18,12 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.AbstractControlledRpcManager;
+import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.CountingRpcManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -133,7 +133,7 @@ public class BiasRevocationTest extends MultipleCacheManagersTest {
       void apply(Cache cache, Object key, Object value);
    }
 
-   private class FailingRpcManager extends AbstractControlledRpcManager {
+   private class FailingRpcManager extends AbstractDelegatingRpcManager {
       public boolean throwBefore = false;
       public boolean throwInFuture = false;
 
@@ -142,8 +142,9 @@ public class BiasRevocationTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
-                                                  ResponseCollector<T> collector, RpcOptions rpcOptions) {
+      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+                                                      ResponseCollector<T> collector,
+                                                      Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
          if (command instanceof RevokeBiasCommand) {
             if (throwBefore)
                throw new RemoteException("Induced", null);
@@ -151,7 +152,7 @@ public class BiasRevocationTest extends MultipleCacheManagersTest {
                return CompletableFutures.completedExceptionFuture(new RemoteException("Induced", null));
             }
          }
-         return super.invokeCommand(targets, command, collector, rpcOptions);
+         return super.performRequest(targets, command, collector, invoker);
       }
    }
 }

@@ -12,9 +12,6 @@ import java.util.regex.Pattern;
  * @since 8.2
  */
 public class Exceptions {
-   public interface ExceptionRunnable {
-      void run() throws Exception;
-   }
 
    public static void assertException(Class<? extends Throwable> exceptionClass, Throwable t) {
       if (t == null) {

@@ -1,6 +1,8 @@
 package org.infinispan.lock.singlelock.replicated.pessimistic;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
@@ -27,7 +29,7 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
       advancedCache(1).addInterceptor(txControlInterceptor, 1);
 
       MagicKey key = new MagicKey("k", cache(0));
-      beginAndCommitTx(key, 1);
+      Future<Void> future = beginAndCommitTx(key, 1);
       txControlInterceptor.preparedReceived.await();
 
       assertLocked(cache(0), key);
@@ -41,21 +43,17 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
       killMember(1);
 
       assertNotLocked(key);
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0);
-         }
-      });
+      eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
+      future.get(30, TimeUnit.SECONDS);
    }
 
    public void testInitiatorCrashesBeforeReleasingLock() throws Exception {
       final CountDownLatch releaseLocksLatch = new CountDownLatch(1);
 
-      prepareCache(releaseLocksLatch);
+      skipTxCompletion(advancedCache(1), releaseLocksLatch);
 
       MagicKey key = new MagicKey("k", cache(0));
-      beginAndCommitTx(key, 1);
+      Future<Void> future = beginAndCommitTx(key, 1);
       releaseLocksLatch.await();
 
       assert checkTxCount(0, 0, 1);
@@ -68,15 +66,11 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
 
       killMember(1);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0);
-         }
-      });
+      eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
       assertNotLocked(key);
       assert cache(0).get(key).equals("v");
       assert cache(1).get(key).equals("v");
+      future.get(30, TimeUnit.SECONDS);
    }
 
    public void testInitiatorNodeCrashesBeforePrepare() throws Exception {
@@ -90,14 +84,9 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
       advancedCache(1).addInterceptor(txControlInterceptor, 1);
 
       //prepare is sent, but is not precessed on other nodes because of the txControlInterceptor.preparedReceived
-      beginAndPrepareTx("k", 1);
+      Future<Void> future = beginAndPrepareTx("k", 1);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return  checkTxCount(0, 0, 1) &&  checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1);
-         }
-      });
+      eventually(() -> checkTxCount(0, 0, 1) &&  checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1));
 
       killMember(1);
 
@@ -105,11 +94,7 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
       txControlInterceptor.prepareProgress.countDown();
 
       assertNotLocked("k");
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0);
-         }
-      });
+      eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
+      future.get(30, TimeUnit.SECONDS);
    }
 }

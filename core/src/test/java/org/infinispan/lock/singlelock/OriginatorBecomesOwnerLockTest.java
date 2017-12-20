@@ -14,14 +14,16 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.statetransfer.StateRequestCommand;
+import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -29,7 +31,7 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
-import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
@@ -93,7 +95,8 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
    }
 
    private void testLockMigrationDuringPrepare(final Object key) throws Exception {
-      ControlledRpcManager controlledRpcManager = installControlledRpcManager(PrepareCommand.class);
+      ControlledRpcManager controlledRpcManager = ControlledRpcManager.replaceRpcManager(originatorCache);
+      controlledRpcManager.excludeCommands(StateRequestCommand.class, StateResponseCommand.class);
       final EmbeddedTransactionManager tm = embeddedTm(ORIGINATOR_INDEX);
 
       Future<EmbeddedTransaction> f = fork(() -> {
@@ -107,6 +110,12 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
          return tx;
       });
 
+      if (!originatorCache.getAdvancedCache().getDistributionManager().getCacheTopology().isReadOwner(key)) {
+         controlledRpcManager.expectCommand(ClusteredGetCommand.class).send().receiveAll();
+      }
+
+      ControlledRpcManager.BlockedRequest blockedPrepare = controlledRpcManager.expectCommand(PrepareCommand.class);
+
       // Allow the tx thread to send the prepare command to the owners
       Thread.sleep(2000);
 
@@ -114,7 +123,10 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
       killCache();
 
       log.trace("Allow the prepare RPC to proceed");
-      controlledRpcManager.stopBlocking();
+      blockedPrepare.send().receiveAll();
+      // Also allow the retry to proceed
+      controlledRpcManager.expectCommand(PrepareCommand.class).send().receiveAll();
+
       // Ensure the prepare finished on the other node
       EmbeddedTransaction tx = f.get();
       log.tracef("Prepare finished");
@@ -122,11 +134,14 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
       checkNewTransactionFails(key);
 
       log.trace("About to commit existing transactions.");
+      controlledRpcManager.excludeCommands(CommitCommand.class, TxCompletionNotificationCommand.class);
       tm.resume(tx);
       tx.runCommit(false);
 
       // read the data from the container, just to make sure all replicas are correctly set
       checkValue(key, "value");
+
+      controlledRpcManager.stopBlocking();
    }
 
 
@@ -177,7 +192,8 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
    }
 
    private void testLockMigrationDuringCommit(final Object key) throws Exception {
-      ControlledRpcManager controlledRpcManager = installControlledRpcManager(CommitCommand.class);
+      ControlledRpcManager controlledRpcManager = ControlledRpcManager.replaceRpcManager(originatorCache);
+      controlledRpcManager.excludeCommands(StateRequestCommand.class, StateResponseCommand.class);
       final EmbeddedTransactionManager tm = embeddedTm(ORIGINATOR_INDEX);
 
       Future<EmbeddedTransaction> f = fork(() -> {
@@ -192,16 +208,26 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
          return null;
       });
 
-      // Allow the tx thread to send the commit to the owners
-      Thread.sleep(2000);
+      if (!originatorCache.getAdvancedCache().getDistributionManager().getCacheTopology().isReadOwner(key)) {
+         controlledRpcManager.expectCommand(ClusteredGetCommand.class).send().receiveAll();
+      }
+      controlledRpcManager.expectCommand(PrepareCommand.class).send().receiveAll();
+
+      // Wait for the tx thread to block sending the commit
+      ControlledRpcManager.BlockedRequest blockedCommit = controlledRpcManager.expectCommand(CommitCommand.class);
 
       log.trace("Lock transfer happens here");
       killCache();
 
       log.trace("Allow the commit RPC to proceed");
-      controlledRpcManager.stopBlocking();
+      blockedCommit.send().receiveAll();
+
+      // Process the retry and the completion notification normally
+      controlledRpcManager.expectCommand(CommitCommand.class).send().receiveAll();
+      controlledRpcManager.expectCommand(TxCompletionNotificationCommand.class).sendWithoutResponses();
+
       // Ensure the commit finished on the other node
-      f.get();
+      f.get(30, TimeUnit.SECONDS);
       log.tracef("Commit finished");
 
       // read the data from the container, just to make sure all replicas are correctly set
@@ -209,6 +235,8 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
 
       assertNoLocksOrTxs(key, originatorCache);
       assertNoLocksOrTxs(key, otherCache);
+
+      controlledRpcManager.stopBlocking();
    }
 
 
@@ -217,20 +245,8 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
 
       final TransactionTable transactionTable = TestingUtil.extractComponent(cache, TransactionTable.class);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return transactionTable.getLocalTxCount() == 0 && transactionTable.getRemoteTxCount() == 0;
-         }
-      });
-   }
-
-   private ControlledRpcManager installControlledRpcManager(Class<? extends VisitableCommand> commandClass) {
-      ControlledRpcManager controlledRpcManager = new ControlledRpcManager(
-            originatorCache.getAdvancedCache().getRpcManager());
-      controlledRpcManager.blockBefore(commandClass);
-      TestingUtil.replaceComponent(originatorCache, RpcManager.class, controlledRpcManager, true);
-      return controlledRpcManager;
+      eventuallyEquals(0, transactionTable::getLocalTxCount);
+      eventuallyEquals(0, transactionTable::getRemoteTxCount);
    }
 
    private void killCache() {

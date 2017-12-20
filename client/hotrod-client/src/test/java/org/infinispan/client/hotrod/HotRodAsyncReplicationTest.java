@@ -52,7 +52,7 @@ public class HotRodAsyncReplicationTest extends MultiHotRodServersTest {
       if (replList == null)
          replList = new ReplListener(cache(cacheIndex), true, true);
       else
-         replList.reconfigureListener(true, true);
+         replList.reconfigureListener(true);
 
       return replList;
    }
