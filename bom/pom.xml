@@ -382,6 +382,16 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan.server</groupId>
+            <artifactId>infinispan-server-cli</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan.server</groupId>
+            <artifactId>infinispan-server-common</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-commons</artifactId>
             <version>${project.version}</version>
          </dependency>

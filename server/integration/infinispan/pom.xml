@@ -13,6 +13,7 @@
     <packaging>jar</packaging>
 
     <name>Infinispan Server - Infinispan Subsystem</name>
+    <description>Infinispan Server - Infinispan Subsystem</description>
 
     <dependencies>
         <dependency>
@@ -33,11 +34,19 @@
         </dependency>
         <dependency>
             <groupId>org.wildfly.core</groupId>
+            <artifactId>wildfly-controller</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-controller-client</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-transactions</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss</groupId>
+            <artifactId>jboss-transaction-spi</artifactId>
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
@@ -93,10 +102,6 @@
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cli-interpreter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>net.jcip</groupId>
-            <artifactId>jcip-annotations</artifactId>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
@@ -225,34 +230,26 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
-                    <useManifestOnlyJar>false</useManifestOnlyJar>
-                    <parallel>none</parallel>
+                <configuration combine.self="override">
+                    <groups combine.self="override">${defaultJUnitGroups}</groups>
+                    <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
+                    <systemPropertyVariables>
+                        <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
+                        <build.directory>${project.build.directory}</build.directory>
+                    </systemPropertyVariables>
+                    <trimStackTrace>false</trimStackTrace>
+                    <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.surefire</groupId>
+                        <artifactId>surefire-junit47</artifactId>
+                        <version>${version.maven.surefire}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
     </build>
-    <description>Infinispan Server - Infinispan Subsystem</description>
-
-    <profiles>
-       <profile>
-          <id>smoke</id>
-          <build>
-             <plugins>
-                <plugin>
-                   <groupId>org.apache.maven.plugins</groupId>
-                   <artifactId>maven-surefire-plugin</artifactId>
-                   <executions>
-                      <execution>
-                         <id>default-test</id>
-                         <phase>none</phase>
-                      </execution>
-                   </executions>
-                </plugin>
-             </plugins>
-          </build>
-       </profile>
-    </profiles>
 </project>

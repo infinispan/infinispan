@@ -4,7 +4,7 @@
 
    <feature name="query-sample-domain" version="${project.version}">
       <feature version="${project.version}">infinispan-remote</feature>
-      <bundle>mvn:org.infinispan.protostream/sample-domain-implementation/${version.org.infinispan.protostream}</bundle>
-      <bundle>mvn:org.infinispan.protostream/sample-domain-definition/${version.org.infinispan.protostream}</bundle>
+      <bundle>mvn:org.infinispan.protostream/sample-domain-implementation/${version.protostream}</bundle>
+      <bundle>mvn:org.infinispan.protostream/sample-domain-definition/${version.protostream}</bundle>
    </feature>
 </features>
