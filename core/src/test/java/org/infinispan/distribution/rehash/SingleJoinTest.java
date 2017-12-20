@@ -15,14 +15,14 @@ public class SingleJoinTest extends RehashTestBase {
    Cache<Object, String> joiner;
 
    void performRehashEvent(boolean offline) {
-      joinerManager = addClusterEnabledCacheManager(new TransportFlags().withFD(true));
+      joinerManager = addClusterEnabledCacheManager(new TransportFlags());
       joinerManager.defineConfiguration(cacheName, configuration.build());
       joiner = joinerManager.getCache(cacheName);
    }
 
    void waitForRehashCompletion() {
       // need to block until this join has completed!
-      List<Cache> allCaches = new ArrayList(caches);
+      List<Cache> allCaches = new ArrayList<>(caches);
       allCaches.add(joiner);
       TestingUtil.blockUntilViewsReceived(60000, allCaches);
       waitForClusterToForm(cacheName);

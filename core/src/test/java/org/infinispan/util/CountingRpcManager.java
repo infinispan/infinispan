@@ -1,11 +1,17 @@
 package org.infinispan.util;
 
+import java.util.Collection;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 
 /**
  * Use the {@link CountingRpcManager#replaceRpcManager(org.infinispan.Cache)}.
@@ -13,7 +19,7 @@ import org.infinispan.remoting.rpc.RpcManager;
  * @author Mircea Markus
  * @since 5.2
  */
-public class CountingRpcManager extends AbstractControlledRpcManager {
+public class CountingRpcManager extends AbstractDelegatingRpcManager {
 
    public volatile int lockCount;
    public volatile int clusterGet;
@@ -39,14 +45,16 @@ public class CountingRpcManager extends AbstractControlledRpcManager {
    }
 
    @Override
-   protected Object beforeInvokeRemotely(ReplicableCommand rpcCommand) {
-      if (rpcCommand instanceof LockControlCommand) {
+   protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+                                                   ResponseCollector<T> collector,
+                                                   Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
+      if (command instanceof LockControlCommand) {
          lockCount++;
-      } else if (rpcCommand instanceof ClusteredGetCommand) {
+      } else if (command instanceof ClusteredGetCommand) {
          clusterGet++;
       } else {
          otherCount++;
       }
-      return null;
+      return super.performRequest(targets, command, collector, invoker);
    }
 }

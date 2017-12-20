@@ -1,14 +1,18 @@
 package org.infinispan.test;
 
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
@@ -16,6 +20,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -25,7 +30,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -34,26 +39,27 @@ import org.infinispan.util.logging.LogFactory;
  * attachReplicationListener(cache); r.expect(RemoveCommand.class); // ... r.waitForRPC(); </code>
  */
 public class ReplListener {
-   Cache<?, ?> c;
-   volatile List<Predicate<VisitableCommand>> expectedCommands;
-   List<VisitableCommand> eagerCommands = new LinkedList<>();
-   boolean recordCommandsEagerly;
-   boolean watchLocal;
-   final Lock expectationSetupLock = new ReentrantLock();
-   CountDownLatch latch = new CountDownLatch(1);
-   volatile boolean sawAtLeastOneInvocation = false;
-   boolean expectAny = false;
-   private Log log = LogFactory.getLog(ReplListener.class);
+   private static final Log log = LogFactory.getLog(ReplListener.class);
+
+   private final Cache<?, ?> cache;
+   private final Lock lock = new ReentrantLock();
+   private final Condition newCommandCondition = lock.newCondition();
+   @GuardedBy("lock")
+   private final List<Predicate<VisitableCommand>> expectedCommands = new ArrayList<>();
+   @GuardedBy("lock")
+   private final Queue<VisitableCommand> loggedCommands = new ArrayDeque<>();
+   @GuardedBy("lock")
+   private boolean watchLocal;
 
    /**
     * This listener attaches itself to a cache and when {@link #expect(Class[])} is invoked, will start checking for
     * invocations of the command on the cache, waiting for all expected commands to be received in {@link
     * #waitForRpc()}.
     *
-    * @param c cache on which to attach listener
+    * @param cache cache on which to attach listener
     */
-   public ReplListener(Cache<?, ?> c) {
-      this(c, false);
+   public ReplListener(Cache<?, ?> cache) {
+      this(cache, false);
    }
 
    /**
@@ -64,26 +70,25 @@ public class ReplListener {
     * the cache, even before {@link #expect(Class[])} is invoked.  As such, when {@link #expect(Class[])} is called, the
     * list of commands to wait for will take into account commands already seen thanks to eager recording.
     *
-    * @param c                     cache on which to attach listener
+    * @param cache                     cache on which to attach listener
     * @param recordCommandsEagerly whether to record commands eagerly
     */
-   public ReplListener(Cache<?, ?> c, boolean recordCommandsEagerly) {
-      this(c, recordCommandsEagerly, false);
+   public ReplListener(Cache<?, ?> cache, boolean recordCommandsEagerly) {
+      this(cache, recordCommandsEagerly, false);
    }
 
    /**
     * Same as {@link #ReplListener(org.infinispan.Cache, boolean)} except that this constructor allows you to set the
     * watchLocal parameter.  If true, even local events are recorded (not just ones that originate remotely).
     *
-    * @param c                     cache on which to attach listener
+    * @param cache                     cache on which to attach listener
     * @param recordCommandsEagerly whether to record commands eagerly
     * @param watchLocal            if true, local events are watched for as well
     */
-   public ReplListener(Cache<?, ?> c, boolean recordCommandsEagerly, boolean watchLocal) {
-      this.c = c;
-      this.recordCommandsEagerly = recordCommandsEagerly;
+   public ReplListener(Cache<?, ?> cache, boolean recordCommandsEagerly, boolean watchLocal) {
+      this.cache = cache;
       this.watchLocal = watchLocal;
-      this.c.getAdvancedCache().addInterceptor(new ReplListenerInterceptor(), 1);
+      this.cache.getAdvancedCache().addInterceptor(new ReplListenerInterceptor(), 1);
    }
 
    /**
@@ -91,8 +96,7 @@ public class ReplListener {
     * unblocked.
     */
    public void expectAny() {
-      expectAny = true;
-      expect(new Predicate[0]);
+      expect(c -> true);
    }
 
    /**
@@ -104,11 +108,11 @@ public class ReplListener {
     */
    @SuppressWarnings("unchecked")
    public void expectWithTx(Class<? extends VisitableCommand>... commands) {
-      List<Class<? extends VisitableCommand>> cmdsToExpect = new ArrayList<Class<? extends VisitableCommand>>();
+      List<Class<? extends VisitableCommand>> cmdsToExpect = new ArrayList<>();
       cmdsToExpect.add(PrepareCommand.class);
       if (commands != null) cmdsToExpect.addAll(Arrays.asList(commands));
       //this is because for async replication we have an 1pc transaction
-      if (c.getCacheConfiguration().clustering().cacheMode().isSynchronous()) cmdsToExpect.add(CommitCommand.class);
+      if (cache.getCacheConfiguration().clustering().cacheMode().isSynchronous()) cmdsToExpect.add(CommitCommand.class);
 
       expect(cmdsToExpect.toArray(new Class[cmdsToExpect.size()]));
    }
@@ -122,7 +126,7 @@ public class ReplListener {
       List<Class<? extends VisitableCommand>> cmdsToExpect = new ArrayList<Class<? extends VisitableCommand>>(2);
       cmdsToExpect.add(PrepareCommand.class);
       //this is because for async replication we have an 1pc transaction
-      if (c.getCacheConfiguration().clustering().cacheMode().isSynchronous()) cmdsToExpect.add(CommitCommand.class);
+      if (cache.getCacheConfiguration().clustering().cacheMode().isSynchronous()) cmdsToExpect.add(CommitCommand.class);
 
       expect(cmdsToExpect.toArray(new Class[cmdsToExpect.size()]));
    }
@@ -150,31 +154,24 @@ public class ReplListener {
    }
 
    public void expect(Collection<Predicate<VisitableCommand>> predicates) {
-      expectationSetupLock.lock();
+      lock.lock();
       try {
-         if (this.expectedCommands == null) {
-            this.expectedCommands = new CopyOnWriteArrayList<>();
-         }
          this.expectedCommands.addAll(predicates);
-         info("Record eagerly is " + recordCommandsEagerly + ", and eager commands are " + eagerCommands);
-         if (recordCommandsEagerly) {
-            for (VisitableCommand eager : eagerCommands) {
-               this.expectedCommands.removeIf(pred -> pred.test(eager));
-            }
-            if (!eagerCommands.isEmpty()) sawAtLeastOneInvocation = true;
-            eagerCommands.clear();
-         }
       } finally {
-         expectationSetupLock.unlock();
+         lock.unlock();
       }
    }
 
    private void info(String str) {
-      log.info(" [" + c + "] " + str);
+      log.debugf("[" + cache.getCacheManager().getAddress() + "] " + str);
+   }
+
+   private void infof(String format, Object... params) {
+      log.debugf("[" + cache.getCacheManager().getAddress() + "] " + format, params);
    }
 
    /**
-    * Blocks for a predefined amount of time (120 Seconds) until commands defined in any of the expect*() methods have
+    * Blocks for a predefined amount of time (30 Seconds) until commands defined in any of the expect*() methods have
     * been detected.  If the commands have not been detected by this time, an exception is thrown.
     */
    public void waitForRpc() {
@@ -185,46 +182,74 @@ public class ReplListener {
     * The same as {@link #waitForRpc()} except that you are allowed to specify the max wait time.
     */
    public void waitForRpc(long time, TimeUnit unit) {
-      assert expectedCommands != null : "there are no replication expectations; please use ReplListener.expect() before calling this method";
+      assertFalse("there are no replication expectations; please use ReplListener.expect() before calling this method",
+                  expectedCommands.isEmpty());
+      lock.lock();
       try {
-         boolean successful = (expectAny && sawAtLeastOneInvocation) || (!expectAny && expectedCommands.isEmpty());
-         info("Expect Any is " + expectAny + ", saw at least one? " + sawAtLeastOneInvocation + " Successful? " + successful);
-         if (!successful && !latch.await(time, unit)) {
-            EmbeddedCacheManager cacheManager = c.getCacheManager();
-            assert false : "Waiting for more than " + time + " " + unit + " and some commands did not replicate on cache [" + cacheManager.getAddress() + "]";
+         long remainingNanos = unit.toNanos(time);
+         while (true) {
+            infof("Waiting for %d command(s)", expectedCommands.size());
+            for (Iterator<VisitableCommand> itCommand = loggedCommands.iterator(); itCommand.hasNext(); ) {
+               VisitableCommand command = itCommand.next();
+               for (Iterator<Predicate<VisitableCommand>> itExpectation = expectedCommands.iterator();
+                    itExpectation.hasNext(); ) {
+                  Predicate<VisitableCommand> expectation = itExpectation.next();
+                  if (expectation.test(command)) {
+                     infof("Matched command %s", command);
+                     itCommand.remove();
+                     itExpectation.remove();
+                     break;
+                  }
+               }
+            }
+            if (expectedCommands.isEmpty()) {
+               newCommandCondition.signalAll();
+            }
+            if (expectedCommands.isEmpty())
+               break;
+
+            remainingNanos = newCommandCondition.awaitNanos(remainingNanos);
+            Address address = cache.getCacheManager().getAddress();
+            assertTrue("Waiting for more than " + time + " " + unit +
+                          " and some commands did not replicate on cache [" + address + "]",
+                       remainingNanos > 0);
          }
-      }
-      catch (InterruptedException e) {
-         throw new IllegalStateException("unexpected", e);
-      }
-      finally {
-         expectationSetupLock.lock();
-         expectedCommands = null;
-         expectationSetupLock.unlock();
-         expectAny = false;
-         sawAtLeastOneInvocation = false;
-         latch = new CountDownLatch(1);
-         eagerCommands.clear();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new TestException("Interrupted", e);
+      } finally {
+         lock.unlock();
       }
    }
 
    public Cache<?, ?> getCache() {
-      return c;
+      return cache;
    }
 
    public void resetEager() {
-      eagerCommands.clear();
+      lock.lock();
+      try {
+         loggedCommands.clear();
+      } finally {
+         lock.unlock();
+      }
+
    }
 
-   public void reconfigureListener(boolean recordCommandsEagerly, boolean watchLocal) {
-      this.recordCommandsEagerly = recordCommandsEagerly;
-      this.watchLocal = watchLocal;
+   public void reconfigureListener(boolean watchLocal) {
+      lock.lock();
+      try {
+         this.watchLocal = watchLocal;
+      } finally {
+         lock.unlock();
+      }
+
    }
 
    private boolean isPrimaryOwner(VisitableCommand cmd) {
       if (cmd instanceof DataCommand) {
-         return c.getAdvancedCache().getDistributionManager().getCacheTopology()
-               .getDistribution(((DataCommand) cmd).getKey()).isPrimary();
+         return cache.getAdvancedCache().getDistributionManager().getCacheTopology()
+                     .getDistribution(((DataCommand) cmd).getKey()).isPrimary();
       } else {
          return true;
       }
@@ -233,49 +258,39 @@ public class ReplListener {
    protected class ReplListenerInterceptor extends CommandInterceptor {
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
-         // first pass up chain
-         Object o;
          try {
-            o = invokeNextInterceptor(ctx, cmd);
+            // first pass up chain
+            return invokeNextInterceptor(ctx, cmd);
          } finally {//make sure we do mark this command as received even in the case of exceptions(e.g. timeouts)
-            info("Checking whether command " + cmd.getClass().getSimpleName() + " should be marked as local with watch local set to " + watchLocal);
-            if (!ctx.isOriginLocal() || (watchLocal && isPrimaryOwner(cmd))) markAsVisited(cmd);
+            if (!ctx.isOriginLocal() || (watchLocal && isPrimaryOwner(cmd))) {
+               logCommand(cmd);
+            } else {
+               infof("Not logging command (watchLocal=%b) %s", watchLocal, cmd);
+            }
          }
-         return o;
       }
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand cmd) throws Throwable {
-         // first pass up chain
-         Object o = invokeNextInterceptor(ctx, cmd);
-         if (!ctx.isOriginLocal() || watchLocal) {
-            markAsVisited(cmd);
-            for (WriteCommand mod : cmd.getModifications()) markAsVisited(mod);
+         try {
+            // first pass up chain
+            return invokeNextInterceptor(ctx, cmd);
+         } finally {
+            if (!ctx.isOriginLocal() || watchLocal) {
+               logCommand(cmd);
+               for (WriteCommand mod : cmd.getModifications()) logCommand(mod);
+            }
          }
-         return o;
       }
 
-      private void markAsVisited(VisitableCommand cmd) {
-         expectationSetupLock.lock();
+      private void logCommand(VisitableCommand cmd) {
+         lock.lock();
          try {
-            info("ReplListener saw command " + cmd);
-            if (expectedCommands != null) {
-               if (expectedCommands.removeIf(predicate -> predicate.test(cmd))) {
-                  info("Successfully removed command: " + cmd.getClass());
-               }
-               else {
-                  if (recordCommandsEagerly) eagerCommands.add(cmd);
-               }
-               sawAtLeastOneInvocation = true;
-               if (expectedCommands.isEmpty()) {
-                  info("Nothing to wait for, releasing latch");
-                  latch.countDown();
-               }
-            } else {
-               if (recordCommandsEagerly) eagerCommands.add(cmd);
-            }
+            infof("ReplListener saw command %s", cmd);
+            loggedCommands.add(cmd);
+            newCommandCondition.signalAll();
          } finally {
-            expectationSetupLock.unlock();
+            lock.unlock();
          }
       }
    }

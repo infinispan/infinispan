@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -26,12 +28,11 @@ import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.AbstractControlledRpcManager;
+import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
@@ -94,19 +95,22 @@ public class GetAllCacheNotFoundResponseTest extends MultipleCacheManagersTest {
       return Collections.singletonMap(address(cache(target)), response);
    }
 
-   private class FakeRpcManager extends AbstractControlledRpcManager {
+   private class FakeRpcManager extends AbstractDelegatingRpcManager {
 
       public FakeRpcManager(RpcManager realOne) {
          super(realOne);
       }
 
       @Override
-      public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
-                                                  ResponseCollector<T> collector, RpcOptions rpcOptions) {
+      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+                                                      ResponseCollector<T> collector,
+                                                      Function<ResponseCollector<T>, CompletionStage<T>>
+                                                            invoker) {
          if (!(command instanceof ClusteredGetAllCommand)) {
-            return super.invokeCommand(target, command, collector, rpcOptions);
+            return super.performRequest(targets, command, collector, invoker);
          }
          ClusteredGetAllCommand cmd = (ClusteredGetAllCommand) command;
+         Address target = targets.iterator().next();
          if (hasKeys(cmd, key1, key2) && target.equals(address(cache(0)))) {
             cd1.countDown();
             return (CompletionStage<T>) cf1;

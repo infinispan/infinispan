@@ -6,9 +6,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.infinispan.Cache;
@@ -17,13 +18,12 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.AbstractControlledRpcManager;
+import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -60,25 +60,30 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
       for (ReplListener rl : r) listenerLookup.put(rl.getCache(), rl);
 
       for (Cache c : caches) {
-         TestingUtil.wrapComponent(c, RpcManager.class, original -> new AbstractControlledRpcManager(original) {
+         TestingUtil.wrapComponent(c, RpcManager.class, original -> new AbstractDelegatingRpcManager(original) {
             @Override
-            public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
-               ReplicableCommand command = rpc;
-               if (rpc instanceof SingleRpcCommand) {
-                  command = ((SingleRpcCommand) rpc).getCommand();
+            protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+                                                            ResponseCollector<T> collector,
+                                                            Function<ResponseCollector<T>,
+                                                               CompletionStage<T>> invoker) {
+               if (command instanceof SingleRpcCommand) {
+                  command = ((SingleRpcCommand) command).getCommand();
                }
                if (command instanceof InvalidateL1Command) {
                   InvalidateL1Command invalidateL1Command = (InvalidateL1Command) command;
-                  if (recipients != null) {
-                     recipients.stream().map(address -> caches.stream()
-                           .filter(c -> c.getCacheManager().getAddress().equals(address))
-                           .findFirst().<IllegalStateException>orElseThrow(() -> new IllegalStateException("Missing cache for " + address))
-                     ).forEach(c -> expectedL1Invalidations
-                           .computeIfAbsent(c, ignored -> Collections.synchronizedList(new ArrayList<>()))
-                           .add(invalidateL1Command));
+                  log.tracef("Sending invalidation %s to %s", command, targets);
+                  if (targets != null) {
+                     targets.stream()
+                            .map(address -> caches.stream()
+                                                  .filter(c -> c.getCacheManager().getAddress().equals(address))
+                                                  .findFirst()
+                                                  .orElseThrow(
+                                                     () -> new IllegalStateException("Missing cache for " + address)))
+                            .forEach(c -> expectedL1Invalidations.computeIfAbsent(
+                               c, ignored -> Collections.synchronizedList(new ArrayList<>())).add(invalidateL1Command));
                   }
                }
-               return super.invokeRemotelyAsync(recipients, rpc, options);
+               return super.performRequest(targets, command, collector, invoker);
             }
          });
       }
@@ -110,9 +115,11 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
 
    private void waitForInvalidations() {
       for (Map.Entry<Cache<?, ?>, List<InvalidateL1Command>> expected : expectedL1Invalidations.entrySet()) {
-         ReplListener replListener = listenerLookup.get(expected.getKey());
+         Cache<?, ?> cache = expected.getKey();
+         ReplListener replListener = listenerLookup.get(cache);
          List<InvalidateL1Command> list = expected.getValue();
          if (!list.isEmpty()) {
+            log.tracef("Waiting for invalidations on %s: %s", cache, list);
             synchronized (list) {
                for (InvalidateL1Command cmd : list) {
                   replListener.expect(InvalidateL1Command.class);

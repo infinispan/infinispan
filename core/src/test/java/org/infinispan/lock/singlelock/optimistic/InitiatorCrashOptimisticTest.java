@@ -1,5 +1,8 @@
 package org.infinispan.lock.singlelock.optimistic;
 
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractInitiatorCrashTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -25,7 +28,7 @@ public class InitiatorCrashOptimisticTest extends AbstractInitiatorCrashTest {
       Object k = getKeyForCache(2);
 
       //prepare is sent, but is not precessed on other nodes because of the txControlInterceptor.preparedReceived
-      beginAndPrepareTx(k, 1);
+      Future<Void> future = beginAndPrepareTx(k, 1);
 
       txControlInterceptor.preparedReceived.await();
       assert checkTxCount(0, 0, 1);
@@ -38,11 +41,7 @@ public class InitiatorCrashOptimisticTest extends AbstractInitiatorCrashTest {
       txControlInterceptor.prepareProgress.countDown();
 
       assertNotLocked(k);
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0);
-         }
-      });
+      eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
+      future.get(30, TimeUnit.SECONDS);
    }
 }

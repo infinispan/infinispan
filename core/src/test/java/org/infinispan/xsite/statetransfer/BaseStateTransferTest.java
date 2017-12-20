@@ -40,6 +40,7 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ControlledTransport;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.test.ExceptionRunnable;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverDelegator;
@@ -367,7 +368,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       final XSiteStateProviderControl control = XSiteStateProviderControl.replaceInCache(cache(LON, 0));
 
       //safe (i.e. not blocking main thread), the state transfer is async
-      final Future<?> f = fork((Runnable) this::startStateTransfer);
+      final Future<?> f = fork((ExceptionRunnable) this::startStateTransfer);
 
       //state transfer will be running (nothing to transfer however) while the operation is done.
       control.await();

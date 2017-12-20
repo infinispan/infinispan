@@ -1,16 +1,13 @@
 package org.infinispan.tx;
 
-import static org.infinispan.util.concurrent.CompletableFutures.completedNull;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,9 +17,12 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import javax.transaction.Transaction;
+
 import org.infinispan.Cache;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -38,26 +38,24 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.ResponseCollector;
+import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.tx.dld.ControlledRpcManager;
-import org.infinispan.util.AbstractControlledRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
+import org.infinispan.util.ControlledRpcManager;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "tx.EntryWrappingInterceptorDoesNotBlockTest")
 @CleanupAfterMethod
 public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManagersTest {
-   ConfigurationBuilder cb;
-   ControlledConsistentHashFactory chFactory;
-   ExecutorService executor = Executors.newCachedThreadPool(getTestThreadFactory("Transport"));
+   private ConfigurationBuilder cb;
+   private ControlledConsistentHashFactory.Default chFactory;
+   private ExecutorService executor = Executors.newCachedThreadPool(getTestThreadFactory("Transport"));
 
    private static class Operation {
       final String name;
@@ -111,14 +109,13 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
    }
 
    protected void test(int expectRemoteGets, BiFunction<MagicKey, Integer, Object> operation, MagicKey... keys) throws Exception {
-      ControlledRpcManager crm0 = replace(cache(0), ControlledRpcManager::new);
-      ControlledRpcManager crm1 = replace(cache(1), ControlledRpcManager::new);
-      CountDownLatch prepareLatch = new CountDownLatch(1);
-      CountingBlockingRpcManager crm2 = replace(cache(2), delegate -> new CountingBlockingRpcManager(delegate, prepareLatch));
+      ControlledRpcManager crm0 = ControlledRpcManager.replaceRpcManager(cache(0));
+      ControlledRpcManager crm1 = ControlledRpcManager.replaceRpcManager(cache(1));
+      ControlledRpcManager crm2 = ControlledRpcManager.replaceRpcManager(cache(2));
       CountDownLatch topologyChangeLatch = new CountDownLatch(2);
       cache(0).addListener(new TopologyChangeListener(topologyChangeLatch));
       cache(2).addListener(new TopologyChangeListener(topologyChangeLatch));
-      cache(2).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new PrepareExpectingInterceptor(prepareLatch), 0);
+      cache(2).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new PrepareExpectingInterceptor(), 0);
 
       tm(0).begin();
       for (int i = 0; i < keys.length; ++i) {
@@ -126,29 +123,49 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
          assertEquals("r" + i, returnValue);
       }
 
-      // node 2 should be backup for both segment 0
+      // node 2 should be backup for both segment 0 (new) and segment 1 (already there)
       chFactory.setOwnerIndexes(new int[][]{{0, 2}, {0, 2}});
-      // block sending segment 0 to node 2
-      crm0.blockBefore(StateResponseCommand.class);
-      crm1.blockBefore(StateResponseCommand.class);
 
       addClusterEnabledCacheManager(cb);
       Future<?> newNode = fork(() -> cache(3));
+
+      // block sending segment 0 to node 2
+      expectStateRequestCommand(crm2, StateRequestCommand.Type.GET_TRANSACTIONS).send().receiveAll();
+      expectStateRequestCommand(crm2, StateRequestCommand.Type.START_STATE_TRANSFER).send().receiveAll();
+      ControlledRpcManager.BlockedRequest blockedStateResponse0 = crm0.expectCommand(StateResponseCommand.class);
       assertTrue(topologyChangeLatch.await(10, TimeUnit.SECONDS));
 
-      tm(0).commit();
+      Transaction transaction = tm(0).suspend();
+      Future<Void> commitFuture = fork(transaction::commit);
+
+      ControlledRpcManager.SentRequest sentPrepare = crm0.expectCommand(PrepareCommand.class).send();
 
       // the node should load all moving keys
-      assertEquals(expectRemoteGets, crm2.clusterGet);
+      for (int i = 0; i < expectRemoteGets; i++) {
+         crm2.expectCommand(ClusteredGetCommand.class).send().receiveAll();
+      }
+
+      sentPrepare.receiveAll();
+      crm0.expectCommand(CommitCommand.class).send().receiveAll();
+      crm0.expectCommand(TxCompletionNotificationCommand.class).sendWithoutResponses();
+
+      commitFuture.get(10, TimeUnit.SECONDS);
+
+      crm2.excludeCommands(ClusteredGetCommand.class);
       for (int i = 0; i < keys.length; i++) {
          MagicKey key = keys[i];
          assertEquals("v" + i, cache(2).get(key));
       }
 
-      crm0.stopBlocking();
-      crm1.stopBlocking();
+      blockedStateResponse0.send().receiveAll();
 
       newNode.get(10, TimeUnit.SECONDS);
+   }
+
+   private ControlledRpcManager.BlockedRequest expectStateRequestCommand(ControlledRpcManager crm,
+                                                                         StateRequestCommand.Type type)
+      throws InterruptedException {
+      return crm.expectCommand(StateRequestCommand.class, c -> assertEquals(type, c.getType()));
    }
 
    private Object readWriteKey(MagicKey key, int index) {
@@ -219,78 +236,8 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       }
    }
 
-   private class CountingBlockingRpcManager extends AbstractControlledRpcManager {
-      private final CountDownLatch latch;
-      private int clusterGet;
-
-      public CountingBlockingRpcManager(RpcManager delegate, CountDownLatch latch) {
-         super(delegate);
-         this.latch = latch;
-      }
-
-      @Override
-      public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
-                                                  ResponseCollector<T> collector, RpcOptions rpcOptions) {
-         // We have to force afterInvokeRemotely being invoked in another thread, because if the response
-         // arrives too soon, we could be processing in the same thread that is about to wait for the prepare
-         // command to finish without blocking
-         return completedNull()
-               .thenComposeAsync(o -> super.invokeCommand(target, command, collector, rpcOptions), executor);
-      }
-
-      @Override
-      public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
-                                                  ResponseCollector<T> collector, RpcOptions rpcOptions) {
-         // We have to force afterInvokeRemotely being invoked in another thread, because if the response
-         // arrives too soon, we could be processing in the same thread that is about to wait for the prepare
-         // command to finish without blocking
-         return completedNull()
-               .thenComposeAsync(o -> super.invokeCommand(targets, command, collector, rpcOptions), executor);
-      }
-
-      @Override
-      public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
-                                                       RpcOptions rpcOptions) {
-         // We have to force afterInvokeRemotely being invoked in another thread, because if the response
-         // arrives too soon, we could be processing in the same thread that is about to wait for the prepare
-         // command to finish without blocking
-         return completedNull()
-               .thenComposeAsync(o -> super.invokeCommandOnAll(command, collector, rpcOptions), executor);
-      }
-
-      @Override
-      public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
-                                                           ResponseCollector<T> collector, RpcOptions rpcOptions) {
-         // We have to force afterInvokeRemotely being invoked in another thread, because if the response
-         // arrives too soon, we could be processing in the same thread that is about to wait for the prepare
-         // command to finish without blocking
-         return completedNull()
-               .thenComposeAsync(o -> super.invokeCommandStaggered(targets, command, collector, rpcOptions), executor);
-      }
-
-      @Override
-      protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
-         if (command instanceof ClusteredGetCommand) {
-            ++clusterGet;
-            try {
-               log.debug("Waiting until PrepareExpectingInterceptor gets incomplete stage");
-               assertTrue(latch.await(10, TimeUnit.SECONDS));
-               log.debug("Releasing read response");
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
-               throw new RuntimeException(e);
-            }
-         }
-         return responseObject;
-      }
-   }
-
    private class PrepareExpectingInterceptor extends DDAsyncInterceptor {
-      private final CountDownLatch latch;
-
-      public PrepareExpectingInterceptor(CountDownLatch latch) {
-         this.latch = latch;
-      }
+      private final CountDownLatch latch = new CountDownLatch(1);
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
@@ -300,6 +247,13 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
          log.debug("Received incomplete stage");
          latch.countDown();
          return invocationStage;
+      }
+
+      public void await() throws InterruptedException {
+         boolean success = latch.await(10, TimeUnit.SECONDS);
+         if (!success) {
+            throw new TimeoutException("Timed out waiting for PrepareCommand");
+         }
       }
    }
 }

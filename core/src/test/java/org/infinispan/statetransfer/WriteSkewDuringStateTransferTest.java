@@ -1,6 +1,7 @@
 package org.infinispan.statetransfer;
 
 import static org.infinispan.distribution.DistributionTestHelper.hasOwners;
+import static org.infinispan.util.BlockingLocalTopologyManager.confirmTopologyUpdate;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
@@ -9,12 +10,15 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -23,13 +27,12 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -54,33 +57,34 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
       //keep track of all controlled components. In case of failure, we need to unblock all otherwise we have to wait
       //long time until the test is able to stop all cache managers.
       for (BlockingLocalTopologyManager topologyManager : topologyManagerList) {
-         topologyManager.stopBlockingAll();
+         topologyManager.stopBlocking();
       }
       topologyManagerList.clear();
    }
 
    /*
-   Replicated TX cache with WSC, A, B are in cluster, C is joining
-   0. The current CH already contains A and B as owners, C is joining (is not primary owner of anything yet).
-B is primary owner of K=V.
-   1. A sends PrepareCommand to B and C with put(K, V) (V is null on all nodes); //A has already received the
-rebalance_start
-   2. C receives PrepareCommand and responds with no versions (it is not primary owner); //C has already received the
-rebalance_start
-   3. topology changes on B - primary ownership of K is transferred to C; //B has already received the ch_update
-   4. B receives PrepareCommand, responds without K's version (it is not primary)
-   5. B forwards the Prepare to C as it sees that the command has lower topology ID
-   6. C responds to B's prepare with version of K; //at this point, C has received the ch_update
-   7. K version is not added to B's response, B responds to A
-   8. A finds out that topology has changed, forwards prepare to C; //A has received the ch_update
-   9. C responds to C's prepare with version of K
-   10. A receives C's response, but the versions are not added to transaction
-   11. A sends out CommitCommand missing version of K
-   12. all nodes record K=V without version as usual ImmortalCacheEntry
    */
 
    /**
-    * See description above or ISPN-3738
+    * See ISPN-3738
+    *
+    * Replicated TX cache with WSC, A, B are in cluster, C is joining
+    * 0. The current CH already contains A and B as owners, C is joining (is not primary owner of anything yet).
+    * B is primary owner of K=V.
+    * 1. A sends PrepareCommand to B and C with put(K, V) (V is null on all nodes); //A has already received the
+    * rebalance_start
+    * 2. C receives PrepareCommand and responds with no versions (it is not primary owner); //C has already received the
+    * rebalance_start
+    * 3. topology changes on B - primary ownership of K is transferred to C; //B has already received the ch_update
+    * 4. B receives PrepareCommand, responds without K's version (it is not primary)
+    * 5. --B forwards the Prepare to C as it sees that the command has lower topology ID--
+    * 6. C responds to B's prepare with version of K; //at this point, C has received the ch_update
+    * 7. K version is not added to B's response, B responds to A
+    * 8. A finds out that topology has changed, forwards prepare to C; //A has received the ch_update
+    * 9. C responds to C's prepare with version of K
+    * 10. A receives C's response, but the versions are not added to transaction
+    * 11. A sends out CommitCommand missing version of K
+    * 12. all nodes record K=V without version as usual ImmortalCacheEntry
     */
    public void testVersionsAfterStateTransfer() throws Exception {
       assertClusterSize("Wrong cluster size", 2);
@@ -88,45 +92,60 @@ rebalance_start
       assertKeyOwnership(key, cache(1), cache(0));
       final int currentTopologyId = currentTopologyId(cache(0));
 
-      final ControlledRpcManager nodeARpcManager = replaceRpcManager(cache(0));
+      final ControlledRpcManager nodeARpcManager = ControlledRpcManager.replaceRpcManager(cache(0));
       final NodeController nodeAController = setNodeControllerIn(cache(0));
       setInitialPhaseForNodeA(nodeAController, currentTopologyId);
       final NodeController nodeBController = setNodeControllerIn(cache(1));
       setInitialPhaseForNodeB(nodeBController, currentTopologyId);
       final NewNode nodeC = addNode(currentTopologyId);
 
-      //node A thinks that node B is the primary owner. Node B is blocking the prepare command until it thinks that
-      //node C is the primary owner
-      nodeAController.topologyManager.waitToBlock(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
-      nodeARpcManager.blockAfter(VersionedPrepareCommand.class);
-      //node C thinks that node B is the primary owner.
-      //nodeC.controller.topologyManager.waitToBlock(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+      // Start the rebalance everywhere
+      confirmTopologyUpdate(CacheTopology.Phase.READ_OLD_WRITE_ALL,
+                            nodeAController.topologyManager,
+                            nodeBController.topologyManager,
+                            nodeC.controller.topologyManager);
 
-      //after this waiting phase, node A thinks that node B is the primary owner, node B thinks that node C is the
-      // primary owner and node C thinks that node B is the primary owner
-      //lets execute the transaction...
+
+      // Install the READ_ALL_WRITE_ALL topology on B
+      nodeBController.topologyManager.confirmTopologyUpdate(CacheTopology.Phase.READ_ALL_WRITE_ALL);
 
       Future<Object> tx = executeTransaction(cache(0), key);
 
-      //it waits until all nodes has replied. then, we change the topology ID and let it collect the responses.
-      nodeARpcManager.waitForCommandToBlock();
-      nodeAController.topologyManager.stopBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+      // Wait until all nodes have replied. then, we change the topology ID and let it collect the responses.
+      ControlledRpcManager.BlockedResponseMap blockedPrepare =
+         nodeARpcManager.expectCommand(VersionedPrepareCommand.class).send().awaitAll();
+      assertEquals(0, nodeC.commandLatch.getCount());
+
+      nodeAController.topologyManager.confirmTopologyUpdate(CacheTopology.Phase.READ_ALL_WRITE_ALL);
+      nodeC.controller.topologyManager.confirmTopologyUpdate(CacheTopology.Phase.READ_ALL_WRITE_ALL);
+      confirmTopologyUpdate(CacheTopology.Phase.READ_NEW_WRITE_ALL, nodeAController.topologyManager,
+                            nodeBController.topologyManager, nodeC.controller.topologyManager);
+      confirmTopologyUpdate(CacheTopology.Phase.NO_REBALANCE, nodeAController.topologyManager,
+                            nodeBController.topologyManager, nodeC.controller.topologyManager);
       awaitForTopology(currentTopologyId + 4, cache(0));
 
-      nodeARpcManager.stopBlocking();
+      blockedPrepare.receive();
+
+      // Retry the prepare and then commit
+      nodeARpcManager.expectCommand(PrepareCommand.class).send().receiveAll();
+      nodeARpcManager.expectCommand(CommitCommand.class).send().receiveAll();
+      nodeARpcManager.expectCommand(TxCompletionNotificationCommand.class).sendWithoutResponses();
       assertNull("Wrong put() return value.", tx.get());
 
-      nodeAController.topologyManager.stopBlockingAll();
-      nodeBController.topologyManager.stopBlockingAll();
-      nodeC.controller.topologyManager.stopBlockingAll();
+      nodeAController.topologyManager.stopBlocking();
+      nodeBController.topologyManager.stopBlocking();
+      nodeC.controller.topologyManager.stopBlocking();
 
-      nodeC.joinerFuture.get();
+      nodeC.joinerFuture.get(30, TimeUnit.SECONDS);
 
       awaitForTopology(currentTopologyId + 4, cache(0));
       awaitForTopology(currentTopologyId + 4, cache(1));
       awaitForTopology(currentTopologyId + 4, cache(2));
 
       assertKeyVersionInDataContainer(key, cache(1), cache(2));
+
+      nodeARpcManager.stopBlocking();
+
       cache(0).put(key, "v2");
    }
 
@@ -144,14 +163,6 @@ rebalance_start
       }
    }
 
-   private ControlledRpcManager replaceRpcManager(Cache cache) {
-      RpcManager manager = TestingUtil.extractComponent(cache, RpcManager.class);
-      ControlledRpcManager controlledRpcManager = new ControlledRpcManager(manager);
-      TestingUtil.replaceComponent(cache, RpcManager.class, controlledRpcManager, true);
-      //rpcManagerList.add(controlledRpcManager);
-      return controlledRpcManager;
-   }
-
    private void awaitForTopology(final int expectedTopologyId, final Cache cache) {
       eventually(() -> expectedTopologyId == currentTopologyId(cache));
    }
@@ -164,7 +175,7 @@ rebalance_start
       return fork(() -> TestingUtil.withTx(cache.getAdvancedCache().getTransactionManager(), () -> cache.put(key, "value")));
    }
 
-   private NewNode addNode(final int currentTopologyId) {
+   private NewNode addNode(final int currentTopologyId) throws InterruptedException {
       final NewNode newNode = new NewNode();
       ConfigurationBuilder builder = configuration();
       newNode.controller = new NodeController();
@@ -172,6 +183,7 @@ rebalance_start
       builder.customInterceptors().addInterceptor().index(0).interceptor(newNode.controller.interceptor);
       EmbeddedCacheManager embeddedCacheManager = addClusterEnabledCacheManager(builder);
       newNode.controller.topologyManager = replaceTopologyManager(embeddedCacheManager);
+
       newNode.controller.interceptor.addAction(new Action() {
          @Override
          public boolean isApplicable(InvocationContext context, VisitableCommand command) {
@@ -198,12 +210,11 @@ rebalance_start
          public void after(InvocationContext context, VisitableCommand command, Cache cache) {
             log.tracef("After: command=%s. origin=%s", command, context.getOrigin());
             if (context.getOrigin().equals(address(cache(0)))) {
-               newNode.controller.topologyManager.stopBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+               newNode.commandLatch.countDown();
             }
          }
       });
 
-      newNode.controller.topologyManager.startBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
       newNode.joinerFuture = fork(() -> {
          waitForClusterToForm();
          return null;
@@ -224,8 +235,9 @@ rebalance_start
       assertTrue("Wrong ownership for " + key + ".", hasOwners(key, primaryOwner, backupOwners));
    }
 
-   private BlockingLocalTopologyManager replaceTopologyManager(CacheContainer cacheContainer) {
-      BlockingLocalTopologyManager localTopologyManager = BlockingLocalTopologyManager.replaceTopologyManager(cacheContainer);
+   private BlockingLocalTopologyManager replaceTopologyManager(EmbeddedCacheManager cacheContainer) {
+      BlockingLocalTopologyManager localTopologyManager =
+         BlockingLocalTopologyManager.replaceTopologyManagerDefaultCache(cacheContainer);
       topologyManagerList.add(localTopologyManager);
       return localTopologyManager;
    }
@@ -233,7 +245,8 @@ rebalance_start
    private static NodeController setNodeControllerIn(Cache<Object, Object> cache) {
       NodeController nodeController = new NodeController();
       nodeController.interceptor = new ControlledCommandInterceptor(cache);
-      nodeController.topologyManager = BlockingLocalTopologyManager.replaceTopologyManager(cache.getCacheManager());
+      nodeController.topologyManager = BlockingLocalTopologyManager.replaceTopologyManagerDefaultCache(
+         cache.getCacheManager());
       return nodeController;
    }
 
@@ -262,7 +275,6 @@ rebalance_start
             //no-op
          }
       });
-      nodeA.topologyManager.startBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
    }
 
    private static void setInitialPhaseForNodeB(NodeController nodeB, final int currentTopology) {
@@ -381,6 +393,7 @@ rebalance_start
 
    private static class NewNode {
       Future<Void> joinerFuture;
+      CountDownLatch commandLatch = new CountDownLatch(1);
       NodeController controller;
    }
 }

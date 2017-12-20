@@ -20,7 +20,6 @@ import static org.infinispan.stats.container.ExtendedStatistic.values;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractField;
 import static org.infinispan.test.TestingUtil.extractLockManager;
-import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.replaceField;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -45,7 +44,7 @@ import org.infinispan.stats.wrappers.ExtendedStatisticLockManager;
 import org.infinispan.stats.wrappers.ExtendedStatisticRpcManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.infinispan.util.TimeService;
@@ -117,7 +116,7 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
    }
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       for (int i = 0; i < NUM_NODES; ++i) {
          ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
          builder.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
@@ -146,8 +145,7 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
          replaceField(TEST_TIME_SERVICE, "timeService", interceptor, ExtendedStatisticInterceptor.class);
          replaceField(TEST_TIME_SERVICE, "timeService", lockManager, ExtendedStatisticLockManager.class);
          replaceField(TEST_TIME_SERVICE, "timeService", rpcManager, ExtendedStatisticRpcManager.class);
-         controlledRpcManager[i] = new ControlledRpcManager(rpcManager);
-         replaceComponent(cache(i), RpcManager.class, controlledRpcManager[i], true);
+         controlledRpcManager[i] = ControlledRpcManager.replaceRpcManager(cache(i));
          transactionTrackInterceptors[i] = TransactionTrackInterceptor.injectInCache(cache(i));
          if (i == 0) {
             LockManager actualLockManager = lockManager.getActual();
@@ -308,7 +306,6 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
    private void resetState() {
       for (ControlledRpcManager rpcManager : controlledRpcManager) {
          rpcManager.stopBlocking();
-         rpcManager.stopFailing();
       }
       lockManagerTimeService.triggerTimeout = false;
       for (TransactionTrackInterceptor interceptor : transactionTrackInterceptors) {

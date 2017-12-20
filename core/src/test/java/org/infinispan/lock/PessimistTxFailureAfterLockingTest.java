@@ -2,6 +2,10 @@ package org.infinispan.lock;
 
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.Collection;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -9,11 +13,13 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.AbstractControlledRpcManager;
+import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
@@ -87,18 +93,20 @@ public class PessimistTxFailureAfterLockingTest extends MultipleCacheManagersTes
     * this RpcManager simulates a reply lost from LockControlCommand by throwing a TimeoutException. However, it is
     * expected the command to acquire the remote lock.
     */
-   private class TestControllerRpcManager extends AbstractControlledRpcManager {
+   private class TestControllerRpcManager extends AbstractDelegatingRpcManager {
 
       public TestControllerRpcManager(RpcManager realOne) {
          super(realOne);
       }
 
       @Override
-      protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
+      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+                                                      ResponseCollector<T> collector,
+                                                      Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
          if (command instanceof LockControlCommand) {
             throw new TimeoutException("Exception expected!");
          }
-         return responseObject;
+         return super.performRequest(targets, command, collector, invoker);
       }
    }
 }

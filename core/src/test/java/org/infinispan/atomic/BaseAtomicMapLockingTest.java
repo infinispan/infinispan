@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-
 import javax.transaction.Transaction;
 
 import org.infinispan.commands.tx.PrepareCommand;
@@ -19,11 +18,9 @@ import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -79,9 +76,7 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
       }
       waitForClusterToForm();
       for (int i = 0; i < NUM_NODES; ++i) {
-         RpcManager rpcManager = TestingUtil.extractComponent(cache(i), RpcManager.class);
-         rpcManagers[i] = new ControlledRpcManager(rpcManager);
-         TestingUtil.replaceComponent(cache(i), RpcManager.class, rpcManagers[i], true);
+         rpcManagers[i] = ControlledRpcManager.replaceRpcManager(cache(i));
       }
       ahmKey = new MagicKey("AtomicMap", cache(0));
       fgahmKey = new MagicKey("FineGrainedAtomicMap", cache(0));
@@ -98,12 +93,6 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
       map.put("key3", VALUE);
       final Transaction tx1 = tm(txExecutor).suspend();
 
-      if (pessimistic) {
-         rpcManagers[txExecutor].blockBefore(prepareCommandClass);
-      } else {
-         rpcManagers[txExecutor].blockAfter(prepareCommandClass);
-      }
-
       Future<Boolean> txOutcome = fork(new Callable<Boolean>() {
          @Override
          public Boolean call() throws Exception {
@@ -118,12 +107,22 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
       });
 
       try {
-         rpcManagers[txExecutor].waitForCommandToBlock();
+         ControlledRpcManager.BlockedRequest blockedPrepare =
+            rpcManagers[txExecutor].expectCommand(prepareCommandClass);
+         ControlledRpcManager.BlockedResponseMap blockedPrepareResponses = null;
+         if (!pessimistic) {
+            blockedPrepareResponses = blockedPrepare.send().awaitAll();
+         }
+
          assertKeysLocked(0, ahmKey);
          assertKeysLocked(1, EMPTY_ARRAY);
          assertKeysLocked(2, EMPTY_ARRAY);
 
-         rpcManagers[txExecutor].stopBlocking();
+         if (pessimistic) {
+            blockedPrepare.send().receiveAll();
+         } else {
+            blockedPrepareResponses.receive();
+         }
          Assert.assertTrue(txOutcome.get());
       } finally {
          rpcManagers[txExecutor].stopBlocking();
@@ -145,12 +144,6 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
             "Wrong number of composite keys collected!");
       log.infof("%s composite keys collected.", collectors[txExecutor].getKeys().size());
 
-      if (pessimistic) {
-         rpcManagers[txExecutor].blockBefore(prepareCommandClass);
-      } else {
-         rpcManagers[txExecutor].blockAfter(prepareCommandClass);
-      }
-
       Future<Boolean> txOutcome = fork(new Callable<Boolean>() {
          @Override
          public Boolean call() throws Exception {
@@ -165,12 +158,22 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
       });
 
       try {
-         rpcManagers[txExecutor].waitForCommandToBlock();
+         ControlledRpcManager.BlockedRequest blockedPrepare =
+            rpcManagers[txExecutor].expectCommand(prepareCommandClass);
+         ControlledRpcManager.BlockedResponseMap blockedPrepareResponses = null;
+         if (!pessimistic) {
+            blockedPrepareResponses = blockedPrepare.send().awaitAll();
+         }
+
          assertKeysLocked(0, collectors[txExecutor].getKeys().toArray());
          assertKeysLocked(1, EMPTY_ARRAY);
          assertKeysLocked(2, EMPTY_ARRAY);
 
-         rpcManagers[txExecutor].stopBlocking();
+         if (pessimistic) {
+            blockedPrepare.send().receiveAll();
+         } else {
+            blockedPrepareResponses.receive();
+         }
          Assert.assertTrue(txOutcome.get());
       } finally {
          rpcManagers[txExecutor].stopBlocking();
@@ -202,7 +205,6 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
          }
          if (rpcManagers[i] != null) {
             rpcManagers[i].stopBlocking();
-            rpcManagers[i].stopFailing();
          }
       }
    }

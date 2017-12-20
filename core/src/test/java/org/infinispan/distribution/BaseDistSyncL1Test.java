@@ -69,18 +69,17 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
       return addBlockingInterceptorBeforeTx(cache, barrier, commandClass, true);
    }
 
-   protected BlockingInterceptor addBlockingInterceptorBeforeTx(Cache<?, ?> cache,
-         final CyclicBarrier barrier,
-                                                 Class<? extends VisitableCommand> commandClass,
-                                                 boolean blockAfterCommand) {
+   protected BlockingInterceptor addBlockingInterceptorBeforeTx(Cache<?, ?> cache, final CyclicBarrier barrier,
+                                                                Class<? extends VisitableCommand> commandClass,
+                                                                boolean blockAfterCommand) {
       return addBlockingInterceptor(cache, barrier, commandClass, getDistributionInterceptorClass(),
             blockAfterCommand);
    }
 
    protected BlockingInterceptor addBlockingInterceptor(Cache<?, ?> cache, final CyclicBarrier barrier,
-                                         Class<? extends VisitableCommand> commandClass,
-         Class<? extends AsyncInterceptor> interceptorPosition,
-                                         boolean blockAfterCommand) {
+                                                        Class<? extends VisitableCommand> commandClass,
+                                                        Class<? extends AsyncInterceptor> interceptorPosition,
+                                                        boolean blockAfterCommand) {
       BlockingInterceptor bi = new BlockingInterceptor<>(barrier, commandClass, blockAfterCommand, false);
       AsyncInterceptorChain interceptorChain = cache.getAdvancedCache().getAsyncInterceptorChain();
       assertTrue(interceptorChain.addInterceptorBefore(bi, interceptorPosition));

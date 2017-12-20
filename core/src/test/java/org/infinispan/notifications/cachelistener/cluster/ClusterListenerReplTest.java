@@ -3,8 +3,8 @@ package org.infinispan.notifications.cachelistener.cluster;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.Collections;
 import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -17,9 +17,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.ControlledRpcManager;
 import org.testng.annotations.Test;
 
 /**
@@ -35,7 +34,7 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
    }
 
    public void testPrimaryOwnerGoesDownBeforeBackupRaisesEvent() throws InterruptedException, TimeoutException,
-                                                                   ExecutionException, BrokenBarrierException {
+                                                                   ExecutionException {
       final Cache<Object, String> cache0 = cache(0, CACHE_NAME);
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
       Cache<Object, String> cache2 = cache(2, CACHE_NAME);
@@ -44,24 +43,17 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
       cache0.addListener(clusterListener);
 
       // Now we want to block the outgoing put to the backup owner
-      RpcManager rpcManager = TestingUtil.extractComponent(cache1, RpcManager.class);
-      ControlledRpcManager controlledRpcManager = new ControlledRpcManager(rpcManager);
-      controlledRpcManager.blockBefore(PutKeyValueCommand.class);
-      TestingUtil.replaceComponent(cache1, RpcManager.class, controlledRpcManager, true);
+      ControlledRpcManager controlledRpcManager = ControlledRpcManager.replaceRpcManager(cache1);
 
       final MagicKey key = new MagicKey(cache1, cache2);
-      Future<String> future = fork(new Callable<String>() {
-         @Override
-         public String call() throws Exception {
-            return cache0.put(key, FIRST_VALUE);
-         }
-      });
+      Future<String> future = fork(() -> cache0.put(key, FIRST_VALUE));
 
       // Wait until the primary owner has sent the put command successfully to  backup
-      controlledRpcManager.waitForCommandToBlock(10, TimeUnit.SECONDS);
+      ControlledRpcManager.BlockedRequest blockedPut = controlledRpcManager.expectCommand(PutKeyValueCommand.class);
 
       // Kill the cache now
       TestingUtil.killCacheManagers(cache1.getCacheManager());
+      blockedPut.skipSend().receive(Collections.emptyMap());
 
       // This should return null normally, but since it was retried it returns it's own value :(
       // Maybe some day this can work properly

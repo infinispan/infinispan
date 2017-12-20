@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -13,6 +14,9 @@ import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
+import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.ExceptionAckCommand;
+import org.infinispan.commands.write.PrimaryAckCommand;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
@@ -21,10 +25,9 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.CountingRpcManager;
 import org.infinispan.util.TimeService;
@@ -43,31 +46,34 @@ public class BiasLeaseTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.SCATTERED_SYNC, false);
       builder.clustering().biasAcquisition(BiasAcquisition.ON_WRITE);
-      // Scan biasses frequently
+      // Scan biases frequently
       builder.expiration().wakeUpInterval(100);
       createCluster(builder, 3);
 
       IntStream.of(0, 1, 2).mapToObj(this::cache).forEach(
             c -> TestingUtil.replaceComponent(c, TimeService.class, timeService, true));
-      TestingUtil.wrapComponent(cache(0), RpcManager.class, rpcManager -> rpcManager0 = new ControlledRpcManager(rpcManager));
-      TestingUtil.wrapComponent(cache(1), RpcManager.class, rpcManager -> rpcManager1 = new CountingRpcManager(rpcManager));
+      rpcManager0 = ControlledRpcManager.replaceRpcManager(cache(0));
+      rpcManager1 = CountingRpcManager.replaceRpcManager(cache(1));
       TestingUtil.wrapInboundInvocationHandler(cache(0), handler -> handler0 = new RenewWaitingInvocationHandler(handler));
    }
 
    @AfterMethod
    public void cleanup() {
+      rpcManager0.excludeCommands(ClearCommand.class);
       IntStream.of(0, 1, 2).mapToObj(this::cache).forEach(Cache::clear);
+      rpcManager0.excludeCommands();
    }
 
-   public void testBiasTimesOut() throws InterruptedException {
+   public void testBiasTimesOut() throws Exception {
+      rpcManager0.excludeCommands(PrimaryAckCommand.class, ExceptionAckCommand.class);
       MagicKey key = new MagicKey(cache(0));
-      cache(1).put(key, "v0");
+      Future<Object> putFuture = fork(() -> cache(1).put(key, "v0"));
+      putFuture.get(10, TimeUnit.SECONDS);
+
       assertTrue(biasManager(1).hasLocalBias(key));
 
-      rpcManager0.blockAfter(RevokeBiasCommand.class);
       timeService.advance(BIAS_LIFESPAN + 1);
-      rpcManager0.waitForCommandToBlock();
-      rpcManager0.stopBlocking();
+      rpcManager0.expectCommand(RevokeBiasCommand.class).send().receiveAll();
 
       // The local bias is invalidated synchronously with the sync command, but it may take few moments
       // to remove the remote bias.
@@ -75,9 +81,12 @@ public class BiasLeaseTest extends MultipleCacheManagersTest {
       eventuallyEquals(null, () -> biasManager(0).getRemoteBias(key));
    }
 
-   public void testBiasLeaseRenewed() throws InterruptedException {
+   public void testBiasLeaseRenewed() throws Exception {
       MagicKey key = new MagicKey(cache(0));
-      cache(1).put(key, "v0");
+      Future<Object> putFuture = fork(() -> cache(1).put(key, "v0"));
+      rpcManager0.expectCommand(PrimaryAckCommand.class).sendWithoutResponses();
+      putFuture.get(10, TimeUnit.SECONDS);
+
       assertEquals(Collections.singletonList(address(1)), biasManager(0).getRemoteBias(key));
       assertTrue(biasManager(1).hasLocalBias(key));
 

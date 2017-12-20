@@ -13,15 +13,15 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
 import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.testng.annotations.Test;
 
@@ -200,23 +200,21 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
 
-      RpcManager rm = TestingUtil.extractComponent(nonOwnerCache, RpcManager.class);
-      ControlledRpcManager crm = new ControlledRpcManager(rm);
-      // Make our node block and not return the get yet
-      crm.blockAfter(PutKeyValueCommand.class);
-      TestingUtil.replaceComponent(nonOwnerCache, RpcManager.class, crm, true);
+      ControlledRpcManager crm = ControlledRpcManager.replaceRpcManager(nonOwnerCache);
+      crm.excludeCommands(ClusteredGetCommand.class);
 
       try {
-         Future<String> future = nonOwnerCache.putIfAbsentAsync(key, firstValue);
+         Future<String> future = fork(() -> nonOwnerCache.putIfAbsent(key, firstValue));
 
          // Now wait for the get to return and block it for now
-         crm.waitForCommandToBlock(5, TimeUnit.SECONDS);
+         ControlledRpcManager.BlockedResponseMap blockedPutResponses =
+            crm.expectCommand(PutKeyValueCommand.class).send().awaitAll();
 
          // Owner should have the new value
          assertEquals(firstValue, ownerCache.remove(key));
 
          // Now let owner key->updateValue go through
-         crm.stopBlocking();
+         blockedPutResponses.receive();
 
          // This should be originalValue still as we did the get
          assertNull(future.get(5, TimeUnit.SECONDS));
@@ -229,7 +227,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
          assertNull(nonOwnerCache.get(key));
          assertIsNotInL1(nonOwnerCache, key);
       } finally {
-         TestingUtil.replaceComponent(nonOwnerCache, RpcManager.class, rm, true);
+         crm.revertRpcManager(nonOwnerCache);
       }
    }
 

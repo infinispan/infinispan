@@ -1,6 +1,7 @@
 package org.infinispan.distribution.rehash;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.infinispan.util.ControlledRpcManager.replaceRpcManager;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -15,9 +16,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
+import org.infinispan.commands.remote.RevokeBiasCommand;
+import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
+import org.infinispan.commands.write.BackupWriteRpcCommand;
+import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
@@ -25,7 +31,6 @@ import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -33,7 +38,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -133,7 +138,11 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
 
       // Block any state response commands on cache0
       CheckPoint checkPoint = new CheckPoint();
-      ControlledRpcManager blockingRpcManager0 = blockStateResponseCommand(cache0);
+      ControlledRpcManager blockingRpcManager0 = replaceRpcManager(cache0);
+      blockingRpcManager0.excludeCommands(WriteCommand.class, BackupWriteRpcCommand.class,
+                                          RevokeBiasCommand.class, InvalidateVersionsCommand.class,
+                                          AbstractTransactionBoundaryCommand.class,
+                                          TxCompletionNotificationCommand.class);
 
       int rebalanceTopologyId = preJoinTopologyId + 1;
       // Block the rebalance confirmation on cache0
@@ -163,7 +172,8 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       assertTrue(cache1.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, ewi));
 
       // Wait for cache0 to collect the state to send to cache1 (including our previous value).
-      blockingRpcManager0.waitForCommandToBlock();
+      ControlledRpcManager.BlockedRequest blockedStateResponse =
+         blockingRpcManager0.expectCommand(StateResponseCommand.class);
 
       // Put/Replace/Remove from cache0 with cache0 as primary owner, cache1 will become a backup owner for the retry
       // The put command will be blocked on cache1 just before committing the entry.
@@ -175,7 +185,10 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       blockingInterceptor1.suspend(true);
 
       // Allow the state to be applied on cache1 (writing the old value for our entry)
-      blockingRpcManager0.stopBlocking();
+      blockedStateResponse.send().receiveAll();
+      if (cacheMode.isScattered()) {
+         blockingRpcManager0.expectCommand(StateResponseCommand.class).send().receiveAll();
+      }
 
       // Wait for cache1 to finish applying the state, but don't allow the rebalance confirmation to be processed.
       // (It would change the topology and it would trigger a retry for the command.)
@@ -197,14 +210,8 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       // Check the value on all the nodes
       assertEquals(op.getValue(), cache0.get(key));
       assertEquals(op.getValue(), cache1.get(key));
-   }
 
-   private ControlledRpcManager blockStateResponseCommand(final Cache cache) throws InterruptedException {
-      RpcManager rpcManager = TestingUtil.extractComponent(cache, RpcManager.class);
-      ControlledRpcManager controlledRpcManager = new ControlledRpcManager(rpcManager);
-      controlledRpcManager.blockBefore(StateResponseCommand.class);
-      TestingUtil.replaceComponent(cache, RpcManager.class, controlledRpcManager, true);
-      return controlledRpcManager;
+      blockingRpcManager0.stopBlocking();
    }
 
    private void blockRebalanceConfirmation(final EmbeddedCacheManager manager, final CheckPoint checkPoint, int rebalanceTopologyId)

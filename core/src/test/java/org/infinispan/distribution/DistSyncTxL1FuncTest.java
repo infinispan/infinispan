@@ -1,9 +1,5 @@
 package org.infinispan.distribution;
 
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyCollection;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -17,17 +13,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -38,15 +30,12 @@ import org.infinispan.interceptors.distribution.L1TxInterceptor;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
 import org.infinispan.remoting.RemoteException;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
-import org.infinispan.remoting.transport.ResponseCollector;
+import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.test.Exceptions;
-import org.infinispan.test.TestingUtil;
+import org.infinispan.test.TestException;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.mockito.AdditionalAnswers;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.DistSyncTxL1FuncTest")
@@ -124,8 +113,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
    }
 
    @Test
-   public void testL1UpdatedBeforePutCommits() throws InterruptedException, TimeoutException, BrokenBarrierException,
-                                                        ExecutionException, SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
+   public void testL1UpdatedBeforePutCommits() throws Exception {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
 
@@ -147,8 +135,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
    }
 
    @Test
-   public void testL1UpdatedBeforeRemoveCommits() throws InterruptedException, TimeoutException, BrokenBarrierException,
-                                                      ExecutionException, SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
+   public void testL1UpdatedBeforeRemoveCommits() throws Exception {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
 
@@ -197,7 +184,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
    }
 
    @Test
-   public void testGetOccursAfterReplaceRunningBeforeWithRemoteException() throws ExecutionException, InterruptedException, BrokenBarrierException, TimeoutException {
+   public void testGetOccursAfterReplaceRunningBeforeWithRemoteException() throws Exception {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
 
@@ -205,16 +192,8 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
 
       CyclicBarrier barrier = new CyclicBarrier(2);
       addBlockingInterceptorBeforeTx(nonOwnerCache, barrier, ReplaceCommand.class, false);
-      RpcManager realManager = nonOwnerCache.getAdvancedCache().getComponentRegistry().getComponent(RpcManager.class);
-      RpcManager mockManager = mock(RpcManager.class, AdditionalAnswers.delegatesTo(realManager));
 
-      // Only throw exception on the first call just in case if test calls it more than once to fail properly
-      doAnswer(invocationOnMock -> {
-         throw new RemoteException("FAIL", new TimeoutException());
-      }).doAnswer(AdditionalAnswers.delegatesTo(realManager)).when(mockManager)
-            .invokeCommandStaggered(anyCollection(), any(ClusteredGetCommand.class), any(ResponseCollector.class), any(RpcOptions.class));
-
-      TestingUtil.replaceComponent(nonOwnerCache, RpcManager.class, mockManager, true);
+      ControlledRpcManager controlledRpcManager = ControlledRpcManager.replaceRpcManager(nonOwnerCache);
       try {
          // The replace will internally block the get until it gets the remote value
          Future<Boolean> futureReplace = fork(() -> nonOwnerCache.replace(key, firstValue, secondValue));
@@ -223,26 +202,24 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
 
          Future<String> futureGet = fork(() -> nonOwnerCache.get(key));
 
+         // The get will blocks locally on the L1WriteSynchronizer registered by the replace command
          Exceptions.expectException(TimeoutException.class, () -> futureGet.get(100, TimeUnit.MILLISECONDS));
+         controlledRpcManager.expectNoCommand();
 
-         // Let the replace now finish
+         // Continue the replace
          barrier.await(5, TimeUnit.SECONDS);
-         try {
-            futureReplace.get(5, TimeUnit.SECONDS);
-            fail("Test should have thrown an execution exception");
-         } catch (ExecutionException e) {
-            assertTrue(e.getCause() instanceof RemoteException);
-         }
 
+         // That also unblocks the get command and allows it to perform the remote get
+         controlledRpcManager.expectCommand(ClusteredGetCommand.class)
+                             .skipSend()
+                             .receive(address(ownerCache), new ExceptionResponse(new TestException()));
 
-         try {
-            assertEquals(firstValue, futureGet.get(5, TimeUnit.SECONDS));
-         } catch (ExecutionException e) {
-            assertTrue(e.getCause() instanceof RemoteException);
-         }
+         Exceptions.expectExecutionException(RemoteException.class, TestException.class, futureReplace);
+
+         Exceptions.expectExecutionException(RemoteException.class, TestException.class, futureGet);
       } finally {
          removeAllBlockingInterceptorsFromCache(nonOwnerCache);
-         TestingUtil.replaceComponent(nonOwnerCache, RpcManager.class, realManager, true);
+         controlledRpcManager.revertRpcManager(nonOwnerCache);
       }
    }
 
@@ -363,26 +340,20 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
 
       assertIsInL1(nonOwnerCache, key);
 
-      // We add controlled rpc manager so we can stop the L1 invalidations being sent by the owner and backup.  This
-      // way we can ensure these are synchronous
-      RpcManager rm = TestingUtil.extractComponent(ownerCache, RpcManager.class);
-      ControlledRpcManager crm = new ControlledRpcManager(rm);
-      crm.blockBefore(InvalidateL1Command.class);
-      TestingUtil.replaceComponent(ownerCache, RpcManager.class, crm, true);
-
-      // We have to do this on backup owner as well since both invalidate now
-      RpcManager rm2 = TestingUtil.extractComponent(backupOwnerCache, RpcManager.class);
-      ControlledRpcManager crm2 = new ControlledRpcManager(rm2);
-      // Make our node block and not return the get yet
-      crm2.blockBefore(InvalidateL1Command.class);
-      TestingUtil.replaceComponent(backupOwnerCache, RpcManager.class, crm2, true);
+      ControlledRpcManager crm = ControlledRpcManager.replaceRpcManager(ownerCache);
+      ControlledRpcManager crm2 = ControlledRpcManager.replaceRpcManager(backupOwnerCache);
 
       try {
          Future<String> future = fork(() -> ownerCache.put(key, secondValue));
 
-         // wait until they all get there, but keep them blocked
-         crm.waitForCommandToBlock(10, TimeUnit.SECONDS);
-         crm2.waitForCommandToBlock(10, TimeUnit.SECONDS);
+         if (!onePhaseCommitOptimization) {
+            // With 2PC the invalidation is sent before the commit but after the prepare
+            crm.expectCommand(PrepareCommand.class).send().receiveAll();
+         }
+
+         // Wait for the L1 invalidation commands and block them
+         ControlledRpcManager.BlockedRequest blockedInvalidate1 = crm.expectCommand(InvalidateL1Command.class);
+         crm2.expectNoCommand(100, TimeUnit.MILLISECONDS);
 
          try {
             future.get(1, TimeUnit.SECONDS);
@@ -393,8 +364,15 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
          }
 
          // Now we should let the L1 invalidations go through
-         crm.stopBlocking();
-         crm2.stopBlocking();
+         blockedInvalidate1.send().receiveAll();
+
+         if (onePhaseCommitOptimization) {
+            // With 1PC the invalidation command is sent before the prepare command
+            crm.expectCommand(PrepareCommand.class).send().receiveAll();
+         } else {
+            crm.expectCommand(CommitCommand.class).send().receiveAll();
+            crm.expectCommand(TxCompletionNotificationCommand.class).sendWithoutResponses();
+         }
 
          assertEquals(firstValue, future.get(10, TimeUnit.SECONDS));
 
@@ -404,6 +382,9 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
       } finally {
          removeAllBlockingInterceptorsFromCache(ownerCache);
          removeAllBlockingInterceptorsFromCache(backupOwnerCache);
+
+         crm.revertRpcManager(ownerCache);
+         crm2.revertRpcManager(backupOwnerCache);
       }
    }
 }

@@ -44,7 +44,7 @@ class FailOverClusterExecutor implements ClusterExecutor {
 
    private void submit(Runnable command, CompletableFuture<Void> future, int retriesLeft) {
       if (isTrace) {
-         log.tracef("Submitting runnable %d retries left %d", command, retriesLeft);
+         log.tracef("Submitting runnable %s retries left %d", command, retriesLeft);
       }
       executor.submit(command).whenComplete((v, t) -> {
          if (t != null) {

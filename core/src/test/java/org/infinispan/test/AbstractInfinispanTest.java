@@ -5,16 +5,14 @@ import static org.testng.AssertJUnit.fail;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionService;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
@@ -25,7 +23,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
-
 import javax.transaction.TransactionManager;
 
 import org.infinispan.test.fwk.ChainMethodInterceptor;
@@ -56,6 +53,9 @@ import org.testng.internal.MethodInstance;
 @Listeners(ChainMethodInterceptor.class)
 @TestSelector(interceptors = AbstractInfinispanTest.OrderByInstance.class)
 public class AbstractInfinispanTest {
+   protected interface Condition {
+      boolean isSatisfied() throws Exception;
+   }
 
    protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
@@ -235,8 +235,9 @@ public class AbstractInfinispanTest {
 
    /**
     * This method will actually spawn a fresh thread and will not use underlying pool.  The
-    * {@link org.infinispan.test.AbstractInfinispanTest#fork(Runnable)} should be preferred
+    * {@link org.infinispan.test.AbstractInfinispanTest#fork(ExceptionRunnable)} should be preferred
     * unless you require explicit access to the thread.
+    *
     * @param r The runnable to run
     * @return The created thread
     */
@@ -247,40 +248,32 @@ public class AbstractInfinispanTest {
       return t;
    }
 
-   protected Future<?> fork(Runnable r) {
-      return defaultExecutorService.submit(new RunnableWrapper(r));
-   }
-
-   protected <T> Future<T> fork(Runnable r, T result) {
-      return defaultExecutorService.submit(new RunnableWrapper(r), result);
+   protected Future<Void> fork(ExceptionRunnable r) {
+      return defaultExecutorService.submit(new CallableWrapper<Void>(() -> {
+         r.run();
+         return null;
+      }));
    }
 
    protected <T> Future<T> fork(Callable<T> c) {
-      return defaultExecutorService.submit(new LoggingCallable<>(c));
+      return defaultExecutorService.submit(new CallableWrapper<>(c));
    }
 
    /**
-    * Returns an executor service that can  be used by tests which has it's lifecycle handled
-    * by the test container itself.
-    * @param <V> The desired type provided by the user of the CompletionService
-    * @return The completion service that should be used by tests
-    */
-   protected <V> CompletionService<V> completionService() {
-      return new ExecutorCompletionService<>(defaultExecutorService);
-   }
-
-   /**
-    * This should normally not be used, use the {@link AbstractInfinispanTest#completionService()}
-    * method when an executor is required.  Although if you want a limited set of threads this could
-    * still be useful for something like {@link java.util.concurrent.Executors#newFixedThreadPool(int, java.util.concurrent.ThreadFactory)} or
+    * This should normally not be used, use the {@code fork(Runnable|Callable|ExceptionRunnable)}
+    * method when an executor is required.
+    *
+    * Although if you want a limited set of threads this could still be useful for something like
+    * {@link java.util.concurrent.Executors#newFixedThreadPool(int, java.util.concurrent.ThreadFactory)} or
     * {@link java.util.concurrent.Executors#newSingleThreadExecutor(java.util.concurrent.ThreadFactory)}
+    *
     * @param prefix The prefix starting for the thread factory
     * @return A thread factory that will use the same naming schema as the other methods
     */
    protected ThreadFactory getTestThreadFactory(final String prefix) {
       final String className = getClass().getSimpleName();
 
-      ThreadFactory threadFactory = new ThreadFactory() {
+      return new ThreadFactory() {
          private final AtomicInteger counter = new AtomicInteger(0);
 
          @Override
@@ -291,232 +284,83 @@ public class AbstractInfinispanTest {
             return thread;
          }
       };
-      return threadFactory;
    }
 
    /**
-    * This will run the various callables at approximately the same time by ensuring they all start before
-    * allowing the callables to proceed.  The callables may not be running yet at the offset of the return of
-    * the completion service.
+    * This will run two or more tasks concurrently.
     *
-    * This method doesn't allow distinction between which Future applies to which Callable.  If that is required
-    * it is suggested to use {@link AbstractInfinispanTest#completionService()} and retrieve the future
-    * directly when submitting the Callable while also wrapping your callables in something like
-    * {@link org.infinispan.test.AbstractInfinispanTest.ConcurrentCallable} to ensure your callables will be invoked
-    * at approximately the same time.
-    * @param task1 First task to add - required to ensure at least 2 callables are provided
-    * @param task2 Second task to add - required to ensure at least 2 callables are provided
-    * @param tasks The callables to run
-    * @param <V> The type of callables
-    * @return The completion service that can be used to query when a callable completes
+    * It synchronizes before starting at approximately the same time by ensuring they all start before
+    * allowing the tasks to proceed.
+    *
+    * @param tasks The tasks to run
+    * @throws InterruptedException Thrown if this thread is interrupted
+    * @throws ExecutionException Thrown if one of the callables throws any kind of Throwable.  The
+    *         thrown Throwable will be wrapped by this exception
+    * @throws TimeoutException If one of the tasks doesn't complete within the timeout
     */
-   protected <V> CompletionService<V> runConcurrentlyWithCompletionService(Callable<? extends V> task1,
-                                                                           Callable<? extends V> task2,
-                                                                           Callable<? extends V>... tasks) {
-      if (task1 == null) {
-         throw new NullPointerException("Task1 was not provided!");
+   protected void runConcurrently(long timeout, TimeUnit timeUnit, ExceptionRunnable... tasks) throws Exception {
+      if (tasks == null || tasks.length < 2) {
+         throw new IllegalArgumentException("Need at least 2 tasks to run concurrently");
       }
-      if (task2 == null) {
-         throw new NullPointerException("Task2 was not provided!");
-      }
-      Callable[] callables = new Callable[tasks.length + 2];
-      int i = 0;
-      callables[i++] = task1;
-      callables[i++] = task2;
-      for (Callable<? extends V> callable : tasks) {
-         callables[i++] = callable;
-      }
-      return runConcurrentlyWithCompletionService(callables);
-   }
 
-   /**
-    * This will run the various callables at approximately the same time by ensuring they all start before
-    * allowing the callables to proceed.  The callables may not be running yet at the offset of the return of
-    * the completion service.
-    *
-    * This method doesn't allow distinction between which Future applies to which Callable.  If that is required
-    * it is suggested to use {@link AbstractInfinispanTest#completionService()} and retrieve the future
-    * directly when submitting the Callable while also wrapping your callables in something like
-    * {@link org.infinispan.test.AbstractInfinispanTest.ConcurrentCallable} to ensure your callables will be invoked
-    * at approximately the same time.
-    * @param tasks The callables to run.  Note the type isn't provided since it is difficult
-    * @param <V> The type of callables
-    * @return The completion service that can be used to query when a callable completes
-    */
-   protected <V> CompletionService<V> runConcurrentlyWithCompletionService(Callable[] tasks) {
-      if (tasks.length == 0) {
-         throw new IllegalArgumentException("Provided tasks array was empty");
-      }
-      CompletionService<V> completionService = completionService();
+      long deadlineNanos = System.nanoTime() + TimeUnit.NANOSECONDS.convert(timeout, timeUnit);
+      List<Future<Void>> futures = new ArrayList<>(tasks.length);
       CyclicBarrier barrier = new CyclicBarrier(tasks.length);
-      for (Callable task : tasks) {
-         completionService.submit(new ConcurrentCallable<>(new LoggingCallable<V>(task), barrier));
+      for (ExceptionRunnable task : tasks) {
+         futures.add(defaultExecutorService.submit(new ConcurrentCallable(task, barrier)));
       }
 
-      return completionService;
-   }
-
-   /**
-    * This will run the various callables at approximately the same time by ensuring they all start before
-    * allowing the callables to proceed.  All callables will be ensure to completion else a TimeoutException will be thrown
-    * @param task1 First task to add - required to ensure at least 2 callables are provided
-    * @param task2 Second task to add - required to ensure at least 2 callables are provided
-    * @param tasks The callables to run
-    * @param <V> The type of callabels
-    * @throws InterruptedException Thrown if this thread is interrupted
-    * @throws ExecutionException Thrown if one of the callables throws any kind of Throwable.  The
-    *         thrown Throwable will be wrapped by this exception
-    * @throws TimeoutException If one of the callables doesn't complete within 10 seconds
-    */
-   protected <V> void runConcurrently(Callable<? extends V> task1, Callable<? extends V> task2,
-                                      Callable<? extends V>... tasks) throws InterruptedException,ExecutionException,
-                                                                             TimeoutException {
-      CompletionService<V> completionService = runConcurrentlyWithCompletionService(task1, task2, tasks);
-
-      waitForCompletionServiceTasks(completionService, tasks.length + 2);
-   }
-
-   /**
-    * This will run the various callables at approximately the same time by ensuring they all start before
-    * allowing the callables to proceed.  All callables will be ensure to completion else a TimeoutException will be thrown
-    * @param tasks The callables to run
-    * @param <V> The type of callables
-    * @throws InterruptedException Thrown if this thread is interrupted
-    * @throws ExecutionException Thrown if one of the callables throws any kind of Throwable.  The
-    *         thrown Throwable will be wrapped by this exception
-    * @throws TimeoutException If one of the callables doesn't complete within 10 seconds
-    */
-   protected <V> void runConcurrently(Callable<? extends V>[] tasks) throws InterruptedException,ExecutionException,
-                                                                             TimeoutException {
-      CompletionService<V> completionService = runConcurrentlyWithCompletionService(tasks);
-
-      waitForCompletionServiceTasks(completionService, tasks.length);
-   }
-
-   /**
-    * Waits for the desired numberOfTasks in the completion service to complete one at a time polling for each up to
-    * 10 seconds.  If one of the tasks produces an exception, the first one is rethrown wrapped in a ExecutionException
-    * after all tasks have completed.
-    * @param completionService The completion service that had tasks submitted to that total numberOfTasks
-    * @param numberOfTasks How many tasks have been sent to the service
-    * @throws InterruptedException If this thread is interruped while waiting for the tasks to complete
-    * @throws ExecutionException Thrown if one of the tasks produces an exception.  The first encounted exception will
-    *         be thrown
-    * @throws TimeoutException If a task is not found to complete within 10 seconds of the previously completed or the
-    *         first task.
-    */
-   protected void waitForCompletionServiceTasks(CompletionService<?> completionService, int numberOfTasks)
-         throws InterruptedException,ExecutionException, TimeoutException {
-      if (completionService == null) {
-         throw new NullPointerException("Provided completionService cannot be null");
-      }
-      if (numberOfTasks <= 0) {
-         throw new IllegalArgumentException("Provided numberOfTasks cannot be less than or equal to 0");
-      }
-      // check for any errors
-      ExecutionException exception = null;
-      for (int i = 0; i < numberOfTasks; i++) {
+      List<Exception> exceptions = new ArrayList<>();
+      for (Future<Void> future : futures) {
          try {
-            Future<?> future = completionService.poll(10, TimeUnit.SECONDS);
-            if (future == null) {
-               throw new TimeoutException("Concurrent task didn't complete within 10 seconds!");
-            }
-            // No timeout since it is guaranteed to be done
-            future.get();
-         } catch (ExecutionException e) {
-            log.debug("Exception in concurrent task", e);
-            if (exception == null) {
-               exception = e;
-            }
+            future.get(deadlineNanos - System.nanoTime(), TimeUnit.NANOSECONDS);
+         } catch (Exception e) {
+            futures.forEach(f -> f.cancel(true));
+            exceptions.add(e);
          }
       }
 
-      // If there was an exception throw the last one
-      if (exception != null) {
+      if (!exceptions.isEmpty()) {
+         Exception exception = exceptions.remove(0);
+         for (Exception e : exceptions) {
+            exception.addSuppressed(e);
+         }
          throw exception;
       }
    }
 
    /**
-    * This will run the callable at approximately the same time in different thrads by ensuring they all start before
-    * allowing the callables to proceed.  All callables will be ensure to completion else a TimeoutException will be thrown
+    * This will run two or more tasks concurrently.
     *
-    * The callable itself should be thread safe since it will be invoked from multiple threads.
-    * @param callable The callable to run multiple times
-    * @param <V> The type of callable
+    * It synchronizes before starting at approximately the same time by ensuring they all start before
+    * allowing the tasks to proceed.
+    *
+    * @param tasks The tasks to run
     * @throws InterruptedException Thrown if this thread is interrupted
     * @throws ExecutionException Thrown if one of the callables throws any kind of Throwable.  The
     *         thrown Throwable will be wrapped by this exception
-    * @throws TimeoutException If one of the callables doesn't complete within 10 seconds
+    * @throws TimeoutException If one of the tasks doesn't complete within the timeout
     */
-   protected <V> void runConcurrently(Callable<V> callable, int invocationCount) throws InterruptedException,
-                                                                                        ExecutionException,
-                                                                                        TimeoutException {
-      if (callable == null) {
-         throw new NullPointerException("Provided callable cannot be null");
-      }
-      if (invocationCount <= 0) {
-         throw new IllegalArgumentException("Provided invocationCount cannot be less than or equal to 0");
-      }
-      CompletionService<V> completionService = completionService();
-      CyclicBarrier barrier = new CyclicBarrier(invocationCount);
-
-      for (int i = 0; i < invocationCount; ++i) {
-         completionService.submit(new ConcurrentCallable<>(new LoggingCallable<>(callable), barrier));
-      }
-
-      waitForCompletionServiceTasks(completionService, invocationCount);
+   protected void runConcurrently(long timeout, TimeUnit timeUnit, Callable<?>... tasks) throws Exception {
+      runConcurrently(timeout, timeUnit,
+                      Arrays.stream(tasks).<ExceptionRunnable>map(task -> task::call)
+                         .toArray(ExceptionRunnable[]::new));
    }
 
    /**
-    * A callable that will first await on the provided barrier before calling the provided callable.
-    * This is useful to have a better attempt at multiple threads ran at the same time, but still is
-    * no guarantee since this is controlled by the thread scheduler.
-    * @param <V>
+    * Equivalent to {@code runConcurrently(30, SECONDS, tasks)}
     */
-   public final class ConcurrentCallable<V> implements Callable<V> {
-      private final Callable<? extends V> callable;
-      private final CyclicBarrier barrier;
-
-      public ConcurrentCallable(Callable<? extends V> callable, CyclicBarrier barrier) {
-         this.callable = callable;
-         this.barrier = barrier;
-      }
-
-      @Override
-      public V call() throws Exception {
-         log.trace("About to wait on provided barrier");
-         try {
-            barrier.await(10, TimeUnit.SECONDS);
-            log.trace("Completed await on provided barrier");
-         } catch (InterruptedException | TimeoutException | BrokenBarrierException e) {
-            log.tracef("Barrier await was broken due to exception", e);
-         }
-         return callable.call();
-      }
+   protected void runConcurrently(ExceptionRunnable... tasks) throws Exception {
+      runConcurrently(30, TimeUnit.SECONDS, tasks);
    }
 
-   public final class RunnableWrapper implements Runnable {
-
-      final Runnable realOne;
-
-      public RunnableWrapper(Runnable realOne) {
-         this.realOne = realOne;
-      }
-
-      @Override
-      public void run() {
-         try {
-            log.trace("Started fork runnable..");
-            realOne.run();
-            log.debug("Exiting fork runnable.");
-         } catch (Throwable e) {
-            log.debug("Exiting fork runnable due to exception", e);
-            throw e;
-         }
-      }
+   /**
+    * Equivalent to {@code runConcurrently(30, SECONDS, tasks)}
+    */
+   protected void runConcurrently(Callable<?>... tasks) throws Exception {
+      runConcurrently(
+         Arrays.stream(tasks).<ExceptionRunnable>map(task -> task::call).toArray(ExceptionRunnable[]::new));
    }
-
 
    protected void eventually(Condition ec) {
       eventually(ec, 10000);
@@ -524,31 +368,6 @@ public class AbstractInfinispanTest {
 
    protected void eventually(String message, Condition ec) {
       eventually(message, ec, 10000, 500, TimeUnit.MILLISECONDS);
-   }
-
-   protected interface Condition {
-      boolean isSatisfied() throws Exception;
-   }
-
-   private class LoggingCallable<T> implements Callable<T> {
-      private final Callable<? extends T> c;
-
-      public LoggingCallable(Callable<? extends T> c) {
-         this.c = c;
-      }
-
-      @Override
-      public T call() throws Exception {
-         try {
-            log.trace("Started fork callable..");
-            T result = c.call();
-            log.debug("Exiting fork callable.");
-            return result;
-         } catch (Exception e) {
-            log.warn("Exiting fork callable due to exception", e);
-            throw e;
-         }
-      }
    }
 
    public void safeRollback(TransactionManager transactionManager) {
@@ -573,4 +392,77 @@ public class AbstractInfinispanTest {
          }
       }
    }
+
+   /**
+    * A callable that will first await on the provided barrier before calling the provided callable.
+    * This is useful to have a better attempt at multiple threads ran at the same time, but still is
+    * no guarantee since this is controlled by the thread scheduler.
+    */
+   public final class ConcurrentCallable implements Callable<Void> {
+      private final ExceptionRunnable task;
+      private final CyclicBarrier barrier;
+
+      ConcurrentCallable(ExceptionRunnable task, CyclicBarrier barrier) {
+         this.task = task;
+         this.barrier = barrier;
+      }
+
+      @Override
+      public Void call() throws Exception {
+         try {
+            log.trace("Started concurrent callable");
+            barrier.await(10, TimeUnit.SECONDS);
+            log.trace("Synchronized with the other concurrent runnables");
+            task.run();
+            log.debug("Exiting fork runnable.");
+            return null;
+         } catch (Throwable e) {
+            log.warn("Exiting fork runnable due to exception", e);
+            throw e;
+         }
+      }
+   }
+
+   public final class RunnableWrapper implements Runnable {
+      final Runnable realOne;
+
+      RunnableWrapper(Runnable realOne) {
+         this.realOne = realOne;
+      }
+
+      @Override
+      public void run() {
+         try {
+            log.trace("Started fork runnable..");
+            realOne.run();
+            log.debug("Exiting fork runnable.");
+         } catch (Throwable e) {
+            log.warn("Exiting fork runnable due to exception", e);
+            throw e;
+         }
+      }
+   }
+
+   private class CallableWrapper<T> implements Callable<T> {
+      private final Callable<? extends T> c;
+
+      CallableWrapper(Callable<? extends T> c) {
+         this.c = c;
+      }
+
+      @Override
+      public T call() throws Exception {
+         try {
+            log.trace("Started fork callable..");
+            T result = c.call();
+            log.debug("Exiting fork callable.");
+            return result;
+         } catch (Exception e) {
+            log.warn("Exiting fork callable due to exception", e);
+            throw e;
+         }
+      }
+   }
+
+
 }

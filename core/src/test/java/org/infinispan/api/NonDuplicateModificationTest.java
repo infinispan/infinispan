@@ -3,16 +3,15 @@ package org.infinispan.api;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.ControlledRpcManager;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
@@ -76,26 +75,26 @@ public class NonDuplicateModificationTest extends MultipleCacheManagersTest {
 
    private void performTestOn(final Operation operation) throws Exception {
       final Object key = getKeyForCache(cache(0), cache(1));
-      final ControlledRpcManager controlledRpcManager = replaceRpcManager(cache(1));
-
       cache(0).put(key, "v1");
-
-      operation.setCommandToBlock(controlledRpcManager);
-
       assertKeyValue(key, "v1");
+
+      final ControlledRpcManager controlledRpcManager = ControlledRpcManager.replaceRpcManager(cache(1));
 
       Future<Void> future = fork(() -> {
          operation.execute(cache(1), key, "v2");
          return null;
       });
 
-      controlledRpcManager.waitForCommandToBlock();
+      ControlledRpcManager.BlockedResponseMap blockedResponses = operation.expectCommand(controlledRpcManager)
+                                                                          .send().awaitAll();
 
       cache(0).put(key, "v3");
 
-      controlledRpcManager.stopBlocking();
+      blockedResponses.receive();
 
       future.get();
+
+      controlledRpcManager.stopBlocking();
 
       assertKeyValue(key, "v3");
    }
@@ -106,25 +105,19 @@ public class NonDuplicateModificationTest extends MultipleCacheManagersTest {
       }
    }
 
-   private ControlledRpcManager replaceRpcManager(Cache cache) {
-      RpcManager rpcManager = TestingUtil.extractComponent(cache, RpcManager.class);
-      ControlledRpcManager controlledRpcManager = new ControlledRpcManager(rpcManager);
-      TestingUtil.replaceComponent(cache, RpcManager.class, controlledRpcManager, true);
-      return controlledRpcManager;
-   }
-
    private enum Operation {
       PUT(PutKeyValueCommand.class),
       REMOVE(RemoveCommand.class),
       REPLACE(ReplaceCommand.class);
-      private final Class<?> classToBlock;
+      private final Class<? extends ReplicableCommand> classToBlock;
 
-      Operation(Class<?> classToBlock) {
+      Operation(Class<? extends ReplicableCommand> classToBlock) {
          this.classToBlock = classToBlock;
       }
 
-      private void setCommandToBlock(ControlledRpcManager rpcManager) {
-         rpcManager.blockAfter(classToBlock);
+      private ControlledRpcManager.BlockedRequest expectCommand(ControlledRpcManager rpcManager)
+         throws InterruptedException {
+         return rpcManager.expectCommand(classToBlock);
       }
 
       private void execute(Cache<Object, Object> cache, Object key, Object value) {

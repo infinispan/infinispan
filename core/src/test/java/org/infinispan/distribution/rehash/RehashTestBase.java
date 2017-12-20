@@ -48,10 +48,6 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
     */
    abstract void waitForRehashCompletion();
 
-   void additionalWait() {
-      TestingUtil.sleepThread(1000);
-   }
-
    protected List<MagicKey> init() {
 
       List<MagicKey> keys = new ArrayList<>(Arrays.asList(
@@ -96,35 +92,32 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
       final CountDownLatch l = new CountDownLatch(1);
       final AtomicBoolean rollback = new AtomicBoolean(false);
 
-      Future<Void> future = fork(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               // start a transaction on c1.
-               TransactionManager t1 = TestingUtil.getTransactionManager(c1);
-               t1.begin();
-               c1.put(keys.get(0), "transactionally_replaced");
-               Transaction tx = t1.getTransaction();
-               tx.enlistResource(new XAResourceAdapter() {
-                  public int prepare(Xid id) {
-                     // this would be called *after* the cache prepares.
-                     try {
-                        log.debug("Unblocking commit");
-                        l.await();
-                     } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                     }
-                     return XAResource.XA_OK;
+      Future<Void> future = fork(() -> {
+         try {
+            // start a transaction on c1.
+            TransactionManager t1 = TestingUtil.getTransactionManager(c1);
+            t1.begin();
+            c1.put(keys.get(0), "transactionally_replaced");
+            Transaction tx = t1.getTransaction();
+            tx.enlistResource(new XAResourceAdapter() {
+               public int prepare(Xid id) {
+                  // this would be called *after* the cache prepares.
+                  try {
+                     log.debug("Unblocking commit");
+                     l.await();
+                  } catch (InterruptedException e) {
+                     Thread.currentThread().interrupt();
                   }
-               });
-               t1.commit();
-            } catch (Exception e) {
-               log.error("Error committing transaction", e);
-               rollback.set(true);
-               throw new RuntimeException(e);
-            }
+                  return XAResource.XA_OK;
+               }
+            });
+            t1.commit();
+         } catch (Exception e) {
+            log.error("Error committing transaction", e);
+            rollback.set(true);
+            throw new RuntimeException(e);
          }
-      }, null);
+      });
 
       log.info("Invoking rehash event");
       performRehashEvent(true);

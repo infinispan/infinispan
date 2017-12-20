@@ -12,14 +12,13 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.ControlledRpcManager;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
 
@@ -47,7 +46,7 @@ public class MergeDuringReplaceTest extends MultipleCacheManagersTest {
 
       cache(0).put(key, value);
 
-      int nonOwner = -1;
+      int nonOwner;
       final Cache<Object, Object> c;
       if (cacheMode.isScattered()) {
          nonOwner = findNonOwner(key);
@@ -55,7 +54,7 @@ public class MergeDuringReplaceTest extends MultipleCacheManagersTest {
       } else {
          ConsistentHash ch = cache(0).getAdvancedCache().getComponentRegistry()
             .getStateTransferManager().getCacheTopology().getCurrentCH();
-         List<Address> members = new ArrayList<Address>(ch.getMembers());
+         List<Address> members = new ArrayList<>(ch.getMembers());
          List<Address> owners = ch.locateOwners(key);
          members.removeAll(owners);
          nonOwner = ch.getMembers().indexOf(members.get(0));
@@ -65,12 +64,12 @@ public class MergeDuringReplaceTest extends MultipleCacheManagersTest {
       List<Cache<Object, Object>> partition1 = caches();
       partition1.remove(c);
 
-      ControlledRpcManager controlledRpcManager = new ControlledRpcManager(c.getAdvancedCache().getRpcManager());
-      TestingUtil.replaceComponent(c, RpcManager.class, controlledRpcManager, true);
-
-      controlledRpcManager.blockBefore(ReplaceCommand.class);
+      ControlledRpcManager controlledRpcManager = ControlledRpcManager.replaceRpcManager(c);
+      controlledRpcManager.excludeCommands(StateRequestCommand.class, StateResponseCommand.class);
 
       Future<Boolean> future = fork(() -> c.replace(key, value, "myNewValue"));
+
+      ControlledRpcManager.BlockedRequest blockedReplace = controlledRpcManager.expectCommand(ReplaceCommand.class);
 
       discard[nonOwner].setDiscardAll(true);
 
@@ -80,10 +79,16 @@ public class MergeDuringReplaceTest extends MultipleCacheManagersTest {
       TestingUtil.waitForNoRebalance(partition1.get(0), partition1.get(1));
       TestingUtil.waitForNoRebalance(c);
 
-      controlledRpcManager.stopBlocking();
+      if (cacheMode.isScattered()) {
+         blockedReplace.sendWithoutResponses();
+      } else {
+         blockedReplace.send().receiveAll();
+      }
 
       // Since the non owner didn't have the value before the split it can't do the replace correctly
       assertEquals(future.get(10, TimeUnit.SECONDS), Boolean.FALSE);
+
+      controlledRpcManager.stopBlocking();
    }
 
    public int findNonOwner(String key) {
