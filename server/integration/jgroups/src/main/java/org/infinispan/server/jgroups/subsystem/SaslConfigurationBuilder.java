@@ -22,7 +22,7 @@ public class SaslConfigurationBuilder extends AbstractProtocolConfigurationBuild
 
     @Override
     public ServiceName getServiceName() {
-        return ProtocolStackServiceName.CHANNEL_FACTORY.getServiceName(this.stackName).append("sasl");
+        return ProtocolStackServiceName.CHANNEL_FACTORY.getServiceName(this.stackName).append(ModelKeys.SASL);
     }
 
     @Override

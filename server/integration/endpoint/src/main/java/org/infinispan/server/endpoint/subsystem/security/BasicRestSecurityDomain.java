@@ -16,7 +16,8 @@ import org.jboss.as.core.security.SubjectUserInfo;
 import org.jboss.as.domain.management.AuthMechanism;
 import org.jboss.as.domain.management.AuthorizingCallbackHandler;
 import org.jboss.as.domain.management.SecurityRealm;
-import org.jboss.sasl.callback.VerifyPasswordCallback;
+import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 
 public class BasicRestSecurityDomain implements SecurityDomain {
 
@@ -30,13 +31,13 @@ public class BasicRestSecurityDomain implements SecurityDomain {
       AuthorizingCallbackHandler handler = securityRealm.getAuthorizingCallbackHandler(AuthMechanism.PLAIN);
       NameCallback ncb = new NameCallback("name", username);
       ncb.setName(username);
-      VerifyPasswordCallback vpcb = new VerifyPasswordCallback(password);
+      EvidenceVerifyCallback evcb = new EvidenceVerifyCallback(new PasswordGuessEvidence(password.toCharArray()));
       try {
-         handler.handle(new Callback[] { ncb, vpcb });
+         handler.handle(new Callback[] { ncb, evcb });
       } catch (Exception e) {
          ROOT_LOGGER.authenticationError(e);
       }
-      if (vpcb.isVerified()) {
+      if (evcb.isVerified()) {
          try {
             SubjectUserInfo subjectUserInfo = handler.createSubjectUserInfo(Collections.singletonList(new SimpleUserPrincipal(username)));
             return Security.getSubjectUserPrincipal(subjectUserInfo.getSubject());

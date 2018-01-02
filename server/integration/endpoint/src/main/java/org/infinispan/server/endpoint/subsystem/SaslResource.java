@@ -29,6 +29,7 @@ import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.ListAttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -80,7 +81,8 @@ public class SaslResource extends SimpleResourceDefinition {
    static final AttributeDefinition[] SASL_ATTRIBUTES = { MECHANISMS, QOP, SERVER_CONTEXT_NAME, SERVER_NAME, STRENGTH };
 
    SaslResource() {
-      super(SASL_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.SASL), SaslAdd.INSTANCE, ReloadRequiredRemoveStepHandler.INSTANCE);
+      super(SASL_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.SASL),
+            new ReloadRequiredAddStepHandler(SASL_ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
    }
 
    @Override

@@ -10,6 +10,8 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 
+import org.wildfly.security.auth.callback.AvailableRealmsCallback;
+
 /**
  *
  * @author <a href="mailto:vjuranek@redhat.com">Vojtech Juranek</a>
@@ -38,6 +40,8 @@ public class SaslPropCallbackHandler implements CallbackHandler {
             AuthorizeCallback authorizeCallback = (AuthorizeCallback) callback;
             authorizeCallback.setAuthorized(authorizeCallback.getAuthenticationID().equals(
                   authorizeCallback.getAuthorizationID()));
+         } else if (callback instanceof AvailableRealmsCallback) {
+            ((AvailableRealmsCallback) callback).setRealmNames(realm);
          } else if (callback instanceof RealmCallback) {
             RealmCallback realmCallback = (RealmCallback) callback;
             realmCallback.setText(realm);

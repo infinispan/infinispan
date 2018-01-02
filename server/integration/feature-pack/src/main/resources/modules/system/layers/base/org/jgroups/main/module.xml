@@ -10,6 +10,6 @@
         <module name="javax.api"/>
         <module name="org.jgroups.extension"/>
         <module name="org.jgroups.kubernetes.kubernetes"/>
-        <module name="org.jboss.sasl" services="import" />
+        <module name="org.wildfly.security.elytron-private" services="import"/>
     </dependencies>
 </module>

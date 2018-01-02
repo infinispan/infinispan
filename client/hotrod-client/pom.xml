@@ -126,12 +126,6 @@
          <scope>test</scope>
       </dependency>
 
-       <dependency>
-         <groupId>org.jboss.sasl</groupId>
-         <artifactId>jboss-sasl</artifactId>
-         <scope>test</scope>
-      </dependency>
-
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>

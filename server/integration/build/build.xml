@@ -6,7 +6,7 @@
 
    <target name="trim-modules">
       <delete includeemptydirs="true" verbose="true">
-         <fileset dir="${output.dir}/modules/system/layers/base" includesfile="trim-modules.txt" />
+         <fileset dir="${output.dir}/modules/system/layers/base" includesfile="trim-modules.txt" excludesfile="retain-modules.txt"/>
       </delete>
    </target>
 

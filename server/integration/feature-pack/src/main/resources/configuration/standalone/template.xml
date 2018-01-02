@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 
-<server xmlns="urn:jboss:domain:4.2">
+<server xmlns="urn:jboss:domain:5.0">
 
     <extensions>
         <?EXTENSIONS?>
@@ -10,7 +10,7 @@
         <security-realms>
             <security-realm name="ManagementRealm">
                 <authentication>
-                    <local default-user="$local" skip-group-loading="true" />
+                    <local default-user="$local"/>
                     <properties path="mgmt-users.properties" relative-to="jboss.server.config.dir"/>
                 </authentication>
                 <authorization map-groups-to-roles="false">
@@ -18,8 +18,13 @@
                 </authorization>
             </security-realm>
             <security-realm name="ApplicationRealm">
+                <server-identities>
+                    <ssl>
+                        <keystore path="application.keystore" relative-to="jboss.server.config.dir" keystore-password="password" alias="server" key-password="password" generate-self-signed-certificate-host="localhost"/>
+                    </ssl>
+                </server-identities>
                 <authentication>
-                    <local default-user="$local" allowed-users="*" skip-group-loading="true" />
+                    <local default-user="$local" allowed-users="*"/>
                     <properties path="application-users.properties" relative-to="jboss.server.config.dir"/>
                 </authentication>
                 <authorization>
@@ -30,22 +35,23 @@
         <audit-log>
             <formatters>
                <json-formatter name="json-formatter"/>
-            </formatters>        
+            </formatters>
             <handlers>
                <file-handler name="file" formatter="json-formatter" relative-to="jboss.server.data.dir" path="audit-log.log"/>
             </handlers>
-            <logger log-boot="true" log-read-only="false" enabled="false">
+            <logger log-boot="true" enabled="false">
                <handlers>
                   <handler name="file"/>
                </handlers>
             </logger>
         </audit-log>
         <management-interfaces>
-            <http-interface security-realm="ManagementRealm" http-upgrade-enabled="true">
+            <http-interface security-realm="ManagementRealm">
+                <http-upgrade enabled="true"/>
                 <socket-binding http="management-http"/>
             </http-interface>
         </management-interfaces>
-        <access-control provider="simple">
+        <access-control>
             <role-mapping>
                 <role name="SuperUser">
                     <include>

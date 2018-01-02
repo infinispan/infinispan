@@ -22,10 +22,10 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.jboss.as.clustering.infinispan.subsystem.CacheConfigOperationHandlers.CacheConfigAdd;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -59,7 +59,7 @@ public class CacheContainerAuthorizationResource extends SimpleResourceDefinitio
     static final AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[] { AUDIT_LOGGER, MAPPER };
 
     CacheContainerAuthorizationResource() {
-        super(PathElement.pathElement(ModelKeys.AUTHORIZATION), new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.SECURITY, ModelKeys.AUTHORIZATION), new CacheConfigAdd(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
+        super(PathElement.pathElement(ModelKeys.AUTHORIZATION), new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.SECURITY, ModelKeys.AUTHORIZATION), new ReloadRequiredAddStepHandler(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
     }
 
     @Override

@@ -1,11 +1,17 @@
 package org.infinispan.server.endpoint.subsystem;
 
 import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
+import static org.wildfly.security.sasl.util.SaslMechanismInformation.Names.DIGEST_MD5;
+import static org.wildfly.security.sasl.util.SaslMechanismInformation.Names.EXTERNAL;
+import static org.wildfly.security.sasl.util.SaslMechanismInformation.Names.GSSAPI;
+import static org.wildfly.security.sasl.util.SaslMechanismInformation.Names.PLAIN;
 
 import java.io.IOException;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 import javax.security.auth.callback.Callback;
@@ -19,6 +25,9 @@ import org.jboss.as.core.security.RealmUser;
 import org.jboss.as.domain.management.AuthMechanism;
 import org.jboss.as.domain.management.RealmConfigurationConstants;
 import org.jboss.as.domain.management.SecurityRealm;
+import org.wildfly.security.auth.callback.AvailableRealmsCallback;
+import org.wildfly.security.sasl.WildFlySasl;
+
 /**
  * EndpointServerAuthenticationProvider.
  *
@@ -26,17 +35,10 @@ import org.jboss.as.domain.management.SecurityRealm;
  * @since 7.0
  */
 public class EndpointServerAuthenticationProvider implements ServerAuthenticationProvider {
-   static final String SASL_OPT_REALM_PROPERTY = "com.sun.security.sasl.digest.realm";
-   static final String SASL_OPT_ALT_PROTO_PROPERTY = "org.jboss.sasl.digest.alternative_protocols";
-   static final String SASL_OPT_PRE_DIGESTED_PROPERTY = "org.jboss.sasl.digest.pre_digested";
-
-   static final String DIGEST_MD5 = "DIGEST-MD5";
-   static final String EXTERNAL = "EXTERNAL";
-   static final String GSSAPI = "GSSAPI";
-   static final String PLAIN = "PLAIN";
-
+   private static final String SASL_OPT_PRE_DIGESTED_PROPERTY = "org.wildfly.security.sasl.digest.pre_digested";
 
    private final SecurityRealm realm;
+   private String[] realmList;
 
    EndpointServerAuthenticationProvider(SecurityRealm realm) {
       this.realm = realm;
@@ -50,9 +52,9 @@ public class EndpointServerAuthenticationProvider implements ServerAuthenticatio
       } else if (PLAIN.equals(mechanismName)) {
          return new RealmAuthorizingCallbackHandler(realm.getAuthorizingCallbackHandler(AuthMechanism.PLAIN));
       } else if (DIGEST_MD5.equals(mechanismName)) {
-         if (!mechanismProperties.containsKey(SASL_OPT_REALM_PROPERTY)) {
-            mechanismProperties.put(SASL_OPT_REALM_PROPERTY, realm.getName());
-         }
+         String realmStr = mechanismProperties.get(WildFlySasl.REALM_LIST);
+         realmList = realmStr == null ? new String[] {realm.getName()} : realmStr.split(" ");
+
          Map<String, String> mechConfig = realm.getMechanismConfig(AuthMechanism.DIGEST);
          boolean plainTextDigest = true;
          if (mechConfig.containsKey(RealmConfigurationConstants.DIGEST_PLAIN_TEXT)) {
@@ -79,12 +81,18 @@ public class EndpointServerAuthenticationProvider implements ServerAuthenticatio
 
       @Override
       public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-         AuthorizeCallback acb = (AuthorizeCallback) callbacks[0];
-         String authenticationId = acb.getAuthenticationID();
-         String authorizationId = acb.getAuthorizationID();
-         acb.setAuthorized(authenticationId.equals(authorizationId));
-         int realmSep = authorizationId.indexOf('@');
-         realmUser = realmSep <= 0 ? new RealmUser(authorizationId) : new RealmUser(authorizationId.substring(realmSep+1), authorizationId.substring(0, realmSep));
+         for (Callback callback : callbacks) {
+            if (callback instanceof AvailableRealmsCallback) {
+               ((AvailableRealmsCallback) callback).setRealmNames(realm.getName());
+            } else if (callback instanceof AuthorizeCallback) {
+               AuthorizeCallback acb = (AuthorizeCallback) callback;
+               String authenticationId = acb.getAuthenticationID();
+               String authorizationId = acb.getAuthorizationID();
+               acb.setAuthorized(authenticationId.equals(authorizationId));
+               int realmSep = authorizationId.indexOf('@');
+               realmUser = realmSep <= 0 ? new RealmUser(authorizationId) : new RealmUser(authorizationId.substring(realmSep+1), authorizationId.substring(0, realmSep));
+            }
+         }
       }
 
       @Override
@@ -106,13 +114,26 @@ public class EndpointServerAuthenticationProvider implements ServerAuthenticatio
 
       private final org.jboss.as.domain.management.AuthorizingCallbackHandler delegate;
 
-      public RealmAuthorizingCallbackHandler(org.jboss.as.domain.management.AuthorizingCallbackHandler authorizingCallbackHandler) {
+      RealmAuthorizingCallbackHandler(org.jboss.as.domain.management.AuthorizingCallbackHandler authorizingCallbackHandler) {
          this.delegate = authorizingCallbackHandler;
       }
 
       @Override
       public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-         delegate.handle(callbacks);
+         ArrayList<Callback> list = new ArrayList<>(Arrays.asList(callbacks));
+         Iterator<Callback> it = list.iterator();
+         while (it.hasNext()) {
+            Callback callback = it.next();
+            if (callback instanceof AvailableRealmsCallback) {
+               ((AvailableRealmsCallback) callback).setRealmNames(realmList);
+               it.remove();
+            }
+         }
+
+         // If the only callback was AvailableRealmsCallback, we must not pass it to the AuthorizingCallbackHandler
+         if (!list.isEmpty()) {
+            delegate.handle(callbacks);
+         }
       }
 
       @Override

@@ -24,6 +24,7 @@ package org.infinispan.server.endpoint.subsystem;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -57,7 +58,8 @@ public class SniResource extends SimpleResourceDefinition {
    static final SimpleAttributeDefinition[] SNI_ATTRIBUTES = { HOST_NAME, SECURITY_REALM };
 
    SniResource() {
-      super(SNI_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.SNI), SniAdd.INSTANCE, ReloadRequiredRemoveStepHandler.INSTANCE);
+      super(SNI_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.SNI),
+            new ReloadRequiredAddStepHandler(SNI_ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
    }
 
    @Override

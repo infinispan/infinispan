@@ -24,13 +24,12 @@
         <module name="org.jboss.marshalling"/>
         <module name="org.jboss.modules"/>
         <module name="org.jboss.msc"/>
-        <module name="org.jboss.sasl" services="import" />
         <module name="org.jboss.security.negotiation" />
         <module name="org.jboss.staxmapper"/>
         <module name="org.jboss.threads"/>
         <module name="org.jgroups"/>
         <module name="org.jgroups.kubernetes.kubernetes"/>
-        <module name="org.picketbox" />
+        <module name="org.wildfly.security.elytron-private" services="import"/>
         <module name="org.wildfly.security.manager"/>
         <module name="sun.jdk"/>
     </dependencies>

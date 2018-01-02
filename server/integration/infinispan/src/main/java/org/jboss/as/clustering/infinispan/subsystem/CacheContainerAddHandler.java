@@ -29,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.globalstate.ConfigurationStorage;
-import org.infinispan.server.commons.controller.ReloadRequiredAddStepHandler;
 import org.infinispan.server.commons.dmr.ModelNodes;
 import org.infinispan.server.commons.naming.BinderServiceBuilder;
 import org.infinispan.server.commons.naming.JndiNameFactory;
@@ -51,6 +50,7 @@ import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.naming.deployment.ContextNames;

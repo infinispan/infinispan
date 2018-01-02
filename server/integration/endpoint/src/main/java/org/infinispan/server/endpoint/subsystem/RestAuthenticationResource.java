@@ -21,6 +21,7 @@ package org.infinispan.server.endpoint.subsystem;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -59,8 +60,9 @@ public class RestAuthenticationResource extends SimpleResourceDefinition {
 
    static final SimpleAttributeDefinition[] AUTHENTICATION_ATTRIBUTES = { SECURITY_REALM, AUTH_METHOD };
 
-   public RestAuthenticationResource() {
-      super(AUTHENTICATION_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.AUTHENTICATION), RestAuthenticationAdd.INSTANCE, ReloadRequiredRemoveStepHandler.INSTANCE);
+   RestAuthenticationResource() {
+      super(AUTHENTICATION_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.AUTHENTICATION),
+            new ReloadRequiredAddStepHandler(AUTHENTICATION_ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
    }
 
    @Override

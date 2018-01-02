@@ -5,6 +5,7 @@
         <subsystem>infinispan-logging.xml</subsystem>
         <subsystem>deployment-scanner.xml</subsystem>
         <subsystem>datasources.xml</subsystem>
+        <subsystem>elytron.xml</subsystem>
         <subsystem supplement="services">infinispan-core.xml</subsystem>
         <subsystem supplement="clustered">infinispan-endpoint.xml</subsystem>
         <subsystem>cloud-jgroups.xml</subsystem>

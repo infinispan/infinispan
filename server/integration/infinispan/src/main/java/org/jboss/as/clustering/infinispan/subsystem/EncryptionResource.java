@@ -21,6 +21,7 @@ package org.jboss.as.clustering.infinispan.subsystem;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -56,7 +57,8 @@ public class EncryptionResource extends SimpleResourceDefinition {
    static final SimpleAttributeDefinition[] ENCRYPTION_ATTRIBUTES = {SECURITY_REALM, SNI_HOSTNAME};
 
    public EncryptionResource() {
-      super(ENCRYPTION_PATH, new InfinispanResourceDescriptionResolver(ModelKeys.REMOTE_STORE, ModelKeys.ENCRYPTION), EncryptionAdd.INSTANCE, ReloadRequiredRemoveStepHandler.INSTANCE);
+      super(ENCRYPTION_PATH, new InfinispanResourceDescriptionResolver(ModelKeys.REMOTE_STORE, ModelKeys.ENCRYPTION),
+            new ReloadRequiredAddStepHandler(ENCRYPTION_ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
    }
 
    @Override

@@ -23,7 +23,7 @@
       <module name="org.infinispan.query.remote.client" slot="${slot}"/>
       <module name="org.jboss.logging" />
       <module name="org.jboss.marshalling" slot="${slot}" services="import"/>
-      <module name="org.jboss.sasl" services="import" />
       <module name="org.jgroups" slot="${slot}"/>
+      <module name="org.wildfly.security.elytron-private" services="import"/>
    </dependencies>
 </module>

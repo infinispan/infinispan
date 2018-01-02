@@ -5,6 +5,7 @@
       <subsystem>logging.xml</subsystem>
       <subsystem>deployment-scanner.xml</subsystem>
       <subsystem>datasources.xml</subsystem>
+      <subsystem>elytron.xml</subsystem>
       <subsystem>infinispan-core.xml</subsystem>
       <subsystem supplement="rest-ssl">infinispan-endpoint.xml</subsystem>
       <subsystem>io.xml</subsystem>

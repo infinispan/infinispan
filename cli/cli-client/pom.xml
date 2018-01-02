@@ -31,10 +31,6 @@
           <artifactId>infinispan-commons</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.jboss.sasl</groupId>
-         <artifactId>jboss-sasl</artifactId>
-      </dependency>
-      <dependency>
          <groupId>org.jboss.remotingjmx</groupId>
          <artifactId>remoting-jmx</artifactId>
       </dependency>

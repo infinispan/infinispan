@@ -23,10 +23,10 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
-import org.jboss.as.clustering.infinispan.subsystem.CacheConfigOperationHandlers.CacheConfigAdd;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -76,7 +76,7 @@ static final SimpleAttributeDefinition STATE_TRANSFER_CHUNK_SIZE = new SimpleAtt
    private final boolean runtimeRegistration;
 
    BackupSiteStateTransferConfigurationResource(boolean runtimeRegistration) {
-      super(PATH, new InfinispanResourceDescriptionResolver(ModelKeys.BACKUP, ModelKeys.STATE_TRANSFER), new CacheConfigAdd(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
+      super(PATH, new InfinispanResourceDescriptionResolver(ModelKeys.BACKUP, ModelKeys.STATE_TRANSFER), new ReloadRequiredAddStepHandler(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
       this.runtimeRegistration = runtimeRegistration;
    }
 
