@@ -71,7 +71,15 @@
         </filterset>
 
         <module-def name="io.netty" slot="${infinispan.slot}">
-            <maven-resource group="io.netty" artifact="netty-all" />
+            <maven-resource group="io.netty" artifact="netty-buffer" />
+            <maven-resource group="io.netty" artifact="netty-common" />
+            <maven-resource group="io.netty" artifact="netty-codec" />
+            <maven-resource group="io.netty" artifact="netty-codec-http" />
+            <maven-resource group="io.netty" artifact="netty-codec-http2" />
+            <maven-resource group="io.netty" artifact="netty-handler" />
+            <maven-resource group="io.netty" artifact="netty-resolver" />
+            <maven-resource group="io.netty" artifact="netty-transport" />
+            <maven-resource group="io.netty" artifact="netty-transport-native-epoll" />
         </module-def>
 
         <module-def name="com.github.ben-manes.caffeine" slot="${infinispan.slot}">
