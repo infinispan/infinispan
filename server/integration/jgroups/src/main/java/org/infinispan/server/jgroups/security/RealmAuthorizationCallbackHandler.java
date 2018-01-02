@@ -1,9 +1,16 @@
 package org.infinispan.server.jgroups.security;
 
+import static org.wildfly.security.sasl.util.SaslMechanismInformation.Names.DIGEST_MD5;
+import static org.wildfly.security.sasl.util.SaslMechanismInformation.Names.EXTERNAL;
+import static org.wildfly.security.sasl.util.SaslMechanismInformation.Names.GSSAPI;
+import static org.wildfly.security.sasl.util.SaslMechanismInformation.Names.PLAIN;
+
 import java.io.IOException;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +26,8 @@ import org.jboss.as.domain.management.AuthMechanism;
 import org.jboss.as.domain.management.AuthorizingCallbackHandler;
 import org.jboss.as.domain.management.RealmConfigurationConstants;
 import org.jboss.as.domain.management.SecurityRealm;
+import org.wildfly.security.auth.callback.AvailableRealmsCallback;
+import org.wildfly.security.sasl.WildFlySasl;
 
 /**
  * RealmAuthorizationCallbackHandler. A {@link CallbackHandler} for JGroups which piggybacks on the
@@ -31,14 +40,9 @@ public class RealmAuthorizationCallbackHandler implements CallbackHandler {
     private final String mechanismName;
     private final SecurityRealm realm;
     private final String clusterRole;
+    private String[] realmList;
 
-    static final String SASL_OPT_REALM_PROPERTY = "com.sun.security.sasl.digest.realm";
-    static final String SASL_OPT_PRE_DIGESTED_PROPERTY = "org.jboss.sasl.digest.pre_digested";
-
-    static final String DIGEST_MD5 = "DIGEST-MD5";
-    static final String EXTERNAL = "EXTERNAL";
-    static final String GSSAPI = "GSSAPI";
-    static final String PLAIN = "PLAIN";
+    private static final String SASL_OPT_PRE_DIGESTED_PROPERTY = "org.wildfly.security.sasl.digest.pre_digested";
 
     public RealmAuthorizationCallbackHandler(SecurityRealm realm, String mechanismName, String clusterRole, Map<String, String> mechanismProperties) {
         this.realm = realm;
@@ -49,9 +53,9 @@ public class RealmAuthorizationCallbackHandler implements CallbackHandler {
 
     private void tunePropsForMech(Map<String, String> mechanismProperties) {
         if (DIGEST_MD5.equals(mechanismName)) {
-            if (!mechanismProperties.containsKey(SASL_OPT_REALM_PROPERTY)) {
-                mechanismProperties.put(SASL_OPT_REALM_PROPERTY, realm.getName());
-            }
+            String realmStr = mechanismProperties.get(WildFlySasl.REALM_LIST);
+            realmList = realmStr == null ? new String[] {realm.getName()} : realmStr.split(" ");
+
             Map<String, String> mechConfig = realm.getMechanismConfig(AuthMechanism.DIGEST);
             boolean plainTextDigest = true;
             if (mechConfig.containsKey(RealmConfigurationConstants.DIGEST_PLAIN_TEXT)) {
@@ -65,8 +69,24 @@ public class RealmAuthorizationCallbackHandler implements CallbackHandler {
 
     @Override
     public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-        AuthorizingCallbackHandler cbh = getMechCallbackHandler();
-        cbh.handle(callbacks);
+        // We have to provide the available realms via this callback
+        // Ideally we would utilise org.wildfly.security.sasl.util.AvailableRealmsSaslServerFactory, however as we can't
+        // pass the SaslServerFactory impl to JGroups we must do it here instead.
+        ArrayList<Callback> list = new ArrayList<>(Arrays.asList(callbacks));
+        Iterator<Callback> it = list.iterator();
+        while (it.hasNext()) {
+            Callback callback = it.next();
+            if (callback instanceof AvailableRealmsCallback) {
+                ((AvailableRealmsCallback) callback).setRealmNames(realmList);
+                it.remove();
+            }
+        }
+
+        // If the only callback was AvailableRealmsCallback, we must not pass it to the AuthorizingCallbackHandler
+        if (!list.isEmpty()) {
+            AuthorizingCallbackHandler cbh = getMechCallbackHandler();
+            cbh.handle(callbacks);
+        }
     }
 
     private AuthorizingCallbackHandler getMechCallbackHandler() {
@@ -124,11 +144,10 @@ public class RealmAuthorizationCallbackHandler implements CallbackHandler {
         }
     }
 
-    public static <T extends Callback> T findCallbackHandler(Class<T> klass, Callback[] callbacks) {
-        for(int i=0; i < callbacks.length; i++) {
-            if (klass.isInstance(callbacks[i])) {
-                return (T) callbacks[i];
-            }
+    private static <T extends Callback> T findCallbackHandler(Class<T> klass, Callback[] callbacks) {
+        for (Callback callback : callbacks) {
+            if (klass.isInstance(callback))
+                return (T) callback;
         }
         return null;
     }

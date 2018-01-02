@@ -21,6 +21,7 @@ package org.infinispan.server.endpoint.subsystem;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -57,8 +58,9 @@ public class EncryptionResource extends SimpleResourceDefinition {
 
    static final SimpleAttributeDefinition[] ENCRYPTION_ATTRIBUTES = { REQUIRE_SSL_CLIENT_AUTH, SECURITY_REALM };
 
-   public EncryptionResource() {
-      super(ENCRYPTION_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.ENCRYPTION), EncryptionAdd.INSTANCE, ReloadRequiredRemoveStepHandler.INSTANCE);
+   EncryptionResource() {
+      super(ENCRYPTION_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.ENCRYPTION),
+            new ReloadRequiredAddStepHandler(ENCRYPTION_ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
    }
 
    @Override

@@ -24,7 +24,7 @@
       <module name="org.infinispan.counter" services="import"/>
       <module name="org.jboss.logging" />
       <module name="org.jboss.marshalling" services="import"/>
-      <module name="org.jboss.sasl" services="import" />
       <module name="org.jgroups" />
+      <module name="org.wildfly.security.elytron-private" services="import"/>
    </dependencies>
 </module>

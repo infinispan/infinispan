@@ -21,6 +21,7 @@ package org.infinispan.server.endpoint.subsystem;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -79,8 +80,9 @@ public class TopologyStateTransferResource extends SimpleResourceDefinition {
 
    static final SimpleAttributeDefinition[] TOPOLOGY_ATTRIBUTES = { EXTERNAL_HOST, EXTERNAL_PORT, LAZY_RETRIEVAL, AWAIT_INITIAL_RETRIEVAL, LOCK_TIMEOUT, REPLICATION_TIMEOUT };
 
-   public TopologyStateTransferResource() {
-      super(TOPOLOGY_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.TOPOLOGY_STATE_TRANSFER), TopologyStateTransferAdd.INSTANCE, ReloadRequiredRemoveStepHandler.INSTANCE);
+   TopologyStateTransferResource() {
+      super(TOPOLOGY_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.TOPOLOGY_STATE_TRANSFER),
+            new ReloadRequiredAddStepHandler(TOPOLOGY_ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
   }
 
    @Override

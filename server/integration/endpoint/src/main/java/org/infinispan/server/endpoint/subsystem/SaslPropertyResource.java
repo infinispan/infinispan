@@ -3,6 +3,7 @@ package org.infinispan.server.endpoint.subsystem;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -17,7 +18,7 @@ import org.jboss.dmr.ModelType;
  */
 public class SaslPropertyResource extends SimpleResourceDefinition {
 
-    static final PathElement SASL_PROPERTY_PATH = PathElement.pathElement(ModelKeys.PROPERTY);
+    private static final PathElement SASL_PROPERTY_PATH = PathElement.pathElement(ModelKeys.PROPERTY);
 
     // attributes
     static final SimpleAttributeDefinition VALUE =
@@ -27,8 +28,9 @@ public class SaslPropertyResource extends SimpleResourceDefinition {
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
                     .build();
 
-    public SaslPropertyResource() {
-        super(SASL_PROPERTY_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.PROPERTY), SaslPropertyAdd.INSTANCE, ReloadRequiredRemoveStepHandler.INSTANCE);
+    SaslPropertyResource() {
+        super(SASL_PROPERTY_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.PROPERTY),
+              new ReloadRequiredAddStepHandler(SASL_PROPERTY_ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
     }
 
     static final AttributeDefinition[] SASL_PROPERTY_ATTRIBUTES = {VALUE};

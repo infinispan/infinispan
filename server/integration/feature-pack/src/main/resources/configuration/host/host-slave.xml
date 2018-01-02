@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 
-<host xmlns="urn:jboss:domain:4.2">
+<host xmlns="urn:jboss:domain:5.0">
     <extensions>
         <?EXTENSIONS?>
     </extensions>
@@ -14,7 +14,7 @@
                 </server-identities>
 
                 <authentication>
-                    <local default-user="$local" skip-group-loading="true"/>
+                    <local default-user="$local"/>
                     <properties path="mgmt-users.properties" relative-to="jboss.domain.config.dir"/>
                 </authentication>
                 <authorization map-groups-to-roles="false">
@@ -23,7 +23,7 @@
             </security-realm>
             <security-realm name="ApplicationRealm">
                 <authentication>
-                    <local default-user="$local" allowed-users="*" skip-group-loading="true"/>
+                    <local default-user="$local" allowed-users="*"/>
                     <properties path="application-users.properties" relative-to="jboss.domain.config.dir"/>
                 </authentication>
                 <authorization>

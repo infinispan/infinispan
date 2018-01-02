@@ -22,10 +22,10 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.infinispan.server.commons.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;

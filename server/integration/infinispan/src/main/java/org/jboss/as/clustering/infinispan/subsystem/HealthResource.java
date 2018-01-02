@@ -22,8 +22,8 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.infinispan.server.commons.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;

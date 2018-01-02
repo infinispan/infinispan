@@ -23,6 +23,7 @@ package org.infinispan.server.endpoint.subsystem;
 
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -63,7 +64,7 @@ public class SaslPolicyResource extends SimpleResourceDefinition {
     SaslPolicyResource() {
         super(SASL_POLICY_PATH,
                 EndpointExtension.getResourceDescriptionResolver(ModelKeys.SASL_POLICY),
-                SaslPolicyAdd.INSTANCE,
+                new ReloadRequiredAddStepHandler(ATTRIBUTES),
                 ReloadRequiredRemoveStepHandler.INSTANCE);
     }
 

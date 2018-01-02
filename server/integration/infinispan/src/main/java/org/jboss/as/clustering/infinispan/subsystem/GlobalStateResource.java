@@ -23,11 +23,11 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.globalstate.ConfigurationStorage;
-import org.jboss.as.clustering.infinispan.subsystem.CacheConfigOperationHandlers.CacheConfigAdd;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.ObjectTypeAttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -117,7 +117,7 @@ public class GlobalStateResource extends SimpleResourceDefinition {
     GlobalStateResource() {
         super(GLOBAL_STATE_PATH,
                 new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.GLOBAL_STATE),
-                new CacheConfigAdd(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
+                new ReloadRequiredAddStepHandler(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
     }
 
     @Override

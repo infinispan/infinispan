@@ -19,7 +19,6 @@ import org.infinispan.server.hotrod.test.TestAuthMechListResponse;
 import org.infinispan.server.hotrod.test.TestAuthResponse;
 import org.infinispan.server.hotrod.test.TestCallbackHandler;
 import org.infinispan.test.TestingUtil;
-import org.jboss.sasl.JBossSaslProvider;
 import org.testng.annotations.Test;
 
 import io.netty.channel.group.ChannelGroup;
@@ -32,7 +31,6 @@ import io.netty.channel.group.ChannelGroup;
  */
 @Test(groups = "functional", testName = "server.hotrod.HotRodAuthenticationTest")
 public class HotRodAuthenticationTest extends HotRodSingleNodeTest {
-   JBossSaslProvider jbossSaslProvider = new JBossSaslProvider();
 
    @Override
    public HotRodServer createStartHotRodServer(EmbeddedCacheManager cacheManager) {

@@ -99,7 +99,7 @@ public class LdapAuthenticationIT extends AbstractAuthentication {
 
       @Override
       protected Collection<String> getCategories(ManagementClient managementClient, String containerId) {
-         return Arrays.asList("javax.security", "org.jboss.security", "org.picketbox");
+         return Arrays.asList("javax.security", "org.jboss.security", "org.picketbox", "org.wildfly.security");
       }
    }
 

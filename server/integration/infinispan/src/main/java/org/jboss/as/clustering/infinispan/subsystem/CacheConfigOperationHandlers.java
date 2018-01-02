@@ -32,6 +32,7 @@ import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
@@ -43,53 +44,22 @@ import org.jboss.dmr.Property;
  * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
  * @author William Burns (c) 2013 Red Hat Inc.
  */
-public class CacheConfigOperationHandlers {
-    static final OperationStepHandler CONTAINER_CONFIGURATIONS_ADD = new CacheConfigAdd();
-    static final OperationStepHandler CONTAINER_SECURITY_ADD = new CacheConfigAdd();
+class CacheConfigOperationHandlers {
+    static final OperationStepHandler CONTAINER_CONFIGURATIONS_ADD = new ReloadRequiredAddStepHandler();
+    static final OperationStepHandler CONTAINER_SECURITY_ADD = new ReloadRequiredAddStepHandler();
 
     static final OperationStepHandler LOADER_ADD = new CacheLoaderAdd();
-    static final OperationStepHandler LOADER_PROPERTY_ADD = new CacheConfigAdd(new AttributeDefinition[]{LoaderPropertyResource.VALUE});
+    static final OperationStepHandler LOADER_PROPERTY_ADD = new ReloadRequiredAddStepHandler(new AttributeDefinition[]{LoaderPropertyResource.VALUE});
     static final OperationStepHandler CLUSTER_LOADER_ADD = new ClusterCacheLoaderAdd();
     static final OperationStepHandler STORE_ADD = new CacheStoreAdd();
-    static final OperationStepHandler STORE_WRITE_BEHIND_ADD = new CacheConfigAdd(StoreWriteBehindResource.ATTRIBUTES);
+    static final OperationStepHandler STORE_WRITE_BEHIND_ADD = new ReloadRequiredAddStepHandler(StoreWriteBehindResource.ATTRIBUTES);
     static final OperationStepHandler FILE_STORE_ADD = new FileCacheStoreAdd();
     static final OperationStepHandler STRING_KEYED_JDBC_STORE_ADD = new StringKeyedJDBCCacheStoreAdd();
     static final OperationStepHandler REMOTE_STORE_ADD = new RemoteCacheStoreAdd();
     static final OperationStepHandler ROCKSDB_STORE_ADD = new RocksDBCacheStoreAdd();
-    static final OperationStepHandler ROCKSDB_EXPIRATION_ADD = new CacheConfigAdd(RocksDBExpirationConfigurationResource.ATTRIBUTES);
-    static final OperationStepHandler LEVELDB_COMPRESSION_ADD = new CacheConfigAdd(RocksDBCompressionConfigurationResource.ATTRIBUTES);
+    static final OperationStepHandler ROCKSDB_EXPIRATION_ADD = new ReloadRequiredAddStepHandler(RocksDBExpirationConfigurationResource.ATTRIBUTES);
+    static final OperationStepHandler LEVELDB_COMPRESSION_ADD = new ReloadRequiredAddStepHandler(RocksDBCompressionConfigurationResource.ATTRIBUTES);
     static final OperationStepHandler REST_STORE_ADD = new RestCacheStoreAdd();
-
-    /**
-     * Helper class to process adding basic nested cache configuration elements to the cache parent resource.
-     * When additional configuration is added, services need to be restarted; we restart all of them, for now
-     * by indicating reload required.
-     */
-    public static class CacheConfigAdd extends AbstractAddStepHandler  {
-        private final AttributeDefinition[] attributes;
-
-        CacheConfigAdd() {
-            this.attributes = new AttributeDefinition[0];
-        }
-
-        CacheConfigAdd(final AttributeDefinition[] attributes) {
-            this.attributes = attributes;
-        }
-
-        @Override
-        protected void populateModel(ModelNode operation, ModelNode model) throws OperationFailedException {
-            for (AttributeDefinition attr : attributes) {
-                attr.validateAndSet(operation, model);
-            }
-        }
-
-        @Override
-        protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
-            super.performRuntime(context, operation, model);
-            // once we add a cache configuration, we need to restart all the services for the changes to take effect
-            context.reloadRequired();
-        }
-    }
 
     /**
      * Base class for adding cache loaders.
@@ -102,10 +72,6 @@ public class CacheConfigOperationHandlers {
      */
     abstract static class AbstractCacheLoaderAdd extends AbstractAddStepHandler {
         protected final AttributeDefinition[] attributes;
-
-        AbstractCacheLoaderAdd() {
-            this(BaseLoaderConfigurationResource.BASE_LOADER_PARAMETERS);
-        }
 
         AbstractCacheLoaderAdd(AttributeDefinition[] attributes) {
            this(attributes, false);

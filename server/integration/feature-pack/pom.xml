@@ -52,6 +52,17 @@
             </exclusions>
         </dependency>
 
+        <dependency>
+            <groupId>org.jboss</groupId>
+            <artifactId>jboss-transaction-spi</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
        <!-- Feature Pack dependencies -->
        <dependency>
             <groupId>org.wildfly</groupId>

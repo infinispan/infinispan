@@ -45,19 +45,13 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.picketbox</groupId>
-         <artifactId>jbosssx-bare</artifactId>
-         <scope>test</scope>
-         <exclusions>
-             <exclusion>
-                 <artifactId>hibernate-annotations</artifactId>
-                 <groupId>org.hibernate</groupId>
-             </exclusion>
-         </exclusions>
-      </dependency>
-      <dependency>
          <groupId>org.wildfly.core</groupId>
          <artifactId>wildfly-core-testsuite-shared</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.commons</groupId>
+         <artifactId>commons-lang3</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>

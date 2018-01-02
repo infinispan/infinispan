@@ -32,25 +32,18 @@
       <version.org.infinispan.server-build.old>8.2.7.Final</version.org.infinispan.server-build.old>
       <version.org.slf4j>1.7.2</version.org.slf4j>
       <version.org.apache.logging.log4j>2.3</version.org.apache.logging.log4j>
+      <version.jcl.over.slf4j>1.7.22</version.jcl.over.slf4j>
 
-      <!-- WildFly dependencies -->
-      <version.org.wildfly>10.1.0.Final</version.org.wildfly>
-      <version.org.wildfly.core>2.2.0.Final</version.org.wildfly.core>
-      <version.org.wildfly.arquillian>1.1.0.Beta1</version.org.wildfly.arquillian>
-      <version.remoting.jmx.wildfly>2.0.1.Final</version.remoting.jmx.wildfly>
-      <version.org.wildfly.build-tools>1.1.6.Final</version.org.wildfly.build-tools>
       <!-- Infinispan Server dependencies -->
       <version.org.wildfly.extras.creaper>1.1.0</version.org.wildfly.extras.creaper>
       <version.xml.maven.plugin>1.0</version.xml.maven.plugin>
       <version.http.client>4.5</version.http.client>
-      <version.org.picketbox>4.0.17.SP2</version.org.picketbox>
       <version.xpp3>1.1.4c</version.xpp3>
       <version.karaf>4.1.2</version.karaf>
       <version.pax.exam>4.11.0</version.pax.exam>
       <version.h2.database>1.3.173</version.h2.database>
       <version.jest>2.0.4</version.jest>
       <version.gson>2.6.2</version.gson>
-      <version.commonslang3>3.4</version.commonslang3>
       <version.jboss.aesh>0.66.13</version.jboss.aesh>
       <!-- Jolokia and Prometheus support -->
       <version.agent-bond>1.0.2</version.agent-bond>
@@ -158,12 +151,6 @@
                   <artifactId>wildfly-patching</artifactId>
                </exclusion>
             </exclusions>
-         </dependency>
-
-         <dependency>
-            <groupId>org.jboss.remotingjmx</groupId>
-            <artifactId>remoting-jmx</artifactId>
-            <version>${version.remoting.jmx.wildfly}</version>
          </dependency>
 
          <dependency>
@@ -277,6 +264,13 @@
          </dependency>
 
          <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <version>${version.jcl.over.slf4j}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
             <version>${version.org.apache.logging.log4j}</version>
@@ -301,13 +295,6 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>${version.http.client}</version>
-         </dependency>
-
-         <dependency>
-            <groupId>org.picketbox</groupId>
-            <artifactId>jbosssx-bare</artifactId>
-            <version>${version.org.picketbox}</version>
-            <scope>test</scope>
          </dependency>
 
          <dependency>
@@ -442,12 +429,6 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>${version.gson}</version>
-         </dependency>
-
-         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>${version.commonslang3}</version>
          </dependency>
 
          <dependency>

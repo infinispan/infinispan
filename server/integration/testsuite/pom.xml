@@ -42,6 +42,10 @@
                     <groupId>org.jboss.remoting3</groupId>
                     <artifactId>jboss-remoting</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.jboss.sasl</groupId>
+                    <artifactId>jboss-sasl</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -182,16 +186,6 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-epoll</artifactId>
             <classifier>linux-x86_64</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.picketbox</groupId>
-            <artifactId>jbosssx-bare</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>javax.transaction</groupId>
-                    <artifactId>jta</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <!-- TODO: Make it possible to use a different version of Karaf -->
         <dependency>
