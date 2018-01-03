@@ -269,6 +269,7 @@
       <version.jgoodies.forms>1.0.7</version.jgoodies.forms>
       <version.jmh>1.12</version.jmh>
       <version.jsap>2.1</version.jsap>
+      <version.jsr305>3.0.2</version.jsr305>
       <version.jstl>1.2</version.jstl>
       <version.junit>4.12</version.junit>
       <version.karaf-maven-plugin>4.1.2</version.karaf-maven-plugin>
@@ -313,6 +314,7 @@
       <version.spymemcached>2.12.1</version.spymemcached>
       <version.testng.arquillian>6.5.2</version.testng.arquillian>
       <version.testng>6.8.8</version.testng>
+      <version.traute>1.1.8</version.traute>
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld-se>2.3.4.Final</version.weld-se>
       <version.weld>2.3.4.Final</version.weld>
@@ -1069,6 +1071,11 @@
             <version>${version.latency.utils}</version>
          </dependency>
          <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>${version.jsr305}</version>
+         </dependency>
+         <dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch</artifactId>
             <version>${version.elasticsearch}</version>
@@ -1449,6 +1456,17 @@
                      <exclude>**/package-info.java</exclude>
                   </excludes>
                   <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files</compilerArgument>
+                  <compilerArgs>
+                     <arg>-Xplugin:Traute</arg>
+                     <arg>-Atraute.failure.text.parameter=$${PARAMETER_NAME} is mandatory</arg>
+                  </compilerArgs>
+                  <annotationProcessorPaths>
+                     <path>
+                        <groupId>tech.harmonysoft</groupId>
+                        <artifactId>traute-javac</artifactId>
+                        <version>${version.traute}</version>
+                     </path>
+                  </annotationProcessorPaths>
                </configuration>
             </plugin>
          </plugins>
