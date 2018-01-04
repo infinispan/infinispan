@@ -57,7 +57,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.functional.impl.Params;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;

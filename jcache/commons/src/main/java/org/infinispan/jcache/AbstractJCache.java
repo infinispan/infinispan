@@ -4,6 +4,7 @@ import static org.infinispan.jcache.RIMBeanServerRegistrationUtility.ObjectNameT
 import static org.infinispan.jcache.RIMBeanServerRegistrationUtility.ObjectNameType.STATISTICS;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -139,7 +140,7 @@ public abstract class AbstractJCache<K, V> implements Cache<K, V> {
       return keysToLoad;
    }
 
-   protected Map<K, V> loadAllKeys(List<K> keysToLoad) {
+   protected Map<K, V> loadAllKeys(Collection<? extends K> keysToLoad) {
       try {
          return jcacheLoader.loadAll(keysToLoad);
       } catch (Exception e) {
