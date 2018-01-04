@@ -33,6 +33,7 @@ import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorException;
 import javax.cache.processor.MutableEntry;
 
+import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -441,7 +442,7 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       }
    }
 
-   private static class CustomEntryProcessor implements EntryProcessor {
+   private static class CustomEntryProcessor implements EntryProcessor, Serializable, ExternalPojo {
 
       @Override
       public Object process(MutableEntry entry, Object... arguments) throws EntryProcessorException {

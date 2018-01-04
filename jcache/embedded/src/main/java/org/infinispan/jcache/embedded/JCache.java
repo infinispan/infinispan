@@ -1,6 +1,7 @@
 package org.infinispan.jcache.embedded;
 
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -8,44 +9,58 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.cache.Cache;
-import javax.cache.CacheException;
 import javax.cache.CacheManager;
 import javax.cache.configuration.CacheEntryListenerConfiguration;
+import javax.cache.configuration.MutableConfiguration;
+import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.integration.CacheLoader;
 import javax.cache.integration.CacheWriter;
 import javax.cache.integration.CompletionListener;
 import javax.cache.management.CacheStatisticsMXBean;
 import javax.cache.processor.EntryProcessor;
-import javax.cache.processor.EntryProcessorException;
+import javax.cache.processor.EntryProcessorResult;
 import javax.management.MBeanServer;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.CacheListenerException;
-import org.infinispan.commons.api.AsyncCache;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ExpirationConfiguration;
 import org.infinispan.context.Flag;
+import org.infinispan.functional.EntryView;
+import org.infinispan.functional.FunctionalMap.ReadWriteMap;
+import org.infinispan.functional.Param;
+import org.infinispan.functional.impl.FunctionalMapImpl;
+import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.jcache.AbstractJCache;
 import org.infinispan.jcache.AbstractJCacheListenerAdapter;
 import org.infinispan.jcache.Exceptions;
+import org.infinispan.jcache.FailureEntryProcessorResult;
 import org.infinispan.jcache.JCacheEntry;
-import org.infinispan.jcache.MutableJCacheEntry;
+import org.infinispan.jcache.SuccessEntryProcessorResult;
+import org.infinispan.jcache.embedded.functions.GetAndPut;
+import org.infinispan.jcache.embedded.functions.GetAndRemove;
+import org.infinispan.jcache.embedded.functions.GetAndReplace;
+import org.infinispan.jcache.embedded.functions.Invoke;
+import org.infinispan.jcache.embedded.functions.Put;
+import org.infinispan.jcache.embedded.functions.PutIfAbsent;
+import org.infinispan.jcache.embedded.functions.ReadWithExpiry;
+import org.infinispan.jcache.embedded.functions.Remove;
+import org.infinispan.jcache.embedded.functions.RemoveConditionally;
+import org.infinispan.jcache.embedded.functions.Replace;
+import org.infinispan.jcache.embedded.functions.ReplaceConditionally;
 import org.infinispan.jcache.embedded.logging.Log;
 import org.infinispan.jmx.JmxUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
-import org.infinispan.util.concurrent.locks.impl.LockContainer;
-import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -62,35 +77,29 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    private static final boolean trace = log.isTraceEnabled();
 
    private final AdvancedCache<K, V> cache;
-   private final AdvancedCache<K, V> ignoreReturnValuesCache;
    private final AdvancedCache<K, V> skipCacheLoadCache;
    private final AdvancedCache<K, V> skipCacheLoadAndStatsCache;
    private final AdvancedCache<K, V> skipListenerCache;
-   private final AdvancedCache<K, V> skipStatisticsCache;
+   private final ReadWriteMap<K, V> rwMap;
+   private final ReadWriteMap<K, V> rwMapSkipCacheLoad;
    private final RICacheStatistics stats;
 
-   private final LockContainer processorLocks;
-   private final long lockTimeout; // milliseconds
-
    public JCache(AdvancedCache<K, V> cache, CacheManager cacheManager, ConfigurationAdapter<K, V> c) {
-      super(c.getConfiguration(), cacheManager, new JCacheNotifier<K, V>());
+      super(adjustConfiguration(c.getConfiguration(), cache), cacheManager, new JCacheNotifier<>());
       this.cache = cache;
-      this.processorLocks = new PerKeyLockContainer();
-      ((PerKeyLockContainer) processorLocks).inject(cache.getComponentRegistry().getTimeService());
-      this.ignoreReturnValuesCache = cache.withFlags(Flag.IGNORE_RETURN_VALUES);
       this.skipCacheLoadCache = cache.withFlags(Flag.SKIP_CACHE_LOAD);
       this.skipCacheLoadAndStatsCache = cache.withFlags(Flag.SKIP_CACHE_LOAD, Flag.SKIP_STATISTICS);
       // Typical use cases of the SKIP_LISTENER_NOTIFICATION is when trying
       // to comply with specifications such as JSR-107, which mandate that
       // {@link Cache#clear()}} calls do not fire entry removed notifications
       this.skipListenerCache = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION);
-      this.skipStatisticsCache = cache.withFlags(Flag.SKIP_STATISTICS);
-
+      this.rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(cache));
+      this.rwMapSkipCacheLoad = rwMap.withParams(Param.PersistenceMode.SKIP_LOAD);
       this.stats = new RICacheStatistics(this.cache);
-      this.lockTimeout =  cache.getCacheConfiguration()
-            .locking().lockAcquisitionTimeout();
 
       addConfigurationListeners();
+
+      cache.getComponentRegistry().registerComponent(expiryPolicy, ExpiryPolicy.class);
 
       setCacheLoader(configuration);
       setCacheWriter(configuration);
@@ -100,6 +109,17 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
       if (configuration.isStatisticsEnabled())
          setStatisticsEnabled(true);
+   }
+
+   private static <K, V> MutableConfiguration<K, V> adjustConfiguration(MutableConfiguration<K, V> configuration, AdvancedCache<K, V> cache) {
+      Configuration cfg = cache.getCacheConfiguration();
+      boolean lifespanSet = cfg.expiration().attributes().attribute(ExpirationConfiguration.LIFESPAN).isModified();
+      boolean maxIdleSet = cfg.expiration().attributes().attribute(ExpirationConfiguration.MAX_IDLE).isModified();
+      if (lifespanSet || maxIdleSet) {
+         configuration.setExpiryPolicyFactory(new LimitExpiryFactory(
+               configuration.getExpiryPolicyFactory(), cfg.expiration().lifespan(), cfg.expiration().maxIdle()));
+      }
+      return configuration;
    }
 
    protected void addCacheLoaderAdapter(CacheLoader<K, V> cacheLoader) {
@@ -149,15 +169,6 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
          throw log.parameterMustNotBeNull("key");
 
       try {
-         if (lockRequired(key)) {
-            return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
-               @Override
-               public Boolean call() {
-                  return skipCacheLoadCache.containsKey(key);
-               }
-            });
-         }
-
          return skipCacheLoadAndStatsCache.containsKey(key);
       } catch (org.infinispan.commons.CacheException e) {
          throw Exceptions.launderException(e);
@@ -167,27 +178,18 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    public V get(final K key) {
       checkNotClosed();
-      if (lockRequired(key)) {
-         return new WithProcessorLock<V>().call(key, new Callable<V>() {
-            @Override
-            public V call() {
-               return doGet(key);
-            }
-         });
-      }
-
-      return doGet(key);
-   }
-
-   private V doGet(K key) {
+      checkNotNull(key, "key");
       try {
-         V value = configuration.isReadThrough() ? cache.get(key) : skipCacheLoadCache.get(key);
-         if (value != null)
-            updateTTLForAccessed(cache, key, value);
-         return value;
+         return readMap().eval(key, new ReadWithExpiry<>()).join();
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
          throw Exceptions.launderException(e);
       }
+   }
+
+   private ReadWriteMap<K, V> readMap() {
+      return configuration.isReadThrough() ? this.rwMap : rwMapSkipCacheLoad;
    }
 
    @Override
@@ -197,29 +199,32 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       if (keys.isEmpty()) {
          return Collections.emptyMap();
       }
-
-      AdvancedCache<K, V> cache = configuration.isReadThrough() ? this.cache :
-            this.skipCacheLoadCache;
       try {
-         return cache.getAll(keys);
+         return evalMany(readMap(), keys, new ReadWithExpiry<>());
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
          throw Exceptions.launderException(e);
       }
    }
 
+   private <R> Map<K, R> evalMany(ReadWriteMap<K, V> map, Set<? extends K> keys, Function<EntryView.ReadWriteEntryView<K, V>, R> function) {
+      // ReadWriteMap.evalMany is not that useful since it forces us to transfer keys
+      return keys.stream().map(k -> new SimpleEntry<>(k, map.eval(k, function)))
+            // intermediary list to force all removes to be invoked before waiting for any
+            .collect(Collectors.toList()).stream().filter(e -> e.getValue().join() != null)
+            .collect(Collectors.toMap(SimpleEntry::getKey, e -> e.getValue().join()));
+   }
+
    @Override
    public V getAndPut(final K key, final V value) {
       checkNotClosed();
+      checkNotNull(key, "key");
+      checkNotNull(value, "value");
       try {
-         if (lockRequired(key)) {
-            return new WithProcessorLock<V>().call(key, new Callable<V>() {
-               @Override
-               public V call() {
-                  return put(skipCacheLoadCache, skipCacheLoadCache, key, value, false);
-               }
-            });
-         }
-         return put(skipCacheLoadCache, skipCacheLoadCache, key, value, false);
+         return rwMapSkipCacheLoad.eval(key, value, new GetAndPut<>()).join();
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
          throw Exceptions.launderException(e);
       }
@@ -228,18 +233,12 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    public V getAndRemove(final K key) {
       checkNotClosed();
+      checkNotNull(key, "key");
       try {
-         skipCacheLoadCache.get(key); // bring in key and update stats
-         if (lockRequired(key)) {
-            return new WithProcessorLock<V>().call(key, new Callable<V>() {
-               @Override
-               public V call() {
-                  return skipCacheLoadCache.remove(key);
-               }
-            });
-         }
-
-         return skipCacheLoadCache.remove(key);
+         // We cannot use the regular remove because it does not count hit/miss statistics as JCache expects
+         return rwMapSkipCacheLoad.eval(key, GetAndRemove.getInstance()).join();
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
          throw Exceptions.launderException(e);
       }
@@ -248,17 +247,13 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    public V getAndReplace(final K key, final V value) {
       checkNotClosed();
+      checkNotNull(key, "key");
+      checkNotNull(value, "value");
       try {
-         if (lockRequired(key)) {
-            return new WithProcessorLock<V>().call(key, new Callable<V>() {
-               @Override
-               public V call() {
-                  return replace(skipCacheLoadCache, key, value);
-               }
-            });
-         }
-
-         return replace(skipCacheLoadCache, key, value);
+         checkNotNull(value, "value");
+         return rwMapSkipCacheLoad.eval(key, value, new GetAndReplace<>()).join();
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
          throw Exceptions.launderException(e);
       }
@@ -282,106 +277,49 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    @Override
    public <T> T invoke(final K key, final EntryProcessor<K, V, T> entryProcessor, final Object... arguments) {
-      checkNotClosed().checkNotNull(key, "key").checkNotNull(entryProcessor, "entryProcessor");
-
-      // Using references for backup copies to provide perceived exclusive
-      // read access, and only apply changes if original value was not
-      // changed by another thread, the JSR requirements for this method could
-      // have been full filled. However, the TCK has some timing checks which
-      // verify that under contended access, one of the threads should "wait"
-      // for the other, hence the use locks.
-
-      if (trace)
-         log.tracef("Invoke entry processor %s for key=%s", entryProcessor, key);
-
+      checkNotClosed();
+      checkNotNull(key, "key");
+      checkNotNull(entryProcessor, "entryProcessor");
       try {
-         return new WithProcessorLock<T>().call(key, new Callable<T>() {
-            @Override
-            public T call() throws Exception {
-               // Get old value skipping any listeners to impacting
-               // listener invocation expectations set by the TCK.
-               V oldValue = skipCacheLoadCache.get(key);
-               V safeOldValue = oldValue;
-               if (configuration.isStoreByValue()) {
-                  // Make a copy because the entry processor could make changes
-                  // directly in the value, and we wanna keep a safe old value
-                  // around for when calling the atomic replace() call.
-                  safeOldValue = safeCopy(oldValue);
-               }
-
-               MutableJCacheEntry<K, V> mutable = createMutableCacheEntry(safeOldValue, key);
-               T ret = processEntryProcessor(mutable, entryProcessor, arguments);
-
-               switch (mutable.getOperation()) {
-                  case NONE:
-                     break;
-                  case ACCESS:
-                     updateTTLForAccessed(cache, key, oldValue);
-                     break;
-                  case UPDATE:
-                     V newValue = mutable.getNewValue();
-                     if (oldValue != null) {
-                        // Only allow change to be applied if value has not
-                        // changed since the start of the processing.
-                        replace(cache, skipCacheLoadAndStatsCache, key, oldValue, newValue, true);
-                     } else {
-                        put(cache, skipCacheLoadCache, key, newValue, true);
-                     }
-                     break;
-                  case REMOVE:
-                     cache.remove(key);
-                     break;
-                  default:
-                     break;
-               }
-
-               return ret;
-            }
-         });
+         ReadWriteMap<K, V> rw = configuration.isReadThrough() ? rwMap : rwMapSkipCacheLoad;
+         return rw.eval(key, new Invoke<>(entryProcessor, arguments,
+               !configuration.isStoreByValue())).join();
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
          throw Exceptions.launderException(e);
       }
    }
 
-   private MutableJCacheEntry<K, V> createMutableCacheEntry(V safeOldValue, K key) {
-      return new MutableJCacheEntry<K, V>(
-            configuration.isReadThrough() ? cache : skipCacheLoadCache, skipStatisticsCache, key, safeOldValue);
-   }
-
-
-   @SuppressWarnings("unchecked")
-   private V safeCopy(V original) {
+   @Override
+   public <T> Map<K, EntryProcessorResult<T>> invokeAll(Set<? extends K> keys, EntryProcessor<K, V, T> entryProcessor, Object... arguments) {
+      checkNotClosed();
+      verifyKeys(keys);
+      checkNotNull(entryProcessor, "entryProcessor");
       try {
-         StreamingMarshaller marshaller = skipCacheLoadCache.getComponentRegistry().getCacheMarshaller();
-         byte[] bytes = marshaller.objectToByteBuffer(original);
-         Object o = marshaller.objectFromByteBuffer(bytes);
-         return (V) o;
-      } catch (Exception e) {
-         throw new CacheException(
-               "Unexpected error making a copy of entry " + original, e);
+         ReadWriteMap<K, V> rw = configuration.isReadThrough() ? rwMap : rwMapSkipCacheLoad;
+         // ReadWriteMap.evalMany is not that useful since it forces us to transfer keys
+         return keys.stream().map(k -> new SimpleEntry<>(k, rw.eval(k, new Invoke<>(entryProcessor, arguments, !configuration.isStoreByValue()))))
+               // intermediary list to force all removes to be invoked before waiting for any
+               .collect(Collectors.toList()).stream().filter(e -> {
+                  try {
+                     return e.getValue().join() != null;
+                  } catch (CompletionException ex) {
+                     return true;
+                  }
+               })
+               .collect(Collectors.toMap(SimpleEntry::getKey, e -> {
+                  try {
+                     return new SuccessEntryProcessorResult(e.getValue().join());
+                  } catch (CompletionException ex) {
+                     return new FailureEntryProcessorResult<>(ex);
+                  }
+               }));
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
       }
-   }
-
-   private boolean lockRequired(K key) {
-      // Check if processor is locking a key, so that exclusive locking can
-      // be avoided for majority of use cases. This way, only when
-      // invokeProcessor is locking a key there's a need for CRUD cache
-      // methods to acquire the exclusive lock. This latter requirement is
-      // specifically tested by the TCK comparing duration of paralell
-      // executions.
-      boolean locked = processorLocks.isLocked(key);
-      if (trace)
-         log.tracef("Lock required for key=%s? %s", key, locked);
-
-      return locked;
-   }
-
-   private void acquiredProcessorLock(K key) throws InterruptedException {
-      processorLocks.acquire(key, Thread.currentThread(), lockTimeout, TimeUnit.MILLISECONDS);
-   }
-
-   private void releaseProcessorLock(K key) {
-      processorLocks.release(key, Thread.currentThread());
    }
 
    @Override
@@ -389,15 +327,14 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       if (isClosed()) {
          throw log.cacheClosed(cache.getStatus());
       }
+      // TODO
       return new Itr();
    }
 
    @Override
    public void loadAll(Set<? extends K> keys, boolean replaceExistingValues, final CompletionListener listener) {
       checkNotClosed();
-
-      if (keys == null)
-         throw log.parameterMustNotBeNull("keys");
+      verifyKeys(keys);
 
       // Separate logic based on whether a JCache cache loader or an Infinispan
       // cache loader might be plugged. TCK has some strict expectations when
@@ -413,27 +350,64 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
          if (jcacheLoader == null && jcacheWriter != null)
             setListenerCompletion(listener);
          else if (jcacheLoader != null) {
-            loadAllFromJCacheLoader(keys, replaceExistingValues, listener, ignoreReturnValuesCache.withFlags(Flag.SKIP_CACHE_STORE), skipCacheLoadCache);
+            loadAllFromJCacheLoader(keys, replaceExistingValues, listener);
          } else
             loadAllFromInfinispanCacheLoader(keys, replaceExistingValues, listener);
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
          throw Exceptions.launderException(e);
+      }
+   }
+
+   private void loadAllFromJCacheLoader(Set<? extends K> keys, boolean replaceExistingValues, CompletionListener listener) {
+      AtomicInteger countDown = new AtomicInteger(1);
+      BiConsumer<Object, Throwable> completionAction = (nil, t) -> {
+         if (t != null) {
+            if (countDown.getAndSet(0) != 0) {
+               setListenerException(listener, t);
+            }
+            return;
+         }
+         if (countDown.decrementAndGet() == 0) {
+            setListenerCompletion(listener);
+         }
+      };
+      try {
+         Map<K, V> loaded = loadAllKeys(keys);
+         for (Map.Entry<K, V> entry : loaded.entrySet()) {
+            K loadedKey = entry.getKey();
+            V loadedValue = entry.getValue();
+            if (loadedValue == null) {
+               continue;
+            }
+            countDown.incrementAndGet();
+            if (replaceExistingValues) {
+               rwMap.withParams(Param.PersistenceMode.SKIP)
+                     .eval(loadedKey, loadedValue, new Put<>()).whenComplete(completionAction);
+            } else {
+               rwMap.withParams(Param.PersistenceMode.SKIP)
+                     .eval(loadedKey, loadedValue, new PutIfAbsent<>()).whenComplete(completionAction);
+            }
+         }
+         completionAction.accept(null, null);
+      } catch (Throwable t) {
+         completionAction.accept(null, t);
       }
    }
 
    @Override
    public void put(final K key, final V value) {
       checkNotClosed();
-      if (lockRequired(key)) {
-         new WithProcessorLock<Void>().call(key, new Callable<Void>() {
-            @Override
-            public Void call() {
-               doPut(key, value);
-               return null;
-            }
-         });
-      } else {
-         doPut(key, value);
+      checkNotNull(key, "key");
+      checkNotNull(value, "value");
+      // A normal put should not fire notifications when checking TTL
+      try {
+         rwMapSkipCacheLoad.eval(key, value, new Put<>()).join();
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
+      } catch (org.infinispan.commons.CacheException e) {
+         throw Exceptions.launderException(e);
       }
    }
 
@@ -441,31 +415,17 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    public void putAll(Map<? extends K, ? extends V> inputMap) {
       checkNotClosed();
       InfinispanCollections.assertNotNullEntries(inputMap, "inputMap");  // spec required check
-      /**
-       * TODO Similar to mentioned before, it'd be interesting to see if multiple putAsync() calls
-       * could be executed in parallel to speed up.
-       *
-       */
-      for (final Map.Entry<? extends K, ? extends V> e : inputMap.entrySet()) {
-         final K key = e.getKey();
-         if (lockRequired(key)) {
-            new WithProcessorLock<Void>().call(key, new Callable<Void>() {
-               @Override
-               public Void call() {
-                  doPut(key, e.getValue());
-                  return null;
-               }
-            });
-         } else {
-            doPut(key, e.getValue());
-         }
-      }
-   }
-
-   private void doPut(K key, V value) {
-      // A normal put should not fire notifications when checking TTL
       try {
-         put(ignoreReturnValuesCache, skipCacheLoadAndStatsCache, key, value, false);
+         if (configuration.isWriteThrough()) {
+            // Write-through caching expects that a failure persisting one entry
+            // does not block the commit of other, already persisted entries
+            inputMap.entrySet().stream().map(e -> rwMap.eval(e.getKey(), e.getValue(), new Put<>()))
+                  .collect(Collectors.toList()).forEach(CompletableFuture::join);
+         } else {
+            rwMapSkipCacheLoad.evalMany(inputMap, new Put<>()).forEach(nil -> {});
+         }
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
          throw Exceptions.launderException(e);
       }
@@ -474,19 +434,12 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    public boolean putIfAbsent(final K key, final V value) {
       checkNotClosed();
+      checkNotNull(key, "key");
+      checkNotNull(value, "value");
       try {
-         if (lockRequired(key)) {
-            return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
-               @Override
-               public Boolean call() {
-                  return put(skipCacheLoadCache,
-                        skipCacheLoadAndStatsCache, key, value, true) == null;
-               }
-            });
-         }
-
-         return put(skipCacheLoadCache,
-               skipCacheLoadCache, key, value, true) == null;
+         return rwMapSkipCacheLoad.eval(key, value, new PutIfAbsent<>()).join();
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
          throw Exceptions.launderException(e);
       }
@@ -495,19 +448,11 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    public boolean remove(final K key) {
       checkNotClosed();
+      checkNotNull(key, "key");
       try {
-         if (lockRequired(key)) {
-            return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
-               @Override
-               public Boolean call() {
-                  return cache.remove(key) != null;
-               }
-            });
-         }
-
-         return cache.remove(key) != null;
-      } catch (CacheListenerException e) {
-         throw Exceptions.launderCacheListenerException(e);
+         return rwMapSkipCacheLoad.eval(key, Remove.getInstance()).join();
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
          throw Exceptions.launderException(e);
       }
@@ -516,17 +461,12 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    public boolean remove(final K key, final V oldValue) {
       checkNotClosed();
+      checkNotNull(key, "key");
+      checkNotNull(oldValue, "oldValue");
       try {
-         if (lockRequired(key)) {
-            return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
-               @Override
-               public Boolean call() {
-                  return remove(cache, key, oldValue);
-               }
-            });
-         }
-
-         return remove(cache, key, oldValue);
+         return rwMapSkipCacheLoad.eval(key, oldValue, new RemoveConditionally<>()).join();
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
          throw Exceptions.launderException(e);
       }
@@ -543,43 +483,21 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       // TODO: What happens with entries only in store but not in memory?
 
       // Delete asynchronously and then wait for removals to complete
-      List<Future<V>> futures = new ArrayList<Future<V>>();
+      List<CompletableFuture<V>> futures = new ArrayList<>();
       try {
          for (final K key : cache.keySet()) {
-            if (lockRequired(key)) {
-               new WithProcessorLock<Void>().call(key, new Callable<Void>() {
-                  @Override
-                  public Void call() {
-                     cache.remove(key);
-                     return null;
-                  }
-               });
-            } else {
-               futures.add(cache.removeAsync(key));
-            }
+            futures.add(cache.removeAsync(key));
          }
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
          throw Exceptions.launderException(e);
       }
 
-      for (Future<V> future : futures) {
-         try {
-            future.get(10, TimeUnit.SECONDS);
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new CacheException(
-                  "Interrupted while waiting for remove to complete");
-         } catch (TimeoutException e) {
-            throw new CacheException(
-                  "Timed out while waiting for remove to complete");
-         } catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof org.infinispan.commons.CacheException) {
-               throw Exceptions.launderException((org.infinispan.commons.CacheException) cause);
-            } else {
-               throw new CacheException(cause);
-            }
-         }
+      try {
+         CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()])).join();
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
       }
    }
 
@@ -588,9 +506,16 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotClosed();
       verifyKeys(keys);
       try {
-         for (K k : keys) {
-            remove(k);
+         if (configuration.isWriteThrough()) {
+            // Write-through caching expects that a failure persisting one entry
+            // does not block the commit of other, already persisted entries
+            keys.stream().map(k -> rwMapSkipCacheLoad.eval(k, Remove.getInstance()))
+                  .collect(Collectors.toList()).forEach(CompletableFuture::join);
+         } else {
+            rwMapSkipCacheLoad.evalMany(keys, Remove.getInstance()).forEach(b -> {});
          }
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
          throw Exceptions.launderException(e);
       }
@@ -599,19 +524,12 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    public boolean replace(final K key, final V value) {
       checkNotClosed();
+      checkNotNull(key, "key");
+      checkNotNull(value, "value");
       try {
-         if (lockRequired(key)) {
-            return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
-               @Override
-               public Boolean call() {
-                  return replace(skipCacheLoadCache, skipCacheLoadCache,
-                        key, null, value, false);
-               }
-            });
-         }
-
-         return replace(skipCacheLoadCache, skipCacheLoadCache,
-               key, null, value, false);
+         return rwMapSkipCacheLoad.eval(key, value, new Replace<>()).join();
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
          throw Exceptions.launderException(e);
       }
@@ -620,19 +538,13 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    public boolean replace(final K key, final V oldValue, final V newValue) {
       checkNotClosed();
+      checkNotNull(key, "key");
+      checkNotNull(oldValue, "oldValue");
+      checkNotNull(newValue, "newValue");
       try {
-         if (lockRequired(key)) {
-            return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
-               @Override
-               public Boolean call() {
-                  return replace(skipCacheLoadCache, skipCacheLoadCache,
-                        key, oldValue, newValue, true);
-               }
-            });
-         }
-
-         return replace(skipCacheLoadCache, skipCacheLoadCache,
-               key, oldValue, newValue, true);
+         return rwMapSkipCacheLoad.eval(key, newValue, new ReplaceConditionally<>(oldValue)).join();
+      } catch (CompletionException e) {
+         throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
          throw Exceptions.launderException(e);
       }
@@ -678,71 +590,32 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    }
 
    private void loadAllFromInfinispanCacheLoader(Set<? extends K> keys, boolean replaceExistingValues, final CompletionListener listener) {
-      final List<K> keysToLoad = filterLoadAllKeys(keys, replaceExistingValues, true);
-      if (keysToLoad.isEmpty()) {
-         setListenerCompletion(listener);
-         return;
-      }
-
-      try {
-         // Using a cyclic barrier, initialised with the number of keys to load,
-         // in order to load all keys asynchronously and when the last one completes,
-         // callback to the CompletionListener (via a barrier action).
-         final CyclicBarrier barrier = new CyclicBarrier(keysToLoad.size(), new Runnable() {
-            @Override
-            public void run() {
-               if (trace)
-                  log.tracef("Keys %s loaded, notify listener on completion", keysToLoad);
-
-               setListenerCompletion(listener);
+      AtomicInteger countDown = new AtomicInteger(keys.size() + 1);
+      BiConsumer<V, Throwable> completionAction = (v, t) -> {
+         if (t != null) {
+            if (countDown.getAndSet(0) != 0) {
+               setListenerException(listener, t);
             }
-         });
-         AsyncCache<K, V> asyncCache = cache;
-         for (K k : keysToLoad)
-            asyncCache.getAsync(k).whenComplete((v, t) -> {
-               if (t != null) {
-                  setListenerException(listener, t);
-               }
-               try {
-                  if (trace)
-                     log.tracef("Key loaded, wait for the rest of keys to load");
-
-                  barrier.await(30, TimeUnit.SECONDS);
-               } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-               } catch (BrokenBarrierException e) {
-                  setListenerException(listener, e);
-               } catch (TimeoutException e) {
-                  setListenerException(listener, e);
-               }
-            });
-
-      } catch (Throwable t) {
-         log.errorLoadingAll(keysToLoad, t);
-         setListenerException(listener, t);
-      }
-   }
-
-   private class WithProcessorLock<V> {
-      public V call(K key, Callable<V> callable) {
-         try {
-            acquiredProcessorLock(key);
-            return callable.call();
-         } catch (InterruptedException e) {
-            // restore interrupted status
-            Thread.currentThread().interrupt();
-            return null;
-         } catch (CacheListenerException e) {
-            throw Exceptions.launderCacheListenerException(e);
-         } catch (EntryProcessorException e) {
-            throw e;
-         } catch (CacheException e) {
-            throw e;
-         } catch (Exception e) {
-            throw new EntryProcessorException(e);
-         } finally {
-            releaseProcessorLock(key);
+            return;
          }
+         if (trace)
+            log.tracef("Key loaded, wait for the rest of keys to load");
+
+         if (countDown.decrementAndGet() == 0) {
+            setListenerCompletion(listener);
+         }
+      };
+      try {
+         for (K k : keys) {
+            if (replaceExistingValues) {
+               cache.evict(k);
+            }
+            cache.getAsync(k).whenComplete(completionAction);
+         }
+         completionAction.accept(null, null);
+      } catch (Throwable t) {
+         log.errorLoadingAll(keys, t);
+         completionAction.accept(null, t);
       }
    }
 
@@ -760,7 +633,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
          long start = statisticsEnabled() ? System.nanoTime() : 0;
          if (it.hasNext()) {
             Map.Entry<K, V> entry = it.next();
-            next = new JCacheEntry<K, V>(
+            next = new JCacheEntry<>(
                   entry.getKey(), entry.getValue());
 
             if (statisticsEnabled()) {

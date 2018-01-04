@@ -27,6 +27,9 @@ public class Expiration {
     * expiry settings for the cached entry.
     */
    public static Duration getExpiry(ExpiryPolicy policy, Operation op) {
+      if (policy == null) {
+         return getDefaultDuration();
+      }
       switch (op) {
          case CREATION:
             try {

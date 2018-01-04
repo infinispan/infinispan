@@ -14,9 +14,7 @@ import javax.cache.configuration.Factory;
 import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.Duration;
 import javax.cache.expiry.ExpiryPolicy;
-import javax.cache.spi.CachingProvider;
 
-import org.infinispan.jcache.util.JCacheRunnable;
 import org.testng.annotations.Test;
 
 /**
@@ -32,43 +30,35 @@ public class JCacheExpiryTest {
       final MutableConfiguration<Integer, String>
             cfg = new MutableConfiguration<Integer, String>();
 
-      cfg.setExpiryPolicyFactory(new Factory<ExpiryPolicy>() {
+      cfg.setExpiryPolicyFactory((Factory<ExpiryPolicy>) () -> new ExpiryPolicy() {
          @Override
-         public ExpiryPolicy create() {
-            return new ExpiryPolicy() {
-               @Override
-               public Duration getExpiryForCreation() {
-                  return Duration.ETERNAL;
-               }
+         public Duration getExpiryForCreation() {
+            return Duration.ETERNAL;
+         }
 
-               @Override
-               public Duration getExpiryForAccess() {
-                  return null;
-               }
+         @Override
+         public Duration getExpiryForAccess() {
+            return null;
+         }
 
-               @Override
-               public Duration getExpiryForUpdate() {
-                  return Duration.ZERO;
-               }
-            };
+         @Override
+         public Duration getExpiryForUpdate() {
+            return Duration.ZERO;
          }
       });
 
       final String name = getName(m);
-      withCachingProvider(new JCacheRunnable() {
-         @Override
-         public void run(CachingProvider provider) {
-            CacheManager cm = provider.getCacheManager();
-            Cache<Integer, String> cache = cm.createCache(name, cfg);
+      withCachingProvider(provider -> {
+         CacheManager cm = provider.getCacheManager();
+         Cache<Integer, String> cache = cm.createCache(name, cfg);
 
-            cache.put(1, "v1");
-            assertTrue(cache.containsKey(1));
-            assertEquals("v1", cache.get(1));
+         cache.put(1, "v1");
+         assertTrue(cache.containsKey(1));
+         assertEquals("v1", cache.get(1));
 
-            cache.getAndReplace(1, "v2");
-            assertFalse(cache.containsKey(1));
-            assertNull(cache.get(1));
-         }
+         cache.getAndReplace(1, "v2");
+         assertFalse(cache.containsKey(1));
+         assertNull(cache.get(1));
       });
    }
 

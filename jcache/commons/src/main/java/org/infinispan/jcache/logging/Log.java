@@ -5,7 +5,7 @@ import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.Closeable;
-import java.util.List;
+import java.util.Collection;
 
 import javax.cache.CacheException;
 import javax.cache.configuration.Configuration;
@@ -73,7 +73,7 @@ public interface Log extends org.infinispan.commons.logging.Log {
 
    @LogMessage(level = ERROR)
    @Message(value = "Error loading %s keys from persistence store", id = 21017)
-   <K> void errorLoadingAll(List<K> keysToLoad, @Cause Throwable t);
+   void errorLoadingAll(Collection<?> keysToLoad, @Cause Throwable t);
 
    @Message(value = "The configuration class %s is not supported by this implementation", id = 21018)
    IllegalArgumentException configurationClassNotSupported(Class clazz);

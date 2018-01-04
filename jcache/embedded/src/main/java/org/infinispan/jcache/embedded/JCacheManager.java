@@ -152,11 +152,11 @@ public class JCacheManager extends AbstractJCacheManager {
       if (!ispnCache.getStatus().allowInvocations())
          ispnCache.start();
 
-      return new JCache<K, V>(ispnCache, this, adapter);
+      return new JCache<>(ispnCache, this, adapter);
    }
 
    @Override
    protected <K, V, I extends BasicCache<K, V>> AbstractJCache<K, V> create(I ispnCache) {
-      return new JCache<K, V>((AdvancedCache<K, V>) ispnCache, this, ConfigurationAdapter.<K, V>create());
+      return new JCache<>((AdvancedCache<K, V>) ispnCache, this, ConfigurationAdapter.create());
    }
 }

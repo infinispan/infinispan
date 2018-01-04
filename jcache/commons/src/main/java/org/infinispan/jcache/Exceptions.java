@@ -1,5 +1,7 @@
 package org.infinispan.jcache;
 
+import java.util.concurrent.CompletionException;
+
 import javax.cache.CacheException;
 import javax.cache.event.CacheEntryListenerException;
 import javax.cache.integration.CacheLoaderException;
@@ -63,6 +65,18 @@ public class Exceptions {
    public static CacheException launderException(org.infinispan.commons.CacheException e) {
       // Exceptions thrown from Infinispan are be wrapped as CacheExceptions
       if (e.getCause() instanceof CacheException) {
+         return (CacheException) e.getCause();
+      } else {
+         return new CacheException(e);
+      }
+   }
+
+   public static CacheException launderException(CompletionException e) {
+      if (e.getCause() == null) {
+         return new CacheException(e);
+      } else if (e.getCause() instanceof org.infinispan.commons.CacheException) {
+         return launderException((org.infinispan.commons.CacheException) e.getCause());
+      } else if (e.getCause() instanceof CacheException) {
          return (CacheException) e.getCause();
       } else {
          return new CacheException(e);
