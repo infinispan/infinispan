@@ -72,6 +72,6 @@ public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
     */
    public static long estimateSizeOverhead(long size) {
       // We take 8 and add the number provided and then round up to 16 (& operator has higher precedence than +)
-      return (size + 8 + 15) & ~0x15;
+      return (size + 8 + 15) & ~15;
    }
 }
