@@ -1,7 +1,5 @@
 package org.infinispan.marshall.core;
 
-import java.util.Set;
-
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
@@ -36,8 +34,5 @@ public interface EncoderRegistry {
     */
    Transcoder getTranscoder(MediaType type1, MediaType type2);
 
-   /**
-    * @return all supported {@link MediaType} for the registered {@link Transcoder}.
-    */
-   Set<String> getSupportedMediaTypes();
+   boolean isConversionSupported(MediaType from, MediaType to);
 }

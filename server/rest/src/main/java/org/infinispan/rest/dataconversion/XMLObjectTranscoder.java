@@ -3,12 +3,11 @@ package org.infinispan.rest.dataconversion;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 
-import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.rest.logging.Log;
@@ -34,18 +33,18 @@ public class XMLObjectTranscoder implements Transcoder {
       supportedTypes.add(APPLICATION_OBJECT);
    }
 
-
    @Override
    public Object transcode(Object content, MediaType contentType, MediaType destinationType) {
       if (destinationType.match(APPLICATION_XML)) {
-         try {
-            return XStreamHolder.XStream.toXML(content).getBytes("UTF-8");
-         } catch (IOException e) {
-            throw new CacheException(e);
+         Charset charset = destinationType.getCharset();
+         if (content instanceof byte[]) {
+            String contentAsString = new String((byte[]) content, charset);
+            return XStreamHolder.XStream.toXML(contentAsString);
          }
+         return XStreamHolder.XStream.toXML(content).getBytes(charset);
       }
       if (destinationType.match(APPLICATION_OBJECT)) {
-         if(content instanceof byte[]) {
+         if (content instanceof byte[]) {
             return content;
          }
          return XStreamHolder.XStream.fromXML(new StringReader((String) content));

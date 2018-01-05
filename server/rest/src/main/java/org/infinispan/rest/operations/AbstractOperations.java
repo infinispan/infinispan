@@ -1,34 +1,35 @@
 package org.infinispan.rest.operations;
 
-import java.util.HashSet;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
+
 import java.util.Optional;
-import java.util.Set;
 
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.rest.InfinispanRequest;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.rest.RestResponseException;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.RestServerConfiguration;
+import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.operations.exceptions.UnacceptableDataFormatException;
+import org.infinispan.util.logging.LogFactory;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 abstract class AbstractOperations {
 
+   private final static Log logger = LogFactory.getLog(AbstractOperations.class, Log.class);
    static final MurmurHash3 hashFunc = MurmurHash3.getInstance();
 
    final RestCacheManager<Object> restCacheManager;
    final RestServerConfiguration restServerConfiguration;
-   private final Set<String> supported = new HashSet<>();
 
    AbstractOperations(RestServerConfiguration configuration, RestCacheManager<Object> cacheManager) {
       this.restServerConfiguration = configuration;
       this.restCacheManager = cacheManager;
-      EncoderRegistry encoderRegistry = restCacheManager.encoderRegistry();
-      supported.addAll(encoderRegistry.getSupportedMediaTypes());
    }
 
    RestResponseException createResponseException(Throwable exception) {
@@ -37,33 +38,44 @@ abstract class AbstractOperations {
       return new RestResponseException(HttpResponseStatus.INTERNAL_SERVER_ERROR, rootCauseException.getMessage(), rootCauseException);
    }
 
-   private Throwable getRootCauseException(Throwable re) {
+   Throwable getRootCauseException(Throwable re) {
       if (re == null) return null;
       Throwable cause = re.getCause();
-      if (cause instanceof RuntimeException)
+      if (cause != null)
          return getRootCauseException(cause);
       else
          return re;
    }
 
-   MediaType getMediaType(InfinispanRequest request) throws UnacceptableDataFormatException {
-      Optional<String> maybeContentType = request.getAcceptContentType();
-      if (maybeContentType.isPresent()) {
-         try {
-            String contents = maybeContentType.get();
-            if (contents.equals("*/*")) return null;
-            for (String content : contents.split(" *, *")) {
-               MediaType mediaType = MediaType.fromString(content);
-               if (supported.contains(mediaType.getTypeSubtype())) {
-                  return mediaType;
-               }
-            }
-            throw new UnacceptableDataFormatException();
-         } catch (EncodingException e) {
-            throw new UnacceptableDataFormatException();
-         }
+   MediaType tryNarrowMediaType(MediaType negotiated, String cacheName) {
+      if (!negotiated.matchesAll()) return negotiated;
+
+      Configuration cacheConfiguration = restCacheManager.getCache(cacheName).getCacheConfiguration();
+      boolean compat = cacheConfiguration.compatibility().enabled();
+      MediaType valueStorageFormat = restCacheManager.getValueStorageFormat(cacheName);
+      if (compat) {
+         return TEXT_PLAIN;
       }
-      return null;
+      if (valueStorageFormat != null && valueStorageFormat.match(MediaType.APPLICATION_PROTOSTREAM)) {
+         return APPLICATION_JSON;
+      }
+      return negotiated;
+   }
+
+   MediaType negotiateMediaType(String accept, String cacheName) throws UnacceptableDataFormatException {
+      try {
+         DataConversion valueDataConversion = restCacheManager.getCache(cacheName).getValueDataConversion();
+
+         Optional<MediaType> negotiated = MediaType.parseList(accept)
+               .filter(valueDataConversion::isConversionSupported)
+               .findFirst();
+
+         return negotiated.map(m -> tryNarrowMediaType(m, cacheName))
+               .orElseThrow(() -> logger.unsupportedDataFormat(accept));
+
+      } catch (EncodingException e) {
+         throw new UnacceptableDataFormatException();
+      }
    }
 
 }

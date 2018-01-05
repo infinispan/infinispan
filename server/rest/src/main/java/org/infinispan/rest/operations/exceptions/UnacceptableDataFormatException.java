@@ -10,4 +10,7 @@ public class UnacceptableDataFormatException extends RestResponseException {
       super(HttpResponseStatus.NOT_ACCEPTABLE, "Data format not supported");
    }
 
+   public UnacceptableDataFormatException(String reason) {
+      super(HttpResponseStatus.NOT_ACCEPTABLE, reason);
+   }
 }

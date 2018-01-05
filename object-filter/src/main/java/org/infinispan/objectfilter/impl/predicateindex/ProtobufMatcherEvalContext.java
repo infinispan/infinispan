@@ -2,6 +2,7 @@ package org.infinispan.objectfilter.impl.predicateindex;
 
 import java.io.IOException;
 
+import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
@@ -11,12 +12,15 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
+import org.jboss.logging.Logger;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
 public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descriptor, FieldDescriptor, Integer> implements TagHandler {
+
+   private static final Log log = Logger.getMessageLogger(Log.class, ProtobufMatcherEvalContext.class.getName());
 
    private boolean payloadStarted = false;
    private int skipping = 0;
@@ -34,7 +38,7 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
       try {
          ProtobufParser.INSTANCE.parse(this, wrappedMessageDescriptor, (byte[]) getInstance());
       } catch (IOException e) {
-         throw new RuntimeException(e);  // TODO [anistor] proper exception handling needed
+         throw log.errorParsingProtobuf(e);
       }
    }
 

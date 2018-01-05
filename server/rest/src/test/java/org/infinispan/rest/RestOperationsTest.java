@@ -1,5 +1,8 @@
 package org.infinispan.rest;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.rest.JSONConstants.TYPE;
 
 import org.assertj.core.api.Assertions;
@@ -29,8 +32,8 @@ public class RestOperationsTest extends BaseRestOperationsTest {
    protected void defineCaches() {
       super.defineCaches();
       ConfigurationBuilder object = getDefaultCacheBuilder();
-      object.encoding().key().mediaType(MediaType.TEXT_PLAIN_TYPE);
-      object.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+      object.encoding().key().mediaType(TEXT_PLAIN_TYPE);
+      object.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
 
       restServer.defineCache("objectCache", object);
    }
@@ -49,7 +52,6 @@ public class RestOperationsTest extends BaseRestOperationsTest {
             .send();
 
       //then
-      System.out.println(response.getContentAsString());
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("application/json");
       ResponseAssertion.assertThat(response).hasReturnedText("{\"" + TYPE + "\":\"" + TestClass.class.getName() + "\",\"name\":\"test\"}");
@@ -80,35 +82,37 @@ public class RestOperationsTest extends BaseRestOperationsTest {
    @Test
    public void shouldReadAsBinaryWithCompatMode() throws Exception {
       //given
-      TestClass testClass = new TestClass();
-      testClass.setName("test");
-      putValueInCache("compatCache", "test", testClass);
+      String cacheName = "compatCache";
+      String key = "test";
+      TestClass value = new TestClass();
+      value.setName("test");
+
+      putValueInCache(cacheName, key, value);
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "compatCache", "test"))
-            .header(HttpHeader.ACCEPT, MediaType.APPLICATION_OCTET_STREAM_TYPE)
-            .send();
+      ContentResponse response = get(cacheName, key, APPLICATION_OCTET_STREAM_TYPE);
 
       //then
       ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasContentType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+      ResponseAssertion.assertThat(response).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
    }
 
    @Test
    public void shouldReadTextWithCompatMode() throws Exception {
       //given
-      putValueInCache("compatCache", "k1", "v1");
+      String cacheName = "compatCache";
+      String key = "k1";
+      String value = "v1";
+
+      putValueInCache(cacheName, key, value);
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "compatCache", "k1"))
-            .header(HttpHeader.ACCEPT, MediaType.APPLICATION_OCTET_STREAM_TYPE)
-            .send();
+      ContentResponse response = get(cacheName, key, TEXT_PLAIN_TYPE);
 
       //then
       ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasContentType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+      ResponseAssertion.assertThat(response).hasContentType(TEXT_PLAIN_TYPE);
+      ResponseAssertion.assertThat(response).hasReturnedText(value);
    }
 
    @Test
@@ -121,14 +125,13 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       //when
       ContentResponse response = client
             .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "compatCache", "k1"))
-            .header(HttpHeader.ACCEPT, MediaType.APPLICATION_OCTET_STREAM_TYPE)
+            .header(HttpHeader.ACCEPT, APPLICATION_OCTET_STREAM_TYPE)
             .send();
 
       //then
-      System.out.println(response.getContentAsString());
       ResponseAssertion.assertThat(response).hasReturnedBytes("v1".getBytes());
       ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasContentType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+      ResponseAssertion.assertThat(response).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
    }
 
    @Test
@@ -151,6 +154,25 @@ public class RestOperationsTest extends BaseRestOperationsTest {
    }
 
    @Test
+   public void shouldNegotiateFromCompatCacheWithoutAccept() throws Exception {
+      //given
+      TestClass testClass = new TestClass();
+      testClass.setName("test");
+      String cacheName = "compatCache";
+      String key = "k1";
+
+      putValueInCache(cacheName, key, testClass);
+
+      //when
+      ContentResponse response = get(cacheName, key, null);
+
+      //then
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).hasContentType(MediaType.TEXT_PLAIN_TYPE);
+      ResponseAssertion.assertThat(response).hasReturnedText(testClass.toString());
+   }
+
+   @Test
    public void shouldWriteTextContentWithCompatMode() throws Exception {
       //given
       putStringValueInCache("compatCache", "key1", "data");
@@ -158,13 +180,13 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       //when
       ContentResponse response = client
             .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "compatCache", "key1"))
-            .header(HttpHeader.ACCEPT, MediaType.TEXT_PLAIN_TYPE)
+            .header(HttpHeader.ACCEPT, TEXT_PLAIN_TYPE)
             .send();
 
       //then
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasReturnedText("data");
-      ResponseAssertion.assertThat(response).hasContentType(MediaType.TEXT_PLAIN_TYPE);
+      ResponseAssertion.assertThat(response).hasContentType(TEXT_PLAIN_TYPE);
    }
 
    @Test
@@ -179,7 +201,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       //then
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasReturnedBytes("<hey>ho</hey>".getBytes());
-      ResponseAssertion.assertThat(response).hasContentType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+      ResponseAssertion.assertThat(response).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
    }
 
    @Test

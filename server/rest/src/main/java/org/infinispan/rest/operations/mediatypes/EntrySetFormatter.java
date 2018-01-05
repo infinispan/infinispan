@@ -5,6 +5,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.IMAGE_PNG_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 
 import java.util.HashMap;
@@ -36,6 +37,7 @@ public class EntrySetFormatter {
       printerByMediaType.put(APPLICATION_OCTET_STREAM_TYPE, jsonOutputPrinter);
       printerByMediaType.put(IMAGE_PNG_TYPE, binaryOutputPrinter);
       printerByMediaType.put(APPLICATION_SERIALIZED_OBJECT_TYPE, binaryOutputPrinter);
+      printerByMediaType.put(MATCH_ALL_TYPE, textOutputPrinter);
    }
 
    public static OutputPrinter forMediaType(MediaType mediaType) {
