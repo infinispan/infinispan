@@ -7,6 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringReader;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -42,7 +43,12 @@ public class ProtostreamJsonTranscoder implements Transcoder {
             return ProtobufUtil.toCanonicalJSON(ctx, (byte[]) content);
          }
          if (destinationType.match(APPLICATION_PROTOSTREAM)) {
-            Reader reader = new InputStreamReader(new ByteArrayInputStream((byte[]) content));
+            Reader reader;
+            if (content instanceof byte[]) {
+               reader = new InputStreamReader(new ByteArrayInputStream((byte[]) content));
+            } else {
+               reader = new StringReader(content.toString());
+            }
             return ProtobufUtil.fromCanonicalJSON(ctx, reader);
          }
       } catch (IOException e) {

@@ -28,6 +28,7 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.dsl.IndexedQueryMode;
@@ -256,11 +257,19 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    }
 
    private void index(int id, String person) throws Exception {
+      write(id, person, HttpMethod.POST, MediaType.APPLICATION_JSON);
+   }
+
+   protected void put(int id, String contents) throws Exception {
+      write(id, contents, HttpMethod.PUT, MediaType.APPLICATION_JSON);
+   }
+
+   protected void write(int id, String contents, HttpMethod method, MediaType contentType) throws Exception {
       ContentResponse response = client
             .newRequest(String.format("http://localhost:%d/rest/%s/%d", pickServer().getPort(), CACHE_NAME, id))
-            .method(POST)
-            .content(new StringContentProvider(person))
-            .header(HttpHeader.CONTENT_TYPE, "application/json")
+            .method(method)
+            .content(new StringContentProvider(contents))
+            .header(HttpHeader.CONTENT_TYPE, contentType.toString())
             .send();
       assertEquals(response.getStatus(), HttpStatus.SC_OK);
    }
@@ -271,7 +280,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
             .send();
    }
 
-   private ObjectNode createPerson(int id, String name, String surname, String street, String postCode, String gender, int... phoneNumbers) {
+   protected ObjectNode createPerson(int id, String name, String surname, String street, String postCode, String gender, int... phoneNumbers) {
       ObjectNode person = MAPPER.createObjectNode();
       person.put(TYPE, "org.infinispan.rest.search.entity.Person");
       person.put("id", id);
