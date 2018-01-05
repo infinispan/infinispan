@@ -6,6 +6,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.rest.dataconversion.FormUrlEncodedObjectTranscoder;
 import org.infinispan.rest.dataconversion.JavaSerializationTranscoder;
 import org.infinispan.rest.dataconversion.JsonObjectTranscoder;
 import org.infinispan.rest.dataconversion.OctedStreamToObject;
@@ -34,5 +35,6 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       encoderRegistry.registerTranscoder(new XMLObjectTranscoder());
       encoderRegistry.registerTranscoder(new TextBinaryTranscoder());
       encoderRegistry.registerTranscoder(new OctedStreamToObject());
+      encoderRegistry.registerTranscoder(new FormUrlEncodedObjectTranscoder());
    }
 }

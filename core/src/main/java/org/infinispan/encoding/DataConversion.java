@@ -53,6 +53,7 @@ public class DataConversion {
 
    private boolean isKey;
    private Transcoder transcoder;
+   private transient EncoderRegistry encoderRegistry;
 
    private DataConversion(Class<? extends Encoder> encoderClass, Class<? extends Wrapper> wrapperClass,
                           MediaType requestMediaType, MediaType storageMediaType, boolean isKey) {
@@ -125,12 +126,17 @@ public class DataConversion {
       if (!embeddedMode && configuration.indexing().index().isEnabled() && contentTypeConfiguration.mediaType() == null) {
          return MediaType.APPLICATION_PROTOSTREAM;
       }
-      // Otherwise don't guess the media type, preventing transcoding.
-      return null;
+      // Otherwise assume java object
+      return MediaType.APPLICATION_OBJECT;
+   }
+
+   public boolean isConversionSupported(MediaType mediaType) {
+      return encoderRegistry.isConversionSupported(storageMediaType, mediaType);
    }
 
    @Inject
    public void injectDependencies(GlobalConfiguration gcr, EncoderRegistry encoderRegistry, Configuration configuration) {
+      this.encoderRegistry = encoderRegistry;
       boolean embeddedMode = Configurations.isEmbeddedMode(gcr);
       CompatibilityModeConfiguration compatibility = configuration.compatibility();
       boolean compat = compatibility.enabled();
@@ -153,14 +159,18 @@ public class DataConversion {
             this.encoderClass = embeddedMode ? IdentityEncoder.class : CompatModeEncoder.class;
          }
       }
-      this.lookupWrapper(encoderRegistry);
-      this.lookupEncoder(encoderRegistry, compatibility, gcr.classLoader());
+      this.lookupWrapper();
+      this.lookupEncoder(compatibility, gcr.classLoader());
       this.storageMediaType = getStorageMediaType(configuration, embeddedMode);
-      this.lookupTranscoder(encoderRegistry);
+      this.lookupTranscoder();
    }
 
-   private void lookupTranscoder(EncoderRegistry encoderRegistry) {
-      boolean needsTranscoding = storageMediaType != null && requestMediaType != null && !requestMediaType.equals(storageMediaType);
+   public MediaType getStorageMediaType() {
+      return storageMediaType;
+   }
+
+   private void lookupTranscoder() {
+      boolean needsTranscoding = requestMediaType != null && !requestMediaType.matchesAll() && !requestMediaType.equals(storageMediaType);
       if (needsTranscoding) {
          Transcoder directTranscoder = null;
          if (encoder.getStorageFormat() != null) {
@@ -180,7 +190,7 @@ public class DataConversion {
       }
    }
 
-   private void lookupEncoder(EncoderRegistry encoderRegistry, CompatibilityModeConfiguration compatConfig, ClassLoader classLoader) {
+   private void lookupEncoder(CompatibilityModeConfiguration compatConfig, ClassLoader classLoader) {
       if (!compatConfig.enabled()) {
          this.encoder = encoderRegistry.getEncoder(encoderClass, encoderId);
       } else {
@@ -194,7 +204,7 @@ public class DataConversion {
       }
    }
 
-   private void lookupWrapper(EncoderRegistry encoderRegistry) {
+   private void lookupWrapper() {
       this.wrapper = encoderRegistry.getWrapper(wrapperClass, wrapperId);
    }
 

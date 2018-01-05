@@ -1,7 +1,9 @@
 package org.infinispan.rest.search;
 
+import org.eclipse.jetty.client.api.ContentResponse;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.rest.assertion.ResponseAssertion;
 import org.testng.annotations.Test;
 
 /**
@@ -29,4 +31,11 @@ public class CompatNonIndexedDefaultMarshallerTest extends BaseRestSearchTest {
       return true;
    }
 
+   @Override
+   public void testReadDocumentFromBrowser() throws Exception {
+      ContentResponse fromBrowser = get("2", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+
+      ResponseAssertion.assertThat(fromBrowser).isOk();
+      ResponseAssertion.assertThat(fromBrowser).bodyNotEmpty();
+   }
 }

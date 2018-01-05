@@ -35,6 +35,16 @@ public class ResponseAssertion {
       return this;
    }
 
+   public ResponseAssertion containsReturnedText(String text) {
+      Assertions.assertThat(response.getContentAsString()).contains(text);
+      return this;
+   }
+
+   public ResponseAssertion bodyNotEmpty() {
+      Assertions.assertThat(response.getContentAsString()).isNotEmpty();
+      return this;
+   }
+
    public ResponseAssertion hasEtag() {
       Assertions.assertThat(response.getHeaders().get("etag")).isNotNull().isNotEmpty();
       return this;

@@ -2,6 +2,7 @@ package org.infinispan.rest.search;
 
 import static org.eclipse.jetty.http.HttpMethod.GET;
 import static org.eclipse.jetty.http.HttpMethod.POST;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.rest.JSONConstants.HIT;
 import static org.infinispan.rest.JSONConstants.QUERY_MODE;
@@ -49,7 +50,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    private static final String CACHE_NAME = "search-rest";
    private static final String PROTO_FILE_NAME = "person.proto";
-   private static final ObjectMapper MAPPER = new ObjectMapper();
+   protected static final ObjectMapper MAPPER = new ObjectMapper();
 
    private HttpClient client;
    private List<RestServerHelper> restServers = new ArrayList<>();
@@ -60,9 +61,9 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    }
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       ConfigurationBuilder builder = getConfigBuilder();
-      createClusteredCaches(getNumNodes(), builder, true, CACHE_NAME);
+      createClusteredCaches(getNumNodes(), builder, true, CACHE_NAME, "default");
       waitForClusterToForm(CACHE_NAME);
    }
 
@@ -76,7 +77,11 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    }
 
    private String getUrl(RestServerHelper restServerHelper) {
-      return String.format("http://localhost:%d/rest/%s?action=search", restServerHelper.getPort(), CACHE_NAME);
+      return getUrl(restServerHelper, CACHE_NAME);
+   }
+
+   private String getUrl(RestServerHelper restServerHelper, String cacheName) {
+      return String.format("http://localhost:%d/rest/%s?action=search", restServerHelper.getPort(), cacheName);
    }
 
    @BeforeClass
@@ -97,7 +102,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    @AfterMethod
    @Override
-   protected void clearContent() throws Throwable {
+   protected void clearContent() {
    }
 
    @Test(dataProvider = "HttpMethodProvider")
@@ -190,7 +195,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    @Test(dataProvider = "HttpMethodProvider")
    public void testOffSet(HttpMethod method) throws Exception {
       String q = "select p.name from org.infinispan.rest.search.entity.Person p order by p.name desc";
-      JsonNode results = query(q, method, 2, 2);
+      JsonNode results = query(q, method, 2, 2, CACHE_NAME);
 
       assertEquals(results.get("total_results").getIntValue(), 4);
       ArrayNode hits = ArrayNode.class.cast(results.get("hits"));
@@ -210,6 +215,26 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       JsonNode jsonNode = MAPPER.readTree(contentAsString);
 
       assertTrue(jsonNode.get("error").path("message").asText().contains("Invalid search request"));
+   }
+
+   @Test
+   public void testReadDocument() throws Exception {
+      ContentResponse response = get("1", "*/*");
+
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).bodyNotEmpty();
+   }
+
+   @Test
+   public void testReadDocumentFromBrowser() throws Exception {
+      ContentResponse fromBrowser = get("2", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+
+      ResponseAssertion.assertThat(fromBrowser).isOk();
+      ResponseAssertion.assertThat(fromBrowser).bodyNotEmpty();
+      ResponseAssertion.assertThat(fromBrowser).hasContentType(APPLICATION_JSON_TYPE);
+
+      JsonNode person = MAPPER.readTree(fromBrowser.getContentAsString());
+      assertEquals(person.get("id").getIntValue(), 2);
    }
 
    @AfterClass
@@ -238,6 +263,12 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
             .header(HttpHeader.CONTENT_TYPE, "application/json")
             .send();
       assertEquals(response.getStatus(), HttpStatus.SC_OK);
+   }
+
+   protected ContentResponse get(String id, String accept) throws Exception {
+      return client.newRequest(String.format("http://localhost:%d/rest/%s/%s", pickServer().getPort(), CACHE_NAME, id))
+            .header(HttpHeader.ACCEPT, accept)
+            .send();
    }
 
    private ObjectNode createPerson(int id, String name, String surname, String street, String postCode, String gender, int... phoneNumbers) {
@@ -281,18 +312,18 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       return String.format("http://localhost:%d/rest/%s/%s", pickServer().getPort(), PROTOBUF_METADATA_CACHE_NAME, key);
    }
 
-   private void assertZeroHits(JsonNode queryResponse) throws Exception {
+   private void assertZeroHits(JsonNode queryResponse) {
       ArrayNode hits = ArrayNode.class.cast(queryResponse.get("hits"));
       assertEquals(hits.size(), 0);
    }
 
    private JsonNode query(String q, HttpMethod method) throws Exception {
-      return query(q, method, 0, 10);
+      return query(q, method, 0, 10, CACHE_NAME);
    }
 
-   private JsonNode query(String q, HttpMethod method, int offset, int maxResults) throws Exception {
+   private JsonNode query(String q, HttpMethod method, int offset, int maxResults, String cacheName) throws Exception {
       Request request;
-      String searchUrl = getUrl(pickServer());
+      String searchUrl = getUrl(pickServer(), cacheName);
       String mode = getQueryMode().toString();
       if (method == POST) {
          ObjectNode queryReq = MAPPER.createObjectNode();
@@ -311,7 +342,6 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       }
       ContentResponse response = request.send();
       String contentAsString = response.getContentAsString();
-      System.out.println(contentAsString);
       assertEquals(response.getStatus(), HttpStatus.SC_OK);
       return MAPPER.readTree(contentAsString);
    }

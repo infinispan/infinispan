@@ -100,4 +100,7 @@ public interface Log extends BasicLogger {
    @Message(id = 28527, value = "Full-text queries cannot be applied to property '%2$s' in type %1$s unless the property is indexed.")
    ParsingException getFullTextQueryOnNotIndexedPropertyNotSupportedException(String typeName, String propertyName);
 
+   @Message(id = 28528, value = "Error parsing content. Data not stored as protobuf?")
+   ParsingException errorParsingProtobuf(@Cause Exception e);
+
 }

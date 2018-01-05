@@ -1,5 +1,13 @@
 package org.infinispan.rest;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIALIZED_OBJECT;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,6 +31,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -76,7 +85,6 @@ public abstract class BaseRestOperationsTest {
       text.encoding().value().mediaType(MediaType.TEXT_PLAIN_TYPE);
 
       ConfigurationBuilder compat = getDefaultCacheBuilder();
-//      compat.encoding().value().mediaType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
       compat.compatibility().enabled(enableCompatibility());
 
       restServer.defineCache("expiration", expirationConfiguration);
@@ -251,7 +259,7 @@ public abstract class BaseRestOperationsTest {
 
       //then
       ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasContentType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+      ResponseAssertion.assertThat(response).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
       ResponseAssertion.assertThat(response).hasReturnedText("test");
    }
 
@@ -260,7 +268,7 @@ public abstract class BaseRestOperationsTest {
       //given
       TestClass testClass = new TestClass();
       testClass.setName("test");
-      putBinaryValueInCache("serialized", "test", convertToBytes(testClass), MediaType.APPLICATION_SERIALIZED_OBJECT);
+      putBinaryValueInCache("serialized", "test", convertToBytes(testClass), APPLICATION_SERIALIZED_OBJECT);
 
       //when
       ContentResponse response = client
@@ -271,7 +279,7 @@ public abstract class BaseRestOperationsTest {
 
       //then
       ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasContentType(MediaType.APPLICATION_SERIALIZED_OBJECT.toString());
+      ResponseAssertion.assertThat(response).hasContentType(APPLICATION_SERIALIZED_OBJECT.toString());
       ResponseAssertion.assertThat(response).hasNoCharset();
       Assertions.assertThat(convertedObject.getName()).isEqualTo("test");
    }
@@ -348,7 +356,6 @@ public abstract class BaseRestOperationsTest {
             .header(HttpHeader.CONTENT_TYPE, mediaType.toString())
             .method(HttpMethod.PUT)
             .send();
-
       ResponseAssertion.assertThat(response).isOk();
    }
 
@@ -384,7 +391,7 @@ public abstract class BaseRestOperationsTest {
 
    @Test
    public void shouldDeleteExistingValueWithAcceptHeader() throws Exception {
-      putBinaryValueInCache("serialized", "test", convertToBytes(42), MediaType.APPLICATION_SERIALIZED_OBJECT);
+      putBinaryValueInCache("serialized", "test", convertToBytes(42), APPLICATION_SERIALIZED_OBJECT);
 
       ContentResponse headResponse = client
             .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "serialized", "test"))
@@ -569,6 +576,21 @@ public abstract class BaseRestOperationsTest {
             .header(HttpHeader.ACCEPT, "application/wrong-content-type")
             .send();
 
+      //then
+      ResponseAssertion.assertThat(response).isNotAcceptable();
+   }
+
+   @Test
+   public void shouldNotAcceptUnknownContentTypeWithHead() throws Exception {
+      //given
+      putStringValueInCache("default", "key1", "test1");
+
+      //when
+      ContentResponse response = client
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "key1"))
+            .method(HttpMethod.HEAD)
+            .header(HttpHeader.ACCEPT, "garbage")
+            .send();
       //then
       ResponseAssertion.assertThat(response).isNotAcceptable();
    }
@@ -815,9 +837,8 @@ public abstract class BaseRestOperationsTest {
             .method(HttpMethod.GET)
             .send();
 
-      ResponseAssertion.assertThat(response).isError();
-      ResponseAssertion.assertThat(response)
-            .hasReturnedText("ISPN000492: Cannot find transcoder between 'application/json' to 'application/xml'");
+      ResponseAssertion.assertThat(response).isNotAcceptable();
+      ResponseAssertion.assertThat(response).containsReturnedText("Cannot convert to application/json");
    }
 
    @Test
@@ -881,7 +902,179 @@ public abstract class BaseRestOperationsTest {
             .send();
 
       ResponseAssertion.assertThat(getResponse).isOk();
+      ResponseAssertion.assertThat(getResponse).hasReturnedText("test");
 
+   }
+
+   protected ContentResponse get(String cacheName, String key, String acceptHeader) throws Exception {
+      Request request = client.newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), cacheName, key))
+            .method(HttpMethod.GET);
+      if (acceptHeader != null) {
+         request.accept(acceptHeader);
+      }
+      ContentResponse response = request.send();
+      ResponseAssertion.assertThat(response).isOk();
+      return response;
+   }
+
+   @Test
+   public void shouldAcceptUrlEncodedContentForDefaultCache() throws Exception {
+      putBinaryValueInCache("default", "test", "test".getBytes(UTF_8), APPLICATION_WWW_FORM_URLENCODED);
+
+      ContentResponse getResponse = get("default", "test", null);
+
+      ResponseAssertion.assertThat(getResponse).hasReturnedText("test");
+      ResponseAssertion.assertThat(getResponse).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
+   }
+
+   @Test
+   public void shouldNegotiateFromDefaultCacheWithoutAccept() throws Exception {
+      putStringValueInCache("default", "test", "test");
+
+      ContentResponse getResponse = get("default", "test", null);
+
+      ResponseAssertion.assertThat(getResponse).hasReturnedText("test");
+      ResponseAssertion.assertThat(getResponse).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
+   }
+
+   @Test
+   public void shouldNegotiateFromDefaultCacheWithAccept() throws Exception {
+      putStringValueInCache("default", "test", "test");
+
+      ContentResponse jsonResponse = get("default", "test", "application/json");
+
+      ResponseAssertion.assertThat(jsonResponse).hasReturnedText("\"test\"");
+      ResponseAssertion.assertThat(jsonResponse).hasContentType("application/json");
+
+      ContentResponse xmlResponse = get("default", "test", "application/xml");
+
+      ResponseAssertion.assertThat(xmlResponse).hasReturnedText("<string>test</string>");
+      ResponseAssertion.assertThat(xmlResponse).hasContentType("application/xml");
+
+      ContentResponse binaryResponse = get("default", "test", APPLICATION_OCTET_STREAM_TYPE);
+
+      ResponseAssertion.assertThat(binaryResponse).hasReturnedBytes("test".getBytes(UTF_8));
+      ResponseAssertion.assertThat(binaryResponse).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
+   }
+
+   @Test
+   public void shouldNegotiateFromDefaultCacheWithBinary() throws Exception {
+      TestClass testClass = new TestClass();
+      byte[] javaSerialized = new JavaSerializationMarshaller().objectToByteBuffer(testClass);
+
+      putBinaryValueInCache("default", "test", javaSerialized, APPLICATION_OCTET_STREAM);
+
+      ContentResponse response = get("default", "test", APPLICATION_OCTET_STREAM_TYPE);
+
+      ResponseAssertion.assertThat(response).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
+      ResponseAssertion.assertThat(response).hasReturnedBytes(javaSerialized);
+   }
+
+   @Test
+   public void shouldNegotiateFromDefaultCacheWithWildcardAccept() throws Exception {
+      putStringValueInCache("default", "test", "test");
+
+      ContentResponse getResponse = get("default", "test", "*/*");
+
+      ResponseAssertion.assertThat(getResponse).isOk();
+      ResponseAssertion.assertThat(getResponse).hasReturnedText("test");
+      ResponseAssertion.assertThat(getResponse).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
+   }
+
+   @Test
+   public void shouldNegotiateFromDefaultCacheWithMultipleAccept() throws Exception {
+      putStringValueInCache("default", "test", "test");
+
+      ContentResponse sameWeightResponse = get("default", "test", "text/html,application/xhtml+xml,*/*");
+
+      ResponseAssertion.assertThat(sameWeightResponse).isOk();
+      ResponseAssertion.assertThat(sameWeightResponse).hasReturnedText("test");
+      ResponseAssertion.assertThat(sameWeightResponse).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
+
+      ContentResponse weightedResponse = get("default", "test", "text/plain;q=0.1, application/json;q=0.8, */*;q=0.7");
+
+      ResponseAssertion.assertThat(weightedResponse).isOk();
+      ResponseAssertion.assertThat(weightedResponse).hasReturnedText("\"test\"");
+      ResponseAssertion.assertThat(weightedResponse).hasContentType(APPLICATION_JSON_TYPE);
+   }
+
+   @Test
+   public void shouldNegotiateFromJsonCacheWithoutAccept() throws Exception {
+      String cacheName = "json";
+      String key = "1";
+      String value = "{\"id\": 1}";
+
+      putStringValueInCache(cacheName, key, value);
+
+      ContentResponse getResponse = get(cacheName, key, null);
+
+      ResponseAssertion.assertThat(getResponse).hasReturnedText(value);
+      ResponseAssertion.assertThat(getResponse).hasContentType(APPLICATION_JSON_TYPE);
+   }
+
+   @Test
+   public void shouldNegotiateFromJsonCacheWithAccept() throws Exception {
+      String cacheName = "json";
+      String key = "1";
+      String value = "{\"id\": 1}";
+
+      putStringValueInCache(cacheName, key, value);
+
+      ContentResponse jsonResponse = get(cacheName, key, APPLICATION_JSON_TYPE);
+
+      ResponseAssertion.assertThat(jsonResponse).hasReturnedText(value);
+      ResponseAssertion.assertThat(jsonResponse).hasContentType(APPLICATION_JSON_TYPE);
+
+      ContentResponse textResponse = get(cacheName, key, TEXT_PLAIN_TYPE);
+
+      ResponseAssertion.assertThat(textResponse).hasReturnedBytes(value.getBytes(UTF_8));
+      ResponseAssertion.assertThat(textResponse).hasContentType(TEXT_PLAIN_TYPE);
+   }
+
+   @Test
+   public void shouldNegotiateFromJsonCacheWithWildcardAccept() throws Exception {
+      String cacheName = "json";
+      String key = "1";
+      String value = "{\"id\": 1}";
+
+      putStringValueInCache(cacheName, key, value);
+
+      ContentResponse jsonResponse = get(cacheName, key, "*/*");
+
+      ResponseAssertion.assertThat(jsonResponse).isOk();
+      ResponseAssertion.assertThat(jsonResponse).hasReturnedText(value);
+      ResponseAssertion.assertThat(jsonResponse).hasContentType(APPLICATION_JSON_TYPE);
+   }
+
+   @Test
+   public void shouldNegotiateFromJsonCacheWithMultipleAccept() throws Exception {
+      String cacheName = "json";
+      String key = "1";
+      String value = "{\"id\": 1}";
+
+      putStringValueInCache(cacheName, key, value);
+
+      ContentResponse jsonResponse = get(cacheName, key, "text/html,*/*");
+
+      ResponseAssertion.assertThat(jsonResponse).isOk();
+      ResponseAssertion.assertThat(jsonResponse).hasReturnedText(value);
+      ResponseAssertion.assertThat(jsonResponse).hasContentType(APPLICATION_JSON_TYPE);
+
+      ContentResponse binaryResponse = get(cacheName, key, "application/xml, text/plain; q=0.71, */*;q=0.7");
+
+      ResponseAssertion.assertThat(binaryResponse).isOk();
+      ResponseAssertion.assertThat(binaryResponse).hasReturnedText(value);
+      ResponseAssertion.assertThat(binaryResponse).hasContentType(TEXT_PLAIN_TYPE);
+   }
+
+   @Test
+   public void shouldNegotiateOnlySupportedFromDefaultCacheWithMultipleAccept() throws Exception {
+      putStringValueInCache("default", "test", "test");
+
+      ContentResponse getResponse = get("default", "test", "text/html, application/xml");
+
+      ResponseAssertion.assertThat(getResponse).hasReturnedText("<string>test</string>");
+      ResponseAssertion.assertThat(getResponse).hasContentType("application/xml");
    }
 
    @Test

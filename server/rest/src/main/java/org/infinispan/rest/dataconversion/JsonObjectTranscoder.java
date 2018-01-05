@@ -47,6 +47,10 @@ public class JsonObjectTranscoder implements Transcoder {
    public Object transcode(Object content, MediaType contentType, MediaType destinationType) {
       if (destinationType.match(MediaType.APPLICATION_JSON)) {
          try {
+            if (content instanceof byte[]) {
+               String contentAsString = new String((byte[]) content, destinationType.getCharset());
+               return jsonMapper.writeValueAsString(contentAsString);
+            }
             return jsonMapper.writeValueAsString(content);
          } catch (IOException e) {
             throw new CacheException(e);
