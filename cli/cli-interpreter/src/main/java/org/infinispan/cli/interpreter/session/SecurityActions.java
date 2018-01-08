@@ -31,6 +31,13 @@ final class SecurityActions {
       return doPrivileged(action);
    }
 
+   static void endBatch(final AdvancedCache<?, ?> cache) {
+      doPrivileged((PrivilegedAction<Void>) () -> {
+         cache.endBatch(false);
+         return null;
+      });
+   }
+
    interface SetThreadContextClassLoaderAction {
 
       ClassLoader setThreadContextClassLoader(Class cl);

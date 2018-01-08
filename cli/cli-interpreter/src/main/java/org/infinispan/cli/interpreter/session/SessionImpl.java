@@ -133,7 +133,7 @@ public class SessionImpl implements Session {
    private void resetCache(final Cache<Object, Object> cache) {
       Configuration configuration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
       if (configuration.invocationBatching().enabled()) {
-         cache.endBatch(false);
+         SecurityActions.endBatch(cache.getAdvancedCache());
       }
       TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
       try {
