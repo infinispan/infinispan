@@ -12,7 +12,9 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.kohsuke.MetaInfServices;
 
+@MetaInfServices(ModuleLifecycle.class)
 public class LifecycleCallbacks implements ModuleLifecycle {
 
 	@Override

@@ -9,6 +9,7 @@ package org.infinispan.hibernate.cache.commons.util;
 import org.infinispan.commands.module.ModuleCommandExtensions;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
+import org.kohsuke.MetaInfServices;
 
 /**
  * Command extensions for second-level cache use case
@@ -16,6 +17,7 @@ import org.infinispan.commands.module.ModuleCommandInitializer;
  * @author Galder Zamarreño
  * @since 4.0
  */
+@MetaInfServices(ModuleCommandExtensions.class)
 public class CacheCommandExtensions implements ModuleCommandExtensions {
 	final CacheCommandFactory cacheCommandFactory = new CacheCommandFactory();
 	final CacheCommandInitializer cacheCommandInitializer = new CacheCommandInitializer();

@@ -11,9 +11,11 @@ import org.infinispan.hibernate.cache.main.naturalid.NaturalIdRegionImpl;
 import org.infinispan.hibernate.cache.main.query.QueryResultsRegionImpl;
 import org.infinispan.hibernate.cache.main.timestamp.ClusteredTimestampsRegionImpl;
 import org.infinispan.hibernate.cache.main.timestamp.TimestampsRegionImpl;
+import org.kohsuke.MetaInfServices;
 
 import javax.transaction.TransactionManager;
 
+@MetaInfServices(InternalRegionFactory.class)
 public class InternalRegionFactoryImpl implements InternalRegionFactory {
 
    @Override

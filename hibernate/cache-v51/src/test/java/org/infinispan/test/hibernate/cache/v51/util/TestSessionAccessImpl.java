@@ -26,6 +26,7 @@ import org.infinispan.test.hibernate.cache.commons.util.BatchModeJtaPlatform;
 import org.infinispan.test.hibernate.cache.commons.util.JdbcResourceTransactionMock;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.infinispan.util.ControlledTimeService;
+import org.kohsuke.MetaInfServices;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -34,6 +35,7 @@ import java.util.List;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@MetaInfServices(TestSessionAccess.class)
 public final class TestSessionAccessImpl implements TestSessionAccess {
 
    @Override
