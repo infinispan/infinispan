@@ -1,7 +1,8 @@
 package org.infinispan.cli.interpreter.codec;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import org.infinispan.cli.interpreter.logging.Log;
-import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
@@ -29,44 +30,31 @@ public class RestCodec extends AbstractCodec {
    }
 
    @Override
-   public Object encodeKey(Object key) throws CodecException {
+   public Object encodeKey(Object key) {
       return key;
    }
 
    @Override
-   public Object encodeValue(Object value) throws CodecException {
-      if (value != null) {
-         if (value instanceof MIMECacheEntry) {
-            return value;
-         } else if (value instanceof String) {
-            return new MIMECacheEntry("text/plain", ((String)value).getBytes());
-         } else if (value instanceof byte[]) {
-            return new MIMECacheEntry("application/binary", (byte[])value);
-         } else {
-            throw log.valueEncodingFailed(value.getClass().getName(), this.getName());
-         }
-      } else {
-         return null;
+   public Object encodeValue(Object value) {
+      if (value == null) return null;
+      if (value instanceof String) {
+         return ((String) value).getBytes(UTF_8);
       }
+      if (value instanceof byte[]) {
+         return value;
+      }
+      return value.toString();
    }
 
    @Override
-   public Object decodeKey(Object key) throws CodecException {
+   public Object decodeKey(Object key) {
       return key;
    }
 
    @Override
-   public Object decodeValue(Object value) throws CodecException {
-      if (value != null) {
-         MIMECacheEntry e = (MIMECacheEntry)value;
-         if (e.contentType.startsWith("text/") || e.contentType.equals("application/xml") || e.contentType.equals("application/json")) {
-            return new String(e.data);
-         } else {
-            return e.data;
-         }
-      } else {
-         return null;
-      }
+   public Object decodeValue(Object value) {
+       if (value == null) return null;
+      return value instanceof byte[] ? new String((byte[]) value, UTF_8) : value.toString();
    }
 
 }
