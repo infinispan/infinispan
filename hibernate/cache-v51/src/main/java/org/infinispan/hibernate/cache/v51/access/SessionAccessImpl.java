@@ -4,9 +4,11 @@ import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.transaction.spi.IsolationDelegate;
 import org.hibernate.resource.transaction.TransactionCoordinator;
 import org.infinispan.hibernate.cache.commons.access.SessionAccess;
+import org.kohsuke.MetaInfServices;
 
 import javax.transaction.Synchronization;
 
+@MetaInfServices(SessionAccess.class)
 public class SessionAccessImpl implements SessionAccess {
 
    @Override

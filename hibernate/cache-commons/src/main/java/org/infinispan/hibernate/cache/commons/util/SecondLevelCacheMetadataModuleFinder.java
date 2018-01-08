@@ -7,10 +7,12 @@
 package org.infinispan.hibernate.cache.commons.util;
 
 import org.infinispan.factories.components.ModuleMetadataFileFinder;
+import org.kohsuke.MetaInfServices;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
+@MetaInfServices(ModuleMetadataFileFinder.class)
 public class SecondLevelCacheMetadataModuleFinder implements ModuleMetadataFileFinder {
 	@Override
 	public String getMetadataFilename() {
