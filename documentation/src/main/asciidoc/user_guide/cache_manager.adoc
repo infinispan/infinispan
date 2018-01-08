@@ -70,7 +70,7 @@ If you need to create caches dynamically across the whole cluster, you should in
 [source,java]
 ----
 
-Cache<String, String> myCache = manager.administration().createCache("myCache");
+Cache<String, String> myCache = manager.administration().createCache("myCache", "myTemplate");
 
 ----
 
@@ -82,7 +82,7 @@ shutdown and restarted, use the +PERMANENT+ flag as follows:
 [source,java]
 ----
 
-Cache<String, String> myCache = manager.administration().withFlags(AdminFlag.PERMANENT).createCache("myCache");
+Cache<String, String> myCache = manager.administration().withFlags(AdminFlag.PERMANENT).createCache("myCache", "myTemplate");
 
 ----
 
