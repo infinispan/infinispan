@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener;
 
+import java.lang.invoke.MethodHandles;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -26,7 +27,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 7.0
  */
 abstract class BaseQueueingSegmentListener<K, V, E extends Event<K, V>> implements QueueingSegmentListener<K, V, E> {
-   protected final Log log = LogFactory.getLog(getClass());
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    protected boolean trace = log.isTraceEnabled();
 
    protected final AtomicBoolean completed = new AtomicBoolean(false);

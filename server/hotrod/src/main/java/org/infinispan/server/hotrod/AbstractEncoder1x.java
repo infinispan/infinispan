@@ -1,5 +1,6 @@
 package org.infinispan.server.hotrod;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -35,7 +36,7 @@ import io.netty.buffer.ByteBuf;
  */
 public abstract class AbstractEncoder1x implements VersionedEncoder {
 
-   protected final Log log = LogFactory.getLog(getClass(), Log.class);
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    protected final boolean trace = log.isTraceEnabled();
 
    @Override
