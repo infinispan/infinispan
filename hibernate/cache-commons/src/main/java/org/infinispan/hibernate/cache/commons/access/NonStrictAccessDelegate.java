@@ -31,6 +31,7 @@ import org.infinispan.context.Flag;
 public class NonStrictAccessDelegate implements AccessDelegate {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( NonStrictAccessDelegate.class );
 	private static final boolean trace = log.isTraceEnabled();
+   private static final SessionAccess SESSION_ACCESS = SessionAccess.findSessionAccess();
 
 	private final BaseTransactionalDataRegion region;
 	private final AdvancedCache cache;
@@ -130,7 +131,7 @@ public class NonStrictAccessDelegate implements AccessDelegate {
 		// as that would be prone to race conditions - if the entry was updated in the meantime
 		// the remove could be discarded and we would end up with stale record
 		// See VersionedTest#testCollectionUpdate for such situation
-      TransactionCoordinatorAccess transactionCoordinator = region.sessionAccess.getTransactionCoordinator(session);
+      TransactionCoordinatorAccess transactionCoordinator = SESSION_ACCESS.getTransactionCoordinator(session);
 		RemovalSynchronization sync = new RemovalSynchronization(transactionCoordinator, writeCache, false, region, key);
 		transactionCoordinator.registerLocalSynchronization(sync);
 	}
@@ -168,13 +169,13 @@ public class NonStrictAccessDelegate implements AccessDelegate {
 
 	@Override
 	public boolean afterInsert(Object session, Object key, Object value, Object version) {
-		writeCache.put(key, getVersioned(value, version, region.sessionAccess.getTimestamp(session)));
+		writeCache.put(key, getVersioned(value, version, SESSION_ACCESS.getTimestamp(session)));
 		return true;
 	}
 
 	@Override
 	public boolean afterUpdate(Object session, Object key, Object value, Object currentVersion, Object previousVersion, SoftLock lock) {
-		writeCache.put(key, getVersioned(value, currentVersion, region.sessionAccess.getTimestamp(session)));
+		writeCache.put(key, getVersioned(value, currentVersion, SESSION_ACCESS.getTimestamp(session)));
 		return true;
 	}
 
