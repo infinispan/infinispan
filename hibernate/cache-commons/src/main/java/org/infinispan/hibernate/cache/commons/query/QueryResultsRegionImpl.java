@@ -15,6 +15,7 @@ import javax.transaction.TransactionManager;
 
 import org.hibernate.cache.CacheException;
 import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
+import org.infinispan.hibernate.cache.commons.access.SessionAccess;
 import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
 import org.infinispan.hibernate.cache.commons.impl.BaseTransactionalDataRegion;
 import org.infinispan.hibernate.cache.commons.util.Caches;
@@ -35,6 +36,7 @@ import org.infinispan.transaction.TransactionMode;
  */
 public abstract class QueryResultsRegionImpl extends BaseTransactionalDataRegion {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( QueryResultsRegionImpl.class );
+   private static final SessionAccess SESSION_ACCESS = SessionAccess.findSessionAccess();
 
 	private final AdvancedCache evictCache;
 	private final AdvancedCache putCache;
@@ -127,7 +129,7 @@ public abstract class QueryResultsRegionImpl extends BaseTransactionalDataRegion
 			// ISPN-5356 tracks that. This is because if the transaction continued the
 			// value could be committed on backup owners, including the failed operation,
 			// and the result would not be consistent.
-         TransactionCoordinatorAccess tc = sessionAccess.getTransactionCoordinator(session);
+         TransactionCoordinatorAccess tc = SESSION_ACCESS.getTransactionCoordinator(session);
 			if (tc != null && tc.isJoined()) {
             tc.registerLocalSynchronization(new PostTransactionQueryUpdate(tc, session, key, value));
 				// no need to synchronize as the transaction will be accessed by only one thread

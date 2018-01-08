@@ -25,6 +25,7 @@ import org.infinispan.context.Flag;
  */
 public class TombstoneAccessDelegate implements AccessDelegate {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( TombstoneAccessDelegate.class );
+   private static final SessionAccess SESSION_ACCESS = SessionAccess.findSessionAccess();
 
 	protected final BaseTransactionalDataRegion region;
 	protected final AdvancedCache cache;
@@ -32,10 +33,8 @@ public class TombstoneAccessDelegate implements AccessDelegate {
 	protected final AdvancedCache asyncWriteCache;
 	protected final AdvancedCache putFromLoadCache;
 	protected final boolean requiresTransaction;
-   private final SessionAccess sessionAccess;
 
-   public TombstoneAccessDelegate(SessionAccess sessionAccess, BaseTransactionalDataRegion region) {
-      this.sessionAccess = sessionAccess;
+   public TombstoneAccessDelegate(BaseTransactionalDataRegion region) {
 		this.region = region;
 		this.cache = region.getCache();
 		this.writeCache = Caches.ignoreReturnValuesCache(cache);
@@ -99,7 +98,7 @@ public class TombstoneAccessDelegate implements AccessDelegate {
 		}
 		// we can't use putForExternalRead since the PFER flag means that entry is not wrapped into context
 		// when it is present in the container. TombstoneCallInterceptor will deal with this.
-		putFromLoadCache.put(key, new TombstoneUpdate(sessionAccess.getTimestamp(session), value));
+		putFromLoadCache.put(key, new TombstoneUpdate(SESSION_ACCESS.getTimestamp(session), value));
 		return true;
 	}
 
@@ -121,8 +120,8 @@ public class TombstoneAccessDelegate implements AccessDelegate {
 	}
 
 	protected void write(Object session, Object key, Object value) {
-      TransactionCoordinatorAccess tc = sessionAccess.getTransactionCoordinator(session);
-      long timestamp = sessionAccess.getTimestamp(session);
+      TransactionCoordinatorAccess tc = SESSION_ACCESS.getTransactionCoordinator(session);
+      long timestamp = SESSION_ACCESS.getTimestamp(session);
       FutureUpdateSynchronization sync = new FutureUpdateSynchronization(tc, asyncWriteCache, requiresTransaction, key, value, region, timestamp);
 		// The update will be invalidating all putFromLoads for the duration of expiration or until removed by the synchronization
 		Tombstone tombstone = new Tombstone(sync.getUuid(), region.nextTimestamp() + region.getTombstoneExpiration());

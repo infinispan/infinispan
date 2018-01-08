@@ -12,7 +12,6 @@ import org.infinispan.hibernate.cache.commons.access.LockingInterceptor;
 import org.infinispan.hibernate.cache.commons.access.NonStrictAccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.NonTxInvalidationCacheAccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
-import org.infinispan.hibernate.cache.commons.access.SessionAccess;
 import org.infinispan.hibernate.cache.commons.access.TombstoneAccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.TombstoneCallInterceptor;
 import org.infinispan.hibernate.cache.commons.access.TxInvalidationCacheAccessDelegate;
@@ -72,9 +71,6 @@ public abstract class BaseTransactionalDataRegion
 	private AccessType accessType;
 	private Strategy strategy;
 
-	// TODO: Make static
-   public final SessionAccess sessionAccess;
-
 	protected enum Strategy {
 		NONE, VALIDATION, TOMBSTONES, VERSIONED_ENTRIES
 	}
@@ -92,7 +88,6 @@ public abstract class BaseTransactionalDataRegion
 			AdvancedCache cache, String name, TransactionManager transactionManager,
 			CacheDataDescription metadata, InfinispanRegionFactory factory, CacheKeysFactory cacheKeysFactory) {
 		super( cache, name, transactionManager, factory);
-		this.sessionAccess = SessionAccess.findSessionAccess();
 		this.metadata = metadata;
 		this.cacheKeysFactory = cacheKeysFactory;
 
@@ -137,7 +132,7 @@ public abstract class BaseTransactionalDataRegion
 		}
 		if (cacheMode.isDistributed() || cacheMode.isReplicated()) {
 			prepareForTombstones();
-			return new TombstoneAccessDelegate(sessionAccess, this);
+			return new TombstoneAccessDelegate(this);
 		}
 		else {
 			prepareForValidation();
