@@ -1,5 +1,6 @@
 package org.infinispan.container.offheap;
 
+import java.lang.invoke.MethodHandles;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Collection;
@@ -39,8 +40,8 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.0
  */
 public class OffHeapDataContainer implements DataContainer<WrappedBytes, WrappedBytes> {
-   protected final Log log = LogFactory.getLog(getClass());
-   protected final boolean trace = log.isTraceEnabled();
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+   protected final boolean trace = getLog().isTraceEnabled();
 
    protected final AtomicLong size = new AtomicLong();
    protected final int lockCount;
@@ -115,7 +116,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       locks.lockAll();
       try {
          if (size.get() != 0) {
-            log.warn("Container was not cleared before deallocating memory lookup tables!  Memory leak " +
+            getLog().warn("Container was not cleared before deallocating memory lookup tables!  Memory leak " +
                   "will have occurred!");
          }
          clear();
@@ -431,7 +432,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
 
    protected void performClear() {
       if (trace) {
-         log.trace("Clearing off heap data");
+         getLog().trace("Clearing off heap data");
       }
       memoryLookup.toStreamRemoved().forEach(address -> {
          while (address != 0) {
@@ -442,7 +443,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       });
       size.set(0);
       if (trace) {
-         log.trace("Cleared off heap data");
+         getLog().trace("Cleared off heap data");
       }
    }
 
@@ -679,5 +680,9 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    @Override
    public long evictionSize() {
       return size.get();
+   }
+
+   public Log getLog() {
+      return log;
    }
 }

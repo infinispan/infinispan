@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -14,6 +15,8 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * This handler is to be used with a clustered distributed cache.  This handler does special optimizations to
@@ -24,6 +27,7 @@ import org.infinispan.util.KeyValuePair;
  * @since 7.0
  */
 class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListener<K, V, CacheEntryEvent<K, V>> {
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private final AtomicReferenceArray<Queue<KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>>>> queues;
 
    private final ToIntFunction<Object> intFunction;
@@ -116,5 +120,10 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
 
    public void segmentCompleted(Set<Integer> segments) {
       justCompletedSegments = segments.stream().filter(s -> queues.get(s) != null);
+   }
+
+   @Override
+   protected Log getLog() {
+      return log;
    }
 }

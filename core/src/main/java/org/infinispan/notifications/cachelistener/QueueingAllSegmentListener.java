@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -10,6 +11,8 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * This handler is to be used when all the events must be queued until the iteration process is complete.
@@ -21,6 +24,7 @@ import org.infinispan.util.KeyValuePair;
  * @since 7.0
  */
 class QueueingAllSegmentListener<K, V> extends BaseQueueingSegmentListener<K, V, Event<K, V>> {
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    protected final Queue<KeyValuePair<Event<K, V>, ListenerInvocation<Event<K, V>>>> queue =
          new ConcurrentLinkedQueue<>();
    protected final InternalEntryFactory entryFactory;
@@ -66,5 +70,10 @@ class QueueingAllSegmentListener<K, V> extends BaseQueueingSegmentListener<K, V,
          iterator.remove();
       }
       completed.set(true);
+   }
+
+   @Override
+   protected Log getLog() {
+      return log;
    }
 }

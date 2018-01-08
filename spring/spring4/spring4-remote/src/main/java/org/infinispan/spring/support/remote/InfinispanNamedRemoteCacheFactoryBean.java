@@ -1,5 +1,6 @@
 package org.infinispan.spring.support.remote;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -29,7 +30,7 @@ import org.springframework.util.StringUtils;
 public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<RemoteCache<K, V>>,
                                                                     BeanNameAware, InitializingBean {
 
-   private final Log logger = LogFactory.getLog(getClass());
+   private static final Log logger = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private RemoteCacheManager infinispanRemoteCacheManager;
 

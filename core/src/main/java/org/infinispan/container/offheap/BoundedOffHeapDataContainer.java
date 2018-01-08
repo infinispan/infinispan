@@ -1,5 +1,6 @@
 package org.infinispan.container.offheap;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -11,6 +12,8 @@ import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Data Container implementation that stores entries in native memory (off-heap) that is also bounded.  This
@@ -25,6 +28,7 @@ import org.infinispan.metadata.Metadata;
  * @since 9.0
  */
 public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    protected final long maxSize;
    protected final Lock lruLock;
    protected final LongUnaryOperator sizeCalculator;
@@ -127,7 +131,7 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
       boolean middleNode = true;
       if (address == lastAddress) {
          if (trace) {
-            log.tracef("Removed entry 0x%016x from the end of the LRU list", address);
+            getLog().tracef("Removed entry 0x%016x from the end of the LRU list", address);
          }
          long previousLRUNode = OffHeapLruNode.getPrevious(address);
          if (previousLRUNode != 0) {
@@ -138,7 +142,7 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
       }
       if (address == firstAddress) {
          if (trace) {
-            log.tracef("Removed entry 0x%016x from the beginning of the LRU list", address);
+            getLog().tracef("Removed entry 0x%016x from the beginning of the LRU list", address);
          }
          long nextLRUNode = OffHeapLruNode.getNext(address);
          if (nextLRUNode != 0) {
@@ -149,7 +153,7 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
       }
       if (middleNode) {
          if (trace) {
-            log.tracef("Removed entry 0x%016x from the middle of the LRU list", address);
+            getLog().tracef("Removed entry 0x%016x from the middle of the LRU list", address);
          }
          // We are a middle pointer so both of these have to be non zero
          long previousLRUNode = OffHeapLruNode.getPrevious(address);
@@ -166,7 +170,7 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
       lruLock.lock();
       try {
          if (trace) {
-            log.tracef("Moving entry 0x%016x to the end of the LRU list", entryAddress);
+            getLog().tracef("Moving entry 0x%016x to the end of the LRU list", entryAddress);
          }
          moveToEnd(entryAddress);
          super.entryRetrieved(entryAddress);
@@ -178,7 +182,7 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
    @Override
    protected void performClear() {
       if (trace) {
-         log.trace("Clearing bounded LRU entries");
+         getLog().trace("Clearing bounded LRU entries");
       }
       // Technically we don't need to do lruLock since clear obtains all write locks first
       lruLock.lock();
@@ -190,7 +194,7 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
          lruLock.unlock();
       }
       if (trace) {
-         log.trace("Cleared bounded LRU entries");
+         getLog().trace("Cleared bounded LRU entries");
       }
       super.performClear();
    }
@@ -268,7 +272,7 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
 
          if (addressToRemove != 0) {
             if (trace) {
-               log.tracef("Removing entry: 0x%016x due to eviction due to size %d being larger than maximum of %d",
+               getLog().tracef("Removing entry: 0x%016x due to eviction due to size %d being larger than maximum of %d",
                           addressToRemove, currentSize, maxSize);
             }
             try {
@@ -292,7 +296,7 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
     */
    private void addEntryAddressToEnd(long entryAddress) {
       if (trace) {
-         log.tracef("Adding entry 0x%016x to the end of the LRU list", entryAddress);
+         getLog().tracef("Adding entry 0x%016x to the end of the LRU list", entryAddress);
       }
       // This means it is the first entry
       if (lastAddress == 0) {
@@ -358,5 +362,9 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
       } finally {
          lruLock.unlock();
       }
+   }
+
+   public Log getLog() {
+      return log;
    }
 }

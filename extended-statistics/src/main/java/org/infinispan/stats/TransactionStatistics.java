@@ -10,6 +10,8 @@ import static org.infinispan.stats.container.ExtendedStatistic.RO_TX_SUCCESSFUL_
 import static org.infinispan.stats.container.ExtendedStatistic.WR_TX_ABORTED_EXECUTION_TIME;
 import static org.infinispan.stats.container.ExtendedStatistic.WR_TX_SUCCESSFUL_EXECUTION_TIME;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.stats.container.ConcurrentGlobalContainer;
 import org.infinispan.stats.container.ExtendedStatistic;
 import org.infinispan.stats.container.ExtendedStatisticsContainer;
@@ -32,7 +34,7 @@ public abstract class TransactionStatistics {
 
    //Here the elements which are common for local and remote transactions
    protected final long initTime;
-   protected final Log log = LogFactory.getLog(getClass(), Log.class);
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    protected final boolean trace = log.isTraceEnabled();
    protected final TimeService timeService;
    private final ExtendedStatisticsContainer container;

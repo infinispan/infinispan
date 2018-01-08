@@ -53,7 +53,6 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.util.IdentityIntMap;
 import org.reactivestreams.Publisher;
 
@@ -66,8 +65,6 @@ import io.reactivex.Flowable;
  * @param <S> The stream interface
  */
 public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 extends S> implements BaseStream<T, S> {
-   protected final Log log = LogFactory.getLog(getClass());
-
    protected final Queue<IntermediateOperation> intermediateOperations;
    protected final Address localAddress;
    protected final DistributionManager dm;
