@@ -1,5 +1,6 @@
 package org.infinispan.container.offheap;
 
+import java.lang.invoke.MethodHandles;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Collection;
@@ -39,7 +40,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.0
  */
 public class OffHeapDataContainer implements DataContainer<WrappedBytes, WrappedBytes> {
-   protected final Log log = LogFactory.getLog(getClass());
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    protected final boolean trace = log.isTraceEnabled();
 
    protected final AtomicLong size = new AtomicLong();

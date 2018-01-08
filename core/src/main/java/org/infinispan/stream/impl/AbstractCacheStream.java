@@ -1,5 +1,6 @@
 package org.infinispan.stream.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -50,7 +51,7 @@ import org.infinispan.util.logging.LogFactory;
  * @param <S> The stream interface
  */
 public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 extends S> implements BaseStream<T, S> {
-   protected final Log log = LogFactory.getLog(getClass());
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    protected final Queue<IntermediateOperation> intermediateOperations;
    protected final Address localAddress;

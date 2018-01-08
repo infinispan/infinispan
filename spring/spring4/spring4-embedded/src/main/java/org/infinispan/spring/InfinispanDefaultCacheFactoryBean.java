@@ -1,5 +1,7 @@
 package org.infinispan.spring;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
@@ -32,7 +34,7 @@ import org.springframework.beans.factory.InitializingBean;
 public class InfinispanDefaultCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>,
                                                                 InitializingBean, DisposableBean {
 
-   protected final Log logger = LogFactory.getLog(getClass());
+   protected static final Log logger = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private CacheContainer infinispanCacheContainer;
 

@@ -1,5 +1,6 @@
 package org.infinispan.stream.impl.local;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,7 +20,7 @@ import org.infinispan.util.logging.LogFactory;
  * stream is populated
  */
 public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>, S2 extends S> implements BaseStream<T, S> {
-   protected final Log log = LogFactory.getLog(getClass());
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    protected final StreamSupplier<T, S> streamSupplier;
    protected final ComponentRegistry registry;
