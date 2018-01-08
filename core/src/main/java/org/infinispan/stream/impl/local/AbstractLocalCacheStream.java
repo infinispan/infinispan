@@ -11,16 +11,12 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.intops.UnorderedOperation;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Implements the base operations required for a local stream.
  * stream is populated
  */
 public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>, S2 extends S> implements BaseStream<T, S> {
-   protected final Log log = LogFactory.getLog(getClass());
-
    protected final StreamSupplier<T, S> streamSupplier;
    protected final ComponentRegistry registry;
 

@@ -2,6 +2,7 @@ package org.infinispan.spring;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandles;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Properties;
@@ -23,7 +24,7 @@ import org.springframework.core.io.Resource;
  */
 public abstract class AbstractRemoteCacheManagerFactory {
 
-   protected final Log logger = LogFactory.getLog(getClass());
+   protected static final Log logger = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    protected boolean startAutomatically = true;
 

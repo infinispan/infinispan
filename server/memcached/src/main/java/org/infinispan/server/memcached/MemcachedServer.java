@@ -1,5 +1,6 @@
 package org.infinispan.server.memcached;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -32,7 +33,7 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
       super("Memcached");
    }
 
-   private final JavaLog log = LogFactory.getLog(getClass(), JavaLog.class);
+   private final static JavaLog log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), JavaLog.class);
    protected ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
    private AdvancedCache<String, byte[]> memcachedCache;
 

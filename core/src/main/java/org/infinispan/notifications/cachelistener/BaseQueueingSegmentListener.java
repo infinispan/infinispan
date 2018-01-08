@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * This is the base class for use when listening to segment completions when doing initial event
@@ -26,14 +25,14 @@ import org.infinispan.util.logging.LogFactory;
  * @since 7.0
  */
 abstract class BaseQueueingSegmentListener<K, V, E extends Event<K, V>> implements QueueingSegmentListener<K, V, E> {
-   protected final Log log = LogFactory.getLog(getClass());
-   protected boolean trace = log.isTraceEnabled();
+   protected final boolean trace;
 
    protected final AtomicBoolean completed = new AtomicBoolean(false);
    protected final ConcurrentMap<K, Object> notifiedKeys;
 
    protected BaseQueueingSegmentListener() {
       this.notifiedKeys = new ConcurrentHashMap<>();
+      trace = getLog().isTraceEnabled();
    }
 
    @Override
@@ -43,7 +42,7 @@ abstract class BaseQueueingSegmentListener<K, V, E extends Event<K, V>> implemen
       Object value = notifiedKeys.put(key, NOTIFIED);
       if (value != null) {
          if (trace) {
-            log.tracef("Processing key %s as a concurrent update occurred with value %s", key, value);
+            getLog().tracef("Processing key %s as a concurrent update occurred with value %s", key, value);
          }
       }
       return value;
@@ -104,4 +103,6 @@ abstract class BaseQueueingSegmentListener<K, V, E extends Event<K, V>> implemen
       }
       return returnValue;
    }
+
+   protected abstract Log getLog();
 }
