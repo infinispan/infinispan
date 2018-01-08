@@ -14,6 +14,7 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -659,7 +660,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
    protected static abstract class StateListener<K, V> {
       final List<CacheEntryEvent<K, V>> events = Collections.synchronizedList(new ArrayList<>());
-      private final Log log = LogFactory.getLog(getClass());
+      private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
       @CacheEntryCreated
       @CacheEntryModified

@@ -3,6 +3,7 @@ package org.infinispan.test;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -56,7 +57,7 @@ import org.testng.internal.MethodInstance;
 @TestSelector(interceptors = AbstractInfinispanTest.OrderByInstance.class)
 public class AbstractInfinispanTest {
 
-   protected final Log log = LogFactory.getLog(getClass());
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private final ThreadFactory defaultThreadFactory = getTestThreadFactory("ForkThread");
    private final ThreadPoolExecutor defaultExecutorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE,

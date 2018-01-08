@@ -10,6 +10,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -313,7 +314,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
          useRawData = true, includeCurrentState = true)
    private static class ClientEntryListener {
 
-      private final Log log = LogFactory.getLog(getClass());
+      private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
       public final BlockingQueue<FilterResult> createEvents = new LinkedBlockingQueue<>();
 

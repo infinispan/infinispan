@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.lang.invoke.MethodHandles;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
@@ -43,7 +44,7 @@ import org.testng.annotations.Test;
 @InCacheMode({CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC, CacheMode.SCATTERED_SYNC})
 public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTest {
 
-   private final Log log = LogFactory.getLog(getClass());
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    public ConditionalOperationsConcurrentTest() {
       this(2, 10, 2);

@@ -1,5 +1,6 @@
 package org.infinispan.spring.provider.sample;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Random;
 
 import org.infinispan.commons.api.BasicCache;
@@ -28,7 +29,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional")
 public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSpringContextTests {
 
-   protected final Log log = LogFactory.getLog(getClass());
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    @BeforeTest(alwaysRun = true)
    public void beforeTest() {
