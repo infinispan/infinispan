@@ -164,15 +164,8 @@ public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
                awaitOrThrow(preFlushLatch);
             }
             s.flush();
-         } catch (StaleStateException e) {
-            log.info("Exception thrown: ", e);
-            markRollbackOnly(s);
-            return false;
-         } catch (OptimisticLockException e) {
-            log.info("Exception thrown: ", e);
-            markRollbackOnly(s);
-            return false;
-         } catch (PessimisticLockException | org.hibernate.PessimisticLockException e) {
+         } catch (StaleStateException | OptimisticLockException
+            | PessimisticLockException | org.hibernate.PessimisticLockException e) {
             log.info("Exception thrown: ", e);
             markRollbackOnly(s);
             return false;
