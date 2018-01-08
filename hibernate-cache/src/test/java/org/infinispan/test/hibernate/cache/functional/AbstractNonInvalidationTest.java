@@ -1,5 +1,6 @@
 package org.infinispan.test.hibernate.cache.functional;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,7 +53,7 @@ public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
 
    protected long TIMEOUT;
    protected ExecutorService executor;
-   protected InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(getClass());
+   protected static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(MethodHandles.lookup().lookupClass());
    protected AdvancedCache entityCache;
    protected long itemId;
    protected Region region;

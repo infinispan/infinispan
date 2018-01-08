@@ -3,6 +3,7 @@ package org.infinispan.tx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -28,7 +29,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "tx.DummyTxTest")
 public class DummyTxTest extends SingleCacheManagerTest {
 
-   protected final Log log = LogFactory.getLog(getClass());
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);  // also try this test with 'true' so you can tell the difference between DummyTransactionManager and JBoss TM

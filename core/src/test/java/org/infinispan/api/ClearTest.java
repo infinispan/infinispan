@@ -3,6 +3,8 @@ package org.infinispan.api;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -26,7 +28,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "api.ClearTest")
 public class ClearTest extends MultipleCacheManagersTest {
 
-   protected final Log log = LogFactory.getLog(getClass());
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    protected AdvancedCache<Integer, String> c0;
    protected AdvancedCache<Integer, String> c1;

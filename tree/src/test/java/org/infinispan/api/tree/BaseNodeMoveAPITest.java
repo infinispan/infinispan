@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -42,7 +43,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "api.tree.BaseNodeMoveAPITest")
 public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
-   protected final Log log = LogFactory.getLog(getClass());
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    protected static final Fqn A = Fqn.fromString("/a"), B = Fqn.fromString("/b"), C = Fqn.fromString("/c"), D = Fqn.fromString("/d"), E = Fqn.fromString("/e");
    static final Fqn A_B = Fqn.fromRelativeFqn(A, B);
