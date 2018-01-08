@@ -10,7 +10,7 @@ import org.hibernate.persister.entity.EntityPersister;
 import org.infinispan.hibernate.cache.commons.access.AccessDelegate;
 
 class ReadOnlyAccess
-   extends org.infinispan.hibernate.cache.commons.entity.ReadOnlyAccess
+   extends org.infinispan.hibernate.cache.commons.access.AbstractAccess
    implements EntityRegionAccessStrategy {
 
    private final EntityRegionImpl region;

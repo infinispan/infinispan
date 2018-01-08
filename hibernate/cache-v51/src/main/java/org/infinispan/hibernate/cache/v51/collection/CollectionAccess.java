@@ -7,10 +7,11 @@ import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.persister.collection.CollectionPersister;
+import org.infinispan.hibernate.cache.commons.access.AbstractAccess;
 import org.infinispan.hibernate.cache.commons.access.AccessDelegate;
 
 public class CollectionAccess
-   extends org.infinispan.hibernate.cache.commons.collection.CollectionAccess
+   extends AbstractAccess
    implements CollectionRegionAccessStrategy {
 
    private final CollectionRegionImpl region;
