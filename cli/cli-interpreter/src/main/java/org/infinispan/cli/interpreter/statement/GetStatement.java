@@ -1,5 +1,7 @@
 package org.infinispan.cli.interpreter.statement;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.util.List;
 
 import org.infinispan.Cache;
@@ -35,7 +37,9 @@ public class GetStatement extends CodecAwareStatement {
          return new StringResult("null");
       } else {
          Object decoded = codec.decodeValue(value);
-         if (decoded instanceof String) {
+         if (decoded instanceof byte[]) {
+            return new StringResult(new String((byte[]) decoded), UTF_8);
+         } else if (decoded instanceof String) {
             return new StringResult((String) decoded);
          } else if (decoded.getClass().isPrimitive()) {
             return new StringResult(decoded.toString());

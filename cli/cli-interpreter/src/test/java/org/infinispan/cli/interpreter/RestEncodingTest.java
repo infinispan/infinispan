@@ -122,7 +122,11 @@ public class RestEncodingTest extends SingleCacheManagerTest {
       HttpGet httpGet = new HttpGet(getRestEndpoint(cache, key));
       httpGet.addHeader("Accept", MediaType.TEXT_PLAIN_TYPE);
       CloseableHttpResponse response = restClient.execute(httpGet);
-      assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+      int statusCode = response.getStatusLine().getStatusCode();
+      if(statusCode == HttpStatus.SC_NOT_FOUND) {
+         return null;
+      }
+      assertEquals(HttpStatus.SC_OK, statusCode);
       HttpEntity entity = response.getEntity();
       return EntityUtils.toString(entity);
    }
