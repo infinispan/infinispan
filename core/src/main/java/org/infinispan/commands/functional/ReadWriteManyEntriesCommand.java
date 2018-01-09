@@ -21,8 +21,11 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.functional.Param;
 import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.EntryViews.AccessLoggingReadWriteView;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.functional.impl.StatsEnvelope;
 
 // TODO: the command does not carry previous values to backup, so it can cause
 // the values on primary and backup owners to diverge in case of topology change
@@ -124,7 +127,8 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      List<R> returns = new ArrayList<>(entries.size());
+      List<Object> returns = new ArrayList<>(entries.size());
+      boolean skipStats = Param.StatisticsMode.isSkip(params);
       entries.forEach((k, v) -> {
          CacheEntry entry = ctx.lookupEntry(k);
 
@@ -132,8 +136,10 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
             throw new IllegalStateException();
          }
          V decodedValue = (V) valueDataConversion.fromStorage(v);
-         R r = f.apply(decodedValue, EntryViews.readWrite(entry, keyDataConversion, valueDataConversion));
-         returns.add(snapshot(r));
+         boolean exists = entry.getValue() != null;
+         AccessLoggingReadWriteView<K, V> view = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);
+         R r = snapshot(f.apply(decodedValue, view));
+         returns.add(skipStats ? r : StatsEnvelope.create(r, entry, exists, view.isRead()));
       });
       return returns;
    }

@@ -1195,7 +1195,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
 
       @Override
       public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
-         return handleValueResponseCommand(ctx, command);
+         return handleFunctionalCommand(ctx, command);
       }
 
       @Override
@@ -1210,7 +1210,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
 
       @Override
       public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
-         return handleValueResponseCommand(ctx, command);
+         return handleFunctionalCommand(ctx, command);
       }
 
       @Override
@@ -1268,7 +1268,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          }
          MetadataImmortalCacheValue micv = (MetadataImmortalCacheValue) responseValue;
          InternalCacheEntry ice = micv.toInternalCacheEntry(command.getKey());
-         returnValue = command.isWriteOnly() ? null : ice.getValue();
+         returnValue = ice.getValue();
          version = ice.getMetadata().version();
 
          entryFactory.wrapExternalEntry(ctx, command.getKey(), ice, true, true);
@@ -1360,12 +1360,12 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
 
       @Override
       public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
-         return handleValueResponseCommand(ctx, command);
+         return handleFunctionalCommand(ctx, command);
       }
 
       @Override
       public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
-         return handleValueResponseCommand(ctx, command);
+         return handleFunctionalCommand(ctx, command);
       }
    }
 

@@ -297,12 +297,13 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          throw t;
       }
       return asyncValue(remoteInvocation).andHandle(ctx, command, (rCtx, rCommand, rv, t) -> {
-         command.setValueMatcher(command.getValueMatcher().matcherForRetry());
+         DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
+         dataWriteCommand.setValueMatcher(dataWriteCommand.getValueMatcher().matcherForRetry());
          CompletableFutures.rethrowException(t);
 
          Response response = ((Response) rv);
          if (!response.isSuccessful()) {
-            command.fail();
+            dataWriteCommand.fail();
             // FIXME A response cannot be successful and not valid
          } else if (!(response instanceof ValidResponse)) {
             throw unexpected(response);

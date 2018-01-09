@@ -821,7 +821,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
       Class<?> extClazz;
       switch (type) {
          case ID_INTERNAL:
-            return reverseInternalExts.get(in.readByte());
+            return reverseInternalExts.get((0xFF & in.readByte()));
          case ID_EXTERNAL:
             return reverseExternalExts.get(in.readInt());
          case ID_ANNOTATED:

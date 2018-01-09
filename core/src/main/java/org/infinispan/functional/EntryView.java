@@ -77,6 +77,14 @@ public final class EntryView {
        * {@link WriteEntryView#set(Object, MetaParam.Writable[])}.
        */
       Optional<V> find();
+
+      /**
+       * The same as {@link #find()} but does not update any hit/miss statistics.
+       * @return
+       */
+      default Optional<V> peek() {
+         return find();
+      }
    }
 
    /**

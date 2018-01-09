@@ -92,6 +92,7 @@ import org.infinispan.notifications.cachelistener.filter.KeyFilterAsCacheEventFi
 import org.infinispan.notifications.cachelistener.filter.KeyValueFilterAsCacheEventFilter;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.MIMECacheEntry;
+import org.infinispan.functional.impl.StatsEnvelope;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -231,6 +232,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new SerializableXid.XidExternalizer(), exts);
       addInternalExternalizer(new SimpleClusteredVersion.Externalizer(), exts);
       addInternalExternalizer(new StateChunk.Externalizer(), exts);
+      addInternalExternalizer(new StatsEnvelope.Externalizer(), exts);
       addInternalExternalizer(new StreamMarshalling.StreamMarshallingExternalizer(), exts);
       addInternalExternalizer(new SuccessfulResponse.Externalizer(), exts);
       addInternalExternalizer(new SyncConsistentHashFactory.Externalizer(), exts);

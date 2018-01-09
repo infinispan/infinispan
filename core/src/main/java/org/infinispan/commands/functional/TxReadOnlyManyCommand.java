@@ -16,8 +16,10 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
+import org.infinispan.functional.Param;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.functional.impl.StatsEnvelope;
 
 public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R> {
    public static final byte COMMAND_ID = 65;
@@ -29,10 +31,10 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
    }
 
    public TxReadOnlyManyCommand(Collection<?> keys, List<List<Mutation<K, V, ?>>> mutations,
-                                DataConversion keyDataConversion,
+                                Params params, DataConversion keyDataConversion,
                                 DataConversion valueDataConversion,
                                 ComponentRegistry componentRegistry) {
-      super(keys, null, Params.create(), keyDataConversion, valueDataConversion, componentRegistry);
+      super(keys, null, params, keyDataConversion, valueDataConversion, componentRegistry);
       this.mutations = mutations;
       init(componentRegistry);
    }
@@ -112,8 +114,9 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
       if (mutations == null) {
          return super.perform(ctx);
       }
-      ArrayList<R> retvals = new ArrayList<>(keys.size());
+      ArrayList<Object> retvals = new ArrayList<>(keys.size());
       Iterator<List<Mutation<K, V, ?>>> mutIt = mutations.iterator();
+      boolean skipStats = Param.StatisticsMode.isSkip(params);
       for (Object k : keys) {
          List<Mutation<K, V, ?>> mutations = mutIt.next();
          MVCCEntry entry = (MVCCEntry) lookupCacheEntry(ctx, k);
@@ -130,9 +133,9 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
             ro = rw;
          }
          if (f != null) {
-            ret = f.apply(ro);
+            ret = snapshot(f.apply(ro));
          }
-         retvals.add(snapshot((R) ret));
+         retvals.add(skipStats ? ret : StatsEnvelope.create(ret, entry.isNull()));
       }
       return retvals.stream();
    }

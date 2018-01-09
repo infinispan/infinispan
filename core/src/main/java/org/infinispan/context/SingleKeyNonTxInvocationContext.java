@@ -71,9 +71,6 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
    @Override
    public void clearLockedKeys() {
       isLocked = false;
-      // TODO Dan: this shouldn't be necessary, but we don't clear the looked up keys
-      // when retrying a non-tx command because of a topology change
-      cacheEntry = null;
    }
 
    @Override

@@ -51,11 +51,11 @@ public final class EntryViews {
       return new EntryBackedWriteOnlyView<>(entry, valueDataConversion);
    }
 
-   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry entry, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+   public static <K, V> AccessLoggingReadWriteView<K, V> readWrite(CacheEntry entry, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       return new EntryBackedReadWriteView<>(entry, keyDataConversion, valueDataConversion);
    }
 
-   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry entry, Object prevValue, Metadata prevMetadata, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+   public static <K, V> AccessLoggingReadWriteView<K, V> readWrite(CacheEntry entry, Object prevValue, Metadata prevMetadata, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       return new EntryAndPreviousReadWriteView<>(entry, prevValue, prevMetadata, keyDataConversion, valueDataConversion);
    }
 
@@ -93,6 +93,10 @@ public final class EntryViews {
       }
 
       return ret;
+   }
+
+   public interface AccessLoggingReadWriteView<K, V> extends ReadWriteEntryView<K, V> {
+      boolean isRead();
    }
 
    private static final class EntryBackedReadOnlyView<K, V> implements ReadEntryView<K, V> {
@@ -237,17 +241,20 @@ public final class EntryViews {
       }
    }
 
-   private static final class EntryBackedReadWriteView<K, V> implements ReadWriteEntryView<K, V> {
+   private static final class EntryBackedReadWriteView<K, V> implements AccessLoggingReadWriteView<K, V> {
       final CacheEntry entry;
       private final DataConversion keyDataConversion;
       private final DataConversion valueDataConversion;
+      private final boolean existsBefore;
       private K decodedKey;
       private V decodedValue;
+      private boolean isRead;
 
       private EntryBackedReadWriteView(CacheEntry entry, DataConversion keyDataConversion, DataConversion valueDataConversion) {
          this.entry = entry;
          this.keyDataConversion = keyDataConversion;
          this.valueDataConversion = valueDataConversion;
+         this.existsBefore = entry.getValue() != null;
       }
 
       @Override
@@ -264,10 +271,18 @@ public final class EntryViews {
 
       @Override
       public Optional<V> find() {
+         isRead = true;
+         return peek();
+      }
+
+      @Override
+      public Optional<V> peek() {
          if (entry == null) {
             return Optional.empty();
          }
-         decodedValue = decodedValue == null ? (V) valueDataConversion.fromStorage(entry.getValue()) : decodedValue;
+         if (decodedValue == null) {
+            decodedValue = (V) valueDataConversion.fromStorage(entry.getValue());
+         }
          return Optional.ofNullable(decodedValue);
       }
 
@@ -301,12 +316,10 @@ public final class EntryViews {
       @Override
       public Void remove() {
          decodedValue = null;
-         if (!entry.isNull()) {
-            entry.setRemoved(true);
-            entry.setChanged(true);
-            entry.setValue(null);
-            entry.setCreated(false);
-         }
+         entry.setRemoved(existsBefore);
+         entry.setChanged(existsBefore);
+         entry.setValue(null);
+         entry.setCreated(false);
 
          return null;
       }
@@ -326,6 +339,7 @@ public final class EntryViews {
 
       @Override
       public V get() throws NoSuchElementException {
+         isRead = true;
          if (entry == null || entry.getValue() == null)
             throw new NoSuchElementException("No value present");
          decodedValue = decodedValue == null ? (V) valueDataConversion.fromStorage(entry.getValue()) : decodedValue;
@@ -336,9 +350,14 @@ public final class EntryViews {
       public String toString() {
          return "EntryBackedReadWriteView{" + "entry=" + entry + '}';
       }
+
+      @Override
+      public boolean isRead() {
+         return isRead;
+      }
    }
 
-   private static final class EntryAndPreviousReadWriteView<K, V> implements ReadWriteEntryView<K, V> {
+   private static final class EntryAndPreviousReadWriteView<K, V> implements AccessLoggingReadWriteView<K, V> {
       final CacheEntry entry;
       final Object prevValue;
       final Metadata prevMetadata;
@@ -347,6 +366,7 @@ public final class EntryViews {
       private K decodedKey;
       private V decodedPrevValue;
       private V decodedValue;
+      private boolean isRead;
 
       private EntryAndPreviousReadWriteView(CacheEntry entry,
                                             Object prevValue,
@@ -370,6 +390,12 @@ public final class EntryViews {
 
       @Override
       public Optional<V> find() {
+         isRead = true;
+         return peek();
+      }
+
+      @Override
+      public Optional<V> peek() {
          if (decodedPrevValue == null) {
             decodedPrevValue = (V) valueDataConversion.fromStorage(prevValue);
          }
@@ -377,6 +403,7 @@ public final class EntryViews {
       }
 
       public V getCurrentValue() {
+         isRead = true;
          if (decodedValue == null) {
             decodedValue = (V) valueDataConversion.fromStorage(entry.getValue());
          }
@@ -413,18 +440,17 @@ public final class EntryViews {
       @Override
       public Void remove() {
          decodedValue = null;
-         if (!entry.isNull()) {
-            entry.setRemoved(true);
-            entry.setCreated(false);
-            entry.setChanged(true);
-            entry.setValue(null);
-         }
+         entry.setRemoved(prevValue != null);
+         entry.setCreated(false);
+         entry.setChanged(prevValue != null);
+         entry.setValue(null);
 
          return null;
       }
 
       @Override
       public <T extends MetaParam> Optional<T> findMetaParam(Class<T> type) {
+         isRead = true;
          Metadata metadata = prevMetadata; // Use previous metadata
          if (metadata instanceof MetaParamsInternalMetadata) {
             MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
@@ -438,6 +464,7 @@ public final class EntryViews {
 
       @Override
       public V get() throws NoSuchElementException {
+         isRead = true;
          if (prevValue == null) throw new NoSuchElementException();
          if (decodedPrevValue == null) {
             decodedPrevValue = (V) valueDataConversion.fromStorage(prevValue);
@@ -452,6 +479,11 @@ public final class EntryViews {
                ", prevValue=" + prevValue +
                ", prevMetadata=" + prevMetadata +
                '}';
+      }
+
+      @Override
+      public boolean isRead() {
+         return isRead;
       }
    }
 

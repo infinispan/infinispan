@@ -1,13 +1,26 @@
 package org.infinispan.interceptors.impl;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.functional.AbstractWriteManyCommand;
+import org.infinispan.commands.functional.ReadOnlyKeyCommand;
+import org.infinispan.commands.functional.ReadOnlyManyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
+import org.infinispan.commands.functional.ReadWriteManyCommand;
+import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -20,6 +33,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
@@ -30,6 +44,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.functional.impl.StatsEnvelope;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -68,9 +83,8 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       if (!getStatisticsEnabled(command))
          return invokeNext(ctx, command);
 
-      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
-         counters.increment(StripeB.evictionsFieldUpdater, counters.stripeForCurrentThread());
-      });
+      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) ->
+            counters.increment(StripeB.evictionsFieldUpdater, counters.stripeForCurrentThread()));
    }
 
    @Override
@@ -170,9 +184,9 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
-         if (rv == null && command.isSuccessful()) {
+         if (rv == null && rCommand.isSuccessful()) {
             increaseRemoveMisses();
-         } else if (command.isSuccessful()) {
+         } else if (rCommand.isSuccessful()) {
             long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
             StripeB stripe = counters.stripeForCurrentThread();
             counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalMilliseconds);
@@ -193,13 +207,210 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
-         if (command.isSuccessful()) {
+         if (rCommand.isSuccessful()) {
             long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
             StripeB stripe = counters.stripeForCurrentThread();
             counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalNanoseconds);
             counters.increment(StripeB.storesFieldUpdater, stripe);
          }
       });
+   }
+
+   @Override
+   public Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
+      if (!ctx.isOriginLocal() || command.hasAnyFlag(FlagBitSets.SKIP_STATISTICS))
+         return invokeNext(ctx, command);
+
+      if (!getStatisticsEnabled())
+         return invokeNextThenApply(ctx, command, StatsEnvelope::unpack);
+
+      long start = timeService.time();
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
+         StripeB stripe = counters.stripeForCurrentThread();
+         StatsEnvelope envelope = (StatsEnvelope) rv;
+         if (envelope.isMiss()) {
+            counters.add(StripeB.missTimesFieldUpdater, stripe, intervalNanoseconds);
+            counters.increment(StripeB.missesFieldUpdater, stripe);
+         } else if (envelope.isHit()){
+            counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalNanoseconds);
+            counters.increment(StripeB.hitsFieldUpdater, stripe);
+         }
+         return envelope.value();
+      });
+   }
+
+   @Override
+   public Object visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
+      if (!ctx.isOriginLocal() || command.hasAnyFlag(FlagBitSets.SKIP_STATISTICS))
+         return invokeNext(ctx, command);
+
+      if (!getStatisticsEnabled())
+         return invokeNextThenApply(ctx, command, StatsEnvelope::unpackStream);
+
+      long start = timeService.time();
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
+         StripeB stripe = counters.stripeForCurrentThread();
+         ByRef.Integer hitCount = new ByRef.Integer(0);
+         ByRef.Integer missCount = new ByRef.Integer(0);
+         int numResults = ((ReadOnlyManyCommand) rCommand).getKeys().size();
+         Collection<Object> retvals = new ArrayList<>(numResults);
+         ((Stream<StatsEnvelope<Object>>) rv).forEach(e -> {
+            if (e.isHit()) hitCount.inc();
+            if (e.isMiss()) missCount.inc();
+            retvals.add(e.value());
+         });
+         if (missCount.get() > 0) {
+            counters.add(StripeB.missTimesFieldUpdater, stripe, missCount.get() * intervalNanoseconds / numResults);
+            counters.add(StripeB.missesFieldUpdater, stripe, missCount.get());
+         }
+         if (hitCount.get() > 0) {
+            counters.add(StripeB.hitTimesFieldUpdater, stripe, hitCount.get() * intervalNanoseconds / numResults);
+            counters.add(StripeB.hitsFieldUpdater, stripe, hitCount.get());
+         }
+         return retvals.stream();
+      });
+   }
+
+   @Override
+   public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
+      return updateStatisticsWriteOnly(ctx, command);
+   }
+
+   private Object updateStatisticsWriteOnly(InvocationContext ctx, AbstractDataCommand command) {
+      if (!ctx.isOriginLocal() || command.hasAnyFlag(FlagBitSets.SKIP_STATISTICS)) {
+         return invokeNext(ctx, command);
+      }
+      if (!getStatisticsEnabled())
+         return invokeNextThenApply(ctx, command, StatsEnvelope::unpack);
+
+      long start = timeService.time();
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
+         StripeB stripe = counters.stripeForCurrentThread();
+         StatsEnvelope<?> envelope = (StatsEnvelope<?>) rv;
+         if (envelope.isDelete()) {
+            counters.add(StripeB.removeTimesFieldUpdater, stripe, intervalNanoseconds);
+            counters.increment(StripeB.removeHitsFieldUpdater, stripe);
+         } else if ((envelope.flags() & (StatsEnvelope.CREATE | StatsEnvelope.UPDATE)) != 0) {
+            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalNanoseconds);
+            counters.increment(StripeB.storesFieldUpdater, stripe);
+         }
+         assert envelope.value() == null;
+         return null;
+      });
+   }
+
+   @Override
+   public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
+      return updateStatisticsReadWrite(ctx, command);
+   }
+
+   private Object updateStatisticsReadWrite(InvocationContext ctx, AbstractDataCommand command) {
+      if (!ctx.isOriginLocal() || command.hasAnyFlag(FlagBitSets.SKIP_STATISTICS)) {
+         return invokeNext(ctx, command);
+      }
+
+      if (!getStatisticsEnabled())
+         return invokeNextThenApply(ctx, command, StatsEnvelope::unpack);
+
+      long start = timeService.time();
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
+         StripeB stripe = counters.stripeForCurrentThread();
+         StatsEnvelope<?> envelope = (StatsEnvelope<?>) rv;
+         if (envelope.isDelete()) {
+            counters.add(StripeB.removeTimesFieldUpdater, stripe, intervalNanoseconds);
+            counters.increment(StripeB.removeHitsFieldUpdater, stripe);
+         } else if ((envelope.flags() & (StatsEnvelope.CREATE | StatsEnvelope.UPDATE)) != 0) {
+            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalNanoseconds);
+            counters.increment(StripeB.storesFieldUpdater, stripe);
+         }
+         if (envelope.isHit()) {
+            counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalNanoseconds);
+            counters.increment(StripeB.hitsFieldUpdater, stripe);
+         } else if (envelope.isMiss()) {
+            counters.add(StripeB.missTimesFieldUpdater, stripe, intervalNanoseconds);
+            counters.increment(StripeB.missesFieldUpdater, stripe);
+         }
+         return envelope.value();
+      });
+   }
+
+   @Override
+   public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+      return updateStatisticsReadWrite(ctx, command);
+   }
+
+   @Override
+   public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
+      return updateStatisticsWriteOnly(ctx, command);
+   }
+
+   // TODO: WriteOnlyManyCommand and WriteOnlyManyEntriesCommand not implemented as the rest of stack
+   // does not pass the return value.
+
+   @Override
+   public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+      return updateStatisticsReadWrite(ctx, command);
+   }
+
+   private Object updateStatisticsReadWrite(InvocationContext ctx, AbstractWriteManyCommand command) {
+      if (!ctx.isOriginLocal() || command.hasAnyFlag(FlagBitSets.SKIP_STATISTICS)) {
+         return invokeNext(ctx, command);
+      }
+
+      if (!getStatisticsEnabled())
+         return invokeNextThenApply(ctx, command, StatsEnvelope::unpackCollection);
+
+      long start = timeService.time();
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
+         StripeB stripe = counters.stripeForCurrentThread();
+
+         int hits = 0;
+         int misses = 0;
+         int stores = 0;
+         int removals = 0;
+         int numResults = ((AbstractWriteManyCommand) rCommand).getAffectedKeys().size();
+         List<Object> results = new ArrayList<>(numResults);
+         for(StatsEnvelope<?> envelope : ((Collection<StatsEnvelope<?>>) rv)) {
+            if (envelope.isDelete()) {
+               removals++;
+            } else if ((envelope.flags() & (StatsEnvelope.CREATE | StatsEnvelope.UPDATE)) != 0) {
+               stores++;
+            }
+            if (envelope.isHit()) {
+               hits++;
+            } else if (envelope.isMiss()) {
+               misses++;
+            }
+            results.add(envelope.value());
+         }
+         if (removals > 0) {
+            counters.add(StripeB.removeTimesFieldUpdater, stripe, removals * intervalNanoseconds / numResults);
+            counters.add(StripeB.removeHitsFieldUpdater, stripe, removals);
+         }
+         if (stores > 0) {
+            counters.add(StripeB.storeTimesFieldUpdater, stripe, stores * intervalNanoseconds / numResults);
+            counters.add(StripeB.storesFieldUpdater, stripe, stores);
+         }
+         if (misses > 0) {
+            counters.add(StripeB.missTimesFieldUpdater, stripe, misses * intervalNanoseconds / numResults);
+            counters.add(StripeB.missesFieldUpdater, stripe, misses);
+         }
+         if (hits > 0) {
+            counters.add(StripeB.hitTimesFieldUpdater, stripe, hits * intervalNanoseconds / numResults);
+            counters.add(StripeB.hitsFieldUpdater, stripe, hits);
+         }
+         return results;
+      });
+   }
+
+   @Override
+   public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+      return updateStatisticsReadWrite(ctx, command);
    }
 
    @Override

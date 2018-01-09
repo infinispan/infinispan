@@ -14,8 +14,10 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
+import org.infinispan.functional.Param.StatisticsMode;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.functional.impl.StatsEnvelope;
 
 public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    public static final byte COMMAND_ID = 64;
@@ -26,17 +28,18 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    }
 
    public TxReadOnlyKeyCommand(Object key, List<Mutation<K, V, ?>> mutations,
-                               DataConversion keyDataConversion,
+                               Params params, DataConversion keyDataConversion,
                                DataConversion valueDataConversion,
                                ComponentRegistry componentRegistry) {
-      super(key, null, Params.create(), keyDataConversion, valueDataConversion, componentRegistry);
+      super(key, null, params, keyDataConversion, valueDataConversion, componentRegistry);
       this.mutations = mutations;
       init(componentRegistry);
    }
 
-   public TxReadOnlyKeyCommand(ReadOnlyKeyCommand other, List<Mutation<K, V, ?>> mutations, DataConversion keyDataConversion,
-                               DataConversion valueDataConversion, ComponentRegistry componentRegistry) {
-      super(other.getKey(), other.f, Params.create(), keyDataConversion, valueDataConversion, componentRegistry);
+   public TxReadOnlyKeyCommand(ReadOnlyKeyCommand other, List<Mutation<K, V, ?>> mutations, Params params,
+                               DataConversion keyDataConversion, DataConversion valueDataConversion,
+                               ComponentRegistry componentRegistry) {
+      super(other.getKey(), other.f, params, keyDataConversion, valueDataConversion, componentRegistry);
       this.mutations = mutations;
       init(componentRegistry);
    }
@@ -82,9 +85,9 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
          entry.updatePreviousValue();
       }
       if (f != null) {
-         ret = f.apply(rw);
+         ret = snapshot(f.apply(rw));
       }
-      return snapshot(ret);
+      return StatisticsMode.isSkip(params) ? ret : StatsEnvelope.create(ret, entry.isNull());
    }
 
    @Override
@@ -93,6 +96,7 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
       sb.append("key=").append(key);
       sb.append(", f=").append(f);
       sb.append(", mutations=").append(mutations);
+      sb.append(", params=").append(params);
       sb.append(", keyDataConversion=").append(keyDataConversion);
       sb.append(", valueDataConversion=").append(valueDataConversion);
       sb.append('}');

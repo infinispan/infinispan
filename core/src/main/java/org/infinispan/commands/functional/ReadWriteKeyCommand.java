@@ -19,8 +19,11 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.functional.Param.StatisticsMode;
 import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.EntryViews.AccessLoggingReadWriteView;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.functional.impl.StatsEnvelope;
 
 // TODO: the command does not carry previous values to backup, so it can cause
 // the values on primary and backup owners to diverge in case of topology change
@@ -92,9 +95,10 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       if (e == null) return null;
 
       R ret;
-      ReadWriteEntryView<K, V> entry = EntryViews.readWrite(e, keyDataConversion, valueDataConversion);
-      ret = f.apply(entry);
-      return snapshot(ret);
+      boolean exists = e.getValue() != null;
+      AccessLoggingReadWriteView<K, V> view = EntryViews.readWrite(e, keyDataConversion, valueDataConversion);
+      ret = snapshot(f.apply(view));
+      return StatisticsMode.isSkip(params) ? ret : StatsEnvelope.create(ret, e, exists, view.isRead());
    }
 
    @Override
@@ -119,7 +123,7 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    @Override
    public String toString() {
       final StringBuilder sb = new StringBuilder("ReadWriteKeyCommand{");
-      sb.append(", key=").append(toStr(key));
+      sb.append("key=").append(toStr(key));
       sb.append(", f=").append(f.getClass().getName());
       sb.append(", flags=").append(printFlags());
       sb.append(", commandInvocationId=").append(commandInvocationId);
