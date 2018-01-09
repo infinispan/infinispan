@@ -485,7 +485,7 @@
             <version>${project.version}</version>
          </dependency>
          <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-hibernate-cache-commons</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
