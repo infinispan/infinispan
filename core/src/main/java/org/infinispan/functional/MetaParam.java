@@ -265,4 +265,45 @@ public interface MetaParam<T> {
       }
    }
 
+   /**
+    * Non-writable parameter telling if the entry was loaded from a persistence tier
+    * ({@link org.infinispan.persistence.spi.CacheLoader}) or not.
+    * This information may be available only to write commands due to implementation reasons.
+    */
+   @Experimental
+   final class MetaLoadedFromPersistence implements MetaParam<Boolean> {
+      public static MetaLoadedFromPersistence LOADED = new MetaLoadedFromPersistence(true);
+      public static MetaLoadedFromPersistence NOT_LOADED = new MetaLoadedFromPersistence(false);
+
+      private boolean loaded;
+
+      private MetaLoadedFromPersistence(boolean loaded) {
+         this.loaded = loaded;
+      }
+
+      @Override
+      public Boolean get() {
+         return loaded;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         MetaLoadedFromPersistence that = (MetaLoadedFromPersistence) o;
+
+         return loaded == that.loaded;
+      }
+
+      @Override
+      public int hashCode() {
+         return (loaded ? 1 : 0);
+      }
+
+      public static MetaLoadedFromPersistence of(boolean loaded) {
+         return loaded ? LOADED : NOT_LOADED;
+      }
+   }
+
 }

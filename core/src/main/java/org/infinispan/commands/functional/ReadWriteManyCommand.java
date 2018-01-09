@@ -14,7 +14,7 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
@@ -126,7 +126,7 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
       List<Object> returns = new ArrayList<>(keys.size());
       boolean skipStats = Param.StatisticsMode.isSkip(params);
       keys.forEach(k -> {
-         CacheEntry entry = ctx.lookupEntry(k);
+         MVCCEntry entry = (MVCCEntry) ctx.lookupEntry(k);
 
          boolean exists = entry.getValue() != null;
          AccessLoggingReadWriteView<K, V> view = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);

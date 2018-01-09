@@ -77,4 +77,17 @@ public interface MVCCEntry<K, V> extends CacheEntry<K, V>, StateChangingEntry {
     * @return True if this context entry has been committed to the {@link DataContainer}
     */
    default boolean isCommitted() { return false; }
+
+   /**
+    * @return True if we've checked persistence for presence of this entry.
+    */
+   default boolean isLoaded() {
+      return false;
+   }
+
+   default void setLoaded(boolean loaded) {
+   }
+
+   @Override
+   MVCCEntry<K, V> clone();
 }

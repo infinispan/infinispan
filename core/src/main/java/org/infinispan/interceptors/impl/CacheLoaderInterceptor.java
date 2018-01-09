@@ -47,6 +47,7 @@ import org.infinispan.container.EntryFactory;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.group.impl.GroupFilter;
@@ -347,6 +348,10 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
             sendNotification(key, value, true, ctx, cmd);
             sendNotification(key, value, false, ctx, cmd);
          }
+      }
+      CacheEntry contextEntry = ctx.lookupEntry(key);
+      if (contextEntry instanceof MVCCEntry) {
+         ((MVCCEntry) contextEntry).setLoaded(true);
       }
       return isLoadedValue;
    }
