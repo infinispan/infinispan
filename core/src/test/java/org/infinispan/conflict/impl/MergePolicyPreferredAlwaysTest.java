@@ -11,7 +11,7 @@ public class MergePolicyPreferredAlwaysTest extends BaseMergePolicyTest {
       return new Object[] {
             new MergePolicyPreferredAlwaysTest().setPartitions("5N", new int[]{0,1,2}, new int[]{3,4}),
             new MergePolicyPreferredAlwaysTest().setPartitions("4N", new int[]{0,1}, new int[]{2,3}),
-            new MergePolicyPreferredAlwaysTest().setPartitions("3N", new int[]{0,1}, new int[]{2}).setValueAfterMerge("BEFORE SPLIT")
+            new MergePolicyPreferredAlwaysTest().setPartitions("3N", new int[]{0,1}, new int[]{2})
       };
    }
 
