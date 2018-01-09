@@ -13,7 +13,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.encoding.DataConversion;
@@ -89,7 +89,7 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
          return null;
       }
 
-      CacheEntry e = ctx.lookupEntry(key);
+      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
 
       // Could be that the key is not local, 'null' is how this is signalled
       if (e == null) return null;

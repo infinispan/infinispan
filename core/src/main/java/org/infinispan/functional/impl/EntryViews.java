@@ -14,6 +14,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.functional.EntryView.ReadEntryView;
@@ -51,11 +52,11 @@ public final class EntryViews {
       return new EntryBackedWriteOnlyView<>(entry, valueDataConversion);
    }
 
-   public static <K, V> AccessLoggingReadWriteView<K, V> readWrite(CacheEntry entry, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+   public static <K, V> AccessLoggingReadWriteView<K, V> readWrite(MVCCEntry entry, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       return new EntryBackedReadWriteView<>(entry, keyDataConversion, valueDataConversion);
    }
 
-   public static <K, V> AccessLoggingReadWriteView<K, V> readWrite(CacheEntry entry, Object prevValue, Metadata prevMetadata, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+   public static <K, V> AccessLoggingReadWriteView<K, V> readWrite(MVCCEntry entry, Object prevValue, Metadata prevMetadata, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       return new EntryAndPreviousReadWriteView<>(entry, prevValue, prevMetadata, keyDataConversion, valueDataConversion);
    }
 
@@ -242,7 +243,7 @@ public final class EntryViews {
    }
 
    private static final class EntryBackedReadWriteView<K, V> implements AccessLoggingReadWriteView<K, V> {
-      final CacheEntry entry;
+      final MVCCEntry entry;
       private final DataConversion keyDataConversion;
       private final DataConversion valueDataConversion;
       private final boolean existsBefore;
@@ -250,7 +251,7 @@ public final class EntryViews {
       private V decodedValue;
       private boolean isRead;
 
-      private EntryBackedReadWriteView(CacheEntry entry, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      private EntryBackedReadWriteView(MVCCEntry entry, DataConversion keyDataConversion, DataConversion valueDataConversion) {
          this.entry = entry;
          this.keyDataConversion = keyDataConversion;
          this.valueDataConversion = valueDataConversion;
@@ -327,6 +328,9 @@ public final class EntryViews {
       @Override
       public <T extends MetaParam> Optional<T> findMetaParam(Class<T> type) {
          Metadata metadata = entry.getMetadata();
+         if (type == MetaParam.MetaLoadedFromPersistence.class) {
+            return Optional.of((T) MetaParam.MetaLoadedFromPersistence.of(entry.isLoaded()));
+         }
          if (metadata instanceof MetaParamsInternalMetadata) {
             MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
             return metaParamsMetadata.findMetaParam(type);
@@ -358,7 +362,7 @@ public final class EntryViews {
    }
 
    private static final class EntryAndPreviousReadWriteView<K, V> implements AccessLoggingReadWriteView<K, V> {
-      final CacheEntry entry;
+      final MVCCEntry entry;
       final Object prevValue;
       final Metadata prevMetadata;
       private final DataConversion keyDataConversion;
@@ -368,7 +372,7 @@ public final class EntryViews {
       private V decodedValue;
       private boolean isRead;
 
-      private EntryAndPreviousReadWriteView(CacheEntry entry,
+      private EntryAndPreviousReadWriteView(MVCCEntry entry,
                                             Object prevValue,
                                             Metadata prevMetadata,
                                             DataConversion keyDataConversion,
@@ -451,6 +455,9 @@ public final class EntryViews {
       @Override
       public <T extends MetaParam> Optional<T> findMetaParam(Class<T> type) {
          isRead = true;
+         if (type == MetaParam.MetaLoadedFromPersistence.class) {
+            return Optional.of((T) MetaParam.MetaLoadedFromPersistence.of(entry.isLoaded()));
+         }
          Metadata metadata = prevMetadata; // Use previous metadata
          if (metadata instanceof MetaParamsInternalMetadata) {
             MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;

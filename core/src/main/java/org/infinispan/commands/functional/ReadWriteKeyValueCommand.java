@@ -13,7 +13,6 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -124,7 +123,7 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       // Note: other commands don't clone the entry as they don't carry the previous value for comparison
       // using value matcher - if other commands are retried these can apply the function multiple times.
       // Here we don't want to modify the value in context when trying what would be the outcome of the operation.
-      CacheEntry<K, V> copy = e.clone();
+      MVCCEntry<K, V> copy = e.clone();
       V decodedValue = (V) valueDataConversion.fromStorage(value);
       AccessLoggingReadWriteView<K, V> view = EntryViews.readWrite(copy, prevValue, prevMetadata, keyDataConversion, valueDataConversion);
       R ret = snapshot(f.apply(decodedValue, view));
