@@ -1,6 +1,7 @@
 package org.infinispan.functional;
 
 import org.infinispan.commons.util.Experimental;
+import org.infinispan.functional.impl.Params;
 
 /**
  * An easily extensible parameter that allows functional map operations to be
@@ -166,4 +167,43 @@ public interface Param<P> {
          return CACHED_VALUES[ordinal];
       }
    }
-}
+
+   /**
+    * Defines how statistics are gathered for this command.
+    */
+   @Experimental
+   enum StatisticsMode implements Param<StatisticsMode> {
+      /**
+       * Statistics from this command are recorded
+       */
+      GATHER,
+      /**
+       * Statistics from this command are not recorded
+       */
+      SKIP;
+
+      public static final int ID = ParamIds.STATS_MODE_ID;
+      private static final StatisticsMode[] CACHED_VALUES = values();
+
+      @Override
+      public int id() {
+         return ID;
+      }
+
+      @Override
+      public StatisticsMode get() {
+         return this;
+      }
+
+      public static StatisticsMode defaultValue() {
+         return GATHER;
+      }
+
+      public static StatisticsMode valueOf(int ordinal) {
+         return CACHED_VALUES[ordinal];
+      }
+
+      public static boolean isSkip(Params params) {
+         return params.<StatisticsMode>get(ID).get() == SKIP;
+      }
+   }}

@@ -45,4 +45,24 @@ public class ByRef<T> {
       }
    }
 
+   public static class Integer {
+      int ref;
+
+      public Integer(int i) {
+         ref = i;
+      }
+
+      public int get() {
+         return ref;
+      }
+
+      public void set(int i) {
+         ref = i;
+      }
+
+      public void inc() {
+         ref++;
+      }
+   }
+
 }

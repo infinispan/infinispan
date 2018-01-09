@@ -16,8 +16,10 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.WriteEntryView;
+import org.infinispan.functional.Param.StatisticsMode;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.functional.impl.StatsEnvelope;
 
 public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyCommand<K, V> {
 
@@ -88,8 +90,9 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       if (e == null) return null;
 
       V decodedValue = (V) valueDataConversion.fromStorage(value);
+      boolean exists = e.getValue() != null;
       f.accept(decodedValue, EntryViews.writeOnly(e, valueDataConversion));
-      return null;
+      return StatisticsMode.isSkip(params) ? null : StatsEnvelope.create(null, e, exists, false);
    }
 
    @Override

@@ -20,8 +20,11 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.functional.Param.StatisticsMode;
 import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.EntryViews.AccessLoggingReadWriteView;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.functional.impl.StatsEnvelope;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -123,7 +126,8 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       // Here we don't want to modify the value in context when trying what would be the outcome of the operation.
       CacheEntry<K, V> copy = e.clone();
       V decodedValue = (V) valueDataConversion.fromStorage(value);
-      R ret = f.apply(decodedValue, EntryViews.readWrite(copy, prevValue, prevMetadata, keyDataConversion, valueDataConversion));
+      AccessLoggingReadWriteView<K, V> view = EntryViews.readWrite(copy, prevValue, prevMetadata, keyDataConversion, valueDataConversion);
+      R ret = snapshot(f.apply(decodedValue, view));
       if (valueMatcher.matches(oldPrevValue, prevValue, copy.getValue())) {
          log.tracef("Execute read-write function on previous value %s and previous metadata %s", prevValue, prevMetadata);
          e.setValue(copy.getValue());
@@ -132,7 +136,7 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
          e.setChanged(copy.isChanged());
          e.setRemoved(copy.isRemoved());
       }
-      return snapshot(ret);
+      return StatisticsMode.isSkip(params) ? ret : StatsEnvelope.create(ret, e, prevValue != null, view.isRead());
    }
 
    @Override
@@ -147,9 +151,10 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
 
    @Override
    public String toString() {
-      return new StringBuilder(getClass().getSimpleName())
-            .append(" {key=").append(toStr(key))
+      return new StringBuilder("ReadWriteKeyValueCommand{")
+            .append("key=").append(toStr(key))
             .append(", value=").append(toStr(value))
+            .append(", f=").append(f.getClass().getName())
             .append(", prevValue=").append(toStr(prevValue))
             .append(", prevMetadata=").append(toStr(prevMetadata))
             .append(", flags=").append(printFlags())

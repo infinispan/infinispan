@@ -150,6 +150,12 @@ public abstract class AbstractJCacheNotifier<K, V> implements Closeable {
 
    public void notifyEntryRemoved(Cache<K, V> cache, K key, V value, V prev) {
       try {
+         if (prev == null) {
+            // When we do a remove and the value is not present, we still need to set entry.setRemoved(true)
+            // to make sure the remove occurs in persistence. However this fires a remove event, too.
+            // JCache does not allow remove events with null previous value.
+            return;
+         }
          if (!removedListeners.isEmpty()) {
             List<CacheEntryEvent<? extends K, ? extends V>> events =
                eventAsList(new RICacheEntryEvent<>(cache, key, value, prev, EventType.REMOVED));

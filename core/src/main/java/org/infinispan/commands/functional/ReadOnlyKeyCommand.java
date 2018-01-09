@@ -16,8 +16,10 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadEntryView;
+import org.infinispan.functional.Param.StatisticsMode;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.functional.impl.StatsEnvelope;
 
 public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
 
@@ -84,8 +86,9 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
       }
 
       ReadEntryView<K, V> ro = entry.isNull() ? EntryViews.noValue((K) key, keyDataConversion) : EntryViews.readOnly(entry, keyDataConversion, valueDataConversion);
-      R ret = f.apply(ro);
-      return snapshot(ret);
+      R ret = snapshot(f.apply(ro));
+      // We'll consider the entry always read for stats purposes even if the function is a noop
+      return StatisticsMode.isSkip(params) ? ret : StatsEnvelope.create(ret, entry.isNull());
    }
 
    @Override
@@ -102,7 +105,7 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
     * Apply function on entry without any data
     */
    public Object performOnLostData() {
-      return f.apply(EntryViews.noValue((K) key, keyDataConversion));
+      return StatsEnvelope.create(f.apply(EntryViews.noValue((K) key, keyDataConversion)), true);
    }
 
    @Override
@@ -122,5 +125,9 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
 
    public DataConversion getValueDataConversion() {
       return valueDataConversion;
+   }
+
+   public Params getParams() {
+      return params;
    }
 }

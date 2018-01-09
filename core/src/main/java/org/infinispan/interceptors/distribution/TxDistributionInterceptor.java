@@ -57,6 +57,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.Params;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
@@ -481,7 +482,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
                List<Mutation> mutationsOnKey = getMutationsOnKey((TxInvocationContext) ctx, key);
                mutationsOnKey.add(command.toMutation(key));
-               TxReadOnlyKeyCommand remoteRead = new TxReadOnlyKeyCommand(key, mutationsOnKey, command.getKeyDataConversion(), command.getValueDataConversion(), componentRegistry);
+               TxReadOnlyKeyCommand remoteRead = new TxReadOnlyKeyCommand(key, mutationsOnKey, command.getParams(),
+                     command.getKeyDataConversion(), command.getValueDataConversion(), componentRegistry);
                remoteRead.setTopologyId(command.getTopologyId());
 
                CompletionStage<Response> remoteStage =
@@ -542,7 +544,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (!ctx.isInTxScope()) {
          return command;
       }
-      return new TxReadOnlyKeyCommand(command, getMutationsOnKey((TxInvocationContext) ctx, command.getKey()), command.getKeyDataConversion(), command.getValueDataConversion(), componentRegistry);
+      return new TxReadOnlyKeyCommand(command, getMutationsOnKey((TxInvocationContext) ctx, command.getKey()),
+            command.getParams(), command.getKeyDataConversion(), command.getValueDataConversion(), componentRegistry);
    }
 
    @Override
@@ -678,7 +681,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                list.add(mutation);
             }
          }
-         return new TxReadOnlyManyCommand(keys, mutations, command.getKeyDataConversion(), command.getValueDataConversion(), componentRegistry);
+         return new TxReadOnlyManyCommand(keys, mutations, command.getParams(),
+               command.getKeyDataConversion(), command.getValueDataConversion(), componentRegistry);
       }
 
       @Override

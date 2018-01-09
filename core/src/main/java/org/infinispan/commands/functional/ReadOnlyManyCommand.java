@@ -18,8 +18,10 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadEntryView;
+import org.infinispan.functional.Param;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.functional.impl.StatsEnvelope;
 
 public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedCommand implements LocalCommand {
    public static final int COMMAND_ID = 63;
@@ -112,13 +114,15 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       // lazy execution triggers exceptions on unexpected places
-      ArrayList<R> retvals = new ArrayList<R>(keys.size());
+      ArrayList<Object> retvals = new ArrayList<>(keys.size());
+      boolean skipStats = Param.StatisticsMode.isSkip(params);
       for (Object k : keys) {
          CacheEntry me = lookupCacheEntry(ctx, k);
          ReadEntryView<K, V> view = me.isNull() ?
                EntryViews.noValue(k, keyDataConversion) :
                EntryViews.readOnly(me, keyDataConversion, valueDataConversion);
-         retvals.add(snapshot(f.apply(view)));
+         R ret = snapshot(f.apply(view));
+         retvals.add(skipStats ? ret : StatsEnvelope.create(ret, me.isNull()));
       }
       return retvals.stream();
    }
