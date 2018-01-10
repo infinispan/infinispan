@@ -194,4 +194,8 @@ public interface InfinispanLogger extends BasicLogger {
     @LogMessage(level = ERROR)
     @Message(id = 20, value = "Waiting for deployment of custom EntryMergePolicy (%s) timed out. Please check if this EntryMergePolicy is really present.")
     void loadingCustomMergePolicyTimeout(String className);
+
+    @LogMessage(level = WARN)
+    @Message(id = 21, value = "Managed configuration storage is currently unsupported in domain mode. Please use Overlay storage.")
+    void managedConfigurationUnavailableInDomainMode();
 }

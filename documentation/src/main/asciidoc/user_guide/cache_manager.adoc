@@ -90,7 +90,7 @@ In order for the above to work, global state must be enabled and a suitable conf
 The available configuration stores are:
 
 - `VOLATILE`: as the name implies, this configuration storage does not support +PERMANENT+ caches.
-- `OVERLAY`: this stores configurations in the global state persistent path in a file named _caches.xml_.
+- `OVERLAY`: this stores configurations in the global shared state persistent path in a file named _caches.xml_.
 - `MANAGED`: this is only supported in server deployments, and will store +PERMANENT+ caches in the server model.
 - `CUSTOM`: a custom configuration store.
 
