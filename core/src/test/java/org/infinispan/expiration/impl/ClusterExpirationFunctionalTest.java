@@ -3,6 +3,7 @@ package org.infinispan.expiration.impl;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
@@ -29,7 +30,7 @@ import org.testng.annotations.Test;
 @InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC, CacheMode.SCATTERED_SYNC})
 public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
 
-   protected final Log log = LogFactory.getLog(getClass());
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    protected ControlledTimeService ts0;
    protected ControlledTimeService ts1;

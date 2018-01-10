@@ -4,6 +4,7 @@ import static org.infinispan.test.Exceptions.expectException;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,7 +49,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "partitionhandling.BasePartitionHandlingTest")
 public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
-   protected Log log = LogFactory.getLog(getClass());
+   protected static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private final AtomicInteger viewId = new AtomicInteger(5);
    protected int numMembersInCluster = 4;

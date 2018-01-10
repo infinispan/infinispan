@@ -15,6 +15,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
@@ -512,7 +513,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
    protected static abstract class StateListener<K, V> {
       final List<CacheEntryEvent<K, V>> events = new ArrayList<>();
-      private final Log log = LogFactory.getLog(getClass());
+      private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
       @CacheEntryCreated
       @CacheEntryModified
