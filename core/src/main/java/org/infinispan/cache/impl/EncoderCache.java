@@ -564,6 +564,11 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    @Override
+   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapper) {
+      return withWrapping(wrapper, wrapper);
+   }
+
+   @Override
    public AdvancedCache<K, V> withMediaType(String keyMediaType, String valueMediaType) {
       MediaType kType = MediaType.fromString(keyMediaType);
       MediaType vType = MediaType.fromString(valueMediaType);
