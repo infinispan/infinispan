@@ -34,9 +34,6 @@ import org.infinispan.globalstate.LocalConfigurationStorage;
 public class OverlayLocalConfigurationStorage extends VolatileLocalConfigurationStorage {
    private ConcurrentHashSet<String> persistentCaches = new ConcurrentHashSet<>();
 
-   public OverlayLocalConfigurationStorage() {
-   }
-
    @Override
    public void validateFlags(EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       if (flags.contains(CacheContainerAdmin.AdminFlag.PERMANENT) && !globalConfiguration.globalState().enabled())

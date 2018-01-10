@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.Executors;
 
 import javax.management.MBeanServer;
 
@@ -38,6 +39,7 @@ import org.infinispan.configuration.global.GlobalStateConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
+import org.infinispan.globalstate.LocalConfigurationStorage;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.PrincipalRoleMapper;
@@ -57,6 +59,8 @@ import org.jboss.as.clustering.infinispan.io.SimpleExternalizer;
 import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfigurationService.AuthorizationConfiguration;
 import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfigurationService.GlobalStateLocationConfiguration;
 import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfigurationService.TransportConfiguration;
+import org.jboss.as.controller.ModelController;
+import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.as.controller.services.path.PathManagerService;
 import org.jboss.as.jmx.MBeanServerService;
@@ -97,6 +101,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
     private final InjectedValue<ThreadPoolConfiguration> transportThreadPool = new InjectedValue<>();
     private final InjectedValue<ThreadPoolConfiguration> replicationQueueThreadPool = new InjectedValue<>();
     private final InjectedValue<PathManager> pathManager = new InjectedValue<>();
+    private final InjectedValue<ModelController> modelController = new InjectedValue<>();
 
     public CacheContainerConfigurationBuilder(String name) {
         this.name = name;
@@ -110,6 +115,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
     @Override
     public ServiceBuilder<GlobalConfiguration> build(ServiceTarget target) {
         ServiceBuilder<GlobalConfiguration> builder = target.addService(this.getServiceName(), new ValueService<>(this))
+                .addDependency(Services.JBOSS_SERVER_CONTROLLER, ModelController.class, this.modelController)
                 .addDependency(Services.JBOSS_SERVICE_MODULE_LOADER, ModuleLoader.class, this.loader)
                 .addDependency(MBeanServerService.SERVICE_NAME, MBeanServer.class, this.server)
                 .addDependency(ThreadPoolResource.ASYNC_OPERATIONS.getServiceName(this.name), ThreadPoolConfiguration.class, this.asyncOperationsThreadPool)
@@ -226,6 +232,22 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
             statePersistenceBuilder.persistentLocation(persistentLocation);
             String temporaryLocation = pathManager.getValue().resolveRelativePathEntry(statePersistence.getPersistencePath(), statePersistence.getPersistenceRelativeTo());
             statePersistenceBuilder.temporaryLocation(temporaryLocation);
+            statePersistenceBuilder.configurationStorage(statePersistence.getConfigurationStorage());
+            // If the LocalConfigurationStorage is server-aware, apply some context
+            String configurationStorageClass = statePersistence.getConfigurationStorageClass();
+            if (configurationStorageClass != null) {
+                try {
+                    LocalConfigurationStorage localConfigurationStorage = Class.forName(configurationStorageClass, true, loader).asSubclass(LocalConfigurationStorage.class).newInstance();
+                    if (localConfigurationStorage != null && localConfigurationStorage instanceof ServerLocalConfigurationStorage) {
+                        ServerLocalConfigurationStorage serverLocalConfigurationManager = (ServerLocalConfigurationStorage)localConfigurationStorage;
+                        serverLocalConfigurationManager.setRootPath(PathAddress.pathAddress(InfinispanExtension.SUBSYSTEM_PATH).append("cache-container", name));
+                        serverLocalConfigurationManager.setModelControllerClient(modelController.getValue().createClient(Executors.newCachedThreadPool()));
+                    }
+                    statePersistenceBuilder.configurationStorageSupplier(() -> localConfigurationStorage);
+                } catch (Exception e) {
+                    throw new IllegalStateException(e);
+                }
+            }
         }
 
         builder.asyncThreadPool().read(this.asyncOperationsThreadPool.getValue());

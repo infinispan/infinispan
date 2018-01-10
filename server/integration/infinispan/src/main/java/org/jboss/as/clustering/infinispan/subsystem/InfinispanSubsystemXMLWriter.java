@@ -29,6 +29,7 @@ import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.security.impl.ClusterRoleMapper;
 import org.infinispan.security.impl.CommonNameRoleMapper;
 import org.infinispan.security.impl.IdentityRoleMapper;
@@ -142,6 +143,25 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     ModelNode globalState = container.get(ModelKeys.GLOBAL_STATE, ModelKeys.GLOBAL_STATE_NAME);
                     writeStatePathElement(Element.PERSISTENT_LOCATION, ModelKeys.PERSISTENT_LOCATION, writer, globalState);
                     writeStatePathElement(Element.TEMPORARY_LOCATION, ModelKeys.TEMPORARY_LOCATION, writer, globalState);
+                    if (globalState.hasDefined(ModelKeys.CONFIGURATION_STORAGE)) {
+                        ConfigurationStorage configurationStorage = ConfigurationStorage.valueOf(globalState.get(ModelKeys.CONFIGURATION_STORAGE).asString());
+                        switch (configurationStorage) {
+                            case VOLATILE:
+                                writer.writeEmptyElement(Element.VOLATILE_CONFIGURATION_STORAGE.getLocalName());
+                                break;
+                            case OVERLAY:
+                                writer.writeEmptyElement(Element.OVERLAY_CONFIGURATION_STORAGE.getLocalName());
+                                break;
+                            case MANAGED:
+                                writer.writeEmptyElement(Element.MANAGED_CONFIGURATION_STORAGE.getLocalName());
+                                break;
+                            case CUSTOM:
+                                writer.writeStartElement(Element.CUSTOM_CONFIGURATION_STORAGE.getLocalName());
+                                writer.writeAttribute(Attribute.CLASS.getLocalName(), globalState.get(ModelKeys.CONFIGURATION_STORAGE_CLASS).asString());
+                                writer.writeEndElement();
+                                break;
+                        }
+                    }
                     writer.writeEndElement();
                 }
 

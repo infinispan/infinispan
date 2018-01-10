@@ -77,6 +77,8 @@ public class ModelKeys {
     static final String COMPRESSION_NAME = "COMPRESSION";
     static final String CONCURRENCY_LEVEL = "concurrency-level";
     static final String CONFIGURATION = "configuration";
+    static final String CONFIGURATION_STORAGE = "configuration-storage";
+    static final String CONFIGURATION_STORAGE_CLASS = "configuration-storage-class";
     static final String CONFIGURATIONS = "configurations";
     static final String CONFIGURATIONS_NAME = "CONFIGURATIONS";
     static final String CONNECTION_POOL = "connection-pool";
@@ -84,6 +86,7 @@ public class ModelKeys {
     static final String COUNTERS = "counters";
     static final String COUNTERS_NAME = "COUNTERS";
     static final String CREATE_ON_START = "create-on-start";
+    static final String CUSTOM_CONFIGURATION_STORAGE = "custom-configuration-storage";
     static final String CUSTOM_ROLE_MAPPER = "custom-role-mapper";
     static final String DATA_COLUMN = "data-column";
     static final String DATASOURCE = "datasource";
@@ -157,6 +160,7 @@ public class ModelKeys {
     static final String LOCKING_NAME = "LOCKING";
     static final String LOWER_BOUND = "lower-bound";
     static final String MACHINE = "machine";
+    static final String MANAGED_CONFIGURATION_STORAGE = "managed-configuration-storage";
     static final String MAPPER = "mapper";
     static final String MARSHALLER = "marshaller";
     static final String MAX_BATCH_SIZE = "max-batch-size";
@@ -184,6 +188,7 @@ public class ModelKeys {
     static final String OBJECT_NAME = "OBJECT";
     static final String OFF_HEAP_NAME = "OFF-HEAP";
     static final String OUTBOUND_SOCKET_BINDING = "outbound-socket-binding";
+    static final String OVERLAY_CONFIGURATION_STORAGE = "overlay-configuration-storage";
     static final String OWNERS = "owners";
     static final String PARTITION_HANDLING = "partition-handling";
     static final String PARTITION_HANDLING_NAME = "PARTITION_HANDLING";
@@ -277,6 +282,7 @@ public class ModelKeys {
     static final String USERNAME = "username";
     static final String UPPER_BOUND = "upper-bound";
     static final String VALUE = "value";
+    static final String VOLATILE_CONFIGURATION_STORAGE = "volatile-configuration-storage";
     static final String WAIT = "wait";
     static final String WAIT_TIME = "wait-time";
     static final String WHEN_SPLIT = "when-split";

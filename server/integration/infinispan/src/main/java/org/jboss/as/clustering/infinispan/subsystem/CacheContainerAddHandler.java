@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.server.commons.controller.ReloadRequiredAddStepHandler;
 import org.infinispan.server.commons.dmr.ModelNodes;
 import org.infinispan.server.commons.naming.BinderServiceBuilder;
@@ -45,6 +46,7 @@ import org.infinispan.server.jgroups.spi.service.ChannelServiceName;
 import org.infinispan.server.jgroups.spi.service.ChannelServiceNameFactory;
 import org.infinispan.server.jgroups.spi.service.ProtocolStackServiceName;
 import org.infinispan.server.jgroups.subsystem.JGroupsBindingFactory;
+import org.jboss.as.clustering.infinispan.InfinispanLogger;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
@@ -146,6 +148,23 @@ public class CacheContainerAddHandler extends AbstractAddStepHandler {
                 globalStateBuilder.setTemporaryPath(path).setTemporaryRelativeTo(relativeTo);
             } else {
                 globalStateBuilder.setTemporaryPath(defaultPersistentLocation).setTemporaryRelativeTo(ServerEnvironment.SERVER_TEMP_DIR);
+            }
+            ConfigurationStorage configurationStorage = ConfigurationStorage.valueOf(GlobalStateResource.CONFIGURATION_STORAGE.resolveModelAttribute(context, globalState).asString());
+            globalStateBuilder.setConfigurationStorage(configurationStorage);
+            if (configurationStorage.equals(ConfigurationStorage.MANAGED)) {
+                switch (context.getProcessType()) {
+                    case STANDALONE_SERVER:
+                        globalStateBuilder.setConfigurationStorageClass(StandaloneServerLocalConfigurationStorage.class.getName());
+                        break;
+                    case DOMAIN_SERVER:
+                        InfinispanLogger.ROOT_LOGGER.managedConfigurationUnavailableInDomainMode();
+                        break;
+                    default:
+                        // No need
+                        break;
+                }
+            } else if (configurationStorage.equals(ConfigurationStorage.CUSTOM)) {
+                globalStateBuilder.setConfigurationStorageClass(GlobalStateResource.CONFIGURATION_STORAGE_CLASS.resolveModelAttribute(context, globalState).asString());
             }
         }
 

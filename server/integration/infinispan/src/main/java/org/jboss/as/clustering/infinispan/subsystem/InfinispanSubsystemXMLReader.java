@@ -40,6 +40,7 @@ import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.security.impl.ClusterRoleMapper;
 import org.infinispan.security.impl.CommonNameRoleMapper;
@@ -527,6 +528,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
 
    private void parseGlobalState(XMLExtendedStreamReader reader, PathAddress containerAddress,
             Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+        ConfigurationStorage storage = null;
         PathAddress globalStateAddress = containerAddress.append(ModelKeys.GLOBAL_STATE, ModelKeys.GLOBAL_STATE_NAME);
         ModelNode globalState = Util.createAddOperation(globalStateAddress);
         while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
@@ -540,10 +542,43 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     parseGlobalStatePath(reader, globalState, GlobalStateResource.TEMPORARY_STATE_PATH);
                     break;
                 }
+                case VOLATILE_CONFIGURATION_STORAGE: {
+                    if (storage != null) {
+                        throw ParseUtils.unexpectedElement(reader);
+                    }
+                    storage = ConfigurationStorage.VOLATILE;
+                    break;
+                }
+                case OVERLAY_CONFIGURATION_STORAGE: {
+                    if (storage != null) {
+                        throw ParseUtils.unexpectedElement(reader);
+                    }
+                    storage = ConfigurationStorage.OVERLAY;
+                    break;
+                }
+                case MANAGED_CONFIGURATION_STORAGE: {
+                    if (storage != null) {
+                        throw ParseUtils.unexpectedElement(reader);
+                    }
+                    storage = ConfigurationStorage.MANAGED;
+                    break;
+                }
+                case CUSTOM_CONFIGURATION_STORAGE: {
+                    if (storage != null) {
+                        throw ParseUtils.unexpectedElement(reader);
+                    }
+                    storage = ConfigurationStorage.CUSTOM;
+                    String klass = ParseUtils.readStringAttributeElement(reader, Attribute.CLASS.getLocalName());
+                    GlobalStateResource.CONFIGURATION_STORAGE_CLASS.parseAndSetParameter(klass, globalState, reader);
+                    break;
+                }
                 default: {
                     throw ParseUtils.unexpectedElement(reader);
                 }
             }
+        }
+        if (storage != null) {
+            GlobalStateResource.CONFIGURATION_STORAGE.parseAndSetParameter(storage.name(), globalState, reader);
         }
 
         operations.put(globalStateAddress, globalState);

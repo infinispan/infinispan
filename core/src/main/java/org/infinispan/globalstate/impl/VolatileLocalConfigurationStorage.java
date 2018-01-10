@@ -38,9 +38,6 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
    protected ParserRegistry parserRegistry;
    protected GlobalConfiguration globalConfiguration;
 
-   public VolatileLocalConfigurationStorage() {
-   }
-
    public void initialize(EmbeddedCacheManager cacheManager) {
       this.globalConfiguration = cacheManager.getCacheManagerConfiguration();
       this.cacheManager = cacheManager;

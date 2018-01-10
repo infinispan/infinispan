@@ -278,4 +278,19 @@ public interface InfinispanMessages {
 
    @Message(id = 125, value = "%s is not a valid EntryMergePolicy")
    IllegalArgumentException invalidEntryMergePolicy(@Cause Throwable cause, String mergePolicy);
+
+   @Message(id = 126, value = "Cannot create cache '%s'")
+   CacheConfigurationException cannotCreateCache(@Cause Throwable cause, String name);
+
+   @Message(id = 127, value = "Cannot remove cache '%s'")
+   CacheConfigurationException cannotRemoveCache(@Cause Throwable e, String name);
+
+   @Message(id = 128, value = "Cache '%s' does not exist")
+   CacheConfigurationException nonExistingCache(String name);
+
+   @Message(id = 129, value = "Cannot create non-permanent cache '%s'")
+   CacheConfigurationException cannotCreateNonPermamentCache(String name);
+
+   @Message(id = 130, value = "Cannot create cache '%s' since template '%s' does not exist")
+   CacheConfigurationException nonExistingTemplate(String name, String template);
 }
