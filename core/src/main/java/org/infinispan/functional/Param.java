@@ -49,17 +49,17 @@ public interface Param<P> {
     * the write operation only in the in-memory contents of the caches in
     * the cluster.
     *
-    * @apiNote Amongst the old flags, there's one that allows cache store
-    * to be skipped for loading or reading. There's no need for such
-    * per-invocation parameter here, because to avoid loading or reading from
-    * the store, Write-only operations can be called which do not read previous
-    * values from the persistence store.
+    * @apiNote Previously this flag had only two options; PERSIST and SKIP
+    * since it was assumed that an implementation can use write-only command
+    * when it is not interested in the previous value. However sometimes
+    * we are interested in the memory-only data but cannot afford to load it
+    * from persistence.
     *
     * @since 8.0
     */
    @Experimental
    enum PersistenceMode implements Param<PersistenceMode> {
-      PERSIST, SKIP;
+      LOAD_PERSIST, SKIP_PERSIST, SKIP_LOAD, SKIP;
 
       public static final int ID = ParamIds.PERSISTENCE_MODE_ID;
       private static final PersistenceMode[] CACHED_VALUES = values();
@@ -78,7 +78,7 @@ public interface Param<P> {
        * Provides default persistence mode.
        */
       public static PersistenceMode defaultValue() {
-         return PERSIST;
+         return LOAD_PERSIST;
       }
 
       public static PersistenceMode valueOf(int ordinal) {

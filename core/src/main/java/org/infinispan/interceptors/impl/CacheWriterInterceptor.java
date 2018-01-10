@@ -297,7 +297,8 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
          Param<PersistenceMode> persistMode = dataWriteCommand.getParams().get(PersistenceMode.ID);
          switch (persistMode.get()) {
-            case PERSIST:
+            case LOAD_PERSIST:
+            case SKIP_LOAD:
                Object key = dataWriteCommand.getKey();
                CacheEntry entry = rCtx.lookupEntry(key);
                if (entry != null) {
@@ -312,6 +313,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                }
                log.trace("Skipping cache store since entry was not found in context");
                break;
+            case SKIP_PERSIST:
             case SKIP:
                log.trace("Skipping cache store since persistence mode parameter is SKIP");
          }
@@ -351,7 +353,8 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
          Param<PersistenceMode> persistMode = manyEntriesCommand.getParams().get(PersistenceMode.ID);
          switch (persistMode.get()) {
-            case PERSIST:
+            case LOAD_PERSIST:
+            case SKIP_LOAD:
                int storedCount = 0;
                for (Object key : ((WriteCommand) rCommand).getAffectedKeys()) {
                   CacheEntry entry = rCtx.lookupEntry(key);
@@ -371,6 +374,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                if (getStatisticsEnabled())
                   cacheStores.getAndAdd(storedCount);
                break;
+            case SKIP_PERSIST:
             case SKIP:
                log.trace("Skipping cache store since persistence mode parameter is SKIP");
          }

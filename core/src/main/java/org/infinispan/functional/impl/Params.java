@@ -104,7 +104,19 @@ public final class Params {
       ExecutionMode executionMode = (ExecutionMode) params[ExecutionMode.ID].get();
       StatisticsMode statisticsMode = (StatisticsMode) params[StatisticsMode.ID].get();
       long flagsBitSet = 0;
-      if (persistenceMode == PersistenceMode.SKIP) flagsBitSet |= FlagBitSets.SKIP_CACHE_LOAD | FlagBitSets.SKIP_CACHE_STORE;
+      switch (persistenceMode) {
+         case LOAD_PERSIST:
+            break;
+         case SKIP_PERSIST:
+            flagsBitSet |= FlagBitSets.SKIP_CACHE_STORE;
+            break;
+         case SKIP_LOAD:
+            flagsBitSet |= FlagBitSets.SKIP_CACHE_LOAD;
+            break;
+         case SKIP:
+            flagsBitSet |= FlagBitSets.SKIP_CACHE_LOAD | FlagBitSets.SKIP_CACHE_STORE;
+            break;
+      }
       if (lockingMode == LockingMode.SKIP) flagsBitSet |= FlagBitSets.SKIP_LOCKING;
       if (executionMode == ExecutionMode.LOCAL) flagsBitSet |= FlagBitSets.CACHE_MODE_LOCAL;
       else if (executionMode == ExecutionMode.LOCAL_SITE) flagsBitSet |= FlagBitSets.SKIP_XSITE_BACKUP;
@@ -116,6 +128,10 @@ public final class Params {
       Params params = create();
       if ((flagsBitSet & (FlagBitSets.SKIP_CACHE_LOAD | FlagBitSets.SKIP_CACHE_STORE)) != 0) {
          params = params.addAll(PersistenceMode.SKIP);
+      } else if ((flagsBitSet & FlagBitSets.SKIP_CACHE_STORE) != 0) {
+         params = params.addAll(PersistenceMode.SKIP_PERSIST);
+      } else if ((flagsBitSet & FlagBitSets.SKIP_CACHE_LOAD) != 0) {
+         params = params.addAll(PersistenceMode.SKIP_LOAD);
       }
       if ((flagsBitSet & FlagBitSets.SKIP_LOCKING) != 0) {
          params = params.addAll(LockingMode.SKIP);
@@ -148,7 +164,7 @@ public final class Params {
 
    static {
       // make sure that bit-set marshalling will work
-      if (PersistenceMode.values().length > 2) throw new IllegalStateException();
+      if (PersistenceMode.values().length > 4) throw new IllegalStateException();
       if (LockingMode.values().length > 2) throw new IllegalStateException();
       if (ExecutionMode.values().length > 4) throw new IllegalStateException();
       if (StatisticsMode.values().length > 2) throw new IllegalStateException();
@@ -160,18 +176,18 @@ public final class Params {
       ExecutionMode executionMode = (ExecutionMode) params.get(ExecutionMode.ID).get();
       StatisticsMode statisticsMode = (StatisticsMode) params.get(StatisticsMode.ID).get();
       int paramBits = persistenceMode.ordinal()
-            | (lockingMode.ordinal() << 1)
-            | (executionMode.ordinal() << 2)
-            | (statisticsMode.ordinal() << 4);
+            | (lockingMode.ordinal() << 2)
+            | (executionMode.ordinal() << 3)
+            | (statisticsMode.ordinal() << 5);
       output.writeByte(paramBits);
    }
 
    public static Params readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int paramBits = input.readByte();
-      PersistenceMode persistenceMode = PersistenceMode.valueOf(paramBits & 1);
-      LockingMode lockingMode = LockingMode.valueOf((paramBits >>> 1) & 1);
-      ExecutionMode executionMode = ExecutionMode.valueOf((paramBits >>> 2) & 3);
-      StatisticsMode statisticsMode = StatisticsMode.valueOf((paramBits >>> 4) & 1);
+      PersistenceMode persistenceMode = PersistenceMode.valueOf(paramBits & 3);
+      LockingMode lockingMode = LockingMode.valueOf((paramBits >>> 2) & 1);
+      ExecutionMode executionMode = ExecutionMode.valueOf((paramBits >>> 3) & 3);
+      StatisticsMode statisticsMode = StatisticsMode.valueOf((paramBits >>> 5) & 1);
       if (persistenceMode == PersistenceMode.defaultValue()
             && lockingMode == LockingMode.defaultValue()
             && executionMode == ExecutionMode.defaultValue()
