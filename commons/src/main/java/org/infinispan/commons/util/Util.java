@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import javax.naming.Context;
 import javax.security.auth.Subject;
@@ -1025,6 +1026,14 @@ public final class Util {
          }
       }
       return out.toString();
+   }
+
+   public static <T> Supplier<T> getInstanceSupplier(Class<T> klass) {
+      return () -> getInstance(klass);
+   }
+
+   public static <T> Supplier<T> getInstanceSupplier(String className, ClassLoader classLoader) {
+      return () -> getInstance(className, classLoader);
    }
 
   /**

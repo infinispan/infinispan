@@ -570,6 +570,45 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
+      <xs:choice minOccurs="0">
+        <xs:element name="volatile-configuration-storage">
+          <xs:annotation>
+            <xs:documentation>
+              A non-persistent configuration storage.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="overlay-configuration-storage">
+          <xs:annotation>
+            <xs:documentation>
+              A persistent configuration storage which saves runtime configurations to the persistent-location.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="managed-configuration-storage">
+          <xs:annotation>
+            <xs:documentation>
+              A persistent configuration storage for managed environments. This doesn't work in embedded mode.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="custom-configuration-storage">
+          <xs:annotation>
+            <xs:documentation>
+              Uses a custom configuration storage implementation.
+            </xs:documentation>
+          </xs:annotation>
+          <xs:complexType>
+            <xs:attribute name="class" type="xs:string">
+              <xs:annotation>
+                <xs:documentation>
+                  Class of the custom configuration storage implementation.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:attribute>
+          </xs:complexType>
+        </xs:element>
+      </xs:choice>
     </xs:sequence>
   </xs:complexType>
 

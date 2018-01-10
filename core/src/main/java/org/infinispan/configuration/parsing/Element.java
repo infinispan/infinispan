@@ -31,6 +31,7 @@ public enum Element {
     COMMON_NAME_ROLE_MAPPER("common-name-role-mapper"),
     COMPATIBILITY("compatibility"),
     CUSTOM_INTERCEPTORS("custom-interceptors"),
+    CUSTOM_CONFIGURATION_STORAGE("custom-configuration-storage"),
     CUSTOM_ROLE_MAPPER("custom-role-mapper"),
     DATA_CONTAINER("data-container"),
     DEFAULT("default"),
@@ -63,10 +64,13 @@ public enum Element {
     PERSISTENCE("persistence"),
     PERSISTENT_LOCATION("persistent-location"),
     LOCKING("locking"),
+    MANAGED_CONFIGURATION_STORAGE("managed-configuration-storage"),
     MEMORY("memory"),
     MODULES("modules"),
     OBJECT("object"),
     OFFHEAP("off-heap"),
+    OVERLAY_CONFIGURATION_STORAGE("overlay-configuration-storage"),
+    PARTITION_HANDLING("partition-handling"),
     PROPERTIES("properties"),
     PROPERTY("property"),
     RECOVERY("recovery"),
@@ -98,8 +102,8 @@ public enum Element {
     UNSAFE("unsafe"),
     VALUE_DATA_TYPE("value"),
     VERSIONING("versioning"),
+    VOLATILE_CONFIGURATION_STORAGE("volatile-configuration-storage"),
     WRITE_BEHIND("write-behind"),
-    PARTITION_HANDLING("partition-handling"),
     ;
 
     private final String name;

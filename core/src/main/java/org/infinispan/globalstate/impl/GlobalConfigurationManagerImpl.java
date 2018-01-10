@@ -15,7 +15,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.PostStart;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.globalstate.GlobalConfigurationManager;
-import org.infinispan.globalstate.LocalConfigurationManager;
+import org.infinispan.globalstate.LocalConfigurationStorage;
 import org.infinispan.globalstate.ScopeFilter;
 import org.infinispan.globalstate.ScopedState;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -38,12 +38,22 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    private EmbeddedCacheManager cacheManager;
    private Cache<ScopedState, Object> stateCache;
    private ParserRegistry parserRegistry;
-   private LocalConfigurationManager localConfigurationManager;
+   private LocalConfigurationStorage localConfigurationManager;
 
    @Inject
    public void inject(GlobalConfiguration globalConfiguration, EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
-      this.localConfigurationManager = globalConfiguration.globalState().localConfigurationManager();
+      switch(globalConfiguration.globalState().configurationStorage()) {
+         case VOLATILE:
+            this.localConfigurationManager = new VolatileLocalConfigurationStorage();
+            break;
+         case OVERLAY:
+            this.localConfigurationManager = new OverlayLocalConfigurationStorage();
+            break;
+         default:
+            this.localConfigurationManager = globalConfiguration.globalState().configurationStorageClass().get();
+            break;
+      }
    }
 
    @Start
@@ -59,7 +69,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
    @PostStart
    public void postStart() {
-      localConfigurationManager.initialize(cacheManager, this);
+      localConfigurationManager.initialize(cacheManager);
       // Initialize caches which are present in the initial state. We do this before installing the listener.
       for (Map.Entry<ScopedState, Object> e : getStateCache().entrySet()) {
          if (CACHE_SCOPE.equals(e.getKey().getScope()))
@@ -122,7 +132,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       } else {
          configuration = cacheManager.getCacheConfiguration(template);
          if (configuration == null) {
-            throw log.undeclaredConfiguration(cacheName, template);
+            throw log.undeclaredConfiguration(template, cacheName);
          }
       }
       return createCache(cacheName, template, configuration, flags);
@@ -143,7 +153,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       log.debugf("Create cache %s", name);
       ConfigurationBuilderHolder builderHolder = parserRegistry.parse(state.getConfiguration());
       Configuration configuration = builderHolder.getNamedConfigurationBuilders().get(name).build();
-      localConfigurationManager.createCache(name, configuration, state.getFlags());
+      localConfigurationManager.createCache(name, state.getTemplate(), configuration, state.getFlags());
    }
 
    @Override
@@ -152,11 +162,11 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       if (getStateCache().containsKey(cacheScopedState)) {
          getStateCache().remove(cacheScopedState);
       } else {
-         localConfigurationManager.removeCache(name);
+         localConfigurationManager.removeCache(name, flags);
       }
    }
 
    void removeCacheLocally(String name, CacheState state) {
-      localConfigurationManager.removeCache(name);
+      localConfigurationManager.removeCache(name, state.getFlags());
    }
 }

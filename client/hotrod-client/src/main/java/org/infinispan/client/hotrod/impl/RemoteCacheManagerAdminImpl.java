@@ -64,7 +64,10 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    @Override
    public void removeCache(String name) {
       remover.accept(name);
-      operationsFactory.newExecuteOperation("@@cache@remove", Collections.singletonMap(CACHE_NAME, string(name))).execute();
+      Map<String, byte[]> params = new HashMap<>(2);
+      params.put(CACHE_NAME, string(name));
+      if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
+      operationsFactory.newExecuteOperation("@@cache@remove", params).execute();
    }
 
    @Override

@@ -10,6 +10,8 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -20,6 +22,8 @@ import org.testng.annotations.Test;
 public class CacheManagerAdminTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
+      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      global.globalState().configurationStorage(ConfigurationStorage.VOLATILE);
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       addClusterEnabledCacheManager(builder);
@@ -42,7 +46,7 @@ public class CacheManagerAdminTest extends MultipleCacheManagersTest {
       checkConsistencyAcrossCluster("a", configuration);
 
       Exceptions.expectException(CacheConfigurationException.class,
-            "ISPN000374: No such template 'b' when declaring 'nonExistingTemplate'",
+            "ISPN000374: No such template 'nonExistingTemplate' when declaring 'b'",
             () -> manager(0).administration().createCache("b", "nonExistingTemplate"));
 
       // attempt to create an existing cache

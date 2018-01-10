@@ -1,10 +1,12 @@
 package org.infinispan.configuration.global;
 
+import java.util.function.Supplier;
+
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.globalstate.LocalConfigurationManager;
-import org.infinispan.globalstate.impl.EmbeddedLocalConfigurationManager;
+import org.infinispan.globalstate.ConfigurationStorage;
+import org.infinispan.globalstate.LocalConfigurationStorage;
 
 /**
  *
@@ -22,26 +24,31 @@ public class GlobalStateConfiguration {
    public static final AttributeDefinition<String> TEMPORARY_LOCATION = AttributeDefinition
          .builder("temporaryLocation", null, String.class)
             .initializer(() -> SecurityActions.getSystemProperty("java.io.tmpdir")).immutable().build();
-   public static final AttributeDefinition<LocalConfigurationManager> LOCAL_CONFIGURATION_MANAGER = AttributeDefinition
-         .builder("localConfigurationManager", null, LocalConfigurationManager.class)
-         .initializer(EmbeddedLocalConfigurationManager::new).immutable().build();
+   public static final AttributeDefinition<ConfigurationStorage> CONFIGURATION_STORAGE = AttributeDefinition
+         .builder("configurationStorage", ConfigurationStorage.VOLATILE, ConfigurationStorage.class).autoPersist(false)
+         .immutable().build();
+   public static final AttributeDefinition<Supplier<? extends LocalConfigurationStorage>> CONFIGURATION_STORAGE_SUPPLIER = AttributeDefinition
+         .supplierBuilder("configurationStorageSupplier", LocalConfigurationStorage.class).autoPersist(false)
+         .immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(GlobalStateConfiguration.class, ENABLED, PERSISTENT_LOCATION, TEMPORARY_LOCATION, LOCAL_CONFIGURATION_MANAGER);
+      return new AttributeSet(GlobalStateConfiguration.class, ENABLED, PERSISTENT_LOCATION, TEMPORARY_LOCATION, CONFIGURATION_STORAGE, CONFIGURATION_STORAGE_SUPPLIER);
    }
 
    private final AttributeSet attributes;
    private final Attribute<Boolean> enabled;
-   private Attribute<String> persistentLocation;
-   private Attribute<String> temporaryLocation;
-   private Attribute<LocalConfigurationManager> localConfigurationManager;
+   private final Attribute<String> persistentLocation;
+   private final Attribute<String> temporaryLocation;
+   private final Attribute<ConfigurationStorage> configurationStorage;
+   private final Attribute<Supplier<? extends LocalConfigurationStorage>> configurationStorageSupplier;
 
    public GlobalStateConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
       this.enabled = attributes.attribute(ENABLED);
       this.persistentLocation = attributes.attribute(PERSISTENT_LOCATION);
       this.temporaryLocation = attributes.attribute(TEMPORARY_LOCATION);
-      this.localConfigurationManager = attributes.attribute(LOCAL_CONFIGURATION_MANAGER);
+      this.configurationStorage = attributes.attribute(CONFIGURATION_STORAGE);
+      this.configurationStorageSupplier = attributes.attribute(CONFIGURATION_STORAGE_SUPPLIER);
    }
 
    public boolean enabled() {
@@ -65,11 +72,15 @@ public class GlobalStateConfiguration {
       return temporaryLocation.get();
    }
 
+   public ConfigurationStorage configurationStorage() {
+      return configurationStorage.get();
+   }
+
    /**
-    * Returns the @{@link LocalConfigurationManager}
+    * Returns the {@link LocalConfigurationStorage} {@link Supplier}
     */
-   public LocalConfigurationManager localConfigurationManager() {
-      return localConfigurationManager.get();
+   public Supplier<? extends LocalConfigurationStorage> configurationStorageClass() {
+      return configurationStorageSupplier.get();
    }
 
    public AttributeSet attributes() {

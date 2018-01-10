@@ -1,15 +1,18 @@
 package org.infinispan.configuration.global;
 
+import static org.infinispan.configuration.global.GlobalStateConfiguration.CONFIGURATION_STORAGE;
+import static org.infinispan.configuration.global.GlobalStateConfiguration.CONFIGURATION_STORAGE_SUPPLIER;
 import static org.infinispan.configuration.global.GlobalStateConfiguration.ENABLED;
-import static org.infinispan.configuration.global.GlobalStateConfiguration.LOCAL_CONFIGURATION_MANAGER;
 import static org.infinispan.configuration.global.GlobalStateConfiguration.PERSISTENT_LOCATION;
 import static org.infinispan.configuration.global.GlobalStateConfiguration.TEMPORARY_LOCATION;
 
 import java.lang.invoke.MethodHandles;
+import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.globalstate.LocalConfigurationManager;
+import org.infinispan.globalstate.ConfigurationStorage;
+import org.infinispan.globalstate.LocalConfigurationStorage;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -70,10 +73,20 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
    }
 
    /**
-    * Defines the @{@link LocalConfigurationManager}. Defaults to @{@link org.infinispan.globalstate.impl.EmbeddedLocalConfigurationManager}
+    * Defines the {@link ConfigurationStorage} strategy to use. If using {@link ConfigurationStorage#CUSTOM}, then
+    * the actual implementation must be passed by invoking {@link #localConfigurationManager(LocalConfigurationStorage)}
     */
-   public GlobalStateConfigurationBuilder localConfigurationManager(LocalConfigurationManager localConfigurationManager) {
-      attributes.attribute(LOCAL_CONFIGURATION_MANAGER).set(localConfigurationManager);
+   public GlobalStateConfigurationBuilder configurationStorage(ConfigurationStorage storage) {
+      attributes.attribute(CONFIGURATION_STORAGE).set(storage);
+      return this;
+   }
+
+   /**
+    * Defines the @{@link LocalConfigurationStorage}. Defaults to @{@link org.infinispan.globalstate.impl.VolatileLocalConfigurationStorage}
+    */
+   public GlobalStateConfigurationBuilder configurationStorageSupplier(Supplier<? extends LocalConfigurationStorage> configurationStorageSupplier) {
+      configurationStorage(ConfigurationStorage.CUSTOM);
+      attributes.attribute(CONFIGURATION_STORAGE_SUPPLIER).set(configurationStorageSupplier);
       return this;
    }
 
@@ -81,6 +94,9 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
    public void validate() {
       if (attributes.attribute(ENABLED).get() && attributes.attribute(PERSISTENT_LOCATION).isNull()) {
          log.missingGlobalStatePersistentLocation();
+      }
+      if (attributes.attribute(CONFIGURATION_STORAGE).get().equals(ConfigurationStorage.CUSTOM) && attributes.attribute(CONFIGURATION_STORAGE_SUPPLIER).isNull()) {
+         throw log.customStorageStrategyNotSet();
       }
    }
 
@@ -94,5 +110,4 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
       attributes.read(template.attributes());
       return this;
    }
-
 }
