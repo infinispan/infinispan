@@ -554,6 +554,11 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    @Override
+   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapper) {
+      return withWrapping(wrapper, wrapper);
+   }
+
+   @Override
    public AdvancedCache<K, V> withFlags(Flag... flags) {
       AdvancedCache<K, V> returned = super.withFlags(flags);
       if (returned != this && returned instanceof EncoderCache) {
