@@ -45,7 +45,7 @@
             <xs:documentation>Cache store block size.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="cache-size" type="xs:long" default="${RocksDBStore.cacheSize}}">
+        <xs:attribute name="cache-size" type="xs:long" default="${RocksDBStore.cacheSize}">
           <xs:annotation>
             <xs:documentation>Cache size for the cache store.</xs:documentation>
           </xs:annotation>
