@@ -31,6 +31,6 @@ public class GlobalConfigurationStateListener {
    @CacheEntryRemoved
    public void removeCache(CacheEntryRemovedEvent<ScopedState, CacheState> event) {
       String cacheName = event.getKey().getName();
-      gcm.removeCacheLocally(cacheName, event.getValue());
+      gcm.removeCacheLocally(cacheName, event.getOldValue());
    }
 }

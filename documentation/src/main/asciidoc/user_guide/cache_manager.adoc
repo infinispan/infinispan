@@ -86,8 +86,16 @@ Cache<String, String> myCache = manager.administration().withFlags(AdminFlag.PER
 
 ----
 
-In order for the above to work, global state must be enabled and a persistent path configured. +PERMANENT+ cache
-configurations will be stored in a file named _caches.xml_.
+In order for the above to work, global state must be enabled and a suitable configuration storage selected.
+The available configuration stores are:
+
+- `VOLATILE`: as the name implies, this configuration storage does not support +PERMANENT+ caches.
+- `OVERLAY`: this stores configurations in the global state persistent path in a file named _caches.xml_.
+- `MANAGED`: this is only supported in server deployments, and will store +PERMANENT+ caches in the server model.
+- `CUSTOM`: a custom configuration store.
+
+See .link:{javadocroot}/org/infinispan/configuration/global/GlobalStateConfigurationBuilder.html#
+for details.
 
 === Clustering Information
 The `EmbeddedCacheManager` has quite a few methods to provide information

@@ -8,6 +8,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
@@ -27,7 +28,7 @@ public class CacheManagerAdminPermanentTest extends CacheManagerAdminTest {
       if (clear)
          Util.recursiveFileRemove(stateDirectory);
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      global.globalState().enable().persistentLocation(stateDirectory);
+      global.globalState().enable().persistentLocation(stateDirectory).configurationStorage(ConfigurationStorage.OVERLAY);
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       addClusterEnabledCacheManager(global, builder);

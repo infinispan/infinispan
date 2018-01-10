@@ -1,5 +1,7 @@
 package org.infinispan.commons.configuration.attributes;
 
+import java.util.function.Supplier;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.Util;
 
@@ -110,6 +112,14 @@ public final class AttributeDefinition<T> {
 
    public static <T> Builder<T> builder(String name, T defaultValue, Class<T> klass) {
       return new Builder<>(name, defaultValue, klass);
+   }
+
+   public static <T> Builder<Class<? extends T>> classBuilder(String name, Class<T> klass) {
+      return new Builder(name, null, Class.class);
+   }
+
+   public static <T> Builder<Supplier<? extends T>> supplierBuilder(String name, Class<T> klass) {
+      return new Builder(name, null, Supplier.class);
    }
 
    @Override

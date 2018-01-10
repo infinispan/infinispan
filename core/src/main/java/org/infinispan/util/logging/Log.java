@@ -1298,7 +1298,7 @@ public interface Log extends BasicLogger {
    CacheConfigurationException templateConfigurationStartAttempt(String cacheName);
 
    @Message(value = "No such template '%s' when declaring '%s'", id = 374)
-   CacheConfigurationException undeclaredConfiguration(String extend, String name);
+   CacheConfigurationException undeclaredConfiguration(String template, String name);
 
    @Message(value = "Cannot use configuration '%s' as a template", id = 375)
    CacheConfigurationException noConfiguration(String extend);
@@ -1739,4 +1739,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Unable to add a 'null' EntryMergePolicyFactory", id = 509)
    IllegalArgumentException unableToAddNullEntryMergePolicyFactory();
+
+   @Message(value = "ConfigurationStrategy set to CUSTOM, but none specified", id = 510)
+   CacheConfigurationException customStorageStrategyNotSet();
+
+   @Message(value = "ConfigurationStrategy cannot be set to MANAGED in embedded mode", id = 511)
+   CacheConfigurationException managerConfigurationStorageUnavailable();
 }

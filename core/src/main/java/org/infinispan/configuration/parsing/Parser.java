@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -65,6 +66,8 @@ import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.threads.DefaultThreadFactory;
+import org.infinispan.globalstate.ConfigurationStorage;
+import org.infinispan.globalstate.LocalConfigurationStorage;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
@@ -1127,6 +1130,7 @@ public class Parser implements ConfigurationParser {
    private void parseGlobalState(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
       ParseUtils.requireNoAttributes(reader);
       GlobalStateConfigurationBuilder builder = holder.getGlobalConfigurationBuilder().globalState().enable();
+      ConfigurationStorage storage = null;
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
@@ -1138,10 +1142,42 @@ public class Parser implements ConfigurationParser {
                builder.temporaryLocation(parseGlobalStatePath(reader));
                break;
             }
+            case VOLATILE_CONFIGURATION_STORAGE: {
+               if (storage != null) {
+                  throw ParseUtils.unexpectedElement(reader);
+               }
+               storage = ConfigurationStorage.VOLATILE;
+               break;
+            }
+            case OVERLAY_CONFIGURATION_STORAGE: {
+               if (storage != null) {
+                  throw ParseUtils.unexpectedElement(reader);
+               }
+               storage = ConfigurationStorage.OVERLAY;
+               break;
+            }
+            case MANAGED_CONFIGURATION_STORAGE: {
+               if (storage != null) {
+                  throw ParseUtils.unexpectedElement(reader);
+               } else {
+                  throw log.managerConfigurationStorageUnavailable();
+               }
+            }
+            case CUSTOM_CONFIGURATION_STORAGE: {
+               if (storage != null) {
+                  throw ParseUtils.unexpectedElement(reader);
+               }
+               storage = ConfigurationStorage.CUSTOM;
+               builder.configurationStorageSupplier(parseCustomConfigurationStorage(reader, holder));
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedElement(reader);
             }
          }
+      }
+      if (storage != null) {
+         builder.configurationStorage(storage);
       }
    }
 
@@ -1165,6 +1201,12 @@ public class Parser implements ConfigurationParser {
       }
       ParseUtils.requireNoContent(reader);
       return path;
+   }
+
+   private Supplier<? extends LocalConfigurationStorage> parseCustomConfigurationStorage(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      String storageClass = ParseUtils.requireSingleAttribute(reader, Attribute.CLASS.getLocalName());
+      ParseUtils.requireNoContent(reader);
+      return Util.getInstanceSupplier(storageClass, holder.getClassLoader());
    }
 
    private ThreadPoolConfiguration createThreadPoolConfiguration(String threadPoolName, String componentName) {

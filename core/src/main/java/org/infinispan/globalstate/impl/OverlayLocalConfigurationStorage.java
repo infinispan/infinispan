@@ -1,44 +1,28 @@
 package org.infinispan.globalstate.impl;
 
-import static org.infinispan.factories.KnownComponentNames.CACHE_DEPENDENCY_GRAPH;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
 import java.nio.channels.FileLock;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
-import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.eviction.PassivationManager;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.globalstate.GlobalConfigurationManager;
-import org.infinispan.globalstate.LocalConfigurationManager;
-import org.infinispan.jmx.CacheJmxRegistration;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.util.DependencyGraph;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.globalstate.LocalConfigurationStorage;
 
 /**
- * The default implementation of {@link LocalConfigurationManager} for embedded scenarios.
+ * An implementation of {@link LocalConfigurationStorage} which stores
+ * {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#PERMANENT}
  *
  * This component persists cache configurations to the {@link GlobalStateConfiguration#persistentLocation()} in a
  * <pre>caches.xml</pre> file which is read on startup.
@@ -47,20 +31,10 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.2
  */
 
-public class EmbeddedLocalConfigurationManager implements LocalConfigurationManager {
-   private static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+public class OverlayLocalConfigurationStorage extends VolatileLocalConfigurationStorage {
    private ConcurrentHashSet<String> persistentCaches = new ConcurrentHashSet<>();
-   private EmbeddedCacheManager cacheManager;
-   private ParserRegistry parserRegistry;
-   private GlobalConfiguration globalConfiguration;
 
-   public EmbeddedLocalConfigurationManager() {
-   }
-
-   public void initialize(EmbeddedCacheManager cacheManager, GlobalConfigurationManager globalConfigurationManager) {
-      this.globalConfiguration = cacheManager.getCacheManagerConfiguration();
-      this.cacheManager = cacheManager;
-      this.parserRegistry = new ParserRegistry();
+   public OverlayLocalConfigurationStorage() {
    }
 
    @Override
@@ -69,48 +43,19 @@ public class EmbeddedLocalConfigurationManager implements LocalConfigurationMana
          throw log.globalStateDisabled();
    }
 
-   public void createCache(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      Configuration existing = cacheManager.getCacheConfiguration(name);
-      if (existing == null) {
-         cacheManager.defineConfiguration(name, configuration);
-         log.debugf("Defined cache '%s' on '%s' using %s", name, cacheManager.getAddress(), configuration);
-      } else if (!existing.matches(configuration)) {
-         throw log.incompatibleClusterConfiguration(name, configuration, existing);
-      } else {
-         log.debugf("%s already has a cache %s with configuration %s", cacheManager.getAddress(), name, configuration);
-      }
+   public void createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      super.createCache(name, template, configuration, flags);
       if (flags.contains(CacheContainerAdmin.AdminFlag.PERMANENT)) {
          persistentCaches.add(name);
          storeAll();
       }
-      // Ensure the cache is started
-      cacheManager.getCache(name);
    }
 
-
-   public void removeCache(String name) {
-      log.debugf("Remove cache %s", name);
+   public void removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       if (persistentCaches.remove(name)) {
          storeAll();
       }
-
-      GlobalComponentRegistry globalComponentRegistry = cacheManager.getGlobalComponentRegistry();
-      ComponentRegistry cacheComponentRegistry = globalComponentRegistry.getNamedComponentRegistry(name);
-      if (cacheComponentRegistry != null) {
-         cacheComponentRegistry.getComponent(PersistenceManager.class).setClearOnStop(true);
-         cacheComponentRegistry.getComponent(CacheJmxRegistration.class).setUnregisterCacheMBean(true);
-         cacheComponentRegistry.getComponent(PassivationManager.class).skipPassivationOnStop(true);
-         Cache<?, ?> cache = cacheManager.getCache(name, false);
-         if (cache != null) {
-            cache.stop();
-         }
-      }
-      globalComponentRegistry.removeCache(name);
-      // Remove cache configuration and remove it from the computed cache name list
-      globalComponentRegistry.getComponent(ConfigurationManager.class).removeConfiguration(name);
-      // Remove cache from dependency graph
-      //noinspection unchecked
-      globalComponentRegistry.getComponent(DependencyGraph.class, CACHE_DEPENDENCY_GRAPH).remove(name);
+      super.removeCache(name, flags);
    }
 
    public Map<String, Configuration> loadAll() {
