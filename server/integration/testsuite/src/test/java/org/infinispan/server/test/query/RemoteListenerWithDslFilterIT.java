@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -154,7 +155,7 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
          useRawData = true, includeCurrentState = true)
    public static class ClientEntryListener {
 
-      private final Log log = LogFactory.getLog(getClass());
+      private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
       public final BlockingQueue<FilterResult> createEvents = new LinkedBlockingQueue<>();
 

@@ -1,5 +1,6 @@
 package org.infinispan.spring.provider.sample.dao;
 
+import java.lang.invoke.MethodHandles;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -33,7 +34,7 @@ import org.springframework.stereotype.Repository;
 @Repository(value = "jdbcBookDao")
 public class JdbcBookDao implements BaseBookDao {
 
-   private final Log log = LogFactory.getLog(getClass());
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private NamedParameterJdbcTemplate jdbcTemplate;
 

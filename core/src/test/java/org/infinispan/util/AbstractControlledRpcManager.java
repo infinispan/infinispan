@@ -1,5 +1,6 @@
 package org.infinispan.util;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public abstract class AbstractControlledRpcManager implements RpcManager {
 
-   protected final Log log = LogFactory.getLog(getClass());
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    protected final RpcManager realOne;
 
    public AbstractControlledRpcManager(RpcManager realOne) {
