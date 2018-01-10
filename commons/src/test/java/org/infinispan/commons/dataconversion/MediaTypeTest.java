@@ -4,12 +4,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
+import java.util.Queue;
 
 import org.junit.Test;
 
@@ -183,6 +188,50 @@ public class MediaTypeTest {
       assertEquals("*/*", everythingElse.getTypeSubtype());
    }
 
+   @Test
+   public void testMediaTypeMatch() {
+      MediaType one = MediaType.APPLICATION_INFINISPAN_BINARY;
+      MediaType two = MediaType.APPLICATION_INFINISPAN_BINARY;
+
+      assertTrue(one.match(two));
+      assertTrue(two.match(one));
+   }
+
+   @Test
+   public void testMediaTypeUnMatch() {
+      MediaType one = MediaType.APPLICATION_INFINISPAN_BINARY;
+      MediaType two = MediaType.APPLICATION_INFINISPAN_MARSHALLED;
+
+      assertFalse(one.match(two));
+      assertFalse(two.match(one));
+   }
+
+   @Test
+   public void testMediaTypeMatchItself() {
+      MediaType one = MediaType.APPLICATION_INFINISPAN_BINARY;
+      assertTrue(one.match(one));
+   }
+
+   @Test
+   public void testMediaTypeExternalizerNoId() throws Exception {
+      ObjectInOut inOutOrig = new ObjectInOut();
+      MediaType.MediaTypeExternalizer mediaTypeExternalizer = new MediaType.MediaTypeExternalizer();
+      mediaTypeExternalizer.writeObject(inOutOrig, MediaType.APPLICATION_XML);
+      MediaType mediaType = mediaTypeExternalizer.readObject(inOutOrig);
+
+      assertMediaTypeNoParams(mediaType, "application", "xml");
+   }
+
+   @Test
+   public void testMediaTypeExternalizerId() throws Exception {
+      ObjectInOut inOutOrig = new ObjectInOut();
+      MediaType.MediaTypeExternalizer mediaTypeExternalizer = new MediaType.MediaTypeExternalizer();
+      mediaTypeExternalizer.writeObject(inOutOrig, MediaType.TEXT_PLAIN);
+      MediaType mediaType = mediaTypeExternalizer.readObject(inOutOrig);
+
+      assertMediaTypeNoParams(mediaType, "text", "plain");
+   }
+
    private void assertMediaTypeNoParams(MediaType mediaType, String type, String subType) {
       assertEquals(type, mediaType.getType());
       assertEquals(subType, mediaType.getSubType());
@@ -229,4 +278,198 @@ public class MediaTypeTest {
       return map;
    }
 
+   private static class ObjectInOut implements ObjectInput, ObjectOutput {
+
+      private final Queue<Object> buffer = new LinkedList<>();
+
+      @Override
+      public Object readObject() throws ClassNotFoundException, IOException {
+         return buffer.poll();
+      }
+
+      @Override
+      public int read() throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public int read(byte[] b) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public int read(byte[] b, int off, int len) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public long skip(long n) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public int available() throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void writeObject(Object obj) throws IOException {
+         buffer.add(obj);
+      }
+
+      @Override
+      public void write(int b) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void write(byte[] b) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void write(byte[] b, int off, int len) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void writeBoolean(boolean v) throws IOException {
+         buffer.add(v);
+      }
+
+      @Override
+      public void writeByte(int v) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void writeShort(int v) throws IOException {
+         buffer.add((short) v);
+      }
+
+      @Override
+      public void writeChar(int v) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void writeInt(int v) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void writeLong(long v) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void writeFloat(float v) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void writeDouble(double v) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void writeBytes(String s) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void writeChars(String s) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void writeUTF(String s) throws IOException {
+         buffer.add(s);
+      }
+
+      @Override
+      public void flush() throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void close() throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void readFully(byte[] b) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void readFully(byte[] b, int off, int len) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public int skipBytes(int n) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean readBoolean() throws IOException {
+         return (boolean) buffer.poll();
+      }
+
+      @Override
+      public byte readByte() throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public int readUnsignedByte() throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public short readShort() throws IOException {
+         return (short) buffer.poll();
+      }
+
+      @Override
+      public int readUnsignedShort() throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public char readChar() throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public int readInt() throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public long readLong() throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public float readFloat() throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public double readDouble() throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public String readLine() throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public String readUTF() throws IOException {
+         return (String) buffer.poll();
+      }
+   }
 }
