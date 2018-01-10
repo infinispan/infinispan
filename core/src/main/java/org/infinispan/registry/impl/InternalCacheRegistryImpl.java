@@ -3,10 +3,10 @@ package org.infinispan.registry.impl;
 import java.lang.invoke.MethodHandles;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -26,7 +26,7 @@ import org.infinispan.util.logging.LogFactory;
 public class InternalCacheRegistryImpl implements InternalCacheRegistry {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private EmbeddedCacheManager cacheManager;
-   private final ConcurrentMap<String, EnumSet<Flag>> internalCaches = CollectionFactory.makeBoundedConcurrentMap(10);
+   private final ConcurrentMap<String, EnumSet<Flag>> internalCaches = new ConcurrentHashMap<>();
    private final Set<String> privateCaches = new ConcurrentHashSet<>();
 
    @Inject
