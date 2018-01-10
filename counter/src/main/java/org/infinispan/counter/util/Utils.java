@@ -51,7 +51,7 @@ public final class Utils {
    public static Param.PersistenceMode getPersistenceMode(Storage storage) {
       switch (storage) {
          case PERSISTENT:
-            return Param.PersistenceMode.PERSIST;
+            return Param.PersistenceMode.LOAD_PERSIST;
          case VOLATILE:
             return Param.PersistenceMode.SKIP;
          default:
