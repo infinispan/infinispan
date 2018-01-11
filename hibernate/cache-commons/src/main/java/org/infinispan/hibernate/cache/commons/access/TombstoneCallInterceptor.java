@@ -100,7 +100,7 @@ public class TombstoneCallInterceptor extends DDAsyncInterceptor {
 			// We need to first execute the async update and then local one, because if we're on the primary
 			// owner the local future update would fail the async one.
 			// TODO: There is some discrepancy with TombstoneUpdate handling which does not fail the update
-			return setFailed(ctx, command);
+         command.fail();
 		}
 		return null;
 	}
@@ -124,7 +124,7 @@ public class TombstoneCallInterceptor extends DDAsyncInterceptor {
 		if (value == null) {
 			// eviction
 			if (storedValue == null || storedValue instanceof Tombstone) {
-				return setFailed(ctx, command);
+				command.fail();
 			}
 			else {
 				// We have to keep Tombstone, because otherwise putFromLoad could insert a stale entry
@@ -169,15 +169,6 @@ public class TombstoneCallInterceptor extends DDAsyncInterceptor {
 			e.setMetadata(defaultMetadata);
 		}
 		return e.setValue(value);
-	}
-
-	private Object setFailed(InvocationContext ctx, PutKeyValueCommand command) {
-		// This sets command to be unsuccessful, since we don't want to replicate it to backup owner
-		command.setValueMatcher(ValueMatcher.MATCH_NEVER);
-      return invokeNextAndExceptionally( ctx, command, (rCtx, rCommand, throwable) -> {
-         // Ignore
-         return null;
-      } );
 	}
 
 	@Override
