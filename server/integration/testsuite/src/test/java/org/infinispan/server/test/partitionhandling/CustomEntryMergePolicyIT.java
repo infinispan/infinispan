@@ -15,6 +15,7 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,6 +29,8 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 public class CustomEntryMergePolicyIT {
 
+   private static File deployment;
+
    // Reuse the config of the CustomCacheStoreIT
    @InfinispanResource("clustered-mergepolicies")
    RemoteInfinispanServer server;
@@ -38,8 +41,15 @@ public class CustomEntryMergePolicyIT {
       deployedMergePolicy.addPackage(CustomEntryMergePolicy.class.getPackage());
       deployedMergePolicy.addAsServiceProvider(EntryMergePolicy.class, CustomEntryMergePolicy.class);
 
-      deployedMergePolicy.as(ZipExporter.class).exportTo(
-            new File(System.getProperty("server1.dist"), "/standalone/deployments/custom-entry-merge-policy.jar"), true);
+      deployment = new File(System.getProperty("server1.dist"), "/standalone/deployments/custom-entry-merge-policy.jar");
+      deployedMergePolicy.as(ZipExporter.class).exportTo(deployment, true);
+   }
+
+   @AfterClass
+   public static void after() {
+      if (deployment != null) {
+         deployment.delete();
+      }
    }
 
    @Test

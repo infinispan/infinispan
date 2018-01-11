@@ -1736,4 +1736,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot rename file %s to %s", id = 508)
    CacheConfigurationException cannotRenamePersistentFile(String absolutePath, File persistentFile);
+
+   @Message(value = "Unable to add a 'null' EntryMergePolicyFactory", id = 509)
+   IllegalArgumentException unableToAddNullEntryMergePolicyFactory();
 }

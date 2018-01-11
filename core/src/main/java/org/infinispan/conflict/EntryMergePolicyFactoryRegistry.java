@@ -1,12 +1,14 @@
 package org.infinispan.conflict;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A registry for {@link EntryMergePolicyFactory} implementations, which allows {@link EntryMergePolicy} implementations
@@ -23,7 +25,9 @@ import org.infinispan.factories.scopes.Scopes;
 @Scope(Scopes.GLOBAL)
 public class EntryMergePolicyFactoryRegistry {
 
-   private final List<EntryMergePolicyFactory> factories = new ArrayList<>();
+   private static final Log log = LogFactory.getLog(EntryMergePolicyFactoryRegistry.class);
+
+   private final List<EntryMergePolicyFactory> factories = Collections.synchronizedList(new ArrayList<EntryMergePolicyFactory>());
 
    public EntryMergePolicyFactoryRegistry() {
       // Create the factory for local embedded classes
@@ -45,7 +49,9 @@ public class EntryMergePolicyFactoryRegistry {
    }
 
    public void addMergePolicyFactory(EntryMergePolicyFactory factory) {
-      Objects.requireNonNull(factory);
+      if(factory == null)
+         throw log.unableToAddNullEntryMergePolicyFactory();
+
       factories.add(0, factory);
    }
 }
