@@ -11,6 +11,7 @@
         <artifact name="${io.netty:netty-resolver}" />
         <artifact name="${io.netty:netty-transport}" />
         <artifact name="${io.netty:netty-transport-native-epoll}" />
+        <artifact name="${io.netty:netty-transport-native-epoll::linux-x86_64}" />
     </resources>
 
     <dependencies>

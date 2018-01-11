@@ -718,6 +718,12 @@
             <version>${version.netty}</version>
          </dependency>
          <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-native-epoll</artifactId>
+            <version>${version.netty}</version>
+            <classifier>linux-x86_64</classifier>
+         </dependency>
+         <dependency>
             <groupId>org.rocksdb</groupId>
             <artifactId>rocksdbjni</artifactId>
             <version>${version.rocksdb}</version>

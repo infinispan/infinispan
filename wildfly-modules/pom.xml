@@ -24,9 +24,16 @@
       </dependency>
 
       <dependency>
+         <groupId>io.netty</groupId>
+         <artifactId>netty-transport-native-epoll</artifactId>
+         <classifier>linux-x86_64</classifier>
+      </dependency>
+
+      <dependency>
          <groupId>org.apache.ant</groupId>
          <artifactId>ant</artifactId>
       </dependency>
+
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-core</artifactId>
