@@ -135,6 +135,10 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
          e.setChanged(copy.isChanged());
          e.setRemoved(copy.isRemoved());
       }
+      // The effective result of retried command is not safe; we'll go to backup anyway
+      if (!e.isChanged() && !hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
+         successful = false;
+      }
       return StatisticsMode.isSkip(params) ? ret : StatsEnvelope.create(ret, e, prevValue != null, view.isRead());
    }
 

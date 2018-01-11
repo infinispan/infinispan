@@ -191,28 +191,28 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
                   incrementInvocationCount(clazz);
                }
                write.accept(view, null);
-            }).join()),
+            }).join(), false),
       WO_EVAL_VALUE(false, (key, wo, rw, read, write, clazz) ->
             wo.eval(key, null, (v, view) -> {
                      if (isModifying()) {
                         incrementInvocationCount(clazz);
                      }
                      write.accept(view, null);
-                  }).join()),
+                  }).join(), false),
       WO_EVAL_MANY(false, (key, wo, rw, read, write, clazz) ->
             wo.evalMany(Collections.singleton(key), view -> {
                if (isModifying()) {
                   incrementInvocationCount(clazz);
                }
                write.accept(view, null);
-            }).join()),
+            }).join(), true),
       WO_EVAL_MANY_ENTRIES(false, (key, wo, rw, read, write, clazz) ->
             wo.evalMany(Collections.singletonMap(key, null), (v, view) -> {
                      if (isModifying()) {
                         incrementInvocationCount(clazz);
                      }
                      write.accept(view, null);
-                  }).join()),
+                  }).join(), true),
       RW_EVAL(true, (key, wo, rw, read, write, clazz) ->
             rw.eval(key, view -> {
                      if (isModifying()) {
@@ -221,7 +221,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
                      Object ret = read.apply(view);
                      write.accept(view, ret);
                      return ret;
-                  }).join()),
+                  }).join(), false),
       RW_EVAL_VALUE(true, (key, wo, rw, read, write, clazz) ->
             rw.eval(key, null, (v, view) -> {
                      if (isModifying()) {
@@ -230,7 +230,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
                      Object ret = read.apply(view);
                      write.accept(view, ret);
                      return ret;
-                  }).join()),
+                  }).join(), false),
       RW_EVAL_MANY(true, (key, wo, rw, read, write, clazz) ->
             rw.evalMany(Collections.singleton(key), view -> {
                      if (isModifying()) {
@@ -239,7 +239,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
                      Object ret = read.apply(view);
                      write.accept(view, ret);
                      return ret;
-                  }).filter(Objects::nonNull).findAny().orElse(null)),
+                  }).filter(Objects::nonNull).findAny().orElse(null), true),
       RW_EVAL_MANY_ENTRIES(true, (key, wo, rw, read, write, clazz) ->
             rw.evalMany(Collections.singletonMap(key, null), (v, view) -> {
                      if (isModifying()) {
@@ -248,14 +248,16 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
                      Object ret = read.apply(view);
                      write.accept(view, ret);
                      return ret;
-                  }).filter(Objects::nonNull).findAny().orElse(null)),;
+                  }).filter(Objects::nonNull).findAny().orElse(null), true),;
 
       private final Performer action;
       final boolean doesRead;
+      final boolean isMany;
 
-      <K, R> WriteMethod(boolean doesRead, Performer<K, R> action) {
+      <K, R> WriteMethod(boolean doesRead, Performer<K, R> action, boolean isMany) {
          this.doesRead = doesRead;
          this.action = action;
+         this.isMany = isMany;
       }
 
       public <K, R> R eval(K key,

@@ -97,6 +97,10 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
       // should we leak this to stats in write-only commands? we do that for events anyway...
       boolean exists = e.getValue() != null;
       f.accept(EntryViews.writeOnly(e, valueDataConversion));
+      // The effective result of retried command is not safe; we'll go to backup anyway
+      if (!e.isChanged() && !hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
+         successful = false;
+      }
       return Param.StatisticsMode.isSkip(params) ? null : StatsEnvelope.create(null, e, exists, false);
    }
 

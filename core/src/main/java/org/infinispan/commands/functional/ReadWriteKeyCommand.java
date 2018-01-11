@@ -98,6 +98,10 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       boolean exists = e.getValue() != null;
       AccessLoggingReadWriteView<K, V> view = EntryViews.readWrite(e, keyDataConversion, valueDataConversion);
       ret = snapshot(f.apply(view));
+      // The effective result of retried command is not safe; we'll go to backup anyway
+      if (!e.isChanged() && !hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
+         successful = false;
+      }
       return StatisticsMode.isSkip(params) ? ret : StatsEnvelope.create(ret, e, exists, view.isRead());
    }
 
