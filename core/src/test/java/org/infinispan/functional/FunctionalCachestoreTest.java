@@ -56,6 +56,8 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
          assertTrue(store.contains(key), getAddress(cache).toString());
       });
 
+      resetInvocationCount();
+
       method.eval(key, wo, rw,
             view -> {
                assertTrue(view.find().isPresent());
@@ -64,7 +66,11 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
             },
             (view, nil) -> {}, getClass());
 
-      assertInvocations(4);
+      if (method.isMany) {
+         assertInvocations(2);
+      } else {
+         assertInvocations(1);
+      }
    }
 
    public DummyInMemoryStore getStore(Cache cache) {

@@ -92,6 +92,10 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       V decodedValue = (V) valueDataConversion.fromStorage(value);
       boolean exists = e.getValue() != null;
       f.accept(decodedValue, EntryViews.writeOnly(e, valueDataConversion));
+      // The effective result of retried command is not safe; we'll go to backup anyway
+      if (!e.isChanged() && !hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
+         successful = false;
+      }
       return StatisticsMode.isSkip(params) ? null : StatsEnvelope.create(null, e, exists, false);
    }
 

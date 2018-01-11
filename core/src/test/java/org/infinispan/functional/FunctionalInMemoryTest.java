@@ -30,6 +30,20 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
       persistence = false;
    }
 
+   // Expected invocations; many-commands always execute everywhere
+   // Mode                    | O | P | B | Sum
+   // Non-tx orig == owner    | 1 | = | 1 | 2
+   // Non-tx orig != owner    | 0 | 1 | 1 | 2
+   // Non-tx orig == owner RO | 1 | = | 0 | 1
+   // Non-tx orig != owner RO | 0 | 1 | 0 | 1
+   // TX orig == owner RO     | 1 | = | 0 | 1
+   // TX orig == owner RW     | 1 | = | 1 | 2
+   // TX orig == owner WO     | 1 | = | 1 | 2
+   // TX orig == owner WOnoop | 1 | = | 0 | 1
+   // TX orig != owner RO     | 0 | 1 | 0 | 1
+   // TX orig != owner RW     | 0 | 1 | 1 | 2
+   // TX orig != owner WO     | 1 | 1 | 1 | 3 // The write-only command creates the value in context
+   // TX orig != owner WOnoop | 1 | = | 0 | 1 // The write-only command creates the value in context
    @Test(dataProvider = "owningModeAndWriteMethod")
    public void testWriteLoad(boolean isOwner, WriteMethod method) {
       Object key = getKey(isOwner, DIST);
@@ -49,6 +63,9 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
          }
       });
 
+      resetInvocationCount();
+
+      // this does not write anything
       method.eval(key, wo, rw,
             view -> {
                assertTrue(view.find().isPresent());
@@ -57,7 +74,12 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
             },
             (view, nil) -> {}, getClass());
 
-      assertInvocations(Boolean.TRUE.equals(transactional) && !isOwner && !method.doesRead ? 6 : 4);
+      // TODO ISPN-8676: routing optimization for no-write many commands not implemented
+      if (method.isMany) {
+         assertInvocations(Boolean.TRUE.equals(transactional) && !isOwner && !method.doesRead ? 3 : 2);
+      } else {
+         assertInvocations(Boolean.TRUE.equals(transactional) && !isOwner && method.doesRead? 2 : 1);
+      }
    }
 
    @Test(dataProvider = "writeMethods")
