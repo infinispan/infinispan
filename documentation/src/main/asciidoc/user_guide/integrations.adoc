@@ -276,9 +276,9 @@ One common strategy is to use Hibernate Search's JMS Master/Slave or JGroups bac
 
 Refer to the link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/[Hibernate Search documentation] for instructions on how to setup JMS or JGroups backends.
 
-=== JPA/Hibernate 2L Cache
 
-Documentation on how to use Infinispan as second-level cache with JPA/Hibernate can be found link:https://docs.jboss.org/hibernate/orm/5.2/userguide/html_single/Hibernate_User_Guide.html#caching-provider-infinispan[here].
+include::integrations_hibernate_cache.adoc[]
+
 
 ===  JPA / Hibernate OGM [[integrations:hibernate-ogm]]
 
