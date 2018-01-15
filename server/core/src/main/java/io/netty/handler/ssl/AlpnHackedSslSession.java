@@ -32,11 +32,6 @@ public class AlpnHackedSslSession implements SSLSession, ApplicationProtocolAcce
    }
 
    @Override
-   public String getApplicationProtocol() {
-      return engine.getSelectedApplicationProtocol();
-   }
-
-   @Override
    public byte[] getId() {
       return unwrap().getId();
    }
@@ -134,5 +129,10 @@ public class AlpnHackedSslSession implements SSLSession, ApplicationProtocolAcce
    @Override
    public int getApplicationBufferSize() {
       return unwrap().getApplicationBufferSize();
+   }
+
+   @Override
+   public String getNegotiatedApplicationProtocol() {
+      return engine.getSelectedApplicationProtocol();
    }
 }

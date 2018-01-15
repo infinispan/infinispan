@@ -339,6 +339,7 @@
                            !com.sun.jmx.mbeanserver,
                            !infinispan.*,
                            !io.netty.internal.tcnative.*,
+                           !org.conscrypt.*,
                            !javax.cache.*,
                            !javax.enterprise.*,
                            !javax.inject.*,

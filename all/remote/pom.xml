@@ -285,6 +285,7 @@
                            !com.jcraft.jzlib,
                            !com.ning.compress.*,
                            !io.netty.internal.tcnative.*,
+                           !org.conscrypt.*,
                            !lzma.*,
                            !net.jpountz.*,
                            !org.apache.log4j.*,
