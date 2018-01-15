@@ -1,9 +1,12 @@
+com/fasterxml/jackson/core/jackson-databind/**
+com/fasterxml/jackson/jaxrs/jackson-jaxrs-json-provider/**
 com/sun/jsf-impl/**
 javax/faces/**
 org/apache/cxf/**
 org/apache/qpid/**
 org/apache/santuario/**
 org/apache/velocity/**
+org/apache/ws/security/**
 org/jberet/**
 org/jboss/ws/**
 org/picketlink/**
