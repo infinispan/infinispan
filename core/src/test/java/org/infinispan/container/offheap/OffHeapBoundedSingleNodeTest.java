@@ -35,6 +35,8 @@ public class OffHeapBoundedSingleNodeTest extends OffHeapSingleNodeTest {
       dcc.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       // Only start up the 1 cache
       addClusterEnabledCacheManager(dcc);
+
+      configureTimeService();
    }
 
    public void testMoreWriteThanSize() {

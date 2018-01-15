@@ -159,7 +159,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
             return null;
          }
 
-         long actualAddress = performGet(bucketAddress, k);
+         long actualAddress = performGet(bucketAddress, k, peek);
          if (actualAddress != 0) {
             InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(actualAddress);
             if (!peek) {
@@ -179,13 +179,13 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
     * @param k the key to retrieve the address for it if matches
     * @return the address matching the key or 0
     */
-   protected long performGet(long bucketHeadAddress, Object k) {
+   protected long performGet(long bucketHeadAddress, Object k, boolean returnExpired) {
       WrappedBytes wrappedKey = toWrapper(k);
       long address = bucketHeadAddress;
       while (address != 0) {
          long nextAddress = offHeapEntryFactory.getNext(address);
          if (offHeapEntryFactory.equalsKey(address, wrappedKey)) {
-            if (offHeapEntryFactory.isExpired(address)) {
+            if (!returnExpired && offHeapEntryFactory.isExpired(address)) {
                address = 0;
             }
             break;
@@ -547,7 +547,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          checkDeallocation();
          long bucketAddress = memoryLookup.getMemoryAddress(key);
          if (bucketAddress != 0) {
-            long actualAddress = performGet(bucketAddress, key);
+            long actualAddress = performGet(bucketAddress, key, false);
             if (actualAddress != 0) {
                InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(actualAddress);
                passivator.passivate(ice);
@@ -567,7 +567,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       try {
          checkDeallocation();
          long bucketAddress = memoryLookup.getMemoryAddress(key);
-         long actualAddress = bucketAddress == 0 ? 0 : performGet(bucketAddress, key);
+         long actualAddress = bucketAddress == 0 ? 0 : performGet(bucketAddress, key, true);
          InternalCacheEntry<WrappedBytes, WrappedBytes> prev;
          if (actualAddress != 0) {
             prev = offHeapEntryFactory.fromMemory(actualAddress);
