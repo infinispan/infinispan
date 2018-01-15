@@ -213,7 +213,6 @@
       <version.lucene>5.5.5</version.lucene>
       <version.maven-compiler-plugin>3.6.1</version.maven-compiler-plugin>
       <version.maven.source>3.0.1</version.maven.source>
-      <version.netty>4.1.9.Final</version.netty>
       <version.osgi>4.3.1</version.osgi>
       <version.protostream>4.2.0.CR1</version.protostream>
       <version.reactivestreams>1.0.1</version.reactivestreams>
@@ -314,6 +313,9 @@
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld-se>2.3.4.Final</version.weld-se>
       <version.weld>2.3.4.Final</version.weld>
+      <version.netty-tcnative-boringssl-static>2.0.7.Final</version.netty-tcnative-boringssl-static>
+      <!-- The Hot Rod Client's Karaf feature requires this. -->
+      <version.netty>4.1.21.Final</version.netty>
    </properties>
    <dependencyManagement>
       <dependencies>
@@ -1132,9 +1134,9 @@
          </dependency>
          <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty-transport-native-epoll</artifactId>
-            <version>${version.netty}</version>
-            <classifier>linux-x86_64</classifier>
+            <artifactId>netty-tcnative-boringssl-static</artifactId>
+            <version>${version.netty-tcnative-boringssl-static}</version>
+            <scope>test</scope>
          </dependency>
       </dependencies>
    </dependencyManagement>
