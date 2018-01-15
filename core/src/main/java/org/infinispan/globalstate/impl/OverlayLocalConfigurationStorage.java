@@ -77,7 +77,9 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
 
    private void storeAll() {
       try {
-         File temp = File.createTempFile("caches", null, new File(globalConfiguration.globalState().persistentLocation()));
+         File sharedDirectory = new File(globalConfiguration.globalState().sharedPersistentLocation());
+         sharedDirectory.mkdirs();
+         File temp = File.createTempFile("caches", null, sharedDirectory);
          Map<String, Configuration> configurationMap = new HashMap<>();
          for (String cacheName : persistentCaches) {
             configurationMap.put(cacheName, cacheManager.getCacheConfiguration(cacheName));
@@ -103,10 +105,10 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
    }
 
    private File getPersistentFile() {
-      return new File(globalConfiguration.globalState().persistentLocation(), "caches.xml");
+      return new File(globalConfiguration.globalState().sharedPersistentLocation(), "caches.xml");
    }
 
    private File getPersistentFileLock() {
-      return new File(globalConfiguration.globalState().persistentLocation(), "caches.xml.lck");
+      return new File(globalConfiguration.globalState().sharedPersistentLocation(), "caches.xml.lck");
    }
 }

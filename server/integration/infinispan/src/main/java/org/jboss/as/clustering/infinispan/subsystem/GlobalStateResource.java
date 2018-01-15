@@ -62,6 +62,11 @@ public class GlobalStateResource extends SimpleResourceDefinition {
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(ServerEnvironment.SERVER_DATA_DIR)).build();
 
+    static final SimpleAttributeDefinition SHARED_PERSISTENT_RELATIVE_TO = new SimpleAttributeDefinitionBuilder(ModelKeys.RELATIVE_TO,
+          ModelType.STRING, true).setXmlName(Attribute.RELATIVE_TO.getLocalName()).setAllowExpression(false)
+          .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+          .setDefaultValue(new ModelNode().set(ServerEnvironment.SERVER_DATA_DIR)).build();
+
     static final SimpleAttributeDefinition TEMPORARY_RELATIVE_TO = new SimpleAttributeDefinitionBuilder(ModelKeys.RELATIVE_TO,
             ModelType.STRING, true).setXmlName(Attribute.RELATIVE_TO.getLocalName()).setAllowExpression(false)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
@@ -69,6 +74,13 @@ public class GlobalStateResource extends SimpleResourceDefinition {
 
     static final ObjectTypeAttributeDefinition PERSISTENT_LOCATION_PATH =
             ObjectTypeAttributeDefinition.Builder.of(ModelKeys.PERSISTENT_LOCATION, PATH, PERSISTENT_RELATIVE_TO)
+                .setAllowNull(true)
+                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                .setXmlName(ModelKeys.PERSISTENT_LOCATION)
+                .build();
+
+    static final ObjectTypeAttributeDefinition SHARED_PERSISTENT_LOCATION_PATH =
+          ObjectTypeAttributeDefinition.Builder.of(ModelKeys.SHARED_PERSISTENT_LOCATION, PATH, SHARED_PERSISTENT_RELATIVE_TO)
                 .setAllowNull(true)
                 .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                 .setXmlName(ModelKeys.PERSISTENT_LOCATION)
@@ -97,7 +109,10 @@ public class GlobalStateResource extends SimpleResourceDefinition {
                 .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                 .build();
 
-    static final AttributeDefinition[] ATTRIBUTES = { PERSISTENT_LOCATION_PATH, TEMPORARY_STATE_PATH, CONFIGURATION_STORAGE,  CONFIGURATION_STORAGE_CLASS};
+    static final AttributeDefinition[] ATTRIBUTES = {
+          PERSISTENT_LOCATION_PATH, SHARED_PERSISTENT_LOCATION_PATH, TEMPORARY_STATE_PATH,
+          CONFIGURATION_STORAGE,  CONFIGURATION_STORAGE_CLASS
+    };
 
     GlobalStateResource() {
         super(GLOBAL_STATE_PATH,

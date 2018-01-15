@@ -1745,4 +1745,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "ConfigurationStrategy cannot be set to MANAGED in embedded mode", id = 511)
    CacheConfigurationException managerConfigurationStorageUnavailable();
+
+   @Message(value = "Cannot acquire lock '%s' for persistent global state", id = 512)
+   CacheConfigurationException globalStateCannotAcquireLockFile(@Cause Throwable cause, File lockFile);
 }

@@ -1138,6 +1138,10 @@ public class Parser implements ConfigurationParser {
                builder.persistentLocation(parseGlobalStatePath(reader));
                break;
             }
+            case SHARED_PERSISTENT_LOCATION: {
+               builder.sharedPersistentLocation(parseGlobalStatePath(reader));
+               break;
+            }
             case TEMPORARY_LOCATION: {
                builder.temporaryLocation(parseGlobalStatePath(reader));
                break;

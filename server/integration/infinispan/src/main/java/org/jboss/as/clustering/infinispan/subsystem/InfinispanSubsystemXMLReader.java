@@ -538,6 +538,10 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     parseGlobalStatePath(reader, globalState, GlobalStateResource.PERSISTENT_LOCATION_PATH);
                     break;
                 }
+                case SHARED_PERSISTENT_LOCATION: {
+                    parseGlobalStatePath(reader, globalState, GlobalStateResource.SHARED_PERSISTENT_LOCATION_PATH);
+                    break;
+                }
                 case TEMPORARY_LOCATION: {
                     parseGlobalStatePath(reader, globalState, GlobalStateResource.TEMPORARY_STATE_PATH);
                     break;

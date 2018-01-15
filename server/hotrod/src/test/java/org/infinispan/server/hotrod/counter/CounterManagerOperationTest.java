@@ -91,9 +91,11 @@ public class CounterManagerOperationTest extends HotRodMultiNodeTest implements 
    @Override
    protected void createCacheManagers() {
       for (int i = 0; i < nodeCount(); i++) {
+         char id = 'A';
+         id += i;
          GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().clusteredDefault();
          builder.globalState().enable()
-               .persistentLocation(PERSISTENT_LOCATION)
+               .persistentLocation(PERSISTENT_LOCATION + File.separator + id)
                .temporaryLocation(TMP_LOCATION);
          EmbeddedCacheManager cm = createClusteredCacheManager(builder, hotRodCacheConfiguration());
          cacheManagers.add(cm);

@@ -23,12 +23,23 @@ public class CacheManagerAdminPermanentTest extends CacheManagerAdminTest {
       createStatefulCacheManager("B", false);
    }
 
+   protected boolean isShared() {
+      return false;
+   }
+
    private void createStatefulCacheManager(String id, boolean clear) {
       String stateDirectory = TestingUtil.tmpDirectory(this.getClass().getSimpleName() + File.separator + id);
       if (clear)
          Util.recursiveFileRemove(stateDirectory);
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      global.globalState().enable().persistentLocation(stateDirectory).configurationStorage(ConfigurationStorage.OVERLAY);
+      global.globalState().enable().persistentLocation(stateDirectory).
+            configurationStorage(ConfigurationStorage.OVERLAY);
+      if (isShared()) {
+         String sharedDirectory = TestingUtil.tmpDirectory(this.getClass().getSimpleName() + File.separator + "COMMON");
+         global.globalState().sharedPersistentLocation(sharedDirectory);
+      } else {
+         global.globalState().sharedPersistentLocation(stateDirectory);
+      }
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       addClusterEnabledCacheManager(global, builder);

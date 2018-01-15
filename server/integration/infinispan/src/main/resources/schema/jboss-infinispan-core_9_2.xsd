@@ -358,15 +358,22 @@
 
     <xs:complexType name="global-state">
         <xs:sequence>
-            <xs:element name="persistent-location" type="tns:global-state-path" minOccurs="0" maxOccurs="1">
+            <xs:element name="persistent-location" type="tns:global-state-path" minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
                         Defines the path where global state for this cache-container will be stored. The data stored at this location is required for graceful
-                        shutdown and restore.
+                        shutdown and restore. This path must NOT be shared among multiple containers.
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="temporary-location" type="tns:global-state-path" minOccurs="0" maxOccurs="1">
+            <xs:element name="shared-persistent-location" type="tns:global-state-path" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        Defines the path where shared global state for this cache-container will be stored. This path may be shared across multiple containers.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="temporary-location" type="tns:global-state-path" minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
                         Defines the path which will be used to store temporary data.

@@ -13,6 +13,8 @@ import org.jboss.msc.value.Value;
 public class GlobalStateLocationConfigurationBuilder implements Value<GlobalStateLocationConfiguration>, GlobalStateLocationConfiguration {
     private String persistencePath;
     private String persistenceRelativeTo;
+    private String sharedPersistencePath;
+    private String sharedPersistenceRelativeTo;
     private String temporaryPath;
     private String temporaryRelativeTo;
     private ConfigurationStorage configurationStorage;
@@ -35,6 +37,26 @@ public class GlobalStateLocationConfigurationBuilder implements Value<GlobalStat
 
     public GlobalStateLocationConfigurationBuilder setPersistenceRelativeTo(String relativeTo) {
         this.persistenceRelativeTo = relativeTo;
+        return this;
+    }
+
+    @Override
+    public String getSharedPersistencePath() {
+        return sharedPersistencePath;
+    }
+
+    public GlobalStateLocationConfigurationBuilder setSharedPersistencePath(String path) {
+        this.sharedPersistencePath = path;
+        return this;
+    }
+
+    @Override
+    public String getSharedPersistenceRelativeTo() {
+        return sharedPersistenceRelativeTo;
+    }
+
+    public GlobalStateLocationConfigurationBuilder setSharedPersistenceRelativeTo(String relativeTo) {
+        this.sharedPersistenceRelativeTo = relativeTo;
         return this;
     }
 
