@@ -136,14 +136,22 @@ public class CacheContainerAddHandler extends AbstractAddStepHandler {
             if (globalState.hasDefined(ModelKeys.PERSISTENT_LOCATION)) {
                 ModelNode persistentLocation = globalState.get(ModelKeys.PERSISTENT_LOCATION);
                 final String path = ModelNodes.asString(GlobalStateResource.PATH.resolveModelAttribute(context, persistentLocation), defaultPersistentLocation);
-                final String relativeTo = ModelNodes.asString(GlobalStateResource.TEMPORARY_RELATIVE_TO.resolveModelAttribute(context, persistentLocation));
+                final String relativeTo = ModelNodes.asString(GlobalStateResource.PERSISTENT_RELATIVE_TO.resolveModelAttribute(context, persistentLocation));
                 globalStateBuilder.setPersistencePath(path).setPersistenceRelativeTo(relativeTo);
             } else {
                 globalStateBuilder.setPersistencePath(defaultPersistentLocation).setPersistenceRelativeTo(ServerEnvironment.SERVER_DATA_DIR);
             }
+            if (globalState.hasDefined(ModelKeys.SHARED_PERSISTENT_LOCATION)) {
+                ModelNode persistentLocation = globalState.get(ModelKeys.SHARED_PERSISTENT_LOCATION);
+                final String path = ModelNodes.asString(GlobalStateResource.SHARED_PERSISTENT_LOCATION_PATH.resolveModelAttribute(context, persistentLocation), defaultPersistentLocation);
+                final String relativeTo = ModelNodes.asString(GlobalStateResource.SHARED_PERSISTENT_RELATIVE_TO.resolveModelAttribute(context, persistentLocation));
+                globalStateBuilder.setSharedPersistencePath(path).setSharedPersistenceRelativeTo(relativeTo);
+            } else {
+                globalStateBuilder.setSharedPersistencePath(defaultPersistentLocation).setSharedPersistenceRelativeTo(ServerEnvironment.SERVER_DATA_DIR);
+            }
             if (globalState.hasDefined(ModelKeys.TEMPORARY_LOCATION)) {
                 ModelNode persistentLocation = globalState.get(ModelKeys.TEMPORARY_LOCATION);
-                final String path = ModelNodes.asString(GlobalStateResource.PATH.resolveModelAttribute(context, persistentLocation), defaultPersistentLocation);
+                final String path = ModelNodes.asString(GlobalStateResource.TEMPORARY_STATE_PATH.resolveModelAttribute(context, persistentLocation), defaultPersistentLocation);
                 final String relativeTo = ModelNodes.asString(GlobalStateResource.TEMPORARY_RELATIVE_TO.resolveModelAttribute(context, persistentLocation));
                 globalStateBuilder.setTemporaryPath(path).setTemporaryRelativeTo(relativeTo);
             } else {

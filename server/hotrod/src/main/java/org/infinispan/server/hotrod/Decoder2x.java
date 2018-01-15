@@ -901,12 +901,6 @@ class ExecRequestContext extends NamedParametricRequestContext<byte[]> {
    }
 }
 
-class AdminRequestContext extends NamedParametricRequestContext<String> {
-   AdminRequestContext(String name, int paramSize, Map<String, String> params) {
-      super(name, paramSize, params);
-   }
-}
-
 class ClientListenerRequestContext {
    private final byte[] listenerId;
    private final boolean includeCurrentState;
