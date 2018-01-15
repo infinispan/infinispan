@@ -237,6 +237,7 @@ public class ModelKeys {
     static final String CAPACITY_FACTOR = "capacity-factor";
     static final String SECURITY_REALM = "security-realm";
     static final String SHARED = "shared";
+    static final String SHARED_PERSISTENT_LOCATION = "shared-persistent-location";
     static final String SHUTDOWN_TIMEOUT = "shutdown-timeout";
     static final String SIMPLE_CACHE = "simple-cache";
 

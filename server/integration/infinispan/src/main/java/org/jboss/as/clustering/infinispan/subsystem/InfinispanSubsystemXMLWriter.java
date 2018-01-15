@@ -142,6 +142,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     writer.writeStartElement(Element.GLOBAL_STATE.getLocalName());
                     ModelNode globalState = container.get(ModelKeys.GLOBAL_STATE, ModelKeys.GLOBAL_STATE_NAME);
                     writeStatePathElement(Element.PERSISTENT_LOCATION, ModelKeys.PERSISTENT_LOCATION, writer, globalState);
+                    writeStatePathElement(Element.SHARED_PERSISTENT_LOCATION, ModelKeys.SHARED_PERSISTENT_LOCATION, writer, globalState);
                     writeStatePathElement(Element.TEMPORARY_LOCATION, ModelKeys.TEMPORARY_LOCATION, writer, globalState);
                     if (globalState.hasDefined(ModelKeys.CONFIGURATION_STORAGE)) {
                         ConfigurationStorage configurationStorage = ConfigurationStorage.valueOf(globalState.get(ModelKeys.CONFIGURATION_STORAGE).asString());

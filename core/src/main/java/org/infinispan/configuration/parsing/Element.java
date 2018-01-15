@@ -80,6 +80,7 @@ public enum Element {
     ROOT("infinispan"),
     SCATTERED_CACHE("scattered-cache"),
     SCATTERED_CACHE_CONFIGURATION("scattered-cache-configuration"),
+    SHARED_PERSISTENT_LOCATION("shared-persistent-location"),
     SCHEDULED_THREAD_POOL("scheduled-thread-pool"),
     SECURITY("security"),
     SERIALIZATION("serialization"),
@@ -124,7 +125,7 @@ public enum Element {
     private static final Map<String, Element> MAP;
 
     static {
-        final Map<String, Element> map = new HashMap<String, Element>(8);
+        final Map<String, Element> map = new HashMap<>(8);
         for (Element element : values()) {
             final String name = element.getLocalName();
             if (name != null) map.put(name, element);

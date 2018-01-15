@@ -552,17 +552,28 @@
 
   <xs:complexType name="global-state">
     <xs:sequence>
-      <xs:element name="persistent-location" type="tns:global-state-path" minOccurs="1" maxOccurs="1">
+      <xs:element name="persistent-location" type="tns:global-state-path" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
             Defines the filesystem path where persistent state data which needs to survive container restarts
             should be stored. The data stored at this location is required for graceful
-            shutdown and restore. Defaults to the user.dir system property which usually is where the
+            shutdown and restore. This path must NOT be shared among multiple instances.
+            Defaults to the user.dir system property which usually is where the
             application was started. This value should be overridden to a more appropriate location.
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="temporary-location" type="tns:global-state-path" minOccurs="0" maxOccurs="1">
+      <xs:element name="shared-persistent-location" type="tns:global-state-path" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Defines the filesystem path where shared persistent state data which needs to survive container restarts
+            should be stored. This path can be safely shared among multiple instances.
+            Defaults to the user.dir system property which usually is where the
+            application was started. This value should be overridden to a more appropriate location.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="temporary-location" type="tns:global-state-path" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
             Defines the filesystem path where temporary state should be stored. Defaults to the value of the

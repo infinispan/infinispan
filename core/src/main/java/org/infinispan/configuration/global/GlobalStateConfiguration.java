@@ -21,6 +21,9 @@ public class GlobalStateConfiguration {
    public static final AttributeDefinition<String> PERSISTENT_LOCATION = AttributeDefinition
          .builder("persistentLocation", null, String.class)
             .initializer(() -> SecurityActions.getSystemProperty("user.dir")).immutable().build();
+   public static final AttributeDefinition<String> SHARED_PERSISTENT_LOCATION = AttributeDefinition
+         .builder("sharedPersistentLocation", null, String.class)
+         .initializer(() -> SecurityActions.getSystemProperty("user.dir")).immutable().build();
    public static final AttributeDefinition<String> TEMPORARY_LOCATION = AttributeDefinition
          .builder("temporaryLocation", null, String.class)
             .initializer(() -> SecurityActions.getSystemProperty("java.io.tmpdir")).immutable().build();
@@ -32,12 +35,13 @@ public class GlobalStateConfiguration {
          .immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(GlobalStateConfiguration.class, ENABLED, PERSISTENT_LOCATION, TEMPORARY_LOCATION, CONFIGURATION_STORAGE, CONFIGURATION_STORAGE_SUPPLIER);
+      return new AttributeSet(GlobalStateConfiguration.class, ENABLED, PERSISTENT_LOCATION, SHARED_PERSISTENT_LOCATION, TEMPORARY_LOCATION, CONFIGURATION_STORAGE, CONFIGURATION_STORAGE_SUPPLIER);
    }
 
    private final AttributeSet attributes;
    private final Attribute<Boolean> enabled;
    private final Attribute<String> persistentLocation;
+   private Attribute<String> sharedPersistentLocation;
    private final Attribute<String> temporaryLocation;
    private final Attribute<ConfigurationStorage> configurationStorage;
    private final Attribute<Supplier<? extends LocalConfigurationStorage>> configurationStorageSupplier;
@@ -46,6 +50,7 @@ public class GlobalStateConfiguration {
       this.attributes = attributes.checkProtection();
       this.enabled = attributes.attribute(ENABLED);
       this.persistentLocation = attributes.attribute(PERSISTENT_LOCATION);
+      this.sharedPersistentLocation = attributes.attribute(SHARED_PERSISTENT_LOCATION);
       this.temporaryLocation = attributes.attribute(TEMPORARY_LOCATION);
       this.configurationStorage = attributes.attribute(CONFIGURATION_STORAGE);
       this.configurationStorageSupplier = attributes.attribute(CONFIGURATION_STORAGE_SUPPLIER);
@@ -58,10 +63,19 @@ public class GlobalStateConfiguration {
    /**
     * Returns the filesystem path where persistent state data which needs to survive container
     * restarts should be stored. Defaults to the user.dir system property which usually is where the
-    * application was started.
+    * application was started. Warning: this path must NOT be shared with other instances.
     */
    public String persistentLocation() {
       return persistentLocation.get();
+   }
+
+   /**
+    * Returns the filesystem path where shared persistent state data which needs to survive container
+    * restarts should be stored. Defaults to the user.dir system property which usually is where the
+    * application was started. This path may be shared among multiple instances.
+    */
+   public String sharedPersistentLocation() {
+      return sharedPersistentLocation.get();
    }
 
    /**
@@ -91,6 +105,4 @@ public class GlobalStateConfiguration {
    public String toString() {
       return "GlobalStateConfiguration [attributes=" + attributes + "]";
    }
-
-
 }

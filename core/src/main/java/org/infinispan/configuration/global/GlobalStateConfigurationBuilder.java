@@ -4,6 +4,7 @@ import static org.infinispan.configuration.global.GlobalStateConfiguration.CONFI
 import static org.infinispan.configuration.global.GlobalStateConfiguration.CONFIGURATION_STORAGE_SUPPLIER;
 import static org.infinispan.configuration.global.GlobalStateConfiguration.ENABLED;
 import static org.infinispan.configuration.global.GlobalStateConfiguration.PERSISTENT_LOCATION;
+import static org.infinispan.configuration.global.GlobalStateConfiguration.SHARED_PERSISTENT_LOCATION;
 import static org.infinispan.configuration.global.GlobalStateConfiguration.TEMPORARY_LOCATION;
 
 import java.lang.invoke.MethodHandles;
@@ -55,11 +56,23 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
    /**
     * Defines the filesystem path where persistent state data which needs to survive container restarts
     * should be stored. The data stored at this location is required for graceful
-      shutdown and restore. Defaults to the user.dir system property which usually is where the
+    * shutdown and restore. This path must NOT be shared among multiple instances.
+    * Defaults to the user.dir system property which usually is where the
     * application was started. This value should be overridden to a more appropriate location.
     */
    public GlobalStateConfigurationBuilder persistentLocation(String location) {
       attributes.attribute(PERSISTENT_LOCATION).set(location);
+      return this;
+   }
+
+   /**
+    * Defines the filesystem path where shared persistent state data which needs to survive container restarts
+    * should be stored. This path can be safely shared among multiple instances.
+    * Defaults to the user.dir system property which usually is where the
+    * application was started. This value should be overridden to a more appropriate location.
+    */
+   public GlobalStateConfigurationBuilder sharedPersistentLocation(String location) {
+      attributes.attribute(SHARED_PERSISTENT_LOCATION).set(location);
       return this;
    }
 

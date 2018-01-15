@@ -1,7 +1,6 @@
 package org.infinispan.commons.util;
 
 import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -434,7 +433,7 @@ public final class Util {
        }
     }
 
-   public static void close(Closeable cl) {
+   public static void close(AutoCloseable cl) {
       if (cl == null) return;
       try {
          cl.close();
@@ -450,8 +449,8 @@ public final class Util {
       }
    }
 
-   public static void close(Closeable... cls) {
-      for (Closeable cl : cls) {
+   public static void close(AutoCloseable... cls) {
+      for (AutoCloseable cl : cls) {
          close(cl);
       }
    }

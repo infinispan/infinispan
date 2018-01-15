@@ -15,6 +15,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
+import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -40,14 +41,24 @@ public class RemoteCacheAdminPermanentTest extends MultiHotRodServersTest {
       return addStatefulHotRodServer(builder, serverId++);
    }
 
+   protected boolean isShared() {
+      return false;
+   }
+
    protected HotRodServer addStatefulHotRodServer(ConfigurationBuilder builder, char id) {
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
       String stateDirectory = TestingUtil.tmpDirectory(this.getClass().getSimpleName() + File.separator + id);
       if (clear)
          Util.recursiveFileRemove(stateDirectory);
-      gcb.globalState().enable().persistentLocation(stateDirectory);
-
+      gcb.globalState().enable().persistentLocation(stateDirectory).
+         configurationStorage(ConfigurationStorage.OVERLAY);
+      if (isShared()) {
+         String sharedDirectory = TestingUtil.tmpDirectory(this.getClass().getSimpleName() + File.separator + "COMMON");
+         gcb.globalState().sharedPersistentLocation(sharedDirectory);
+      } else {
+         gcb.globalState().sharedPersistentLocation(stateDirectory);
+      }
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(gcb, builder);
       cm.defineConfiguration("template", builder.build());
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();

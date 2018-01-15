@@ -82,8 +82,10 @@ public class RemoteCounterManagerTest extends AbstractCounterTest implements Cou
 
    @Override
    protected void modifyGlobalConfiguration(GlobalConfigurationBuilder builder) {
+      char id = 'A';
+      id += cacheManagers.size();
       builder.globalState().enable()
-            .persistentLocation(PERSISTENT_LOCATION)
+            .persistentLocation(PERSISTENT_LOCATION + File.separator + id)
             .temporaryLocation(TMP_LOCATION);
    }
 

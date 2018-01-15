@@ -54,6 +54,8 @@ public class EmbeddedCacheManagerConfigurationService {
     interface GlobalStateLocationConfiguration {
         String getPersistencePath();
         String getPersistenceRelativeTo();
+        String getSharedPersistencePath();
+        String getSharedPersistenceRelativeTo();
         String getTemporaryPath();
         String getTemporaryRelativeTo();
         ConfigurationStorage getConfigurationStorage();

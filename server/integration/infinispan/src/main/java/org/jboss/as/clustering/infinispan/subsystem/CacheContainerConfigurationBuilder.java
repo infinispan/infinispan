@@ -230,7 +230,9 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
             GlobalStateConfigurationBuilder statePersistenceBuilder = builder.globalState().enable();
             String persistentLocation = pathManager.getValue().resolveRelativePathEntry(statePersistence.getPersistencePath(), statePersistence.getPersistenceRelativeTo());
             statePersistenceBuilder.persistentLocation(persistentLocation);
-            String temporaryLocation = pathManager.getValue().resolveRelativePathEntry(statePersistence.getPersistencePath(), statePersistence.getPersistenceRelativeTo());
+            String sharedPersistentLocation = pathManager.getValue().resolveRelativePathEntry(statePersistence.getSharedPersistencePath(), statePersistence.getSharedPersistenceRelativeTo());
+            statePersistenceBuilder.sharedPersistentLocation(sharedPersistentLocation);
+            String temporaryLocation = pathManager.getValue().resolveRelativePathEntry(statePersistence.getTemporaryPath(), statePersistence.getTemporaryRelativeTo());
             statePersistenceBuilder.temporaryLocation(temporaryLocation);
             statePersistenceBuilder.configurationStorage(statePersistence.getConfigurationStorage());
             // If the LocalConfigurationStorage is server-aware, apply some context
