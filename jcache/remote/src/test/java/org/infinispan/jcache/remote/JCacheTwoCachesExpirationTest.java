@@ -43,8 +43,12 @@ public class JCacheTwoCachesExpirationTest extends AbstractTwoCachesExpirationTe
       createClusteredCaches(2, "expiry", getExpiryCacheConfig());
       cacheManagers.forEach(cm -> replaceComponent(cm, TimeService.class, controlledTimeService, true));
 
-      hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(cacheManagers.get(0), new HotRodServerConfigurationBuilder().adminOperationsHandler(new EmbeddedServerAdminOperationHandler()));
-      hotRodServer2 = HotRodClientTestingUtil.startHotRodServer(cacheManagers.get(1), new HotRodServerConfigurationBuilder().adminOperationsHandler(new EmbeddedServerAdminOperationHandler()));
+      hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(
+            cacheManagers.get(0),
+            new HotRodServerConfigurationBuilder().adminOperationsHandler(new EmbeddedServerAdminOperationHandler()));
+      hotRodServer2 = HotRodClientTestingUtil.startHotRodServer(
+            cacheManagers.get(1),
+            new HotRodServerConfigurationBuilder().adminOperationsHandler(new EmbeddedServerAdminOperationHandler()));
       testSpecificClassLoader = new JCacheTestingUtil.TestClassLoader(JCacheTwoCachesExpirationTest.class.getClassLoader());
 
       Properties properties = new Properties();

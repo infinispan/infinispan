@@ -53,7 +53,7 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
    public void createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       Configuration existing = cacheManager.getCacheConfiguration(name);
       if (existing == null) {
-         cacheManager.defineConfiguration(name, configuration);
+         SecurityActions.defineConfiguration(cacheManager, name, configuration);
          log.debugf("Defined cache '%s' on '%s' using %s", name, cacheManager.getAddress(), configuration);
       } else if (!existing.matches(configuration)) {
          throw log.incompatibleClusterConfiguration(name, configuration, existing);

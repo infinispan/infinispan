@@ -11,6 +11,7 @@
                     </authorization>
                 </security>
                 <transport lock-timeout="240000"/>
+                <distributed-cache-configuration name="template"/>
                 <distributed-cache name="testcache" remote-timeout="30000" >
                     <security>
                         <authorization roles="admin reader writer supervisor" enabled="true" />

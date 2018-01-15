@@ -1,5 +1,6 @@
 package org.infinispan.server.core.admin;
 
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.concurrent.Executor;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
+import org.infinispan.security.Security;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.spi.TaskEngine;
@@ -45,7 +47,11 @@ public abstract class AdminOperationsHandler implements TaskEngine {
       AdminServerTask<T> task = tasks.get(taskName);
       return CompletableFuture.supplyAsync(() -> {
          try {
-            return task.execute(context);
+            if (context.getSubject().isPresent()) {
+               return Security.doAs(context.getSubject().get(), (PrivilegedAction<T>) () -> task.execute(context));
+            } else {
+               return task.execute(context);
+            }
          } catch (CacheException e) {
             throw e;
          } catch (Exception e) {
