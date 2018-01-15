@@ -409,6 +409,11 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          // value and keyLength
          offset += 4 + keyLength;
 
+         // If it has version that means we wrote the size as well which goes after key length
+         if ((metadataType & HAS_VERSION) != 0) {
+            offset += 4;
+         }
+
          switch (metadataType & 0xFC) {
             case MORTAL:
                metadataBytes = new byte[16];
@@ -434,5 +439,40 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
 
    static private boolean requiresMetadataSize(byte type) {
       return (type & (CUSTOM | HAS_VERSION)) != 0;
+   }
+
+   @Override
+   public long calculateSize(WrappedBytes key, WrappedBytes value, Metadata metadata) {
+      long totalSize = evictionEnabled ? 24 : 8;
+      totalSize += HEADER_LENGTH;
+      totalSize += key.getLength() + value.getLength();
+      long metadataSize = 0;
+      if (metadata instanceof EmbeddedMetadata) {
+         EntryVersion version = metadata.version();
+         if (version != null) {
+            try {
+               metadataSize += marshaller.objectToByteBuffer(version).length;
+            } catch (IOException | InterruptedException e) {
+               throw new CacheException(e);
+            }
+            // We have to write the size of the version
+            metadataSize += 4;
+         }
+         if (metadata.maxIdle() >= 0) {
+            metadataSize += 16;
+         }
+         if (metadata.lifespan() >= 0) {
+            metadataSize += 16;
+         }
+      } else {
+         // We have to write the size of the metadata object
+         metadataSize += 4;
+         try {
+            metadataSize += marshaller.objectToByteBuffer(metadata).length;
+         } catch (IOException | InterruptedException e) {
+            throw new CacheException(e);
+         }
+      }
+      return UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(totalSize + metadataSize);
    }
 }
