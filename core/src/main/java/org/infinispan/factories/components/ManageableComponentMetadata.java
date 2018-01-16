@@ -18,17 +18,17 @@ import org.infinispan.jmx.annotations.ManagedOperation;
  * @author Manik Surtani
  * @since 5.1
  */
-public class ManageableComponentMetadata extends ComponentMetadata {
+public final class ManageableComponentMetadata extends ComponentMetadata {
 
    private String jmxObjectName;
    private String description;
    private Set<JmxAttributeMetadata> attributeMetadata;
    private Set<JmxOperationMetadata> operationMetadata;
 
-   public ManageableComponentMetadata(Class<?> component, List<Method> injectMethods, List<Method> startMethods, List<Method> postStartMethods, List<Method> stopMethods, boolean global, boolean survivesRestarts, List<Field> managedAttributeFields, List<Method> managedAttributeMethods, List<Method> managedOperationMethods, MBean mbean) {
+   ManageableComponentMetadata(Class<?> component, List<Method> injectMethods, List<Method> startMethods, List<Method> postStartMethods, List<Method> stopMethods, boolean global, boolean survivesRestarts, List<Field> managedAttributeFields, List<Method> managedAttributeMethods, List<Method> managedOperationMethods, MBean mbean) {
       super(component, injectMethods, startMethods, postStartMethods, stopMethods, global, survivesRestarts);
       if ((managedAttributeFields != null && !managedAttributeFields.isEmpty()) || (managedAttributeMethods != null && !managedAttributeMethods.isEmpty())) {
-         attributeMetadata =  new HashSet<JmxAttributeMetadata>((managedAttributeFields == null ? 0 : managedAttributeFields.size()) + (managedAttributeMethods == null ? 0 : managedAttributeMethods.size()));
+         attributeMetadata = new HashSet<>((managedAttributeFields == null ? 0 : managedAttributeFields.size()) + (managedAttributeMethods == null ? 0 : managedAttributeMethods.size()));
 
          if (managedAttributeFields != null) {
             for (Field f: managedAttributeFields) attributeMetadata.add(new JmxAttributeMetadata(f));
@@ -40,7 +40,7 @@ public class ManageableComponentMetadata extends ComponentMetadata {
       }
 
       if (managedOperationMethods != null && !managedOperationMethods.isEmpty()) {
-         operationMetadata = new HashSet<JmxOperationMetadata>(managedOperationMethods.size());
+         operationMetadata = new HashSet<>(managedOperationMethods.size());
          for (Method m: managedOperationMethods) operationMetadata.add(new JmxOperationMetadata(m));
       }
 

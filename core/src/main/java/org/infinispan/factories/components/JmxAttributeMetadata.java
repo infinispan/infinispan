@@ -13,7 +13,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
  * @author Manik Surtani
  * @since 5.1
  */
-public class JmxAttributeMetadata implements Serializable {
+public final class JmxAttributeMetadata implements Serializable {
    private String name;
    private String description;
    private boolean writable;
@@ -26,13 +26,13 @@ public class JmxAttributeMetadata implements Serializable {
       writable = annotation.writable();
    }
 
-   public JmxAttributeMetadata(Field field) {
+   JmxAttributeMetadata(Field field) {
       this(field.getAnnotation(ManagedAttribute.class));
       name = field.getName();
       type = field.getType().toString();
    }
 
-   public JmxAttributeMetadata(Method method) {
+   JmxAttributeMetadata(Method method) {
       this(method.getAnnotation(ManagedAttribute.class));
       useSetter = true;
       String methodName = method.getName();

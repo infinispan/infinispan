@@ -15,8 +15,9 @@ import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
-@MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
+@MetaInfServices
 public class LifecycleCallbacks implements ModuleLifecycle {
+
    private static final Log log = LogFactory.getLog(LifecycleCallbacks.class, Log.class);
 
    private ObjectName interpreterObjName;

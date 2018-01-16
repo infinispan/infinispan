@@ -6,6 +6,7 @@ import org.infinispan.cli.connection.jmx.JMXConnection;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices
+@SuppressWarnings("unused")
 public class HttpJMXRemotingConnector implements Connector {
 
    public HttpJMXRemotingConnector() {

@@ -8,7 +8,7 @@ import org.kohsuke.MetaInfServices;
  * @since 9.0
  */
 @MetaInfServices
-public class CounterMetadataFileFinder implements ModuleMetadataFileFinder {
+public final class CounterMetadataFileFinder implements ModuleMetadataFileFinder {
 
    @Override
    public String getMetadataFilename() {

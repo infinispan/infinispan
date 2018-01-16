@@ -4,6 +4,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.kohsuke.MetaInfServices;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
@@ -12,6 +13,7 @@ import org.infinispan.lifecycle.ModuleLifecycle;
  * @author Galder Zamarreño
  * @since 5.0
  */
+@MetaInfServices
 public class LifecycleCallbacks implements ModuleLifecycle {
 
    static ComponentMetadataRepo componentMetadataRepo;

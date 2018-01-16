@@ -35,6 +35,7 @@ import org.kohsuke.MetaInfServices;
    @Namespace(uri = "urn:infinispan:config:store:rest:7.1", root = "rest-store"),
    @Namespace(uri = "urn:infinispan:config:store:rest:7.0", root = "rest-store"),
 })
+@SuppressWarnings("unused")
 public class RestStoreConfigurationParser implements ConfigurationParser {
 
    private static final Log log = LogFactory.getLog(RestStoreConfigurationParser.class, Log.class);

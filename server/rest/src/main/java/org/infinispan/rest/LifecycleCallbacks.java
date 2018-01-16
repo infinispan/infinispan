@@ -14,6 +14,7 @@ import org.infinispan.rest.dataconversion.TextBinaryTranscoder;
 import org.infinispan.rest.dataconversion.TextObjectTranscoder;
 import org.infinispan.rest.dataconversion.XMLObjectTranscoder;
 import org.infinispan.rest.operations.mime.MimeMetadata;
+import org.kohsuke.MetaInfServices;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific {@link org.infinispan.commons.marshall.AdvancedExternalizer}
@@ -22,6 +23,7 @@ import org.infinispan.rest.operations.mime.MimeMetadata;
  * @author Galder Zamarreño
  * @since 5.3
  */
+@MetaInfServices
 public class LifecycleCallbacks implements ModuleLifecycle {
 
    @Override

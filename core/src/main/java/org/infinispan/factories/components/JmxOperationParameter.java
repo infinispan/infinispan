@@ -11,12 +11,12 @@ import javax.management.MBeanParameterInfo;
  * @author Tristan Tarrant
  * @since 5.2.3
  */
-public class JmxOperationParameter implements Serializable {
-   final String name;
-   final String type;
-   final String description;
+public final class JmxOperationParameter implements Serializable {
+   private final String name;
+   private final String type;
+   private final String description;
 
-   public JmxOperationParameter(String name, String type, String description) {
+   JmxOperationParameter(String name, String type, String description) {
       this.name = name;
       this.type = type;
       this.description = description;

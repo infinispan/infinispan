@@ -10,6 +10,7 @@ import org.kohsuke.MetaInfServices;
  * @since 5.2
  */
 @MetaInfServices(org.infinispan.cli.interpreter.codec.Codec.class)
+@SuppressWarnings("unused")
 public class NoneCodec extends AbstractCodec {
 
    @Override

@@ -284,6 +284,12 @@
           <version>0.12.1</version>
           <scope>test</scope>
        </dependency>
+        <dependency>
+            <groupId>org.kohsuke.metainf-services</groupId>
+            <artifactId>metainf-services</artifactId>
+            <optional>true</optional>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <properties>

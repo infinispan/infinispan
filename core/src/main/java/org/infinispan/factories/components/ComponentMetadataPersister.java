@@ -43,7 +43,6 @@ public class ComponentMetadataPersister {
    public static void main(String[] args) throws ClassNotFoundException, IOException {
       // When run off the command-line or a build script, this program takes in two arguments: the path containing
       // class files to scan, and the output file to generate.
-      long startTime = System.nanoTime();
       String path = args[0];
       String outputFile = args[1];
 
@@ -90,7 +89,7 @@ public class ComponentMetadataPersister {
             }
          }
 
-         if (hasErrors && Boolean.getBoolean("infinispan.isCoreModule"))
+         if (hasErrors)
             throw new RuntimeException("Could not pass sanity check of all annotated components and their respective factories/dependencies.");
       }
       writeMetadata(repo, outputFile);
@@ -110,7 +109,6 @@ public class ComponentMetadataPersister {
       }
    }
 
-
    private static boolean isValidClassFile(File f) {
       // Valid classes end with .class
       return f.getName().endsWith(".class");
@@ -119,11 +117,9 @@ public class ComponentMetadataPersister {
    private static void processClass(ComponentMetadataRepo repo, Class<?> clazz, String className) {
       MBean mbean = ReflectionUtil.getAnnotation(clazz, MBean.class);
 
-      boolean survivesRestarts;
-      boolean isGlobal;
       // Could still be a valid component.
-      isGlobal = ScopeDetector.detectScope(clazz) == Scopes.GLOBAL;
-      survivesRestarts = ReflectionUtil.getAnnotation(clazz, SurvivesRestarts.class) != null;
+      boolean isGlobal = ScopeDetector.detectScope(clazz) == Scopes.GLOBAL;
+      boolean survivesRestarts = ReflectionUtil.getAnnotation(clazz, SurvivesRestarts.class) != null;
 
       List<Method> injectMethods = ReflectionUtil.getAllMethods(clazz, Inject.class);
       List<Method> startMethods = ReflectionUtil.getAllMethods(clazz, Start.class);
@@ -164,7 +160,7 @@ public class ComponentMetadataPersister {
    private static void writeMetadata(ComponentMetadataRepo repo, String metadataFile) throws IOException {
       File file = new File(metadataFile);
       File parent = file.getParentFile();
-      if(!parent.exists() && !parent.mkdirs()){
+      if (!parent.exists() && !parent.mkdirs()) {
          throw new IllegalStateException("Couldn't create dir: " + parent);
       }
 

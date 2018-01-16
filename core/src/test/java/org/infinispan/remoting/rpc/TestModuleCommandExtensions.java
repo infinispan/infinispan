@@ -11,11 +11,14 @@ import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.ByteString;
+import org.kohsuke.MetaInfServices;
 
 /**
  * @author anistor@redhat.com
  * @since 5.3
  */
+@MetaInfServices
+@SuppressWarnings("unused")
 public class TestModuleCommandExtensions implements ModuleCommandExtensions {
 
    @Override
