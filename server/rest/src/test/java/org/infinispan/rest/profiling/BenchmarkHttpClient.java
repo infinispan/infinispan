@@ -15,7 +15,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.infinispan.rest.http2.Http2Client;
+import org.infinispan.rest.http2.NettyHttpClient;
 
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -32,7 +32,7 @@ import io.netty.util.CharsetUtil;
  */
 public class BenchmarkHttpClient {
 
-   private Http2Client http2Client;
+   private NettyHttpClient nettyHttpClient;
    private HttpClient http1Client;
 
    private ExecutorCompletionService executorCompletionService;
@@ -46,7 +46,7 @@ public class BenchmarkHttpClient {
       if (!OpenSsl.isAlpnSupported()) {
          throw new IllegalStateException("OpenSSL is not present, can not test TLS/ALPN support");
       }
-      http2Client = Http2Client.newClientWithAlpn(keystorePath, keystorePassword);
+      nettyHttpClient = NettyHttpClient.newHttp2ClientWithALPN(keystorePath, keystorePassword);
 
       SslContextFactory sslContextFactory = new SslContextFactory();
       sslContextFactory.setTrustStorePassword(trustStorePath);
@@ -59,7 +59,7 @@ public class BenchmarkHttpClient {
    }
 
    public BenchmarkHttpClient() {
-      http2Client = Http2Client.newClientWithHttp11Upgrade();
+      nettyHttpClient = NettyHttpClient.newHttp2ClientWithHttp11Upgrade();
       http1Client = new HttpClient();
    }
 
@@ -70,7 +70,7 @@ public class BenchmarkHttpClient {
          executorCompletionService.submit(() -> {
             if (http2) {
                FullHttpRequest getRequest = new DefaultFullHttpRequest(HTTP_1_1, GET, "/rest/default/" + key);
-               http2Client.sendRequest(getRequest);
+               nettyHttpClient.sendRequest(getRequest);
             } else {
                try {
                   String scheme = usesTLS ? "https" : "http";
@@ -87,7 +87,7 @@ public class BenchmarkHttpClient {
          executorCompletionService.take().get();
       }
       if (http2) {
-         http2Client.awaitForResponses();
+         nettyHttpClient.getResponses();
       }
    }
 
@@ -98,7 +98,7 @@ public class BenchmarkHttpClient {
             if (http2) {
                FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/default/" + randomKey,
                      wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
-               http2Client.sendRequest(putValueInCacheRequest);
+               nettyHttpClient.sendRequest(putValueInCacheRequest);
                return 1;
             } else {
                try {
@@ -118,7 +118,7 @@ public class BenchmarkHttpClient {
          executorCompletionService.take().get();
       }
       if (http2) {
-         http2Client.awaitForResponses();
+         nettyHttpClient.getResponses();
       }
    }
 
@@ -127,7 +127,7 @@ public class BenchmarkHttpClient {
       this.port = port;
       this.http2 = http2;
       if (http2)
-         http2Client.start(address, port);
+         nettyHttpClient.start(address, port);
       else
          http1Client.start();
       executor = Executors.newFixedThreadPool(threads);
@@ -136,7 +136,7 @@ public class BenchmarkHttpClient {
 
    public void stop() throws Exception {
       if (http2)
-         http2Client.stop();
+         nettyHttpClient.stop();
       else
          http1Client.stop();
       executor.shutdownNow();

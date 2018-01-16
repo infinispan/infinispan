@@ -24,7 +24,7 @@ public class SslConfigurationBuilder<T extends ProtocolServerConfiguration, S ex
    private SslEngineConfigurationBuilder defaultDomainConfigurationBuilder = new SslEngineConfigurationBuilder(this);
    private Map<String, SslEngineConfigurationBuilder> sniDomains;
 
-   SslConfigurationBuilder(ProtocolServerConfigurationChildBuilder<T, S> builder) {
+   public SslConfigurationBuilder(ProtocolServerConfigurationChildBuilder<T, S> builder) {
       super(builder);
       sniDomains = new HashMap<>();
       defaultDomainConfigurationBuilder = new SslEngineConfigurationBuilder(this);

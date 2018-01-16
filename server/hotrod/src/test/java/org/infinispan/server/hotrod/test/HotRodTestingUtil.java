@@ -32,6 +32,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
@@ -116,19 +117,24 @@ public class HotRodTestingUtil {
       return startHotRodServer(manager, port, 0, host(), port, delay);
    }
 
-   public static HotRodServer startHotRodServerWithoutTransport() {
-      return startHotRodServerWithoutTransport(new HotRodServerConfigurationBuilder());
+   public static HotRodServer startHotRodServerWithoutTransport(String... definedCaches) {
+      return startHotRodServerWithoutTransport(new HotRodServerConfigurationBuilder(), definedCaches);
    }
 
-   public static HotRodServer startHotRodServerWithoutTransport(HotRodServerConfigurationBuilder builder) {
+   public static HotRodServer startHotRodServerWithoutTransport(HotRodServerConfigurationBuilder builder, String... definedCaches) {
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder();
 
-      ConfigurationBuilder cacheConfiguration = new ConfigurationBuilder();
-      cacheConfiguration.compatibility().enable();
+      Configuration cacheConfiguration = new ConfigurationBuilder().
+            compatibility().enable().build();
 
       builder.startTransport(false);
 
-      return startHotRodServer(new DefaultCacheManager(globalConfiguration.build(), cacheConfiguration.build()), builder);
+      DefaultCacheManager cacheManager = new DefaultCacheManager(globalConfiguration.build(), cacheConfiguration);
+      for (String cache : definedCaches) {
+         cacheManager.defineConfiguration(cache, cacheConfiguration);
+      }
+
+      return startHotRodServer(cacheManager, builder);
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, int port, int idleTimeout,

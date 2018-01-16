@@ -359,6 +359,11 @@
                    addSecRealm2="${other.parts}/hotrod-ssl-realm-with-sni2.xml"
                    modifyInfinispan="${infinispan.parts}/multitenancy.xml"
                    infinispanServerEndpoint="${other.parts}/cachecontainer-endpoints-multitenancy.xml"/>
+
+        <transform in="clustered.xml" out="testsuite/hotrod-ssl-with-single-port.xml"
+                   addSecRealm="${other.parts}/client-cert-realm.xml"
+                   infinispanServerEndpoint="${other.parts}/cachecontainer-endpoints-single-port.xml"/>
+
         <transform in="clustered.xml" out="testsuite/clustered-hotrod-rolling-upgrade.xml"
                    modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"
                    modifyInfinispan="${infinispan.parts}/rolling-upgrades-clustered-${new.server.schema.version}.xml"

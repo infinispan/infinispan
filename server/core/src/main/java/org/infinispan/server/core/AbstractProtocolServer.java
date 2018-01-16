@@ -161,7 +161,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       return configuration.host();
    }
 
-   public int getPort() {
+   public Integer getPort() {
       if (transport != null) {
          return transport.getPort();
       }

@@ -20,7 +20,7 @@ package org.infinispan.server.endpoint.subsystem;
 
 import java.util.Optional;
 
-import org.infinispan.server.router.configuration.builder.MultiTenantRouterConfigurationBuilder;
+import org.infinispan.server.router.configuration.builder.RouterConfigurationBuilder;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
@@ -47,31 +47,62 @@ class RouterSubsystemAdd extends AbstractAddStepHandler {
       // Read the full model
       ModelNode config = Resource.Tools.readModel(context.readResource(PathAddress.EMPTY_ADDRESS));
 
-      MultiTenantRouterConfigurationBuilder configuration = new MultiTenantRouterConfigurationBuilder();
-      MultiTenantRouterService routerService = new MultiTenantRouterService(configuration, getServiceName(config));
+      RouterConfigurationBuilder configuration = new RouterConfigurationBuilder();
+      RouterService routerService = new RouterService(configuration, getServiceName(config));
 
-      final ServiceName MultitenantRouterServiceName = EndpointUtils.getServiceName(operation, "router");
-      ServiceBuilder<?> builder = context.getServiceTarget().addService(MultitenantRouterServiceName, routerService);
-      EndpointUtils.addSocketBindingDependency(context, builder, operation.get(ModelKeys.HOTROD_SOCKET_BINDING).asString(), routerService.getHotrodSocketBinding());
-      EndpointUtils.addSocketBindingDependency(context, builder, operation.get(ModelKeys.REST_SOCKET_BINDING).asString(), routerService.getRestSocketBinding());
+      final ServiceName routerServiceName = EndpointUtils.getServiceName(operation, "router");
+      ServiceBuilder<?> builder = context.getServiceTarget().addService(routerServiceName, routerService);
 
       ModelNode multiTenancyInnerConfiguration = config.get(ModelKeys.MULTI_TENANCY, ModelKeys.MULTI_TENANCY_NAME);
+      ModelNode SinglePortInnerConfiguration = config.get(ModelKeys.SINGLE_PORT, ModelKeys.SINGLE_PORT_NAME);
 
-      addHotRod(context, multiTenancyInnerConfiguration, routerService, builder);
-      addRest(context, multiTenancyInnerConfiguration, routerService, builder);
+      addMultiTenantRest(context, operation, multiTenancyInnerConfiguration, routerService, builder);
+      addMultiTenantHotRod(context, operation, multiTenancyInnerConfiguration, routerService, builder);
+
+      addSinglePortHotRod(context, operation, SinglePortInnerConfiguration, routerService, builder);
 
       builder.install();
    }
 
-   private void addRest(OperationContext context, ModelNode config, MultiTenantRouterService routerService, ServiceBuilder<?> builder) throws OperationFailedException {
+   private void addSinglePortHotRod(OperationContext context, ModelNode operation, ModelNode config, RouterService routerService, ServiceBuilder<?> builder) throws OperationFailedException {
+      if (config.isDefined()) {
+         EndpointUtils.addSocketBindingDependency(context, builder, operation.get(ModelKeys.SINGLE_PORT_SOCKET_BINDING).asString(), routerService.getSinglePortSocketBinding());
+         // We are parsing this model: {
+         //    "security-realm" => "ClientCertRealm",
+         //    "hotrod" => {"single-port-hotrod" => {"name" => "single-port-hotrod"}},
+         //    "rest" => {"single-port-rest" => {"name" => "single-port-rest"}}
+         //}
+         RouterService.SinglePortRouting singlePortRouting = routerService.getSinglePortRouting();
+         // We use endpoint names as keys in the model. That's very handy while parsing and writing to an XML
+         // but it's causes a bit of headache when reading.
+         ModelNode hotRodModelNode = config.get(ModelKeys.HOTROD).asList().get(0).get(0);
+         ModelNode restModelNode = config.get(ModelKeys.REST).asList().get(0).get(0);
+         ModelNode securityRealmModelNode = SinglePortResource.SECURITY_REALM.resolveModelAttribute(context, config);
+         String securityRealm = securityRealmModelNode.asString();
+         String hotRodServerName = SinglePortHotRodResource.NAME.resolveModelAttribute(context, hotRodModelNode).asString();
+         String restServerName = SinglePortRestResource.NAME.resolveModelAttribute(context, restModelNode).asString();
+         if (hotRodModelNode.isDefined()) {
+            EndpointUtils.addHotRodDependency(builder, hotRodServerName, singlePortRouting.getHotrodServer());
+         }
+         if (restModelNode.isDefined()) {
+            EndpointUtils.addRestDependency(builder, restServerName, singlePortRouting.getRestServer());
+         }
+         if (securityRealmModelNode.isDefined()) {
+            EndpointUtils.addSecurityRealmDependency(builder, securityRealm, singlePortRouting.getSecurityRealm());
+         }
+      }
+   }
+
+   private void addMultiTenantRest(OperationContext context, ModelNode operation, ModelNode config, RouterService routerService, ServiceBuilder<?> builder) throws OperationFailedException {
       if (config.get(ModelKeys.REST).isDefined()) {
+         EndpointUtils.addSocketBindingDependency(context, builder, operation.get(ModelKeys.REST_SOCKET_BINDING).asString(), routerService.getRestSocketBinding());
          for (ModelNode r : config.get(ModelKeys.REST).asList()) {
             ModelNode restNode = r.get(0);
-            String restName = RouterRestResource.NAME.resolveModelAttribute(context, restNode).asString();
+            String restName = MultiTenantRestResource.NAME.resolveModelAttribute(context, restNode).asString();
             if (restNode.get(ModelKeys.PREFIX).isDefined()) {
                for (ModelNode prefixNode : restNode.get(ModelKeys.PREFIX).asList()) {
                   String pathPrefix = PrefixResource.PATH.resolveModelAttribute(context, prefixNode.get(0)).asString();
-                  MultiTenantRouterService.RestRouting restRouting = routerService.getRestRouting(pathPrefix, restName);
+                  RouterService.RestRouting restRouting = routerService.getRestRouting(pathPrefix, restName);
                   EndpointUtils.addRestDependency(builder, restName, restRouting.getRest());
                }
             }
@@ -79,11 +110,12 @@ class RouterSubsystemAdd extends AbstractAddStepHandler {
       }
    }
 
-   private void addHotRod(OperationContext context, ModelNode config, MultiTenantRouterService routerService, ServiceBuilder<?> builder) throws OperationFailedException {
+   private void addMultiTenantHotRod(OperationContext context, ModelNode operation, ModelNode config, RouterService routerService, ServiceBuilder<?> builder) throws OperationFailedException {
       if(config.get(ModelKeys.HOTROD).isDefined()) {
+         EndpointUtils.addSocketBindingDependency(context, builder, operation.get(ModelKeys.HOTROD_SOCKET_BINDING).asString(), routerService.getHotrodSocketBinding());
          for(ModelNode hr : config.get(ModelKeys.HOTROD).asList()) {
             ModelNode hotRod = hr.get(0);
-            String hotRodName = RouterHotRodResource.NAME.resolveModelAttribute(context, hotRod).asString();
+            String hotRodName = MultiTenantHotRodResource.NAME.resolveModelAttribute(context, hotRod).asString();
             routerService.tcpNoDelay(RouterConnectorResource.TCP_NODELAY.resolveModelAttribute(context, hotRod).asBoolean());
             routerService.keepAlive(RouterConnectorResource.KEEP_ALIVE.resolveModelAttribute(context, hotRod).asBoolean());
             routerService.sendBufferSize(RouterConnectorResource.SEND_BUFFER_SIZE.resolveModelAttribute(context, hotRod).asInt());
@@ -93,7 +125,7 @@ class RouterSubsystemAdd extends AbstractAddStepHandler {
                   ModelNode sniNode = sni.get(0);
                   String sniHostName = SniResource.HOST_NAME.resolveModelAttribute(context, sniNode).asString();
                   String securityRealm = SniResource.SECURITY_REALM.resolveModelAttribute(context, sniNode).asString();
-                  MultiTenantRouterService.HotRodRouting hotRodRouting = routerService.getHotRodRouting(sniHostName);
+                  RouterService.HotRodRouting hotRodRouting = routerService.getHotRodRouting(sniHostName);
                   EndpointUtils.addHotRodDependency(builder, hotRodName, hotRodRouting.getHotRod());
                   EndpointUtils.addSecurityRealmDependency(builder, securityRealm, hotRodRouting.getSecurityRealm());
                }

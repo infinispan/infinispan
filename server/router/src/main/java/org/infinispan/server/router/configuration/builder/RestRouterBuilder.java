@@ -12,9 +12,9 @@ public class RestRouterBuilder extends AbstractRouterBuilder {
     /**
      * Creates new {@link RestRouterConfiguration}.
      *
-     * @param parent Parent {@link MultiTenantConfigurationBuilderParent}.
+     * @param parent Parent {@link ConfigurationBuilderParent}.
      */
-    public RestRouterBuilder(MultiTenantConfigurationBuilderParent parent) {
+    public RestRouterBuilder(ConfigurationBuilderParent parent) {
         super(parent);
     }
 

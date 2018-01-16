@@ -48,6 +48,13 @@ public class RouterConnectorResource extends SimpleResourceDefinition {
                    .setRestartAllServices()
                    .build();
 
+   public final static SimpleAttributeDefinition SINGLE_PORT_SOCKET_BINDING =
+         new SimpleAttributeDefinitionBuilder(ModelKeys.SINGLE_PORT_SOCKET_BINDING, ModelType.STRING, true)
+               .setAllowExpression(true)
+               .setXmlName(ModelKeys.SINGLE_PORT_SOCKET_BINDING)
+               .setRestartAllServices()
+               .build();
+
    static final SimpleAttributeDefinition KEEP_ALIVE =
            new SimpleAttributeDefinitionBuilder(ModelKeys.KEEP_ALIVE, ModelType.BOOLEAN, true)
                    .setAllowExpression(true)
@@ -87,7 +94,7 @@ public class RouterConnectorResource extends SimpleResourceDefinition {
                    .setRestartAllServices()
                    .build();
 
-   static final SimpleAttributeDefinition[] ROUTER_CONNECTOR_ATTRIBUTES = { KEEP_ALIVE, TCP_NODELAY, SEND_BUFFER_SIZE, RECEIVE_BUFFER_SIZE, HOTROD_SOCKET_BINDING, REST_SOCKET_BINDING, NAME };
+   static final SimpleAttributeDefinition[] ROUTER_CONNECTOR_ATTRIBUTES = { KEEP_ALIVE, TCP_NODELAY, SEND_BUFFER_SIZE, RECEIVE_BUFFER_SIZE, HOTROD_SOCKET_BINDING, REST_SOCKET_BINDING, SINGLE_PORT_SOCKET_BINDING, NAME };
 
    public RouterConnectorResource() {
       super(ROUTER_CONNECTOR_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.ROUTER_CONNECTOR), RouterSubsystemAdd.INSTANCE, ReloadRequiredRemoveStepHandler.INSTANCE);
@@ -96,6 +103,7 @@ public class RouterConnectorResource extends SimpleResourceDefinition {
    @Override
    public void registerChildren(ManagementResourceRegistration resourceRegistration) {
       resourceRegistration.registerSubModel(new MultiTenancyResource());
+      resourceRegistration.registerSubModel(new SinglePortResource());
    }
 
    @Override

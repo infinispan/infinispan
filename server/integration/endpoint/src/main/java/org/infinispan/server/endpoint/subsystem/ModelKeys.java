@@ -34,6 +34,7 @@ public class ModelKeys {
    public static final String SOCKET_BINDING = "socket-binding"; // string
    public static final String HOTROD_SOCKET_BINDING = "hotrod-socket-binding"; // string
    public static final String REST_SOCKET_BINDING = "rest-socket-binding"; // string
+   public static final String SINGLE_PORT_SOCKET_BINDING = "single-port-socket-binding";
    public static final String KEEP_ALIVE = "keep-alive"; // boolean
    public static final String CACHE = "cache"; // string
    public static final String CACHE_CONTAINER = "cache-container"; // string
@@ -115,4 +116,8 @@ public class ModelKeys {
 
    public static final String MANAGEMENT_HTTP = "management-http";
    public static final String MANAGEMENT_HTTPS = "management-https";
+
+
+   public static final String SINGLE_PORT = "single-port";
+   public static final String SINGLE_PORT_NAME = "SINGLE_PORT";
 }

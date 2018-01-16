@@ -16,9 +16,10 @@ package org.infinispan.rest.http2;
 
 import static io.netty.handler.logging.LogLevel.INFO;
 
+import java.util.concurrent.TimeUnit;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
@@ -41,13 +42,14 @@ import io.netty.handler.ssl.SslContext;
 /**
  * Configures the client pipeline to support HTTP/2 frames.
  */
-public class Http2ClientInitializer extends ChannelInitializer<SocketChannel> {
+public class Http2ClientInitializer extends CommunicationInitializer {
+
     private static final Http2FrameLogger logger = new Http2FrameLogger(INFO, Http2ClientInitializer.class);
 
     private final SslContext sslCtx;
     private final int maxContentLength;
     private HttpToHttp2ConnectionHandler connectionHandler;
-    private HttpResponseHandler responseHandler;
+    private Http2ResponseHandler responseHandler;
     private Http2SettingsHandler settingsHandler;
 
     public Http2ClientInitializer(SslContext sslCtx, int maxContentLength) {
@@ -68,7 +70,7 @@ public class Http2ClientInitializer extends ChannelInitializer<SocketChannel> {
                 .frameLogger(logger)
                 .connection(connection)
                 .build();
-        responseHandler = new HttpResponseHandler();
+        responseHandler = new Http2ResponseHandler();
         settingsHandler = new Http2SettingsHandler(ch.newPromise());
         if (sslCtx != null) {
             configureSsl(ch);
@@ -77,12 +79,9 @@ public class Http2ClientInitializer extends ChannelInitializer<SocketChannel> {
         }
     }
 
-    public HttpResponseHandler responseHandler() {
+    @Override
+    public CommunicationHandler getCommunicationHandler() {
         return responseHandler;
-    }
-
-    public Http2SettingsHandler settingsHandler() {
-        return settingsHandler;
     }
 
     protected void configureEndOfPipeline(ChannelPipeline pipeline) {
@@ -110,6 +109,12 @@ public class Http2ClientInitializer extends ChannelInitializer<SocketChannel> {
                 throw new IllegalStateException("unknown protocol: " + protocol);
             }
         });
+        pipeline.addLast(new UserEventLogger());
+    }
+
+    @Override
+    public void upgradeToHttp2IfNeeded() throws Exception {
+        settingsHandler.awaitSettings(15, TimeUnit.SECONDS);
     }
 
     /**
@@ -118,7 +123,7 @@ public class Http2ClientInitializer extends ChannelInitializer<SocketChannel> {
     private void configureClearText(SocketChannel ch) {
         HttpClientCodec sourceCodec = new HttpClientCodec();
         Http2ClientUpgradeCodec upgradeCodec = new Http2ClientUpgradeCodec(connectionHandler);
-        HttpClientUpgradeHandler upgradeHandler = new HttpClientUpgradeHandler(sourceCodec, upgradeCodec, 65536);
+        HttpClientUpgradeHandler upgradeHandler = new HttpClientUpgradeHandler(sourceCodec, upgradeCodec, maxContentLength);
 
         ch.pipeline().addLast(sourceCodec,
                               upgradeHandler,
@@ -155,4 +160,6 @@ public class Http2ClientInitializer extends ChannelInitializer<SocketChannel> {
             ctx.fireUserEventTriggered(evt);
         }
     }
+
+
 }

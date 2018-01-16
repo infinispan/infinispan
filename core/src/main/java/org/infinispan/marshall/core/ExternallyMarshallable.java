@@ -37,7 +37,7 @@ public final class ExternallyMarshallable {
       whiteListClasses.add("org.infinispan.distexec.RunnableAdapter"); // prod
       whiteListClasses.add("org.infinispan.jcache.annotation.DefaultCacheKey"); // prod
       whiteListClasses.add("org.infinispan.query.clustered.QueryResponse"); // prod
-      whiteListClasses.add("org.infinispan.server.core.transport.NettyTransport$ConnectionAdderTask"); // prod
+      whiteListClasses.add("org.infinispan.server.core.transport.NettyTransportConnectionStats$ConnectionAdderTask"); // prod
       whiteListClasses.add("org.infinispan.server.hotrod.CheckAddressTask"); // prod
       whiteListClasses.add("org.infinispan.server.infinispan.task.DistributedServerTask"); // prod
       whiteListClasses.add("org.infinispan.scripting.impl.DataType"); // prod

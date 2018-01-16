@@ -9,7 +9,7 @@ import org.infinispan.server.router.RoutingTable;
 import org.infinispan.server.router.logging.RouterLogger;
 import org.infinispan.server.router.routes.PrefixedRouteSource;
 import org.infinispan.server.router.routes.Route;
-import org.infinispan.server.router.routes.rest.NettyRestServerRouteDestination;
+import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -40,12 +40,12 @@ public class ChannelInboundHandlerDelegator extends SimpleChannelInboundHandler<
       String context = uriSplitted[2];
 
       logger.debugf("Decoded context %s", context);
-      Optional<Route<PrefixedRouteSource, NettyRestServerRouteDestination>> route = routingTable.streamRoutes(PrefixedRouteSource.class, NettyRestServerRouteDestination.class)
+      Optional<Route<PrefixedRouteSource, RestServerRouteDestination>> route = routingTable.streamRoutes(PrefixedRouteSource.class, RestServerRouteDestination.class)
             .filter(r -> r.getRouteSource().getRoutePrefix().equals(context))
             .findAny();
 
-      NettyRestServerRouteDestination routeDestination = route.orElseThrow(() -> logger.noRouteFound()).getRouteDesitnation();
-      Http11RequestHandler restHandler = routeDestination.getRestServer().getRestChannelInitializer().getHttp11To2UpgradeHandler().getHttp1Handler();
+      RestServerRouteDestination routeDestination = route.orElseThrow(() -> logger.noRouteFound()).getRouteDesitnation();
+      Http11RequestHandler restHandler = (Http11RequestHandler) routeDestination.getRestServer().getRestChannelInitializer().getHttp11To2UpgradeHandler().getHttp1Handler();
 
       //before passing it to REST Handler, we need to replace path. The handler should not be aware of additional context
       //used for multi-tenant prefixes

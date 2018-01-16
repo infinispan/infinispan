@@ -27,7 +27,7 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    protected boolean startTransport = true;
    protected AdminOperationsHandler adminOperationsHandler;
 
-   protected ProtocolServerConfigurationBuilder(int port) {
+   public ProtocolServerConfigurationBuilder(int port) {
       this.port = port;
       this.ssl = new SslConfigurationBuilder(this);
    }

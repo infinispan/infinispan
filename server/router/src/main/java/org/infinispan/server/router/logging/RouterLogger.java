@@ -30,11 +30,11 @@ public interface RouterLogger extends BasicLogger {
     IllegalArgumentException noRouteFound();
 
     @LogMessage(level = DEBUG)
-    @Message(value = "HotRod Router listening on %s", id = 14003)
+    @Message(value = "HotRod EndpointRouter listening on %s", id = 14003)
     void hotRodRouterStarted(String address);
 
     @LogMessage(level = DEBUG)
-    @Message(value = "REST Router listening on %s", id = 14004)
+    @Message(value = "REST EndpointRouter listening on %s", id = 14004)
     void restRouterStarted(String address);
 
     @LogMessage(level = INFO)

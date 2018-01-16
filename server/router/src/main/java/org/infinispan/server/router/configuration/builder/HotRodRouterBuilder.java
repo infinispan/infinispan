@@ -17,9 +17,9 @@ public class HotRodRouterBuilder extends AbstractRouterBuilder {
     /**
      * Creates new {@link HotRodRouterBuilder}.
      *
-     * @param parent Parent {@link MultiTenantConfigurationBuilderParent}
+     * @param parent Parent {@link ConfigurationBuilderParent}
      */
-    public HotRodRouterBuilder(MultiTenantConfigurationBuilderParent parent) {
+    public HotRodRouterBuilder(ConfigurationBuilderParent parent) {
         super(parent);
     }
 

@@ -44,6 +44,12 @@ public abstract class ProtocolServerConfiguration {
       this.adminOperationsHandler = adminOperationsHandler;
    }
 
+   protected ProtocolServerConfiguration(String name, String host, int port, int idleTimeout,
+                                      int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay,
+                                      int workerThreads) {
+      this(null, name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, workerThreads, null, true, null);
+   }
+
    public String defaultCacheName() {
       return defaultCacheName;
    }

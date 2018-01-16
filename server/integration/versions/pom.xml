@@ -181,6 +181,13 @@
          </dependency>
 
          <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-server-rest</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+         </dependency>
+
+         <dependency>
             <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-feature-pack</artifactId>
             <version>${project.version}</version>

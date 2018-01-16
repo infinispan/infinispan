@@ -25,7 +25,7 @@ public class MemcachedServerTest extends AbstractInfinispanTest {
          Stoppable.useServer(new MemcachedServer(), ms -> {
             ms.start(new MemcachedServerConfigurationBuilder().build(), cm);
             assertEquals(ms.getHost(), "127.0.0.1");
-            assertEquals(ms.getPort(), 11211);
+            assertEquals((int) ms.getPort(), 11211);
          }));
    }
 
