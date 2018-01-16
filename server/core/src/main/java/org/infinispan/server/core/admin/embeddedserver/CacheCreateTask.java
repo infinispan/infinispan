@@ -7,6 +7,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.admin.AdminServerTask;
 
@@ -25,9 +28,10 @@ public class CacheCreateTask extends AdminServerTask<Void> {
    private static final Set<String> PARAMETERS;
 
    static {
-      Set<String> params = new HashSet<>(2);
+      Set<String> params = new HashSet<>(3);
       params.add("name");
       params.add("template");
+      params.add("configuration");
       PARAMETERS = Collections.unmodifiableSet(params);
    }
 
@@ -50,7 +54,18 @@ public class CacheCreateTask extends AdminServerTask<Void> {
    protected Void execute(EmbeddedCacheManager cacheManager, Map<String, String> parameters, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       String name = requireParameter(parameters, "name");
       String template = getParameter(parameters, "template");
-      cacheManager.administration().withFlags(flags).createCache(name, template);
+      String configuration = getParameter(parameters, "configuration");
+      if (configuration != null) {
+         ParserRegistry parserRegistry = new ParserRegistry();
+         ConfigurationBuilderHolder builderHolder = parserRegistry.parse(configuration);
+         if (!builderHolder.getNamedConfigurationBuilders().containsKey("configuration")) {
+            throw log.missingCacheConfiguration(name, configuration);
+         }
+         Configuration config = builderHolder.getNamedConfigurationBuilders().get("configuration").build();
+         cacheManager.administration().withFlags(flags).createCache(name, config);
+      } else {
+         cacheManager.administration().withFlags(flags).createCache(name, template);
+      }
       return null;
    }
 }

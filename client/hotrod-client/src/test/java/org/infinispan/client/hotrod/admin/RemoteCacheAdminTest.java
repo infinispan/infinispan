@@ -20,8 +20,10 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.configuration.XMLStringConfiguration;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -98,7 +100,28 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    }
 
    public void getOrCreateWithoutTemplateTest() {
-      client(0).administration().getOrCreateCache("default", null);
+      client(0).administration().getOrCreateCache("default", (String)null);
+   }
+
+   public void cacheCreateWithXMLConfigurationTest(Method m) {
+      String cacheName = m.getName();
+      client(0).administration().getOrCreateCache(cacheName,
+            new XMLStringConfiguration("<infinispan><cache-container><distributed-cache name=\"configuration\"><expiration interval=\"10000\" lifespan=\"10\" max-idle=\"10\"/></distributed-cache></cache-container></infinispan>"));
+      Configuration configuration = manager(0).getCache(cacheName).getCacheConfiguration();
+      assertEquals(10000, configuration.expiration().wakeUpInterval());
+      assertEquals(10, configuration.expiration().lifespan());
+      assertEquals(10, configuration.expiration().maxIdle());
+   }
+
+   public void cacheCreateWithEmbeddedConfigurationTest(Method m) {
+      String cacheName = m.getName();
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.expiration().wakeUpInterval(10000).maxIdle(10).lifespan(10);
+      client(0).administration().getOrCreateCache(cacheName, builder.build());
+      Configuration configuration = manager(0).getCache(cacheName).getCacheConfiguration();
+      assertEquals(10000, configuration.expiration().wakeUpInterval());
+      assertEquals(10, configuration.expiration().lifespan());
+      assertEquals(10, configuration.expiration().maxIdle());
    }
 
    public void cacheReindexTest(Method m) throws IOException {

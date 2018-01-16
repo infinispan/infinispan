@@ -25,7 +25,7 @@ public interface CacheContainer extends BasicCacheContainer {
     * removal. If the underlying container is clustered or remote, the operations will affect all nodes.
     * @return
     */
-   default CacheContainerAdmin<?> administration() {
+   default CacheContainerAdmin<?, ?> administration() {
       throw new UnsupportedOperationException();
    }
 

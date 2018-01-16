@@ -12,7 +12,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
@@ -220,16 +219,14 @@ public class ParserRegistry implements NamespaceMappingParser {
     * @param name the name of the configuration
     * @param configuration the {@link Configuration}
     * @return the XML representation of the specified configuration
-    * @throws XMLStreamException
     */
-   public String serialize(String name, Configuration configuration) throws XMLStreamException {
-      ByteArrayOutputStream os = new ByteArrayOutputStream();
-      serialize(os, name, configuration);
+   public String serialize(String name, Configuration configuration) {
       try {
+         ByteArrayOutputStream os = new ByteArrayOutputStream();
+         serialize(os, name, configuration);
          return os.toString("UTF-8");
-      } catch (UnsupportedEncodingException e) {
-         // Will never happen
-         return null;
+      } catch (Exception e) {
+         throw new CacheConfigurationException(e);
       }
    }
 }
