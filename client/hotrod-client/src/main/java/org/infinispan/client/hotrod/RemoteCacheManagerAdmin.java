@@ -3,7 +3,9 @@ package org.infinispan.client.hotrod;
 import java.util.EnumSet;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.configuration.BasicConfiguration;
 
 /**
  * Remote Administration operations
@@ -11,7 +13,7 @@ import org.infinispan.commons.api.CacheContainerAdmin;
  * @author Tristan Tarrant
  * @since 9.1
  */
-public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCacheManagerAdmin> {
+public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCacheManagerAdmin, BasicConfiguration> {
 
    /**
     * Creates a cache on the remote server cluster using the specified template.
@@ -26,6 +28,19 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
    <K, V> RemoteCache<K, V> createCache(String name, String template) throws HotRodClientException;
 
    /**
+    * Creates a cache on the remote server cluster using the specified configuration
+    *
+    * @param name the name of the cache to create
+    * @param configuration a concrete configuration that will be sent to the server. The XML representation of this
+    *                      configuration must use the Infinispan embedded configuration schema in a version supported
+    *                      by the server.
+    * @return the cache
+    * @throws HotRodClientException
+    */
+   @Override
+   <K, V> BasicCache<K, V> createCache(String name, BasicConfiguration configuration) throws HotRodClientException;
+
+   /**
     * Retrieves a an existing cache on the remote server cluster. If it doesn't exist, it will be created using the
     * specified template.
     *
@@ -37,6 +52,20 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     */
    @Override
    <K, V> RemoteCache<K, V> getOrCreateCache(String name, String template) throws HotRodClientException;
+
+   /**
+    * Retrieves a an existing cache on the remote server cluster. If it doesn't exist, it will be created using the
+    * specified configuration.
+    *
+    * @param name the name of the cache to create
+    * @param configuration a concrete configuration that will be sent to the server. The XML representation of this
+    *                      configuration must use the Infinispan embedded configuration schema in a version supported
+    *                      by the server.
+    * @return the cache
+    * @throws HotRodClientException
+    */
+   @Override
+   <K, V> BasicCache<K, V> getOrCreateCache(String name, BasicConfiguration configuration) throws HotRodClientException;
 
    /**
     * Creates a cache on the remote server cluster using the specified template and flags.

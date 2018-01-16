@@ -12,7 +12,7 @@ import org.infinispan.configuration.cache.Configuration;
  * @since 9.2
  */
 
-public interface EmbeddedCacheManagerAdmin extends CacheContainerAdmin<EmbeddedCacheManagerAdmin> {
+public interface EmbeddedCacheManagerAdmin extends CacheContainerAdmin<EmbeddedCacheManagerAdmin, Configuration> {
 
    /**
     * Creates a cache on the container using the specified template.

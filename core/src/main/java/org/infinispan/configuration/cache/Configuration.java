@@ -5,12 +5,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.configuration.parsing.ParserRegistry;
 
-public class Configuration implements Matchable<Configuration> {
+public class Configuration implements BasicConfiguration, Matchable<Configuration> {
    public static final AttributeDefinition<Boolean> SIMPLE_CACHE = AttributeDefinition.builder("simpleCache", false).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
@@ -436,5 +438,11 @@ public class Configuration implements Matchable<Configuration> {
             return false;
       }
       return attributes.matches(other.attributes);
+   }
+
+   @Override
+   public String toXMLString() {
+      ParserRegistry reg = new ParserRegistry();
+      return reg.serialize("configuration", this);
    }
 }

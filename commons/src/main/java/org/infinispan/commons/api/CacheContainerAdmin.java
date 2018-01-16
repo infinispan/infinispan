@@ -2,6 +2,8 @@ package org.infinispan.commons.api;
 
 import java.util.EnumSet;
 
+import org.infinispan.commons.configuration.BasicConfiguration;
+
 /**
  * Administrative cache container operations.
  *
@@ -9,7 +11,7 @@ import java.util.EnumSet;
  * @since 9.2
  */
 
-public interface CacheContainerAdmin<C extends CacheContainerAdmin> {
+public interface CacheContainerAdmin<C extends CacheContainerAdmin, A extends BasicConfiguration> {
 
    /**
     * Flags which affect only administrative operations
@@ -42,8 +44,6 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin> {
       }
    }
 
-
-
    /**
     * Creates a cache on the container using the specified template.
     *
@@ -57,6 +57,18 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin> {
    <K, V> BasicCache<K, V> createCache(String name, String template);
 
    /**
+    * Creates a cache on the container using the specified template.
+    *
+    * @param name     the name of the cache to create
+    * @param configuration the configuration to use for the cache. If null, the configuration marked as default on the container
+    *                 will be used
+    * @return the cache
+    *
+    * @throws org.infinispan.commons.CacheException if a cache with the same name already exists
+    */
+   <K, V> BasicCache<K, V> createCache(String name, A configuration);
+
+   /**
     * Retrieves an existing cache or creates one using the specified template if it doesn't exist
     *
     * @param name     the name of the cache to create
@@ -65,6 +77,16 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin> {
     * @return the cache
     */
    <K, V> BasicCache<K, V> getOrCreateCache(String name, String template);
+
+   /**
+    * Retrieves an existing cache or creates one using the specified template if it doesn't exist
+    *
+    * @param name     the name of the cache to create
+    * @param configuration the configuration to use for the cache. If null, the configuration marked as default on the container
+    *                 will be used
+    * @return the cache
+    */
+   <K, V> BasicCache<K, V> getOrCreateCache(String name, A configuration);
 
    /**
     * Removes a cache from the cache container. Any persisted data will be cleared.
