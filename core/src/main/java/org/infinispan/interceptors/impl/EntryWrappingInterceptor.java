@@ -337,7 +337,10 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          }
          for (Object key : keys) {
             MVCCEntry entry = (MVCCEntry) ctx.lookupEntry(key);
-            entry.resetCurrentValue();
+            // When a non-transactional command is retried remotely, the context is going to be empty
+            if (entry != null) {
+               entry.resetCurrentValue();
+            }
          }
       } else {
          ctx.removeLookedUpEntries(keys);

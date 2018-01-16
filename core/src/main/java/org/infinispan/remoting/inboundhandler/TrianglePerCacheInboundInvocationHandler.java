@@ -21,7 +21,6 @@ import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.inboundhandler.action.Action;
 import org.infinispan.remoting.inboundhandler.action.ActionState;
 import org.infinispan.remoting.inboundhandler.action.ActionStatus;
@@ -235,7 +234,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       return new DefaultTopologyRunnable(this, command, Reply.NO_OP, TopologyMode.READY_TX_DATA, commandTopologyId, false) {
          @Override
          protected void onException(Throwable throwable) {
-            sendExceptionAck(writeCommand.getCommandInvocationId(), new RemoteException("Exception on " + localAddress, throwable), commandTopologyId);
+            sendExceptionAck(writeCommand.getCommandInvocationId(), throwable, commandTopologyId);
          }
       };
    }

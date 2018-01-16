@@ -5,8 +5,12 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.CacheException;
+import org.infinispan.remoting.transport.ResponseCollectors;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CommandAckCollector;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A command that represents an exception acknowledge sent by any owner.
@@ -17,6 +21,7 @@ import org.infinispan.util.concurrent.CommandAckCollector;
  * @since 9.0
  */
 public class ExceptionAckCommand extends BaseRpcCommand {
+   private static final Log log = LogFactory.getLog(ExceptionAckCommand.class);
 
    public static final byte COMMAND_ID = 42;
    private CommandAckCollector commandAckCollector;
@@ -40,7 +45,8 @@ public class ExceptionAckCommand extends BaseRpcCommand {
    }
 
    public void ack() {
-      commandAckCollector.completeExceptionally(id, throwable, topologyId);
+      CacheException remoteException = ResponseCollectors.wrapRemoteException(getOrigin(), this.throwable);
+      commandAckCollector.completeExceptionally(id, remoteException, topologyId);
    }
 
    @Override
