@@ -74,19 +74,35 @@
     </xs:complexType>
 
     <xs:complexType name="router-connector">
-        <xs:sequence minOccurs="1" maxOccurs="1">
-            <xs:element name="multi-tenancy">
+        <xs:choice minOccurs="1" maxOccurs="unbounded">
+            <xs:element name="multi-tenancy" maxOccurs="unbounded">
                 <xs:annotation>
                     <xs:documentation>Multi-tenancy settings for the router</xs:documentation>
                 </xs:annotation>
                 <xs:complexType>
                     <xs:choice maxOccurs="unbounded">
-                        <xs:element name="hotrod" type="tns:router-hotrod" maxOccurs="unbounded"/>
-                        <xs:element name="rest" type="tns:router-rest" maxOccurs="unbounded"/>
+                        <xs:element name="hotrod" type="tns:router-multi-tenancy-hotrod" maxOccurs="unbounded"/>
+                        <xs:element name="rest" type="tns:router-multi-tenancy-rest" maxOccurs="unbounded"/>
                     </xs:choice>
                 </xs:complexType>
             </xs:element>
-        </xs:sequence>
+            <xs:element name="single-port" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>Single port settings for the router</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:choice maxOccurs="unbounded">
+                        <xs:element name="hotrod" type="tns:router-single-port-hotrod"/>
+                        <xs:element name="rest" type="tns:router-single-port-rest"/>
+                    </xs:choice>
+                    <xs:attribute name="security-realm" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The name of the security realm to use for TLS/ALPN negotiation</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:choice>
         <xs:attribute name="hotrod-socket-binding" type="xs:string" use="optional">
             <xs:annotation>
                 <xs:documentation>The socket on which HotRod router will bind itself</xs:documentation>
@@ -95,6 +111,11 @@
         <xs:attribute name="rest-socket-binding" type="xs:string" use="optional">
             <xs:annotation>
                 <xs:documentation>The socket on which REST router will bind itself</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="single-port-socket-binding" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>The socket on Single Port router will bind itself</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="name" type="xs:string" use="optional">
@@ -235,7 +256,7 @@
         </xs:attribute>
     </xs:complexType>
 
-    <xs:complexType name="router-hotrod">
+    <xs:complexType name="router-multi-tenancy-hotrod">
         <xs:sequence>
             <xs:element name="sni" type="tns:sni" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
@@ -246,7 +267,23 @@
         </xs:attribute>
     </xs:complexType>
 
-    <xs:complexType name="router-rest">
+    <xs:complexType name="router-single-port-hotrod">
+        <xs:attribute name="name" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>HotRod connector name</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="router-single-port-rest">
+        <xs:attribute name="name" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>REST connector name</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="router-multi-tenancy-rest">
         <xs:sequence>
             <xs:element name="prefix" type="tns:prefix" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>

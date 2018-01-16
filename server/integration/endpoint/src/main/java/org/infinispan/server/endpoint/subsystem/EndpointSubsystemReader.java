@@ -248,6 +248,10 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
             RouterConnectorResource.HOTROD_SOCKET_BINDING.parseAndSetParameter(value, connector, reader);
             break;
          }
+         case SINGLE_PORT_SOCKET_BINDING: {
+            RouterConnectorResource.SINGLE_PORT_SOCKET_BINDING.parseAndSetParameter(value, connector, reader);
+            break;
+         }
          default: {
             throw ParseUtils.unexpectedAttribute(reader, i);
          }
@@ -461,6 +465,14 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
                parseMultiTenancy(reader, connector, operations);
                break;
             }
+            case SINGLE_PORT: {
+               if (namespace.since(Namespace.INFINISPAN_ENDPOINT_9_2)) {
+                  parseSinglePort(reader, connector, operations);
+               } else {
+                  throw ParseUtils.unexpectedElement(reader);
+               }
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedElement(reader);
             }
@@ -577,11 +589,44 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
          final Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case HOTROD: {
-               parseHotRod(reader, multiTenancy, operations);
+               parseMultiTenantHotRod(reader, multiTenancy, operations);
                break;
             }
             case REST: {
-               parseRest(reader, multiTenancy, operations);
+               parseMultiTenantRest(reader, multiTenancy, operations);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+
+      if(!skipTagCheckAtTheEnd)
+         ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseSinglePort(final XMLExtendedStreamReader reader, final ModelNode connector, final List<ModelNode> operations) throws XMLStreamException {
+      PathAddress address = PathAddress.pathAddress(connector.get(OP_ADDR)).append(
+            PathElement.pathElement(ModelKeys.SINGLE_PORT, ModelKeys.SINGLE_PORT_NAME));
+      ModelNode singlePort = Util.createAddOperation(address);
+      operations.add(singlePort);
+
+      String securityRealm = reader.getAttributeValue(null, Attribute.SECURITY_REALM.getLocalName());
+      SinglePortResource.SECURITY_REALM.parseAndSetParameter(securityRealm, singlePort, reader);
+
+      //Since nextTag() moves the pointer, we need to make sure we won't move too far
+      boolean skipTagCheckAtTheEnd = reader.hasNext();
+
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         final Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case HOTROD: {
+               parseSinglePortHotRod(reader, singlePort, operations);
+               break;
+            }
+            case REST: {
+               parseSinglePortRest(reader, singlePort, operations);
                break;
             }
             default: {
@@ -888,13 +933,13 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
       operations.add(pathOp);
    }
 
-   private void parseHotRod(final XMLExtendedStreamReader reader, final ModelNode multiTenancy, final List<ModelNode> operations) throws XMLStreamException {
+   private void parseMultiTenantHotRod(final XMLExtendedStreamReader reader, final ModelNode multiTenancy, final List<ModelNode> operations) throws XMLStreamException {
       ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName());
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
 
       PathAddress hotrodOpAddress = PathAddress.pathAddress(multiTenancy.get(OP_ADDR)).append(ModelKeys.HOTROD, name);
       ModelNode hotrodOp = Util.createAddOperation(hotrodOpAddress);
-      RouterHotRodResource.NAME.parseAndSetParameter(name, hotrodOp, reader);
+      MultiTenantHotRodResource.NAME.parseAndSetParameter(name, hotrodOp, reader);
       operations.add(hotrodOp);
 
       //Since nextTag() moves the pointer, we need to make sure we won't move too far
@@ -917,13 +962,37 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
          ParseUtils.requireNoContent(reader);
    }
 
-   private void parseRest(final XMLExtendedStreamReader reader, final ModelNode multiTenancy, final List<ModelNode> operations) throws XMLStreamException {
+   private void parseSinglePortHotRod(final XMLExtendedStreamReader reader, final ModelNode singlePort, final List<ModelNode> operations) throws XMLStreamException {
+      ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName());
+      String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
+
+      PathAddress hotrodOpAddress = PathAddress.pathAddress(singlePort.get(OP_ADDR)).append(ModelKeys.HOTROD, name);
+      ModelNode hotrodOp = Util.createAddOperation(hotrodOpAddress);
+      SinglePortHotRodResource.NAME.parseAndSetParameter(name, hotrodOp, reader);
+      operations.add(hotrodOp);
+
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseSinglePortRest(final XMLExtendedStreamReader reader, final ModelNode singlePort, final List<ModelNode> operations) throws XMLStreamException {
+      ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName());
+      String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
+
+      PathAddress restOpAddress = PathAddress.pathAddress(singlePort.get(OP_ADDR)).append(ModelKeys.REST, name);
+      ModelNode restOp = Util.createAddOperation(restOpAddress);
+      SinglePortRestResource.NAME.parseAndSetParameter(name, restOp, reader);
+      operations.add(restOp);
+
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseMultiTenantRest(final XMLExtendedStreamReader reader, final ModelNode multiTenancy, final List<ModelNode> operations) throws XMLStreamException {
       ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName());
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
 
       PathAddress restOpAddress = PathAddress.pathAddress(multiTenancy.get(OP_ADDR)).append(ModelKeys.REST, name);
       ModelNode restOp = Util.createAddOperation(restOpAddress);
-      RouterRestResource.NAME.parseAndSetParameter(name, restOp, reader);
+      MultiTenantRestResource.NAME.parseAndSetParameter(name, restOp, reader);
       operations.add(restOp);
 
       //Since nextTag() moves the pointer, we need to make sure we won't move too far

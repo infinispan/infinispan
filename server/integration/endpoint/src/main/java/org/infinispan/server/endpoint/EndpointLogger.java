@@ -192,8 +192,8 @@ public interface EndpointLogger extends BasicLogger {
    void startingServerWithoutTransport(String protocolName);
 
    @LogMessage(level = INFO)
-   @Message(id = 10034, value = "Multi tenant router started (HotRod listening on %s, REST listening on %s")
-   void routerStarted(String hotrodAddress, String restAddress);
+   @Message(id = 10034, value = "Endpoint router started (HotRod listening on %s, REST listening on %s, Single Port listening on %s")
+   void routerStarted(String hotrodAddress, String restAddress, String singlePortAddress);
 
    @LogMessage(level = WARN)
    @Message(id = 10035, value = "The security-domain attribute on the REST connector is ignored")

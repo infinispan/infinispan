@@ -6,16 +6,16 @@ import java.net.InetAddress;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.router.logging.RouterLogger;
 
-public abstract class AbstractRouterBuilder implements MultiTenantConfigurationBuilderParent {
+public abstract class AbstractRouterBuilder implements ConfigurationBuilderParent {
 
     protected static final RouterLogger logger = LogFactory.getLog(MethodHandles.lookup().lookupClass(), RouterLogger.class);
 
-    protected final MultiTenantConfigurationBuilderParent parent;
+    protected final ConfigurationBuilderParent parent;
     protected int port;
     protected InetAddress ip;
     protected boolean enabled;
 
-    protected AbstractRouterBuilder(MultiTenantConfigurationBuilderParent parent) {
+    protected AbstractRouterBuilder(ConfigurationBuilderParent parent) {
         this.parent = parent;
     }
 
@@ -58,5 +58,10 @@ public abstract class AbstractRouterBuilder implements MultiTenantConfigurationB
     @Override
     public RestRouterBuilder rest() {
         return parent.rest();
+    }
+
+    @Override
+    public SinglePortRouterBuilder singlePort() {
+        return parent.singlePort();
     }
 }

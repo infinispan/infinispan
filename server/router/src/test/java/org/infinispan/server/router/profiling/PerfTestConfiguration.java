@@ -9,7 +9,7 @@ import java.util.stream.IntStream;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.server.router.MultiTenantRouter;
+import org.infinispan.server.router.Router;
 import org.infinispan.server.router.routes.Route;
 import org.infinispan.server.router.routes.RouteDestination;
 import org.infinispan.server.router.routes.RouteSource;
@@ -18,17 +18,17 @@ public interface PerfTestConfiguration {
 
     List<HotRodServer> initServers();
 
-    RemoteCacheManager initClient(Optional<MultiTenantRouter> router, Optional<Set<Route<? extends RouteSource, ? extends RouteDestination>>> routes, List<HotRodServer> servers);
+    RemoteCacheManager initClient(Optional<Router> router, Optional<Set<Route<? extends RouteSource, ? extends RouteDestination>>> routes, List<HotRodServer> servers);
 
     default Optional<Set<Route<? extends RouteSource, ? extends RouteDestination>>> initRoutes(List<HotRodServer> servers) {
         return Optional.empty();
     }
 
-    default Optional<MultiTenantRouter> initRouter(Optional<Set<Route<? extends RouteSource, ? extends RouteDestination>>> routes) {
+    default Optional<Router> initRouter(Optional<Set<Route<? extends RouteSource, ? extends RouteDestination>>> routes) {
         return Optional.empty();
     }
 
-    default void shutdown(List<HotRodServer> servers, Optional<MultiTenantRouter> router) {
+    default void shutdown(List<HotRodServer> servers, Optional<Router> router) {
         servers.forEach(s -> s.stop());
         router.ifPresent(r -> r.stop());
     }

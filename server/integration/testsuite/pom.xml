@@ -273,6 +273,12 @@
           <version>0.12.1</version>
           <scope>test</scope>
        </dependency>
+       <dependency>
+          <groupId>org.infinispan</groupId>
+          <artifactId>infinispan-server-rest</artifactId>
+          <type>test-jar</type>
+          <scope>test</scope>
+       </dependency>
     </dependencies>
 
     <properties>

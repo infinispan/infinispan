@@ -66,7 +66,7 @@ public enum Element {
     NO_PLAIN_TEXT(ModelKeys.NO_PLAIN_TEXT),
     PASS_CREDENTIALS(ModelKeys.PASS_CREDENTIALS),
     MULTI_TENANCY(ModelKeys.MULTI_TENANCY),
-    ;
+    SINGLE_PORT(ModelKeys.SINGLE_PORT);
 
     private final String name;
     private final AttributeDefinition definition;

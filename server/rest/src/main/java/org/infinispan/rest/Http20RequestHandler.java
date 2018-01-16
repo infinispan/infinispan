@@ -38,7 +38,7 @@ public class Http20RequestHandler extends SimpleChannelInboundHandler<FullHttpRe
     *
     * @param restServer    Rest Server.
     */
-   Http20RequestHandler(RestServer restServer) {
+   public Http20RequestHandler(RestServer restServer) {
       this.restServer = restServer;
       this.configuration = restServer.getConfiguration();
       this.authenticator = restServer.getAuthenticator();

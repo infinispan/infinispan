@@ -25,16 +25,16 @@ import org.jboss.as.controller.registry.ManagementResourceRegistration;
 
 public class MultiTenancyResource extends SimpleResourceDefinition {
 
-   public static final PathElement ROUTER_CONNECTOR_PATH = PathElement.pathElement(ModelKeys.MULTI_TENANCY);
+   public static final PathElement MULTI_TENANCY_PATH = PathElement.pathElement(ModelKeys.MULTI_TENANCY);
 
    public MultiTenancyResource() {
-      super(ROUTER_CONNECTOR_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.MULTI_TENANCY), MultiTenancySubsystemAdd.INSTANCE, ReloadRequiredRemoveStepHandler.INSTANCE);
+      super(MULTI_TENANCY_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.MULTI_TENANCY), MultiTenancySubsystemAdd.INSTANCE, ReloadRequiredRemoveStepHandler.INSTANCE);
    }
 
    @Override
    public void registerChildren(ManagementResourceRegistration resourceRegistration) {
-      resourceRegistration.registerSubModel(new RouterHotRodResource());
-      resourceRegistration.registerSubModel(new RouterRestResource());
+      resourceRegistration.registerSubModel(new MultiTenantHotRodResource());
+      resourceRegistration.registerSubModel(new MultiTenantRestResource());
    }
 
 }

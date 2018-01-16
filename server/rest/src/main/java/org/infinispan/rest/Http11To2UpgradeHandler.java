@@ -19,6 +19,7 @@ import io.netty.handler.codec.http2.HttpToHttp2ConnectionHandler;
 import io.netty.handler.codec.http2.HttpToHttp2ConnectionHandlerBuilder;
 import io.netty.handler.codec.http2.InboundHttp2ToHttpAdapter;
 import io.netty.handler.codec.http2.InboundHttp2ToHttpAdapterBuilder;
+import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
 import io.netty.util.AsciiString;
@@ -30,24 +31,24 @@ import io.netty.util.AsciiString;
  */
 @ChannelHandler.Sharable
 public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandler {
-   private static final int MAX_INITIAL_LINE_SIZE = 4096;
-   private static final int MAX_HEADER_SIZE = 8192;
+   protected static final int MAX_INITIAL_LINE_SIZE = 4096;
+   protected static final int MAX_HEADER_SIZE = 8192;
 
-   private final RestServer restServer;
+   protected final RestServer restServer;
    private final List<CorsConfig> corsRules;
 
-   Http11To2UpgradeHandler(RestServer restServer) {
+   public Http11To2UpgradeHandler(RestServer restServer) {
       super(ApplicationProtocolNames.HTTP_1_1);
       this.restServer = restServer;
       this.corsRules = restServer.getConfiguration().getCorsRules();
    }
 
    @Override
-   protected void configurePipeline(ChannelHandlerContext ctx, String protocol) {
+   public void configurePipeline(ChannelHandlerContext ctx, String protocol) throws Exception {
       configurePipeline(ctx.pipeline(), protocol);
    }
 
-   void configurePipeline(ChannelPipeline pipeline, String protocol) {
+   public void configurePipeline(ChannelPipeline pipeline, String protocol) {
       if (ApplicationProtocolNames.HTTP_2.equals(protocol)) {
          configureHttp2(pipeline);
          return;
@@ -61,12 +62,12 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
       throw new IllegalStateException("unknown protocol: " + protocol);
    }
 
-   private void configureHttp2(ChannelPipeline pipeline) {
+   protected void configureHttp2(ChannelPipeline pipeline) {
       pipeline.addLast(getHttp11To2ConnectionHandler());
       pipeline.addLast("rest-handler-http2", getHttp2Handler());
    }
 
-   private void configureHttp1(ChannelPipeline pipeline) {
+   protected void configureHttp1(ChannelPipeline pipeline) {
       RestServerConfiguration configuration = restServer.getConfiguration();
       final HttpServerCodec httpCodec = new HttpServerCodec(MAX_INITIAL_LINE_SIZE, MAX_HEADER_SIZE, configuration.maxContentLength());
       pipeline.addLast(httpCodec);
@@ -87,8 +88,8 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
       pipeline.addLast("rest-handler", getHttp1Handler());
    }
 
-   private int maxContentLength() {
-      return restServer.getConfiguration().maxContentLength() + MAX_INITIAL_LINE_SIZE + MAX_HEADER_SIZE;
+   protected int maxContentLength() {
+      return this.restServer.getConfiguration().maxContentLength() + MAX_INITIAL_LINE_SIZE + MAX_HEADER_SIZE;
    }
 
    /**
@@ -96,7 +97,7 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
     *
     * @return new instance of {@link HttpToHttp2ConnectionHandler}.
     */
-   private HttpToHttp2ConnectionHandler getHttp11To2ConnectionHandler() {
+   protected HttpToHttp2ConnectionHandler getHttp11To2ConnectionHandler() {
       DefaultHttp2Connection connection = new DefaultHttp2Connection(true);
 
       InboundHttp2ToHttpAdapter listener = new InboundHttp2ToHttpAdapterBuilder(connection)
@@ -116,7 +117,7 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
     *
     * @return HTTP/1.1 handler.
     */
-   public Http11RequestHandler getHttp1Handler() {
+   public ChannelHandler getHttp1Handler() {
       return new Http11RequestHandler(restServer);
    }
 
@@ -125,7 +126,21 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
     *
     * @return HTTP/2 handler.
     */
-   private Http20RequestHandler getHttp2Handler() {
+   public ChannelHandler getHttp2Handler() {
       return new Http20RequestHandler(restServer);
+   }
+
+   public ApplicationProtocolConfig getAlpnConfiguration() {
+      if (restServer.getConfiguration().ssl().enabled()) {
+         return new ApplicationProtocolConfig(
+               ApplicationProtocolConfig.Protocol.ALPN,
+               // NO_ADVERTISE is currently the only mode supported by both OpenSsl and JDK providers.
+               ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
+               // ACCEPT is currently the only mode supported by both OpenSsl and JDK providers.
+               ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
+               ApplicationProtocolNames.HTTP_2,
+               ApplicationProtocolNames.HTTP_1_1);
+      }
+      return null;
    }
 }

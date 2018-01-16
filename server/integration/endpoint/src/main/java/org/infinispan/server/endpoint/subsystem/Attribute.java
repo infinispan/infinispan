@@ -68,6 +68,7 @@ public enum Attribute {
     SOCKET_BINDING(ModelKeys.SOCKET_BINDING),
     REST_SOCKET_BINDING(ModelKeys.REST_SOCKET_BINDING),
     HOTROD_SOCKET_BINDING(ModelKeys.HOTROD_SOCKET_BINDING),
+    SINGLE_PORT_SOCKET_BINDING(ModelKeys.SINGLE_PORT_SOCKET_BINDING),
     SSL(ModelKeys.SSL),
     STRENGTH(ModelKeys.STRENGTH),
     TCP_NODELAY(ModelKeys.TCP_NODELAY),
@@ -76,8 +77,7 @@ public enum Attribute {
     VALUE(ModelKeys.VALUE),
     VIRTUAL_HOST(ModelKeys.VIRTUAL_HOST),
     VIRTUAL_SERVER(ModelKeys.VIRTUAL_SERVER),
-    WORKER_THREADS(ModelKeys.WORKER_THREADS),
-    ;
+    WORKER_THREADS(ModelKeys.WORKER_THREADS);
 
     private final String name;
     private final AttributeDefinition definition;

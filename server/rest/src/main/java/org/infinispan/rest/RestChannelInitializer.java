@@ -44,17 +44,7 @@ public class RestChannelInitializer extends NettyChannelInitializer {
 
    @Override
    protected ApplicationProtocolConfig getAlpnConfiguration() {
-      if (server.getConfiguration().ssl().enabled()) {
-         return new ApplicationProtocolConfig(
-               ApplicationProtocolConfig.Protocol.ALPN,
-               // NO_ADVERTISE is currently the only mode supported by both OpenSsl and JDK providers.
-               ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
-               // ACCEPT is currently the only mode supported by both OpenSsl and JDK providers.
-               ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
-               ApplicationProtocolNames.HTTP_2,
-               ApplicationProtocolNames.HTTP_1_1);
-      }
-      return null;
+      return http11To2UpgradeHandler.getAlpnConfiguration();
    }
 
    public Http11To2UpgradeHandler getHttp11To2UpgradeHandler() {

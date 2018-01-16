@@ -1,0 +1,10 @@
+        <subsystem xmlns="urn:infinispan:server:endpoint:${infinispan.core.schema.version}">
+            <hotrod-connector name="single-port-hotrod" cache-container="clustered" />
+            <rest-connector name="single-port-rest" cache-container="clustered" />
+            <router-connector single-port-socket-binding="rest">
+                <single-port security-realm="ClientCertRealm">
+                    <hotrod name="single-port-hotrod" />
+                    <rest name="single-port-rest" />
+                </single-port>
+            </router-connector>
+        </subsystem>

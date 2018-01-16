@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.router.RoutingTable;
+import org.infinispan.server.router.configuration.RouterConfiguration;
 import org.infinispan.server.router.logging.RouterLogger;
 import org.infinispan.server.router.routes.Route;
 import org.infinispan.server.router.routes.RouteDestination;
@@ -16,19 +17,19 @@ import org.infinispan.server.router.routes.RouteSource;
  *
  * @author Sebastian Łaskawiec
  */
-public class RoutingBuilder implements MultiTenantConfigurationBuilderParent {
+public class RoutingBuilder implements ConfigurationBuilderParent {
 
     protected static final RouterLogger logger = LogFactory.getLog(MethodHandles.lookup().lookupClass(), RouterLogger.class);
 
-    private final MultiTenantRouterConfigurationBuilder parent;
+    private final RouterConfigurationBuilder parent;
     private Set<Route<? extends RouteSource, ? extends RouteDestination>> routes = new HashSet<>();
 
     /**
      * Creates new {@link RoutingBuilder}.
      *
-     * @param parent Parent {@link org.infinispan.server.router.configuration.MultiTenantRouterConfiguration}.
+     * @param parent Parent {@link RouterConfiguration}.
      */
-    public RoutingBuilder(MultiTenantRouterConfigurationBuilder parent) {
+    public RoutingBuilder(RouterConfigurationBuilder parent) {
         this.parent = parent;
     }
 
@@ -67,5 +68,10 @@ public class RoutingBuilder implements MultiTenantConfigurationBuilderParent {
     @Override
     public RestRouterBuilder rest() {
         return parent.rest();
+    }
+
+    @Override
+    public SinglePortRouterBuilder singlePort() {
+        return parent.singlePort();
     }
 }

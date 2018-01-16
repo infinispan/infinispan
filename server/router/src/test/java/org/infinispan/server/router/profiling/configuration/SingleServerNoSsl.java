@@ -11,7 +11,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
-import org.infinispan.server.router.MultiTenantRouter;
+import org.infinispan.server.router.Router;
 import org.infinispan.server.router.profiling.PerfTestConfiguration;
 import org.infinispan.server.router.routes.Route;
 import org.infinispan.server.router.routes.RouteDestination;
@@ -27,7 +27,7 @@ public class SingleServerNoSsl implements PerfTestConfiguration {
     }
 
     @Override
-    public RemoteCacheManager initClient(Optional<MultiTenantRouter> router, Optional<Set<Route<? extends RouteSource, ? extends RouteDestination>>> routes, List<HotRodServer> servers) {
+    public RemoteCacheManager initClient(Optional<Router> router, Optional<Set<Route<? extends RouteSource, ? extends RouteDestination>>> routes, List<HotRodServer> servers) {
         int port = servers.get(0).getTransport().getPort();
         return HotRodClientTestingUtil.createNoAuth(InetAddress.getLoopbackAddress(), port);
     }

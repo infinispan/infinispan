@@ -22,7 +22,7 @@ public class Http11RequestHandler extends Http20RequestHandler {
     *
     * @param restServer    Rest Server.
     */
-   Http11RequestHandler(RestServer restServer) {
+   public Http11RequestHandler(RestServer restServer) {
       super(restServer);
    }
 
