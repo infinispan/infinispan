@@ -35,7 +35,7 @@ public class ProtostreamTextTranscoder implements Transcoder {
             return ProtobufUtil.toWrappedByteArray(ctx, content);
          }
          if (destinationType.match(MediaType.TEXT_PLAIN)) {
-            return ProtobufUtil.fromByteArray(ctx, (byte[]) content, String.class);
+            return ProtobufUtil.fromWrappedByteArray(ctx, (byte[]) content);
          }
       } catch (IOException e) {
          throw log.errorTranscoding(e);
