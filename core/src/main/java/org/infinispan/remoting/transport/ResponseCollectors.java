@@ -16,7 +16,7 @@ import org.infinispan.util.logging.LogFactory;
 public class ResponseCollectors {
    private static final Log log = LogFactory.getLog(ResponseCollectors.class);
 
-   public static CacheException wrapRemoteException(Address sender, Exception exception) {
+   public static CacheException wrapRemoteException(Address sender, Throwable exception) {
       CacheException e;
       if (exception instanceof SuspectException) {
          e = log.thirdPartySuspected(sender, (SuspectException) exception);
