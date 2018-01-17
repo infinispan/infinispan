@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.MemoryConfiguration.ADDRESS_COUNT;
+import static org.infinispan.configuration.cache.MemoryConfiguration.EVICTION_STRATEGY;
 import static org.infinispan.configuration.cache.MemoryConfiguration.EVICTION_TYPE;
 import static org.infinispan.configuration.cache.MemoryConfiguration.SIZE;
 import static org.infinispan.configuration.cache.MemoryConfiguration.STORAGE_TYPE;
@@ -11,6 +12,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.offheap.OffHeapDataContainer;
 import org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.util.logging.Log;
 
@@ -52,7 +54,10 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * Defines the maximum size before eviction occurs. See {@link #evictionType(EvictionType)}
     * for more details on the size is interpreted.
     *
-    * @param size
+    * If {@link #evictionStrategy(EvictionStrategy)} has not been invoked, this will set the strategy to
+    * {@link EvictionStrategy#REMOVE}.
+    *
+    * @param size the maximum size for the container
     */
    public MemoryConfigurationBuilder size(long size) {
       attributes.attribute(SIZE).set(size);
@@ -75,8 +80,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * </ul>
     *
     * Cache size is guaranteed not to exceed upper
-    * limit specified by max entries. However, due to the nature of eviction it is unlikely to ever
-    * be exactly maximum number of entries specified here.
+    * limit specified by size.
     *
     * @param type
     */
@@ -91,6 +95,33 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     */
    public EvictionType evictionType() {
       return attributes.attribute(EVICTION_TYPE).get();
+   }
+
+   /**
+    * Sets the eviction strategy which can be:
+    * <ul>
+    *    <li>NONE - no eviction will take place</li>
+    *    <li>MANUAL - no eviction will take place automatically, but user is assumed to manually call evict</li>
+    *    <li>REMOVE - eviction will remove entries to make room for new entries to be inserted</li>
+    *    <li>EXCEPTION - eviction will not take place, but instead an exception will be thrown to ensure container doesn't grow too large</li>
+    * </ul>
+    *
+    * The eviction strategy NONE and MANUAL are essentially the same except that MANUAL does not warn the user
+    * when passivation is enabled.
+    * @param strategy the strategy to set
+    * @return this
+    */
+   public MemoryConfigurationBuilder evictionStrategy(EvictionStrategy strategy) {
+      attributes.attribute(EVICTION_STRATEGY).set(strategy);
+      return this;
+   }
+
+   /**
+    * The configured eviction strategy, please see {@link MemoryConfigurationBuilder#evictionStrategy(EvictionStrategy)}.
+    * @return the configured eviction stategy
+    */
+   public EvictionStrategy evictionStrategy() {
+      return attributes.attribute(EVICTION_STRATEGY).get();
    }
 
    /**
@@ -122,31 +153,44 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
       if (type != StorageType.OBJECT && getBuilder().compatibility().isEnabled()) {
          throw log.compatibilityModeOnlyCompatibleWithObjectStorage(type);
       }
+
       long size = attributes.attribute(SIZE).get();
-      if (size > 0) {
-         EvictionType evictionType = attributes.attribute(EVICTION_TYPE).get();
-         if (evictionType.isExceptionBased()) {
+      EvictionType evictionType = attributes.attribute(EVICTION_TYPE).get();
+      if (evictionType == EvictionType.MEMORY) {
+         switch (type) {
+            case OBJECT:
+               throw log.offHeapMemoryEvictionNotSupportedWithObject();
+            case OFF_HEAP:
+               int addressCount = attributes.attribute(ADDRESS_COUNT).get();
+               // Note this is cast to long as we have to multiply by 8 below which could overflow
+               long actualAddressCount = OffHeapDataContainer.getActualAddressCount(addressCount << 3);
+               actualAddressCount = UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(actualAddressCount);
+               if (size < actualAddressCount) {
+                  throw log.offHeapMemoryEvictionSizeNotLargeEnoughForAddresses(size, actualAddressCount, addressCount);
+               }
+         }
+      }
+
+      EvictionStrategy strategy = attributes.attribute(EVICTION_STRATEGY).get();
+      if (!strategy.isEnabled()) {
+         if (size > 0) {
+            evictionStrategy(EvictionStrategy.REMOVE);
+            log.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overridden to %s", size, strategy);
+         } else if (getBuilder().persistence().passivation() && strategy != EvictionStrategy.MANUAL &&
+               !getBuilder().template()) {
+            log.passivationWithoutEviction();
+         }
+      } else {
+         if (size <= 0) {
+            throw log.invalidEvictionSize();
+         }
+         if (strategy.isExceptionBased()) {
             TransactionConfigurationBuilder transactionConfiguration = getBuilder().transaction();
             org.infinispan.transaction.TransactionMode transactionMode = transactionConfiguration.transactionMode();
             if (transactionMode == null || !transactionMode.isTransactional() ||
                   transactionConfiguration.useSynchronization() ||
                   transactionConfiguration.use1PcForAutoCommitTransactions()) {
-               throw new UnsupportedOperationException();
-               // TODO: need to add log
-//               throw log.exceptionBasedEvictionOnlySupportedInTransactionalCaches();
-            }
-         } else if (evictionType.isMemoryBased()) {
-            switch (type) {
-               case OBJECT:
-                  throw log.offHeapMemoryEvictionNotSupportedWithObject();
-               case OFF_HEAP:
-                  int addressCount = attributes.attribute(ADDRESS_COUNT).get();
-                  // Note this is cast to long as we have to multiply by 8 below which could overflow
-                  long actualAddressCount = OffHeapDataContainer.getActualAddressCount(addressCount << 3);
-                  actualAddressCount = UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(actualAddressCount);
-                  if (size < actualAddressCount) {
-                     throw log.offHeapMemoryEvictionSizeNotLargeEnoughForAddresses(size, actualAddressCount, addressCount);
-                  }
+               throw log.exceptionBasedEvictionOnlySupportedInTransactionalCaches();
             }
          }
       }

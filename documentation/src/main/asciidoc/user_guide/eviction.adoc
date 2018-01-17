@@ -36,12 +36,39 @@ All cache entry are evicted by piggybacking on user threads that are hitting the
 
 ==== Eviction strategy
 
+Strategies control how the eviction is handled.
+
+The possible choices are
+
+.`NONE`
+Eviction is not enabled and it is assumed that the user will not invoke evict directly
+on the cache. If passivation is enabled this will cause aa warning message to be
+emitted. This is the default strategy.
+
+.`MANUAL`
+This strategy is just like <b>NONE</b> except that it asssumes the user will be
+invoking evict directly. This way if passivation is enabled no warning message
+is logged.
+
+.`REMOVE`
+This strategy will actually evict "old" entries to make room for incoming ones.
+
 Eviction is handled by link:https://github.com/ben-manes/caffeine[Caffeine] utilizing
 the TinyLFU algorithm with an additional admission window.  This was chosen as
 provides high hit rate while also requiring low memory overhead.  This provides a
 better hit ratio than LRU while also requiring less memory than LIRS.
 
+.`EXCEPTION`
+This strategy actually prevents new entries from being created by throwing
+a `ContainerFullException`. This strategy only works with transactional caches
+that always run with 2 phase commit, that is no 1 phase commit or synchronization
+optimizations allowed.
+
 ==== Eviction types
+
+Eviction type applies only when the size is set to something greater than 0.
+The eviction type below determines when the container will decide to remove
+entries.
 
 .`COUNT`
 This type of eviction will remove entries based on how many there are in the
@@ -51,9 +78,8 @@ entry will be removed to make room.
 .`MEMORY`
 This type of eviction will estimate how much each entry will take up in memory
 and will remove an entry when the total size of all entries is larger than
-the configured `size`.  This type only works with primitive wrapper, String
-and byte[] types, thus if custom types are desired you must enable
-storeAsBinary.  Also MEMORY based eviction only works with LRU policy.
+the configured `size`.  This type does not work with `OBJECT` storage type
+below.
 
 ==== Storage type
 
@@ -76,13 +102,13 @@ Stores the keys and values in native memory outside of the
 Java heap as bytes.  The configured marshaller will be used if the cache has one.
 Both `COUNT` and `MEMORY` eviction types are supported.
 
-WARNING: Both `BINARY` and `OFF-HEAP` violate equality in that equality is dictated
-by equivalence of the resulting byte[] they generate instead of the object instance.
+WARNING: Both `BINARY` and `OFF-HEAP` violate equality and hashCode that they are
+dictated by the resulting byte[] they generate instead of the object instance.
 
 ==== More defaults
 
-By default when no `<memory />` element is specified, no eviction takes place and
-`OBJECT` storage type is used.
+By default when no `<memory />` element is specified, no eviction takes place,
+`OBJECT` storage type is used, and a strategy of `NONE` is assumed.
 
 In case there is an memory element, this table describes the behaviour of eviction
 based on information provided in the xml configuration ("-" in Supplied size or
@@ -92,8 +118,11 @@ Supplied strategy column means that the attribute wasn't supplied)
 |===============
 |Supplied size|Example|Eviction behaviour
 |-| `<memory />` |no eviction as an object
+|-| `<memory strategy="MANUAL">` |no eviction as an object and won't log warning if passivation is enabled
 |&gt; 0| `<memory> <object size="100" /> </memory>` |eviction takes place and stored as objects
+|&gt; 0| `<memory> <binary size="100" eviction="MEMORY"/> </memory>` |eviction takes place and stored as a binary removing to make sure memory doens't go higher than 100
 |&gt; 0| `<memory> <off-heap size="100" /> </memory>` |eviction takes place and stored in off-heap
+|&gt; 0| `<memory> <off-heap size="100" strategy="EXCEPTION" /> </memory>` |entries are stored in off-heap and if 100 entries are in container exceptions will be thrown for additional
 |0| `<memory> <object size="0" /> </memory>` | no eviction
 |&lt; 0| `<memory> <object size="-1" /> </memory>` | no eviction
 

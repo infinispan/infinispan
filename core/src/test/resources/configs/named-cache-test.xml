@@ -104,7 +104,7 @@
       <local-cache name="evictionCache">
          <expiration interval="500" lifespan="60000" max-idle="1000"/>
          <memory>
-            <object size="5000"/>
+            <object strategy="REMOVE" size="5000"/>
          </memory>
       </local-cache>
       <replicated-cache name="withouthJmxEnabled" mode="ASYNC" statistics="false"/>

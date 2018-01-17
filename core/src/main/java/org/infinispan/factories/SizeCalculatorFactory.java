@@ -6,6 +6,7 @@ import org.infinispan.container.KeyValueMetadataSizeCalculator;
 import org.infinispan.container.entries.CacheEntrySizeCalculator;
 import org.infinispan.container.entries.PrimitiveEntrySizeCalculator;
 import org.infinispan.container.offheap.OffHeapEntryFactory;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.marshall.core.WrappedByteArraySizeCalculator;
 
@@ -19,7 +20,7 @@ public class SizeCalculatorFactory extends AbstractNamedCacheComponentFactory im
    @Override
    public <T> T construct(Class<T> componentType) {
       MemoryConfiguration memory = configuration.memory();
-      if (memory.evictionType().isMemoryBased()) {
+      if (memory.evictionStrategy().isEnabled() && memory.evictionType() == EvictionType.MEMORY) {
          StorageType type = memory.storageType();
          switch (type) {
             case BINARY:

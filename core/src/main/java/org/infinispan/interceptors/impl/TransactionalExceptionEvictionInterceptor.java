@@ -28,7 +28,6 @@ import org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
@@ -48,6 +47,7 @@ import org.infinispan.util.logging.LogFactory;
 @Listener(observation = Listener.Observation.POST)
 public class TransactionalExceptionEvictionInterceptor extends DDAsyncInterceptor {
    private final static Log log = LogFactory.getLog(TransactionalExceptionEvictionInterceptor.class);
+   private final static boolean isTrace = log.isTraceEnabled();
 
    private final AtomicLong currentSize = new AtomicLong();
    private final ConcurrentMap<GlobalTransaction, Long> pendingSize = new ConcurrentHashMap<>();
@@ -88,8 +88,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
 
    @Start
    public void start() {
-      if (memoryConfiguration.storageType() == StorageType.OFF_HEAP &&
-            memoryConfiguration.evictionType() == EvictionType.MEMORY_EXCEPTION) {
+      if (memoryConfiguration.storageType() == StorageType.OFF_HEAP) {
          minSize = UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(memoryConfiguration.addressCount() << 3);
          currentSize.set(minSize);
       }
@@ -116,7 +115,9 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
          long targetSize = size + increaseAmount;
          if (targetSize <= maxSize) {
             if (currentSize.compareAndSet(size, size + increaseAmount)) {
-               log.tracef("Increased exception based size by %d to %d", increaseAmount, size + increaseAmount);
+               if (isTrace) {
+                  log.tracef("Increased exception based size by %d to %d", increaseAmount, size + increaseAmount);
+               }
                return true;
             }
          } else {
@@ -146,6 +147,9 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      if (isTrace) {
+         log.tracef("Clear command encountered, resetting size to %d", minSize);
+      }
       // Clear is never invoked in the middle of a transaction with others so just set the size
       currentSize.set(minSize);
       return super.visitClearCommand(ctx, command);
@@ -187,8 +191,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
       }
 
       if (!increaseSize(changeAmount)) {
-         // TODO: need to write a valid exception for this
-         throw new IllegalArgumentException();
+         throw log.containerFull(maxSize);
       }
 
       pendingSize.put(ctx.getGlobalTransaction(), changeAmount);
@@ -200,7 +203,9 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       Long size = pendingSize.remove(ctx.getGlobalTransaction());
       if (size != null) {
-         log.tracef("Rollback encountered subtracting exception size by %d", size);
+         if (isTrace) {
+            log.tracef("Rollback encountered subtracting exception size by %d", size);
+         }
          currentSize.addAndGet(-size);
       }
       return super.visitRollbackCommand(ctx, command);

@@ -23,6 +23,7 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.configuration.cache.MemoryConfiguration;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.jboss.as.controller.AttributeDefinition;
@@ -63,7 +64,16 @@ public class MemoryBinaryConfigurationResource extends CacheConfigurationChildRe
                 .setDefaultValue(new ModelNode().set(MemoryConfiguration.EVICTION_TYPE.getDefaultValue().name()))
                 .build();
 
-    static final AttributeDefinition[] ATTRIBUTES = {SIZE, EVICTION};
+    static final SimpleAttributeDefinition STRATEGY =
+          new SimpleAttributeDefinitionBuilder(ModelKeys.STRATEGY, ModelType.STRING, true)
+                .setXmlName(Attribute.STRATEGY.getLocalName())
+                .setAllowExpression(true)
+                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                .setValidator(new EnumValidator<>(EvictionStrategy.class, true, false))
+                .setDefaultValue(new ModelNode().set(EvictionStrategy.NONE.name()))
+                .build();
+
+    static final AttributeDefinition[] ATTRIBUTES = {SIZE, EVICTION, STRATEGY};
 
     public MemoryBinaryConfigurationResource(CacheConfigurationResource parent) {
         super(PATH, ModelKeys.MEMORY, parent, ATTRIBUTES);
@@ -75,6 +85,7 @@ public class MemoryBinaryConfigurationResource extends CacheConfigurationChildRe
               resource.getPathElement().getKey(), resource.getServiceInstaller(), CacheServiceName.CONFIGURATION, attributes);
 
         resourceRegistration.registerReadWriteAttribute(EVICTION, CacheReadAttributeHandler.INSTANCE, restartCacheWriteHandler);
+        resourceRegistration.registerReadWriteAttribute(STRATEGY, CacheReadAttributeHandler.INSTANCE, restartCacheWriteHandler);
         resourceRegistration.registerReadWriteAttribute(SIZE, CacheReadAttributeHandler.INSTANCE, new RuntimeCacheConfigurationWriteAttributeHandler(SIZE, (configuration, newSize) -> {
             configuration.memory().size(newSize.asLong());
         }));

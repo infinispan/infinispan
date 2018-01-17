@@ -4,10 +4,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.fail;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.transaction.HeuristicMixedException;
@@ -27,8 +25,10 @@ import org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.expiration.ExpirationManager;
+import org.infinispan.interceptors.impl.ContainerFullException;
 import org.infinispan.interceptors.impl.TransactionalExceptionEvictionInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -56,8 +56,6 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
    private ConfigurationBuilder configurationBuilder;
 
    protected ControlledTimeService timeService = new ControlledTimeService();
-
-   private List<TransactionalExceptionEvictionInterceptor> interceptors;
 
    public ExceptionEvictionTest nodeCount(int nodeCount) {
       this.nodeCount = nodeCount;
@@ -143,17 +141,18 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
       configurationBuilder = new ConfigurationBuilder();
       MemoryConfigurationBuilder memoryConfigurationBuilder = configurationBuilder.memory();
       memoryConfigurationBuilder.storageType(storageType);
+      memoryConfigurationBuilder.evictionStrategy(EvictionStrategy.EXCEPTION);
       switch (storageType) {
          case OBJECT:
-            memoryConfigurationBuilder.evictionType(EvictionType.COUNT_EXCEPTION).size(SIZE);
+            memoryConfigurationBuilder.size(SIZE);
             break;
          case BINARY:
             // 64 bytes per entry, however tests that add metadata require 16 more even
-            memoryConfigurationBuilder.evictionType(EvictionType.MEMORY_EXCEPTION).size(convertAmountForStorage(SIZE) + 16);
+            memoryConfigurationBuilder.evictionType(EvictionType.MEMORY).size(convertAmountForStorage(SIZE) + 16);
             break;
          case OFF_HEAP:
             // Each entry takes up 63 bytes total for our tests, however tests that add expiration require 16 more
-            memoryConfigurationBuilder.evictionType(EvictionType.MEMORY_EXCEPTION).size(24 +
+            memoryConfigurationBuilder.evictionType(EvictionType.MEMORY).size(24 +
                   // If we are running optimistic transactions we have to store version so it is larger than pessimistic
                   convertAmountForStorage(SIZE) +
                   UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(memoryConfigurationBuilder.addressCount() << 3));
@@ -180,12 +179,6 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
       }
 
       waitForClusterToForm();
-
-      interceptors = new ArrayList<>(nodeCount);
-      for (Cache cache : caches()) {
-         interceptors.add(cache.getAdvancedCache().getAsyncInterceptorChain().findInterceptorWithClass(
-               TransactionalExceptionEvictionInterceptor.class));
-      }
    }
 
    @AfterMethod
@@ -261,7 +254,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          cache(0).put(-1, -1);
          fail("Should have thrown an exception!");
       } catch (Throwable t) {
-         Exceptions.assertException(IllegalArgumentException.class, getMostNestedSuppressedThrowable(t));
+         Exceptions.assertException(ContainerFullException.class, getMostNestedSuppressedThrowable(t));
       }
    }
 
@@ -274,7 +267,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          cache(0).computeIfAbsent(-1, k -> SIZE);
          fail("Should have thrown an exception!");
       } catch (Throwable t) {
-         Exceptions.assertException(IllegalArgumentException.class, getMostNestedSuppressedThrowable(t));
+         Exceptions.assertException(ContainerFullException.class, getMostNestedSuppressedThrowable(t));
       }
    }
 
@@ -293,7 +286,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          cache(0).put(-1, -1);
          fail("Should have thrown an exception!");
       } catch (Throwable t) {
-         Exceptions.assertException(IllegalArgumentException.class, getMostNestedSuppressedThrowable(t));
+         Exceptions.assertException(ContainerFullException.class, getMostNestedSuppressedThrowable(t));
       }
    }
 
@@ -334,7 +327,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          cache(0).put(-1, -1);
          fail("Should have thrown an exception!");
       } catch (Throwable t) {
-         Exceptions.assertException(IllegalArgumentException.class, getMostNestedSuppressedThrowable(t));
+         Exceptions.assertException(ContainerFullException.class, getMostNestedSuppressedThrowable(t));
       }
 
       assertInterceptorCount(nodeCount * SIZE);
@@ -394,7 +387,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
                tm.commit();
                fail("Should have thrown an exception!");
             } catch (RollbackException e) {
-               Exceptions.assertException(IllegalArgumentException.class, getMostNestedSuppressedThrowable(e));
+               Exceptions.assertException(ContainerFullException.class, getMostNestedSuppressedThrowable(e));
             }
          }
          else {
@@ -442,7 +435,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          cache(0).put(-1, -1);
          fail("Should have thrown an exception!");
       } catch (Throwable t) {
-         Exceptions.assertException(IllegalArgumentException.class, getMostNestedSuppressedThrowable(t));
+         Exceptions.assertException(ContainerFullException.class, getMostNestedSuppressedThrowable(t));
       }
    }
 
@@ -488,7 +481,6 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          // This will fill up the cache with entries that all map to owners
          for (int i = 0; i < SIZE - 1; ++i) {
             nextKey = getNextIntWithOwners(nextKey, lct, dc, targetNode, null);
-            log.fatal("Inserting for key: " + nextKey);
             cache(0).put(nextKey, nextKey);
          }
 
@@ -507,7 +499,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
             cache(0).put(nextKey, nextKey);
             fail("Should have thrown an exception!");
          } catch (Throwable t) {
-            Exceptions.assertException(IllegalArgumentException.class, getMostNestedSuppressedThrowable(t));
+            Exceptions.assertException(ContainerFullException.class, getMostNestedSuppressedThrowable(t));
          }
 
          // Now that it partially failed it should have rolled back all the results

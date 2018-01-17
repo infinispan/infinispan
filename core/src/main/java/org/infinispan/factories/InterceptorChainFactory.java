@@ -239,7 +239,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       // Has to be after entry wrapping interceptor so it can properly see context values even when removed
       if (transactionMode.isTransactional()) {
-         if (configuration.memory().evictionType().isExceptionBased()) {
+         if (configuration.memory().evictionStrategy().isExceptionBased()) {
             interceptorChain.appendInterceptor(createInterceptor(new TransactionalExceptionEvictionInterceptor(),
                   TransactionalExceptionEvictionInterceptor.class), false);
          }

@@ -2,12 +2,12 @@ package org.infinispan.factories;
 
 import org.infinispan.configuration.cache.EvictionConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
-import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.offheap.BoundedOffHeapDataContainer;
 import org.infinispan.container.offheap.OffHeapDataContainer;
-import org.infinispan.eviction.EvictionType;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 
 /**
@@ -31,9 +31,9 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
 
          long thresholdSize = configuration.memory().size();
 
-         EvictionType type = configuration.memory().evictionType();
-         //handle case when < 0 value signifies unbounded container or when we are exception based eviction (handled by
-         if (thresholdSize < 0 || type.isExceptionBased()) {
+         EvictionStrategy strategy = configuration.memory().evictionStrategy();
+         //handle case when < 0 value signifies unbounded container or when we are not removal based
+         if (strategy.isExceptionBased() || !strategy.isEnabled()) {
             if (configuration.memory().storageType() == StorageType.OFF_HEAP) {
                return (T) new OffHeapDataContainer(configuration.memory().addressCount());
             } else {
