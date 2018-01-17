@@ -19,7 +19,7 @@ public class GenericJbossMarshallerEncoder extends MarshallerEncoder {
 
    @Override
    public MediaType getStorageFormat() {
-      return MediaType.APPLICATION_JBOSS_MARSHALLED;
+      return MediaType.APPLICATION_JBOSS_MARSHALLING;
    }
 
    @Override

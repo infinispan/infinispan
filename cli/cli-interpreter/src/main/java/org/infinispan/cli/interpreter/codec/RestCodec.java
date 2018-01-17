@@ -31,7 +31,7 @@ public class RestCodec extends AbstractCodec {
 
    @Override
    public Object encodeKey(Object key) {
-      return key;
+      return key.toString().getBytes();
    }
 
    @Override
@@ -53,7 +53,7 @@ public class RestCodec extends AbstractCodec {
 
    @Override
    public Object decodeValue(Object value) {
-       if (value == null) return null;
+      if (value == null) return null;
       return value instanceof byte[] ? new String((byte[]) value, UTF_8) : value.toString();
    }
 

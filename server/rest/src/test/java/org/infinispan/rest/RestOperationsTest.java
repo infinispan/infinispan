@@ -35,7 +35,29 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       object.encoding().key().mediaType(TEXT_PLAIN_TYPE);
       object.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
 
+      ConfigurationBuilder legacyStorageCache = getDefaultCacheBuilder();
+      legacyStorageCache.encoding().key().mediaType("application/x-java-object;type=java.lang.String");
+
       restServer.defineCache("objectCache", object);
+      restServer.defineCache("legacy", legacyStorageCache);
+
+   }
+
+   @Test
+   public void shouldReadWriteToLegacyCache() throws Exception {
+      //given
+      putStringValueInCache("legacy", "test", "test");
+
+      //when
+      ContentResponse response = client
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "legacy", "test"))
+            .header(HttpHeader.ACCEPT, "text/plain")
+            .send();
+
+      //then
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).hasContentType("text/plain");
+      ResponseAssertion.assertThat(response).hasReturnedText("test");
    }
 
    @Test
@@ -43,7 +65,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       //given
       TestClass testClass = new TestClass();
       testClass.setName("test");
-      putValueInCache("objectCache", "test", testClass);
+      putValueInCache("objectCache", "test".getBytes(), testClass);
 
       //when
       ContentResponse response = client
@@ -62,7 +84,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       //given
       TestClass testClass = new TestClass();
       testClass.setName("test");
-      putValueInCache("objectCache", "test", testClass);
+      putValueInCache("objectCache", "test".getBytes(), testClass);
 
       //when
       ContentResponse response = client
@@ -223,7 +245,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
 
    @Test
    public void shouldDeleteExistingValueEvenWithoutMetadata() throws Exception {
-      putValueInCache("default", "test", "test");
+      putValueInCache("default", "test".getBytes(), "test");
 
       //when
       ContentResponse response = client

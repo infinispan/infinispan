@@ -273,6 +273,9 @@
          <cache-container name="local" default-cache="default">
             <global-state />
             <local-cache name="default">
+               <encoding>
+                    <key media-type="application/x-java-object;type=java.lang.String"/>
+               </encoding>
                <rest-store path="/rest/default" shared="true" purge="false" passivation="false">
                   <connection-pool connection-timeout="60000" socket-timeout="60000" tcp-no-delay="true" max-connections-per-host="4" max-total-connections="20" />
                   <remote-server outbound-socket-binding="remote-store-rest-server" />

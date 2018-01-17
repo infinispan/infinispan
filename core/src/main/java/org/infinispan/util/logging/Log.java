@@ -1689,7 +1689,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Invalid text format: '%s'", id = 493)
    EncodingException invalidTextFormat(Object content);
 
-   @Message(value = "Invalid text format: '%s'", id = 494)
+   @Message(value = "Invalid binary format: '%s'", id = 494)
    EncodingException invalidBinaryFormat(Object content);
 
    @Message(value = "Error transcoding content", id = 495)
@@ -1727,7 +1727,7 @@ public interface Log extends BasicLogger {
    @Message(value = "MEMORY based OFF_HEAP eviction configured size %d must be larger than %d to store configured " +
          "address count of %d", id = 505)
    CacheConfigurationException offHeapMemoryEvictionSizeNotLargeEnoughForAddresses(long configuredSize,
-         long addressMemorySize, int addressCount);
+                                                                                   long addressMemorySize, int addressCount);
 
    @Message(value = "Biased reads are supported only in scattered cache. Maybe you were looking for L1?", id = 506)
    CacheConfigurationException biasedReadsAppliesOnlyToScattered();

@@ -12,6 +12,7 @@ import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterMethod;
@@ -53,7 +54,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
 
       EntityEnclosingMethod put = new PutMethod(restUrl + "/k");
       put.setRequestEntity(new ByteArrayRequestEntity(
-            "v".getBytes(), "text/plain"));
+            "v".getBytes(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
       remote.executeMethod(put);
 
       assertEquals(1, l.createdCounter);
@@ -65,7 +66,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
 
       EntityEnclosingMethod put2 = new PutMethod(restUrl + "/key");
       put2.setRequestEntity(new ByteArrayRequestEntity(
-            "value".getBytes(), "text/plain"));
+            "value".getBytes(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
       remote.executeMethod(put2);
 
       assertEquals(2, l.createdCounter);
@@ -75,7 +76,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
 
       EntityEnclosingMethod put3 = new PutMethod(restUrl + "/key");
       put3.setRequestEntity(new ByteArrayRequestEntity(
-            "modifiedValue".getBytes(), "text/plain"));
+            "modifiedValue".getBytes(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
       remote.executeMethod(put3);
 
       assertEquals(2, l.createdCounter);
@@ -86,7 +87,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
 
       EntityEnclosingMethod post = new PutMethod(restUrl + "/k");
       post.setRequestEntity(new ByteArrayRequestEntity(
-            "replacedValue".getBytes(), "text/plain"));
+            "replacedValue".getBytes(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
       remote.executeMethod(post);
 
       assertEquals(2, l.createdCounter);

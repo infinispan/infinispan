@@ -23,13 +23,10 @@ public interface Transcoder {
    Set<MediaType> getSupportedMediaTypes();
 
    /**
-    * @return true if the transcoder supports all the supplied {@link MediaType}.
+    * @return true if the transcoder supports the conversion between supplied {@link MediaType}.
     */
    default boolean supportsConversion(MediaType mediaType, MediaType other) {
-      if(mediaType.match(other)) {
-         return getSupportedMediaTypes().stream().allMatch(s -> s.match(mediaType));
-      }
-      return supports(mediaType) && supports(other);
+      return !mediaType.match(other) && supports(mediaType) && supports(other);
    }
 
    default boolean supports(MediaType mediaType) {

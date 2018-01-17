@@ -1,6 +1,9 @@
 package org.infinispan.rest.operations.mediatypes;
 
+import java.io.UnsupportedEncodingException;
+
 import org.infinispan.CacheSet;
+import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.rest.operations.exceptions.ServerInternalException;
 
 /**
@@ -26,4 +29,14 @@ public interface OutputPrinter {
     */
    byte[] print(String cacheName, CacheSet<?> cacheSet, Charset charset) throws ServerInternalException;
 
+   default String asString(Object k) {
+      try {
+         if (k instanceof byte[]) {
+            return new String((byte[]) k, "UTF-8");
+         }
+      } catch (UnsupportedEncodingException e) {
+         throw new EncodingException("Cannot convert key to string", e);
+      }
+      return k.toString();
+   }
 }

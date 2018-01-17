@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.infinispan.commons.dataconversion.MediaType;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -17,6 +19,8 @@ import io.netty.handler.codec.http2.HttpConversionUtil;
  */
 public abstract class InfinispanRequest {
 
+   private static final String KEY_CONTENT_TYPE = "Key-Content-Type";
+   private static final MediaType DEFAULT_KEY_CONTENT_TYPE = MediaType.parse("application/x-java-object;type=java.lang.String");
    protected final FullHttpRequest request;
    private final Optional<String> streamId;
    private final ChannelHandlerContext nettyChannelContext;
@@ -81,6 +85,11 @@ public abstract class InfinispanRequest {
       return Optional.ofNullable(request.headers().get(HttpHeaderNames.ACCEPT));
    }
 
+   public MediaType getKeyContentType() {
+      return Optional.ofNullable(request.headers().get(KEY_CONTENT_TYPE)).map(MediaType::parse)
+            .orElse(DEFAULT_KEY_CONTENT_TYPE);
+   }
+
    /***
     * @return <code>Content-Type</code> header value.
     */
@@ -121,7 +130,7 @@ public abstract class InfinispanRequest {
 
    protected String getParameterValue(String name) {
       List<String> values = parameters.get(name);
-      if(values == null) return null;
+      if (values == null) return null;
       return values.iterator().next();
    }
 }

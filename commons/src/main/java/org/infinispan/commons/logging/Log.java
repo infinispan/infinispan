@@ -8,6 +8,7 @@ import java.io.IOException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.EncodingException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.counter.exception.CounterException;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
 import org.jboss.logging.BasicLogger;
@@ -189,4 +190,18 @@ public interface Log extends BasicLogger {
    @Message(value = "Class '%s' blocked by deserialization white list. Adjust the client configuration serialization white list regular expression to include this class.", id = 28023)
    CacheException classNotInWhitelist(String className);
 
+   @Message(value = "Invalid media type. Expected '%s' but got '%s'", id = 28024)
+   EncodingException invalidMediaType(String expected, String actual);
+
+   @Message(value = "Invalid text content '%s'", id = 28025)
+   EncodingException invalidTextContent(Object content);
+
+   @Message(value = "Conversion of content '%s' from '%s' to '%s' not supported", id = 28026)
+   EncodingException conversionNotSupported(Object content, String fromMediaType, String toMediaType);
+
+   @Message(value = "Invalid application/x-www-form-urlencoded content: '%s'", id = 28027)
+   EncodingException cannotDecodeFormURLContent(Object content);
+
+   @Message(value = "Error encoding content '%s' to '%s'", id = 28028)
+   EncodingException errorEncoding(Object content, MediaType mediaType);
 }
