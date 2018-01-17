@@ -40,6 +40,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.interceptors.impl.ContainerFullException;
 import org.infinispan.jmx.JmxDomainConflictException;
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -1748,4 +1749,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot acquire lock '%s' for persistent global state", id = 512)
    CacheConfigurationException globalStateCannotAcquireLockFile(@Cause Throwable cause, File lockFile);
+
+   @Message(value = "Exception based eviction requires a transactional cache that doesn't allow for 1 phase commit or synchronizations", id = 513)
+   CacheConfigurationException exceptionBasedEvictionOnlySupportedInTransactionalCaches();
+
+   @Message(value = "Container eviction limit %d reached, write operation(s) is blocked", id = 514)
+   ContainerFullException containerFull(long size);
 }

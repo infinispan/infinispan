@@ -33,6 +33,7 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.interceptors.FooInterceptor;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
@@ -200,7 +201,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
             "      <memory>\n" +
-            "        <off-heap/>\n" +
+            "        <off-heap strategy=\"MANUAL\"/>\n" +
             "      </memory>\n" +
             "   </local-cache>\n" +
             "</cache-container>" +
@@ -213,6 +214,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(cfg.dataContainer().<byte[]>keyEquivalence() instanceof AnyEquivalence);
             assertTrue(cfg.dataContainer().valueEquivalence() instanceof AnyEquivalence);
             assertEquals(StorageType.OFF_HEAP, cfg.memory().storageType());
+            assertEquals(EvictionStrategy.MANUAL, cfg.memory().evictionStrategy());
          }
       });
 
@@ -669,6 +671,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       c = cm.getCacheConfiguration("evictionCache");
       assertEquals(5000, c.memory().size());
+      assertEquals(EvictionStrategy.REMOVE, c.memory().evictionStrategy());
       assertEquals(60000, c.expiration().lifespan());
       assertEquals(1000, c.expiration().maxIdle());
       assertEquals(500, c.expiration().wakeUpInterval());

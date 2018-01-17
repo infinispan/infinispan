@@ -6,6 +6,7 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 
 /**
@@ -19,14 +20,16 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration> {
          .builder("storage", StorageType.OBJECT).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
    public static final AttributeDefinition<Long> SIZE  = AttributeDefinition.builder("size", -1L).build();
    public static final AttributeDefinition<EvictionType> EVICTION_TYPE  = AttributeDefinition.builder("type", EvictionType.COUNT).build();
+   public static final AttributeDefinition<EvictionStrategy> EVICTION_STRATEGY = AttributeDefinition.builder("strategy", EvictionStrategy.NONE).build();
 
    static public AttributeSet attributeDefinitionSet() {
       return new AttributeSet(MemoryConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(),
-            STORAGE_TYPE, SIZE, EVICTION_TYPE, ADDRESS_COUNT);
+            STORAGE_TYPE, SIZE, EVICTION_TYPE, EVICTION_STRATEGY, ADDRESS_COUNT);
    }
 
    private final Attribute<Long> size;
    private final Attribute<EvictionType> evictionType;
+   private final Attribute<EvictionStrategy> evictionStrategy;
    private final Attribute<StorageType> storageType;
    private final Attribute<Integer> addressCount;
    private final AttributeSet attributes;
@@ -36,6 +39,7 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration> {
       storageType = attributes.attribute(STORAGE_TYPE);
       size = attributes.attribute(SIZE);
       evictionType = attributes.attribute(EVICTION_TYPE);
+      evictionStrategy = attributes.attribute(EVICTION_STRATEGY);
       addressCount = attributes.attribute(ADDRESS_COUNT);
    }
 
@@ -65,6 +69,14 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration> {
     */
    public EvictionType evictionType() {
       return evictionType.get();
+   }
+
+   /**
+    * The configured eviction strategy
+    * @return
+    */
+   public EvictionStrategy evictionStrategy() {
+      return evictionStrategy.get();
    }
 
    public boolean isEvictionEnabled() {
