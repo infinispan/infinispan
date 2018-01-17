@@ -37,13 +37,21 @@ public class RestUpgradeSynchronizerTest extends AbstractInfinispanTest {
    private Cache<byte[], byte[]> targetServerCache;
    private HttpClient client;
 
+   protected static final String LEGACY_KEY_ENCODING = "application/x-java-object;type=java.lang.String";
+
+   protected ConfigurationBuilder getSourceServerBuilder() {
+      ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      serverBuilder.encoding().key().mediaType(LEGACY_KEY_ENCODING);
+      return serverBuilder;
+   }
+
    @BeforeClass
-   public void setup() throws Exception {
+   public void setup() {
       RestServerConfigurationBuilder restServerConfigurationBuilder = new RestServerConfigurationBuilder();
       restServerConfigurationBuilder.port(0);
 
-      ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      sourceContainer = TestCacheManagerFactory.createCacheManager(serverBuilder);
+      ConfigurationBuilder serverBuilder = getSourceServerBuilder();
+      sourceContainer = TestCacheManagerFactory.createServerModeCacheManager(serverBuilder);
       sourceServerCache = sourceContainer.getCache();
       sourceServer = new RestServer();
       sourceServer.start(restServerConfigurationBuilder.build(), sourceContainer);
@@ -52,8 +60,9 @@ public class RestUpgradeSynchronizerTest extends AbstractInfinispanTest {
       ConfigurationBuilder targetConfigurationBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       targetConfigurationBuilder.persistence().addStore(RestStoreConfigurationBuilder.class).host("localhost").port(sourceServer.getPort())
             .path("/rest/" + BasicCacheContainer.DEFAULT_CACHE_NAME).rawValues(true).locking().isolationLevel(IsolationLevel.NONE);
+      targetConfigurationBuilder.encoding().key().mediaType(LEGACY_KEY_ENCODING);
 
-      targetContainer = TestCacheManagerFactory.createCacheManager(targetConfigurationBuilder);
+      targetContainer = TestCacheManagerFactory.createServerModeCacheManager(targetConfigurationBuilder);
       targetServerCache = targetContainer.getCache();
       targetServer = new RestServer();
       targetServer.start(restServerConfigurationBuilder.build(), targetContainer);
@@ -70,6 +79,12 @@ public class RestUpgradeSynchronizerTest extends AbstractInfinispanTest {
          put.setRequestEntity(new StringRequestEntity(s, "text/plain", "UTF-8"));
          assertEquals(HttpStatus.SC_OK, client.executeMethod(put));
       }
+
+      // Read a newly inserted entry
+      GetMethod getInserted = new GetMethod(String.format("http://localhost:%d/rest/%s/A", sourceServer.getPort(), BasicCacheContainer.DEFAULT_CACHE_NAME));
+      assertEquals(HttpStatus.SC_OK, client.executeMethod(getInserted));
+      assertEquals("A", getInserted.getResponseBodyAsString());
+
       // Verify access to some of the data from the new cluster
       GetMethod get = new GetMethod(String.format("http://localhost:%d/rest/%s/A", targetServer.getPort(), BasicCacheContainer.DEFAULT_CACHE_NAME));
       assertEquals(HttpStatus.SC_OK, client.executeMethod(get));

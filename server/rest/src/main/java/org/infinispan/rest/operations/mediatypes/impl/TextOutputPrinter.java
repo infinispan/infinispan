@@ -16,7 +16,7 @@ public class TextOutputPrinter implements OutputPrinter {
    @Override
    public byte[] print(String cacheName, CacheSet<?> keys, Charset charset) {
       return keys.stream()
-            .map(Object::toString)
+            .map(this::asString)
             .collect(Collectors.joining("\n", "", ""))
             .getBytes(charset.getJavaCharset());
    }

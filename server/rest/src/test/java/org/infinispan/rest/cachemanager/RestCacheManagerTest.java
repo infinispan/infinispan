@@ -24,7 +24,7 @@ import org.testng.annotations.Test;
 public class RestCacheManagerTest extends SingleCacheManagerTest {
 
    @BeforeClass
-   public void prepare() throws Exception {
+   public void prepare() {
       Configuration config = new ConfigurationBuilder().build();
       cacheManager.defineConfiguration("cache1", config);
       cacheManager.defineConfiguration("cache2", config);
@@ -52,17 +52,18 @@ public class RestCacheManagerTest extends SingleCacheManagerTest {
       Mockito.verify(embeddedCacheManager, never()).getCache("cache2");
 
       // Request cache with a certain mime type
-      restCacheManager.getCache("cache2", MediaType.APPLICATION_JSON);
-      restCacheManager.getCache("cache2", MediaType.TEXT_PLAIN);
+      restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.APPLICATION_JSON);
+      restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.TEXT_PLAIN);
 
       // Verify they are stored internally
       assertEquals(knownCaches.size(), 4);
 
+
       // Requesting again with same media, or with same media but different parameters should reuse internal instance
       Mockito.reset(embeddedCacheManager);
-      restCacheManager.getCache("cache2", MediaType.TEXT_PLAIN);
-      restCacheManager.getCache("cache2", MediaType.fromString("text/plain; charset=UTF-8"));
-      restCacheManager.getCache("cache2", MediaType.fromString("text/plain; charset=SHIFT-JIS"));
+      restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.TEXT_PLAIN);
+      restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.fromString("text/plain; charset=UTF-8"));
+      restCacheManager.getCache("cache2", MediaType.MATCH_ALL, MediaType.fromString("text/plain; charset=SHIFT-JIS"));
 
       assertEquals(knownCaches.keySet().size(), 4);
 
@@ -71,7 +72,7 @@ public class RestCacheManagerTest extends SingleCacheManagerTest {
    }
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       return TestCacheManagerFactory.createCacheManager(getDefaultStandaloneCacheConfig(false));
    }
 }

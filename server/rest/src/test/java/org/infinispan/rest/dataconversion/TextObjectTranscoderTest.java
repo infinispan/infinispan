@@ -1,13 +1,15 @@
 package org.infinispan.rest.dataconversion;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
+import org.infinispan.commons.dataconversion.DefaultTranscoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.test.data.Address;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.dataconversion.AbstractTranscoderTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertTrue;
 
 
 @Test(groups = "functional", testName = "rest.TextObjectTranscoderTest")
@@ -20,17 +22,17 @@ public class TextObjectTranscoderTest extends AbstractTranscoderTest {
       Address address = new Address();
       address.setCity("London");
       dataSrc.setAddress(address);
-      transcoder = new TextObjectTranscoder();
+      transcoder = DefaultTranscoder.INSTANCE;
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
 
    @Override
-   public void testTranscoderTranscode() throws Exception {
+   public void testTranscoderTranscode() {
       Object transcoded = transcoder.transcode(dataSrc, MediaType.APPLICATION_OBJECT, MediaType.TEXT_PLAIN);
 
-      assertTrue(transcoded instanceof String, "Must be String");
+      assertEquals(new String((byte[]) transcoded), dataSrc.toString());
 
-      transcoded = transcoder.transcode(((String) transcoded).getBytes("UTF-8"), MediaType.APPLICATION_OBJECT, MediaType.TEXT_PLAIN);
+      transcoded = transcoder.transcode(transcoded, MediaType.APPLICATION_OBJECT, MediaType.TEXT_PLAIN);
 
       assertTrue(transcoded instanceof byte[], "Must be byte[]");
    }

@@ -29,6 +29,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 import org.infinispan.query.remote.impl.dataconversion.ProtostreamJsonTranscoder;
+import org.infinispan.query.remote.impl.dataconversion.ProtostreamObjectTranscoder;
 import org.infinispan.query.remote.impl.dataconversion.ProtostreamTextTranscoder;
 import org.infinispan.query.remote.impl.filter.ContinuousQueryResultExternalizer;
 import org.infinispan.query.remote.impl.filter.FilterResultExternalizer;
@@ -81,6 +82,7 @@ public final class LifecycleManager implements ModuleLifecycle {
       EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
       encoderRegistry.registerTranscoder(new ProtostreamJsonTranscoder(serCtx));
       encoderRegistry.registerTranscoder(new ProtostreamTextTranscoder(serCtx));
+      encoderRegistry.registerTranscoder(new ProtostreamObjectTranscoder(serCtx));
 
    }
 

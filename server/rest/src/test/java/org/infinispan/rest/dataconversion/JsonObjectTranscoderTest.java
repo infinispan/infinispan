@@ -23,7 +23,7 @@ public class JsonObjectTranscoderTest extends AbstractTranscoderTest {
       Address address = new Address();
       address.setCity("London");
       dataSrc.setAddress(address);
-      transcoder = new JsonObjectTranscoder();
+      transcoder = new JsonTranscoder();
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
 

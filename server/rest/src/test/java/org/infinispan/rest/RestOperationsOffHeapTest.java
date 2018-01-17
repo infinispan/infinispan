@@ -1,7 +1,5 @@
 package org.infinispan.rest;
 
-import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.testng.annotations.Test;
@@ -21,8 +19,4 @@ public class RestOperationsOffHeapTest extends BaseRestOperationsTest {
       return false;
    }
 
-   @Override
-   protected Class<? extends Encoder> getKeyEncoding() {
-      return UTF8Encoder.class;
-   }
 }

@@ -37,7 +37,7 @@ public class EmbeddedRestHotRodWithStringTest extends AbstractInfinispanTest {
 
       // 1. Put text content with REST
       EntityEnclosingMethod put = new PutMethod(cacheFactory.getRestUrl() + "/" + key);
-      put.setRequestEntity(new StringRequestEntity("<hey>ho</hey>", "application/xml", "UTF-8"));
+      put.setRequestEntity(new StringRequestEntity("<hey>ho</hey>", "text/plain", "UTF-8"));
       HttpClient restClient = cacheFactory.getRestClient();
       restClient.executeMethod(put);
       assertEquals(HttpStatus.SC_OK, put.getStatusCode());

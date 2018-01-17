@@ -34,7 +34,7 @@ public class EntrySetFormatter {
       printerByMediaType.put(TEXT_PLAIN_TYPE, textOutputPrinter);
       printerByMediaType.put(APPLICATION_XML_TYPE, xmlOutputPrinter);
       printerByMediaType.put(APPLICATION_JSON_TYPE, jsonOutputPrinter);
-      printerByMediaType.put(APPLICATION_OCTET_STREAM_TYPE, jsonOutputPrinter);
+      printerByMediaType.put(APPLICATION_OCTET_STREAM_TYPE, binaryOutputPrinter);
       printerByMediaType.put(IMAGE_PNG_TYPE, binaryOutputPrinter);
       printerByMediaType.put(APPLICATION_SERIALIZED_OBJECT_TYPE, binaryOutputPrinter);
       printerByMediaType.put(MATCH_ALL_TYPE, textOutputPrinter);

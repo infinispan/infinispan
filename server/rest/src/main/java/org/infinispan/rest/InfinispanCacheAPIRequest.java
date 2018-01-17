@@ -21,10 +21,10 @@ import io.netty.handler.codec.http.HttpMethod;
  */
 public class InfinispanCacheAPIRequest extends InfinispanRequest {
 
-   private final Optional<String> key;
+   private final Optional<Object> key;
    private final CacheOperations cacheOperations;
 
-   InfinispanCacheAPIRequest(CacheOperations operations, FullHttpRequest request, ChannelHandlerContext ctx, Optional<String> cacheName, Optional<String> key, String context, Map<String, List<String>> parameters) {
+   InfinispanCacheAPIRequest(CacheOperations operations, FullHttpRequest request, ChannelHandlerContext ctx, Optional<String> cacheName, Optional<Object> key, String context, Map<String, List<String>> parameters) {
       super(request, ctx, cacheName.orElse(null), context, parameters);
       this.cacheOperations = operations;
       this.key = key;
@@ -33,7 +33,7 @@ public class InfinispanCacheAPIRequest extends InfinispanRequest {
    /**
     * @return key.
     */
-   public Optional<String> getKey() {
+   public Optional<Object> getKey() {
       return key;
    }
 

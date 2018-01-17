@@ -62,7 +62,7 @@ public final class MediaType {
    public static MediaType APPLICATION_SERIALIZED_OBJECT = fromString(APPLICATION_SERIALIZED_OBJECT_TYPE);
    public static MediaType APPLICATION_XML = fromString(APPLICATION_XML_TYPE);
    public static MediaType APPLICATION_PROTOSTREAM = fromString(APPLICATION_PROTOSTREAM_TYPE);
-   public static MediaType APPLICATION_JBOSS_MARSHALLED = fromString(APPLICATION_JBOSS_MARSHALLING_TYPE);
+   public static MediaType APPLICATION_JBOSS_MARSHALLING = fromString(APPLICATION_JBOSS_MARSHALLING_TYPE);
    public static MediaType APPLICATION_INFINISPAN_MARSHALLED = fromString(APPLICATION_INFINISPAN_MARSHALLING_TYPE);
    public static MediaType APPLICATION_WWW_FORM_URLENCODED = fromString(WWW_FORM_URLENCODED_TYPE);
    public static MediaType IMAGE_PNG = fromString(IMAGE_PNG_TYPE);
@@ -222,13 +222,23 @@ public final class MediaType {
    }
 
    private static String validate(String token) {
-      if(token == null) throw new NullPointerException("type and subtype cannot be null");
+      if (token == null) throw new NullPointerException("type and subtype cannot be null");
       for (char c : token.toCharArray()) {
          if (c < 0x20 || c > 0x7F || INVALID_TOKENS.indexOf(c) > 0) {
             throw log.invalidCharMediaType(c, token);
          }
       }
       return token;
+   }
+
+   public MediaType withCharset(Charset charset) {
+      return withParameter(CHARSET_PARAM_NAME, charset.toString());
+   }
+
+   public MediaType withParameter(String name, String value) {
+      Map<String, String> newParams = new HashMap<>(params);
+      newParams.put(name, value);
+      return new MediaType(type, subType, newParams);
    }
 
    public String toStringExcludingParam(String... params) {

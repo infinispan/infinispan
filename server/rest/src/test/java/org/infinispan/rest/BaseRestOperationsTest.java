@@ -7,6 +7,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIALIZED_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.commons.dataconversion.StandardConversions.bytesToHex;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -14,7 +15,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.net.URLEncoder;
 import java.nio.ByteBuffer;
+import java.util.Base64;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -28,7 +31,6 @@ import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
@@ -81,8 +83,8 @@ public abstract class BaseRestOperationsTest {
       javaSerialized.encoding().value().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE);
 
       ConfigurationBuilder text = getDefaultCacheBuilder();
-      text.encoding().key().mediaType(MediaType.TEXT_PLAIN_TYPE);
-      text.encoding().value().mediaType(MediaType.TEXT_PLAIN_TYPE);
+      text.encoding().key().mediaType(TEXT_PLAIN_TYPE);
+      text.encoding().value().mediaType(TEXT_PLAIN_TYPE);
 
       ConfigurationBuilder compat = getDefaultCacheBuilder();
       compat.compatibility().enabled(enableCompatibility());
@@ -111,17 +113,13 @@ public abstract class BaseRestOperationsTest {
    }
 
    @SuppressWarnings("unchecked")
-   public InternalCacheEntry<String, byte[]> getCacheEntry(String cacheName, String key) {
+   public InternalCacheEntry<String, byte[]> getCacheEntry(String cacheName, byte[] key) {
       CacheEntry cacheEntry = getCache(cacheName).getCacheEntry(key);
       return (InternalCacheEntry<String, byte[]>) cacheEntry;
    }
 
    public AdvancedCache getCache(String cacheName) {
-      return restServer.getCacheManager().getCache(cacheName, false).getAdvancedCache().withKeyEncoding(getKeyEncoding());
-   }
-
-   protected Class<? extends Encoder> getKeyEncoding() {
-      return IdentityEncoder.class;
+      return restServer.getCacheManager().getCache(cacheName, false).getAdvancedCache().withKeyEncoding(IdentityEncoder.class);
    }
 
    @Test
@@ -216,7 +214,7 @@ public abstract class BaseRestOperationsTest {
    @Test
    public void shouldGetJsonValueStoredInSpecificFormat() throws Exception {
       //given
-      putStringValueInCache("json", "test", "{\"name\": \"test\"}");
+      putJsonValueInCache("json", "test", "{\"name\": \"test\"}");
 
       //when
       ContentResponse response = client
@@ -318,7 +316,7 @@ public abstract class BaseRestOperationsTest {
       ResponseAssertion.assertThat(response).hasReturnedText("test");
    }
 
-   protected void putValueInCache(String cacheName, String key, Object testValue) {
+   protected void putValueInCache(String cacheName, Object key, Object testValue) {
       restServer.getCacheManager().getCache(cacheName).getAdvancedCache().put(key, testValue);
    }
 
@@ -338,15 +336,23 @@ public abstract class BaseRestOperationsTest {
       ResponseAssertion.assertThat(response).hasNoContent();
    }
 
-   protected void putStringValueInCache(String cacheName, String key, String value) throws InterruptedException, ExecutionException, TimeoutException {
+   protected void putInCache(String cacheName, String key, String value, String contentType) throws InterruptedException, ExecutionException, TimeoutException {
       ContentResponse response = client
             .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), cacheName, key))
             .content(new StringContentProvider(value))
-            .header("Content-type", "text/plain; charset=utf-8")
+            .header("Content-type", contentType)
             .method(HttpMethod.PUT)
             .send();
 
       ResponseAssertion.assertThat(response).isOk();
+   }
+
+   protected void putStringValueInCache(String cacheName, String key, String value) throws InterruptedException, ExecutionException, TimeoutException {
+      putInCache(cacheName, key, value, "text/plain; charset=utf-8");
+   }
+
+   protected void putJsonValueInCache(String cacheName, String key, String value) throws InterruptedException, ExecutionException, TimeoutException {
+      putInCache(cacheName, key, value, "application/json; charset=utf-8");
    }
 
    protected void putBinaryValueInCache(String cacheName, String key, byte[] value, MediaType mediaType) throws InterruptedException, ExecutionException, TimeoutException {
@@ -527,7 +533,7 @@ public abstract class BaseRestOperationsTest {
       //then
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("application/json");
-      ResponseAssertion.assertThat(response).hasReturnedText("keys=[key1,key2]");
+      ResponseAssertion.assertThat(response).hasReturnedText("keys=[\"key1\",\"key2\"]");
    }
 
    @Test
@@ -546,6 +552,24 @@ public abstract class BaseRestOperationsTest {
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("application/xml");
       ResponseAssertion.assertThat(response).hasReturnedText("<?xml version=\"1.0\" encoding=\"UTF-8\"?><keys><key>key1</key><key>key2</key></keys>");
+   }
+
+   @Test
+   public void shouldGetAllEntriesConvertedToBytes() throws Exception {
+      //given
+      putStringValueInCache("default", "key1", "test1");
+      putStringValueInCache("default", "key2", "test2");
+
+      //when
+      ContentResponse response = client
+            .newRequest(String.format("http://localhost:%d/rest/%s", restServer.getPort(), "default"))
+            .header(HttpHeader.ACCEPT, MediaType.APPLICATION_OCTET_STREAM_TYPE)
+            .send();
+
+      //then
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).hasContentType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+      ResponseAssertion.assertThat(response).hasReturnedText(String.format("%s\n%s", bytesToHex("key1".getBytes()), bytesToHex("key2".getBytes())));
    }
 
    @Test
@@ -645,7 +669,7 @@ public abstract class BaseRestOperationsTest {
             .header("Content-type", "text/plain;charset=UTF-8")
             .send();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("default", "test");
+      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("default", "test".getBytes());
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -664,7 +688,7 @@ public abstract class BaseRestOperationsTest {
             .send();
 
       ResponseAssertion.assertThat(getResponse).isOk();
-      ResponseAssertion.assertThat(getResponse).hasReturnedText("Hey!");
+      ResponseAssertion.assertThat(getResponse).hasReturnedText("\"Hey!\"");
 
    }
 
@@ -677,7 +701,7 @@ public abstract class BaseRestOperationsTest {
             .header("Content-type", "application/unknown")
             .send();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("unknown", "test");
+      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("unknown", "test".getBytes());
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -697,7 +721,7 @@ public abstract class BaseRestOperationsTest {
             .header("Content-type", "application/x-java-serialized-object")
             .send();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("serialized", "test");
+      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("serialized", "test".getBytes());
 
       TestClass valueFromCache = convertFromBytes(cacheEntry.getValue(), TestClass.class);
 
@@ -736,7 +760,7 @@ public abstract class BaseRestOperationsTest {
             .method(HttpMethod.PUT)
             .send();
 
-      String valueFromCache = new String(getCacheEntry("default", "test").getValue());
+      String valueFromCache = new String(getCacheEntry("default", "test".getBytes()).getValue());
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -779,7 +803,7 @@ public abstract class BaseRestOperationsTest {
             .content(new StringContentProvider("test"))
             .send();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test");
+      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test".getBytes());
 
       Metadata metadata = cacheEntry.getMetadata();
 
@@ -799,7 +823,7 @@ public abstract class BaseRestOperationsTest {
             .header("maxIdleTimeSeconds", "-1")
             .send();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test");
+      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test".getBytes());
       Metadata metadata = cacheEntry.getMetadata();
 
       //then
@@ -818,7 +842,7 @@ public abstract class BaseRestOperationsTest {
             .header("maxIdleTimeSeconds", "0")
             .send();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test");
+      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test".getBytes());
       Metadata metadata = cacheEntry.getMetadata();
 
       //then
@@ -851,7 +875,7 @@ public abstract class BaseRestOperationsTest {
             .header("maxIdleTimeSeconds", "50")
             .send();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test");
+      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("expiration", "test".getBytes());
       Metadata metadata = cacheEntry.getMetadata();
 
       //then
@@ -869,7 +893,7 @@ public abstract class BaseRestOperationsTest {
             .content(new ByteBufferContentProvider(payload))
             .send();
 
-      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("binary", "test");
+      InternalCacheEntry<String, byte[]> cacheEntry = getCacheEntry("binary", "test".getBytes());
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -919,12 +943,14 @@ public abstract class BaseRestOperationsTest {
 
    @Test
    public void shouldAcceptUrlEncodedContentForDefaultCache() throws Exception {
-      putBinaryValueInCache("default", "test", "test".getBytes(UTF_8), APPLICATION_WWW_FORM_URLENCODED);
+      String value = "word1 word2";
+      String urlEncoded = URLEncoder.encode(value, "UTF-8");
+      putBinaryValueInCache("default", "test", urlEncoded.getBytes(UTF_8), APPLICATION_WWW_FORM_URLENCODED);
 
-      ContentResponse getResponse = get("default", "test", null);
+      ContentResponse getResponse = get("default", "test", TEXT_PLAIN_TYPE);
 
-      ResponseAssertion.assertThat(getResponse).hasReturnedText("test");
-      ResponseAssertion.assertThat(getResponse).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
+      ResponseAssertion.assertThat(getResponse).hasReturnedText(value);
+      ResponseAssertion.assertThat(getResponse).hasContentType(TEXT_PLAIN_TYPE);
    }
 
    @Test
@@ -948,7 +974,7 @@ public abstract class BaseRestOperationsTest {
 
       ContentResponse xmlResponse = get("default", "test", "application/xml");
 
-      ResponseAssertion.assertThat(xmlResponse).hasReturnedText("<string>test</string>");
+      ResponseAssertion.assertThat(xmlResponse).hasReturnedText("<byte-array>" + Base64.getUrlEncoder().encodeToString("test".getBytes()) + "</byte-array>");
       ResponseAssertion.assertThat(xmlResponse).hasContentType("application/xml");
 
       ContentResponse binaryResponse = get("default", "test", APPLICATION_OCTET_STREAM_TYPE);
@@ -1004,7 +1030,7 @@ public abstract class BaseRestOperationsTest {
       String key = "1";
       String value = "{\"id\": 1}";
 
-      putStringValueInCache(cacheName, key, value);
+      putJsonValueInCache(cacheName, key, value);
 
       ContentResponse getResponse = get(cacheName, key, null);
 
@@ -1018,7 +1044,7 @@ public abstract class BaseRestOperationsTest {
       String key = "1";
       String value = "{\"id\": 1}";
 
-      putStringValueInCache(cacheName, key, value);
+      putJsonValueInCache(cacheName, key, value);
 
       ContentResponse jsonResponse = get(cacheName, key, APPLICATION_JSON_TYPE);
 
@@ -1037,7 +1063,7 @@ public abstract class BaseRestOperationsTest {
       String key = "1";
       String value = "{\"id\": 1}";
 
-      putStringValueInCache(cacheName, key, value);
+      putJsonValueInCache(cacheName, key, value);
 
       ContentResponse jsonResponse = get(cacheName, key, "*/*");
 
@@ -1052,7 +1078,7 @@ public abstract class BaseRestOperationsTest {
       String key = "1";
       String value = "{\"id\": 1}";
 
-      putStringValueInCache(cacheName, key, value);
+      putJsonValueInCache(cacheName, key, value);
 
       ContentResponse jsonResponse = get(cacheName, key, "text/html,*/*");
 
@@ -1069,11 +1095,13 @@ public abstract class BaseRestOperationsTest {
 
    @Test
    public void shouldNegotiateOnlySupportedFromDefaultCacheWithMultipleAccept() throws Exception {
-      putStringValueInCache("default", "test", "test");
+      String value = "test";
+      String encodedValue = Base64.getUrlEncoder().encodeToString(value.getBytes());
+      putStringValueInCache("default", "test", value);
 
       ContentResponse getResponse = get("default", "test", "text/html, application/xml");
 
-      ResponseAssertion.assertThat(getResponse).hasReturnedText("<string>test</string>");
+      ResponseAssertion.assertThat(getResponse).hasReturnedText("<byte-array>" + encodedValue + "</byte-array>");
       ResponseAssertion.assertThat(getResponse).hasContentType("application/xml");
    }
 

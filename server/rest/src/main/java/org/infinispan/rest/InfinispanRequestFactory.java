@@ -35,7 +35,7 @@ class InfinispanRequestFactory {
       String[] components = queryStringDecoder.path().substring(1).split("/");
 
       String context;
-      Optional<String> key = Optional.empty();
+      Optional<Object> key = Optional.empty();
       Optional<String> cacheName = Optional.empty();
 
       List<String> actionParameter = parameters.get(ACTION_PARAMETER);

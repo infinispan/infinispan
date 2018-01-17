@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
 import org.infinispan.commons.configuration.ConfiguredBy;
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.InternalEntryFactory;
@@ -225,7 +224,7 @@ public class RestStore implements AdvancedLoadWriteStore {
             this.response = ((FullHttpResponse) msg).retain();
          }
          ctx.close();
-      };
+      }
 
       @Override
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
@@ -272,9 +271,6 @@ public class RestStore implements AdvancedLoadWriteStore {
 
       try {
          DefaultHttpHeaders headers = new DefaultHttpHeaders();
-         if (configuration.rawValues()) {
-            headers.add("Accept", MediaType.APPLICATION_OCTET_STREAM_TYPE);
-         }
          DefaultHttpRequest get = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, keyToUri(key), headers);
 
          HttpResponseHandler handler = new HttpResponseHandler(true);

@@ -126,8 +126,8 @@ public final class DataConversion {
       if (!embeddedMode && configuration.indexing().index().isEnabled() && contentTypeConfiguration.mediaType() == null) {
          return MediaType.APPLICATION_PROTOSTREAM;
       }
-      // Otherwise assume java object
-      return MediaType.APPLICATION_OBJECT;
+      // Otherwise assume java object for embedded and octet-stream for server
+      return embeddedMode ? MediaType.APPLICATION_OBJECT : MediaType.APPLICATION_OCTET_STREAM;
    }
 
    public boolean isConversionSupported(MediaType mediaType) {
