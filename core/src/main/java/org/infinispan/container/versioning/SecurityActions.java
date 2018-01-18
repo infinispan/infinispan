@@ -1,7 +1,6 @@
 package org.infinispan.container.versioning;
 
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
@@ -9,6 +8,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.AddCacheManagerListenerAction;
+import org.infinispan.security.actions.ContextAwarePrivilegedAction;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
 
@@ -22,11 +22,13 @@ import org.infinispan.security.actions.GetCacheConfigurationAction;
  * @since 7.0
  */
 final class SecurityActions {
-   private static <T> T doPrivileged(PrivilegedAction<T> action) {
+   private static <T> T doPrivileged(ContextAwarePrivilegedAction<T> action) {
       if (System.getSecurityManager() != null) {
          return AccessController.doPrivileged(action);
-      } else {
+      } else if (action.contextRequiresSecurity()) {
          return Security.doPrivileged(action);
+      } else {
+         return action.run();
       }
    }
 

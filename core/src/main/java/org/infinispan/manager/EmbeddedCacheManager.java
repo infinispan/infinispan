@@ -350,4 +350,12 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    default EmbeddedCacheManagerAdmin administration() {
       throw new UnsupportedOperationException();
    }
+
+   /**
+    * Returns whether this {@link EmbeddedCacheManager} has enabled authorization checks.
+    * @return
+    */
+   default boolean isSecure() {
+      return false;
+   }
 }

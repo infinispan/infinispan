@@ -1,5 +1,6 @@
 package org.infinispan.rest;
 
+import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_IMPLEMENTED;
 
 import java.util.List;
@@ -40,28 +41,31 @@ public class InfinispanCacheAPIRequest extends InfinispanRequest {
    @Override
    protected InfinispanResponse execute() {
       InfinispanResponse response = InfinispanErrorResponse.asError(this, NOT_IMPLEMENTED, null);
-
-      if (request.method() == HttpMethod.GET) {
-         if (request.uri().endsWith("banner.png")) {
-            response = StaticContent.INSTANCE.serveBannerFile(this);
-         } else if (!getCacheName().isPresent()) {
-            //we are hitting root context here
-            response = StaticContent.INSTANCE.serveHtmlFile(this);
-         } else if (!key.isPresent()) {
-            response = cacheOperations.getCacheValues(this);
-         } else {
+      try {
+         if (request.method() == HttpMethod.GET) {
+            if (request.uri().endsWith("banner.png")) {
+               response = StaticContent.INSTANCE.serveBannerFile(this);
+            } else if (!getCacheName().isPresent()) {
+               //we are hitting root context here
+               response = StaticContent.INSTANCE.serveHtmlFile(this);
+            } else if (!key.isPresent()) {
+               response = cacheOperations.getCacheValues(this);
+            } else {
+               response = cacheOperations.getCacheValue(this);
+            }
+         } else if (request.method() == HttpMethod.POST || request.method() == HttpMethod.PUT) {
+            response = cacheOperations.putValueToCache(this);
+         } else if (request.method() == HttpMethod.HEAD) {
             response = cacheOperations.getCacheValue(this);
+         } else if (request.method() == HttpMethod.DELETE) {
+            if (!key.isPresent()) {
+               response = cacheOperations.clearEntireCache(this);
+            } else {
+               response = cacheOperations.deleteCacheValue(this);
+            }
          }
-      } else if (request.method() == HttpMethod.POST || request.method() == HttpMethod.PUT) {
-         response = cacheOperations.putValueToCache(this);
-      } else if (request.method() == HttpMethod.HEAD) {
-         response = cacheOperations.getCacheValue(this);
-      } else if (request.method() == HttpMethod.DELETE) {
-         if (!key.isPresent()) {
-            response = cacheOperations.clearEntireCache(this);
-         } else {
-            response = cacheOperations.deleteCacheValue(this);
-         }
+      } catch (SecurityException e) {
+         response = InfinispanErrorResponse.asError(this, FORBIDDEN, null);
       }
       return response;
    }

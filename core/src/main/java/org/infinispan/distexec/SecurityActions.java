@@ -1,7 +1,6 @@
 package org.infinispan.distexec;
 
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.List;
 
 import org.infinispan.AdvancedCache;
@@ -12,11 +11,13 @@ import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.ContextAwarePrivilegedAction;
 import org.infinispan.security.actions.GetCacheAuthorizationManagerAction;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheInterceptorChainAction;
 import org.infinispan.security.actions.GetCacheRpcManagerAction;
+import org.infinispan.security.actions.UnwrapCacheAction;
 
 /**
  * SecurityActions for the org.infinispan.distexec package.
@@ -28,11 +29,13 @@ import org.infinispan.security.actions.GetCacheRpcManagerAction;
  * @since 7.0
  */
 final class SecurityActions {
-   private static <T> T doPrivileged(PrivilegedAction<T> action) {
+   private static <T> T doPrivileged(ContextAwarePrivilegedAction<T> action) {
       if (System.getSecurityManager() != null) {
          return AccessController.doPrivileged(action);
-      } else {
+      } else if (action.contextRequiresSecurity()) {
          return Security.doPrivileged(action);
+      } else {
+         return action.run();
       }
    }
 
@@ -61,7 +64,8 @@ final class SecurityActions {
       return doPrivileged(action);
    }
 
-   static String getConfiguredNodeName(final Cache<?, ?> cache) {
-      return doPrivileged(() -> cache.getCacheManager().getCacheManagerConfiguration().transport().nodeName());
+   static <K, V> AdvancedCache<K, V> getUnwrappedCache(final Cache<K, V> cache) {
+      UnwrapCacheAction<K, V> action = new UnwrapCacheAction(cache.getAdvancedCache());
+      return doPrivileged(action);
    }
 }

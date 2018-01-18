@@ -1,11 +1,13 @@
 package org.infinispan.rest;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.security.Security;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -28,7 +30,7 @@ public abstract class InfinispanRequest {
    private final String cacheName;
    private final String context;
    protected Map<String, List<String>> parameters;
-   private Principal principal;
+   private Subject subject;
 
    protected InfinispanRequest(FullHttpRequest request, ChannelHandlerContext ctx, String cacheName, String context, Map<String, List<String>> parameters) {
       this.request = request;
@@ -136,14 +138,14 @@ public abstract class InfinispanRequest {
       return values.iterator().next();
    }
 
-   public void setPrincipal(Principal principal) {
-      this.principal = principal;
-      if (principal != null) {
-         request.headers().add("X-Principal", principal.getName());
+   public void setSubject(Subject subject) {
+      this.subject = subject;
+      if (subject != null) {
+         request.headers().add("X-Principal", Security.getSubjectUserPrincipal(subject).getName());
       }
    }
 
-   public Principal getPrincipal() {
-      return principal;
+   public Subject getSubject() {
+      return subject;
    }
 }

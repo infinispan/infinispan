@@ -27,7 +27,7 @@ import org.infinispan.server.core.security.SubjectUserInfo;
  */
 public final class SimpleServerAuthenticationProvider implements ServerAuthenticationProvider {
 
-   private final Map<String, Map<String, Entry>> map = new HashMap<String, Map<String, Entry>>();
+   private final Map<String, Map<String, Entry>> map = new HashMap<>();
 
    /**
     * {@inheritDoc}
@@ -35,7 +35,6 @@ public final class SimpleServerAuthenticationProvider implements ServerAuthentic
     * @param mechanismName
     */
    public AuthorizingCallbackHandler getCallbackHandler(final String mechanismName, final Map<String, String> mechanismProperties) {
-
       return new AuthorizingCallbackHandler() {
          Subject subject = new Subject();
          Principal userPrincipal;

@@ -143,6 +143,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    private final Lock lifecycleLock = new ReentrantLock();
    private final DefaultCacheManagerAdmin cacheManagerAdmin;
    private volatile boolean stopping;
+   private final boolean secure;
 
    /**
     * Constructs and starts a default instance of the CacheManager, using configuration defaults. See
@@ -247,6 +248,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             defaultCacheName = null;
          }
       }
+      this.secure = globalConfiguration.security().authorization().enabled();
       this.authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.globalJmxStatistics().cacheManagerName());
       this.globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
       this.globalComponentRegistry.registerComponent(configurationManager, ConfigurationManager.class);
@@ -323,6 +325,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
          globalComponentRegistry.registerComponent(configurationManager, ConfigurationManager.class);
          globalComponentRegistry.registerComponent(cacheDependencyGraph, CACHE_DEPENDENCY_GRAPH, false);
+         this.secure = globalConfiguration.security().authorization().enabled();
          authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.globalJmxStatistics().cacheManagerName());
          stats = new CacheContainerStatsImpl(this);
          health = new HealthImpl(this);
@@ -1010,5 +1013,10 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    public EmbeddedCacheManagerAdmin administration() {
       authzHelper.checkPermission(AuthorizationPermission.ADMIN);
       return cacheManagerAdmin;
+   }
+
+   @Override
+   public boolean isSecure() {
+      return secure;
    }
 }

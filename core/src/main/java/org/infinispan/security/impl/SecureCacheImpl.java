@@ -77,7 +77,9 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
 
    @Override
    public AdvancedCache<K, V> withSubject(Subject subject) {
-      if (this.subject == null) {
+      if (subject == null) {
+         return this;
+      } else if (this.subject == null) {
          return new SecureCacheImpl<>(delegate, authzManager, subject);
       } else {
          throw new IllegalArgumentException("Cannot set a Subject on a SecureCache more than once");

@@ -42,10 +42,18 @@ public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigura
       return this;
    }
 
-
    public AuthorizationConfigurationBuilder role(String name) {
       Set<String> roles = attributes.attribute(ROLES).get();
       roles.add(name);
+      attributes.attribute(ROLES).set(roles);
+      return this;
+   }
+
+   public AuthorizationConfigurationBuilder role(String... names) {
+      Set<String> roles = attributes.attribute(ROLES).get();
+      for(String name : names) {
+         roles.add(name);
+      }
       attributes.attribute(ROLES).set(roles);
       return this;
    }

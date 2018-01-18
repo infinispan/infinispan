@@ -10,11 +10,15 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * @author Tristan Tarrant
  * @since 7.0
  */
-abstract class AbstractEmbeddedCacheManagerAction<T> implements PrivilegedAction<T> {
+abstract class AbstractEmbeddedCacheManagerAction<T> implements ContextAwarePrivilegedAction<T> {
    final EmbeddedCacheManager cacheManager;
 
    public AbstractEmbeddedCacheManagerAction(EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
    }
 
+   @Override
+   public boolean contextRequiresSecurity() {
+      return cacheManager.isSecure();
+   }
 }

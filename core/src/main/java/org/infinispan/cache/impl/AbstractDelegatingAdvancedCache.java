@@ -245,7 +245,7 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
 
    @Override
    public AdvancedCache<K, V> withSubject(Subject subject) {
-      return this.wrapper.wrap(cache.withSubject(subject));
+      return subject == null ? this : this.wrapper.wrap(cache.withSubject(subject));
    }
 
    @Override

@@ -32,9 +32,7 @@ import org.infinispan.rest.RestServer;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.authentication.impl.BasicAuthenticator;
 import org.infinispan.rest.authentication.impl.ClientCertAuthenticator;
-import org.infinispan.rest.authentication.SecurityDomain;
 import org.infinispan.rest.authentication.impl.VoidAuthenticator;
-import org.infinispan.server.endpoint.subsystem.security.BasicRestSecurityDomain;
 import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.as.network.SocketBinding;
@@ -105,15 +103,15 @@ public class RestService implements Service<RestServer>, EncryptableService {
          switch (authMethod) {
             case BASIC: {
                SecurityRealm authenticationRealm = authenticationSecurityRealm.getOptionalValue();
-               SecurityDomain restSecurityDomain = new BasicRestSecurityDomain(authenticationRealm);
-               authenticator = new BasicAuthenticator(restSecurityDomain, authenticationRealm.getName());
+               authenticator = new BasicAuthenticator(new EndpointServerAuthenticationProvider(authenticationRealm), authenticationRealm.getName());
                break;
             }
             case CLIENT_CERT: {
                if (!EncryptableServiceHelper.isSecurityEnabled(this)) {
                   throw ROOT_LOGGER.cannotUseCertificateAuthenticationWithoutEncryption();
                }
-               authenticator = new ClientCertAuthenticator();
+               SecurityRealm authenticationRealm = authenticationSecurityRealm.getOptionalValue();
+               authenticator = new ClientCertAuthenticator(new EndpointServerAuthenticationProvider(authenticationRealm));
                break;
             }
             case NONE: {

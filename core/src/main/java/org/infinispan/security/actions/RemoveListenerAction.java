@@ -1,7 +1,5 @@
 package org.infinispan.security.actions;
 
-import java.security.PrivilegedAction;
-
 import org.infinispan.notifications.Listenable;
 
 /**
@@ -10,7 +8,7 @@ import org.infinispan.notifications.Listenable;
  * @author vjuranek
  * @since 9.0
  */
-public class RemoveListenerAction implements PrivilegedAction<Void> {
+public class RemoveListenerAction implements ContextAwarePrivilegedAction<Void> {
 
     private final Listenable listenable;
     private final Object listener;
@@ -26,4 +24,8 @@ public class RemoveListenerAction implements PrivilegedAction<Void> {
         return null;
     }
 
+    @Override
+    public boolean contextRequiresSecurity() {
+        return true; // err on the safe side
+    }
 }
