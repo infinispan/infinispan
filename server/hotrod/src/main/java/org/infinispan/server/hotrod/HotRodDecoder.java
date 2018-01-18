@@ -230,11 +230,8 @@ public class HotRodDecoder extends ByteToMessageDecoder {
             log.tracef("Header version: %d", version);
          }
 
-         if (Constants.isVersion2x(version)) {
-            decoder = new Decoder2x();
-         } else if (Constants.isVersion1x(version)) {
-            decoder = new Decoder10();
-         } else {
+         decoder = HotRodVersion.getDecoder(version);
+         if (decoder == null) {
             throw new UnknownVersionException("Unknown version:" + version, version, messageId);
          }
          decodeCtx.decoder = decoder;

@@ -703,7 +703,7 @@ enum ClientEventType {
 
    static ClientEventType createType(boolean isCustom, boolean useRawData, byte version) {
       if (isCustom) {
-         if (useRawData && Constants.isVersionPost20(version)) {
+         if (useRawData && HotRodVersion.HOTROD_21.isAtLeast(version)) {
             return CUSTOM_RAW;
          }
          return CUSTOM_PLAIN;

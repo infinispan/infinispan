@@ -14,9 +14,9 @@ import javax.transaction.xa.XAResource;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.server.hotrod.Constants;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.HotRodVersion;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.hotrod.test.RemoteTransaction;
@@ -161,7 +161,7 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
 
    @Override
    protected byte protocolVersion() {
-      return Constants.VERSION_27;
+      return HotRodVersion.HOTROD_27.getVersion();
    }
 
    @Override

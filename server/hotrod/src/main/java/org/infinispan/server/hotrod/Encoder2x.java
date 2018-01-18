@@ -114,7 +114,7 @@ class Encoder2x implements VersionedEncoder {
    }
 
    private void writeStatus(Response r, ByteBuf buf, HotRodServer server, boolean compatibilityEnabled) {
-      if (server == null || Constants.isVersionPre24(r.version))
+      if (server == null || HotRodVersion.HOTROD_24.isOlder(r.version))
          buf.writeByte(r.status.getCode());
       else {
          OperationStatus st = OperationStatus.withCompatibility(r.status, compatibilityEnabled);
@@ -431,7 +431,7 @@ class Encoder2x implements VersionedEncoder {
                Optional<Integer> projectionLength = projectionInfo(entries, r.version);
                projectionLength.ifPresent(i -> ExtendedByteBuf.writeUnsignedInt(i, buf));
                entries.forEach(cacheEntry -> {
-                  if (Constants.isVersionPost24(r.version)) {
+                  if (HotRodVersion.HOTROD_24.isAtLeast(r.version)) {
                      if (r.iterationResult.isMetadata()) {
                         buf.writeByte(1);
                         InternalCacheEntry ice = (InternalCacheEntry) cacheEntry;
@@ -504,7 +504,7 @@ class Encoder2x implements VersionedEncoder {
          CacheEntry entry = entries.get(0);
          if (entry.getValue() instanceof Object[]) {
             return Optional.of(((Object[]) entry.getValue()).length);
-         } else if (!Constants.isVersionPre24(version)) {
+         } else if (HotRodVersion.HOTROD_24.isAtLeast(version)) {
             return Optional.of(1);
          }
       }
