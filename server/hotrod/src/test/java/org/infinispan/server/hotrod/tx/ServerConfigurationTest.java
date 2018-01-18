@@ -12,8 +12,8 @@ import org.infinispan.Cache;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.server.hotrod.Constants;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
+import org.infinispan.server.hotrod.HotRodVersion;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.hotrod.test.TestErrorResponse;
@@ -116,7 +116,7 @@ public class ServerConfigurationTest extends HotRodMultiNodeTest {
 
    @Override
    protected byte protocolVersion() {
-      return Constants.VERSION_27;
+      return HotRodVersion.HOTROD_27.getVersion();
    }
 
    private void doWrongConfigurationTest(String cacheName, ConfigurationBuilder builder, String errorMsg) {

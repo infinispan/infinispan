@@ -14,8 +14,8 @@ import javax.transaction.xa.XAResource;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.server.hotrod.Constants;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
+import org.infinispan.server.hotrod.HotRodVersion;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.RemoteTransaction;
 import org.infinispan.test.TestingUtil;
@@ -542,7 +542,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
    @Override
    protected byte protocolVersion() {
-      return Constants.VERSION_27;
+      return HotRodVersion.HOTROD_27.getVersion();
    }
 
    private void assertDataDoesNotExist(byte[] key) {

@@ -14,8 +14,8 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.hotrod.Constants;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
+import org.infinispan.server.hotrod.HotRodVersion;
 import org.infinispan.server.hotrod.counter.impl.CounterManagerImplTestStrategy;
 import org.infinispan.server.hotrod.counter.impl.TestCounterManager;
 import org.infinispan.test.TestingUtil;
@@ -115,7 +115,7 @@ public class CounterManagerOperationTest extends HotRodMultiNodeTest implements 
 
    @Override
    protected byte protocolVersion() {
-      return Constants.VERSION_27;
+      return HotRodVersion.HOTROD_27.getVersion();
    }
 
    private Log log() {

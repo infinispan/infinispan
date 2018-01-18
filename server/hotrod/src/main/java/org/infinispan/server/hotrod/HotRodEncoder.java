@@ -51,9 +51,9 @@ class HotRodEncoder extends MessageToByteEncoder<Object> {
 
          if (msg instanceof Response) {
             Response r = (Response) msg;
-            VersionedEncoder encoder = getEncoder(r.version);
+            VersionedEncoder encoder = HotRodVersion.getEncoder(r.version);
             try {
-               if (Constants.isVersionKnown(r.version)) {
+               if (HotRodVersion.forVersion(r.version) != HotRodVersion.UNKNOWN) {
                   encoder.writeHeader(r, buf, getAddressCache(), server);
                } else {
                   // if error before reading version, don't send any topology changes
@@ -72,10 +72,10 @@ class HotRodEncoder extends MessageToByteEncoder<Object> {
             }
          } else if (msg instanceof Events.Event) {
             Events.Event e = (Events.Event) msg;
-            VersionedEncoder encoder = getEncoder(e.version);
+            VersionedEncoder encoder = HotRodVersion.getEncoder(e.version);
             encoder.writeEvent(e, buf);
          } else if (msg instanceof ClientCounterEvent) {
-            VersionedEncoder encoder = getEncoder(((ClientCounterEvent) msg).getVersion());
+            VersionedEncoder encoder = HotRodVersion.getEncoder(((ClientCounterEvent) msg).getVersion());
             encoder.writeCounterEvent((ClientCounterEvent) msg, buf);
          } else if (msg != null) {
             log.errorUnexpectedMessage(msg);
@@ -83,20 +83,6 @@ class HotRodEncoder extends MessageToByteEncoder<Object> {
       } catch (Throwable t) {
          log.errorEncodingMessage(msg, t);
          throw t;
-      }
-   }
-
-   private VersionedEncoder getEncoder(byte version) {
-      if (Constants.isVersion2x(version)) {
-         return new Encoder2x();
-      } else if (Constants.isVersion10(version)) {
-         return new AbstractEncoder1x() {
-         };
-      } else if (Constants.isVersion1x(version)) {
-         return new AbstractTopologyAwareEncoder1x() {
-         };
-      } else {
-         return new Encoder2x();
       }
    }
 }

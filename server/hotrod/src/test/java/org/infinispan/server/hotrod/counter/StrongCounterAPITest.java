@@ -6,8 +6,8 @@ import java.util.stream.Collectors;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.counter.api.CounterManager;
-import org.infinispan.server.hotrod.Constants;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
+import org.infinispan.server.hotrod.HotRodVersion;
 import org.infinispan.server.hotrod.counter.impl.StrongCounterImplTestStrategy;
 import org.infinispan.server.hotrod.counter.impl.TestCounterManager;
 import org.testng.annotations.Test;
@@ -84,7 +84,7 @@ public class StrongCounterAPITest extends HotRodMultiNodeTest implements StrongC
 
    @Override
    protected byte protocolVersion() {
-      return Constants.VERSION_27;
+      return HotRodVersion.HOTROD_27.getVersion();
    }
 
    private CounterManager testCounterManager() {
