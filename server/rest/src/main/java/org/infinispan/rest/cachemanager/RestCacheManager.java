@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.UTF8CompatEncoder;
@@ -35,6 +34,7 @@ import org.infinispan.upgrade.RollingUpgradeManager;
  */
 public class RestCacheManager<V> {
    private final EmbeddedCacheManager instance;
+   private final InternalCacheRegistry icr;
    private final Predicate<? super String> isCacheIgnored;
    private final boolean allowInternalCacheAccess;
    private final Map<String, AdvancedCache<String, V>> knownCaches =
@@ -43,62 +43,50 @@ public class RestCacheManager<V> {
    public RestCacheManager(EmbeddedCacheManager instance, Predicate<? super String> isCacheIgnored) {
       this.instance = instance;
       this.isCacheIgnored = isCacheIgnored;
+      this.icr = instance.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       this.allowInternalCacheAccess = instance.getCacheManagerConfiguration().security().authorization().enabled();
    }
 
    @SuppressWarnings("unchecked")
    public AdvancedCache<String, V> getCache(String name, MediaType requestedMediaType) {
+      if (isCacheIgnored.test(name)) {
+         throw new ServiceUnavailableException("Cache with name '" + name + "' is temporarily unavailable.");
+      }
       if (requestedMediaType == null) {
          throw new NullPointerException("requestedMediaType cannot be null");
       }
-      checkCacheAvailable(name);
-      boolean matchesAll = requestedMediaType.matchesAll();
-      String cacheKey = matchesAll ? name : name + requestedMediaType.getTypeSubtype();
-      AdvancedCache<String, V> registered = knownCaches.get(cacheKey);
-
+      AdvancedCache<String, V> registered = knownCaches.get(name + requestedMediaType.getTypeSubtype());
       if (registered != null) return registered;
 
+      checkCacheAvailable(name);
+      AdvancedCache<String, V> cache = instance.<String, V>getCache(name).getAdvancedCache();
+      tryRegisterMigrationManager(cache);
+
       if (name.equals(PROTOBUF_METADATA_CACHE_NAME)) {
-         return (AdvancedCache<String, V>) instance.getCache(PROTOBUF_METADATA_CACHE_NAME).getAdvancedCache()
-               .withEncoding(UTF8CompatEncoder.class);
+         cache = (AdvancedCache<String, V>) cache.withEncoding(UTF8CompatEncoder.class);
+      } else {
+         Configuration cacheConfiguration = cache.getCacheConfiguration();
+         if (cacheConfiguration.memory().storageType() == StorageType.OFF_HEAP) {
+            cache = (AdvancedCache<String, V>) cache.withKeyEncoding(UTF8Encoder.class);
+         }
+         cache = (AdvancedCache<String, V>) cache.withMediaType(TEXT_PLAIN_TYPE, requestedMediaType.toString());
       }
 
-      AdvancedCache<?, ?> encodedCache = getCache(name).getAdvancedCache();
-      Configuration cacheConfiguration = encodedCache.getCacheConfiguration();
-
-      if (cacheConfiguration.memory().storageType() == StorageType.OFF_HEAP) {
-         encodedCache = encodedCache.withKeyEncoding(UTF8Encoder.class);
-      }
-      encodedCache = encodedCache.withMediaType(TEXT_PLAIN_TYPE, requestedMediaType.toString());
-      AdvancedCache<String, V> decoratedCache = (AdvancedCache<String, V>) encodedCache;
-      knownCaches.putIfAbsent(cacheKey, decoratedCache);
-      return decoratedCache;
-   }
-
-   private void checkCacheAvailable(String cacheName) {
-      if (isCacheIgnored.test(cacheName)) {
-         throw new ServiceUnavailableException("Cache with name '" + cacheName + "' is temporarily unavailable.");
-      }
+      knownCaches.putIfAbsent(name + requestedMediaType.getTypeSubtype(), cache);
+      return cache;
    }
 
    public AdvancedCache<String, V> getCache(String name) {
-      checkCacheAvailable(name);
-      boolean isKnownCache = knownCaches.containsKey(name);
-      if (!BasicCacheContainer.DEFAULT_CACHE_NAME.equals(name) && !isKnownCache && !instance.getCacheNames().contains(name))
-         throw new NoCacheFoundException("Cache with name '" + name + "' not found amongst the configured caches");
+      return getCache(name, MATCH_ALL);
+   }
 
-      if (isKnownCache) {
-         return knownCaches.get(name);
-      } else {
-         InternalCacheRegistry icr = instance.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
-         if (icr.isPrivateCache(name)) {
-            throw new CacheUnavailableException(String.format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'", name));
-         } else if (!allowInternalCacheAccess && icr.isInternalCache(name) && !icr.internalCacheHasFlag(name, InternalCacheRegistry.Flag.USER)) {
-            throw new CacheUnavailableException(String.format("Remote requests are not allowed to internal caches when authorization is disabled. Do no send remote requests to cache '%s'", name));
-         }
-         Cache<String, V> cache = name.equals(BasicCacheContainer.DEFAULT_CACHE_NAME) ? instance.getCache() : instance.getCache(name);
-         tryRegisterMigrationManager(cache);
-         return cache.getAdvancedCache();
+   private void checkCacheAvailable(String cacheName) {
+      if (!BasicCacheContainer.DEFAULT_CACHE_NAME.equals(cacheName) && !instance.getCacheNames().contains(cacheName))
+         throw new NoCacheFoundException("Cache with name '" + cacheName + "' not found amongst the configured caches");
+      if (icr.isPrivateCache(cacheName)) {
+         throw new CacheUnavailableException(String.format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'", cacheName));
+      } else if (!allowInternalCacheAccess && icr.isInternalCache(cacheName) && !icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.USER)) {
+         throw new CacheUnavailableException(String.format("Remote requests are not allowed to internal caches when authorization is disabled. Do no send remote requests to cache '%s'", cacheName));
       }
    }
 
@@ -108,10 +96,6 @@ public class RestCacheManager<V> {
 
    public CacheEntry<String, V> getInternalEntry(String cacheName, String key) {
       return getInternalEntry(cacheName, key, false, MATCH_ALL);
-   }
-
-   public MediaType getValueStorageFormat(String cacheName) {
-      return getCache(cacheName).getValueDataConversion().getStorageMediaType();
    }
 
    public MediaType getValueConfiguredFormat(String cacheName) {
@@ -141,8 +125,8 @@ public class RestCacheManager<V> {
       return "0.0.0.0";
    }
 
-   public String getPrimaryOwner(String cacheName, String key, MediaType contentType) {
-      DistributionManager dm = getCache(cacheName, contentType).getDistributionManager();
+   public String getPrimaryOwner(String cacheName, String key) {
+      DistributionManager dm = getCache(cacheName).getDistributionManager();
       if (dm == null) {
          //this is a local cache
          return "0.0.0.0";
@@ -155,8 +139,8 @@ public class RestCacheManager<V> {
    }
 
    @SuppressWarnings("unchecked")
-   private void tryRegisterMigrationManager(Cache<String, V> cache) {
-      ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
+   private void tryRegisterMigrationManager(AdvancedCache<?, ?> cache) {
+      ComponentRegistry cr = cache.getComponentRegistry();
       RollingUpgradeManager migrationManager = cr.getComponent(RollingUpgradeManager.class);
       if (migrationManager != null) migrationManager.addSourceMigrator(new RestSourceMigrator(cache));
    }
