@@ -24,7 +24,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.util.logging.Log;
@@ -60,8 +59,9 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       return asyncExecutor;
    }
 
-   @Start
+   @Override
    public void start() {
+      super.start();
       // Data container entries are retrieved directly, so we don't need to worry about an encodings
       this.cache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache();
       needTransaction = configuration.transaction().transactionMode().isTransactional();
