@@ -134,7 +134,7 @@ public class CacheOperations extends AbstractOperations {
                response.maxIdle(meta.maxIdle());
 
                if (request.getExtended().isPresent() && CacheOperationsHelper.supportsExtendedHeaders(restServerConfiguration, request.getExtended().get())) {
-                  response.clusterPrimaryOwner(restCacheManager.getPrimaryOwner(cacheName, key, requestedMediaType));
+                  response.clusterPrimaryOwner(restCacheManager.getPrimaryOwner(cacheName, key));
                   response.clusterNodeName(restCacheManager.getNodeName());
                   response.clusterServerAddress(restCacheManager.getServerAddress());
                }

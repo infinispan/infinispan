@@ -5,6 +5,7 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 
 import java.util.Optional;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.hash.MurmurHash3;
@@ -47,12 +48,12 @@ abstract class AbstractOperations {
          return re;
    }
 
-   MediaType tryNarrowMediaType(MediaType negotiated, String cacheName) {
+   MediaType tryNarrowMediaType(MediaType negotiated, AdvancedCache<?, ?> cache) {
       if (!negotiated.matchesAll()) return negotiated;
 
-      Configuration cacheConfiguration = restCacheManager.getCache(cacheName).getCacheConfiguration();
+      Configuration cacheConfiguration = cache.getCacheConfiguration();
       boolean compat = cacheConfiguration.compatibility().enabled();
-      MediaType valueStorageFormat = restCacheManager.getValueStorageFormat(cacheName);
+      MediaType valueStorageFormat = cache.getValueDataConversion().getStorageMediaType();
       if (compat) {
          return TEXT_PLAIN;
       }
@@ -64,13 +65,14 @@ abstract class AbstractOperations {
 
    MediaType negotiateMediaType(String accept, String cacheName) throws UnacceptableDataFormatException {
       try {
-         DataConversion valueDataConversion = restCacheManager.getCache(cacheName).getValueDataConversion();
+         AdvancedCache<String, Object> cache = restCacheManager.getCache(cacheName);
+         DataConversion valueDataConversion = cache.getValueDataConversion();
 
          Optional<MediaType> negotiated = MediaType.parseList(accept)
                .filter(valueDataConversion::isConversionSupported)
                .findFirst();
 
-         return negotiated.map(m -> tryNarrowMediaType(m, cacheName))
+         return negotiated.map(m -> tryNarrowMediaType(m, cache))
                .orElseThrow(() -> logger.unsupportedDataFormat(accept));
 
       } catch (EncodingException e) {
