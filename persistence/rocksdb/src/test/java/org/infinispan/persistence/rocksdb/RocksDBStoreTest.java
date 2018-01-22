@@ -72,34 +72,31 @@ public class RocksDBStoreTest extends BaseStoreTest {
       final CountDownLatch finished = new CountDownLatch(THREADS);
       for (int i = 0; i < THREADS; ++i) {
          final int thread = i;
-         fork(new Runnable() {
-            @Override
-            public void run() {
-               try {
-                  started.countDown();
-                  int i = 0;
-                  while (run.get()) {
-                     InternalCacheEntry entry = TestInternalCacheEntryFactory.create("k" + i, "v" + i);
-                     MarshalledEntry me = TestingUtil.marshalledEntry(entry, getMarshaller());
-                     try {
-                        AtomicInteger record = post.get() ? writtenPost : writtenPre;
-                        cl.write(me);
-                        ++i;
-                        int prev;
-                        do {
-                           prev = record.get();
-                           if ((prev & (1 << thread)) != 0) break;
-                        } while (record.compareAndSet(prev, prev | (1 << thread)));
-                     } catch (PersistenceException e) {
-                        // when the store is stopped, exceptions are thrown
-                     }
+         fork(() -> {
+            try {
+               started.countDown();
+               int i1 = 0;
+               while (run.get()) {
+                  InternalCacheEntry entry = TestInternalCacheEntryFactory.create("k" + i1, "v" + i1);
+                  MarshalledEntry me = TestingUtil.marshalledEntry(entry, getMarshaller());
+                  try {
+                     AtomicInteger record = post.get() ? writtenPost : writtenPre;
+                     cl.write(me);
+                     ++i1;
+                     int prev;
+                     do {
+                        prev = record.get();
+                        if ((prev & (1 << thread)) != 0) break;
+                     } while (record.compareAndSet(prev, prev | (1 << thread)));
+                  } catch (PersistenceException e) {
+                     // when the store is stopped, exceptions are thrown
                   }
-               } catch (Exception e) {
-                  log.error("Failed", e);
-                  throw new RuntimeException(e);
-               } finally {
-                  finished.countDown();
                }
+            } catch (Exception e) {
+               log.error("Failed", e);
+               throw new RuntimeException(e);
+            } finally {
+               finished.countDown();
             }
          });
       }
