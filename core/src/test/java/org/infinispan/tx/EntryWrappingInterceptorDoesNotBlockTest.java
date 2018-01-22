@@ -269,7 +269,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       }
 
       @Override
-      protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
+      protected <T> T afterInvokeRemotely(Collection<Address> targets, ReplicableCommand command, T responseObject, Object argument) {
          if (command instanceof ClusteredGetCommand) {
             ++clusterGet;
             try {

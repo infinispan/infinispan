@@ -1,11 +1,14 @@
 package org.infinispan.util;
 
+import java.util.Collection;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * Use the {@link CountingRpcManager#replaceRpcManager(org.infinispan.Cache)}.
@@ -39,7 +42,7 @@ public class CountingRpcManager extends AbstractControlledRpcManager {
    }
 
    @Override
-   protected Object beforeInvokeRemotely(ReplicableCommand rpcCommand) {
+   protected Object beforeInvokeRemotely(Collection<Address> targets, ReplicableCommand rpcCommand) {
       if (rpcCommand instanceof LockControlCommand) {
          lockCount++;
       } else if (rpcCommand instanceof ClusteredGetCommand) {
