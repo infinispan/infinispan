@@ -8,7 +8,6 @@ import static org.testng.AssertJUnit.fail;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
@@ -19,7 +18,7 @@ import org.infinispan.counter.util.StrongTestCounter;
 import org.testng.annotations.Test;
 
 /**
- * A simple counter notification test for bounded {@link org.infinispan.counter.impl.entries.CounterValue}.
+ * A simple consistency test for bounded {@link org.infinispan.counter.api.StrongCounter}.
  *
  * @author Pedro Ruivo
  * @since 9.0
@@ -27,7 +26,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "counter.BoundedCounterTest")
 public class BoundedCounterTest extends StrongCounterTest {
 
-   public void testSimpleThreshold(Method method) throws ExecutionException, InterruptedException {
+   public void testSimpleThreshold(Method method) {
       CounterManager counterManager = counterManager(0);
       counterManager.defineCounter(method.getName(),
             CounterConfiguration.builder(CounterType.BOUNDED_STRONG).lowerBound(-1).upperBound(1).build());

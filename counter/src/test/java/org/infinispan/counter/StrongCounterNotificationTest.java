@@ -8,7 +8,7 @@ import org.infinispan.counter.util.TestCounter;
 import org.testng.annotations.Test;
 
 /**
- * Notification test for atomic counters.
+ * Notification test for {@link org.infinispan.counter.api.StrongCounter}.
  *
  * @author Pedro Ruivo
  * @since 9.0

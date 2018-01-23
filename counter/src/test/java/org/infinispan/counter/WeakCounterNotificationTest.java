@@ -3,13 +3,12 @@ package org.infinispan.counter;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
-import org.infinispan.counter.impl.weak.WeakCounterImpl;
 import org.infinispan.counter.util.TestCounter;
 import org.infinispan.counter.util.WeakTestCounter;
 import org.testng.annotations.Test;
 
 /**
- * A simple notification test for {@link WeakCounterImpl}.
+ * A simple notification test for {@link org.infinispan.counter.api.WeakCounter}.
  *
  * @author Pedro Ruivo
  * @since 9.0

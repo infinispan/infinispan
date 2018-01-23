@@ -1,6 +1,9 @@
 package org.infinispan.counter.impl;
 
-import java.util.EnumSet;
+import static java.util.EnumSet.of;
+import static org.infinispan.registry.InternalCacheRegistry.Flag.EXCLUSIVE;
+import static org.infinispan.registry.InternalCacheRegistry.Flag.PERSISTENT;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -36,7 +39,6 @@ import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.counter.impl.metadata.ConfigurationMetadata;
 import org.infinispan.counter.impl.strong.StrongCounterKey;
 import org.infinispan.counter.impl.weak.WeakCounterKey;
-import org.infinispan.counter.logging.Log;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
@@ -45,7 +47,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -57,7 +58,6 @@ import org.kohsuke.MetaInfServices;
 @MetaInfServices(value = ModuleLifecycle.class)
 public class CounterModuleLifecycle implements ModuleLifecycle {
 
-   private static final Log log = LogFactory.getLog(CounterModuleLifecycle.class, Log.class);
    public static final String COUNTER_CACHE_NAME = "___counters";
    public static final String COUNTER_CONFIGURATION_CACHE_NAME = "___counter_configuration";
 
@@ -76,6 +76,14 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       return builder.build();
    }
 
+   private static Configuration createLocalCounterCacheConfiguration() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.LOCAL)
+            .l1().disable()
+            .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
+      return builder.build();
+   }
+
    private static Configuration createCounterConfigurationCacheConfiguration() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.REPL_SYNC)
@@ -85,6 +93,14 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
             .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
             .customInterceptors().addInterceptor().after(EntryWrappingInterceptor.class)
             .interceptor(new CounterConfigurationInterceptor());
+      return builder.build();
+   }
+
+   private static Configuration createLocalCounterConfigurationCacheConfiguration() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.LOCAL)
+            .l1().disable()
+            .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
       return builder.build();
    }
 
@@ -116,28 +132,31 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
 
    private static void registerCounterCache(InternalCacheRegistry registry, CounterManagerConfiguration config) {
       registry.registerInternalCache(COUNTER_CACHE_NAME, createCounterCacheConfiguration(config),
-            EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE, InternalCacheRegistry.Flag.PERSISTENT));
+            of(EXCLUSIVE, PERSISTENT));
    }
 
    private static void registerConfigurationCache(InternalCacheRegistry registry) {
       registry.registerInternalCache(COUNTER_CONFIGURATION_CACHE_NAME, createCounterConfigurationCacheConfiguration(),
-            EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE, InternalCacheRegistry.Flag.PERSISTENT));
+            of(EXCLUSIVE, PERSISTENT));
+   }
+
+   private static void registerLocalCounterCache(InternalCacheRegistry registry) {
+      registry.registerInternalCache(COUNTER_CACHE_NAME, createLocalCounterCacheConfiguration(),
+            of(EXCLUSIVE, PERSISTENT));
+   }
+
+   private static void registerLocalConfigurationCache(InternalCacheRegistry registry) {
+      registry.registerInternalCache(COUNTER_CONFIGURATION_CACHE_NAME,
+            createLocalCounterConfigurationCacheConfiguration(), of(EXCLUSIVE, PERSISTENT));
    }
 
    private static CompletableFuture<CacheHolder> startCaches(EmbeddedCacheManager cacheManager,
          List<AbstractCounterConfiguration> defaultCounters) {
-      final CompletableFuture<CacheHolder> future = new CompletableFuture<>();
-      new Thread(() -> {
-         try {
+      return CompletableFuture.supplyAsync(() -> {
             Cache<String, CounterConfiguration> configCache = cacheManager.getCache(COUNTER_CONFIGURATION_CACHE_NAME);
             Cache<? extends CounterKey, CounterValue> counterCache = cacheManager.getCache(COUNTER_CACHE_NAME);
-            future.complete(
-                  new CacheHolder(configCache.getAdvancedCache(), counterCache.getAdvancedCache(), defaultCounters));
-         } catch (Throwable throwable) {
-            future.completeExceptionally(throwable);
-         }
-      }).start();
-      return future;
+         return new CacheHolder(configCache.getAdvancedCache(), counterCache.getAdvancedCache(), defaultCounters);
+      });
    }
 
    @Override
@@ -175,9 +194,10 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
          registerConfigurationCache(internalCacheRegistry);
          future = startCaches(cacheManager, counterManagerConfiguration.counters());
       } else {
-         //local only cache manager. unable to create replicated or distributed caches!
-         future = new CompletableFuture<>();
-         future.completeExceptionally(log.expectedClusteredEnvironment());
+         //local only cache manager.
+         registerLocalConfigurationCache(internalCacheRegistry);
+         registerLocalCounterCache(internalCacheRegistry);
+         future = startCaches(cacheManager, counterManagerConfiguration.counters());
       }
       registerCounterManager(gcr, future);
    }
