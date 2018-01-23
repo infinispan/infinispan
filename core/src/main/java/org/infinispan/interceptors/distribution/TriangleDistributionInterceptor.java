@@ -5,6 +5,7 @@ import static org.infinispan.commands.VisitableCommand.LoadType.PRIMARY;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -344,8 +345,11 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             return rv;
          }
          final int topologyId = dwCommand.getTopologyId();
-         if (isSynchronous(dwCommand) || dwCommand.isReturnValueExpected()) {
-            Collector<Object> collector = commandAckCollector.create(id.getId(), backupOwners, topologyId);
+         final boolean sync = isSynchronous(dwCommand);
+         if (sync || dwCommand.isReturnValueExpected()) {
+            Collector<Object> collector = commandAckCollector.create(id.getId(),
+                  sync ? backupOwners : Collections.emptyList(),
+                  topologyId);
             //check the topology after registering the collector.
             //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
             checkTopologyId(topologyId, collector);
@@ -403,11 +407,12 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          DistributionInfo distributionInfo) {
       assert context.isOriginLocal();
       final CommandInvocationId invocationId = command.getCommandInvocationId();
-      if (isSynchronous(command) || command.isReturnValueExpected() && !command
-            .hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
+      final boolean sync = isSynchronous(command);
+      if (sync || command.isReturnValueExpected() && !command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
          final int topologyId = command.getTopologyId();
-         Collector<Object> collector = commandAckCollector
-               .create(invocationId.getId(), distributionInfo.writeBackups(), topologyId);
+         Collector<Object> collector = commandAckCollector.create(invocationId.getId(),
+               sync ? distributionInfo.writeBackups() : Collections.emptyList(),
+               topologyId);
          //check the topology after registering the collector.
          //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
          checkTopologyId(topologyId, collector);

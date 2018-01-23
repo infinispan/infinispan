@@ -102,7 +102,7 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
       this.metadata = metadata;
    }
 
-   public void setComputeIfAbsent(CommandInvocationId id, Object key, Function mappingFunction, Metadata metadata, long flagsBitSet, int topologyId) {
+   public void setComputeIfAbsent(CommandInvocationId id, Object key, Function mappingFunction, Metadata metadata, long flags, int topologyId) {
       this.operation = Operation.COMPUTE_IF_ABSENT;
       setCommonAttributes(id, key, flags, topologyId);
       this.function = mappingFunction;
@@ -274,6 +274,10 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
 
    public void setSequence(long sequence) {
       this.sequence = sequence;
+   }
+
+   public long getFlagBitSet() {
+      return flags;
    }
 
    private void setCommonAttributes(CommandInvocationId commandInvocationId, Object key, long flags, int topologyId) {
