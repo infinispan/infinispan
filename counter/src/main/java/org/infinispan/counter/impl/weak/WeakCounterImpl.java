@@ -5,6 +5,7 @@ import static org.infinispan.counter.util.Utils.getPersistenceMode;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.AdvancedCache;
@@ -79,7 +80,9 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
       this.readOnlyMap = ReadOnlyMapImpl.create(functionalMap);
       this.entries = initKeys(counterName, configuration.concurrencyLevel());
-      this.selector = new KeySelector(entries);
+      this.selector = cache.getCacheConfiguration().clustering().cacheMode().isClustered() ?
+            new ClusteredKeySelector(entries) :
+            new LocalKeySelector(entries);
       this.configuration = configuration;
       this.zeroConfiguration = CounterConfiguration.builder(CounterType.WEAK)
             .concurrencyLevel(configuration.concurrencyLevel()).storage(configuration.storage()).initialValue(0)
@@ -217,7 +220,7 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
     * Debug only!
     */
    public WeakCounterKey[] getPreferredKeys() {
-      return selector.preferredKeys;
+      return selector.getPreferredKeys();
    }
 
    /**
@@ -366,15 +369,46 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
       }
    }
 
-   private class KeySelector {
-      private final Entry[] entries;
-      private volatile WeakCounterKey[] preferredKeys; //null when no keys available
+   private interface KeySelector {
+      WeakCounterKey findKey(int hash);
+      void updatePreferredKeys();
+      WeakCounterKey[] getPreferredKeys();
+   }
 
-      private KeySelector(Entry[] entries) {
+   private class LocalKeySelector implements KeySelector {
+
+      private final Entry[] entries;
+
+      private LocalKeySelector(Entry[] entries) {
          this.entries = entries;
       }
 
-      private WeakCounterKey findKey(int hash) {
+      @Override
+      public WeakCounterKey findKey(int hash) {
+         return get(hash, entries).key;
+      }
+
+      @Override
+      public void updatePreferredKeys() {
+         //no-op, everything is local
+      }
+
+      @Override
+      public WeakCounterKey[] getPreferredKeys() {
+         return Arrays.stream(entries).map(entry -> entry.key).toArray(WeakCounterKey[]::new);
+      }
+   }
+
+   private class ClusteredKeySelector implements KeySelector {
+      private final Entry[] entries;
+      private volatile WeakCounterKey[] preferredKeys; //null when no keys available
+
+      private ClusteredKeySelector(Entry[] entries) {
+         this.entries = entries;
+      }
+
+      @Override
+      public WeakCounterKey findKey(int hash) {
          WeakCounterKey[] copy = preferredKeys;
          if (copy == null) {
             return get(hash, entries).key;
@@ -385,7 +419,8 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
          }
       }
 
-      private void updatePreferredKeys() {
+      @Override
+      public void updatePreferredKeys() {
          ArrayList<WeakCounterKey> preferredKeys = new ArrayList<>(entries.length);
          LocalizedCacheTopology topology = cache.getDistributionManager().getCacheTopology();
          for (Entry entry : entries) {
@@ -396,6 +431,11 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
          this.preferredKeys = preferredKeys.isEmpty() ?
                null :
                preferredKeys.toArray(new WeakCounterKey[preferredKeys.size()]);
+      }
+
+      @Override
+      public WeakCounterKey[] getPreferredKeys() {
+         return preferredKeys;
       }
    }
 }

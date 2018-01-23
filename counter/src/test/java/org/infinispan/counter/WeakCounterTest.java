@@ -14,6 +14,8 @@ import org.infinispan.counter.util.WeakTestCounter;
 import org.testng.annotations.Test;
 
 /**
+ * A simple consistency test for {@link org.infinispan.counter.api.WeakCounter}.
+ *
  * @author Pedro Ruivo
  * @since 9.0
  */

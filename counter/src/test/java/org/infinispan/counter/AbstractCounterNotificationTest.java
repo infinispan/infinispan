@@ -9,7 +9,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -31,20 +30,42 @@ import org.testng.annotations.Test;
 @Test(groups = "functional")
 public abstract class AbstractCounterNotificationTest extends BaseCounterTest {
 
-   private static final int CLUSTER_SIZE = 4;
+   static final int CLUSTER_SIZE = 4;
+
+   private static void incrementInEachCounter(TestCounter[] counters) {
+      if (counters.length != CLUSTER_SIZE) {
+         for (int i = 0; i < CLUSTER_SIZE; ++i) {
+            counters[0].increment();
+         }
+      } else {
+         for (TestCounter counter : counters) {
+            counter.increment();
+         }
+      }
+   }
+
+   private static void decrementInEachCounter(TestCounter[] counters) {
+      if (counters.length != CLUSTER_SIZE) {
+         for (int i = 0; i < CLUSTER_SIZE; ++i) {
+            counters[0].decrement();
+         }
+      } else {
+         for (TestCounter counter : counters) {
+            counter.decrement();
+         }
+      }
+   }
 
    public void testSimpleListener(Method method) throws Exception {
       final String counterName = method.getName();
-      final TestCounter[] counters = new TestCounter[CLUSTER_SIZE];
-      for (int i = 0; i < CLUSTER_SIZE; ++i) {
+      final TestCounter[] counters = new TestCounter[clusterSize()];
+      for (int i = 0; i < clusterSize(); ++i) {
          counters[i] = createCounter(counterManager(i), counterName);
       }
 
       Handle<ListenerQueue> l = counters[0].addListener(new ListenerQueue());
 
-      for (TestCounter counter : counters) {
-         counter.increment();
-      }
+      incrementInEachCounter(counters);
 
       ListenerQueue lq = l.getCounterListener();
       printQueue(lq);
@@ -57,27 +78,23 @@ public abstract class AbstractCounterNotificationTest extends BaseCounterTest {
 
       l.remove();
 
-      for (TestCounter counter : counters) {
-         counter.increment();
-      }
+      incrementInEachCounter(counters);
 
       assertTrue(l.getCounterListener().queue.isEmpty());
    }
 
-   public void testMultipleListeners(Method method) throws ExecutionException, InterruptedException {
+   public void testMultipleListeners(Method method) throws InterruptedException {
       final String counterName = method.getName();
-      final TestCounter[] counters = new TestCounter[CLUSTER_SIZE];
-      final List<Handle<ListenerQueue>> listeners = new ArrayList<>(CLUSTER_SIZE);
-      for (int i = 0; i < CLUSTER_SIZE; ++i) {
+      final TestCounter[] counters = new TestCounter[clusterSize()];
+      final List<Handle<ListenerQueue>> listeners = new ArrayList<>(clusterSize());
+      for (int i = 0; i < clusterSize(); ++i) {
          counters[i] = createCounter(counterManager(i), counterName);
          listeners.add(counters[i].addListener(new ListenerQueue()));
       }
 
-      for (TestCounter counter : counters) {
-         counter.increment();
-      }
+      incrementInEachCounter(counters);
 
-      for (int i = 0; i < CLUSTER_SIZE; ++i) {
+      for (int i = 0; i < clusterSize(); ++i) {
          ListenerQueue lq = listeners.get(i).getCounterListener();
          printQueue(lq);
          lq.assertEvent(0, CounterState.VALID, 1, CounterState.VALID);
@@ -88,10 +105,10 @@ public abstract class AbstractCounterNotificationTest extends BaseCounterTest {
       }
    }
 
-   public void testExceptionInListener(Method method) throws ExecutionException, InterruptedException {
+   public void testExceptionInListener(Method method) throws InterruptedException {
       final String counterName = method.getName();
-      final TestCounter[] counters = new TestCounter[CLUSTER_SIZE];
-      for (int i = 0; i < CLUSTER_SIZE; ++i) {
+      final TestCounter[] counters = new TestCounter[clusterSize()];
+      for (int i = 0; i < clusterSize(); ++i) {
          counters[i] = createCounter(counterManager(i), counterName);
       }
 
@@ -104,9 +121,7 @@ public abstract class AbstractCounterNotificationTest extends BaseCounterTest {
       });
       final Handle<ListenerQueue> l2 = counters[0].addListener(new ListenerQueue());
 
-      for (TestCounter counter : counters) {
-         counter.increment();
-      }
+      incrementInEachCounter(counters);
 
       ListenerQueue lq = l1.getCounterListener();
       printQueue(lq);
@@ -124,9 +139,7 @@ public abstract class AbstractCounterNotificationTest extends BaseCounterTest {
 
       assertEquals(4L, counters[0].getValue());
 
-      for (TestCounter counter : counters) {
-         counter.decrement();
-      }
+      decrementInEachCounter(counters);
 
       lq = l1.getCounterListener();
       printQueue(lq);
@@ -150,7 +163,7 @@ public abstract class AbstractCounterNotificationTest extends BaseCounterTest {
 
    protected abstract TestCounter createCounter(CounterManager counterManager, String counterName);
 
-   protected void printQueue(ListenerQueue queue) {
+   private void printQueue(ListenerQueue queue) {
       log.tracef("Queue is " + queue);
    }
 

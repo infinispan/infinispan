@@ -1,5 +1,7 @@
 package org.infinispan.counter.impl;
 
+import static org.infinispan.test.fwk.TestCacheManagerFactory.getDefaultCacheConfiguration;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
@@ -19,12 +21,18 @@ public abstract class BaseCounterTest extends MultipleCacheManagersTest {
    }
 
    @Override
-   protected final void createCacheManagers() throws Throwable {
+   protected final void createCacheManagers() {
       final int size = clusterSize();
       for (int i = 0; i < size; ++i) {
-         addClusterEnabledCacheManager(configure(i), getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
+         if (size == 1) {
+            addClusterEnabledCacheManager(configure(i), getDefaultCacheConfiguration(false));
+         } else {
+            addClusterEnabledCacheManager(configure(i), getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
+         }
       }
-      waitForCounterCaches();
+      if (size != 1) {
+         waitForCounterCaches();
+      }
    }
 
    protected final void waitForCounterCaches() {

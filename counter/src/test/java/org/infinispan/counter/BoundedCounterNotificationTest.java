@@ -33,8 +33,14 @@ public class BoundedCounterNotificationTest extends AbstractCounterNotificationT
 
       Handle<ListenerQueue> l = counters[0].addListener(new ListenerQueue());
 
-      for (StrongCounter counter : counters) {
-         counter.incrementAndGet();
+      if (counters.length != CLUSTER_SIZE) {
+         for (int i = 0; i < CLUSTER_SIZE; ++i) {
+            counters[0].incrementAndGet();
+         }
+      } else {
+         for (StrongCounter counter : counters) {
+            counter.incrementAndGet();
+         }
       }
 
       l.getCounterListener().assertEvent(0, CounterState.VALID, 1, CounterState.VALID);
@@ -46,8 +52,14 @@ public class BoundedCounterNotificationTest extends AbstractCounterNotificationT
 
       assertEquals(2L, (long) counters[0].getValue().get());
 
-      for (StrongCounter counter : counters) {
-         counter.decrementAndGet();
+      if (counters.length != CLUSTER_SIZE) {
+         for (int i = 0; i < CLUSTER_SIZE; ++i) {
+            counters[0].decrementAndGet();
+         }
+      } else {
+         for (StrongCounter counter : counters) {
+            counter.decrementAndGet();
+         }
       }
 
       l.getCounterListener().assertEvent(2, CounterState.UPPER_BOUND_REACHED, 1, CounterState.VALID);
