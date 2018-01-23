@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -14,6 +15,7 @@ import java.util.function.Consumer;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.AbstractControlledRpcManager;
 import org.infinispan.util.concurrent.ReclosableLatch;
 
@@ -117,14 +119,14 @@ public class ControlledRpcManager extends AbstractControlledRpcManager {
    }
 
    @Override
-   protected Object beforeInvokeRemotely(ReplicableCommand command) {
+   protected Object beforeInvokeRemotely(Collection<Address> targets, ReplicableCommand command) {
       failIfNeeded(command);
       waitBefore(command);
       return null;
    }
 
    @Override
-   protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
+   protected <T> T afterInvokeRemotely(Collection<Address> targets, ReplicableCommand command, T responseObject, Object argument) {
       if (waitAfter(command)) {
          responseChecks.forEach(check -> check.accept(command, responseObject));
       }

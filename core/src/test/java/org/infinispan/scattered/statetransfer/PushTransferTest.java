@@ -3,6 +3,7 @@ package org.infinispan.scattered.statetransfer;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -55,7 +56,7 @@ public class PushTransferTest extends AbstractStateTransferTest {
          RpcManager rpcManager = TestingUtil.extractComponent(c, RpcManager.class);
          TestingUtil.replaceComponent(c, RpcManager.class, new AbstractControlledRpcManager(rpcManager) {
             @Override
-            protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
+            protected <T> T afterInvokeRemotely(Collection<Address> targets, ReplicableCommand command, T responseObject, Object argument) {
                if (command instanceof StateResponseCommand &&
                      ((Map<Address, Response>) responseObject).keySet().contains(cm4.getAddress())) {
                   // We don't have to wait for all push transfers to finish, one is enough to lose something

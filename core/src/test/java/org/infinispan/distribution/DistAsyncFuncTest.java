@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
@@ -17,9 +16,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
@@ -62,10 +59,9 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
       for (Cache c : caches) {
          TestingUtil.wrapComponent(c, RpcManager.class, original -> new AbstractControlledRpcManager(original) {
             @Override
-            public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
-               ReplicableCommand command = rpc;
-               if (rpc instanceof SingleRpcCommand) {
-                  command = ((SingleRpcCommand) rpc).getCommand();
+            protected Object beforeInvokeRemotely(Collection<Address> recipients, ReplicableCommand command) {
+               if (command instanceof SingleRpcCommand) {
+                  command = ((SingleRpcCommand) command).getCommand();
                }
                if (command instanceof InvalidateL1Command) {
                   InvalidateL1Command invalidateL1Command = (InvalidateL1Command) command;
@@ -78,7 +74,7 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
                            .add(invalidateL1Command));
                   }
                }
-               return super.invokeRemotelyAsync(recipients, rpc, options);
+               return null;
             }
          });
       }

@@ -4,6 +4,7 @@ import static org.infinispan.test.TestingUtil.wrapComponent;
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -124,15 +125,15 @@ public class TxReplay3Test extends MultipleCacheManagersTest {
       }
 
       @Override
-      protected Object beforeInvokeRemotely(ReplicableCommand command) {
-         Object arg = super.beforeInvokeRemotely(command);
+      protected Object beforeInvokeRemotely(Collection<Address> targets, ReplicableCommand command) {
+         Object arg = super.beforeInvokeRemotely(targets, command);
          log.debugf("Before invoke remotely %s", command);
          return arg;
       }
 
       @Override
-      protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
-         T result = super.afterInvokeRemotely(command, responseObject, argument);
+      protected <T> T afterInvokeRemotely(Collection<Address> targets, ReplicableCommand command, T responseObject, Object argument) {
+         T result = super.afterInvokeRemotely(targets, command, responseObject, argument);
          log.debugf("After invoke remotely %s. Responses=%s", command, result);
          if (triggered || !(command instanceof PrepareCommand))
             return result;

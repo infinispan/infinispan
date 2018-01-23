@@ -1,11 +1,13 @@
 package org.infinispan.test.concurrent;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.AbstractControlledRpcManager;
 
@@ -72,7 +74,7 @@ public class OutboundRpcSequencerAction {
       }
 
       @Override
-      protected Object beforeInvokeRemotely(ReplicableCommand command) {
+      protected Object beforeInvokeRemotely(Collection<Address> targets, ReplicableCommand command) {
          try {
             boolean accept = matcher.accept(command);
             StateSequencerUtil.advanceMultiple(stateSequencer, accept, statesBefore);
@@ -83,7 +85,7 @@ public class OutboundRpcSequencerAction {
       }
 
       @Override
-      protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
+      protected <T> T afterInvokeRemotely(Collection<Address> targets, ReplicableCommand command, T responseObject, Object argument) {
          try {
             StateSequencerUtil.advanceMultiple(stateSequencer, (Boolean) argument, statesAfter);
          } catch (Exception e) {

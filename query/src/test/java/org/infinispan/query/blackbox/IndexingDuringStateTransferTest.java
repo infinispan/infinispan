@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -27,6 +28,7 @@ import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -132,7 +134,7 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
       CountDownLatch allowStateResponse = new CountDownLatch(1);
       caches().forEach(c -> TestingUtil.wrapComponent(c, RpcManager.class, original -> new AbstractControlledRpcManager(original) {
          @Override
-         protected Object beforeInvokeRemotely(ReplicableCommand command) {
+         protected Object beforeInvokeRemotely(Collection<Address> targets, ReplicableCommand command) {
             if (command instanceof StateResponseCommand) {
                try {
                   assertTrue(allowStateResponse.await(10, TimeUnit.SECONDS));
