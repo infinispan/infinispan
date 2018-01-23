@@ -153,4 +153,8 @@ public class BackupPutMapRpcCommand extends BaseRpcCommand implements TopologyAf
    public void setSequence(long sequence) {
       this.sequence = sequence;
    }
+
+   public long getFlagBitSet() {
+      return flags;
+   }
 }
