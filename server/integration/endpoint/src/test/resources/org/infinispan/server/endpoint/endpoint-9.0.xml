@@ -14,7 +14,6 @@
                     <no-anonymous value="true" />
                 </policy>
                 <property name="com.sun.security.sasl.digest.realm">ServerRealm</property>
-                <property name="com.sun.security.sasl.digest.utf8">true</property>
             </sasl>
         </authentication>
     </hotrod-connector>
