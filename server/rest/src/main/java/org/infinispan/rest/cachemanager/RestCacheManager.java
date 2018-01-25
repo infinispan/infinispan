@@ -24,15 +24,17 @@ import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-import org.infinispan.rest.cachemanager.exceptions.CacheUnavailableException;
-import org.infinispan.rest.operations.exceptions.NoCacheFoundException;
-import org.infinispan.rest.operations.exceptions.ServiceUnavailableException;
+import org.infinispan.rest.logging.Log;
 import org.infinispan.upgrade.RollingUpgradeManager;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Manages caches instances used during rest requests.
  */
 public class RestCacheManager<V> {
+
+   protected final static Log logger = LogFactory.getLog(RestCacheManager.class, Log.class);
+
    private final EmbeddedCacheManager instance;
    private final InternalCacheRegistry icr;
    private final Predicate<? super String> isCacheIgnored;
@@ -50,10 +52,10 @@ public class RestCacheManager<V> {
    @SuppressWarnings("unchecked")
    public AdvancedCache<String, V> getCache(String name, MediaType requestedMediaType) {
       if (isCacheIgnored.test(name)) {
-         throw new ServiceUnavailableException("Cache with name '" + name + "' is temporarily unavailable.");
+         throw logger.cacheUnavailable(name);
       }
       if (requestedMediaType == null) {
-         throw new NullPointerException("requestedMediaType cannot be null");
+         throw logger.missingRequiredMediaType(name);
       }
       AdvancedCache<String, V> registered = knownCaches.get(name + requestedMediaType.getTypeSubtype());
       if (registered != null) return registered;
@@ -82,11 +84,11 @@ public class RestCacheManager<V> {
 
    private void checkCacheAvailable(String cacheName) {
       if (!BasicCacheContainer.DEFAULT_CACHE_NAME.equals(cacheName) && !instance.getCacheNames().contains(cacheName))
-         throw new NoCacheFoundException("Cache with name '" + cacheName + "' not found amongst the configured caches");
+         throw logger.cacheNotFound(cacheName);
       if (icr.isPrivateCache(cacheName)) {
-         throw new CacheUnavailableException(String.format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'", cacheName));
+         throw logger.requestNotAllowedToInternalCaches(cacheName);
       } else if (!allowInternalCacheAccess && icr.isInternalCache(cacheName) && !icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.USER)) {
-         throw new CacheUnavailableException(String.format("Remote requests are not allowed to internal caches when authorization is disabled. Do no send remote requests to cache '%s'", cacheName));
+         throw logger.requestNotAllowedToInternalCachesWithoutAuthz(cacheName);
       }
    }
 
