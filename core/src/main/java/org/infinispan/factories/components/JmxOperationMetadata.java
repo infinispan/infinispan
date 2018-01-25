@@ -15,6 +15,7 @@ import org.infinispan.jmx.annotations.Parameter;
  * @since 5.1
  */
 public class JmxOperationMetadata implements Serializable {
+   private static final long serialVersionUID = 0x111402E12A71017L;
    private final String methodName;
    private final String operationName;
    private final JmxOperationParameter[] methodParameters;

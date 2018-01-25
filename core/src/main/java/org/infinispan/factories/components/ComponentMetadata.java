@@ -40,6 +40,7 @@ import org.infinispan.factories.scopes.Scope;
  * @see ComponentMetadataRepo
  */
 public class ComponentMetadata implements Serializable {
+   private static final long serialVersionUID = 0xC0119011E7ADA7AL;
    private static final InjectFieldMetadata[] EMPTY_INJECT_FIELDS = {};
    public static final InjectMetadata[] EMPTY_INJECT_METHODS = {};
    public static final PrioritizedMethodMetadata[] EMPTY_PRIORITIZED_METHODS = {};
@@ -240,6 +241,7 @@ public class ComponentMetadata implements Serializable {
     * This class encapsulates metadata on a prioritized method, such as one annotated with {@link Start} or {@link @Stop}
     */
    public static class PrioritizedMethodMetadata implements Serializable {
+      private static final long serialVersionUID = 0x21210121712EDL;
       String methodName;
       transient Method method;
       int priority;
