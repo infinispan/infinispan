@@ -32,6 +32,7 @@ import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -290,6 +291,7 @@ public class HotRodRemoteStreamingIT {
     * @throws InterruptedException
     */
    @Test
+   @Ignore("ISPN-8724")
    public void serverShutdownTest() throws IOException, InterruptedException {
       byte[] value = new byte[5000];
       random.nextBytes(value);
