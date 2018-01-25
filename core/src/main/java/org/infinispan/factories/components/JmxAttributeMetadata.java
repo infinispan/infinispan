@@ -14,6 +14,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
  * @since 5.1
  */
 public class JmxAttributeMetadata implements Serializable {
+   private static final long serialVersionUID = 0x1114A77121B07EL;
    private String name;
    private String description;
    private boolean writable;

@@ -19,7 +19,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
  * @since 5.1
  */
 public class ManageableComponentMetadata extends ComponentMetadata {
-
+   private static final long serialVersionUID = 0x11A17A6EAB1EL;
    private String jmxObjectName;
    private String description;
    private Set<JmxAttributeMetadata> attributeMetadata;
