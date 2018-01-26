@@ -68,7 +68,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
          HotRodOperation op = hrh.op;
          switch (op) {
             case AUTH_MECH_LIST:
-               writeResponse(cdc, ctx.channel(), new AuthMechListResponse(hrh.version, hrh.messageId, hrh.cacheName,
+               writeResponse(ctx.channel(), new AuthMechListResponse(hrh.version, hrh.messageId, hrh.cacheName,
                      hrh.clientIntel, authenticationConfig.allowedMechs(), hrh.topologyId));
                break;
             // AUTH never requires authentication
@@ -107,7 +107,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
                   }
                   byte[] serverChallenge = saslServer.evaluateResponse(opContext.getValue());
 
-                  writeResponse(cdc, ctx.channel(), new AuthResponse(hrh.version, hrh.messageId, hrh.cacheName,
+                  writeResponse(ctx.channel(), new AuthResponse(hrh.version, hrh.messageId, hrh.cacheName,
                         hrh.clientIntel, serverChallenge, hrh.topologyId));
                   if (saslServer.isComplete()) {
                      List<Principal> extraPrincipals = new ArrayList<>();

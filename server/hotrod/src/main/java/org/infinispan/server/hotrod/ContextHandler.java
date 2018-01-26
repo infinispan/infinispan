@@ -1,266 +1,297 @@
 package org.infinispan.server.hotrod;
 
+import static java.lang.String.format;
 import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
 
-import java.security.PrivilegedActionException;
-import java.util.BitSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.function.Consumer;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.counter.EmbeddedCounterManagerFactory;
+import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.multimap.impl.EmbeddedMultimapCache;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.server.core.transport.NettyTransport;
-import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.logging.Log;
-import org.infinispan.server.hotrod.multimap.MultimapCacheDecodeContext;
-import org.infinispan.tasks.TaskContext;
-import org.infinispan.tasks.TaskManager;
-import org.infinispan.util.KeyValuePair;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
 /**
- * Handler that performs actual cache operations.  Note this handler should be on a separate executor group than the
- * decoder.
+ * Handler that performs actual cache operations.
  *
  * @author wburns
  * @since 9.0
  */
-public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeContext> {
+public class ContextHandler extends SimpleChannelInboundHandler {
    private final static Log log = LogFactory.getLog(ContextHandler.class, Log.class);
 
-   private final HotRodServer server;
-   private final NettyTransport transport;
+   private final EmbeddedCacheManager cacheManager;
    private final Executor executor;
-   private final TaskManager taskManager;
+   private final NettyTransport transport;
+   private final HotRodServer server;
 
-   public ContextHandler(HotRodServer server, NettyTransport transport, Executor executor) {
-      this.server = server;
-      this.transport = transport;
+   private TransactionRequestProcessor cacheProcessor;
+   private CounterRequestProcessor counterProcessor;
+   private MultimapRequestProcessor multimapRequestProcessor;
+   private TaskRequestProcessor taskRequestProcessor;
+
+   public ContextHandler(EmbeddedCacheManager cacheManager, Executor executor, NettyTransport transport, HotRodServer server) {
+      this.cacheManager = cacheManager;
       this.executor = executor;
-      this.taskManager = SecurityActions.getGlobalComponentRegistry(server.getCacheManager()).getComponent(TaskManager.class);
+      this.transport = transport;
+      this.server = server;
    }
 
    @Override
-   protected void channelRead0(ChannelHandlerContext ctx, CacheDecodeContext msg) throws Exception {
-      executor.execute(() -> {
-         try {
-            if (msg.header.op.isMultimap()) {
-               new MultimapCacheDecodeContext(msg.cache, msg).read(ctx);
-            } else {
-               realRead(ctx, msg);
-            }
-         } catch (PrivilegedActionException|ExecutionException e) {
-            ctx.fireExceptionCaught(e.getCause());
-         } catch (Exception e) {
-            ctx.fireExceptionCaught(e);
-         }
-      });
+   public void handlerAdded(ChannelHandlerContext ctx) {
+      cacheProcessor = new TransactionRequestProcessor(ctx.channel(), executor, server);
+      counterProcessor = new CounterRequestProcessor(ctx.channel(), (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(cacheManager), executor, server);
+      multimapRequestProcessor = new MultimapRequestProcessor(ctx.channel(), executor);
+      taskRequestProcessor = new TaskRequestProcessor(ctx.channel(), executor, server);
    }
 
-   private void realRead(ChannelHandlerContext ctx, CacheDecodeContext msg) throws Exception {
-      HotRodHeader h = msg.header;
+   private void initCache(CacheDecodeContext cdc) throws RequestParsingException {
+      cdc.resource = cache(cdc);
+   }
+
+   private void initMultimap(CacheDecodeContext cdc) throws RequestParsingException {
+      cdc.resource = new EmbeddedMultimapCache(cache(cdc));
+   }
+
+   public AdvancedCache<byte[], byte[]> cache(CacheDecodeContext cdc) throws RequestParsingException {
+      String cacheName = cdc.header.cacheName;
+      // Try to avoid calling cacheManager.getCacheNames() if possible, since this creates a lot of unnecessary garbage
+      AdvancedCache<byte[], byte[]> cache = server.getKnownCache(cacheName);
+      if (cache == null) {
+         cache = obtainCache(cdc.header, cacheName);
+      }
+      cache = cdc.decoder.getOptimizedCache(cdc.header, cache, server.getCacheConfiguration(cacheName));
+      if (cdc.subject != null) {
+         cache = cache.withSubject(cdc.subject);
+      }
+      return cache;
+   }
+
+   private AdvancedCache<byte[], byte[]> obtainCache(HotRodHeader header, String cacheName) throws RequestParsingException {
+      AdvancedCache<byte[], byte[]> cache;// Talking to the wrong cache are really request parsing errors
+      // and hence should be treated as client errors
+      InternalCacheRegistry icr = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      if (icr.isPrivateCache(cacheName)) {
+         throw new RequestParsingException(
+               format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'", cacheName),
+               header.version, header.messageId);
+      } else if (icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.PROTECTED)) {
+         // We want to make sure the cache access is checked everytime, so don't store it as a "known" cache. More
+         // expensive, but these caches should not be accessed frequently
+         cache = server.getCacheInstance(cacheName, cacheManager, true, false);
+      } else if (!cacheName.isEmpty() && !cacheManager.getCacheNames().contains(cacheName)) {
+         throw new CacheNotFoundException(
+               format("Cache with name '%s' not found amongst the configured caches", cacheName),
+               header.version, header.messageId);
+      } else {
+         cache = server.getCacheInstance(cacheName, cacheManager, true, true);
+      }
+      return cache;
+   }
+
+   @Override
+   public boolean acceptInboundMessage(Object msg) throws Exception {
+      // Faster than netty matcher
+      return msg.getClass() == CacheDecodeContext.class;
+   }
+
+   @Override
+   protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+      CacheDecodeContext cdc = (CacheDecodeContext) msg;
+      HotRodHeader h = cdc.header;
       switch (h.op) {
          case PUT:
-            writeResponse(msg, ctx.channel(), msg.put());
+            initCache(cdc);
+            cacheProcessor.put(cdc);
             break;
          case PUT_IF_ABSENT:
-            writeResponse(msg, ctx.channel(), msg.putIfAbsent());
+            initCache(cdc);
+            cacheProcessor.putIfAbsent(cdc);
             break;
          case REPLACE:
-            writeResponse(msg, ctx.channel(), msg.replace());
+            initCache(cdc);
+            cacheProcessor.replace(cdc);
             break;
          case REPLACE_IF_UNMODIFIED:
-            writeResponse(msg, ctx.channel(), msg.replaceIfUnmodified());
+            initCache(cdc);
+            cacheProcessor.replaceIfUnmodified(cdc);
             break;
          case CONTAINS_KEY:
-            writeResponse(msg, ctx.channel(), msg.containsKey());
+            initCache(cdc);
+            cacheProcessor.containsKey(cdc);
             break;
          case GET:
          case GET_WITH_VERSION:
-            writeResponse(msg, ctx.channel(), msg.get());
+            initCache(cdc);
+            cacheProcessor.get(cdc);
             break;
          case GET_STREAM:
          case GET_WITH_METADATA:
-            writeResponse(msg, ctx.channel(), msg.getKeyMetadata());
+            initCache(cdc);
+            cacheProcessor.getKeyMetadata(cdc);
             break;
          case REMOVE:
-            writeResponse(msg, ctx.channel(), msg.remove());
+            initCache(cdc);
+            cacheProcessor.remove(cdc);
             break;
          case REMOVE_IF_UNMODIFIED:
-            writeResponse(msg, ctx.channel(), msg.removeIfUnmodified());
+            initCache(cdc);
+            cacheProcessor.removeIfUnmodified(cdc);
             break;
          case PING:
-            writeResponse(msg, ctx.channel(), new EmptyResponse(h.version, h.messageId, h.cacheName,
+            cache(cdc); // we need to throw an exception when this cache is inaccessible
+            writeResponse(ctx.channel(), new EmptyResponse(h.version, h.messageId, h.cacheName,
                   h.clientIntel, HotRodOperation.PING, OperationStatus.Success, h.topologyId));
             break;
          case STATS:
-            writeResponse(msg, ctx.channel(), msg.decoder.createStatsResponse(msg, transport));
+            writeResponse(ctx.channel(), cdc.decoder.createStatsResponse(cdc, cache(cdc).getStats(), transport));
             break;
          case CLEAR:
-            writeResponse(msg, ctx.channel(), msg.clear());
-            break;
-         case SIZE:
-            writeResponse(msg, ctx.channel(), new SizeResponse(h.version, h.messageId, h.cacheName,
-                  h.clientIntel, h.topologyId, msg.cache.size()));
+            initCache(cdc);
+            cacheProcessor.clear(cdc);
             break;
          case EXEC:
-            ExecRequestContext execContext = (ExecRequestContext) msg.operationDecodeContext;
-            Marshaller marshaller;
-            if (server.getMarshaller() != null) {
-               marshaller = server.getMarshaller();
-            } else {
-               marshaller = new GenericJBossMarshaller();
-            }
-            TaskContext taskContext = new TaskContext()
-                  .marshaller(marshaller)
-                  .cache(msg.cache)
-                  .parameters(execContext.getParams())
-                  .subject(msg.subject);
-            byte[] result = (byte[]) taskManager.runTask(execContext.getName(), taskContext).get();
-            writeResponse(msg, ctx.channel(),
-                  new ExecResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId,
-                        result == null ? new byte[]{} : result));
-            break;
-         case BULK_GET:
-            int size = (int) msg.operationDecodeContext;
-            if (CacheDecodeContext.isTrace) {
-               log.tracef("About to create bulk response count = %d", size);
-            }
-            writeResponse(msg, ctx.channel(), new BulkGetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-                  h.topologyId, size, msg.cache.entrySet()));
-            break;
-         case BULK_GET_KEYS:
-            int scope = (int) msg.operationDecodeContext;
-            if (CacheDecodeContext.isTrace) {
-               log.tracef("About to create bulk get keys response scope = %d", scope);
-            }
-            writeResponse(msg, ctx.channel(), new BulkGetKeysResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-                  h.topologyId, scope, msg.cache.keySet().iterator()));
-            break;
-         case QUERY:
-            byte[] queryResult = server.query(msg.cache, (byte[]) msg.operationDecodeContext);
-            writeResponse(msg, ctx.channel(),
-                  new QueryResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId, queryResult));
-            break;
-         case ADD_CLIENT_LISTENER:
-            ClientListenerRequestContext clientContext = (ClientListenerRequestContext) msg.operationDecodeContext;
-            server.getClientListenerRegistry().addClientListener(msg.decoder, ctx.channel(), h, clientContext.getListenerId(),
-                  msg.cache, clientContext.isIncludeCurrentState(), new KeyValuePair<>(clientContext.getFilterFactoryInfo(),
-                        clientContext.getConverterFactoryInfo()), clientContext.isUseRawData(), clientContext.getListenerInterests());
-            break;
-         case REMOVE_CLIENT_LISTENER:
-            byte[] listenerId = (byte[]) msg.operationDecodeContext;
-            if (server.getClientListenerRegistry().removeClientListener(listenerId, msg.cache)) {
-               writeResponse(msg, ctx.channel(), msg.decoder.createSuccessResponse(h, null));
-            } else {
-               writeResponse(msg, ctx.channel(), msg.decoder.createNotExecutedResponse(h, null));
-            }
-            break;
-         case ITERATION_START:
-            IterationStartRequest iterationStart = (IterationStartRequest) msg.operationDecodeContext;
-
-            Optional<BitSet> optionBitSet;
-            if (iterationStart.getOptionBitSet().isPresent()) {
-               optionBitSet = Optional.of(BitSet.valueOf(iterationStart.getOptionBitSet().get()));
-            } else {
-               optionBitSet = Optional.empty();
-            }
-            String iterationId = server.getIterationManager().start(msg.cache, optionBitSet,
-                  iterationStart.getFactory(), iterationStart.getBatch(), iterationStart.isMetadata());
-            writeResponse(msg, ctx.channel(), new IterationStartResponse(h.version, h.messageId, h.cacheName,
-                  h.clientIntel, h.topologyId, iterationId));
-            break;
-         case ITERATION_NEXT:
-            iterationId = (String) msg.operationDecodeContext;
-            IterableIterationResult iterationResult = server.getIterationManager().next(msg.cache.getName(), iterationId);
-            writeResponse(msg, ctx.channel(), new IterationNextResponse(h.version, h.messageId, h.cacheName,
-                  h.clientIntel, h.topologyId, iterationResult));
-            break;
-         case ITERATION_END:
-            iterationId = (String) msg.operationDecodeContext;
-            boolean removed = server.getIterationManager().close(msg.cache.getName(), iterationId);
-            writeResponse(msg, ctx.channel(), new EmptyResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-                  HotRodOperation.ITERATION_END,
-                  removed ? OperationStatus.Success : OperationStatus.InvalidIteration, h.topologyId));
+            initCache(cdc);
+            taskRequestProcessor.exec(cdc);
             break;
          case PUT_ALL:
-            msg.cache.putAll(msg.operationContext(), msg.buildMetadata());
-            writeResponse(msg, ctx.channel(), msg.decoder.createSuccessResponse(h, null));
+            initCache(cdc);
+            cacheProcessor.putAll(cdc);
             break;
          case GET_ALL:
-            Map<byte[], byte[]> map = msg.cache.getAll(msg.operationContext());
-            writeResponse(msg, ctx.channel(), new GetAllResponse(h.version, h.messageId, h.cacheName,
-                  h.clientIntel, h.topologyId, map));
+            initCache(cdc);
+            cacheProcessor.getAll(cdc);
             break;
          case PUT_STREAM:
-            ByteBuf buf = (ByteBuf) msg.operationDecodeContext;
-            try {
-               byte[] bytes = new byte[buf.readableBytes()];
-               buf.readBytes(bytes);
-               msg.operationDecodeContext = bytes;
-               long version = msg.params.streamVersion;
-               if (version == 0) { // Normal put
-                  writeResponse(msg, ctx.channel(), msg.put());
-               } else if (version < 0) { // putIfAbsent
-                  writeResponse(msg, ctx.channel(), msg.putIfAbsent());
-               } else { // versioned replace
-                  writeResponse(msg, ctx.channel(), msg.replaceIfUnmodified());
-               }
-            } finally {
-               buf.release();
-            }
+            initCache(cdc);
+            cacheProcessor.putStream(cdc);
+            break;
+         case SIZE:
+            initCache(cdc);
+            cacheProcessor.size(cdc);
+            break;
+         case BULK_GET:
+            initCache(cdc);
+            cacheProcessor.bulkGet(cdc);
+            break;
+         case BULK_GET_KEYS:
+            initCache(cdc);
+            cacheProcessor.bulkGetKeys(cdc);
+            break;
+         case QUERY:
+            initCache(cdc);
+            cacheProcessor.query(cdc);
+            break;
+         case ADD_CLIENT_LISTENER:
+            initCache(cdc);
+            cacheProcessor.addClientListener(cdc);
+            break;
+         case REMOVE_CLIENT_LISTENER:
+            initCache(cdc);
+            cacheProcessor.removeClientListener(cdc);
+            break;
+         case ITERATION_START:
+            initCache(cdc);
+            cacheProcessor.iterationStart(cdc);
+            break;
+         case ITERATION_NEXT:
+            initCache(cdc);
+            cacheProcessor.iterationNext(cdc);
+            break;
+         case ITERATION_END:
+            initCache(cdc);
+            cacheProcessor.iterationEnd(cdc);
             break;
          case ROLLBACK_TX:
-            writeResponse(msg, ctx.channel(), msg.rollbackTransaction());
+            initCache(cdc);
+            cacheProcessor.rollbackTransaction(cdc);
             break;
          case PREPARE_TX:
-            writeResponse(msg, ctx.channel(), msg.prepareTransaction());
+            initCache(cdc);
+            cacheProcessor.prepareTransaction(cdc);
             break;
          case COMMIT_TX:
-            writeResponse(msg, ctx.channel(), msg.commitTransaction());
+            initCache(cdc);
+            cacheProcessor.commitTransaction(cdc);
             break;
          case COUNTER_CREATE:
-            msg.createCounter(createResponseHandler(ctx, msg));
+            counterProcessor.createCounter(cdc);
             break;
          case COUNTER_GET_CONFIGURATION:
-            msg.getCounterConfiguration(createResponseHandler(ctx, msg));
+            counterProcessor.getCounterConfiguration(cdc);
             break;
          case COUNTER_IS_DEFINED:
-            msg.isCounterDefined(createResponseHandler(ctx, msg));
+            counterProcessor.isCounterDefined(cdc);
             break;
          case COUNTER_ADD_AND_GET:
-            msg.counterAddAndGet(createResponseHandler(ctx, msg));
+            counterProcessor.counterAddAndGet(cdc);
             break;
          case COUNTER_RESET:
-            msg.counterReset(createResponseHandler(ctx, msg));
+            counterProcessor.counterReset(cdc);
             break;
          case COUNTER_GET:
-            msg.counterGet(createResponseHandler(ctx, msg));
+            counterProcessor.counterGet(cdc);
             break;
          case COUNTER_CAS:
-            msg.counterCompareAndSwap(createResponseHandler(ctx, msg));
+            counterProcessor.counterCompareAndSwap(cdc);
             break;
          case COUNTER_REMOVE:
-            writeResponse(msg, ctx.channel(), msg.counterRemove());
+            counterProcessor.counterRemove(cdc);
             break;
          case COUNTER_GET_NAMES:
-            writeResponse(msg, ctx.channel(), msg.getCounterNames());
+            counterProcessor.getCounterNames(cdc);
             break;
          case COUNTER_REMOVE_LISTENER:
-            writeResponse(msg, ctx.channel(), msg.removeCounterListener(server));
+            counterProcessor.removeCounterListener(cdc);
             break;
          case COUNTER_ADD_LISTENER:
-            writeResponse(msg, ctx.channel(), msg.addCounterListener(server, ctx.channel()));
+            counterProcessor.addCounterListener(cdc);
+            break;
+         case CONTAINS_KEY_MULTIMAP:
+            initMultimap(cdc);
+            multimapRequestProcessor.containsKey(cdc);
+            break;
+         case GET_MULTIMAP:
+            initMultimap(cdc);
+            multimapRequestProcessor.get(cdc);
+            break;
+         case GET_MULTIMAP_WITH_METADATA:
+            initMultimap(cdc);
+            multimapRequestProcessor.getWithMetadata(cdc);
+            break;
+         case PUT_MULTIMAP:
+            initMultimap(cdc);
+            multimapRequestProcessor.put(cdc);
+            break;
+         case REMOVE_MULTIMAP:
+            initMultimap(cdc);
+            multimapRequestProcessor.removeKey(cdc);
+            break;
+         case REMOVE_ENTRY_MULTIMAP:
+            initMultimap(cdc);
+            multimapRequestProcessor.removeEntry(cdc);
+            break;
+         case SIZE_MULTIMAP:
+            initMultimap(cdc);
+            multimapRequestProcessor.size(cdc);
+            break;
+         case CONTAINS_ENTRY_MULTIMAP:
+            initMultimap(cdc);
+            multimapRequestProcessor.containsEntry(cdc);
+            break;
+         case CONTAINS_VALUE_MULTIMAP:
+            initMultimap(cdc);
+            multimapRequestProcessor.containsValue(cdc);
             break;
          default:
-            throw new IllegalArgumentException("Unsupported operation invoked: " + msg.header.op);
+            throw new IllegalArgumentException("Unsupported operation invoked: " + cdc.header.op);
       }
    }
 
@@ -278,15 +309,5 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
       log.tracef("Channel %s writability changed", ctx.channel());
       server.getClientListenerRegistry().findAndWriteEvents(ctx.channel());
       server.getClientCounterNotificationManager().channelActive(ctx.channel());
-   }
-
-   @Override
-   public boolean acceptInboundMessage(Object msg) throws Exception {
-      // Faster than netty matcher
-      return msg.getClass() == CacheDecodeContext.class;
-   }
-
-   private static Consumer<Response> createResponseHandler(ChannelHandlerContext ctx, CacheDecodeContext msg) {
-      return response -> writeResponse(msg, ctx.channel(), response);
    }
 }

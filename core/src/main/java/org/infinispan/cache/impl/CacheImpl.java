@@ -478,6 +478,17 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<CacheEntry<K, V>> getCacheEntryAsync(Object key) {
+      return getCacheEntryAsync(key, EnumUtil.EMPTY_BIT_SET, invocationContextFactory.createInvocationContext(false, 1));
+   }
+
+   final CompletableFuture<CacheEntry<K,V>> getCacheEntryAsync(Object key, long explicitFlags, InvocationContext ctx) {
+      assertKeyNotNull(key);
+      GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, explicitFlags);
+      return invoker.invokeAsync(ctx, command).thenApply(CacheEntry.class::cast);
+   }
+
+   @Override
    public Map<K, V> getAll(Set<?> keys) {
       return getAll(keys, EnumUtil.EMPTY_BIT_SET, invocationContextFactory.createInvocationContext(false, keys.size()));
    }
@@ -486,6 +497,16 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       GetAllCommand command = commandsFactory.buildGetAllCommand(keys, explicitFlags, false);
       Map<K, V> map = (Map<K, V>) invoker.invoke(ctx, command);
       return dropNullEntries(map);
+   }
+
+   @Override
+   public CompletableFuture<Map<K, V>> getAllAsync(Set<?> keys) {
+      return getAllAsync(keys, EnumUtil.EMPTY_BIT_SET, invocationContextFactory.createInvocationContext(false, keys.size()));
+   }
+
+   final CompletableFuture<Map<K, V>> getAllAsync(Set<?> keys, long explicitFlags, InvocationContext ctx) {
+      GetAllCommand command = commandsFactory.buildGetAllCommand(keys, explicitFlags, false);
+      return invoker.invokeAsync(ctx, command).thenApply(map -> dropNullEntries((Map<K, V>) map));
    }
 
    private Map<K, V> dropNullEntries(Map<K, V> map) {
@@ -1492,7 +1513,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return putAllAsync(data, metadata);
    }
 
-   final CompletableFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final Metadata metadata) {
+   @Override
+   public final CompletableFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final Metadata metadata) {
       return putAllAsync(data, metadata, EnumUtil.EMPTY_BIT_SET, getInvocationContextWithImplicitTransaction(false, data.size()));
    }
 
@@ -1522,7 +1544,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return putIfAbsentAsync(key, value, metadata);
    }
 
-   final CompletableFuture<V> putIfAbsentAsync(final K key, final V value, final Metadata metadata) {
+   @Override
+   public final CompletableFuture<V> putIfAbsentAsync(final K key, final V value, final Metadata metadata) {
       return putIfAbsentAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET, getInvocationContextWithImplicitTransaction(false, 1));
    }
 
@@ -1564,7 +1587,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return replaceAsync(key, value, metadata);
    }
 
-   final CompletableFuture<V> replaceAsync(final K key, final V value, final Metadata metadata) {
+   @Override
+   public final CompletableFuture<V> replaceAsync(final K key, final V value, final Metadata metadata) {
       return replaceAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET, getInvocationContextWithImplicitTransaction(false, 1));
    }
 
@@ -1583,7 +1607,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return replaceAsync(key, oldValue, newValue, metadata);
    }
 
-   final CompletableFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
+   @Override
+   public final CompletableFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
                                                  final Metadata metadata) {
       return replaceAsync(key, oldValue, newValue, metadata, EnumUtil.EMPTY_BIT_SET, getInvocationContextWithImplicitTransaction(false, 1));
    }
@@ -1624,6 +1649,24 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          return this;
       else
          return new DecoratedCache<>(this, flags);
+   }
+
+   @Override
+   public AdvancedCache<K, V> withFlags(Collection<Flag> flags) {
+      if (flags == null || flags.isEmpty())
+         return this;
+      else
+         return new DecoratedCache<>(this, flags);
+   }
+
+   @Override
+   public AdvancedCache<K, V> noFlags() {
+      return this;
+   }
+
+   @Override
+   public AdvancedCache<K, V> transform(Function<AdvancedCache<K, V>, ? extends AdvancedCache<K, V>> transformation) {
+      return transformation.apply(this);
    }
 
    @Override

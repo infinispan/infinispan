@@ -213,6 +213,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
+   public boolean isEnabled() {
+      return enabled;
+   }
+
+   @Override
    public boolean isPreloaded() {
       return preloaded;
    }

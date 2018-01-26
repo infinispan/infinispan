@@ -35,6 +35,10 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.BiConsumer;
@@ -134,6 +138,19 @@ public class TestingUtil {
          "      <stack-file name=\"tcp\" path=\"jgroups-tcp.xml\"/>\n" +
          "   </jgroups>";
    private static final int SHORT_TIMEOUT_MILLIS = Integer.getInteger("infinispan.test.shortTimeoutMillis", 500);
+   private static ScheduledExecutorService timeoutExecutor = new ScheduledThreadPoolExecutor(1, r -> {
+      Thread t = new Thread(r);
+      t.setDaemon(true);
+      t.setName("test-timeout-thread");
+      return t;
+   });
+
+   // Temporarily replaces Java 9's CompletableFuture.orTimeout
+   public static <T> CompletableFuture<T> orTimeout(CompletableFuture<T> f, long timeout, TimeUnit timeUnit) {
+      ScheduledFuture<Boolean> scheduled = timeoutExecutor.schedule(() -> f.completeExceptionally(new TimeoutException("Timed out!")), timeout, timeUnit);
+      f.whenComplete((v, t) -> scheduled.cancel(false));
+      return f;
+   }
 
    /**
     * Should be used by tests for a timeout when they need to wait for that timeout to expire.

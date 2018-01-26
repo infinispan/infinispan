@@ -136,9 +136,9 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
 
    @Override
    public AdvancedCache<K, V> lockAs(Object lockOwner) {
-      AdvancedCache<K, V> lockCache = this.cache.lockAs(lockOwner);
+      AdvancedCache<K, V> lockCache = cache.lockAs(lockOwner);
       if (lockCache != cache) {
-         return this.wrapper.wrap(lockCache);
+         return wrapper.wrap(this, lockCache);
       } else {
          return this;
       }
@@ -235,17 +235,49 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
 
    @Override
    public AdvancedCache<K, V> withFlags(Flag... flags) {
-      AdvancedCache<K, V> flagCache = this.cache.withFlags(flags);
+      AdvancedCache<K, V> flagCache = cache.withFlags(flags);
       if (flagCache != cache) {
-         return this.wrapper.wrap(flagCache);
+         return wrapper.wrap(this, flagCache);
       } else {
          return this;
       }
    }
 
    @Override
+   public AdvancedCache<K, V> withFlags(Collection<Flag> flags) {
+      AdvancedCache<K, V> flagCache = cache.withFlags(flags);
+      if (flagCache != cache) {
+         return wrapper.wrap(this, flagCache);
+      } else {
+         return this;
+      }
+   }
+
+   @Override
+   public AdvancedCache<K, V> noFlags() {
+      AdvancedCache<K, V> flagCache = cache.noFlags();
+      if (flagCache != cache) {
+         return wrapper.wrap(this, flagCache);
+      } else {
+         return this;
+      }
+   }
+
+   @Override
+   public AdvancedCache<K, V> transform(Function<AdvancedCache<K, V>, ? extends AdvancedCache<K, V>> transformation) {
+      AdvancedCache<K, V> newDelegate = cache.transform(transformation);
+      AdvancedCache<K, V> newInstance = newDelegate != cache ? wrapper.wrap(this, newDelegate) : this;
+      return transformation.apply(newInstance);
+   }
+
+   @Override
    public AdvancedCache<K, V> withSubject(Subject subject) {
-      return this.wrapper.wrap(cache.withSubject(subject));
+      AdvancedCache<K, V> newDelegate = cache.withSubject(subject);
+      if (newDelegate != cache) {
+         return wrapper.wrap(this, newDelegate);
+      } else {
+         return this;
+      }
    }
 
    @Override
@@ -275,9 +307,9 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
 
    @Override
    public AdvancedCache<K, V> with(ClassLoader classLoader) {
-      AdvancedCache<K, V> loaderCache = this.cache.with(classLoader);
+      AdvancedCache<K, V> loaderCache = cache.with(classLoader);
       if (loaderCache != cache) {
-         return this.wrapper.wrap(loaderCache);
+         return wrapper.wrap(this, loaderCache);
       } else {
          return this;
       }
@@ -291,6 +323,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    @Override
    public CacheEntry<K, V> getCacheEntry(Object key) {
       return cache.getCacheEntry(key);
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> getCacheEntryAsync(Object key) {
+      return cache.getCacheEntryAsync(key);
    }
 
    @Override
@@ -324,13 +361,28 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
+   public CompletableFuture<V> replaceAsync(K key, V value, Metadata metadata) {
+      return cache.replaceAsync(key, value, metadata);
+   }
+
+   @Override
    public boolean replace(K key, V oldValue, V value, Metadata metadata) {
       return cache.replace(key, oldValue, value, metadata);
    }
 
    @Override
+   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, Metadata metadata) {
+      return cache.replaceAsync(key, oldValue, newValue, metadata);
+   }
+
+   @Override
    public V putIfAbsent(K key, V value, Metadata metadata) {
       return cache.putIfAbsent(key, value, metadata);
+   }
+
+   @Override
+   public CompletableFuture<V> putIfAbsentAsync(K key, V value, Metadata metadata) {
+      return cache.putIfAbsentAsync(key, value, metadata);
    }
 
    @Override
@@ -369,6 +421,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
+   public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> map, Metadata metadata) {
+      return cache.putAllAsync(map, metadata);
+   }
+
+   @Override
    public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
       return cache.cacheEntrySet();
    }
@@ -385,9 +442,9 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
 
    @Override
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> encoder) {
-      AdvancedCache encoderCache = this.cache.withEncoding(encoder);
+      AdvancedCache encoderCache = cache.withEncoding(encoder);
       if (encoderCache != cache) {
-         return this.wrapper.wrap(encoderCache);
+         return wrapper.wrap(this, encoderCache);
       } else {
          return this;
       }
@@ -395,18 +452,18 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
 
    @Override
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> keyEncoder, Class<? extends Encoder> valueEncoder) {
-      AdvancedCache encoderCache = this.cache.withEncoding(keyEncoder, valueEncoder);
+      AdvancedCache encoderCache = cache.withEncoding(keyEncoder, valueEncoder);
       if (encoderCache != cache) {
-         return this.wrapper.wrap(encoderCache);
+         return wrapper.wrap(this, encoderCache);
       } else {
          return this;
       }
    }
 
    public AdvancedCache<K, V> withKeyEncoding(Class<? extends Encoder> encoder) {
-      AdvancedCache encoderCache = this.cache.withKeyEncoding(encoder);
+      AdvancedCache encoderCache = cache.withKeyEncoding(encoder);
       if (encoderCache != cache) {
-         return this.wrapper.wrap(encoderCache);
+         return wrapper.wrap(this, encoderCache);
       } else {
          return this;
       }
@@ -415,9 +472,9 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
 
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapper) {
-      AdvancedCache encoderCache = this.cache.withWrapping(wrapper);
+      AdvancedCache encoderCache = cache.withWrapping(wrapper);
       if (encoderCache != cache) {
-         return this.wrapper.wrap(encoderCache);
+         return this.wrapper.wrap(this, encoderCache);
       } else {
          return this;
       }
@@ -427,7 +484,7 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    public AdvancedCache<K, V> withMediaType(String keyMediaType, String valueMediaType) {
       AdvancedCache encoderCache = this.cache.withMediaType(keyMediaType, valueMediaType);
       if (encoderCache != cache) {
-         return this.wrapper.wrap(encoderCache);
+         return wrapper.wrap(this, encoderCache);
       } else {
          return this;
       }
@@ -435,9 +492,9 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
 
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapper, Class<? extends Wrapper> valueWrapper) {
-      AdvancedCache encoderCache = this.cache.withWrapping(keyWrapper, valueWrapper);
+      AdvancedCache encoderCache = cache.withWrapping(keyWrapper, valueWrapper);
       if (encoderCache != cache) {
-         return this.wrapper.wrap(encoderCache);
+         return wrapper.wrap(this, encoderCache);
       } else {
          return this;
       }
@@ -481,7 +538,16 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
       ((CacheImpl<K, V>) cache).putForExternalRead(key, value, metadata, EnumUtil.bitSetOf(flags));
    }
 
+   @Override
+   public CompletableFuture<Map<K, V>> getAllAsync(Set<?> keys) {
+      return cache.getAllAsync(keys);
+   }
+
    public interface AdvancedCacheWrapper<K, V> {
       AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache);
+
+      default AdvancedCache<K, V> wrap(AdvancedCache<K, V> self, AdvancedCache<K, V> newDelegate) {
+         return wrap(newDelegate);
+      }
    }
 }

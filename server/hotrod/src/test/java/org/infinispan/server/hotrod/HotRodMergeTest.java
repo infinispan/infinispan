@@ -27,7 +27,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-@Test(groups = {"functional", "unstable"}, testName = "server.hotrod.HotRodMergeTest")
+@Test(groups = {"functional", "unstable"}, testName = "server.hotrod.HotRodMergeTest", description = "Unstable: ISPN-8706")
 public class HotRodMergeTest extends BasePartitionHandlingTest {
 
    private List<HotRodServer> servers = new ArrayList<>();

@@ -467,6 +467,11 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
       return cache.getAsync(key);
    }
 
+   @Override
+   public CompletableFuture<Map<K, V>> getAllAsync(Set<?> keys) {
+      return cache.getAllAsync(keys);
+   }
+
    @ManagedAttribute(
          description = "Returns the cache configuration in form of properties",
          displayName = "Cache configuration properties",

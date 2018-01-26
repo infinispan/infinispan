@@ -161,7 +161,24 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
 
    @Override
    public AdvancedCache<K, V> withFlags(Flag... flags) {
-      return new SecureCacheImpl(delegate.withFlags(flags), authzManager, subject);
+      return new SecureCacheImpl<>(delegate.withFlags(flags), authzManager, subject);
+   }
+
+   @Override
+   public AdvancedCache<K, V> withFlags(Collection<Flag> flags) {
+      return new SecureCacheImpl<>(delegate.withFlags(flags), authzManager, subject);
+   }
+
+   @Override
+   public AdvancedCache<K, V> noFlags() {
+      return new SecureCacheImpl<>(delegate.noFlags(), authzManager, subject);
+   }
+
+   @Override
+   public AdvancedCache<K, V> transform(Function<AdvancedCache<K, V>, ? extends AdvancedCache<K, V>> transformation) {
+      AdvancedCache<K, V> newDelegate = delegate.transform(transformation);
+      AdvancedCache<K, V> newInstance = newDelegate != delegate ? new SecureCacheImpl<>(newDelegate, authzManager, subject) : this;
+      return transformation.apply(newInstance);
    }
 
    @Override
@@ -733,6 +750,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<Map<K, V>> getAllAsync(Set<?> keys) {
+      authzManager.checkPermission(subject, AuthorizationPermission.BULK_READ);
+      return delegate.getAllAsync(keys);
+   }
+
+   @Override
    public LockManager getLockManager() {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.getLockManager();
@@ -810,6 +833,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> map, Metadata metadata) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.putAllAsync(map, metadata);
+   }
+
+   @Override
    public void putAll(Map<? extends K, ? extends V> m) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       delegate.putAll(m);
@@ -822,9 +851,21 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<V> replaceAsync(K key, V value, Metadata metadata) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.replaceAsync(key, value, metadata);
+   }
+
+   @Override
    public boolean replace(K key, V oldValue, V newValue, Metadata metadata) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.replace(key, oldValue, newValue, metadata);
+   }
+
+   @Override
+   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, Metadata metadata) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.replaceAsync(key, oldValue, newValue, metadata);
    }
 
    @Override
@@ -840,6 +881,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<V> putIfAbsentAsync(K key, V value, Metadata metadata) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.putIfAbsentAsync(key, value, metadata);
+   }
+
+   @Override
    public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.putAsync(key, value, metadata);
@@ -849,6 +896,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public CacheEntry getCacheEntry(Object key) {
       authzManager.checkPermission(subject, AuthorizationPermission.READ);
       return delegate.getCacheEntry(key);
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> getCacheEntryAsync(Object key) {
+      authzManager.checkPermission(subject, AuthorizationPermission.READ);
+      return delegate.getCacheEntryAsync(key);
    }
 
    @Override
