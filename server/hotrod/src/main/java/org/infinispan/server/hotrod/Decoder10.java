@@ -191,9 +191,8 @@ public class Decoder10 implements VersionedDecoder {
    }
 
    @Override
-   public StatsResponse createStatsResponse(CacheDecodeContext hrCtx, NettyTransport t) {
+   public StatsResponse createStatsResponse(CacheDecodeContext hrCtx, Stats cacheStats, NettyTransport t) {
       HotRodHeader h = hrCtx.header;
-      Stats cacheStats = hrCtx.cache.getStats();
       Map<String, String> stats = new HashMap<>();
       stats.put("timeSinceStart", String.valueOf(cacheStats.getTimeSinceStart()));
       stats.put("currentNumberOfEntries", String.valueOf(cacheStats.getCurrentNumberOfEntries()));
@@ -233,5 +232,15 @@ public class Decoder10 implements VersionedDecoder {
          }
       }
       return c;
+   }
+
+   @Override
+   public boolean isSkipCacheLoad(HotRodHeader header) {
+      return false;
+   }
+
+   @Override
+   public boolean isSkipIndexing(HotRodHeader header) {
+      return false;
    }
 }

@@ -16,8 +16,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import javax.security.auth.Subject;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
@@ -39,7 +37,6 @@ import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ForwardingCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -71,7 +68,20 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    private final Function<V, V> decodedValueForRead = this::valueFromStorage;
 
    public EncoderCache(AdvancedCache<K, V> cache, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      super(cache, c -> new EncoderCache<>(c, keyDataConversion, valueDataConversion));
+      super(cache, new AdvancedCacheWrapper<K, V>() {
+         @Override
+         public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
+            throw new UnsupportedOperationException();
+         }
+
+         // we cannot pass a reference to self to superconstructor, so we need to provide it explicitly to the wrapper
+         @Override
+         public AdvancedCache<K, V> wrap(AdvancedCache<K, V> self, AdvancedCache<K, V> newDelegate) {
+            EncoderCache newCache = new EncoderCache<>(newDelegate, keyDataConversion, valueDataConversion);
+            ((EncoderCache) self).initState(newCache, ((EncoderCache) self));
+            return newCache;
+         }
+      });
       this.keyDataConversion = keyDataConversion;
       this.valueDataConversion = valueDataConversion;
    }
@@ -341,6 +351,11 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> map, Metadata metadata) {
+      return super.putAllAsync(encodeMapForWrite(map), metadata);
+   }
+
+   @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value) {
       return super.putIfAbsentAsync(keyToStorage(key), valueToStorage(value)).thenApply(decodedValueForRead);
    }
@@ -367,6 +382,11 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<V> putIfAbsentAsync(K key, V value, Metadata metadata) {
+      return super.putIfAbsentAsync(keyToStorage(key), valueToStorage(value), metadata).thenApply(decodedValueForRead);
+   }
+
+   @Override
    public CompletableFuture<V> removeAsync(Object key) {
       return super.removeAsync(keyToStorage(key)).thenApply(decodedValueForRead);
    }
@@ -387,15 +407,36 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<V> replaceAsync(K key, V value, Metadata metadata) {
+      return super.replaceAsync(keyToStorage(key), valueToStorage(value), metadata).thenApply(decodedValueForRead);
+   }
+
+   @Override
    public Map<K, V> getAll(Set<?> keys) {
       Map<K, V> ret = super.getAll(encodeKeysForWrite(keys));
       return decodeMapForRead(ret);
    }
 
    @Override
+   public CompletableFuture<Map<K, V>> getAllAsync(Set<?> keys) {
+      return super.getAllAsync(encodeKeysForWrite(keys)).thenApply(this::decodeMapForRead);
+   }
+
+   @Override
    public CacheEntry<K, V> getCacheEntry(Object key) {
       K keyToStorage = keyToStorage(key);
       CacheEntry<K, V> returned = super.getCacheEntry(keyToStorage);
+      return unwrapCacheEntry(key, keyToStorage, returned);
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> getCacheEntryAsync(Object key) {
+      K keyToStorage = keyToStorage(key);
+      return super.getCacheEntryAsync(keyToStorage)
+            .thenApply(returned -> unwrapCacheEntry(key, keyToStorage, returned));
+   }
+
+   private CacheEntry<K, V> unwrapCacheEntry(Object key, K keyToStorage, CacheEntry<K, V> returned) {
       if (returned != null) {
          V originalValue = returned.getValue();
          V valueFromStorage = valueFromStorage(originalValue);
@@ -457,6 +498,11 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, Metadata metadata) {
+      return super.replaceAsync(keyToStorage(key), valueToStorage(oldValue), valueToStorage(newValue), metadata);
+   }
+
+   @Override
    public V putIfAbsent(K key, V value, Metadata metadata) {
       V ret = super.putIfAbsent(keyToStorage(key), valueToStorage(value), metadata);
       return valueFromStorage(ret);
@@ -504,16 +550,6 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    private void initState(EncoderCache<K, V> encoderCache, EncoderCache<K, V> template) {
       encoderCache.entryFactory = template.entryFactory;
       encoderCache.componentRegistry = template.componentRegistry;
-      encoderCache.lookupEncoderWrapper();
-   }
-
-   @Override
-   public AdvancedCache<K, V> lockAs(Object lockOwner) {
-      AdvancedCache<K, V> returned = super.lockAs(lockOwner);
-      if (returned != this && returned instanceof EncoderCache) {
-         initState((EncoderCache) returned, this);
-      }
-      return returned;
    }
 
    @Override
@@ -530,6 +566,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       DataConversion newValueDataConversion = valueDataConversion.withEncoding(valueEncoderClass);
       EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, newKeyDataConversion, newValueDataConversion);
       initState(encoderCache, this);
+      encoderCache.lookupEncoderWrapper();
       return encoderCache;
    }
 
@@ -546,6 +583,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       DataConversion newValueDataConversion = valueDataConversion.withEncoding(encoderClass);
       EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, newKeyDataConversion, newValueDataConversion);
       initState(encoderCache, this);
+      encoderCache.lookupEncoderWrapper();
       return encoderCache;
    }
 
@@ -561,6 +599,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       DataConversion newKeyDataConversion = keyDataConversion.withEncoding(encoderClass);
       EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, newKeyDataConversion, valueDataConversion);
       initState(encoderCache, this);
+      encoderCache.lookupEncoderWrapper();
       return encoderCache;
    }
 
@@ -598,6 +637,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       DataConversion newValueDataConversion = valueDataConversion.withWrapping(valueWrapperClass);
       EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, newKeyDataConversion, newValueDataConversion);
       initState(encoderCache, this);
+      encoderCache.lookupEncoderWrapper();
       return encoderCache;
    }
 
@@ -614,34 +654,8 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       DataConversion newValueDataConversion = valueDataConversion.withRequestMediaType(vType);
       EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, newKeyDataConversion, newValueDataConversion);
       initState(encoderCache, this);
+      encoderCache.lookupEncoderWrapper();
       return encoderCache;
-   }
-
-   @Override
-   public AdvancedCache<K, V> withFlags(Flag... flags) {
-      AdvancedCache<K, V> returned = super.withFlags(flags);
-      if (returned != this && returned instanceof EncoderCache) {
-         initState((EncoderCache) returned, this);
-      }
-      return returned;
-   }
-
-   @Override
-   public AdvancedCache<K, V> withSubject(Subject subject) {
-      AdvancedCache<K, V> returned = super.withSubject(subject);
-      if (returned != this && returned instanceof EncoderCache) {
-         initState((EncoderCache) returned, this);
-      }
-      return returned;
-   }
-
-   @Override
-   public AdvancedCache<K, V> with(ClassLoader classLoader) {
-      AdvancedCache<K, V> returned = super.with(classLoader);
-      if (returned != this && returned instanceof EncoderCache) {
-         initState((EncoderCache) returned, this);
-      }
-      return returned;
    }
 
    @Override

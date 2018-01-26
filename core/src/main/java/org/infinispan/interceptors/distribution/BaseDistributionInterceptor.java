@@ -356,6 +356,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    @Override
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP)) {
+         for (Object key : command.getKeys()) {
+            if (ctx.lookupEntry(key) == null) {
+               entryFactory.wrapExternalEntry(ctx, key, NullCacheEntry.getInstance(), true, false);
+            }
+         }
          return invokeNext(ctx, command);
       }
 

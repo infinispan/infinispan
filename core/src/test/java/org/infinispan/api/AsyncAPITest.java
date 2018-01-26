@@ -2,10 +2,14 @@ package org.infinispan.api;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -121,7 +125,26 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert f.isDone();
       assert c.get("k") == null;
 
-      c.put("k", "v");
+      // putAllAsync
+      Map<String, String> map = new HashMap<>();
+      map.put("k", "v");
+      map.put("other-key", "other-value");
+      CompletableFuture<Void> putAllF = c.putAllAsync(map);
+      assertNotNull(putAllF);
+      assertFalse(putAllF.isCancelled());
+      assertEquals(null, putAllF.get());
+      assertTrue(putAllF.isDone());
+      assertEquals("v", c.get("k"));
+      assertEquals("other-value", c.get("other-key"));
+
+      // getAllAsync
+      CompletableFuture<Map<String, String>> getAllF = c.getAllAsync(map.keySet());
+      assertNotNull(getAllF);
+      assertFalse(getAllF.isCancelled());
+      assertEquals(map, getAllF.get());
+      assertTrue(getAllF.isDone());
+
+      // replace2
       f = c.replaceAsync("k", "v5");
       assert f != null;
       assert !f.isCancelled();
@@ -129,7 +152,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert f.isDone();
       assert c.get("k").equals("v5");
 
-      //replace2
+      // replace3
       f3 = c.replaceAsync("k", "v_nonexistent", "v6");
       assert f3 != null;
       assert !f3.isCancelled();

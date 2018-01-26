@@ -29,6 +29,11 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
+   public boolean isEnabled() {
+      return false;
+   }
+
+   @Override
    public boolean isPreloaded() {
       return false;
    }

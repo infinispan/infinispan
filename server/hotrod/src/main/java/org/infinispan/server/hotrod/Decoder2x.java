@@ -753,8 +753,7 @@ class Decoder2x implements VersionedDecoder {
    }
 
    @Override
-   public StatsResponse createStatsResponse(CacheDecodeContext ctx, NettyTransport t) {
-      Stats cacheStats = ctx.cache.getStats();
+   public StatsResponse createStatsResponse(CacheDecodeContext ctx, Stats cacheStats, NettyTransport t) {
       Map<String, String> stats = new HashMap<>();
       stats.put("timeSinceStart", String.valueOf(cacheStats.getTimeSinceStart()));
       stats.put("currentNumberOfEntries", String.valueOf(cacheStats.getCurrentNumberOfEntries()));
@@ -813,6 +812,12 @@ class Decoder2x implements VersionedDecoder {
          return createIllegalLifecycleStateErrorResponse(h, t);
       } else if (t instanceof PrivilegedActionException) {
          return createErrorResponse(h, t.getCause());
+      } else if (t instanceof SuspectedException) {
+         return createNodeSuspectedErrorResponse(h, t);
+      } else if (t instanceof IllegalLifecycleStateException) {
+         return createIllegalLifecycleStateErrorResponse(h, t);
+      } else if (t instanceof InterruptedException) {
+         return createIllegalLifecycleStateErrorResponse(h, t);
       } else {
          return createServerErrorResponse(h, t);
       }
@@ -868,6 +873,16 @@ class Decoder2x implements VersionedDecoder {
          log.warnForceReturnPreviousNonTransactional(h.op.toString());
       }
       return optCache;
+   }
+
+   @Override
+   public boolean isSkipCacheLoad(HotRodHeader header) {
+      return header.op.canSkipCacheLoading() && hasFlag(header, ProtocolFlag.SkipCacheLoader);
+   }
+
+   @Override
+   public boolean isSkipIndexing(HotRodHeader header) {
+      return header.op.canSkipIndexing() && hasFlag(header, ProtocolFlag.SkipIndexing);
    }
 }
 

@@ -3,8 +3,15 @@ package org.infinispan.distribution;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.AdvancedCache;
@@ -64,6 +71,60 @@ public class SingleOwnerAndAsyncMethodsTest extends BaseDistFunctionalTest<Objec
       f = nonOwnerCache.getAsync(key);
       assert f != null;
       assert f.get().equals(value);
+   }
+
+   public void testAsyncGetAll(Method m) throws Exception {
+      final String k1 = k(m, 1);
+      final String v1 = v(m, 1), v2 = v(m, 2);
+
+      Cache<Object, String> ownerCache = getOwner(k1);
+      AdvancedCache<Object, String> nonOwnerCache = getNonOwner(k1).getAdvancedCache();
+
+      String k2;
+      for (int counter = 2;; ++counter) {
+         k2 = k(m, counter);
+         if (getOwner(k2).equals(nonOwnerCache)) break;
+         if (counter > 1000) {
+            // unlucky, don't run the test further
+            throw new IllegalStateException("Cannot find suitable key");
+         }
+      }
+
+      Set<String> keys = new HashSet<>(Arrays.asList(k1, k2));
+      Map<String, String> entries = new HashMap<>();
+      entries.put(k1, v1);
+      entries.put(k2, v2);
+      ownerCache.put(k1, v1);
+      nonOwnerCache.put(k2, v2);
+
+      // Make the cache getAsync call go remote to verify it gets it correctly
+      CompletableFuture<Map<Object, String>> f = nonOwnerCache.getAllAsync(keys);
+      assertNotNull(f);
+      assertEquals(entries, f.get());
+
+      f = nonOwnerCache.withFlags(Flag.SKIP_REMOTE_LOOKUP).getAllAsync(keys);
+      assertNotNull(f);
+      assertEquals(Collections.singletonMap(k2, v2), f.get());
+
+      f = nonOwnerCache.withFlags(Flag.SKIP_REMOTE_LOOKUP).getAllAsync(Collections.singleton(k1));
+      assertNotNull(f);
+      assertEquals(Collections.emptyMap(), f.get());
+
+      f = nonOwnerCache.getAllAsync(keys);
+      assertNotNull(f);
+      assertEquals(entries, f.get());
+
+      f = nonOwnerCache.withFlags(Flag.CACHE_MODE_LOCAL).getAllAsync(keys);
+      assertNotNull(f);
+      assertEquals(Collections.singletonMap(k2, v2), f.get());
+
+      f = nonOwnerCache.withFlags(Flag.CACHE_MODE_LOCAL).getAllAsync(Collections.singleton(k1));
+      assertNotNull(f);
+      assertEquals(Collections.emptyMap(), f.get());
+
+      f = nonOwnerCache.getAllAsync(keys);
+      assertNotNull(f);
+      assertEquals(entries, f.get());
    }
 
    public void testAsyncReplace(Method m) throws Exception {

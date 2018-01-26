@@ -2,8 +2,13 @@ package org.infinispan.distribution;
 
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
 
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -48,14 +53,23 @@ public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest
       TransactionManager tm = getTransactionManager(nonOwnerCache);
       tm.begin();
       CompletableFuture<String> f = nonOwnerCache.getAsync(k);
-      assert f != null;
-      assert f.get().equals(v);
+      assertNotNull(f);
+      assertEquals(v, f.get());
+
+      CompletableFuture<Map<Object, String>> allF = nonOwnerCache.getAllAsync(Collections.singleton(k));
+      assertNotNull(allF);
+      assertEquals(Collections.singletonMap(k, v), allF.get());
+
       nonOwnerCache.put(k, v(m, 2));
       tm.commit();
 
       f = nonOwnerCache.getAsync(k);
-      assert f != null;
-      assert f.get().equals(v(m, 2));
+      assertNotNull(f);
+      assertEquals(v(m, 2), f.get());
+
+      allF = nonOwnerCache.getAllAsync(Collections.singleton(k));
+      assertNotNull(allF);
+      assertEquals(Collections.singletonMap(k, v(m, 2)), allF.get());
    }
 
    public void testAsyncGetToL1AndConcurrentModification(final Method m) throws Throwable {
@@ -75,51 +89,48 @@ public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest
 
       final CountDownLatch getAsynclatch = new CountDownLatch(1);
       final CountDownLatch putLatch = new CountDownLatch(1);
-      Callable<Void> c1 = new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            Cache localCache = cache;
-            TransactionManager tm = getTransactionManager(localCache);
-            tm.begin();
-            // This brings k,v to L1 in non-owner cache
-            CompletableFuture<String> f;
-            if (withFlag)
-               localCache = cache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK);
+      Callable<Void> c1 = () -> {
+         Cache localCache = cache;
+         TransactionManager tm = getTransactionManager(localCache);
+         tm.begin();
+         // This brings k,v to L1 in non-owner cache
+         if (withFlag)
+            localCache = cache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK);
 
-            f = localCache.getAsync(k);
-            assert f != null;
-            assert f.get().equals(v);
-            putLatch.countDown();
-            getAsynclatch.await();
-            tm.commit();
-            return null;
-         }
+         CompletableFuture<String> f = localCache.getAsync(k);
+         CompletableFuture<Map<String, String>> allF = localCache.getAllAsync(Collections.singleton(k));
+         assertNotNull(f);
+         assertEquals(v, f.get());
+         assertNotNull(allF);
+         assertEquals(Collections.singletonMap(k, v), allF.get());
+
+         putLatch.countDown();
+         getAsynclatch.await();
+         tm.commit();
+         return null;
       };
 
-      Callable<Void> c2 = new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            putLatch.await();
-            TransactionManager tm = getTransactionManager(cache);
-            tm.begin();
-            try {
-               // If getAsync was done within a tx, k should be locked
-               // and put() should timeout
-               cache.put(k, v(m, 1));
-               getAsynclatch.countDown();
-               assert !withFlag : "Put operation should have timed out if the get operation acquires a write lock";
-            } catch (TimeoutException e) {
-               tm.setRollbackOnly();
-               getAsynclatch.countDown();
-               throw e;
-            } finally {
-               if (tm.getStatus() == Status.STATUS_ACTIVE)
-                  tm.commit();
-               else
-                  tm.rollback();
-            }
-            return null;
+      Callable<Void> c2 = () -> {
+         putLatch.await();
+         TransactionManager tm = getTransactionManager(cache);
+         tm.begin();
+         try {
+            // If getAsync was done within a tx, k should be locked
+            // and put() should timeout
+            cache.put(k, v(m, 1));
+            getAsynclatch.countDown();
+            assertFalse("Put operation should have timed out if the get operation acquires a write lock", withFlag);
+         } catch (TimeoutException e) {
+            tm.setRollbackOnly();
+            getAsynclatch.countDown();
+            throw e;
+         } finally {
+            if (tm.getStatus() == Status.STATUS_ACTIVE)
+               tm.commit();
+            else
+               tm.rollback();
          }
+         return null;
       };
 
       Future f1 = fork(c1);
