@@ -179,6 +179,10 @@ class FlagCheckCommandInterceptor extends BaseCustomInterceptor {
    Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (command instanceof FlagAffectedCommand) {
          FlagAffectedCommand flagAffectedCommand = (FlagAffectedCommand) command;
+         if (flagAffectedCommand.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
+            // this is the fast non-blocking read
+            return super.handleDefault(ctx, command);
+         }
          boolean hasFlag = flagAffectedCommand.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD);
          if (expectSkipLoadFlag && !hasFlag) {
             throw new CacheException("SKIP_CACHE_LOAD flag is expected!");

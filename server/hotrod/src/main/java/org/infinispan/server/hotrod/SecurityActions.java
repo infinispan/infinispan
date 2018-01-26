@@ -4,18 +4,21 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listenable;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.AddCacheManagerListenerAction;
 import org.infinispan.security.actions.GetCacheAction;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheGlobalComponentRegistryAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 import org.infinispan.security.actions.RemoveListenerAction;
+import org.infinispan.security.impl.SecureCacheImpl;
 
 /**
  * SecurityActions for the org.infinispan.server.hotrod package.
@@ -61,8 +64,20 @@ final class SecurityActions {
       return doPrivileged(action);
    }
 
+   static void addListener(EmbeddedCacheManager cacheManager, Object listener) {
+      doPrivileged(new AddCacheManagerListenerAction(cacheManager, listener));
+   }
+
    static Void removeListener(Listenable listenable, Object listener) {
       RemoveListenerAction action = new RemoveListenerAction(listenable, listener);
       return doPrivileged(action);
+   }
+
+   static <K, V> AdvancedCache<K, V> getUnwrappedCache(final AdvancedCache<K, V> cache) {
+      if (cache instanceof SecureCacheImpl) {
+         return doPrivileged(() -> ((SecureCacheImpl) cache).getDelegate());
+      } else {
+         return cache;
+      }
    }
 }

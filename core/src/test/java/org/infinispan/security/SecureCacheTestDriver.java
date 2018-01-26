@@ -4,6 +4,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
@@ -184,6 +185,11 @@ public class SecureCacheTestDriver {
       cache.containsKey("a");
    }
 
+   @TestCachePermission(AuthorizationPermission.READ)
+   public void testContainsKeyAsync_Object(SecureCache<String, String> cache) {
+      cache.containsKeyAsync("a");
+   }
+
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testReplace_Object_Object(SecureCache<String, String> cache) {
       cache.replace("a", "a");
@@ -192,6 +198,11 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testReplaceAsync_Object_Object_Object(SecureCache<String, String> cache) {
       cache.replaceAsync("a", "a", "b");
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testReplaceAsync_Object_Object_Object_Metadata(SecureCache<String, String> cache) {
+      cache.replaceAsync("a", "a", "b", new EmbeddedMetadata.Builder().build());
    }
 
    @TestCachePermission(AuthorizationPermission.NONE)
@@ -313,6 +324,21 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.NONE)
+   public void testWithFlags_Collection(SecureCache<String, String> cache) {
+      cache.withFlags(Collections.singleton(Flag.IGNORE_RETURN_VALUES));
+   }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
+   public void testNoFlags(SecureCache<String, String> cache) {
+      cache.noFlags();
+   }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
+   public void testTransform_Function(SecureCache<String, String> cache) {
+      cache.transform(Function.identity());
+   }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
    public void testWith_ClassLoader(SecureCache<String, String> cache) {
       cache.with(this.getClass().getClassLoader());
    }
@@ -333,6 +359,11 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testPutIfAbsentAsync_Object_Object_Metadata(SecureCache<String, String> cache) {
+      cache.putIfAbsentAsync("a", "a", new EmbeddedMetadata.Builder().build());
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
    public void testPutAllAsync_Map(SecureCache<String, String> cache) {
       cache.putAllAsync(Collections.singletonMap("a", "a"));
    }
@@ -350,6 +381,11 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.READ)
    public void testGetCacheEntry_Object(SecureCache<String, String> cache) {
       cache.getCacheEntry("a");
+   }
+
+   @TestCachePermission(AuthorizationPermission.READ)
+   public void testGetCacheEntryAsync_Object(SecureCache<String, String> cache) {
+      cache.getCacheEntryAsync("a");
    }
 
    @TestCachePermission(AuthorizationPermission.NONE)
@@ -387,10 +423,14 @@ public class SecureCacheTestDriver {
       cache.putForExternalRead("a", "a", new EmbeddedMetadata.Builder().lifespan(1, TimeUnit.SECONDS).build());
    }
 
-
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testReplaceAsync_Object_Object(SecureCache<String, String> cache) {
       cache.replaceAsync("a", "a");
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testReplaceAsync_Object_Object_Metadata(SecureCache<String, String> cache) {
+      cache.replaceAsync("a", "a", new EmbeddedMetadata.Builder().build());
    }
 
    @TestCachePermission(AuthorizationPermission.BULK_WRITE)
@@ -562,6 +602,11 @@ public class SecureCacheTestDriver {
       cache.putAllAsync(Collections.singletonMap("a", "a"), 1000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
    }
 
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testPutAllAsync_Map_Metadata(SecureCache<String, String> cache) {
+      cache.putAllAsync(Collections.singletonMap("a", "a"), new EmbeddedMetadata.Builder().build());
+   }
+
    @TestCachePermission(AuthorizationPermission.READ)
    public void testGet_Object(SecureCache<String, String> cache) {
       cache.get("a");
@@ -642,6 +687,11 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.BULK_READ)
    public void testGetAll_Set(SecureCache<String, String> cache) {
       cache.getAll(Collections.emptySet());
+   }
+
+   @TestCachePermission(AuthorizationPermission.BULK_READ)
+   public void testGetAllAsync_Set(SecureCache<String, String> cache) {
+      cache.getAllAsync(Collections.emptySet());
    }
 
    @TestCachePermission(AuthorizationPermission.BULK_WRITE)

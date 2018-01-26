@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.test.TestingUtil.orTimeout;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -14,7 +15,7 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -114,7 +115,7 @@ public class LockingTest extends SingleCacheManagerTest {
    private CheckPoint injectBlockingCommandInterceptor(String cacheName) {
       AdvancedCache<?, ?> advancedCache = cache(cacheName).getAdvancedCache();
       final CheckPoint checkPoint = new CheckPoint();
-      advancedCache.getAsyncInterceptorChain().addInterceptorBefore(new BaseCustomInterceptor() {
+      advancedCache.getAsyncInterceptorChain().addInterceptorBefore(new BaseCustomAsyncInterceptor() {
 
          private final AtomicBoolean first = new AtomicBoolean(false);
 
@@ -122,9 +123,9 @@ public class LockingTest extends SingleCacheManagerTest {
          public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
             if (first.compareAndSet(false, true)) {
                checkPoint.trigger("before-block");
-               checkPoint.awaitStrict("block", 30, TimeUnit.SECONDS);
+               return asyncInvokeNext(ctx, command, orTimeout(checkPoint.future("block"), 30, TimeUnit.SECONDS));
             }
-            return invokeNextInterceptor(ctx, command);
+            return invokeNext(ctx, command);
          }
       }, CallInterceptor.class);
       return checkPoint;

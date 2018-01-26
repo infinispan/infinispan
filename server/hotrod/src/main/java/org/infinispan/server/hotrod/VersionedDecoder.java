@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.hotrod.CacheDecodeContext.RequestParameters;
+import org.infinispan.stats.Stats;
 
 import io.netty.buffer.ByteBuf;
 
@@ -67,7 +68,7 @@ interface VersionedDecoder {
    /**
     * Create a response for the stats command.
     */
-   StatsResponse createStatsResponse(CacheDecodeContext hrCtx, NettyTransport t);
+   StatsResponse createStatsResponse(CacheDecodeContext ctx, Stats cacheStats, NettyTransport t);
 
    /**
     * Create an error response based on the Throwable instance received.
@@ -78,4 +79,8 @@ interface VersionedDecoder {
     * Get an optimized cache instance depending on the operation parameters.
     */
    AdvancedCache<byte[], byte[]> getOptimizedCache(HotRodHeader h, AdvancedCache<byte[], byte[]> c, Configuration cacheCfg);
+
+   boolean isSkipCacheLoad(HotRodHeader header);
+
+   boolean isSkipIndexing(HotRodHeader header);
 }
