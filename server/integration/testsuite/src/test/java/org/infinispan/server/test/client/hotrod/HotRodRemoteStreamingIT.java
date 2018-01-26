@@ -334,6 +334,7 @@ public class HotRodRemoteStreamingIT {
     * @throws InterruptedException
     */
    @Test
+   @Ignore("ISPN-8724")
    public void serverKillTest() throws IOException, InterruptedException {
       byte[] value = new byte[5000];
       random.nextBytes(value);
@@ -375,6 +376,7 @@ public class HotRodRemoteStreamingIT {
     * @throws Exception
     */
    @Test
+   @Ignore
    public void performanceTest() throws Exception {
       try {
          byte[] ba = new byte[1024 * 1024 * 10];
