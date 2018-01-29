@@ -53,12 +53,11 @@ import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
-import org.infinispan.commands.write.BackupPutMapRpcCommand;
+import org.infinispan.commands.write.BackupMultiKeyWriteRpcCommand;
 import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
-import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -551,9 +550,9 @@ public interface CommandsFactory {
 
    ExceptionAckCommand buildExceptionAckCommand(long id, Throwable throwable, int topologyId);
 
-   BackupWriteRpcCommand buildBackupWriteRpcCommand(DataWriteCommand command);
+   BackupWriteRpcCommand buildBackupWriteRpcCommand(WriteCommand command);
 
-   BackupPutMapRpcCommand buildBackupPutMapRpcCommand(PutMapCommand command);
+   BackupMultiKeyWriteRpcCommand buildBackupMultiKeyWriteRpcCommand(WriteCommand command, Collection<Object> keys);
 
    InvalidateVersionsCommand buildInvalidateVersionsCommand(int topologyId, Object[] keys, int[] topologyIds, long[] versions, boolean removed);
 

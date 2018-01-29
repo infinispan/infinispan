@@ -1,6 +1,7 @@
 package org.infinispan.commands.functional;
 
 import static org.infinispan.functional.impl.EntryViews.snapshot;
+import static org.infinispan.util.TriangleFunctionsUtil.filterEntries;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -15,6 +16,7 @@ import java.util.function.BiFunction;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
+import org.infinispan.commands.write.BackupMultiKeyWriteRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
@@ -192,5 +194,11 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
 
       if (f instanceof InjectableComponent)
          ((InjectableComponent) f).inject(componentRegistry);
+   }
+
+   @Override
+   public void initBackupMultiKeyWriteRpcCommand(BackupMultiKeyWriteRpcCommand command, Collection<Object> keys) {
+      //noinspection unchecked
+      command.setReadWriteEntries(commandInvocationId, filterEntries(entries, keys), f, params, getFlagsBitSet(), getTopologyId(), keyDataConversion, valueDataConversion);
    }
 }

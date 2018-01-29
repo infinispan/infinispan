@@ -62,12 +62,11 @@ import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
-import org.infinispan.commands.write.BackupPutMapRpcCommand;
+import org.infinispan.commands.write.BackupMultiKeyWriteRpcCommand;
 import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
-import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -95,6 +94,7 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
@@ -195,6 +195,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Inject @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS)
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
    @Inject private VersionGenerator versionGenerator;
+   @Inject private KeyPartitioner keyPartitioner;
 
    private ByteString cacheName;
    private boolean transactional;
@@ -511,7 +512,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case BackupWriteRpcCommand.COMMAND_ID:
             BackupWriteRpcCommand bwc = (BackupWriteRpcCommand) c;
-            bwc.init(icf, interceptorChain, notifier, componentRegistry, versionGenerator);
+            bwc.init(icf, interceptorChain, notifier, componentRegistry, versionGenerator, keyPartitioner);
             break;
          case BackupMultiKeyAckCommand.COMMAND_ID:
             ((BackupMultiKeyAckCommand) c).setCommandAckCollector(commandAckCollector);
@@ -519,8 +520,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case ExceptionAckCommand.COMMAND_ID:
             ((ExceptionAckCommand) c).setCommandAckCollector(commandAckCollector);
             break;
-         case BackupPutMapRpcCommand.COMMAND_ID:
-            ((BackupPutMapRpcCommand) c).init(icf, interceptorChain, notifier);
+         case BackupMultiKeyWriteRpcCommand.COMMAND_ID:
+            ((BackupMultiKeyWriteRpcCommand) c).init(icf, interceptorChain, notifier, keyPartitioner, componentRegistry);
             break;
          case InvalidateVersionsCommand.COMMAND_ID:
             InvalidateVersionsCommand invalidateVersionsCommand = (InvalidateVersionsCommand) c;
@@ -809,15 +810,17 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public BackupWriteRpcCommand buildBackupWriteRpcCommand(DataWriteCommand command) {
+   public BackupWriteRpcCommand buildBackupWriteRpcCommand(WriteCommand command) {
       BackupWriteRpcCommand cmd = new BackupWriteRpcCommand(cacheName);
       command.initBackupWriteRpcCommand(cmd);
       return cmd;
    }
 
    @Override
-   public BackupPutMapRpcCommand buildBackupPutMapRpcCommand(PutMapCommand command) {
-      return new BackupPutMapRpcCommand(cacheName, command);
+   public BackupMultiKeyWriteRpcCommand buildBackupMultiKeyWriteRpcCommand(WriteCommand command, Collection<Object> keys) {
+      BackupMultiKeyWriteRpcCommand cmd = new BackupMultiKeyWriteRpcCommand(cacheName);
+      command.initBackupMultiKeyWriteRpcCommand(cmd, keys);
+      return cmd;
    }
 
    private ValueMatcher getValueMatcher(Object o) {

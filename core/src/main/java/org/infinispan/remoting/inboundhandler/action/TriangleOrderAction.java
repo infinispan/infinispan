@@ -16,40 +16,29 @@ public class TriangleOrderAction implements Action {
 
    private static final Log log = LogFactory.getLog(TriangleOrderAction.class);
    private static final boolean trace = log.isTraceEnabled();
-   private final Object key;
    private final long sequenceNumber;
    private final TrianglePerCacheInboundInvocationHandler handler;
-   private volatile int segmentId = -1;
+   private final int segmentId;
 
-   public TriangleOrderAction(TrianglePerCacheInboundInvocationHandler handler, long sequenceNumber, Object key) {
+   public TriangleOrderAction(TrianglePerCacheInboundInvocationHandler handler, long sequenceNumber, int segmentId) {
       this.handler = handler;
       this.sequenceNumber = sequenceNumber;
-      this.key = key;
+      this.segmentId = segmentId;
    }
 
    @Override
    public ActionStatus check(ActionState state) {
-      int localSegmentId = computeSegmentIdIfNeeded();
       if (trace) {
-         log.tracef("Checking if next for segment %s and sequence %s", localSegmentId, sequenceNumber);
+         log.tracef("Checking if next for segment %s and sequence %s", segmentId, sequenceNumber);
       }
-      return handler.getTriangleOrderManager().isNext(localSegmentId, sequenceNumber, state.getCommandTopologyId()) ?
+      return handler.getTriangleOrderManager().isNext(segmentId, sequenceNumber, state.getCommandTopologyId()) ?
             ActionStatus.READY :
             ActionStatus.NOT_READY;
    }
 
    @Override
    public void onFinally(ActionState state) {
-      handler.getTriangleOrderManager().markDelivered(computeSegmentIdIfNeeded(), sequenceNumber, state.getCommandTopologyId());
+      handler.getTriangleOrderManager().markDelivered(segmentId, sequenceNumber, state.getCommandTopologyId());
       handler.getRemoteExecutor().checkForReadyTasks();
-   }
-
-   private int computeSegmentIdIfNeeded() {
-      int tmp = segmentId;
-      if (tmp == -1) {
-         tmp = handler.getClusteringDependentLogic().getCacheTopology().getSegment(key);
-         segmentId = tmp;
-      }
-      return tmp;
    }
 }

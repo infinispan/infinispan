@@ -1,6 +1,7 @@
 package org.infinispan.commands.write;
 
 import static org.infinispan.commons.util.Util.toStr;
+import static org.infinispan.util.TriangleFunctionsUtil.filterEntries;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -294,5 +295,10 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
     */
    public void setForwarded(boolean forwarded) {
       isForwarded = forwarded;
+   }
+
+   @Override
+   public void initBackupMultiKeyWriteRpcCommand(BackupMultiKeyWriteRpcCommand command, Collection<Object> keys) {
+      command.setPutMap(commandInvocationId, filterEntries(map, keys), metadata, getFlagsBitSet(), getTopologyId());
    }
 }

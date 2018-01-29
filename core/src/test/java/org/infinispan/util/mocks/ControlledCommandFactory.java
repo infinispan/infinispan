@@ -60,12 +60,11 @@ import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
-import org.infinispan.commands.write.BackupPutMapRpcCommand;
+import org.infinispan.commands.write.BackupMultiKeyWriteRpcCommand;
 import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
-import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -505,13 +504,13 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public BackupWriteRpcCommand buildBackupWriteRpcCommand(DataWriteCommand command) {
+   public BackupWriteRpcCommand buildBackupWriteRpcCommand(WriteCommand command) {
       return actual.buildBackupWriteRpcCommand(command);
    }
 
    @Override
-   public BackupPutMapRpcCommand buildBackupPutMapRpcCommand(PutMapCommand command) {
-      return actual.buildBackupPutMapRpcCommand(command);
+   public BackupMultiKeyWriteRpcCommand buildBackupMultiKeyWriteRpcCommand(WriteCommand command, Collection<Object> keys) {
+      return actual.buildBackupMultiKeyWriteRpcCommand(command, keys);
    }
 
    @Override

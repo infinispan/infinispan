@@ -11,6 +11,7 @@ import java.util.function.Function;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
+import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
@@ -146,5 +147,10 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       componentRegistry.wireDependencies(valueDataConversion);
       if (f instanceof InjectableComponent)
          ((InjectableComponent) f).inject(componentRegistry);
+   }
+
+   @Override
+   public void initBackupWriteRpcCommand(BackupWriteRpcCommand command) {
+      command.setReadWriteKey(commandInvocationId, key, f, params, getFlagsBitSet(), getTopologyId(), keyDataConversion, valueDataConversion);
    }
 }
