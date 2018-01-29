@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -67,9 +66,7 @@ public class BiasLeaseTest extends MultipleCacheManagersTest {
    public void testBiasTimesOut() throws Exception {
       rpcManager0.excludeCommands(PrimaryAckCommand.class, ExceptionAckCommand.class);
       MagicKey key = new MagicKey(cache(0));
-      Future<Object> putFuture = fork(() -> cache(1).put(key, "v0"));
-      putFuture.get(10, TimeUnit.SECONDS);
-
+      cache(1).put(key, "v0");
       assertTrue(biasManager(1).hasLocalBias(key));
 
       timeService.advance(BIAS_LIFESPAN + 1);
@@ -83,10 +80,8 @@ public class BiasLeaseTest extends MultipleCacheManagersTest {
 
    public void testBiasLeaseRenewed() throws Exception {
       MagicKey key = new MagicKey(cache(0));
-      Future<Object> putFuture = fork(() -> cache(1).put(key, "v0"));
-      rpcManager0.expectCommand(PrimaryAckCommand.class).sendWithoutResponses();
-      putFuture.get(10, TimeUnit.SECONDS);
-
+      rpcManager0.excludeCommands(PrimaryAckCommand.class, ExceptionAckCommand.class);
+      cache(1).put(key, "v0");
       assertEquals(Collections.singletonList(address(1)), biasManager(0).getRemoteBias(key));
       assertTrue(biasManager(1).hasLocalBias(key));
 

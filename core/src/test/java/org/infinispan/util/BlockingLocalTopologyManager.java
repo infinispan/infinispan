@@ -63,7 +63,29 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
    public static void confirmTopologyUpdate(CacheTopology.Phase phase, BlockingLocalTopologyManager... topologyManagers)
       throws InterruptedException {
       for (BlockingLocalTopologyManager topologyManager : topologyManagers) {
-         topologyManager.confirmTopologyUpdate(phase);
+         topologyManager.expectTopologyUpdate(phase).unblock();
+      }
+      if (needConfirmation(phase)) {
+         for (BlockingLocalTopologyManager topologyManager : topologyManagers) {
+            topologyManager.expectPhaseConfirmation().unblock();
+         }
+      }
+   }
+
+   public static void finishRebalance(CacheTopology.Phase nextPhase, BlockingLocalTopologyManager... topologyManagers)
+      throws InterruptedException {
+      switch (nextPhase) {
+         case READ_OLD_WRITE_ALL:
+            confirmTopologyUpdate(CacheTopology.Phase.READ_OLD_WRITE_ALL, topologyManagers);
+            // fallthrough
+         case READ_ALL_WRITE_ALL:
+            confirmTopologyUpdate(CacheTopology.Phase.READ_ALL_WRITE_ALL, topologyManagers);
+            // fallthrough
+         case READ_NEW_WRITE_ALL:
+            confirmTopologyUpdate(CacheTopology.Phase.READ_NEW_WRITE_ALL, topologyManagers);
+            // fallthrough
+         case NO_REBALANCE:
+            confirmTopologyUpdate(CacheTopology.Phase.NO_REBALANCE, topologyManagers);
       }
    }
 
@@ -88,30 +110,6 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
          throw new TimeoutException("Timed out waiting for topology update on " + address);
       }
       return new BlockedTopology(update);
-   }
-
-   public BlockedTopology expectCHUpdate() throws InterruptedException {
-      BlockedTopology blockedTopology = expectTopologyUpdate();
-      assertEquals(Type.CH_UPDATE, blockedTopology.getType());
-      return blockedTopology;
-   }
-
-   public BlockedTopology expectCHUpdate(int topologyId) throws InterruptedException {
-      BlockedTopology blockedTopology = expectCHUpdate();
-      assertEquals(topologyId, blockedTopology.getCacheTopology().getTopologyId());
-      return blockedTopology;
-   }
-
-   public BlockedTopology expectRebalanceStart() throws InterruptedException {
-      BlockedTopology blockedTopology = expectTopologyUpdate(CacheTopology.Phase.READ_OLD_WRITE_ALL);
-      assertEquals(Type.REBALANCE_START, blockedTopology.getType());
-      return blockedTopology;
-   }
-
-   public BlockedTopology expectRebalanceStart(int topologyId) throws InterruptedException {
-      BlockedTopology blockedTopology = expectRebalanceStart();
-      assertEquals(topologyId, blockedTopology.getCacheTopology().getTopologyId());
-      return blockedTopology;
    }
 
    public BlockedConfirmation expectPhaseConfirmation() throws InterruptedException {
@@ -142,14 +140,28 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
    }
 
    public void expectNoTopologyUpdate(long timeout, TimeUnit timeUnit) throws InterruptedException {
-      Event update = queuedTopologies.poll(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      Event update = queuedTopologies.poll(timeout, timeUnit);
       if (update != null) {
          throw new TestException(
             "Expected no topology update on " + address + ", but got " + update.type + " " + update.topologyId);
       }
    }
 
-   private boolean needConfirmation(CacheTopology.Phase phase) {
+   public BlockedTopology expectRebalanceStartAfterLeave() throws InterruptedException {
+      // After a node leaves, the coordinator sends a NO_REBALANCE topology update with the remaining members
+      // Then it immediately starts the rebalance with a READ_OLD topology update
+      // The members can receive the topology updates in either order
+      BlockedTopology topology0 = expectTopologyUpdate();
+      if (topology0.getType() == Type.REBALANCE_START) {
+         expectTopologyUpdate(CacheTopology.Phase.NO_REBALANCE).unblock();
+      } else {
+         topology0.unblock();
+         topology0 = expectTopologyUpdate(CacheTopology.Phase.READ_OLD_WRITE_ALL);
+      }
+      return topology0;
+   }
+
+   private static boolean needConfirmation(CacheTopology.Phase phase) {
       return phase == CacheTopology.Phase.TRANSITORY ||
                 phase == CacheTopology.Phase.READ_OLD_WRITE_ALL ||
                 phase == CacheTopology.Phase.READ_ALL_WRITE_ALL ||
@@ -279,6 +291,10 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
 
       public CacheTopology getCacheTopology() {
          return event.cacheTopology;
+      }
+
+      public CacheTopology.Phase getPhase() {
+         return event.cacheTopology.getPhase();
       }
 
       public int getViewId() {
