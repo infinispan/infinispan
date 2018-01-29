@@ -48,6 +48,7 @@ public class Http20RequestHandler extends SimpleChannelInboundHandler<FullHttpRe
       InfinispanResponse response;
       InfinispanRequest infinispanRequest = null;
       try {
+         restAccessLoggingHandler.preLog(request);
          infinispanRequest = InfinispanRequestFactory.createRequest(restServer, request, ctx);
          this.checkContext(infinispanRequest);
          authenticator.challenge(infinispanRequest);

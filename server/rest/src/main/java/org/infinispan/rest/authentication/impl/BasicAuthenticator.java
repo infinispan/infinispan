@@ -35,7 +35,7 @@ public class BasicAuthenticator implements Authenticator {
             cookie = new String(Base64.getDecoder().decode(cookie.getBytes()));
             String[] split = cookie.split(":");
             try {
-               domain.authenticate(split[0], split[1]);
+               request.setPrincipal(domain.authenticate(split[0], split[1]));
                //authenticated
                return;
             } catch (SecurityException e) {

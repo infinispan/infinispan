@@ -1,5 +1,6 @@
 package org.infinispan.rest;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,6 +24,7 @@ public abstract class InfinispanRequest {
    private final String cacheName;
    private final String context;
    protected Map<String, List<String>> parameters;
+   private Principal principal;
 
    protected InfinispanRequest(FullHttpRequest request, ChannelHandlerContext ctx, String cacheName, String context, Map<String, List<String>> parameters) {
       this.request = request;
@@ -123,5 +125,16 @@ public abstract class InfinispanRequest {
       List<String> values = parameters.get(name);
       if(values == null) return null;
       return values.iterator().next();
+   }
+
+   public void setPrincipal(Principal principal) {
+      this.principal = principal;
+      if (principal != null) {
+         request.headers().add("X-Principal", principal.getName());
+      }
+   }
+
+   public Principal getPrincipal() {
+      return principal;
    }
 }

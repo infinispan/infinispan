@@ -28,7 +28,7 @@ public class ClientCertAuthenticator implements Authenticator {
       try {
          SslHandler sslHandler = request.getRawContext().pipeline().get(SslHandler.class);
          SSLSession session = sslHandler.engine().getSession();
-         session.getPeerPrincipal();
+         request.setPrincipal(session.getPeerPrincipal());
          return;
       } catch (SSLPeerUnverifiedException e) {
          // Ignore any SSLPeerUnverifiedExceptions
