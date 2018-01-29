@@ -272,8 +272,8 @@
       <version.jsap>2.1</version.jsap>
       <version.jstl>1.2</version.jstl>
       <version.junit>4.12</version.junit>
-      <version.karaf-maven-plugin>4.1.2</version.karaf-maven-plugin>
-      <version.karaf>4.1.2</version.karaf>
+      <version.karaf-maven-plugin>4.1.4</version.karaf-maven-plugin>
+      <version.karaf>4.1.4</version.karaf>
       <version.latency.utils>2.0.2</version.latency.utils>
       <version.log4j>2.8.2</version.log4j>
       <version.maven.antlr3>3.5.2</version.maven.antlr3>

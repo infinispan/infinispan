@@ -121,6 +121,7 @@ public class ModelKeys {
     static final String HOTROD_WRAPPING = "hotrod-wrapping";
     static final String ID_COLUMN = "id-column";
     static final String IDENTITY_ROLE_MAPPER = "identity-role-mapper";
+    static final String IMMUTABLE_CONFIGURATION_STORAGE = "immutable-configuration-storage";
     static final String IMPLEMENTATION = "implementation";
     static final String IMPLEMENTATION_NAME = "IMPLEMENTATION";
     static final String INDEX = "index";

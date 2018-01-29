@@ -1147,6 +1147,13 @@ public class Parser implements ConfigurationParser {
                builder.temporaryLocation(parseGlobalStatePath(reader));
                break;
             }
+            case IMMUTABLE_CONFIGURATION_STORAGE: {
+               if (storage != null) {
+                  throw ParseUtils.unexpectedElement(reader);
+               }
+               storage = ConfigurationStorage.IMMUTABLE;
+               break;
+            }
             case VOLATILE_CONFIGURATION_STORAGE: {
                if (storage != null) {
                   throw ParseUtils.unexpectedElement(reader);

@@ -582,6 +582,13 @@
         </xs:annotation>
       </xs:element>
       <xs:choice minOccurs="0">
+        <xs:element name="immutable-configuration-storage">
+          <xs:annotation>
+            <xs:documentation>
+              An immutable configuration storage.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
         <xs:element name="volatile-configuration-storage">
           <xs:annotation>
             <xs:documentation>

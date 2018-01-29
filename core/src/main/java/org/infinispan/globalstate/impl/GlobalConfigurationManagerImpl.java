@@ -44,6 +44,9 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    public void inject(GlobalConfiguration globalConfiguration, EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
       switch(globalConfiguration.globalState().configurationStorage()) {
+         case IMMUTABLE:
+            this.localConfigurationManager = new ImmutableLocalConfigurationStorage();
+            break;
          case VOLATILE:
             this.localConfigurationManager = new VolatileLocalConfigurationStorage();
             break;
