@@ -2,7 +2,6 @@ package org.infinispan.server.hotrod.transport;
 
 import java.util.concurrent.ExecutorService;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.hotrod.AuthenticationHandler;
@@ -11,7 +10,6 @@ import org.infinispan.server.hotrod.HotRodExceptionHandler;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.LocalContextHandler;
 import org.infinispan.server.hotrod.logging.HotRodAccessLoggingHandler;
-import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.logging.LoggingContextHandler;
 
 import io.netty.channel.Channel;
@@ -52,7 +50,7 @@ public class HotRodChannelInitializer extends NettyChannelInitializer {
       ch.pipeline().addLast("exception", new HotRodExceptionHandler());
 
       // Logging handlers
-      if (LogFactory.getLog(HotRodAccessLoggingHandler.class, Log.class).isTraceEnabled()) {
+      if (HotRodAccessLoggingHandler.isEnabled()) {
          ch.pipeline().addBefore("decoder", "logging", new HotRodAccessLoggingHandler());
          ch.pipeline().addAfter("encoder", "logging-context", LoggingContextHandler.getInstance());
       }
