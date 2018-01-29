@@ -1755,4 +1755,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Container eviction limit %d reached, write operation(s) is blocked", id = 514)
    ContainerFullException containerFull(long size);
+
+   @Message(value = "The configuration is immutable", id = 515)
+   UnsupportedOperationException immutableConfiguration();
 }

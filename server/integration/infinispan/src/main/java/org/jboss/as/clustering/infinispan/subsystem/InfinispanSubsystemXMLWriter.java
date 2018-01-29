@@ -147,6 +147,9 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     if (globalState.hasDefined(ModelKeys.CONFIGURATION_STORAGE)) {
                         ConfigurationStorage configurationStorage = ConfigurationStorage.valueOf(globalState.get(ModelKeys.CONFIGURATION_STORAGE).asString());
                         switch (configurationStorage) {
+                            case IMMUTABLE:
+                                writer.writeEmptyElement(Element.IMMUTABLE_CONFIGURATION_STORAGE.getLocalName());
+                                break;
                             case VOLATILE:
                                 writer.writeEmptyElement(Element.VOLATILE_CONFIGURATION_STORAGE.getLocalName());
                                 break;

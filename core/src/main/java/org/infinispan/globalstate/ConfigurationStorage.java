@@ -9,6 +9,10 @@ package org.infinispan.globalstate;
 
 public enum ConfigurationStorage {
    /**
+    * An immutable configuration storage provider. This forbids creating/removing caches
+    */
+   IMMUTABLE,
+   /**
     * A volatile configuration storage provider which doesn't support {@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#PERMANENT}
     */
    VOLATILE,
@@ -23,5 +27,5 @@ public enum ConfigurationStorage {
    /**
     * A custom configuration storage provider
     */
-   CUSTOM;
+   CUSTOM,
 }

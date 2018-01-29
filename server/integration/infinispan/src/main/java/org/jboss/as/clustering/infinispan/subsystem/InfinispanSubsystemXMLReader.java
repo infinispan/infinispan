@@ -546,6 +546,13 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     parseGlobalStatePath(reader, globalState, GlobalStateResource.TEMPORARY_STATE_PATH);
                     break;
                 }
+                case IMMUTABLE_CONFIGURATION_STORAGE: {
+                    if (storage != null) {
+                        throw ParseUtils.unexpectedElement(reader);
+                    }
+                    storage = ConfigurationStorage.IMMUTABLE;
+                    break;
+                }
                 case VOLATILE_CONFIGURATION_STORAGE: {
                     if (storage != null) {
                         throw ParseUtils.unexpectedElement(reader);

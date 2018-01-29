@@ -265,6 +265,9 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          }
          if (configuration.attributes().attribute(GlobalStateConfiguration.CONFIGURATION_STORAGE).isModified()) {
             switch (configuration.configurationStorage()) {
+               case IMMUTABLE:
+                  writer.writeEmptyElement(Element.IMMUTABLE_CONFIGURATION_STORAGE);
+                  break;
                case VOLATILE:
                   writer.writeEmptyElement(Element.VOLATILE_CONFIGURATION_STORAGE);
                   break;
