@@ -28,6 +28,7 @@ public class Http11RequestHandler extends Http20RequestHandler {
 
    @Override
    public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
+      restAccessLoggingHandler.preLog(request);
       if (HttpUtil.is100ContinueExpected(request)) {
          ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE));
       }

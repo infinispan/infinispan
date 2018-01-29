@@ -13,6 +13,5 @@ public class VoidAuthenticator implements Authenticator {
 
    @Override
    public void challenge(InfinispanRequest request) throws RestResponseException {
-
    }
 }

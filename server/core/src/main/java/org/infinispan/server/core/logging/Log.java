@@ -25,7 +25,6 @@ import io.netty.channel.Channel;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends org.infinispan.util.logging.Log {
-
    @LogMessage(level = INFO)
    @Message(value = "Start main with args: %s", id = 5001)
    void startWithArgs(String args);

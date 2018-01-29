@@ -4,7 +4,6 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-import java.security.Principal;
 import java.util.Base64;
 
 import org.eclipse.jetty.client.HttpClient;
@@ -15,6 +14,7 @@ import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.authentication.SecurityDomain;
 import org.infinispan.rest.authentication.impl.BasicAuthenticator;
 import org.infinispan.rest.helper.RestServerHelper;
+import org.infinispan.server.core.security.simple.SimpleUserPrincipal;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.mockito.internal.stubbing.answers.ThrowsExceptionClass;
 import org.testng.annotations.AfterMethod;
@@ -52,7 +52,8 @@ public class AuthenticationTest extends AbstractInfinispanTest {
    public void shouldAuthenticateWhenProvidingProperCredentials() throws Exception {
       //given
       SecurityDomain securityDomainMock = mock(SecurityDomain.class, new ThrowsExceptionClass(SecurityException.class));
-      doReturn(mock(Principal.class)).when(securityDomainMock).authenticate(eq("test"), eq("test"));
+      SimpleUserPrincipal userPrincipal = new SimpleUserPrincipal("test");
+      doReturn(userPrincipal).when(securityDomainMock).authenticate(eq("test"), eq("test"));
 
       BasicAuthenticator basicAuthenticator = new BasicAuthenticator(securityDomainMock, "ApplicationRealm");
       restServer = RestServerHelper.defaultRestServer().withAuthenticator(basicAuthenticator).start();
