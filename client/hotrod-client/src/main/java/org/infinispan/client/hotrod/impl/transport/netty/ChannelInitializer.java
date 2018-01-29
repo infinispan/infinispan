@@ -4,6 +4,7 @@ import java.net.SocketAddress;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -13,8 +14,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
 import org.infinispan.client.hotrod.configuration.AuthenticationConfiguration;
@@ -24,6 +25,7 @@ import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.util.SaslUtils;
 import org.infinispan.commons.util.SslContextFactory;
 
 import io.netty.bootstrap.Bootstrap;
@@ -137,21 +139,43 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
 
    private void initAuthentication(Channel channel, AuthenticationConfiguration authentication) throws PrivilegedActionException, SaslException {
       SaslClient saslClient;
+      SaslClientFactory scf = getSaslClientFactory(authentication);
       if (authentication.clientSubject() != null) {
          saslClient = Subject.doAs(authentication.clientSubject(), (PrivilegedExceptionAction<SaslClient>) () -> {
             CallbackHandler callbackHandler = authentication.callbackHandler();
             if (callbackHandler == null) {
                callbackHandler = NOOP_HANDLER;
             }
-            return Sasl.createSaslClient(new String[]{authentication.saslMechanism()}, null, "hotrod",
+            return scf.createSaslClient(new String[]{authentication.saslMechanism()}, null, "hotrod",
                   authentication.serverName(), authentication.saslProperties(), callbackHandler);
          });
       } else {
-         saslClient = Sasl.createSaslClient(new String[]{authentication.saslMechanism()}, null, "hotrod",
+         saslClient = scf.createSaslClient(new String[]{authentication.saslMechanism()}, null, "hotrod",
                authentication.serverName(), authentication.saslProperties(), authentication.callbackHandler());
       }
 
       channel.pipeline().addLast(new AuthHandler(authentication, saslClient, operationsFactory));
+   }
+
+   private SaslClientFactory getSaslClientFactory(AuthenticationConfiguration configuration) {
+      if (trace) {
+         log.tracef("Attempting to load SaslClientFactory implementation with mech=%s, props=%s",
+               configuration.saslMechanism(), configuration.saslProperties());
+      }
+      Iterator<SaslClientFactory> clientFactories = SaslUtils.getSaslClientFactories(this.getClass().getClassLoader(), true);
+      while (clientFactories.hasNext()) {
+         SaslClientFactory saslFactory = clientFactories.next();
+         String[] saslFactoryMechs = saslFactory.getMechanismNames(configuration.saslProperties());
+         for (String supportedMech : saslFactoryMechs) {
+            if (supportedMech.equals(configuration.saslMechanism())) {
+               if (trace) {
+                  log.tracef("Loaded SaslClientFactory: %s", saslFactory.getClass().getName());
+               }
+               return saslFactory;
+            }
+         }
+      }
+      throw new IllegalStateException("SaslClientFactory implementation now found");
    }
 
    void setChannelPool(ChannelPool channelPool) {
