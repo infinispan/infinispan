@@ -12,7 +12,7 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.server.core.security.SaslUtils;
+import org.infinispan.commons.util.SaslUtils;
 import org.infinispan.server.core.security.ServerAuthenticationProvider;
 import org.infinispan.server.core.security.external.ExternalSaslServerFactory;
 import org.infinispan.server.hotrod.logging.Log;
