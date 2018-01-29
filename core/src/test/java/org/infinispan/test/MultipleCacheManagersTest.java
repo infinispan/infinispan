@@ -301,8 +301,12 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected void waitForClusterToForm(String... names) {
-      for (String name : names) {
-         waitForClusterToForm(name);
+      if (names != null && names.length != 0) {
+         for (String name : names) {
+            waitForClusterToForm(name);
+         }
+      } else {
+         waitForClusterToForm();
       }
    }
 

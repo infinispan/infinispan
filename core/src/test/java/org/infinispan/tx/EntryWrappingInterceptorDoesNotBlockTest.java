@@ -115,7 +115,8 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       CountDownLatch topologyChangeLatch = new CountDownLatch(2);
       cache(0).addListener(new TopologyChangeListener(topologyChangeLatch));
       cache(2).addListener(new TopologyChangeListener(topologyChangeLatch));
-      cache(2).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new PrepareExpectingInterceptor(), 0);
+      PrepareExpectingInterceptor prepareExpectingInterceptor = new PrepareExpectingInterceptor();
+      cache(2).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(prepareExpectingInterceptor, 0);
 
       tm(0).begin();
       for (int i = 0; i < keys.length; ++i) {
@@ -144,6 +145,8 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       for (int i = 0; i < expectRemoteGets; i++) {
          crm2.expectCommand(ClusteredGetCommand.class).send().receiveAll();
       }
+
+      prepareExpectingInterceptor.await();
 
       sentPrepare.receiveAll();
       crm0.expectCommand(CommitCommand.class).send().receiveAll();
@@ -226,7 +229,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
    private class TopologyChangeListener {
       private final CountDownLatch latch;
 
-      public TopologyChangeListener(CountDownLatch latch) {
+      TopologyChangeListener(CountDownLatch latch) {
          this.latch = latch;
       }
 

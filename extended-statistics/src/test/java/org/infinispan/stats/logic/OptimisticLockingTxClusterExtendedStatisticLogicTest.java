@@ -31,7 +31,10 @@ import java.util.concurrent.TimeUnit;
 import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
 
+import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.impl.TxInterceptor;
@@ -43,6 +46,7 @@ import org.infinispan.stats.container.ExtendedStatistic;
 import org.infinispan.stats.wrappers.ExtendedStatisticInterceptor;
 import org.infinispan.stats.wrappers.ExtendedStatisticLockManager;
 import org.infinispan.stats.wrappers.ExtendedStatisticRpcManager;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
@@ -56,6 +60,7 @@ import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.impl.LockContainer;
 import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
 import org.infinispan.util.concurrent.locks.impl.StripedLockContainer;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -189,6 +194,8 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
    }
 
    private void doWriteSkewTest(boolean executeOnOwner) throws Exception {
+      controlledRpcManager[0].excludeCommands(PrepareCommand.class, CommitCommand.class, RollbackCommand.class, TxCompletionNotificationCommand.class);
+      controlledRpcManager[1].excludeCommands(PrepareCommand.class, CommitCommand.class, RollbackCommand.class, TxCompletionNotificationCommand.class);
       final int txExecutor = executeOnOwner ? 0 : 1;
       cache(0).put(KEY_1, VALUE_1);
       assertTxSeen(0, 1, 1, true);
@@ -240,7 +247,9 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
    private void doTimeoutTest(boolean executeOnOwner, boolean remoteContention) throws Exception {
       final int txExecutor = executeOnOwner ? 0 : 1;
       final int successTxExecutor = remoteContention ? 1 : 0;
+      controlledRpcManager[successTxExecutor].excludeCommands(PrepareCommand.class, CommitCommand.class, TxCompletionNotificationCommand.class);
       cache(successTxExecutor).put(KEY_1, VALUE_1);
+      controlledRpcManager[successTxExecutor].excludeCommands(PrepareCommand.class, TxCompletionNotificationCommand.class);
       assertTxSeen(successTxExecutor, 1, 1, true);
       resetStats();
 
@@ -259,23 +268,14 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
 
       lockManagerTimeService.triggerTimeout = true;
 
+      controlledRpcManager[txExecutor].excludeCommands(PrepareCommand.class, RollbackCommand.class, TxCompletionNotificationCommand.class);
       tm(txExecutor).begin();
       cache(txExecutor).put(KEY_1, VALUE_3);
-      try {
-         tm(txExecutor).commit();
-         fail("Rollback Exception expected!");
-      } catch (RollbackException expected) {
-         //expected timeout exception
-      }
+      Exceptions.expectException(RollbackException.class, () -> tm(txExecutor).commit());
 
       tm(txExecutor).begin();
       cache(txExecutor).put(KEY_1, VALUE_3);
-      try {
-         tm(txExecutor).commit();
-         fail("Rollback Exception expected!");
-      } catch (RollbackException expected) {
-         //expected timeout exception
-      }
+      Exceptions.expectException(RollbackException.class, () -> tm(txExecutor).commit());
 
       blockedCommit.send().receiveAll();
       future.get();
@@ -366,11 +366,15 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
    }
 
    @BeforeMethod(alwaysRun = true)
-   private void resetState() {
+   void resetState() {
+      lockManagerTimeService.triggerTimeout = false;
+   }
+
+   @AfterClass
+   void stopBlockingRpcs() {
       for (ControlledRpcManager rpcManager : controlledRpcManager) {
          rpcManager.stopBlocking();
       }
-      lockManagerTimeService.triggerTimeout = false;
    }
 
    private class LockManagerTimeService extends DefaultTimeService {

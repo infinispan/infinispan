@@ -2,6 +2,7 @@ package org.infinispan.statetransfer;
 
 import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
 import static org.infinispan.util.BlockingLocalTopologyManager.confirmTopologyUpdate;
+import static org.infinispan.util.BlockingLocalTopologyManager.finishRebalance;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -300,23 +301,6 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       finishRebalance(Phase.READ_ALL_WRITE_ALL, topologyManager0, topologyManager1, joiner.topologyManager);
 
       joiner.joinerFuture.get();
-   }
-
-   private void finishRebalance(Phase nextPhase, BlockingLocalTopologyManager... topologyManagers)
-      throws InterruptedException {
-      switch (nextPhase) {
-         case READ_OLD_WRITE_ALL:
-            confirmTopologyUpdate(Phase.READ_OLD_WRITE_ALL, topologyManagers);
-            // fallthrough
-         case READ_ALL_WRITE_ALL:
-            confirmTopologyUpdate(Phase.READ_ALL_WRITE_ALL, topologyManagers);
-            // fallthrough
-         case READ_NEW_WRITE_ALL:
-            confirmTopologyUpdate(Phase.READ_NEW_WRITE_ALL, topologyManagers);
-            // fallthrough
-         case NO_REBALANCE:
-            confirmTopologyUpdate(Phase.NO_REBALANCE, topologyManagers);
-      }
    }
 
    public void testScenario_032_22() throws Exception {
