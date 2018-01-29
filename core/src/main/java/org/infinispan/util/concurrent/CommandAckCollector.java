@@ -123,22 +123,20 @@ public class CommandAckCollector {
     * Creates a collector for {@link org.infinispan.commands.write.PutMapCommand}.
     *
     * @param id         the id from {@link CommandInvocationId#getId()}.
-    * @param primary    a primary owners collection..
     * @param backups    a map between a backup owner and its segments affected.
     * @param topologyId the current topology id.
     */
-   public Collector<Map<Object, Object>> createSegmentBasedCollector(long id, Collection<Address> primary,
-                                                                     Map<Address, Collection<Integer>> backups, int topologyId) {
+   public <T> Collector<T> createSegmentBasedCollector(long id, Map<Address, Collection<Integer>> backups, int topologyId) {
       if (backups.isEmpty()) {
          return new PrimaryOwnerOnlyCollector<>();
       }
-      SegmentBasedCollector collector = new SegmentBasedCollector(id, backups, topologyId);
+      SegmentBasedCollector<T> collector = new SegmentBasedCollector<>(id, backups, topologyId);
       BaseAckTarget prev = collectorMap.put(id, collector);
       //is it possible the have a previous collector when the topology changes after the first collector is created
       //in that case, the previous collector must have a lower topology id
       assert prev == null || prev.topologyId < topologyId : format("replaced old collector '%s' by '%s'", prev, collector);
       if (trace) {
-         log.tracef("Created new collector for %s. Primary=%s. BackupSegments=%s", id, primary, backups);
+         log.tracef("Created new collector for %s. BackupSegments=%s", id, backups);
       }
       return collector;
    }
@@ -448,7 +446,7 @@ public class CommandAckCollector {
       }
    }
 
-   private class SegmentBasedCollector extends BaseCollector<Map<Object, Object>> {
+   private class SegmentBasedCollector<T> extends BaseCollector<T> {
       @GuardedBy("this")
       private final Map<Address, Collection<Integer>> backups;
 
@@ -474,7 +472,7 @@ public class CommandAckCollector {
       }
 
       @Override
-      public void primaryResult(Map<Object, Object> result, boolean success) {
+      public void primaryResult(T result, boolean success) {
          primaryResult = result;
          primaryResultReceived = true;
          synchronized (this) {

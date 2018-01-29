@@ -7,7 +7,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
-import org.infinispan.commands.write.BackupPutMapRpcCommand;
+import org.infinispan.commands.write.BackupMultiKeyWriteRpcCommand;
 import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -29,7 +29,7 @@ public enum TestWriteOperation {
    REPLACE_EXACT(ReplaceCommand.class, BackupWriteRpcCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, "v0", true, true),
    REMOVE(RemoveCommand.class, BackupWriteRpcCommand.class, null, ValueMatcher.MATCH_NON_NULL, "v0", "v0", null),
    REMOVE_EXACT(RemoveCommand.class, BackupWriteRpcCommand.class, null, ValueMatcher.MATCH_EXPECTED, "v0", true, true),
-   PUT_MAP_CREATE(PutMapCommand.class, BackupPutMapRpcCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, false, false),
+   PUT_MAP_CREATE(PutMapCommand.class, BackupMultiKeyWriteRpcCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, false, false),
 
    // Functional put create must return null even on retry (as opposed to non-functional)
    PUT_CREATE_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteRpcCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, null, null, null),

@@ -14,7 +14,7 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
-import org.infinispan.commands.write.BackupPutMapRpcCommand;
+import org.infinispan.commands.write.BackupMultiKeyWriteRpcCommand;
 import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.PrimaryAckCommand;
@@ -90,8 +90,8 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
             case BackupWriteRpcCommand.COMMAND_ID:
                handleBackupWriteRpcCommand((BackupWriteRpcCommand) command);
                return;
-            case BackupPutMapRpcCommand.COMMAND_ID:
-               handleBackupPutMapRpcCommand((BackupPutMapRpcCommand) command);
+            case BackupMultiKeyWriteRpcCommand.COMMAND_ID:
+               handleBackupPutMapRpcCommand((BackupMultiKeyWriteRpcCommand) command);
                return;
             case BackupAckCommand.COMMAND_ID:
                handleBackupAckCommand((BackupAckCommand) command);
@@ -184,17 +184,17 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       }
    }
 
-   private void handleBackupPutMapRpcCommand(BackupPutMapRpcCommand command) {
+   private void handleBackupPutMapRpcCommand(BackupMultiKeyWriteRpcCommand command) {
       final int topologyId = command.getTopologyId();
       ReadyAction readyAction = createTriangleOrderAction(command, topologyId, command.getSequence(),
-            command.getMap().keySet().iterator().next());
+            command.getSegmentId());
       BlockingRunnable runnable = createBackupPutMapRunnable(command, topologyId, readyAction);
       remoteCommandsExecutor.execute(runnable);
    }
 
    private void handleBackupWriteRpcCommand(BackupWriteRpcCommand command) {
       final int topologyId = command.getTopologyId();
-      ReadyAction readyAction = createTriangleOrderAction(command, topologyId, command.getSequence(), command.getKey());
+      ReadyAction readyAction = createTriangleOrderAction(command, topologyId, command.getSequence(), command.getSegmentId());
       BlockingRunnable runnable = createBackupWriteRpcRunnable(command, topologyId, readyAction);
       remoteCommandsExecutor.execute(runnable);
    }
@@ -312,7 +312,7 @@ backupCommand.getFlagBitSet());
       };
    }
 
-   private void sendPutMapBackupAck(CommandInvocationId id, int topologyId, int segment, long flagBitSet) {
+   private void sendMultiKeyAck(CommandInvocationId id, int topologyId, int segment, long flagBitSet) {
       final Address origin = id.getAddress();
       if (skipBackupAck(flagBitSet)) {
          if (trace) {
@@ -332,7 +332,7 @@ backupCommand.getFlagBitSet());
       }
    }
 
-   private BlockingRunnable createBackupPutMapRunnable(BackupPutMapRpcCommand command, int commandTopologyId,
+   private BlockingRunnable createBackupPutMapRunnable(BackupMultiKeyWriteRpcCommand command, int commandTopologyId,
                                                        ReadyAction readyAction) {
       readyAction.addListener(remoteCommandsExecutor::checkForReadyTasks);
       return new DefaultTopologyRunnable(this, command, Reply.NO_OP, TopologyMode.READY_TX_DATA, commandTopologyId,
@@ -347,7 +347,7 @@ backupCommand.getFlagBitSet());
             super.onException(throwable);
             readyAction.onException();
             readyAction.onFinally();
-            BackupPutMapRpcCommand backupCommand = (BackupPutMapRpcCommand) command;
+            BackupMultiKeyWriteRpcCommand backupCommand = (BackupMultiKeyWriteRpcCommand) command;
             sendExceptionAck(backupCommand.getCommandInvocationId(), throwable, commandTopologyId,
                   backupCommand.getFlagBitSet());
          }
@@ -356,10 +356,8 @@ backupCommand.getFlagBitSet());
          protected void afterInvoke() {
             super.afterInvoke();
             readyAction.onFinally();
-            BackupPutMapRpcCommand backupCommand = (BackupPutMapRpcCommand) command;
-            Object key = backupCommand.getMap().keySet().iterator().next();
-            int segment = clusteringDependentLogic.getCacheTopology().getDistribution(key).segmentId();
-            sendPutMapBackupAck(backupCommand.getCommandInvocationId(), commandTopologyId, segment,
+            BackupMultiKeyWriteRpcCommand backupCommand = (BackupMultiKeyWriteRpcCommand) command;
+            sendMultiKeyAck(backupCommand.getCommandInvocationId(), commandTopologyId, backupCommand.getSegmentId(),
                   backupCommand.getFlagBitSet());
          }
       };
@@ -389,9 +387,9 @@ backupCommand.getFlagBitSet());
             null;
    }
 
-   private ReadyAction createTriangleOrderAction(ReplicableCommand command, int topologyId, long sequence, Object key) {
+   private ReadyAction createTriangleOrderAction(ReplicableCommand command, int topologyId, long sequence, int segmentId) {
       return new DefaultReadyAction(new ActionState(command, topologyId, 0), this,
-            new TriangleOrderAction(this, sequence, key));
+            new TriangleOrderAction(this, sequence, segmentId));
    }
 
    private boolean skipBackupAck(long flagBitSet) {

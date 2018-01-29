@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -167,5 +168,23 @@ public final class InfinispanCollections {
          one.putAll(second);
          return one;
       }
+   }
+
+   public static <T> List<T> mergeLists(List<T> one, List<T> second) {
+      if (one == null) {
+         return second;
+      } else if (second == null) {
+         return one;
+      } else {
+         one.addAll(second);
+         return one;
+      }
+   }
+
+   public static Set<Object> toObjectSet(Collection<?> collection) {
+      //noinspection unchecked
+      return collection instanceof Set ?
+            (Set<Object>) collection :
+            new HashSet<>(collection);
    }
 }

@@ -88,7 +88,7 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
       test(ReadAfterLostDataTest::replace, true, false);
    }
 
-   //TODO: We don't test put/remove/replace before topology update as with triangle these commands
+   //TODO: We don't test put/remove/replace/read-write before topology update as with triangle these commands
    // invoke RpcManager.sendTo that does not throw an exception when the target is not in view anymore.
    // These commands rely on next topology (that is blocked) causing the OutdatedTopologyException.
    // We'd need to execute them in parallel, wait until all of them use RpcManager.sendTo and then unblock
@@ -120,10 +120,6 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
 
    public void testReadWrite() throws Exception {
       test(ReadAfterLostDataTest::readWrite, false, false);
-   }
-
-   public void testReadWriteBeforeTopologyUpdate() throws Exception {
-      test(ReadAfterLostDataTest::readWrite, true, true);
    }
 
    public void testReadWriteMany() throws Exception {
