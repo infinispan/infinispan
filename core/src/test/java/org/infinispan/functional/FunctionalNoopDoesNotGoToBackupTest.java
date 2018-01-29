@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
@@ -17,7 +16,7 @@ import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.AbstractControlledRpcManager;
+import org.infinispan.util.CountingRpcManager;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -45,11 +44,11 @@ public class FunctionalNoopDoesNotGoToBackupTest extends MultipleCacheManagersTe
 
    @DataProvider(name = "ownerAndExistence")
    public Object[][] ownerAndExistence() {
-      return new Object[][] {
-            { false, false },
-            { false, true },
-            { true, false},
-            { true, true}
+      return new Object[][]{
+            {false, false},
+            {false, true},
+            {true, false},
+            {true, true}
       };
    }
 
@@ -81,60 +80,52 @@ public class FunctionalNoopDoesNotGoToBackupTest extends MultipleCacheManagersTe
    @Test(dataProvider = "ownerAndExistence")
    public void testWriteOnlyKeyCommand(boolean onOwner, boolean withExisting) {
       WriteOnlyMap<Object, Object> wo = onOwner ? wo0 : wo1;
-      test(() -> wo.eval(key, view -> {}), onOwner, withExisting);
+      test(() -> wo.eval(key, view -> {
+      }), onOwner, withExisting);
    }
 
    @Test(dataProvider = "ownerAndExistence")
    public void testWriteOnlyKeyValueCommand(boolean onOwner, boolean withExisting) {
       WriteOnlyMap<Object, Object> wo = onOwner ? wo0 : wo1;
-      test(() -> wo.eval(key, "bar", (bar, view) -> {}), onOwner, withExisting);
+      test(() -> wo.eval(key, "bar", (bar, view) -> {
+      }), onOwner, withExisting);
    }
 
    @Test(dataProvider = "ownerAndExistence", enabled = false, description = "ISPN-8676")
    public void testWriteOnlyManyCommand(boolean onOwner, boolean withExisting) {
       WriteOnlyMap<Object, Object> wo = onOwner ? wo0 : wo1;
-      test(() -> wo.evalMany(Collections.singleton(key), view -> {}), onOwner, withExisting);
+      test(() -> wo.evalMany(Collections.singleton(key), view -> {
+      }), onOwner, withExisting);
    }
 
    @Test(dataProvider = "ownerAndExistence", enabled = false, description = "ISPN-8676")
    public void testWriteOnlyManyEntriesCommand(boolean onOwner, boolean withExisting) {
       WriteOnlyMap<Object, Object> wo = onOwner ? wo0 : wo1;
-      test(() -> wo.evalMany(Collections.singletonMap(key, "bar"), (bar, view) -> {}), onOwner, withExisting);
+      test(() -> wo.evalMany(Collections.singletonMap(key, "bar"), (bar, view) -> {
+      }), onOwner, withExisting);
    }
 
    private void test(Supplier<CompletableFuture<?>> supplier, boolean onOwner, boolean withExisting) {
       if (withExisting) {
          cache(0).put(key, "foo");
       }
-      rpcManager0.invocations = 0;
-      rpcManager1.invocations = 0;
+      rpcManager0.otherCount = 0;
+      rpcManager1.otherCount = 0;
       supplier.get().join();
-      assertEquals(0, rpcManager0.invocations);
-      assertEquals(onOwner ? 0 : 1, rpcManager1.invocations);
+      assertEquals(0, rpcManager0.otherCount);
+      assertEquals(onOwner ? 0 : 1, rpcManager1.otherCount);
    }
 
    private void testMany(Supplier<Traversable<?>> supplier, boolean onOwner, boolean withExisting) {
       if (withExisting) {
          cache(0).put(key, "foo");
       }
-      rpcManager0.invocations = 0;
-      rpcManager1.invocations = 0;
-      supplier.get().forEach(x -> {});
-      assertEquals(0, rpcManager0.invocations);
-      assertEquals(onOwner ? 0 : 1, rpcManager1.invocations);
+      rpcManager0.otherCount = 0;
+      rpcManager1.otherCount = 0;
+      supplier.get().forEach(x -> {
+      });
+      assertEquals(0, rpcManager0.otherCount);
+      assertEquals(onOwner ? 0 : 1, rpcManager1.otherCount);
    }
 
-   private static class CountingRpcManager extends AbstractControlledRpcManager {
-      private int invocations;
-
-      public CountingRpcManager(RpcManager realOne) {
-         super(realOne);
-      }
-
-      @Override
-      protected Object beforeInvokeRemotely(ReplicableCommand command) {
-         invocations++;
-         return super.beforeInvokeRemotely(command);
-      }
-   }
 }
