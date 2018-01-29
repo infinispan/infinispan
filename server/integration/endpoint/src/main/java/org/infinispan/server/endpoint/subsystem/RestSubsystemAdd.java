@@ -101,7 +101,7 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
    }
 
    protected String getServiceName(ModelNode config) {
-      return config.hasDefined(ModelKeys.NAME) ? config.get(ModelKeys.NAME).asString() : "REST";
+      return config.hasDefined(ModelKeys.NAME) ? config.get(ModelKeys.NAME).asString() : "";
    }
 
    @Override
