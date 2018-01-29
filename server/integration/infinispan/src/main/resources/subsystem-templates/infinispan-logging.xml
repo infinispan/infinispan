@@ -19,7 +19,7 @@
        </periodic-rotating-file-handler>
        <size-rotating-file-handler name="HR-ACCESS-FILE" autoflush="true">
            <formatter>
-               <pattern-formatter pattern="(%t) %s%e%n"/>
+               <named-formatter name="ACCESS-LOG"/>
            </formatter>
            <file relative-to="jboss.server.log.dir" path="hotrod-access.log"/>
            <append value="@@append@@"/>
@@ -28,7 +28,7 @@
        </size-rotating-file-handler>
        <size-rotating-file-handler name="REST-ACCESS-FILE" autoflush="true">
            <formatter>
-               <pattern-formatter pattern="(%t) %s%e%n"/>
+               <named-formatter name="ACCESS-LOG"/>
            </formatter>
            <file relative-to="jboss.server.log.dir" path="rest-access.log"/>
            <append value="@@append@@"/>
@@ -37,14 +37,14 @@
        </size-rotating-file-handler>
 
        <?LOGGERS?>
-       <logger category="org.infinispan.server.hotrod.logging.HotRodAccessLoggingHandler">
+       <logger category="org.infinispan.HOTROD_ACCESS_LOG" use-parent-handlers="false">
            <!-- Set to TRACE to enable access logging for hot rod or use DMR -->
            <level name="INFO"/>
            <handlers>
                <handler name="HR-ACCESS-FILE"/>
            </handlers>
        </logger>
-       <logger category="org.infinispan.rest.logging.RestAccessLoggingHandler">
+       <logger category="org.infinispan.REST_ACCESS_LOG" use-parent-handlers="false">
            <!-- Set to TRACE to enable access logging for rest or use DMR -->
            <level name="INFO"/>
            <handlers>
@@ -63,6 +63,9 @@
        </formatter>
        <formatter name="COLOR-PATTERN">
            <pattern-formatter pattern="%K{level}%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n"/>
+       </formatter>
+       <formatter name="ACCESS-LOG">
+           <pattern-formatter pattern="%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss z}] &quot;%X{method} %m %X{protocol}&quot; %X{status} %X{requestSize} %X{responseSize} %X{duration}%n"/>
        </formatter>
    </subsystem>
    <supplement name="default">
