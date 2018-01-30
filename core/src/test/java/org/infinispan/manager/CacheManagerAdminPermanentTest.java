@@ -16,6 +16,7 @@ import org.testng.annotations.Test;
 @Test(testName = "manager.CacheManagerAdminPermanentTest", groups = "functional")
 @CleanupAfterMethod
 public class CacheManagerAdminPermanentTest extends CacheManagerAdminTest {
+
    @Override
    protected void createCacheManagers() throws Throwable {
       Util.recursiveFileRemove(TestingUtil.tmpDirectory(this.getClass().getSimpleName()));
@@ -27,7 +28,7 @@ public class CacheManagerAdminPermanentTest extends CacheManagerAdminTest {
       return false;
    }
 
-   private void createStatefulCacheManager(String id, boolean clear) {
+   protected void createStatefulCacheManager(String id, boolean clear) {
       String stateDirectory = TestingUtil.tmpDirectory(this.getClass().getSimpleName() + File.separator + id);
       if (clear)
          Util.recursiveFileRemove(stateDirectory);
