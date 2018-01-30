@@ -8,6 +8,8 @@ import static org.testng.AssertJUnit.fail;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import org.infinispan.functional.EntryView.ReadEntryView;
@@ -20,6 +22,7 @@ import org.infinispan.functional.impl.WriteOnlyMapImpl;
 public final class FunctionalTestUtils {
 
    static final Random R = new Random();
+   static final int MAX_WAIT_SECS = 30;
 
    static <K> FunctionalMap.ReadOnlyMap<K, String> ro(FunctionalMapImpl<K, String> fmap) {
       return ReadOnlyMapImpl.create(fmap);
@@ -39,8 +42,8 @@ public final class FunctionalTestUtils {
 
    public static <T> T await(CompletableFuture<T> cf) {
       try {
-         return cf.get();
-      } catch (InterruptedException | ExecutionException e) {
+         return cf.get(MAX_WAIT_SECS, TimeUnit.SECONDS);
+      } catch (TimeoutException | InterruptedException | ExecutionException e) {
          throw new Error(e);
       }
    }
