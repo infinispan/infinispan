@@ -359,17 +359,18 @@ class Index {
          }
          int headerWithoutMagic = INDEX_FILE_HEADER_SIZE - 4;
          buffer = buffer.capacity() < headerWithoutMagic ? ByteBuffer.allocate(headerWithoutMagic) : buffer;
+         buffer.position(0);
+         // we need to set limit ahead, otherwise the putLong could throw IndexOutOfBoundsException
+         buffer.limit(headerWithoutMagic);
          buffer.putLong(0, rootSpace.offset);
          buffer.putShort(8, (short) rootSpace.length);
          buffer.putLong(10, indexFileSize);
          buffer.putLong(18, size.get());
-         buffer.position(0);
-         buffer.limit(headerWithoutMagic);
          indexFile.position(4);
          write(indexFile, buffer);
-         buffer.putInt(0, GRACEFULLY);
          buffer.position(0);
          buffer.limit(4);
+         buffer.putInt(0, GRACEFULLY);
          indexFile.position(0);
          write(indexFile, buffer);
       }
