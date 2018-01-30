@@ -10,6 +10,17 @@
         <profile>
             <id>jboss-public-repository</id>
             <repositories>
+                <!-- Use Central first: it has global mirrors -->
+                <repository>
+                    <id>central</id>
+                    <name>Maven Central</name>
+                    <url>http://repo.maven.apache.org/maven2/</url>
+                    <snapshots>
+                        <enabled>false</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </snapshots>
+                </repository>
+                <!-- Then look in JBoss.org Nexus as not all we need is available in Central -->
                 <repository>
                     <id>jboss-public-repository-group</id>
                     <name>JBoss Public Maven Repository Group</name>
@@ -26,6 +37,16 @@
                 </repository>
             </repositories>
             <pluginRepositories>
+                <!-- Use Central first -->
+                <pluginRepository>
+                    <id>central</id>
+                    <name>Maven Central</name>
+                    <url>http://repo.maven.apache.org/maven2/</url>
+                    <snapshots>
+                        <enabled>false</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </snapshots>
+                </pluginRepository>
                 <pluginRepository>
                     <id>jboss-public-repository-group</id>
                     <name>JBoss Public Maven Repository Group</name>
