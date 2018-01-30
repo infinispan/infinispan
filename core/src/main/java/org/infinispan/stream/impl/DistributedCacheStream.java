@@ -18,10 +18,8 @@ import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -50,7 +48,6 @@ import org.infinispan.LongCacheStream;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.util.AbstractIterator;
-import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.IntSet;
@@ -476,79 +473,6 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       }
    }
 
-   interface PublisherDecorator<S> {
-      Publisher<S> decorateRemote(ClusterStreamManager.RemoteIteratorPublisher<S> remotePublisher);
-      Publisher<S> decorateLocal(ConsistentHash beginningCh, boolean onlyLocal, IntSet segmentsToFilter,
-            Publisher<S> localPublisher);
-   }
-
-   private static class IdentityPublisherDecorator<S, R> implements PublisherDecorator<S> {
-      private static final IdentityPublisherDecorator decorator = new IdentityPublisherDecorator();
-      private IdentityPublisherDecorator() { }
-
-      static <S, R> IdentityPublisherDecorator<S, R> getInstance() {
-         return decorator;
-      }
-
-      @Override
-      public Publisher<S> decorateRemote(ClusterStreamManager.RemoteIteratorPublisher<S> remotePublisher) {
-         return remotePublisher;
-      }
-
-      @Override
-      public Publisher<S> decorateLocal(ConsistentHash beginningCh, boolean onlyLocal, IntSet segmentsToFilter,
-            Publisher<S> localPublisher) {
-         return localPublisher;
-      }
-   }
-
-   private class RehashPublisherDecorator<S> implements PublisherDecorator<S> {
-      private final Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments;
-      private final Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments;
-      private final Consumer<Object> keyConsumer;
-
-      RehashPublisherDecorator(Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments,
-            Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments, Consumer<Object> keyConsumer) {
-         this.completedSegments = completedSegments;
-         this.lostSegments = lostSegments;
-         this.keyConsumer = keyConsumer;
-      }
-
-      @Override
-      public Publisher<S> decorateRemote(ClusterStreamManager.RemoteIteratorPublisher<S> remotePublisher) {
-         Publisher<S> convertedPublisher = s -> remotePublisher.subscribe(s, completedSegments, lostSegments);
-         return decorateBeforeReturn(convertedPublisher);
-      }
-
-      @Override
-      public Publisher<S> decorateLocal(ConsistentHash beginningCh, boolean onlyLocal, IntSet segmentsToFilter,
-            Publisher<S> localPublisher) {
-         Publisher<S> convertedPublisher = Flowable.fromPublisher(localPublisher).doOnComplete(() -> {
-            IntSet ourSegments;
-            if (onlyLocal) {
-               ourSegments = SmallIntSet.from(beginningCh.getSegmentsForOwner(localAddress));
-            } else {
-               ourSegments = SmallIntSet.from(beginningCh.getPrimarySegmentsForOwner(localAddress));
-            }
-            ourSegments.retainAll(segmentsToFilter);
-            // This will notify both completed and suspect of segments that may not even exist or were completed before
-            // on a rehash
-            if (dm.getReadConsistentHash().equals(beginningCh)) {
-               log.tracef("Local iterator has completed segments %s", ourSegments);
-               completedSegments.accept((Supplier<PrimitiveIterator.OfInt>) ourSegments::iterator);
-            } else {
-               log.tracef("Local iterator segments %s are all suspect as consistent hash has changed", ourSegments);
-               lostSegments.accept((Supplier<PrimitiveIterator.OfInt>) ourSegments::iterator);
-            }
-         });
-         return decorateBeforeReturn(convertedPublisher);
-      }
-
-      protected Publisher<S> decorateBeforeReturn(Publisher<S> publisher) {
-         return iteratorOperation.handlePublisher(publisher, keyConsumer);
-      }
-   }
-
    private class RehashIterator<S> extends AbstractIterator<S> implements CloseableIterator<S> {
       private final AtomicReferenceArray<Set<Object>> receivedKeys;
       private final Iterable<IntermediateOperation> intermediateOperations;
@@ -634,7 +558,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
 
       PublisherDecorator<S> publisherDecorator(Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments,
             Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments, Consumer<Object> keyConsumer) {
-         return new RehashPublisherDecorator<>(completedSegments, lostSegments, keyConsumer);
+         return new RehashPublisherDecorator<>(iteratorOperation, dm, localAddress, completedSegments, lostSegments,
+               keyConsumer);
       }
 
       @Override
@@ -677,83 +602,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
             completionListener.segmentsEncountered(i);
             completedSegments.accept(i);
          };
-         return new RehashPublisherDecorator<S>(ourCompleted, lostSegments, keyConsumer) {
-            @Override
-            protected Publisher<S> decorateBeforeReturn(Publisher<S> publisher) {
-               return Flowable.fromPublisher(super.decorateBeforeReturn(publisher)).doOnNext(
-                     completionListener::valueAdded);
-            }
-         };
-      }
-   }
-
-   /**
-    * Only notifies a completion listener when the last key for a segment has been found. The last key for a segment
-    * is assumed to be the last key seen {@link KeyWatchingCompletionListener#valueAdded(Object)} before segments
-    * are encountered {@link KeyWatchingCompletionListener#segmentsEncountered(Supplier)}.
-    */
-   private class KeyWatchingCompletionListener {
-      private final AtomicReference<Object> currentKey = new AtomicReference<>();
-      private final Map<Object, Supplier<PrimitiveIterator.OfInt>> pendingSegments = new ConcurrentHashMap<>();
-      private final Consumer<? super Supplier<PrimitiveIterator.OfInt>> completionListener;
-      // The next 2 variables are possible assuming that the iterator is not used concurrently. This way we don't
-      // have to allocate them on every entry iterated
-      private final ByRef<Supplier<PrimitiveIterator.OfInt>> ref = new ByRef<>(null);
-      private final BiFunction<Object, Supplier<PrimitiveIterator.OfInt>, Supplier<PrimitiveIterator.OfInt>> iteratorMapping;
-
-      private KeyWatchingCompletionListener(Consumer<? super Supplier<PrimitiveIterator.OfInt>> completionListener) {
-         this.completionListener = completionListener;
-         this.iteratorMapping = (k, v) -> {
-            if (v != null) {
-               ref.set(v);
-            }
-            currentKey.compareAndSet(k, null);
-            return null;
-         };
-      }
-
-      public void valueAdded(Object key) {
-         currentKey.set(key);
-      }
-
-      public void valueIterated(Object key) {
-         pendingSegments.compute(key, iteratorMapping);
-         Supplier<PrimitiveIterator.OfInt> segments = ref.get();
-         if (segments != null) {
-            ref.set(null);
-            completionListener.accept(segments);
-         }
-      }
-
-      public void segmentsEncountered(Supplier<PrimitiveIterator.OfInt> segments) {
-         // This code assumes that valueAdded and segmentsEncountered are not invoked concurrently and that all values
-         // added for a response before the segments are completed.
-         // The valueIterated method can be invoked at any point however.
-         // See ClusterStreamManagerImpl$ClusterStreamSubscription.sendRequest where the added and segments are called into
-         ByRef<Supplier<PrimitiveIterator.OfInt>> segmentsToNotify = new ByRef<>(segments);
-         Object key = currentKey.get();
-         if (key != null) {
-            pendingSegments.compute(key, (k, v) -> {
-               // The iterator has consumed all the keys, so there is no reason to wait: just notify of segment
-               // completion immediately
-               if (currentKey.get() == null) {
-                  return null;
-               }
-               // This means we didn't iterate on a key before segments were completed - means it was empty. The
-               // valueIterated notifies the completion of non-empty segments, but we need to notify the completion of
-               // empty segments here
-               segmentsToNotify.set(v);
-               return segments;
-            });
-         }
-         Supplier<PrimitiveIterator.OfInt> notifyThese = segmentsToNotify.get();
-         if (notifyThese != null) {
-            completionListener.accept(notifyThese);
-         }
-      }
-
-      public void completed() {
-         pendingSegments.forEach((k, v) -> completionListener.accept(v));
+         return new CompletionRehashPublisherDecorator<>(iteratorOperation, dm, localAddress, completionListener,
+               ourCompleted, lostSegments, keyConsumer);
       }
    }
 
