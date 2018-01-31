@@ -4,78 +4,87 @@ import java.util.Map;
 import java.util.PrimitiveIterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import org.infinispan.commons.util.ByRef;
-
 /**
  * Only notifies a completion listener when the last key for a segment has been found. The last key for a segment
- * is assumed to be the last key seen {@link KeyWatchingCompletionListener#valueAdded(Object)} before segments
- * are encountered {@link KeyWatchingCompletionListener#segmentsEncountered(Supplier)}.
+ * is assumed to be the last key seen {@link #valueAdded(Object)} before segments
+ * are encountered {@link #accept(Supplier)}. Note that this listener can be used for multiple calls for segments
+ * but it will always follow {0 - N} valueAdded invocations and then {0 - 1} accept method invocations. The
+ * accept method could be invoked 0 times if all segments are lost on the remote node. Also this invocation chain
+ * of valueAdded and accept may be done multiple times if there are multiple nodes such that they outnumber the
+ * number of remote publishers created.
  */
 class KeyWatchingCompletionListener {
-   private final AtomicReference<Object> currentKey = new AtomicReference<>();
-   private final Map<Object, Supplier<PrimitiveIterator.OfInt>> pendingSegments = new ConcurrentHashMap<>();
+   private AtomicReference<Object> currentKey = new AtomicReference<>();
+
    private final Consumer<? super Supplier<PrimitiveIterator.OfInt>> completionListener;
-   // The next 2 variables are possible assuming that the iterator is not used concurrently. This way we don't
-   // have to allocate them on every entry iterated
-   private final ByRef<Supplier<PrimitiveIterator.OfInt>> ref = new ByRef<>(null);
-   private final BiFunction<Object, Supplier<PrimitiveIterator.OfInt>, Supplier<PrimitiveIterator.OfInt>> iteratorMapping;
+   private final Map<Object, Supplier<PrimitiveIterator.OfInt>> pendingSegments = new ConcurrentHashMap<>();
 
    KeyWatchingCompletionListener(Consumer<? super Supplier<PrimitiveIterator.OfInt>> completionListener) {
       this.completionListener = completionListener;
-      this.iteratorMapping = (k, v) -> {
-         if (v != null) {
-            ref.set(v);
-         }
-         currentKey.compareAndSet(k, null);
-         return null;
-      };
    }
 
+   /**
+    * Method invoked for each entry added to the stream passing only the key
+    * @param key key of entry added to stream
+    */
    public void valueAdded(Object key) {
       currentKey.set(key);
    }
 
-   public void valueIterated(Object key) {
-      pendingSegments.compute(key, iteratorMapping);
-      Supplier<PrimitiveIterator.OfInt> segments = ref.get();
-      if (segments != null) {
-         ref.set(null);
-         completionListener.accept(segments);
-      }
-   }
-
-   public void segmentsEncountered(Supplier<PrimitiveIterator.OfInt> segments) {
-      // This code assumes that valueAdded and segmentsEncountered are not invoked concurrently and that all values
-      // added for a response before the segments are completed.
-      // The valueIterated method can be invoked at any point however.
-      // See ClusterStreamManagerImpl$ClusterStreamSubscription.sendRequest where the added and segments are called into
-      ByRef<Supplier<PrimitiveIterator.OfInt>> segmentsToNotify = new ByRef<>(segments);
+   /**
+    * Method to be invoked after all entries have been passed to the stream that belong to these segments
+    * @param segments the segments that had all entries passed down
+    */
+   public void accept(Supplier<PrimitiveIterator.OfInt> segments) {
+      Supplier<PrimitiveIterator.OfInt> notifyThese;
       Object key = currentKey.get();
       if (key != null) {
-         pendingSegments.compute(key, (k, v) -> {
-            // The iterator has consumed all the keys, so there is no reason to wait: just notify of segment
-            // completion immediately
-            if (currentKey.get() == null) {
-               return null;
-            }
-            // This means we didn't iterate on a key before segments were completed - means it was empty. The
-            // valueIterated notifies the completion of non-empty segments, but we need to notify the completion of
-            // empty segments here
-            segmentsToNotify.set(v);
-            return segments;
-         });
+         pendingSegments.put(key, segments);
+         // We now try to go back and set current key to null
+         if (currentKey.getAndSet(null) == null) {
+            // If it was already null that means we returned our key via the iterator below
+            // In this case they may or may not have seen the pendingSegments so if they didn't we have to
+            // notify ourselves
+            notifyThese = pendingSegments.remove(key);
+         } else {
+            // Means that the iteration will see this
+            notifyThese = null;
+         }
+      } else {
+         // This means that we got a set of segments that had no entries in them or the iterator
+         // consumed all entries, so just notify right away
+         notifyThese = segments;
       }
-      Supplier<PrimitiveIterator.OfInt> notifyThese = segmentsToNotify.get();
       if (notifyThese != null) {
          completionListener.accept(notifyThese);
       }
    }
 
+   /**
+    * This method is to be invoked on possibly a different thread at any point which states that a key has
+    * been iterated upon. This is the signal that if a set of segments is waiting for a key to be iterated upon
+    * to notify the iteration
+    * @param key the key just returning
+    */
+   public void valueIterated(Object key) {
+      // If we set to null that tells segment completion to just notify above in accept
+      if (!currentKey.compareAndSet(key, null)) {
+         // Otherwise we have to check if this key was linked to a group of pending segments
+         Supplier<PrimitiveIterator.OfInt> segments = pendingSegments.remove(key);
+         if (segments != null) {
+            completionListener.accept(segments);
+         }
+      }
+   }
+
+   /**
+    * Invoked after the iterator has completed iterating upon all entries
+    */
    public void completed() {
-      pendingSegments.forEach((k, v) -> completionListener.accept(v));
+      // This should always be empty
+      assert pendingSegments.isEmpty() : "pendingSegments should be empty but was: " + pendingSegments;
    }
 }

@@ -31,19 +31,23 @@ import io.reactivex.processors.PublishProcessor;
 import io.reactivex.subscribers.TestSubscriber;
 
 /**
+ * Test to verify that user listener is notified at proper time for segment completions
  * @author wburns
  * @since 9.0
  */
 @Test(testName = "stream.impl.AbstractWriteSkewStressTest", groups = "functional")
 public class CompletionRehashPublisherDecoratorTest {
 
-   <S> CompletionRehashPublisherDecorator<S> createDecorator(KeyWatchingCompletionListener kwcl, Consumer<Object> entryConsumer) {
-      return new CompletionRehashPublisherDecorator<>(AbstractCacheStream.IteratorOperation.NO_MAP, null, null, kwcl,
-            i -> kwcl.segmentsEncountered(i), i -> {}, entryConsumer);
+   <S> CompletionRehashPublisherDecorator<S> createDecorator(Consumer<Supplier<PrimitiveIterator.OfInt>> userListener,
+         Consumer<Object> entryConsumer) {
+      return new CompletionRehashPublisherDecorator<>(AbstractCacheStream.IteratorOperation.NO_MAP, null, null, userListener,
+            // Just ignore early completed segments and lost ones
+            i -> {}, i -> {}, entryConsumer);
    }
 
    <S> CompletionRehashPublisherDecorator<S> createDecorator(ConsistentHash ch, Set<Integer> segmentsForOwner,
-         Set<Integer> primarySegmentsForOwner, KeyWatchingCompletionListener kwcl, Consumer<Object> entryConsumer) {
+         Set<Integer> primarySegmentsForOwner, Consumer<Supplier<PrimitiveIterator.OfInt>> internalListener,
+         Consumer<Object> entryConsumer) {
       Address address = Mockito.mock(Address.class);
 
       if (segmentsForOwner != null) {
@@ -55,12 +59,13 @@ public class CompletionRehashPublisherDecoratorTest {
 
       DistributionManager dm = when(mock(DistributionManager.class).getReadConsistentHash()).thenReturn(ch).getMock();
 
-      return new CompletionRehashPublisherDecorator<>(AbstractCacheStream.IteratorOperation.NO_MAP, dm, address, kwcl,
-            i -> kwcl.segmentsEncountered(i), i -> {}, entryConsumer);
+      return new CompletionRehashPublisherDecorator<>(AbstractCacheStream.IteratorOperation.NO_MAP, dm, address,
+            // Just ignore early completed segments and lost ones
+            internalListener, i -> {}, i -> {}, entryConsumer);
    }
 
    void simpleAssert(Publisher<Object> resultingPublisher, PublishProcessor<Object> valuePublisher,
-         Consumer<Supplier<PrimitiveIterator.OfInt>> segmentConsumer, KeyWatchingCompletionListener kwcl,
+         Consumer<Supplier<PrimitiveIterator.OfInt>> segmentConsumer, CompletionRehashPublisherDecorator<Object> crpd,
          Consumer<IntSet> notifySegmentsCompleted, IntSet segments) {
       // This will store the result once the stream is done
       TestSubscriber<Object> test = Flowable.fromPublisher(resultingPublisher).test();
@@ -90,11 +95,11 @@ public class CompletionRehashPublisherDecoratorTest {
       Mockito.verify(segmentConsumer, Mockito.never()).accept(Mockito.any());
 
       // Now let our iterate over the entries
-      kwcl.valueIterated(entry1);
+      crpd.valueIterated(entry1);
       Mockito.verify(segmentConsumer, Mockito.never()).accept(Mockito.any());
-      kwcl.valueIterated(entry2);
+      crpd.valueIterated(entry2);
       Mockito.verify(segmentConsumer, Mockito.never()).accept(Mockito.any());
-      kwcl.valueIterated(entry3);
+      crpd.valueIterated(entry3);
 
       notifySegmentsCompleted.accept(segments);
 
@@ -115,35 +120,34 @@ public class CompletionRehashPublisherDecoratorTest {
       IntSet segments = SmallIntSet.of(1, 4);
 
       Consumer<Supplier<PrimitiveIterator.OfInt>> segmentConsumer = mock(Consumer.class);
-      KeyWatchingCompletionListener kwcl = new KeyWatchingCompletionListener(segmentConsumer);
       Consumer<Object> entryConsumer = mock(Consumer.class);
       ConsistentHash ch = mock(ConsistentHash.class);
 
-      CompletionRehashPublisherDecorator<Object> crpd = createDecorator(ch, segments, null, kwcl, entryConsumer);
+      CompletionRehashPublisherDecorator<Object> crpd = createDecorator(ch, segments, null, segmentConsumer,
+            entryConsumer);
 
       PublishProcessor<Object> localPublisherProcessor = PublishProcessor.create();
 
       // This is local only iteration
       Publisher<Object> localPublisher = crpd.decorateLocal(ch, true, segments, localPublisherProcessor);
 
-      simpleAssert(localPublisher, localPublisherProcessor, segmentConsumer, kwcl, s -> { }, segments);
+      simpleAssert(localPublisher, localPublisherProcessor, segmentConsumer, crpd, s -> { }, segments);
    }
 
    public void testRemoteOnlyStreamCompletes() {
       IntSet segments = SmallIntSet.of(1, 4);
 
       Consumer<Supplier<PrimitiveIterator.OfInt>> segmentConsumer = mock(Consumer.class);
-      KeyWatchingCompletionListener kwcl = new KeyWatchingCompletionListener(segmentConsumer);
       Consumer<Object> entryConsumer = mock(Consumer.class);
 
-      CompletionRehashPublisherDecorator<Object> crpd = createDecorator(kwcl, entryConsumer);
+      CompletionRehashPublisherDecorator<Object> crpd = createDecorator(segmentConsumer, entryConsumer);
 
       TestRemoteIteratorPublisher<Object> remoteIteratorPublisher = new TestRemoteIteratorPublisher<>();
 
       // Remote only iteration
       Publisher<Object> resultingPublisher = crpd.decorateRemote(remoteIteratorPublisher);
 
-      simpleAssert(resultingPublisher, remoteIteratorPublisher.publishProcessor(), segmentConsumer, kwcl, s ->
+      simpleAssert(resultingPublisher, remoteIteratorPublisher.publishProcessor(), segmentConsumer, crpd, s ->
             remoteIteratorPublisher.notifyCompleted(s::iterator), segments);
    }
 
@@ -151,18 +155,18 @@ public class CompletionRehashPublisherDecoratorTest {
       IntSet segments = SmallIntSet.of(1, 4);
 
       Consumer<Supplier<PrimitiveIterator.OfInt>> segmentConsumer = mock(Consumer.class);
-      KeyWatchingCompletionListener kwcl = new KeyWatchingCompletionListener(segmentConsumer);
       Consumer<Object> entryConsumer = mock(Consumer.class);
       ConsistentHash ch = mock(ConsistentHash.class);
 
-      CompletionRehashPublisherDecorator<Object> crpd = createDecorator(ch, segments, null, kwcl, entryConsumer);
+      CompletionRehashPublisherDecorator<Object> crpd = createDecorator(ch, segments, null, segmentConsumer,
+            entryConsumer);
 
       PublishProcessor<Object> localPublisherProcessor = PublishProcessor.create();
 
       Publisher<Object> localPublisher = crpd.decorateLocal(ch, true, segments,
             localPublisherProcessor);
 
-      simpleAssert(localPublisher, localPublisherProcessor, segmentConsumer, kwcl, s -> { }, segments);
+      simpleAssert(localPublisher, localPublisherProcessor, segmentConsumer, crpd, s -> { }, segments);
       // Reset the mock so remote can test it now
       reset(segmentConsumer);
 
@@ -170,7 +174,7 @@ public class CompletionRehashPublisherDecoratorTest {
 
       Publisher<Object> remotePublisher = crpd.decorateRemote(remoteIteratorPublisher);
 
-      simpleAssert(remotePublisher, remoteIteratorPublisher.publishProcessor(), segmentConsumer, kwcl, s ->
+      simpleAssert(remotePublisher, remoteIteratorPublisher.publishProcessor(), segmentConsumer, crpd, s ->
             remoteIteratorPublisher.notifyCompleted(s::iterator), segments);
    }
 
@@ -179,11 +183,11 @@ public class CompletionRehashPublisherDecoratorTest {
       IntSet remoteSegments = SmallIntSet.of(2, 3);
 
       Consumer<Supplier<PrimitiveIterator.OfInt>> segmentConsumer = mock(Consumer.class);
-      KeyWatchingCompletionListener kwcl = new KeyWatchingCompletionListener(segmentConsumer);
       Consumer<Object> entryConsumer = mock(Consumer.class);
       ConsistentHash ch = mock(ConsistentHash.class);
 
-      CompletionRehashPublisherDecorator<Object> crpd = createDecorator(ch, localSegments, null, kwcl, entryConsumer);
+      CompletionRehashPublisherDecorator<Object> crpd = createDecorator(ch, localSegments, null, segmentConsumer,
+            entryConsumer);
 
       PublishProcessor<Object> localPublisherProcessor = PublishProcessor.create();
 
@@ -234,10 +238,10 @@ public class CompletionRehashPublisherDecoratorTest {
       verify(segmentConsumer, never()).accept(any());
 
       // Now we finally iterate upon them - note that 4 wasn't iterated upon yet since remote took priority
-      kwcl.valueIterated(entry1);
-      kwcl.valueIterated(entry2);
-      kwcl.valueIterated(entry3);
-      kwcl.valueIterated(entry5);
+      crpd.valueIterated(entry1);
+      crpd.valueIterated(entry2);
+      crpd.valueIterated(entry3);
+      crpd.valueIterated(entry5);
 
       ArgumentCaptor<Supplier<PrimitiveIterator.OfInt>> captor = ArgumentCaptor.forClass(Supplier.class);
 
@@ -249,7 +253,7 @@ public class CompletionRehashPublisherDecoratorTest {
 
       reset(segmentConsumer);
 
-      kwcl.valueIterated(entry4);
+      crpd.valueIterated(entry4);
 
       Mockito.verify(segmentConsumer, Mockito.times(1)).accept(captor.capture());
 

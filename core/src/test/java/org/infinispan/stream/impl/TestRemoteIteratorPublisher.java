@@ -8,7 +8,6 @@ import java.util.function.Supplier;
 import org.reactivestreams.Subscriber;
 
 import io.reactivex.processors.PublishProcessor;
-import io.reactivex.subscribers.TestSubscriber;
 
 /**
  * Publisher that also allows signaling completed or lost signals. Note this publisher only allows a single subscription

@@ -576,21 +576,23 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
     * @param <S>
     */
    private class CompletionListenerRehashIterator<S> extends RehashIterator<S> {
-      private final KeyWatchingCompletionListener completionListener;
+      private final Consumer<? super Supplier<PrimitiveIterator.OfInt>> userListener;
+
+      private volatile CompletionRehashPublisherDecorator completionRehashPublisherDecorator;
 
       private CompletionListenerRehashIterator(Iterable<IntermediateOperation> intermediateOperations,
-            Consumer<? super Supplier<PrimitiveIterator.OfInt>> completionListener) {
+            Consumer<? super Supplier<PrimitiveIterator.OfInt>> userListener) {
          super(intermediateOperations);
-         this.completionListener = new KeyWatchingCompletionListener(completionListener);
+         this.userListener = userListener;
       }
 
       @Override
       protected S getNext() {
          S next = super.getNext();
          if (next != null) {
-            completionListener.valueIterated(next);
+            completionRehashPublisherDecorator.valueIterated(next);
          } else {
-            completionListener.completed();
+            completionRehashPublisherDecorator.complete();
          }
          return next;
       }
@@ -598,12 +600,10 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       @Override
       PublisherDecorator<S> publisherDecorator(Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments,
             Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments, Consumer<Object> keyConsumer) {
-         Consumer<? super Supplier<PrimitiveIterator.OfInt>> ourCompleted = i -> {
-            completionListener.segmentsEncountered(i);
-            completedSegments.accept(i);
-         };
-         return new CompletionRehashPublisherDecorator<>(iteratorOperation, dm, localAddress, completionListener,
-               ourCompleted, lostSegments, keyConsumer);
+         completionRehashPublisherDecorator = new CompletionRehashPublisherDecorator<>(iteratorOperation, dm,
+               localAddress, userListener, completedSegments, lostSegments, keyConsumer);
+
+         return completionRehashPublisherDecorator;
       }
    }
 

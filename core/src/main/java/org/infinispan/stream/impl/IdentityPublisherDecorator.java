@@ -5,6 +5,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.reactivestreams.Publisher;
 
 /**
+ * PublishDecorator that just returns the publisher provided by the caller
  * @author wburns
  * @since 9.0
  */
