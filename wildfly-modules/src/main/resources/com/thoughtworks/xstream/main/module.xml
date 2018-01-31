@@ -7,6 +7,6 @@
 
     <dependencies>
         <module name="javax.api" />
-        <module name="xpp3" />
+        <module name="xpp3" slot="${slot}"/>
     </dependencies>
 </module>

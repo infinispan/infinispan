@@ -111,6 +111,7 @@
       <version.netty>4.1.9.Final</version.netty>
       <version.protostuff>1.6.0</version.protostuff>
       <version.xstream>1.4.9</version.xstream>
+      <version.xpp3>1.1.4c</version.xpp3>
    </properties>
 
    <dependencyManagement>
@@ -731,6 +732,11 @@
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
             <version>${version.xstream}</version>
+         </dependency>
+         <dependency>
+            <groupId>xpp3</groupId>
+            <artifactId>xpp3</artifactId>
+            <version>${version.xpp3}</version>
          </dependency>
          <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
