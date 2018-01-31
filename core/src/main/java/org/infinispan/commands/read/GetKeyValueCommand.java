@@ -52,7 +52,7 @@ public class GetKeyValueCommand extends AbstractDataCommand {
          }
          return null;
       }
-
+      Thread.sleep(1);
       return entry.getValue();
    }
 

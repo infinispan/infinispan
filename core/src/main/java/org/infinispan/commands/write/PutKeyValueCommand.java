@@ -95,7 +95,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
          successful = false;
          return prevValue;
       }
-
+      Thread.sleep(5);
       return performPut(e, ctx);
    }
 
