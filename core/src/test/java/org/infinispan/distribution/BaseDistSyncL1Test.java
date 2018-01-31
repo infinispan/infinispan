@@ -512,7 +512,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
       try {
          log.warn("Doing get here - ignore all previous");
 
-         Future<String> getFuture = nonOwnerCache.getAsync(key);
+         Future<String> getFuture = fork(() -> nonOwnerCache.get(key));
 
          // Wait until we are about to write value into data container on non owner
          checkPoint.awaitStrict("pre_acquire_shared_topology_lock_invoked", 10, TimeUnit.SECONDS);
