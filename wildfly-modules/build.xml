@@ -291,6 +291,10 @@
             <maven-resource group="org.infinispan" artifact="infinispan-server-websocket"/>
         </module-def>
 
+        <module-def name="xpp3" slot="${infinispan.slot}">
+            <maven-resource group="xpp3" artifact="xpp3"/>
+        </module-def>
+
         <!-- ORDER MATTERS - following tasks apper to mess with global properties, so run them last -->
 
         <!-- Infinispan/Lucene targeting the latest community release of Hibernate Search which we support -->
