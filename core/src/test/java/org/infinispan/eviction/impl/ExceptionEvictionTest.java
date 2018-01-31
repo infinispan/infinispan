@@ -238,7 +238,9 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
       for (Cache cache : caches()) {
          TransactionalExceptionEvictionInterceptor interceptor = cache.getAdvancedCache().getAsyncInterceptorChain()
                .findInterceptorWithClass(TransactionalExceptionEvictionInterceptor.class);
-         currentCount += interceptor.getCurrentSize();
+         long size = interceptor.getCurrentSize();
+         log.debugf("Exception eviction size for cache: %s is: %d", cache.getName(), size);
+         currentCount += size;
          entryCount += interceptor.getMinSize();
       }
 
