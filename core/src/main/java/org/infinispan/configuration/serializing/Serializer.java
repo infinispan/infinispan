@@ -253,10 +253,33 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
             writer.writeAttribute(Attribute.PATH, configuration.persistentLocation());
             writer.writeEndElement();
          }
+         if (configuration.attributes().attribute(GlobalStateConfiguration.SHARED_PERSISTENT_LOCATION).isModified()) {
+            writer.writeStartElement(Element.SHARED_PERSISTENT_LOCATION);
+            writer.writeAttribute(Attribute.PATH, configuration.sharedPersistentLocation());
+            writer.writeEndElement();
+         }
          if (configuration.attributes().attribute(GlobalStateConfiguration.TEMPORARY_LOCATION).isModified()) {
             writer.writeStartElement(Element.TEMPORARY_LOCATION);
             writer.writeAttribute(Attribute.PATH, configuration.temporaryLocation());
             writer.writeEndElement();
+         }
+         if (configuration.attributes().attribute(GlobalStateConfiguration.CONFIGURATION_STORAGE).isModified()) {
+            switch (configuration.configurationStorage()) {
+               case VOLATILE:
+                  writer.writeEmptyElement(Element.VOLATILE_CONFIGURATION_STORAGE);
+                  break;
+               case OVERLAY:
+                  writer.writeEmptyElement(Element.OVERLAY_CONFIGURATION_STORAGE);
+                  break;
+               case MANAGED:
+                  writer.writeEmptyElement(Element.MANAGED_CONFIGURATION_STORAGE);
+                  break;
+               case CUSTOM:
+                  writer.writeStartElement(Element.CUSTOM_CONFIGURATION_STORAGE);
+                  writer.writeAttribute(Attribute.CLASS, configuration.configurationStorageClass().get().getClass().getName());
+                  writer.writeEndElement();
+                  break;
+            }
          }
          writer.writeEndElement();
       }

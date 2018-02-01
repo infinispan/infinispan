@@ -6,7 +6,9 @@
         <transport channel="maximal-channel" lock-timeout="120000" strict-peer-to-peer="false" initial-cluster-size="4" initial-cluster-timeout="20000"/>
         <global-state>
             <persistent-location path="path" relative-to="jboss.server.temp.dir"/>
+            <shared-persistent-location path="shared" relative-to="jboss.server.temp.dir"/>
             <temporary-location path="path" relative-to="jboss.server.temp.dir"/>
+            <volatile-configuration-storage />
         </global-state>
         <async-operations-thread-pool min-threads="31"
                                       queue-length="32"
