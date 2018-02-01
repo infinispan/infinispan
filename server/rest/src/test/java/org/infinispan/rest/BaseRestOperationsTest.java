@@ -40,13 +40,15 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.helper.RestServerHelper;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional")
-public abstract class BaseRestOperationsTest {
+public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
    protected HttpClient client;
    protected RestServerHelper restServer;
 
@@ -58,7 +60,7 @@ public abstract class BaseRestOperationsTest {
    public void beforeSuite() throws Exception {
       restServer = RestServerHelper.defaultRestServer(getDefaultCacheBuilder(), "default");
       defineCaches();
-      restServer.start();
+      restServer.start(TestResourceTracker.getCurrentTestShortName());
       client = new HttpClient();
       client.start();
    }
