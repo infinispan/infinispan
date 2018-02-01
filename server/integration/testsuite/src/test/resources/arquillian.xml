@@ -339,6 +339,20 @@
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
+        <container qualifier="standalone-rest-ssl" mode="manual">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server1.dist}</property>
+                <property name="managementAddress">${node0.ip}</property>
+                <property name="serverConfig">examples/standalone-rest-ssl.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
+                <property name="waitForPorts">8443 8080</property>
+                <property name="jmxDomain">${server.jmx.domain}</property>
+            </configuration>
+        </container>
         <container qualifier="standalone-rocksdb-cs-local" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
