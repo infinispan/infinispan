@@ -82,7 +82,7 @@
       <version.javax.cache>1.1.0</version.javax.cache>
       <version.jboss.logging>3.3.0.Final</version.jboss.logging>
       <version.jboss.marshalling>2.0.2.Final</version.jboss.marshalling>
-      <version.jgroups>4.0.9.Final</version.jgroups>
+      <version.jgroups>4.0.10.Final</version.jgroups>
       <version.jta>1.0.1.Final</version.jta>
       <version.lucene>5.5.5</version.lucene>
       <version.maven-compiler-plugin>3.6.1</version.maven-compiler-plugin>
