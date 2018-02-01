@@ -21,7 +21,7 @@ import java.util.Collection;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
+import org.infinispan.client.hotrod.SomeRequestBalancingStrategy;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.spring.AbstractRemoteCacheManagerFactory;
@@ -370,7 +370,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
    @Test
    public final void setRequestBalancingStrategyShouldOverrideDefaultRequestBalancingStrategy()
          throws Exception {
-      final String expectedRequestBalancingStrategy = FailoverRequestBalancingStrategy.class.getName();
+      final String expectedRequestBalancingStrategy = SomeRequestBalancingStrategy.class.getName();
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
       objectUnderTest.setRequestBalancingStrategy(expectedRequestBalancingStrategy);
       objectUnderTest.setStartAutomatically(false);

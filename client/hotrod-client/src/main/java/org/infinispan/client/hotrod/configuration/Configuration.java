@@ -6,12 +6,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Supplier;
 
+import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.TypedProperties;
@@ -26,8 +27,7 @@ import org.infinispan.commons.util.TypedProperties;
 public class Configuration {
 
    private final ExecutorFactoryConfiguration asyncExecutorFactory;
-   private final Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass;
-   private final FailoverRequestBalancingStrategy balancingStrategy;
+   private final Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory;
    private final WeakReference<ClassLoader> classLoader;
    private final ClientIntelligence clientIntelligence;
    private final ConnectionPoolConfiguration connectionPool;
@@ -50,15 +50,14 @@ public class Configuration {
    private final List<String> serialWhitelist;
    private final int batchSize;
 
-   Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass, FailoverRequestBalancingStrategy balancingStrategy, ClassLoader classLoader,
+   Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory, ClassLoader classLoader,
                  ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate,
                  Marshaller marshaller, Class<? extends Marshaller> marshallerClass,
                  ProtocolVersion protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
                  int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
                  List<ClusterConfiguration> clusters, List<String> serialWhitelist, int batchSize) {
       this.asyncExecutorFactory = asyncExecutorFactory;
-      this.balancingStrategyClass = balancingStrategyClass;
-      this.balancingStrategy = balancingStrategy;
+      this.balancingStrategyFactory = balancingStrategyFactory;
       this.maxRetries = maxRetries;
       this.classLoader = new WeakReference<>(classLoader);
       this.clientIntelligence = clientIntelligence;
@@ -86,12 +85,38 @@ public class Configuration {
       return asyncExecutorFactory;
    }
 
-   public Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass() {
-      return balancingStrategyClass;
+   /**
+    * Use {@link #balancingStrategyFactory()} instead.
+    *
+    * @deprecated since 9.3
+    */
+   @Deprecated
+   public Class<? extends org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy> balancingStrategyClass() {
+      FailoverRequestBalancingStrategy strategy = balancingStrategyFactory.get();
+      if (org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy.class.isInstance(strategy)) {
+         return (Class<? extends org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy>) strategy.getClass();
+      } else {
+         return org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy.class;
+      }
    }
 
-   public FailoverRequestBalancingStrategy balancingStrategy() {
-      return balancingStrategy;
+   /**
+    * Use {@link #balancingStrategyFactory()} instead.
+    *
+    * @deprecated since 9.3
+    */
+   @Deprecated
+   public org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy balancingStrategy() {
+      FailoverRequestBalancingStrategy strategy = balancingStrategyFactory.get();
+      if (org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy.class.isInstance(strategy)) {
+         return (org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy) strategy;
+      } else {
+         return null;
+      }
+   }
+
+   public Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory() {
+      return balancingStrategyFactory;
    }
 
    @Deprecated
@@ -198,7 +223,7 @@ public class Configuration {
 
    @Override
    public String toString() {
-      return "Configuration [asyncExecutorFactory=" + asyncExecutorFactory + ", balancingStrategyClass=" + balancingStrategyClass + ", balancingStrategy=" + balancingStrategy
+      return "Configuration [asyncExecutorFactory=" + asyncExecutorFactory + ", balancingStrategyFactory=()->" + balancingStrategyFactory.get()
             + ",classLoader=" + classLoader + ", clientIntelligence=" + clientIntelligence + ", connectionPool="
             + connectionPool + ", connectionTimeout=" + connectionTimeout + ", consistentHashImpl=" + Arrays.toString(consistentHashImpl) + ", forceReturnValues="
             + forceReturnValues + ", keySizeEstimate=" + keySizeEstimate + ", marshallerClass=" + marshallerClass + ", marshaller=" + marshaller + ", protocolVersion="
@@ -220,7 +245,7 @@ public class Configuration {
             }
          }
       }
-      properties.setProperty(ConfigurationProperties.REQUEST_BALANCING_STRATEGY, balancingStrategyClass().getName());
+      properties.setProperty(ConfigurationProperties.REQUEST_BALANCING_STRATEGY, balancingStrategyFactory().get().getClass().getName());
       properties.setProperty(ConfigurationProperties.CLIENT_INTELLIGENCE, clientIntelligence().name());
       properties.setProperty(ConfigurationProperties.CONNECT_TIMEOUT, Integer.toString(connectionTimeout()));
       for (int i = 0; i < consistentHashImpl().length; i++) {

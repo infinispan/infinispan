@@ -11,13 +11,13 @@ import java.util.Random;
 import java.util.function.Consumer;
 
 import org.infinispan.Cache;
+import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.event.RemoteCacheSupplier;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
-import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;

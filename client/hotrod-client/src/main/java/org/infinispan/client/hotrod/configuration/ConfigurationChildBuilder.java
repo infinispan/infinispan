@@ -1,12 +1,13 @@
 package org.infinispan.client.hotrod.configuration;
 
 import java.util.Properties;
+import java.util.function.Supplier;
 
+import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.commons.marshall.Marshaller;
 
 import javax.net.ssl.SSLContext;
@@ -49,8 +50,17 @@ public interface ConfigurationChildBuilder {
    /**
     * For replicated (vs distributed) Hot Rod server clusters, the client balances requests to the
     * servers according to this strategy.
+    *
+    * @deprecated since 9.3, use {@link #balancingStrategy(Supplier)} instead.
     */
+   @Deprecated
    ConfigurationBuilder balancingStrategy(FailoverRequestBalancingStrategy balancingStrategy);
+
+   /**
+    * For replicated (vs distributed) Hot Rod server clusters, the client balances requests to the
+    * servers according to this strategy.
+    */
+   ConfigurationBuilder balancingStrategy(Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory);
 
    /**
     * For replicated (vs distributed) Hot Rod server clusters, the client balances requests to the

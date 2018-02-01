@@ -68,7 +68,7 @@ public class ConfigurationTest {
 
    static {
       OPTIONS.put(ASYNC_EXECUTOR_FACTORY, c -> c.asyncExecutorFactory().factoryClass());
-      OPTIONS.put(REQUEST_BALANCING_STRATEGY, Configuration::balancingStrategyClass);
+      OPTIONS.put(REQUEST_BALANCING_STRATEGY, c -> c.balancingStrategyFactory().get().getClass());
       OPTIONS.put("maxActive", c -> c.connectionPool().maxActive());
       OPTIONS.put("maxTotal", c -> c.connectionPool().maxTotal());
       OPTIONS.put("maxWait", c -> c.connectionPool().maxWait());

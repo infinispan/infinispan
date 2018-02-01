@@ -8,10 +8,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
@@ -20,7 +22,6 @@ import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -46,8 +47,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
    private WeakReference<ClassLoader> classLoader;
    private final ExecutorFactoryConfigurationBuilder asyncExecutorFactory;
-   private Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass = RoundRobinBalancingStrategy.class;
-   private FailoverRequestBalancingStrategy balancingStrategy;
+   private Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory = RoundRobinBalancingStrategy::new;
    private ClientIntelligence clientIntelligence = ClientIntelligence.getDefault();
    private final ConnectionPoolConfigurationBuilder connectionPool;
    private int connectionTimeout = ConfigurationProperties.DEFAULT_CONNECT_TIMEOUT;
@@ -123,19 +123,26 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
    @Override
    public ConfigurationBuilder balancingStrategy(String balancingStrategy) {
-      this.balancingStrategyClass = Util.loadClass(balancingStrategy, this.classLoader());
+      this.balancingStrategyFactory = () -> Util.getInstance(balancingStrategy, this.classLoader());
+      return this;
+   }
+
+   @Deprecated
+   @Override
+   public ConfigurationBuilder balancingStrategy(FailoverRequestBalancingStrategy balancingStrategy) {
+      this.balancingStrategyFactory = () -> balancingStrategy;
       return this;
    }
 
    @Override
-   public ConfigurationBuilder balancingStrategy(FailoverRequestBalancingStrategy balancingStrategy) {
-      this.balancingStrategy = balancingStrategy;
+   public ConfigurationBuilder balancingStrategy(Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory) {
+      this.balancingStrategyFactory = balancingStrategyFactory;
       return this;
    }
 
    @Override
    public ConfigurationBuilder balancingStrategy(Class<? extends FailoverRequestBalancingStrategy> balancingStrategy) {
-      this.balancingStrategyClass = balancingStrategy;
+      this.balancingStrategyFactory = () -> Util.getInstance(balancingStrategy);
       return this;
    }
 
@@ -306,7 +313,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          this.asyncExecutorFactory().factoryClass(typed.getProperty(ConfigurationProperties.ASYNC_EXECUTOR_FACTORY, null, true));
       }
       this.asyncExecutorFactory().withExecutorProperties(typed);
-      this.balancingStrategy(typed.getProperty(ConfigurationProperties.REQUEST_BALANCING_STRATEGY, balancingStrategyClass.getName(), true));
+      this.balancingStrategy(typed.getProperty(ConfigurationProperties.REQUEST_BALANCING_STRATEGY, balancingStrategyFactory.get().getClass().getName(), true));
       this.clientIntelligence(typed.getEnumProperty(ConfigurationProperties.CLIENT_INTELLIGENCE, ClientIntelligence.class, ClientIntelligence.getDefault(), true));
       this.connectionPool.withPoolProperties(typed);
       this.connectionTimeout(typed.getIntProperty(ConfigurationProperties.CONNECT_TIMEOUT, connectionTimeout, true));
@@ -389,7 +396,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          marshallerClass = GenericJBossMarshaller.class;
       }
 
-      return new Configuration(asyncExecutorFactory.create(), balancingStrategyClass, balancingStrategy, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
+      return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
             consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive,
             valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize);
    }
@@ -408,10 +415,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
    @Override
    public ConfigurationBuilder read(Configuration template) {
-      this.classLoader = new WeakReference<ClassLoader>(template.classLoader());
+      this.classLoader = new WeakReference<>(template.classLoader());
       this.asyncExecutorFactory.read(template.asyncExecutorFactory());
-      this.balancingStrategyClass = template.balancingStrategyClass();
-      this.balancingStrategy = template.balancingStrategy();
+      this.balancingStrategyFactory = template.balancingStrategyFactory();
       this.connectionPool.read(template.connectionPool());
       this.connectionTimeout = template.connectionTimeout();
       for (int i = 0; i < consistentHashImpl.length; i++) {
