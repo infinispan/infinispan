@@ -1,13 +1,8 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
-import java.net.SocketAddress;
-import java.util.Collection;
-import java.util.Set;
-
-public interface FailoverRequestBalancingStrategy {
-
-   void setServers(Collection<SocketAddress> servers);
-
-   SocketAddress nextServer(Set<SocketAddress> failedServers);
-
+/**
+ * @deprecated since 9.3, use {@link org.infinispan.client.hotrod.FailoverRequestBalancingStrategy}
+ */
+@Deprecated
+public interface FailoverRequestBalancingStrategy extends org.infinispan.client.hotrod.FailoverRequestBalancingStrategy {
 }

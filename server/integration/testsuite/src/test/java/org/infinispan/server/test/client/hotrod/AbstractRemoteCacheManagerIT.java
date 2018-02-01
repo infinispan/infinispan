@@ -4,7 +4,6 @@ import static org.infinispan.server.test.util.ITestUtils.isDistributedMode;
 import static org.infinispan.server.test.util.ITestUtils.isLocalMode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -20,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
@@ -31,7 +31,6 @@ import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelOperation;
-import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
@@ -293,8 +292,7 @@ public abstract class AbstractRemoteCacheManagerIT {
     }
 
     private void assertEqualConfiguration(Configuration config, RemoteCache rc) throws Exception {
-        assertEquals(config.balancingStrategyClass().getName(), getRequestBalancingStrategyProperty(rc));
-        assertNull(config.balancingStrategy());
+        assertEquals(config.balancingStrategyFactory().get().getClass().getName(), getRequestBalancingStrategyProperty(rc));
 
         // Configuration stores servers as List<ServerConfiguration>, getServerListProperty returns string "host1:port1;host2:port2..."
         String servers = getServerListProperty(rc);

@@ -30,6 +30,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.CacheTopologyInfo;
+import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ServerConfiguration;
@@ -40,12 +41,10 @@ import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.util.Util;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -133,7 +132,6 @@ public class ChannelFactory {
 
          if (log.isDebugEnabled()) {
             log.debugf("Statically configured servers: %s", servers);
-            log.debugf("Load balancer class: %s", configuration.balancingStrategyClass().getName());
             log.debugf("Tcp no delay = %b; client socket timeout = %d ms; connect timeout = %d ms",
                     configuration.tcpNoDelay(), configuration.socketTimeout(), configuration.connectionTimeout());
          }
@@ -178,14 +176,7 @@ public class ChannelFactory {
    }
 
    private FailoverRequestBalancingStrategy createBalancer(WrappedByteArray cacheName) {
-      FailoverRequestBalancingStrategy balancer;
-
-      FailoverRequestBalancingStrategy cfgBalancerInstance = configuration.balancingStrategy();
-      if (cfgBalancerInstance != null) {
-         balancer = cfgBalancerInstance;
-      } else {
-         balancer = Util.getInstance(configuration.balancingStrategyClass());
-      }
+      FailoverRequestBalancingStrategy balancer = configuration.balancingStrategyFactory().get();
       balancer.setServers(topologyInfo.getServers(cacheName));
       return balancer;
    }
