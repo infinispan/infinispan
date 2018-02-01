@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "rest.RestAccessLoggingTest")
 public class RestAccessLoggingTest extends SingleCacheManagerTest {
-   public static final String LOG_FORMAT = "%X{address} %X{user} [%d{dd/MMM/yyyy:HH:mm:ss z}] \"%X{method} %m %X{protocol}\" %X{status} %X{requestSize} %X{responseSize} %X{duration}";
+   public static final String LOG_FORMAT = "%X{address} %X{user} [%d{dd/MM/yyyy:HH:mm:ss z}] \"%X{method} %m %X{protocol}\" %X{status} %X{requestSize} %X{responseSize} %X{duration}";
    private StringLogAppender logAppender;
    private RestServerHelper restServer;
    private HttpClient client;
@@ -66,6 +66,6 @@ public class RestAccessLoggingTest extends SingleCacheManagerTest {
 
       String logline = logAppender.getLog(0).toString();
 
-      assertTrue(logline, logline.matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\w+\\] \"PUT /rest/default/key HTTP/1\\.1\" 404 \\d+ \\d+ \\d+$"));
+      assertTrue(logline, logline.matches("^127\\.0\\.0\\.1 (\\w|-) \\[\\d+/\\d+/\\d+:\\d+:\\d+:\\d+ [+-]?\\w+\\] \"PUT /rest/default/key HTTP/1\\.1\" 404 \\d+ \\d+ \\d+$"));
    }
 }
