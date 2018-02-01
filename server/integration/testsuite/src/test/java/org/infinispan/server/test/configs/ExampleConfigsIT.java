@@ -19,11 +19,11 @@ import static org.junit.Assert.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.ObjectInputStream;
-import java.net.Inet6Address;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.management.ObjectName;
+import javax.net.ssl.SSLContext;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -36,7 +36,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.infinispan.arquillian.core.InfinispanResource;
-import org.infinispan.arquillian.core.RESTEndpoint;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RemoteInfinispanServers;
 import org.infinispan.arquillian.core.RunningServer;
@@ -46,6 +45,7 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.infinispan.server.test.client.rest.RESTHelper;
@@ -71,6 +71,12 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Arquillian.class)
 public class ExampleConfigsIT {
+
+    protected static final String KEYSTORE_PATH = ITestUtils.SERVER_CONFIG_DIR + File.separator
+          + "keystore_client.jks";
+    protected static final String TRUSTSTORE_PATH = ITestUtils.SERVER_CONFIG_DIR + File.separator
+          + "ca.jks";
+    protected static final String KEYSTORE_PASSWORD = "secret";
 
     private static final Logger log = Logger.getLogger(ExampleConfigsIT.class);
 
@@ -344,6 +350,25 @@ public class ExampleConfigsIT {
     }
 
     @Test
+    @WithRunningServer({@RunningServer(name = "standalone-rest-ssl")})
+    public void testRestSslConfig() throws Exception {
+        final RemoteInfinispanMBeans s = createRemotes("standalone-hotrod-ssl", "local", DEFAULT_CACHE_NAME);
+        SSLContext sslContext = SslContextFactory.getContext(KEYSTORE_PATH, KEYSTORE_PASSWORD.toCharArray(), TRUSTSTORE_PATH, KEYSTORE_PASSWORD.toCharArray());
+
+        RESTHelper rest = new RESTHelper();
+        rest.withSslContext(sslContext).withPort(8443).withProtocol("https").withServer(s.server);
+
+        cleanRESTServer(rest);
+        HttpResponse response = rest.put(rest.fullPathKey(0, KEY_A), "data", "text/plain");
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        rest.get(rest.fullPathKey(0, KEY_A), "data");
+        cleanRESTServer(rest);
+        rest.post(rest.fullPathKey(0, KEY_A), "data", "text/plain");
+        rest.get(rest.fullPathKey(0, KEY_A), "data");
+        cleanRESTServer(rest);
+    }
+
+    @Test
     @WithRunningServer({@RunningServer(name = "clustered-storage-only-1"),@RunningServer(name = "clustered-storage-only-2")})
     public void testStorageOnlyConfig() throws Exception {
         RemoteInfinispanMBeans s1 = createRemotes("clustered-storage-only-1", "clustered", DEFAULT_CACHE_NAME);
@@ -481,8 +506,7 @@ public class ExampleConfigsIT {
         RemoteCache<Object, Object> s2Cache = createCache(s2);
         RESTHelper rest = new RESTHelper();
 
-        addServer(rest, s1.server);
-        addServer(rest, s2.server);
+        rest = rest.withServers(s1.server, s2.server);
         cleanRESTServer(rest);
         assertEquals(0, s1.cache.getNumberOfEntries());
         assertEquals(0, s2.cache.getNumberOfEntries());
@@ -569,15 +593,6 @@ public class ExampleConfigsIT {
         rest.head(rest.fullPathKey(KEY_A), HttpStatus.SC_NOT_FOUND);
         rest.head(rest.fullPathKey(KEY_B), HttpStatus.SC_NOT_FOUND);
         rest.head(rest.fullPathKey(KEY_C), HttpStatus.SC_NOT_FOUND);
-    }
-
-    private static void addServer(RESTHelper rest, RemoteInfinispanServer server) {
-        RESTEndpoint endpoint = server.getRESTEndpoint();
-        // IPv6 addresses should be in square brackets, otherwise http client does not understand it
-        // otherwise should be IPv4
-        String inetHostName = endpoint.getInetAddress().getHostName();
-        String realHostName = endpoint.getInetAddress() instanceof Inet6Address ? "[" + inetHostName + "]" : inetHostName;
-        rest.addServer(realHostName, endpoint.getContextPath());
     }
 
     private ConfigurationBuilder securityConfig(final String keystoreName, final String truststoreName,

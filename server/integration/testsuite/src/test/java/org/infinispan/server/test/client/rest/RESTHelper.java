@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.Inet6Address;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -40,6 +41,8 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.infinispan.arquillian.core.RESTEndpoint;
+import org.infinispan.arquillian.core.RemoteInfinispanServer;
 
 
 /**
@@ -66,9 +69,37 @@ public class RESTHelper {
     }
 
     private int port = 8080;
+    private String protocol = "http";
     private List<Server> servers = new ArrayList<Server>();
     private CredentialsProvider credsProvider = new BasicCredentialsProvider();
     public CloseableHttpClient client = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
+
+    public RESTHelper withPort(int port) {
+        this.port = port;
+        return this;
+    }
+
+    public RESTHelper withProtocol(String protocol) {
+        this.protocol = protocol;
+        return this;
+    }
+
+    public RESTHelper withSslContext(SSLContext sslContext) {
+        this.client = HttpClients.custom().setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE)).build();
+        return this;
+    }
+
+    public RESTHelper withServer(RemoteInfinispanServer server) {
+        servers.add(new Server(server));
+        return this;
+    }
+
+    public RESTHelper withServers(RemoteInfinispanServer ... servers) {
+        for (RemoteInfinispanServer server : servers) {
+            this.servers.add(new Server(server));
+        }
+        return this;
+    }
 
     public void addServer(String hostname, String restServerPath) {
         servers.add(new Server(hostname, restServerPath));
@@ -239,6 +270,10 @@ public class RESTHelper {
         credsProvider.setCredentials(AuthScope.ANY, credentials);
     }
 
+    public void clearCredentials() {
+        credsProvider.clear();
+    }
+
     public void setSni(SSLContext sslContext, java.util.Optional<String> sniHostName) {
         client = HttpClients.custom().setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE) {
             @Override
@@ -250,10 +285,6 @@ public class RESTHelper {
                 }
             }
         }).build();
-    }
-
-    public void clearCredentials() {
-        credsProvider.clear();
     }
 
     public HttpResponse post(URI uri, Object data, String contentType) throws Exception {
@@ -322,7 +353,7 @@ public class RESTHelper {
         final int connectionPort = port + offset;
 
         try {
-            final URL url = new URL("http", hostname, connectionPort, query);
+            final URL url = new URL(protocol, hostname, connectionPort, query);
             try {
                 return new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), null);
             } catch (URISyntaxException e) {
@@ -378,6 +409,11 @@ public class RESTHelper {
             this.restServerPath = restServerPath;
         }
 
+        public Server(RemoteInfinispanServer server) {
+            this.hostname = getHostName(server);
+            this.restServerPath = server.getRESTEndpoint().getContextPath();
+        }
+
         public String getHostname() {
             return hostname;
         }
@@ -385,5 +421,14 @@ public class RESTHelper {
         public String getRestServerPath() {
             return restServerPath;
         }
+    }
+
+    private static String getHostName(RemoteInfinispanServer server) {
+        RESTEndpoint endpoint = server.getRESTEndpoint();
+        // IPv6 addresses should be in square brackets, otherwise http client does not understand it
+        // otherwise should be IPv4
+        String inetHostName = endpoint.getInetAddress().getHostName();
+        String realHostName = endpoint.getInetAddress() instanceof Inet6Address ? "[" + inetHostName + "]" : inetHostName;
+        return realHostName;
     }
 }
