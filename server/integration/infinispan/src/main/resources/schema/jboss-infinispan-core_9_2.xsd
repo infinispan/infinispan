@@ -886,6 +886,12 @@
                     entries in the cache.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="strategy" type="tns:eviction-strategy">
+            <xs:annotation>
+                <xs:documentation>The eviction strategy to use. This determines if eviction is even enabled or if it
+                    has a different variant.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="memory-binary">
@@ -902,6 +908,12 @@
                     the number of entries.  MEMORY will limit the cache by how much memory the entries use</xs:documentation>
             </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="strategy" type="tns:eviction-strategy">
+            <xs:annotation>
+                <xs:documentation>The eviction strategy to use. This determines if eviction is even enabled or if it
+                    has a different variant.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="memory-off-heap">
@@ -916,6 +928,12 @@
             <xs:annotation>
                 <xs:documentation>The eviction type to use whether it is COUNT or MEMORY.  COUNT will limit the cache based on
                     the number of entries.  MEMORY will limit the cache by how much memory the entries use</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="strategy" type="tns:eviction-strategy">
+            <xs:annotation>
+                <xs:documentation>The eviction strategy to use. This determines if eviction is even enabled or if it
+                    has a different variant.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="address-count" type="xs:int" default="1048576">
@@ -1948,29 +1966,42 @@
                     <xs:documentation>Never evict entries. This is the default.</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="MANUAL">
+                <xs:annotation>
+                    <xs:documentation>Eviction will be performed manually. Equivalent internally to NONE.</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="REMOVE">
+                <xs:annotation>
+                    <xs:documentation>Eviction will be performed automatically to ensure that "older" entries are removed to make room
+                        for new entries.</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="EXCEPTION">
+                <xs:annotation>
+                    <xs:documentation>Eviction is not performed and instead when the container is full exceptions will prevent
+                        new entries from being written to the container. This cache must be transactional and now allow for
+                        commit optimizations that would prevent it from performing a two phase commit.</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="UNORDERED">
                 <xs:annotation>
-                    <xs:documentation>Actually activates LRU.</xs:documentation>
+                    <xs:documentation>Deprecated. Activates REMOVE policy.</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="FIFO">
                 <xs:annotation>
-                    <xs:documentation>Deprecated. Actually activates LRU.</xs:documentation>
+                    <xs:documentation>Deprecated. Activates REMOVE policy.</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="LRU">
                 <xs:annotation>
-                    <xs:documentation>Least-Recently Used policy.</xs:documentation>
+                    <xs:documentation>Deprecated. Activates REMOVE policy.</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="LIRS">
                 <xs:annotation>
-                    <xs:documentation>Low Inter-reference Recency Set. An improved version of LRU which uses cache-locality access information to better decide which data to evict.</xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="MANUAL">
-                <xs:annotation>
-                    <xs:documentation>Eviction will be performed manually. Equivalent internally to NONE.</xs:documentation>
+                    <xs:documentation>Deprecated. Activates REMOVE policy.</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
         </xs:restriction>
