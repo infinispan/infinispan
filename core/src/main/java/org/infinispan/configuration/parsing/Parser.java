@@ -1151,6 +1151,8 @@ public class Parser implements ConfigurationParser {
                if (storage != null) {
                   throw ParseUtils.unexpectedElement(reader);
                }
+               ParseUtils.requireNoAttributes(reader);
+               ParseUtils.requireNoContent(reader);
                storage = ConfigurationStorage.VOLATILE;
                break;
             }
@@ -1158,6 +1160,8 @@ public class Parser implements ConfigurationParser {
                if (storage != null) {
                   throw ParseUtils.unexpectedElement(reader);
                }
+               ParseUtils.requireNoAttributes(reader);
+               ParseUtils.requireNoContent(reader);
                storage = ConfigurationStorage.OVERLAY;
                break;
             }

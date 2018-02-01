@@ -550,6 +550,8 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     if (storage != null) {
                         throw ParseUtils.unexpectedElement(reader);
                     }
+                    ParseUtils.requireNoAttributes(reader);
+                    ParseUtils.requireNoContent(reader);
                     storage = ConfigurationStorage.VOLATILE;
                     break;
                 }
@@ -557,6 +559,8 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     if (storage != null) {
                         throw ParseUtils.unexpectedElement(reader);
                     }
+                    ParseUtils.requireNoAttributes(reader);
+                    ParseUtils.requireNoContent(reader);
                     storage = ConfigurationStorage.OVERLAY;
                     break;
                 }
@@ -564,6 +568,8 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     if (storage != null) {
                         throw ParseUtils.unexpectedElement(reader);
                     }
+                    ParseUtils.requireNoAttributes(reader);
+                    ParseUtils.requireNoContent(reader);
                     storage = ConfigurationStorage.MANAGED;
                     break;
                 }
@@ -572,7 +578,9 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                         throw ParseUtils.unexpectedElement(reader);
                     }
                     storage = ConfigurationStorage.CUSTOM;
+                    ParseUtils.requireSingleAttribute(reader, Attribute.CLASS.getLocalName());
                     String klass = ParseUtils.readStringAttributeElement(reader, Attribute.CLASS.getLocalName());
+                    ParseUtils.requireNoContent(reader);
                     GlobalStateResource.CONFIGURATION_STORAGE_CLASS.parseAndSetParameter(klass, globalState, reader);
                     break;
                 }

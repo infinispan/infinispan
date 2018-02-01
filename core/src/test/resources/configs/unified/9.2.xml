@@ -40,7 +40,9 @@
       </jmx>
       <global-state>
          <persistent-location path="persistentPath" relative-to="jboss.server.temp.dir" />
+         <shared-persistent-location path="sharedPath" relative-to="jboss.server.temp.dir" />
          <temporary-location path="tmpPath" relative-to="jboss.server.temp.dir" />
+         <overlay-configuration-storage />
       </global-state>
       <local-cache name="local" start="EAGER" module="org.infinispan" statistics="true">
          <encoding>
@@ -291,7 +293,7 @@
          <transaction mode="FULL_XA" stop-timeout="61500" locking="OPTIMISTIC"/>
          <expiration interval="11500" lifespan="13" max-idle="13"/>
          <memory>
-            <object size="21500"/>
+            <object size="21500" strategy="REMOVE"/>
          </memory>
          <partition-handling when-split="DENY_READ_WRITES" merge-policy="PREFERRED_ALWAYS"/>
          <state-transfer enabled="true" timeout="60500" chunk-size="10500" />
