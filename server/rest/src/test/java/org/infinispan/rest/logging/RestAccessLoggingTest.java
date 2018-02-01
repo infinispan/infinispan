@@ -12,6 +12,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.annotations.Test;
 
 /**
@@ -34,11 +35,11 @@ public class RestAccessLoggingTest extends SingleCacheManagerTest {
       super.setup();
       logAppender = new StringLogAppender("org.infinispan.REST_ACCESS_LOG",
             Level.TRACE,
-            t -> t.getName().startsWith("REST-rest-ServerWorker-"),
+            t -> t.getName().startsWith("REST-RestAccessLoggingTest-ServerWorker-"),
             PatternLayout.newBuilder().withPattern(LOG_FORMAT).build());
       logAppender.install();
       restServer = new RestServerHelper(cacheManager);
-      restServer.start();
+      restServer.start(TestResourceTracker.getCurrentTestShortName());
       client = new HttpClient();
       client.start();
    }

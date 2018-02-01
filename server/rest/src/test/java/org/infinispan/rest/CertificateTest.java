@@ -8,6 +8,7 @@ import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.authentication.impl.ClientCertAuthenticator;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.Test;
@@ -51,7 +52,7 @@ public class CertificateTest extends AbstractInfinispanTest {
             .withKeyStore(KEY_STORE_PATH, "secret")
             .withTrustStore(TRUST_STORE_PATH, "secret")
             .withClientAuth()
-            .start();
+            .start(TestResourceTracker.getCurrentTestShortName());
 
       //when
       ContentResponse response = client
