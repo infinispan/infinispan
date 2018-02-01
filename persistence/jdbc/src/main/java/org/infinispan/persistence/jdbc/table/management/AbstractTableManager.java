@@ -185,8 +185,15 @@ public abstract class AbstractTableManager implements TableManager {
    protected void dropTimestampIndex(Connection conn) throws PersistenceException {
       if (!timestampIndexExists(conn)) return;
 
-      String dropIndexDdl = String.format("DROP INDEX %s ON %s", getIndexName(true), getTableName());
+      String dropIndexDdl = getDropTimestampSql();
+      if (log.isTraceEnabled()) {
+         log.tracef("Dropping timestamp index with '%s'", dropIndexDdl);
+      }
       executeUpdateSql(conn, dropIndexDdl);
+   }
+
+   protected String getDropTimestampSql() {
+      return String.format("DROP INDEX %s ON %s", getIndexName(true), getTableName());
    }
 
    public int getFetchSize() {
