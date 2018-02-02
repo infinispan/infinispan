@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.counter.api.CounterManager;
 
 import io.netty.buffer.ByteBuf;
@@ -20,7 +21,7 @@ public class IsDefinedOperation extends BaseCounterOperation<Boolean> {
 
    public IsDefinedOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
                              Configuration cfg, String counterName) {
-      super(codec, channelFactory, topologyId, cfg, counterName);
+      super(COUNTER_IS_DEFINED_REQUEST, COUNTER_IS_DEFINED_RESPONSE, codec, channelFactory, topologyId, cfg, counterName);
    }
 
    @Override
@@ -29,7 +30,7 @@ public class IsDefinedOperation extends BaseCounterOperation<Boolean> {
    }
 
    @Override
-   public Boolean decodePayload(ByteBuf buf, short status) {
-      return status == NO_ERROR_STATUS;
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+      complete(status == NO_ERROR_STATUS);
    }
 }

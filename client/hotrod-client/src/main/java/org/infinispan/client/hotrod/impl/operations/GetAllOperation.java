@@ -8,8 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
-import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -27,14 +25,13 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class GetAllOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
 
-   private HeaderDecoder<Map<K, V>> decoder;
    private Map<K, V> result;
    private int size = -1;
 
    public GetAllOperation(Codec codec, ChannelFactory channelFactory,
                           Set<byte[]> keys, byte[] cacheName, AtomicInteger topologyId,
                           int flags, Configuration cfg) {
-      super(codec, channelFactory, cacheName, topologyId, flags, cfg);
+      super(GET_ALL_REQUEST, GET_ALL_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg);
       this.keys = keys;
    }
 
@@ -42,8 +39,7 @@ public class GetAllOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
 
    @Override
    protected void executeOperation(Channel channel) {
-      HeaderParams header = headerParams(HotRodConstants.GET_ALL_REQUEST);
-      decoder = scheduleRead(channel, header);
+      scheduleRead(channel);
 
       int bufSize = codec.estimateHeaderSize(header) + ByteBufUtil.estimateVIntSize(keys.size());
       for (byte[] key : keys) {
@@ -71,7 +67,7 @@ public class GetAllOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
    }
 
    @Override
-   public Map<K, V> decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (size < 0) {
          size = ByteBufUtil.readVInt(buf);
          result = new HashMap<>(size);
@@ -83,6 +79,6 @@ public class GetAllOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
          result.put(key, value);
          decoder.checkpoint();
       }
-      return result;
+      complete(result);
    }
 }

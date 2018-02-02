@@ -468,21 +468,21 @@ public class HintingByteBuf extends ByteBuf {
 
    @Override
    public boolean isReadable() {
-      return terminated? buffer.isReadable() : true;
+      return buffer.isReadable(); // see readableBytes();
    }
 
    @Override
    public boolean isReadable(int size) {
-      return terminated? buffer.isReadable(size) : true;
+      return buffer.isReadable(size); // see readableBytes();
    }
 
    @Override
    public int readableBytes() {
-      if (terminated) {
-         return buffer.readableBytes();
-      } else {
-         return Integer.MAX_VALUE - buffer.readerIndex();
-      }
+      // Contrary to ReplayingDecoderByteBuf we will provide the correct number.
+      // If someone reads past this number we'll throw the Signal as usual, but we're not fooling anyone.
+      // This is useful when injecting another handler below the decoder (as GetStreamOperation does),
+      // as we can hand over the buffered bytes to be consumed immediately.
+      return buffer.readableBytes();
    }
 
    @Override

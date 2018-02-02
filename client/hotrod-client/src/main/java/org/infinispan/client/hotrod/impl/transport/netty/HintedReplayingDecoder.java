@@ -84,11 +84,6 @@ public abstract class HintedReplayingDecoder<S> extends ByteToMessageDecoder {
    }
 
    @Override
-   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-      super.channelRead(ctx, msg);
-   }
-
-   @Override
    protected void callDecode(ChannelHandlerContext ctx, ByteBuf in, List<Object> xxx) {
       if (in.readableBytes() < requiredReadableBytes) {
          // noop, wait for further reads
@@ -123,6 +118,9 @@ public abstract class HintedReplayingDecoder<S> extends ByteToMessageDecoder {
                   // anymore because the buffer has been released already.
                }
                break;
+            } catch (Throwable t) {
+               requiredReadableBytes = 0;
+               throw t;
             }
          }
       } catch (DecoderException e) {

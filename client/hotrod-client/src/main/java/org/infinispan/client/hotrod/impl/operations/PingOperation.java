@@ -11,6 +11,7 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelOperation;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
@@ -33,13 +34,16 @@ public class PingOperation extends HotRodOperation<PingOperation.PingResult> imp
    private final boolean releaseChannel;
 
    public PingOperation(Codec codec, AtomicInteger topologyId, Configuration cfg, byte[] cacheName, ChannelFactory channelFactory, boolean releaseChannel) {
-      super(codec, 0, cfg, cacheName, topologyId, channelFactory);
+      super(PING_REQUEST, PING_RESPONSE, codec, 0, cfg, cacheName, topologyId, channelFactory);
       this.releaseChannel = releaseChannel;
    }
 
    @Override
    public void invoke(Channel channel) {
-      sendHeaderAndRead(channel, HotRodConstants.PING_REQUEST);
+      sendHeaderAndRead(channel);
+      if (releaseChannel) {
+         releaseChannel(channel);
+      }
    }
 
    @Override
@@ -53,11 +57,11 @@ public class PingOperation extends HotRodOperation<PingOperation.PingResult> imp
    }
 
    @Override
-   public PingResult decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isSuccess(status)) {
-         return HotRodConstants.hasCompatibility(status)
+         complete(HotRodConstants.hasCompatibility(status)
                ? PingResult.SUCCESS_WITH_COMPAT
-               : PingResult.SUCCESS;
+               : PingResult.SUCCESS);
       } else {
          String hexStatus = Integer.toHexString(status);
          if (trace)
@@ -69,19 +73,13 @@ public class PingOperation extends HotRodOperation<PingOperation.PingResult> imp
    }
 
    @Override
-   public void releaseChannel(Channel channel) {
-      if (releaseChannel) {
-         super.releaseChannel(channel);
-      }
-   }
-
-   @Override
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
       if (cause instanceof HotRodClientException && cause.getMessage().contains("CacheNotFoundException")) {
          complete(PingResult.CACHE_DOES_NOT_EXIST);
          return;
+      } else {
+         super.exceptionCaught(ctx, cause);
       }
-      super.exceptionCaught(ctx, cause);
    }
 
    public enum PingResult {

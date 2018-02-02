@@ -72,6 +72,10 @@ public class OperationsFactory implements HotRodConstants {
       return cacheName;
    }
 
+   public Codec getCodec() {
+      return codec;
+   }
+
    public <V> GetOperation<V> newGetKeyOperation(Object key, byte[] keyBytes) {
       return new GetOperation<>(
             codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg);

@@ -7,6 +7,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -78,12 +79,13 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       List<WorkerThread> workers = new ArrayList<WorkerThread>();
 
       //create 20 threads and do work with them
+      AtomicLong opCounter = new AtomicLong(0);
       for (int i =0; i < 20; i++) {
          WorkerThread workerThread = new WorkerThread(remoteCache);
          workers.add(workerThread);
-         workerThread.stress();
+         workerThread.stress(opCounter);
       }
-      while (channelFactory.getNumActive() <= 15) {
+      while (opCounter.get() < 100) {
          Thread.sleep(10);
       }
 

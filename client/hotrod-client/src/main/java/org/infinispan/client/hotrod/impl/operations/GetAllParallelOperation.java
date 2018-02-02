@@ -41,7 +41,7 @@ public class GetAllParallelOperation<K, V> extends ParallelHotRodOperation<Map<K
       }
 
       return splittedKeys.values().stream().map(
-            keysSubset -> new GetAllOperation<K, V>(codec, channelFactory, keysSubset, cacheName, topologyId,
+            keysSubset -> new GetAllOperation<K, V>(codec, channelFactory, keysSubset, cacheName, header.topologyId(),
                   flags, cfg)).collect(Collectors.toList());
    }
 

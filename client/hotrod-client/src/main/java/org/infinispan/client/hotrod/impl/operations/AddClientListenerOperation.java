@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -12,9 +13,9 @@ import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.event.impl.ClientEventDispatcher;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderOrEventDecoder;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
@@ -58,7 +59,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> i
                                         String cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
                                         byte[] listenerId, ClientListenerNotifier listenerNotifier, Object listener,
                                         byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
-      super(codec, channelFactory, RemoteCacheManager.cacheNameBytes(cacheName), topologyId, flags, cfg);
+      super(ADD_CLIENT_LISTENER_REQUEST, ADD_CLIENT_LISTENER_RESPONSE, codec, channelFactory, RemoteCacheManager.cacheNameBytes(cacheName), topologyId, flags, cfg);
       this.listenerId = listenerId;
       this.listenerNotifier = listenerNotifier;
       this.listener = listener;
@@ -68,7 +69,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> i
    }
 
    public AddClientListenerOperation copy() {
-      return new AddClientListenerOperation(codec, channelFactory, cacheNameString, topologyId, flags, cfg,
+      return new AddClientListenerOperation(codec, channelFactory, cacheNameString, header.topologyId(), flags, cfg,
             listenerId, listenerNotifier, listener, filterFactoryParams, converterFactoryParams);
    }
 
@@ -98,10 +99,25 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> i
 
    @Override
    protected void executeOperation(Channel channel) {
+      // wait until all scheduled operations complete since we'll be using the channel exclusively
+      CompletableFuture<Void> allCompleteFuture = channel.pipeline().get(HeaderDecoder.class).allCompleteFuture();
+      if (allCompleteFuture.isDone()) {
+         execute(channel);
+      } else {
+         allCompleteFuture.whenComplete((nil, throwable) -> execute(channel));
+      }
+   }
+
+   private void execute(Channel channel) {
+      if (!channel.isActive()) {
+         channelInactive(channel);
+         return;
+      }
       ClientListener clientListener = extractClientListener();
 
-      HeaderParams header = headerParams(ADD_CLIENT_LISTENER_REQUEST);
-      channel.pipeline().addLast(new HeaderOrEventDecoder(codec, header, channelFactory, this, this, listenerId, cfg), this);
+      channel.pipeline().replace(HeaderDecoder.class, HeaderDecoder.NAME,
+            new HeaderOrEventDecoder(codec, header, channelFactory, this, this, listenerId, cfg));
+      scheduleTimeout(channel.eventLoop());
 
       dedicatedChannel = channel;
       listenerNotifier.addDispatcher(ClientEventDispatcher.create(this, listenerNotifier));
@@ -121,7 +137,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> i
    }
 
    @Override
-   public Short decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isSuccess(status)) {
          listenerNotifier.startClientListener(listenerId);
       } else {
@@ -129,11 +145,16 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> i
          listenerNotifier.removeClientListener(listenerId);
          throw log.failedToAddListener(listener, status);
       }
-      return status;
+      complete(status);
    }
 
    @Override
    public void accept(ClientEvent clientEvent) {
       listenerNotifier.invokeEvent(listenerId, clientEvent);
+   }
+
+   public void postponeTimeout(Channel channel) {
+      timeoutFuture.cancel(false);
+      scheduleTimeout(channel.eventLoop());
    }
 }

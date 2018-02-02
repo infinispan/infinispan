@@ -32,9 +32,9 @@ abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
    private static final byte[] COUNTER_CACHE_NAME = RemoteCacheManager.cacheNameBytes("org.infinispan.counter");
    private final String counterName;
 
-   BaseCounterOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId, Configuration cfg,
+   BaseCounterOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId, Configuration cfg,
                         String counterName) {
-      super(codec, channelFactory, EMPTY_CACHE_NAME, topologyId, 0, cfg);
+      super(requestCode, responseCode, codec, channelFactory, EMPTY_CACHE_NAME, topologyId, 0, cfg);
       this.counterName = counterName;
    }
 
@@ -44,13 +44,12 @@ abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
     * @return the {@link HeaderParams}.
     */
    void sendHeaderAndCounterNameAndRead(Channel channel, short opCode) {
-      ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, opCode, 0);
+      ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, 0);
       channel.writeAndFlush(buf);
    }
 
-   ByteBuf getHeaderAndCounterNameBufferAndRead(Channel channel, short opCode, int extraBytes) {
-      HeaderParams header = headerParams(opCode);
-      scheduleRead(channel, header);
+   ByteBuf getHeaderAndCounterNameBufferAndRead(Channel channel, int extraBytes) {
+      scheduleRead(channel);
 
       // counterName should never be null/empty
       byte[] counterBytes = counterName.getBytes(HotRodConstants.HOTROD_STRING_CHARSET);
@@ -58,7 +57,7 @@ abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
       codec.writeHeader(buf, header);
       ByteBufUtil.writeString(buf, counterName);
 
-      setCacheName(header);
+      setCacheName();
       return buf;
    }
 
@@ -74,8 +73,8 @@ abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
       }
    }
 
-   void setCacheName(HeaderParams params) {
-      params.cacheName(COUNTER_CACHE_NAME);
+   void setCacheName() {
+      header.cacheName(COUNTER_CACHE_NAME);
    }
 
    @Override

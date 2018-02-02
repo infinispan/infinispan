@@ -6,10 +6,10 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.VersionedMetadataImpl;
 import org.infinispan.client.hotrod.impl.protocol.ChannelInputStream;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -28,15 +28,14 @@ public class GetStreamOperation extends AbstractKeyOperation<ChannelInputStream>
 
    public GetStreamOperation(Codec codec, ChannelFactory channelFactory,
                              Object key, byte[] keyBytes, int offset, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
+      super(GET_STREAM_REQUEST, GET_STREAM_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
       this.offset = offset;
    }
 
    @Override
    public void executeOperation(Channel channel) {
       this.channel = channel;
-      HeaderParams header = headerParams(GET_STREAM_REQUEST);
-      scheduleRead(channel, header);
+      scheduleRead(channel);
 
       ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + ByteBufUtil.estimateArraySize(keyBytes)
             + ByteBufUtil.estimateVIntSize(offset));
@@ -48,15 +47,9 @@ public class GetStreamOperation extends AbstractKeyOperation<ChannelInputStream>
    }
 
    @Override
-   public void releaseChannel(Channel channel) {
-      // noop
-   }
-
-   @Override
-   public ChannelInputStream decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isNotExist(status) || !HotRodConstants.isSuccess(status)) {
-         super.releaseChannel(channel);
-         return null;
+         complete(null);
       } else {
          short flags = buf.readUnsignedByte();
          long creation = -1;
@@ -75,9 +68,16 @@ public class GetStreamOperation extends AbstractKeyOperation<ChannelInputStream>
          int totalLength = ByteBufUtil.readVInt(buf);
          VersionedMetadataImpl versionedMetadata = new VersionedMetadataImpl(creation, lifespan, lastUsed, maxIdle, version);
 
-         ChannelInputStream stream = new ChannelInputStream(versionedMetadata, () -> channelFactory.releaseChannel(channel), totalLength);
-         channel.pipeline().addLast(stream);
-         return stream;
+         ChannelInputStream stream = new ChannelInputStream(versionedMetadata, () -> {
+            // ChannelInputStreams removes itself when it finishes reading all data
+            if (channel.pipeline().get(ChannelInputStream.class) != null) {
+               channel.pipeline().remove(ChannelInputStream.class);
+            }
+         }, totalLength);
+         if (stream.moveReadable(buf)) {
+            channel.pipeline().addBefore(HeaderDecoder.NAME, ChannelInputStream.NAME, stream);
+         }
+         complete(stream);
       }
    }
 }

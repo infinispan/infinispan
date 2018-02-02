@@ -29,6 +29,8 @@ class AuthHandler extends ActivationHandler {
    private static final String AUTH_INT = "auth-int";
    private static final String AUTH_CONF = "auth-conf";
 
+   static final String NAME = "auth-handler";
+
    private final AuthenticationConfiguration authentication;
    private final SaslClient saslClient;
    private final OperationsFactory operationsFactory;

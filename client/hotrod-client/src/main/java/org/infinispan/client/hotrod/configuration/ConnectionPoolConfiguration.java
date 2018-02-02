@@ -20,9 +20,10 @@ public class ConnectionPoolConfiguration {
    private final boolean testOnBorrow;
    private final boolean testOnReturn;
    private final boolean testWhileIdle;
+   private final int maxPendingRequests;
 
    ConnectionPoolConfiguration(ExhaustedAction exhaustedAction, boolean lifo, int maxActive, int maxTotal, long maxWait, int maxIdle, int minIdle, int numTestsPerEvictionRun,
-         long timeBetweenEvictionRuns, long minEvictableIdleTime, boolean testOnBorrow, boolean testOnReturn, boolean testWhileIdle) {
+                               long timeBetweenEvictionRuns, long minEvictableIdleTime, boolean testOnBorrow, boolean testOnReturn, boolean testWhileIdle, int maxPendingRequests) {
       this.exhaustedAction = exhaustedAction;
       this.lifo = lifo;
       this.maxActive = maxActive;
@@ -36,6 +37,7 @@ public class ConnectionPoolConfiguration {
       this.testOnBorrow = testOnBorrow;
       this.testOnReturn = testOnReturn;
       this.testWhileIdle = testWhileIdle;
+      this.maxPendingRequests = maxPendingRequests;
    }
 
    public ExhaustedAction exhaustedAction() {
@@ -90,11 +92,15 @@ public class ConnectionPoolConfiguration {
       return testWhileIdle;
    }
 
+   public int maxPendingRequests() {
+      return maxPendingRequests;
+   }
+
    @Override
    public String toString() {
       return "ConnectionPoolConfiguration [exhaustedAction=" + exhaustedAction + ", lifo=" + lifo + ", maxActive=" + maxActive + ", maxTotal=" + maxTotal + ", maxWait=" + maxWait
             + ", maxIdle=" + maxIdle + ", minIdle=" + minIdle + ", numTestsPerEvictionRun=" + numTestsPerEvictionRun + ", timeBetweenEvictionRuns=" + timeBetweenEvictionRuns
-            + ", minEvictableIdleTime=" + minEvictableIdleTime + ", testOnBorrow=" + testOnBorrow + ", testOnReturn=" + testOnReturn + ", testWhileIdle=" + testWhileIdle + "]";
+            + ", minEvictableIdleTime=" + minEvictableIdleTime + ", testOnBorrow=" + testOnBorrow + ", testOnReturn=" + testOnReturn + ", testWhileIdle=" + testWhileIdle
+            + ", maxPendingRequests=" + maxPendingRequests + "]";
    }
-
 }

@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
@@ -45,8 +44,6 @@ import io.netty.buffer.ByteBuf;
 public class Codec20 implements Codec, HotRodConstants {
 
    private static final Log log = LogFactory.getLog(Codec20.class, Log.class);
-
-   static final AtomicLong MSG_ID = new AtomicLong();
 
    final boolean trace = getLog().isTraceEnabled();
 
@@ -118,7 +115,7 @@ public class Codec20 implements Codec, HotRodConstants {
    protected HeaderParams writeHeader(
          ByteBuf buf, HeaderParams params, byte version) {
       buf.writeByte(HotRodConstants.REQUEST_MAGIC);
-      ByteBufUtil.writeVLong(buf, params.messageId(MSG_ID.incrementAndGet()).messageId);
+      ByteBufUtil.writeVLong(buf, params.messageId);
       buf.writeByte(version);
       buf.writeByte(params.opCode);
       ByteBufUtil.writeArray(buf, params.cacheName);
@@ -143,10 +140,25 @@ public class Codec20 implements Codec, HotRodConstants {
             1 + 1 + ByteBufUtil.estimateVIntSize(params.topologyId.get());
    }
 
+   public long readMessageId(ByteBuf buf) {
+      short magic = buf.readUnsignedByte();
+      if (magic != HotRodConstants.RESPONSE_MAGIC) {
+         final Log localLog = getLog();
+         localLog.invalidMagicNumber(HotRodConstants.RESPONSE_MAGIC, magic);
+         if (trace)
+            localLog.tracef("Socket dump: %s", hexDump(buf));
+
+         throw new InvalidResponseException(String.format("Invalid magic number. Expected %#x and received %#x", HotRodConstants.RESPONSE_MAGIC, magic));
+      }
+      long receivedMessageId = ByteBufUtil.readVLong(buf);
+      if (trace) {
+         getLog().tracef("Received response for messageId=%d", receivedMessageId);
+      }
+      return receivedMessageId;
+   }
+
    @Override
    public short readHeader(ByteBuf buf, HeaderParams params, ChannelFactory channelFactory, SocketAddress serverAddress) {
-      short magic = readMagic(buf);
-      long receivedMessageId = readMessageId(buf, params);
       short receivedOpCode = buf.readUnsignedByte();
       return readPartialHeader(buf, params, receivedOpCode, channelFactory, serverAddress);
    }
@@ -178,8 +190,7 @@ public class Codec20 implements Codec, HotRodConstants {
 
    @Override
    public ClientEvent readEvent(ByteBuf buf, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist, SocketAddress serverAddress) {
-      readMagic(buf);
-      readMessageId(buf, null);
+      readMessageId(buf);
       short eventTypeId = buf.readUnsignedByte();
       return readPartialEvent(buf, expectedListenerId, marshaller, eventTypeId, whitelist, serverAddress);
    }
@@ -271,8 +282,6 @@ public class Codec20 implements Codec, HotRodConstants {
 
    @Override
    public Either<Short, ClientEvent> readHeaderOrEvent(ByteBuf buf, HeaderParams params, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist, ChannelFactory channelFactory, SocketAddress serverAddress) {
-      readMagic(buf);
-      readMessageId(buf, null);
       short opCode = buf.readUnsignedByte();
       switch (opCode) {
          case CACHE_ENTRY_CREATED_EVENT_RESPONSE:
@@ -344,39 +353,6 @@ public class Codec20 implements Codec, HotRodConstants {
             return "ClientCacheEntryCustomEvent(" + "eventData=" + eventData + ", eventType=" + eventType + ")";
          }
       };
-   }
-
-   private long readMessageId(ByteBuf buf, HeaderParams params) {
-      long receivedMessageId = ByteBufUtil.readVLong(buf);
-      final Log localLog = getLog();
-      // If received id is 0, it could be that a failure was noted before the
-      // message id was detected, so don't consider it to a message id error
-      if (params != null && receivedMessageId != params.messageId && receivedMessageId != 0) {
-         String message = "Invalid message id. Expected %d and received %d";
-         localLog.invalidMessageId(params.messageId, receivedMessageId);
-         if (trace)
-            localLog.tracef("Socket dump: %s", hexDump(buf));
-
-         throw new InvalidResponseException(String.format(message, params.messageId, receivedMessageId));
-      }
-
-      if (trace)
-         localLog.tracef("Received response for messageId=%d", receivedMessageId);
-
-      return receivedMessageId;
-   }
-
-   private short readMagic(ByteBuf buf) {
-      short magic = buf.readUnsignedByte();
-      if (magic != HotRodConstants.RESPONSE_MAGIC) {
-         final Log localLog = getLog();
-         localLog.invalidMagicNumber(HotRodConstants.RESPONSE_MAGIC, magic);
-         if (trace)
-            localLog.tracef("Socket dump: %s", hexDump(buf));
-
-         throw new InvalidResponseException(String.format("Invalid magic number. Expected %#x and received %#x", HotRodConstants.RESPONSE_MAGIC, magic));
-      }
-      return magic;
    }
 
    @Override
@@ -474,7 +450,9 @@ public class Codec20 implements Codec, HotRodConstants {
 
       int currentTopology = channelFactory.getTopologyId(params.cacheName);
       int topologyAge = channelFactory.getTopologyAge();
-      if (params.topologyAge == topologyAge && currentTopology != newTopologyId) {
+      // Since the header is now created only once (not during each retry) the topologyAge in header may be non-actual
+      // but we should still accept the topology
+      if (params.topologyAge < topologyAge || params.topologyAge == topologyAge && currentTopology != newTopologyId) {
          params.topologyId.set(newTopologyId);
          List<SocketAddress> addressList = Arrays.asList(addresses);
          if (localLog.isInfoEnabled()) {
@@ -512,8 +490,7 @@ public class Codec20 implements Codec, HotRodConstants {
    }
 
    private void readAndValidateHeader(ByteBuf buf) {
-      readMagic(buf);
-      readMessageId(buf, null);
+      readMessageId(buf);
       short responseCode = buf.readByte();
       assert responseCode == COUNTER_EVENT_RESPONSE;
       short status = buf.readByte();

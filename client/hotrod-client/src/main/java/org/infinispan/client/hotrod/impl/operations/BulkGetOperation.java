@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -23,18 +22,16 @@ import io.netty.channel.Channel;
 public class BulkGetOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
    private final int entryCount;
    private final Map<K, V> result = new HashMap<>();
-   private HeaderDecoder<Map<K, V>> decoder;
 
    public BulkGetOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicInteger topologyId,
                            int flags, Configuration cfg, int entryCount) {
-      super(codec, channelFactory, cacheName, topologyId, flags, cfg);
+      super(BULK_GET_REQUEST, BULK_GET_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg);
       this.entryCount = entryCount;
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      HeaderParams header = headerParams(BULK_GET_REQUEST);
-      decoder = scheduleRead(channel, header);
+      scheduleRead(channel);
 
       ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + ByteBufUtil.estimateVIntSize(entryCount));
 
@@ -44,13 +41,18 @@ public class BulkGetOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
    }
 
    @Override
-   public Map<K, V> decodePayload(ByteBuf buf, short status) {
+   protected void reset() {
+      result.clear();
+   }
+
+   @Override
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       while (buf.readUnsignedByte() == 1) { //there's more!
          K key = codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller());
          V value = codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller());
          result.put(key, value);
          decoder.checkpoint();
       }
-      return result;
+      complete(result);
    }
 }

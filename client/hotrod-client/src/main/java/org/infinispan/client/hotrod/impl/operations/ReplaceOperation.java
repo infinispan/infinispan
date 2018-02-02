@@ -5,8 +5,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -26,19 +26,18 @@ public class ReplaceOperation<V> extends AbstractKeyValueOperation<V> {
                            Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
                            int flags, Configuration cfg, byte[] value,
                            long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      super(codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, value,
+      super(REPLACE_REQUEST, REPLACE_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, value,
             lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      HeaderParams header = headerParams(REPLACE_REQUEST);
-      scheduleRead(channel, header);
-      sendKeyValueOperation(channel, header);
+      scheduleRead(channel);
+      sendKeyValueOperation(channel);
    }
 
    @Override
-   public V decodePayload(ByteBuf buf, short status) {
-      return returnPossiblePrevValue(buf, status);
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+      complete(returnPossiblePrevValue(buf, status));
    }
 }

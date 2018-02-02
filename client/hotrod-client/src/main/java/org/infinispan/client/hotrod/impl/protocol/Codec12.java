@@ -25,7 +25,7 @@ public class Codec12 extends Codec11 {
    @Override
    protected HeaderParams writeHeader(ByteBuf buf, HeaderParams params, byte version) {
       buf.writeByte(HotRodConstants.REQUEST_MAGIC);
-      ByteBufUtil.writeVLong(buf, params.messageId(MSG_ID.incrementAndGet()).messageId);
+      ByteBufUtil.writeVLong(buf, params.messageId);
       buf.writeByte(version);
       buf.writeByte(params.opCode);
       ByteBufUtil.writeArray(buf, params.cacheName);

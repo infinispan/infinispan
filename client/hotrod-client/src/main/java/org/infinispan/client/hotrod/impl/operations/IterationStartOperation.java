@@ -9,9 +9,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -33,7 +33,7 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
    IterationStartOperation(Codec codec, int flags, Configuration cfg, byte[] cacheName, AtomicInteger topologyId,
                            String filterConverterFactory, byte[][] filterParameters, Set<Integer> segments,
                            int batchSize, ChannelFactory channelFactory, boolean metadata) {
-      super(codec, channelFactory, cacheName, topologyId, flags, cfg);
+      super(ITERATION_START_REQUEST, ITERATION_START_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg);
       this.filterConverterFactory = filterConverterFactory;
       this.filterParameters = filterParameters;
       this.segments = segments;
@@ -44,9 +44,8 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
 
    @Override
    protected void executeOperation(Channel channel) {
-      HeaderParams header = headerParams(ITERATION_START_REQUEST);
       this.channel = channel;
-      scheduleRead(channel, header);
+      scheduleRead(channel);
 
       ByteBuf buf = channel.alloc().buffer();
 
@@ -77,9 +76,9 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
    }
 
    @Override
-   public IterationStartResponse decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       SegmentConsistentHash consistentHash = (SegmentConsistentHash) channelFactory.getConsistentHash(cacheName);
-      IterationStartResponse response = new IterationStartResponse(ByteBufUtil.readArray(buf), consistentHash, topologyId.get(), channel);
-      return response;
+      IterationStartResponse response = new IterationStartResponse(ByteBufUtil.readArray(buf), consistentHash, header.topologyId().get(), channel);
+      complete(response);
    }
 }

@@ -6,10 +6,10 @@ import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.MetadataValueImpl;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
@@ -33,20 +33,20 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
    public GetWithMetadataOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes,
                                    byte[] cacheName, AtomicInteger topologyId, int flags,
                                    Configuration cfg) {
-      super(codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
+      super(GET_WITH_METADATA, GET_WITH_METADATA_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      HeaderParams header = headerParams(GET_WITH_METADATA);
-      scheduleRead(channel, header);
-      sendArrayOperation(channel, header, keyBytes);
+      scheduleRead(channel);
+      sendArrayOperation(channel, keyBytes);
    }
 
    @Override
-   public MetadataValue<V> decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isNotExist(status) || !HotRodConstants.isSuccess(status)) {
-         return null;
+         complete(null);
+         return;
       }
       short flags = buf.readUnsignedByte();
       long creation = -1;
@@ -66,6 +66,6 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
          log.tracef("Received version: %d", version);
       }
       V value = codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller());
-      return new MetadataValueImpl<V>(creation, lifespan, lastUsed, maxIdle, version, value);
+      complete(new MetadataValueImpl<V>(creation, lifespan, lastUsed, maxIdle, version, value));
    }
 }

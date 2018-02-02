@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
@@ -15,6 +16,7 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelOperation;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
@@ -41,9 +43,9 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
    private boolean triedCompleteRestart = false;
    private String currentClusterName;
 
-   protected RetryOnFailureOperation(Codec codec, ChannelFactory channelFactory,
+   protected RetryOnFailureOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory,
                                      byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(codec, flags, cfg, cacheName, topologyId, channelFactory);
+      super(requestCode, responseCode, codec, flags, cfg, cacheName, topologyId, channelFactory);
    }
 
    @Override
@@ -67,6 +69,8 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
          executeOperation(channel);
       } catch (Throwable t) {
          completeExceptionally(t);
+      } finally {
+         releaseChannel(channel);
       }
    }
 
@@ -103,11 +107,11 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
    }
 
    @Override
-   public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+   public void channelInactive(Channel channel) {
       if (isDone()) {
          return;
       }
-      SocketAddress address = ChannelRecord.of(ctx.channel()).getUnresolvedAddress();
+      SocketAddress address = ChannelRecord.of(channel).getUnresolvedAddress();
       updateFailedServers(address);
       logAndRetryOrFail(log.connectionClosed(address, address), true);
    }
@@ -122,7 +126,9 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
             completeExceptionally(cause);
          } finally {
             if (ctx != null) {
-               ctx.pipeline().remove(this);
+               if (trace) {
+                  log.tracef(cause, "(1) Requesting %s close due to exception", ctx.channel());
+               }
                ctx.close();
             }
          }
@@ -138,19 +144,25 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
             updateFailedServers(address);
          }
          if (ctx != null) {
-            // We need to remove self even if we're about to close the channel
+            // We need to remove decoder even if we're about to close the channel
             // because otherwise we would be notified through channelInactive and we would retry (again).
-            ctx.pipeline().remove(this);
+            if (ctx.pipeline().get(HeaderDecoder.NAME) != null) {
+               ctx.pipeline().remove(HeaderDecoder.NAME);
+            }
+            if (trace) {
+               log.tracef(cause, "(2) Requesting %s close due to exception", ctx.channel());
+            }
             ctx.close();
          }
          logAndRetryOrFail(cause, true);
          return null;
       } else if (cause instanceof RemoteNodeSuspectException) {
-         if (ctx != null) {
-            ctx.pipeline().remove(this);
-            releaseChannel(ctx.channel());
-         }
+         // Why can't we switch cluster here?
          logAndRetryOrFail(cause, false);
+         return null;
+      } else if (cause instanceof HotRodClientException && ((HotRodClientException) cause).isServerError()) {
+         // fail the operation (don't retry) but don't close the channel
+         completeExceptionally(cause);
          return null;
       } else {
          return cause;
@@ -159,8 +171,9 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
 
    protected void logAndRetryOrFail(Throwable e, boolean canSwitchCluster) {
       if (retryCount < channelFactory.getMaxRetries() && channelFactory.getMaxRetries() >= 0) {
-         String message = "Exception encountered. Retry %d out of %d";
-         log.tracef(e, message, retryCount, channelFactory.getMaxRetries());
+         if (trace) {
+            log.tracef(e, "Exception encountered in %s. Retry %d out of %d", this, retryCount, channelFactory.getMaxRetries());
+         }
          retryCount++;
          retryIfNotDone();
       } else if (canSwitchCluster) {

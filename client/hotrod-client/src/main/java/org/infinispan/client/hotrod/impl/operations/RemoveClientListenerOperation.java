@@ -7,10 +7,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelOperation;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -33,7 +33,7 @@ public class RemoveClientListenerOperation extends HotRodOperation<Void> impleme
                                            byte[] cacheName, AtomicInteger topologyId, int flags,
                                            Configuration cfg,
                                            ClientListenerNotifier listenerNotifier, Object listener) {
-      super(codec, flags, cfg, cacheName, topologyId, channelFactory);
+      super(REMOVE_CLIENT_LISTENER_REQUEST, REMOVE_CLIENT_LISTENER_RESPONSE, codec, flags, cfg, cacheName, topologyId, channelFactory);
       this.listenerNotifier = listenerNotifier;
       this.listener = listener;
    }
@@ -50,9 +50,9 @@ public class RemoveClientListenerOperation extends HotRodOperation<Void> impleme
 
    @Override
    public void invoke(Channel channel) {
-      HeaderParams header = headerParams(REMOVE_CLIENT_LISTENER_REQUEST);
-      scheduleRead(channel, header);
-      sendArrayOperation(channel, header, listenerId);
+      scheduleRead(channel);
+      sendArrayOperation(channel, listenerId);
+      releaseChannel(channel);
    }
 
    @Override
@@ -61,10 +61,11 @@ public class RemoveClientListenerOperation extends HotRodOperation<Void> impleme
    }
 
    @Override
-   public Void decodePayload(ByteBuf buf, short status) {
-      if (HotRodConstants.isSuccess(status) || HotRodConstants.isNotExecuted(status))
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+      if (HotRodConstants.isSuccess(status) || HotRodConstants.isNotExecuted(status)) {
          listenerNotifier.removeClientListener(listenerId);
-      return null;
+      }
+      complete(null);
    }
 
    @Override

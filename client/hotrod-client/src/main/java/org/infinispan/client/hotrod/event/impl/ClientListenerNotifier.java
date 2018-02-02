@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
@@ -108,7 +109,7 @@ public class ClientListenerNotifier {
    public void startClientListener(byte[] listenerId) {
       EventDispatcher eventDispatcher = dispatchers.get(new WrappedByteArray(listenerId));
       if (EventDispatcher.statusUpdater.compareAndSet(eventDispatcher, EventDispatcher.DispatcherStatus.STOPPED, EventDispatcher.DispatcherStatus.RUNNING)) {
-         eventDispatcher.channel.pipeline().addLast(eventDispatcher);
+         eventDispatcher.channel.pipeline().replace(HeaderDecoder.NAME, EventDispatcher.NAME, eventDispatcher);
       }
    }
 
@@ -123,7 +124,7 @@ public class ClientListenerNotifier {
             log.tracef("Client listener %s not present (removed concurrently?)", Util.printArray(listenerId.getBytes()));
          }
       } else if (EventDispatcher.statusUpdater.compareAndSet(dispatcher, EventDispatcher.DispatcherStatus.RUNNING, EventDispatcher.DispatcherStatus.STOPPED)) {
-         dispatcher.channel.pipeline().remove(dispatcher);
+         dispatcher.channel.pipeline().replace(dispatcher, HeaderDecoder.NAME, new HeaderDecoder(codec, channelFactory));
          channelFactory.releaseChannel(dispatcher.channel);
       }
       if (trace)

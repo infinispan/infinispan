@@ -5,9 +5,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -29,14 +29,13 @@ public class RemoveIfUnmodifiedOperation<V> extends AbstractKeyOperation<Version
                                       Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
                                       int flags, Configuration cfg,
                                       long version) {
-      super(codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
+      super(REMOVE_IF_UNMODIFIED_REQUEST, REMOVE_IF_UNMODIFIED_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
       this.version = version;
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      HeaderParams header = headerParams(REMOVE_IF_UNMODIFIED_REQUEST);
-      scheduleRead(channel, header);
+      scheduleRead(channel);
 
       ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + ByteBufUtil.estimateArraySize(keyBytes) + 8);
 
@@ -47,7 +46,7 @@ public class RemoveIfUnmodifiedOperation<V> extends AbstractKeyOperation<Version
    }
 
    @Override
-   public VersionedOperationResponse<V> decodePayload(ByteBuf buf, short status) {
-      return returnVersionedOperationResponse(buf, status);
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+      complete(returnVersionedOperationResponse(buf, status));
    }
 }

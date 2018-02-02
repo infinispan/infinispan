@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
@@ -30,23 +31,23 @@ public class AddOperation extends BaseCounterOperation<Long> {
 
    public AddOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId, Configuration cfg,
                        String counterName, long delta) {
-      super(codec, channelFactory, topologyId, cfg, counterName);
+      super(COUNTER_ADD_AND_GET_REQUEST, COUNTER_ADD_AND_GET_RESPONSE, codec, channelFactory, topologyId, cfg, counterName);
       this.delta = delta;
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, COUNTER_ADD_AND_GET_REQUEST, 8);
+      ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, 8);
       buf.writeLong(delta);
       channel.writeAndFlush(buf);
    }
 
    @Override
-   public Long decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       checkStatus(status);
       assertBoundaries(status);
       assert status == NO_ERROR_STATUS;
-      return buf.readLong();
+      complete(buf.readLong());
    }
 
    private void assertBoundaries(short status) {

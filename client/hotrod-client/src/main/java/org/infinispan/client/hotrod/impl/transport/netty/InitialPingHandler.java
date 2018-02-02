@@ -11,6 +11,8 @@ public class InitialPingHandler extends ActivationHandler {
    private static final Log log = LogFactory.getLog(InitialPingHandler.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   static final String NAME = "initial-ping-handler";
+
    private final PingOperation ping;
 
    public InitialPingHandler(PingOperation ping) {
@@ -35,5 +37,6 @@ public class InitialPingHandler extends ActivationHandler {
             channelRecord.complete(channel);
          }
       });
+      ctx.pipeline().remove(this);
    }
 }

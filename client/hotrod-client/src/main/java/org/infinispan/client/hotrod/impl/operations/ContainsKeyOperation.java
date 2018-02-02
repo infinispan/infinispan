@@ -4,9 +4,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -23,18 +23,17 @@ public class ContainsKeyOperation extends AbstractKeyOperation<Boolean> {
 
    public ContainsKeyOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes,
                                byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(codec, channelFactory, key, keyBytes,cacheName, topologyId, flags, cfg);
+      super(CONTAINS_KEY_REQUEST, CONTAINS_KEY_RESPONSE, codec, channelFactory, key, keyBytes,cacheName, topologyId, flags, cfg);
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      HeaderParams header = headerParams(CONTAINS_KEY_REQUEST);
-      scheduleRead(channel, header);
-      sendArrayOperation(channel, header, keyBytes);
+      scheduleRead(channel);
+      sendArrayOperation(channel, keyBytes);
    }
 
    @Override
-   public Boolean decodePayload(ByteBuf buf, short status) {
-      return !HotRodConstants.isNotExist(status) && HotRodConstants.isSuccess(status);
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+      complete(!HotRodConstants.isNotExist(status) && HotRodConstants.isSuccess(status));
    }
 }

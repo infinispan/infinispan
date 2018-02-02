@@ -36,6 +36,7 @@ import io.netty.util.internal.PlatformDependent;
 class ChannelPool {
    private static final AtomicIntegerFieldUpdater<TimeoutCallback> invokedUpdater = AtomicIntegerFieldUpdater.newUpdater(TimeoutCallback.class, "invoked");
    private static final Log log = LogFactory.getLog(ChannelPool.class);
+   private static final int MAX_FULL_CHANNELS_SEEN = 10;
 
    private final Deque<Channel> channels = PlatformDependent.newConcurrentDeque();
    private final Deque<ChannelOperation> callbacks = PlatformDependent.newConcurrentDeque();
@@ -45,18 +46,20 @@ class ChannelPool {
    private final ExhaustedAction exhaustedAction;
    private final long maxWait;
    private final int maxConnections;
+   private final int maxPendingRequests;
    private final AtomicInteger created  = new AtomicInteger();
    private final AtomicInteger active = new AtomicInteger();
    private final ReadWriteLock lock = new ReentrantReadWriteLock();
    private volatile boolean terminated = false;
 
-   ChannelPool(EventExecutor executor, SocketAddress address, ChannelInitializer newChannelInvoker, ExhaustedAction exhaustedAction, long maxWait, int maxConnections) {
+   ChannelPool(EventExecutor executor, SocketAddress address, ChannelInitializer newChannelInvoker, ExhaustedAction exhaustedAction, long maxWait, int maxConnections, int maxPendingRequests) {
       this.executor = executor;
       this.address = address;
       this.newChannelInvoker = newChannelInvoker;
       this.exhaustedAction = exhaustedAction;
       this.maxWait = maxWait;
       this.maxConnections = maxConnections;
+      this.maxPendingRequests = maxPendingRequests;
    }
 
    public void acquire(ChannelOperation callback) {
@@ -65,10 +68,20 @@ class ChannelPool {
          return;
       }
       Channel channel;
+      int fullChannelsSeen = 0;
       while ((channel = channels.pollFirst()) != null) {
          if (!channel.isActive()) {
             // The channel was closed while idle but not removed - just forget it
             continue;
+         }
+         if (!channel.isWritable() || channel.pipeline().get(HeaderDecoder.class).registeredOperations() >= maxPendingRequests) {
+            channels.addLast(channel);
+            // prevent looping on non-writable channels
+            if (++fullChannelsSeen < MAX_FULL_CHANNELS_SEEN) {
+               continue;
+            } else {
+               break;
+            }
          }
          activateChannel(channel, callback, false);
          return;
@@ -90,8 +103,8 @@ class ChannelPool {
          case WAIT:
             break;
          case CREATE_NEW:
-            int c = created.incrementAndGet();
-            int a = active.incrementAndGet();
+            created.incrementAndGet();
+            active.incrementAndGet();
             createAndInvoke(callback);
             return;
          default:
@@ -108,6 +121,7 @@ class ChannelPool {
       lock.writeLock().lock();
       try {
          for (;;) {
+            // at this point we won't be picky and use non-writable channel anyway
             channel = channels.pollFirst();
             if (channel == null) {
                callbacks.addLast(callback);
@@ -162,6 +176,7 @@ class ChannelPool {
       }
 
       if (terminated) {
+         log.debugf("Closing %s due to termination", channel);
          channel.close();
          return;
       }
@@ -193,6 +208,7 @@ class ChannelPool {
             try {
                callback.invoke(channel);
             } catch (Throwable t) {
+               log.tracef(t, "Requesting %s close due to exception", channel);
                discardChannel(channel, record);
             }
          });
@@ -200,6 +216,7 @@ class ChannelPool {
          try {
             callback.invoke(channel);
          } catch (Throwable t) {
+            log.tracef(t, "Requesting %s close due to exception", channel);
             discardChannel(channel, record);
             throw t;
          }
@@ -231,7 +248,11 @@ class ChannelPool {
       try {
          RejectedExecutionException cause = new RejectedExecutionException("Pool was terminated");
          callbacks.forEach(callback -> callback.cancel(address, cause));
-         channels.forEach(Channel::close);
+         channels.forEach(channel -> {
+            // We don't want to fail all operations on given channel,
+            // e.g. when moving from unresolved to resolved addresses
+            channel.pipeline().fireUserEventTriggered(ChannelPoolCloseEvent.INSTANCE);
+         });
       } finally {
          lock.writeLock().unlock();
       }
@@ -240,6 +261,7 @@ class ChannelPool {
    private class TimeoutCallback implements ChannelOperation, Runnable {
       final ChannelOperation callback;
       volatile ScheduledFuture<?> timeoutFuture;
+      @SuppressWarnings("unused")
       volatile int invoked = 0;
 
       private TimeoutCallback(ChannelOperation callback) {

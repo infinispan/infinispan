@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -19,7 +20,7 @@ public class GetValueOperation extends BaseCounterOperation<Long> {
 
    public GetValueOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
          Configuration cfg, String counterName) {
-      super(codec, channelFactory, topologyId, cfg, counterName);
+      super(COUNTER_GET_REQUEST, COUNTER_GET_RESPONSE, codec, channelFactory, topologyId, cfg, counterName);
    }
 
    @Override
@@ -28,9 +29,9 @@ public class GetValueOperation extends BaseCounterOperation<Long> {
    }
 
    @Override
-   public Long decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       checkStatus(status);
       assert status == NO_ERROR_STATUS;
-      return buf.readLong();
+      complete(buf.readLong());
    }
 }

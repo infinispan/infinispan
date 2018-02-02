@@ -79,14 +79,17 @@ public final class TopologyInfo {
       } else {
          hash.init(servers2Hash, numKeyOwners, hashSpace);
       }
-      WrappedByteArray key = new WrappedByteArray(cacheName);
-      consistentHashes.put(key, hash);
-      topologyIds.put(key, topologyId);
+      WrappedByteArray wrappedName = new WrappedByteArray(cacheName);
+      consistentHashes.put(wrappedName, hash);
+      if (trace) {
+         log.tracef("(1) Updating topology for %s: %s -> %s", wrappedName, topologyIds.get(wrappedName), topologyId);
+      }
+      topologyIds.put(wrappedName, topologyId);
    }
 
    public void updateTopology(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion,
          byte[] cacheName, AtomicInteger topologyId) {
-      WrappedByteArray key = new WrappedByteArray(cacheName);
+      WrappedByteArray wrappedName = new WrappedByteArray(cacheName);
       if (hashFunctionVersion > 0) {
          SegmentConsistentHash hash = hashFactory.newConsistentHash(hashFunctionVersion);
          if (hash == null) {
@@ -94,10 +97,13 @@ public final class TopologyInfo {
          } else {
             hash.init(segmentOwners, numSegments);
          }
-         consistentHashes.put(key, hash);
+         consistentHashes.put(wrappedName, hash);
       }
-      segmentsByCache.put(key, numSegments);
-      topologyIds.put(key, topologyId);
+      segmentsByCache.put(wrappedName, numSegments);
+      if (trace) {
+         log.tracef("(2) Updating topology for %s: %s -> %s", wrappedName, topologyIds.get(wrappedName), topologyId);
+      }
+      topologyIds.put(wrappedName, topologyId);
    }
 
    public Optional<SocketAddress> getHashAwareServer(Object key, byte[] cacheName) {
@@ -118,7 +124,7 @@ public final class TopologyInfo {
 
    public boolean isTopologyValid(byte[] cacheName) {
       Integer id = topologyIds.get(new WrappedByteArray(cacheName)).get();
-      Boolean valid = id != HotRodConstants.SWITCH_CLUSTER_TOPOLOGY;
+      Boolean valid = id == null || id.intValue() != HotRodConstants.SWITCH_CLUSTER_TOPOLOGY;
       if (trace)
          log.tracef("Is topology id (%s) valid? %b", id, valid);
 
@@ -147,11 +153,19 @@ public final class TopologyInfo {
    }
 
    public AtomicInteger createTopologyId(byte[] cacheName, int topologyId) {
-      return topologyIds.computeIfAbsent(new WrappedByteArray(cacheName), c -> new AtomicInteger(topologyId));
+      WrappedByteArray wrappedName = new WrappedByteArray(cacheName);
+      if (trace) {
+         log.tracef("Creating topology for %s (absent ? %s) id=%d", wrappedName, topologyIds.get(wrappedName), topologyId);
+      }
+      return topologyIds.computeIfAbsent(wrappedName, c -> new AtomicInteger(topologyId));
    }
 
    public void setTopologyId(byte[] cacheName, int topologyId) {
-      AtomicInteger id = topologyIds.get(new WrappedByteArray(cacheName));
+      WrappedByteArray wrappedName = new WrappedByteArray(cacheName);
+      AtomicInteger id = topologyIds.get(wrappedName);
+      if (trace) {
+         log.tracef("Setting topology for %s: %d -> %d", wrappedName, id.get(), topologyId);
+      }
       id.set(topologyId);
    }
 

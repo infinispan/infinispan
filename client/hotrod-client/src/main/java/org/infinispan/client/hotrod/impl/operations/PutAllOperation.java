@@ -10,10 +10,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -32,7 +32,7 @@ public class PutAllOperation extends RetryOnFailureOperation<Void> {
                           Map<byte[], byte[]> map, byte[] cacheName, AtomicInteger topologyId,
                           int flags, Configuration cfg,
                           long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      super(codec, channelFactory, cacheName, topologyId, flags, cfg);
+      super(PUT_ALL_REQUEST, PUT_ALL_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg);
       this.map = map;
       this.lifespan = lifespan;
       this.lifespanTimeUnit = lifespanTimeUnit;
@@ -48,8 +48,7 @@ public class PutAllOperation extends RetryOnFailureOperation<Void> {
 
    @Override
    protected void executeOperation(Channel channel) {
-      HeaderParams header = headerParams(PUT_ALL_REQUEST);
-      scheduleRead(channel, header);
+      scheduleRead(channel);
 
       int bufSize = codec.estimateHeaderSize(header) + ByteBufUtil.estimateVIntSize(map.size()) +
             codec.estimateExpirationSize(lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
@@ -75,9 +74,10 @@ public class PutAllOperation extends RetryOnFailureOperation<Void> {
    }
 
    @Override
-   public Void decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isSuccess(status)) {
-         return null;
+         complete(null);
+         return;
       }
       throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));
    }

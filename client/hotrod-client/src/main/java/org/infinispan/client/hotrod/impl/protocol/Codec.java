@@ -45,13 +45,13 @@ public interface Codec {
 
    int estimateExpirationSize(long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit);
 
+   long readMessageId(ByteBuf buf);
+
    /**
     * Reads a response header from the transport and returns the status
     * of the response.
     */
    short readHeader(ByteBuf buf, HeaderParams params, ChannelFactory channelFactory, SocketAddress serverAddress);
-
-//   int estimateResponseHeaderSize(HeaderParams params);
 
    ClientEvent readEvent(ByteBuf buf, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist, SocketAddress serverAddress);
 

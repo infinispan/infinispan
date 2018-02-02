@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.api.WeakCounter;
@@ -22,7 +23,7 @@ import io.netty.channel.Channel;
 public class RemoveOperation extends BaseCounterOperation<Void> {
    public RemoveOperation(Codec codec, ChannelFactory transportFactory, AtomicInteger topologyId,
                           Configuration cfg, String counterName) {
-      super(codec, transportFactory, topologyId, cfg, counterName);
+      super(COUNTER_REMOVE_REQUEST, COUNTER_REMOVE_RESPONSE, codec, transportFactory, topologyId, cfg, counterName);
    }
 
    @Override
@@ -31,8 +32,8 @@ public class RemoveOperation extends BaseCounterOperation<Void> {
    }
 
    @Override
-   public Void decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       checkStatus(status);
-      return null;
+      complete(null);
    }
 }

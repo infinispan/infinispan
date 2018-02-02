@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -23,24 +22,17 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 public class StatsOperation extends RetryOnFailureOperation<Map<String, String>> {
-   private HeaderDecoder<Map<String, String>> decoder;
    private Map<String, String> result;
    private int numStats = -1;
 
    public StatsOperation(Codec codec, ChannelFactory channelFactory,
                          byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(codec, channelFactory, cacheName, topologyId, flags, cfg);
+      super(STATS_REQUEST, STATS_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg);
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      HeaderParams header = headerParams(STATS_REQUEST);
-      decoder = scheduleRead(channel, header);
-
-      ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header));
-
-      codec.writeHeader(buf, header);
-      channel.writeAndFlush(buf);
+      sendHeaderAndRead(channel);
    }
 
    @Override
@@ -50,7 +42,7 @@ public class StatsOperation extends RetryOnFailureOperation<Map<String, String>>
    }
 
    @Override
-   public Map<String, String> decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (numStats < 0) {
          numStats = ByteBufUtil.readVInt(buf);
          result = new HashMap<>();
@@ -62,6 +54,6 @@ public class StatsOperation extends RetryOnFailureOperation<Map<String, String>>
          result.put(statName, statValue);
          decoder.checkpoint();
       }
-      return result;
+      complete(result);
    }
 }

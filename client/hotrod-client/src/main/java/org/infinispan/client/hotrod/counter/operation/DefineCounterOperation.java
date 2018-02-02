@@ -8,6 +8,7 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
 
@@ -26,20 +27,20 @@ public class DefineCounterOperation extends BaseCounterOperation<Boolean> {
 
    public DefineCounterOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
                                  Configuration cfg, String counterName, CounterConfiguration configuration) {
-      super(codec, channelFactory, topologyId, cfg, counterName);
+      super(COUNTER_CREATE_REQUEST, COUNTER_CREATE_RESPONSE, codec, channelFactory, topologyId, cfg, counterName);
       this.configuration = configuration;
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, COUNTER_CREATE_REQUEST, 28);
+      ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, 28);
       encodeConfiguration(configuration, buf::writeByte, buf::writeLong, i -> ByteBufUtil.writeVInt(buf, i));
       channel.writeAndFlush(buf);
    }
 
    @Override
-   public Boolean decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       checkStatus(status);
-      return status == NO_ERROR_STATUS;
+      complete(status == NO_ERROR_STATUS);
    }
 }

@@ -14,13 +14,15 @@ public class IdleStateHandlerProvider extends ChannelInboundHandlerAdapter {
    private final ChannelPool channelPool;
    private Log log = LogFactory.getLog(IdleStateHandlerProvider.class);
 
+   static final String NAME = "idle-state-handler-provider";
+
    public IdleStateHandlerProvider(int minIdle, ChannelPool channelPool) {
       this.minIdle = minIdle;
       this.channelPool = channelPool;
    }
 
    @Override
-   public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+   public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
       if (evt instanceof IdleStateEvent) {
          if (channelPool.getIdle() > minIdle && ChannelRecord.of(ctx.channel()).isIdle()) {
             log.debugf("Closing idle channel %s", ctx.channel());

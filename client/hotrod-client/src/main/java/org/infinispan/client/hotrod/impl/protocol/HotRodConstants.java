@@ -32,6 +32,7 @@ public interface HotRodConstants {
    byte VERSION_27 = 27;
 
    //requests
+   byte ILLEGAL_OP_CODE = 0x00;
    byte PUT_REQUEST = 0x01;
    byte GET_REQUEST = 0x03;
    byte PUT_IF_ABSENT_REQUEST = 0x05;

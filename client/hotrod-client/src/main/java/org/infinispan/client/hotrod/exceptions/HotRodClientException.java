@@ -45,4 +45,8 @@ public class HotRodClientException extends RuntimeException {
    private String toErrorMsg(int errorStatusCode) {
       return String.format("server error (status=0x%x)", errorStatusCode);
    }
+
+   public boolean isServerError() {
+      return errorStatusCode != -1;
+   }
 }
