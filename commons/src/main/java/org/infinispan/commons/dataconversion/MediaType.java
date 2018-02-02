@@ -108,20 +108,21 @@ public final class MediaType {
 
    public static MediaType parse(String str) {
       if (str == null || str.isEmpty()) throw log.missingMediaType();
-      if (str.indexOf('/') == -1)
-         throw log.invalidMediaTypeSubtype();
-      boolean hasParams = str.indexOf(';') != -1;
-      if (!hasParams) {
-         String[] types = str.split("/");
-         return new MediaType(types[0].trim(), types[1].trim());
-
-      }
-      int paramSeparator = str.indexOf(';');
-      String types = str.substring(0, paramSeparator);
-      String params = str.substring(paramSeparator + 1);
-      String[] typeSubType = types.split("/");
+      int separatorIdx = str.indexOf(';');
+      boolean emptyParams = separatorIdx == -1;
+      String types = emptyParams ? str : str.substring(0, separatorIdx);
+      String params = emptyParams ? "" : str.substring(separatorIdx + 1);
       Map<String, String> paramMap = parseParams(params);
-      return new MediaType(typeSubType[0].trim(), typeSubType[1].trim(), paramMap);
+
+      if (types.trim().equals("*")) {
+         return emptyParams ? MediaType.MATCH_ALL : new MediaType("*", "*", paramMap);
+      }
+      if (types.indexOf('/') == -1) {
+         throw log.invalidMediaTypeSubtype();
+      }
+
+      String[] typeSubtype = types.split("/");
+      return new MediaType(typeSubtype[0].trim(), typeSubtype[1].trim(), paramMap);
    }
 
    public static Stream<MediaType> parseList(String mediaTypeList) {
@@ -140,6 +141,8 @@ public final class MediaType {
 
    private static Map<String, String> parseParams(String params) {
       Map<String, String> parsed = new HashMap<>();
+      if (params == null || params.isEmpty()) return parsed;
+
       String[] parameters = params.split(";");
 
       for (String p : parameters) {
