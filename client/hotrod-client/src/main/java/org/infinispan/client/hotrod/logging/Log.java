@@ -26,6 +26,8 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Param;
 
+import io.netty.channel.Channel;
+
 /**
  * Log abstraction for the hot rod client. For this module, message ids
  * ranging from 4001 to 5000 inclusively have been reserved.
@@ -271,4 +273,13 @@ public interface Log extends BasicLogger {
 
    @Message(value = "TrustStoreFileName and TrustStorePath are mutually exclusive", id = 4075)
    CacheConfigurationException trustStoreFileAndPathExclusive();
+
+   @Message(value = "Unknown message id %d; cannot find matching request", id = 4076)
+   IllegalStateException unknownMessageId(long messageId);
+
+   @Message(value = "Closing channel %s due to error in unknown operation.", id = 4077)
+   TransportException errorFromUnknownOperation(Channel channel, @Cause Throwable cause, @Param SocketAddress address);
+
+   @Message(value = "This channel is about to be closed and does not accept any further operations.", id = 4078)
+   HotRodClientException noMoreOperationsAllowed();
 }

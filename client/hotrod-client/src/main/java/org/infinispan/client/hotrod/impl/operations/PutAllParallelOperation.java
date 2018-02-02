@@ -50,7 +50,7 @@ public class PutAllParallelOperation extends ParallelHotRodOperation<Void, PutAl
       }
 
       return splittedMaps.values().stream().map(
-            mapSubset -> new PutAllOperation(codec, channelFactory, mapSubset, cacheName, topologyId, flags,
+            mapSubset -> new PutAllOperation(codec, channelFactory, mapSubset, cacheName, header.topologyId(), flags,
                   cfg, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit)).collect(Collectors.toList());
    }
 

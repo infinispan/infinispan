@@ -49,14 +49,16 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
    private final SocketAddress unresolvedAddress;
    private final OperationsFactory operationsFactory;
    private final Configuration configuration;
+   private final ChannelFactory channelFactory;
    private ChannelPool channelPool;
    private volatile boolean isFirstPing = true;
 
-   ChannelInitializer(Bootstrap bootstrap, SocketAddress unresolvedAddress, OperationsFactory operationsFactory, Configuration configuration) {
+   ChannelInitializer(Bootstrap bootstrap, SocketAddress unresolvedAddress, OperationsFactory operationsFactory, Configuration configuration, ChannelFactory channelFactory) {
       this.bootstrap = bootstrap;
       this.unresolvedAddress = unresolvedAddress;
       this.operationsFactory = operationsFactory;
       this.configuration = configuration;
+      this.channelFactory = channelFactory;
    }
 
    CompletableFuture<Channel> createChannel() {
@@ -81,17 +83,22 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       }
 
       if (configuration.connectionPool().minEvictableIdleTime() > 0) {
-         channel.pipeline().addLast(
-               new IdleStateHandler(0, 0, configuration.connectionPool().minEvictableIdleTime(), TimeUnit.MILLISECONDS),
-               new IdleStateHandlerProvider(configuration.connectionPool().minIdle(), channelPool));
+         channel.pipeline().addLast("idle-state-handler",
+               new IdleStateHandler(0, 0, configuration.connectionPool().minEvictableIdleTime(), TimeUnit.MILLISECONDS));
       }
       ChannelRecord channelRecord = new ChannelRecord(unresolvedAddress, channelPool);
       channel.attr(ChannelRecord.KEY).set(channelRecord);
       if (isFirstPing) {
          isFirstPing = false;
-         channel.pipeline().addLast(new InitialPingHandler(operationsFactory.newPingOperation(false)));
+         channel.pipeline().addLast(InitialPingHandler.NAME, new InitialPingHandler(operationsFactory.newPingOperation(false)));
       } else {
-         channel.pipeline().addLast(ActivationHandler.INSTANCE);
+         channel.pipeline().addLast(ActivationHandler.NAME, ActivationHandler.INSTANCE);
+      }
+      channel.pipeline().addLast(HeaderDecoder.NAME, new HeaderDecoder(operationsFactory.getCodec(), channelFactory));
+      if (configuration.connectionPool().minEvictableIdleTime() > 0) {
+         // This handler needs to be the last so that HeaderDecoder has the chance to cancel the idle event
+         channel.pipeline().addLast(IdleStateHandlerProvider.NAME,
+               new IdleStateHandlerProvider(configuration.connectionPool().minIdle(), channelPool));
       }
    }
 
@@ -158,7 +165,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
                authentication.serverName(), authentication.saslProperties(), authentication.callbackHandler());
       }
 
-      channel.pipeline().addLast(new AuthHandler(authentication, saslClient, operationsFactory));
+      channel.pipeline().addLast(AuthHandler.NAME, new AuthHandler(authentication, saslClient, operationsFactory));
    }
 
    private SaslClientFactory getSaslClientFactory(AuthenticationConfiguration configuration) {

@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.api.WeakCounter;
 
@@ -21,7 +22,7 @@ public class ResetOperation extends BaseCounterOperation<Void> {
 
    public ResetOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId, Configuration cfg,
                          String counterName) {
-      super(codec, channelFactory, topologyId, cfg, counterName);
+      super(COUNTER_RESET_REQUEST, COUNTER_RESET_RESPONSE, codec, channelFactory, topologyId, cfg, counterName);
    }
 
    @Override
@@ -30,8 +31,8 @@ public class ResetOperation extends BaseCounterOperation<Void> {
    }
 
    @Override
-   public Void decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       checkStatus(status);
-      return null;
+      complete(null);
    }
 }

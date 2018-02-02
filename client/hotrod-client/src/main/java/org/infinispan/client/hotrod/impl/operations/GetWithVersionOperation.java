@@ -6,10 +6,10 @@ import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.VersionedValueImpl;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
@@ -34,26 +34,26 @@ public class GetWithVersionOperation<V> extends AbstractKeyOperation<VersionedVa
    public GetWithVersionOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes,
                                   byte[] cacheName, AtomicInteger topologyId, int flags,
                                   Configuration cfg) {
-      super(codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
+      super(GET_WITH_VERSION, GET_WITH_VERSION_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      HeaderParams header = headerParams(GET_WITH_VERSION);
-      scheduleRead(channel, header);
-      sendArrayOperation(channel, header, keyBytes);
+      scheduleRead(channel);
+      sendArrayOperation(channel, keyBytes);
    }
 
    @Override
-   public VersionedValue<V> decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isNotExist(status) || !HotRodConstants.isSuccess(status)) {
-         return null;
+         complete(null);
+         return;
       }
       long version = ByteBufUtil.readVLong(buf);
       if (trace) {
          log.tracef("Received version: %d", version);
       }
       V value = codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller());
-      return new VersionedValueImpl<V>(version, value);
+      complete(new VersionedValueImpl<V>(version, value));
    }
 }

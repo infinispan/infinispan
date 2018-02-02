@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.api.CounterConfiguration;
@@ -31,7 +32,7 @@ public class CompareAndSwapOperation extends BaseCounterOperation<Long> {
 
    public CompareAndSwapOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
                                   Configuration cfg, String counterName, long expect, long update, CounterConfiguration counterConfiguration) {
-      super(codec, channelFactory, topologyId, cfg, counterName);
+      super(COUNTER_CAS_REQUEST, COUNTER_CAS_RESPONSE, codec, channelFactory, topologyId, cfg, counterName);
       this.expect = expect;
       this.update = update;
       this.counterConfiguration = counterConfiguration;
@@ -39,18 +40,18 @@ public class CompareAndSwapOperation extends BaseCounterOperation<Long> {
 
    @Override
    protected void executeOperation(Channel channel) {
-      ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, COUNTER_CAS_REQUEST, 16);
+      ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, 16);
       buf.writeLong(expect);
       buf.writeLong(update);
       channel.writeAndFlush(buf);
    }
 
    @Override
-   public Long decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       checkStatus(status);
       assertBoundaries(status);
       assert status == NO_ERROR_STATUS;
-      return buf.readLong();
+      complete(buf.readLong());
    }
 
    private void assertBoundaries(short status) {

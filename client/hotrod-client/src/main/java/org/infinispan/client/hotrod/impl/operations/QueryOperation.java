@@ -11,10 +11,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
@@ -36,7 +36,7 @@ public final class QueryOperation extends RetryOnFailureOperation<QueryResponse>
 
    public QueryOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicInteger topologyId,
                          int flags, Configuration cfg, RemoteQuery remoteQuery) {
-      super(codec, channelFactory, cacheName, topologyId, flags, cfg);
+      super(QUERY_REQUEST, QUERY_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg);
       this.remoteQuery = remoteQuery;
    }
 
@@ -75,8 +75,7 @@ public final class QueryOperation extends RetryOnFailureOperation<QueryResponse>
          }
       }
 
-      HeaderParams header = headerParams(QUERY_REQUEST);
-      scheduleRead(channel, header);
+      scheduleRead(channel);
 
       // Here we'll rather just serialize the header + payload length than copying the requestBytes around
       ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + ByteBufUtil.estimateVIntSize(requestBytes.length));
@@ -116,18 +115,18 @@ public final class QueryOperation extends RetryOnFailureOperation<QueryResponse>
    }
 
    @Override
-   public QueryResponse decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       byte[] responseBytes = ByteBufUtil.readArray(buf);
       SerializationContext serCtx = remoteQuery.getSerializationContext();
       if (serCtx != null) {
          try {
-            return ProtobufUtil.fromByteArray(serCtx, responseBytes, QueryResponse.class);
+            complete(ProtobufUtil.fromByteArray(serCtx, responseBytes, QueryResponse.class));
          } catch (IOException e) {
             throw new HotRodClientException(e);
          }
       } else {
          try {
-            return (QueryResponse) channelFactory.getMarshaller().objectFromByteBuffer(responseBytes);
+            complete((QueryResponse) channelFactory.getMarshaller().objectFromByteBuffer(responseBytes));
          } catch (IOException | ClassNotFoundException e) {
             throw new HotRodClientException(e);
          }

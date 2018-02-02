@@ -1,7 +1,5 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
-import org.infinispan.client.hotrod.exceptions.TransportException;
-
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -16,7 +14,7 @@ public class SslHandshakeExceptionHandler extends ChannelInboundHandlerAdapter {
       if (evt instanceof SslHandshakeCompletionEvent) {
          if (evt != SslHandshakeCompletionEvent.SUCCESS) {
             SslHandshakeCompletionEvent sslEvent = (SslHandshakeCompletionEvent) evt;
-            ctx.fireExceptionCaught(new TransportException(sslEvent.cause(), ctx.channel().remoteAddress()));
+            ctx.fireExceptionCaught(sslEvent.cause());
          }
          ctx.pipeline().remove(this);
       } else {

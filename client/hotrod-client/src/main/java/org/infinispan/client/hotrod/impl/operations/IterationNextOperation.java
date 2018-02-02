@@ -12,7 +12,6 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.MetadataValueImpl;
 import org.infinispan.client.hotrod.impl.iteration.KeyTracker;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
@@ -37,7 +36,6 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
    private final Channel channel;
    private final KeyTracker segmentKeyTracker;
 
-   private HeaderDecoder<IterationNextResponse<E>> decoder;
    private byte[] finishedSegments;
    private int entriesSize = -1;
    private List<Entry<Object, E>> entries;
@@ -47,7 +45,7 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
    protected IterationNextOperation(Codec codec, int flags, Configuration cfg, byte[] cacheName,
                                     AtomicInteger topologyId, byte[] iterationId, Channel channel,
                                     ChannelFactory channelFactory, KeyTracker segmentKeyTracker) {
-      super(codec, flags, cfg, cacheName, topologyId, channelFactory);
+      super(ITERATION_NEXT_REQUEST, ITERATION_NEXT_RESPONSE, codec, flags, cfg, cacheName, topologyId, channelFactory);
       this.iterationId = iterationId;
       this.channel = channel;
       this.segmentKeyTracker = segmentKeyTracker;
@@ -58,20 +56,20 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
       if (!channel.isActive()) {
          throw log.channelInactive(channel.remoteAddress(), channel.remoteAddress());
       }
-      HeaderParams header = headerParams(ITERATION_NEXT_REQUEST);
-      decoder = scheduleRead(channel, header);
-      sendArrayOperation(channel, header, iterationId);
+      scheduleRead(channel);
+      sendArrayOperation(channel, iterationId);
       return this;
    }
 
    @Override
-   public IterationNextResponse<E> decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (entriesSize < 0) {
          finishedSegments = ByteBufUtil.readArray(buf);
          entriesSize = ByteBufUtil.readVInt(buf);
          if (entriesSize == 0) {
             segmentKeyTracker.segmentsFinished(finishedSegments);
-            return new IterationNextResponse(status, Collections.emptyList(), false);
+            complete(new IterationNextResponse(status, Collections.emptyList(), false));
+            return;
          }
          entries = new ArrayList<>(entriesSize);
          projectionsSize = ByteBufUtil.readVInt(buf);
@@ -122,15 +120,11 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
       if (HotRodConstants.isInvalidIteration(status)) {
          throw log.errorRetrievingNext(new String(iterationId, HOTROD_STRING_CHARSET));
       }
-      return new IterationNextResponse(status, entries, entriesSize > 0);
+      complete(new IterationNextResponse(status, entries, entriesSize > 0));
    }
 
    private Object unmarshall(byte[] bytes, short status) {
       Marshaller marshaller = channelFactory.getMarshaller();
       return MarshallerUtil.bytes2obj(marshaller, bytes, status, cfg.serialWhitelist());
-   }
-
-   @Override
-   public void releaseChannel(Channel channel) {
    }
 }

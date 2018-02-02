@@ -25,9 +25,9 @@ public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T>
    protected final Object key;
    protected final byte[] keyBytes;
 
-   protected AbstractKeyOperation(Codec codec, ChannelFactory channelFactory,
+   protected AbstractKeyOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory,
                                   Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(codec, channelFactory, cacheName, topologyId, flags, cfg);
+      super(requestCode, responseCode, codec, channelFactory, cacheName, topologyId, flags, cfg);
       this.key = key;
       this.keyBytes = keyBytes;
    }

@@ -5,9 +5,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
@@ -31,7 +31,7 @@ public class AuthOperation extends HotRodOperation<byte[]> {
 
    public AuthOperation(Codec codec, AtomicInteger topologyId, Configuration cfg, Channel channel,
                         ChannelFactory channelFactory, String saslMechanism, byte[] response) {
-      super(codec, 0,  cfg, DEFAULT_CACHE_NAME_BYTES, topologyId, channelFactory);
+      super(AUTH_REQUEST, AUTH_RESPONSE, codec, 0,  cfg, DEFAULT_CACHE_NAME_BYTES, topologyId, channelFactory);
       this.channel = channel;
       this.saslMechanism = saslMechanism;
       this.response = response;
@@ -45,8 +45,7 @@ public class AuthOperation extends HotRodOperation<byte[]> {
 
       byte[] saslMechBytes = saslMechanism.getBytes(HOTROD_STRING_CHARSET);
 
-      HeaderParams header = headerParams(AUTH_REQUEST);
-      scheduleRead(channel, header);
+      scheduleRead(channel);
 
       ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) +
             ByteBufUtil.estimateArraySize(saslMechBytes) + ByteBufUtil.estimateArraySize(response));
@@ -60,14 +59,9 @@ public class AuthOperation extends HotRodOperation<byte[]> {
    }
 
    @Override
-   public void releaseChannel(Channel channel) {
-      // noop
-   }
-
-   @Override
-   public byte[] decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       boolean complete = buf.readUnsignedByte() > 0;
       byte challenge[] = ByteBufUtil.readArray(buf);
-      return complete ? null : challenge;
+      complete(complete ? null : challenge);
    }
 }

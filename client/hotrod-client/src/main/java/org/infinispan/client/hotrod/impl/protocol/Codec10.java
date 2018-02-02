@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.annotation.ClientListener;
@@ -38,8 +37,6 @@ public class Codec10 implements Codec {
 
    private static final Log log = LogFactory.getLog(Codec10.class, Log.class);
    protected final boolean trace = getLog().isTraceEnabled();
-
-   static final AtomicLong MSG_ID = new AtomicLong();
 
    @Override
    public HeaderParams writeHeader(ByteBuf buf, HeaderParams params) {
@@ -76,7 +73,7 @@ public class Codec10 implements Codec {
    protected HeaderParams writeHeader(
          ByteBuf buf, HeaderParams params, byte version) {
       buf.writeByte(HotRodConstants.REQUEST_MAGIC);
-      ByteBufUtil.writeVLong(buf, params.messageId(MSG_ID.incrementAndGet()).messageId);
+      ByteBufUtil.writeVLong(buf, params.messageId);
       buf.writeByte(version);
       buf.writeByte(params.opCode);
       ByteBufUtil.writeArray(buf, params.cacheName);
@@ -101,7 +98,7 @@ public class Codec10 implements Codec {
    }
 
    @Override
-   public short readHeader(ByteBuf buf, HeaderParams params, ChannelFactory channelFactory, SocketAddress serverAddress) {
+   public long readMessageId(ByteBuf buf) {
       short magic = buf.readUnsignedByte();
       final Log localLog = getLog();
       if (magic != HotRodConstants.RESPONSE_MAGIC) {
@@ -112,18 +109,14 @@ public class Codec10 implements Codec {
          throw new InvalidResponseException(String.format(message, HotRodConstants.RESPONSE_MAGIC, magic));
       }
       long receivedMessageId = ByteBufUtil.readVLong(buf);
-      // If received id is 0, it could be that a failure was noted before the
-      // message id was detected, so don't consider it to a message id error
-      if (receivedMessageId != params.messageId && receivedMessageId != 0) {
-         String message = "Invalid message id. Expected %d and received %d";
-         localLog.invalidMessageId(params.messageId, receivedMessageId);
-         if (trace)
-            localLog.tracef("Socket dump: %s", ByteBufUtil.hexDump(buf));
-         throw new InvalidResponseException(String.format(message, params.messageId, receivedMessageId));
+      if (trace) {
+         getLog().tracef("Received response for messageId=%d", receivedMessageId);
       }
-      if (trace)
-         localLog.tracef("Received response for message id: %d", receivedMessageId);
+      return receivedMessageId;
+   }
 
+   @Override
+   public short readHeader(ByteBuf buf, HeaderParams params, ChannelFactory channelFactory, SocketAddress serverAddress) {
       short receivedOpCode = buf.readUnsignedByte();
       // Read both the status and new topology (if present),
       // before deciding how to react to error situations.
@@ -141,16 +134,10 @@ public class Codec10 implements Codec {
                "Invalid response operation. Expected %#x and received %#x",
                params.opRespCode, receivedOpCode));
       }
-      if (trace) localLog.tracef("Received operation code is: %#04x", receivedOpCode);
+      if (trace) getLog().tracef("Received operation code is: %#04x", receivedOpCode);
 
       return status;
    }
-
-   //   @Override
-//   public int estimateResponseHeaderSize(HeaderParams params) {
-//      return 1 /* magic */ + ByteBufUtil.estimateVLongSize(params.messageId) +
-//            1 /* opcode */ + 1 /* status */ + 1 /* topology change */;
-//   }
 
    @Override
    public ClientEvent readEvent(ByteBuf buf, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist, SocketAddress serverAddress) {

@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -23,18 +22,16 @@ import io.netty.channel.Channel;
 public class BulkGetKeysOperation<K> extends RetryOnFailureOperation<Set<K>> {
    private final int scope;
    private final Set<K> result = new HashSet<>();
-   private HeaderDecoder<Set<K>> decoder;
 
    public BulkGetKeysOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
                                AtomicInteger topologyId, int flags, Configuration cfg, int scope) {
-      super(codec, channelFactory, cacheName, topologyId, flags, cfg);
+      super(BULK_GET_KEYS_REQUEST, BULK_GET_KEYS_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg);
       this.scope = scope;
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      HeaderParams header = headerParams(BULK_GET_KEYS_REQUEST);
-      decoder = scheduleRead(channel, header);
+      scheduleRead(channel);
 
       ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + ByteBufUtil.estimateVIntSize(scope));
 
@@ -49,11 +46,11 @@ public class BulkGetKeysOperation<K> extends RetryOnFailureOperation<Set<K>> {
    }
 
    @Override
-   public Set<K> decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       while (buf.readUnsignedByte() == 1) { //there's more!
          result.add(codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller()));
          decoder.checkpoint();
       }
-      return result;
+      complete(result);
    }
 }

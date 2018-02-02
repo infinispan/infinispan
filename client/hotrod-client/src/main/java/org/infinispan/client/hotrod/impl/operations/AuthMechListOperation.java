@@ -7,7 +7,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -28,10 +27,9 @@ public class AuthMechListOperation extends HotRodOperation<List<String>> {
    private final Channel channel;
    private int mechCount = -1;
    private List<String> result;
-   private HeaderDecoder<List<String>> decoder;
 
    public AuthMechListOperation(Codec codec, AtomicInteger topologyId, Configuration cfg, Channel channel, ChannelFactory channelFactory) {
-      super(codec, 0, cfg, DEFAULT_CACHE_NAME_BYTES, topologyId, channelFactory);
+      super(AUTH_MECH_LIST_REQUEST, AUTH_MECH_LIST_RESPONSE, codec, 0, cfg, DEFAULT_CACHE_NAME_BYTES, topologyId, channelFactory);
       this.channel = channel;
    }
 
@@ -40,19 +38,13 @@ public class AuthMechListOperation extends HotRodOperation<List<String>> {
       if (!channel.isActive()) {
          throw log.channelInactive(channel.remoteAddress(), channel.remoteAddress());
       }
-      HeaderParams header = headerParams(AUTH_MECH_LIST_REQUEST);
-      decoder = scheduleRead(channel, header);
-      sendHeader(channel, header);
+      scheduleRead(channel);
+      sendHeader(channel);
       return this;
    }
 
    @Override
-   public void releaseChannel(Channel channel) {
-      // noop
-   }
-
-   @Override
-   public List<String> decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (mechCount < 0) {
          mechCount = ByteBufUtil.readVInt(buf);
          result = new ArrayList<>(mechCount);
@@ -62,6 +54,6 @@ public class AuthMechListOperation extends HotRodOperation<List<String>> {
          result.add(ByteBufUtil.readString(buf));
          decoder.checkpoint();
       }
-      return result;
+      complete(result);
    }
 }

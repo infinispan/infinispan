@@ -8,6 +8,7 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.counter.api.Handle;
 
 import io.netty.buffer.ByteBuf;
@@ -26,7 +27,7 @@ public class RemoveListenerOperation extends BaseCounterOperation<Boolean> {
 
    public RemoveListenerOperation(Codec codec, ChannelFactory transportFactory, AtomicInteger topologyId,
                                   Configuration cfg, String counterName, byte[] listenerId, SocketAddress server) {
-      super(codec, transportFactory, topologyId, cfg, counterName);
+      super(COUNTER_ADD_LISTENER_REQUEST, COUNTER_ADD_LISTENER_RESPONSE, codec, transportFactory, topologyId, cfg, counterName);
       this.listenerId = listenerId;
       this.server = server;
    }
@@ -34,16 +35,15 @@ public class RemoveListenerOperation extends BaseCounterOperation<Boolean> {
 
    @Override
    protected void executeOperation(Channel channel) {
-      ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, COUNTER_ADD_LISTENER_REQUEST,
-            ByteBufUtil.estimateArraySize(listenerId));
+      ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, ByteBufUtil.estimateArraySize(listenerId));
       ByteBufUtil.writeArray(buf, listenerId);
       channel.writeAndFlush(buf);
    }
 
    @Override
-   public Boolean decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       checkStatus(status);
-      return status == NO_ERROR_STATUS;
+      complete(status == NO_ERROR_STATUS);
    }
 
    @Override

@@ -1,14 +1,16 @@
 package org.infinispan.client.hotrod.impl.multimap.operations;
 
 import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.REMOVE_KEY_MULTIMAP_REQUEST;
+import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.REMOVE_KEY_MULTIMAP_RESPONSE;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.operations.AbstractKeyOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -20,24 +22,23 @@ import io.netty.channel.Channel;
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.2
  */
-public class RemoveKeyMultimapOperation extends AbstractMultimapKeyOperation<Boolean> {
+public class RemoveKeyMultimapOperation extends AbstractKeyOperation<Boolean> {
    public RemoveKeyMultimapOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
+      super(REMOVE_KEY_MULTIMAP_REQUEST, REMOVE_KEY_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
    }
 
    @Override
    public void executeOperation(Channel channel) {
-      HeaderParams header = headerParams(REMOVE_KEY_MULTIMAP_REQUEST);
-      scheduleRead(channel, header);
-      sendArrayOperation(channel, header, keyBytes);
+      scheduleRead(channel);
+      sendArrayOperation(channel, keyBytes);
    }
 
    @Override
-   public Boolean decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isNotExist(status)) {
-         return Boolean.FALSE;
+         complete(Boolean.FALSE);
+      } else {
+         complete(buf.readByte() == 1 ? Boolean.TRUE : Boolean.FALSE);
       }
-
-      return buf.readByte() == 1 ? Boolean.TRUE : Boolean.FALSE;
    }
 }

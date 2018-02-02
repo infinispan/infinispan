@@ -152,6 +152,12 @@ public class TestingUtil {
       return f;
    }
 
+   public static <T> CompletableFuture<T> delayed(T value, long timeout, TimeUnit timeUnit) {
+      CompletableFuture<T> future = new CompletableFuture<>();
+      timeoutExecutor.schedule(() -> future.complete(value), timeout, timeUnit);
+      return future;
+   }
+
    /**
     * Should be used by tests for a timeout when they need to wait for that timeout to expire.
     *

@@ -7,7 +7,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 
@@ -34,10 +33,10 @@ public abstract class AbstractKeyValueOperation<T> extends AbstractKeyOperation<
 
    protected final TimeUnit maxIdleTimeUnit;
 
-   protected AbstractKeyValueOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes, byte[] cacheName,
+   protected AbstractKeyValueOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes, byte[] cacheName,
                                        AtomicInteger topologyId, int flags, Configuration cfg, byte[] value,
                                        long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      super(codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
+      super(requestCode, responseCode, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
       this.value = value;
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;
@@ -45,7 +44,7 @@ public abstract class AbstractKeyValueOperation<T> extends AbstractKeyOperation<
       this.maxIdleTimeUnit = maxIdleTimeUnit;
    }
 
-   protected void sendKeyValueOperation(Channel channel, HeaderParams header) {
+   protected void sendKeyValueOperation(Channel channel) {
       ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + keyBytes.length +
             codec.estimateExpirationSize(lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit) + value.length);
 

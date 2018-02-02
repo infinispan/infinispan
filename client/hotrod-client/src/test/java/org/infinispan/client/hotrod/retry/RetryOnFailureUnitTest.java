@@ -15,6 +15,7 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory.ClusterSwitchStatus;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.test.Exceptions;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
@@ -94,7 +95,7 @@ public class RetryOnFailureUnitTest {
       private final boolean failOnTransport;
 
       MockOperation(ChannelFactory channelFactory, boolean failOnTransport) {
-         super(null, channelFactory, null, null, 0, new ConfigurationBuilder().build());
+         super(ILLEGAL_OP_CODE, ILLEGAL_OP_CODE, null, channelFactory, null, null, 0, new ConfigurationBuilder().build());
          this.failOnTransport = failOnTransport;
          channelInvocationCount = new AtomicInteger(0);
          executeInvocationCount = new AtomicInteger(0);
@@ -122,7 +123,7 @@ public class RetryOnFailureUnitTest {
       }
 
       @Override
-      public Void decodePayload(ByteBuf buf, short status) {
+      public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
          throw new UnsupportedOperationException();
       }
    }

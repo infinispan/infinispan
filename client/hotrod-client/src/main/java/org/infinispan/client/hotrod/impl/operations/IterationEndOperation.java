@@ -5,8 +5,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
@@ -26,7 +26,7 @@ public class IterationEndOperation extends HotRodOperation<IterationEndResponse>
    protected IterationEndOperation(Codec codec, int flags, Configuration cfg, byte[] cacheName,
                                    AtomicInteger topologyId, byte[] iterationId, ChannelFactory channelFactory,
                                    Channel channel) {
-      super(codec, flags, cfg, cacheName, topologyId, channelFactory);
+      super(ITERATION_END_REQUEST, ITERATION_END_RESPONSE, codec, flags, cfg, cacheName, topologyId, channelFactory);
       this.iterationId = iterationId;
       this.channel = channel;
    }
@@ -36,14 +36,14 @@ public class IterationEndOperation extends HotRodOperation<IterationEndResponse>
       if (!channel.isActive()) {
          throw log.channelInactive(channel.remoteAddress(), channel.remoteAddress());
       }
-      HeaderParams header = headerParams(ITERATION_END_REQUEST);
-      scheduleRead(channel, header);
-      sendArrayOperation(channel, header, iterationId);
+      scheduleRead(channel);
+      sendArrayOperation(channel, iterationId);
+      releaseChannel(channel);
       return this;
    }
 
    @Override
-   public IterationEndResponse decodePayload(ByteBuf buf, short status) {
-      return new IterationEndResponse(status);
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+      complete(new IterationEndResponse(status));
    }
 }

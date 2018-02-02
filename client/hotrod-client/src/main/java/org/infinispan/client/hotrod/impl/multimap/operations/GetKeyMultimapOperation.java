@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl.multimap.operations;
 
 import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.GET_MULTIMAP_REQUEST;
+import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.GET_MULTIMAP_RESPONSE;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -8,8 +9,8 @@ import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.operations.AbstractKeyOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -27,28 +28,32 @@ import net.jcip.annotations.Immutable;
  * @since 9.2
  */
 @Immutable
-public class GetKeyMultimapOperation<V> extends AbstractMultimapKeyOperation<Collection<V>> {
-   private HeaderDecoder<Collection<V>> decoder;
+public class GetKeyMultimapOperation<V> extends AbstractKeyOperation<Collection<V>> {
    private int size;
    private Collection<V> result;
 
    public GetKeyMultimapOperation(Codec codec, ChannelFactory channelFactory,
                                   Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags,
                                   Configuration cfg) {
-      super(codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
+      super(GET_MULTIMAP_REQUEST, GET_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      HeaderParams header = headerParams(GET_MULTIMAP_REQUEST);
-      decoder = scheduleRead(channel, header);
-      sendArrayOperation(channel, header, keyBytes);
+      scheduleRead(channel);
+      sendArrayOperation(channel, keyBytes);
    }
 
    @Override
-   public Collection<V> decodePayload(ByteBuf buf, short status) {
+   protected void reset() {
+      result = null;
+   }
+
+   @Override
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isNotExist(status)) {
-         return result = Collections.emptySet();
+         complete(Collections.emptySet());
+         return;
       } else if (result == null) {
          size = ByteBufUtil.readVInt(buf);
          result = new HashSet<>(size);
@@ -58,6 +63,6 @@ public class GetKeyMultimapOperation<V> extends AbstractMultimapKeyOperation<Col
          result.add(value);
          decoder.checkpoint();
       }
-      return result;
+      complete(result);
    }
 }

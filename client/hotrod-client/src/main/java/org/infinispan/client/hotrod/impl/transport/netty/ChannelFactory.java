@@ -169,10 +169,10 @@ public class ChannelFactory {
       if (maxConnections < 0) {
          maxConnections = Integer.MAX_VALUE;
       }
-      ChannelInitializer channelInitializer = new ChannelInitializer(bootstrap, address, operationsFactory, configuration);
+      ChannelInitializer channelInitializer = new ChannelInitializer(bootstrap, address, operationsFactory, configuration, this);
       bootstrap.handler(channelInitializer);
       ChannelPool pool = new ChannelPool(bootstrap.config().group().next(), address, channelInitializer, configuration.connectionPool().exhaustedAction(),
-            configuration.connectionPool().maxWait(), maxConnections);
+            configuration.connectionPool().maxWait(), maxConnections, configuration.connectionPool().maxPendingRequests());
       channelInitializer.setChannelPool(pool);
       return pool;
    }
@@ -341,7 +341,7 @@ public class ChannelFactory {
       Set<SocketAddress> failedServers = new HashSet<>(servers);
       failedServers.removeAll(newServers);
       if (trace) {
-         String cacheNameString = new String(cacheName);
+         String cacheNameString = cacheName == null ? "<default>" : new String(cacheName);
          log.tracef("[%s] Current list: %s", cacheNameString, servers);
          log.tracef("[%s] New list: %s", cacheNameString, newServers);
          log.tracef("[%s] Added servers: %s", cacheNameString, addedServers);
@@ -489,11 +489,13 @@ public class ChannelFactory {
                if (trace) {
                   log.tracef(throwable, "Error checking whether this server is alive: %s", server);
                }
-               allFuture.complete(false);
-            } else {
                if (remainingResponses.decrementAndGet() == 0) {
-                  allFuture.complete(true);
+                  allFuture.complete(false);
                }
+            } else {
+               // One successful response is enough to be able to switch to this cluster
+               log.tracef("Ping to server %s succeeded");
+               allFuture.complete(true);
             }
          });
       }
@@ -517,6 +519,7 @@ public class ChannelFactory {
       Collection<SocketAddress> addresses = findClusterInfo(clusterName);
       if (!addresses.isEmpty()) {
          updateServers(addresses);
+         log.debugf("Switching to %s, servers: %s, setting topology.", clusterName, addresses);
          topologyInfo.setAllTopologyIds(HotRodConstants.SWITCH_CLUSTER_TOPOLOGY);
 
          if (log.isInfoEnabled()) {
@@ -581,7 +584,6 @@ public class ChannelFactory {
    public int getNumIdle() {
       return channelPoolMap.values().stream().mapToInt(ChannelPool::getIdle).sum();
    }
-
 
    public enum ClusterSwitchStatus {
       NOT_SWITCHED, SWITCHED, IN_PROGRESS

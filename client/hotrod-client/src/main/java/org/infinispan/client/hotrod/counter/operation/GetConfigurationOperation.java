@@ -8,6 +8,7 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
 
@@ -24,7 +25,7 @@ public class GetConfigurationOperation extends BaseCounterOperation<CounterConfi
 
    public GetConfigurationOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
                                     Configuration cfg, String counterName) {
-      super(codec, channelFactory, topologyId, cfg, counterName);
+      super(COUNTER_GET_CONFIGURATION_REQUEST, COUNTER_GET_CONFIGURATION_RESPONSE, codec, channelFactory, topologyId, cfg, counterName);
    }
 
    @Override
@@ -33,11 +34,12 @@ public class GetConfigurationOperation extends BaseCounterOperation<CounterConfi
    }
 
    @Override
-   public CounterConfiguration decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (status != NO_ERROR_STATUS) {
-         return null;
+         complete(null);
+         return;
       }
 
-      return decodeConfiguration(buf::readByte, buf::readLong, () -> ByteBufUtil.readVInt(buf));
+      complete(decodeConfiguration(buf::readByte, buf::readLong, () -> ByteBufUtil.readVInt(buf)));
    }
 }

@@ -38,7 +38,7 @@ public class ChannelOutputStream extends OutputStream implements GenericFutureLi
    }
 
    @Override
-   public void write(int b) throws IOException {
+   public void write(int b) {
       if (buf == null) {
          alloc();
       } else if (!buf.isWritable()) {
@@ -56,7 +56,7 @@ public class ChannelOutputStream extends OutputStream implements GenericFutureLi
    }
 
    @Override
-   public void write(byte[] b, int off, int len) throws IOException {
+   public void write(byte[] b, int off, int len) {
       if (buf == null) {
          if (len > BUFFER_SIZE) {
             channel.write(vIntBuffer(len), writePromise());
@@ -68,11 +68,9 @@ public class ChannelOutputStream extends OutputStream implements GenericFutureLi
          return;
       }
       if (len > buf.capacity()) {
-         if (buf != null) {
-            channel.write(vIntBuffer(buf.writerIndex()), writePromise());
-            channel.write(buf, writePromise());
-            buf = null;
-         }
+         channel.write(vIntBuffer(buf.writerIndex()), writePromise());
+         channel.write(buf, writePromise());
+         buf = null;
          channel.write(vIntBuffer(len), writePromise());
          channel.write(Unpooled.wrappedBuffer(b, off, len), writePromise());
          return;
@@ -89,7 +87,7 @@ public class ChannelOutputStream extends OutputStream implements GenericFutureLi
    }
 
    @Override
-   public void flush() throws IOException {
+   public void flush() {
       if (buf != null && buf.writerIndex() > 0) {
          channel.write(vIntBuffer(buf.writerIndex()), writePromise());
          channel.writeAndFlush(buf, writePromise());
@@ -109,7 +107,7 @@ public class ChannelOutputStream extends OutputStream implements GenericFutureLi
    }
 
    @Override
-   public void operationComplete(Future<? super Void> future) throws Exception {
+   public void operationComplete(Future<? super Void> future) {
       if (!future.isSuccess()) {
          listener.onError(channel, future.cause());
       }

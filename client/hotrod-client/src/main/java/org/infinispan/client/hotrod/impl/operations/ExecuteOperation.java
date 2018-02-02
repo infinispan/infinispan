@@ -6,9 +6,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -27,15 +27,14 @@ public class ExecuteOperation<T> extends RetryOnFailureOperation<T> {
    protected ExecuteOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
                               AtomicInteger topologyId, int flags, Configuration cfg,
                               String taskName, Map<String, byte[]> marshalledParams) {
-      super(codec, channelFactory, cacheName == null ? DEFAULT_CACHE_NAME_BYTES : cacheName, topologyId, flags, cfg);
+      super(EXEC_REQUEST, EXEC_RESPONSE, codec, channelFactory, cacheName == null ? DEFAULT_CACHE_NAME_BYTES : cacheName, topologyId, flags, cfg);
       this.taskName = taskName;
       this.marshalledParams = marshalledParams;
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      HeaderParams header = headerParams(EXEC_REQUEST);
-      scheduleRead(channel, header);
+      scheduleRead(channel);
 
       ByteBuf buf = channel.alloc().buffer(); // estimation too complex
 
@@ -50,7 +49,7 @@ public class ExecuteOperation<T> extends RetryOnFailureOperation<T> {
    }
 
    @Override
-   public T decodePayload(ByteBuf buf, short status) {
-      return codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller());
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+      complete(codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller()));
    }
 }

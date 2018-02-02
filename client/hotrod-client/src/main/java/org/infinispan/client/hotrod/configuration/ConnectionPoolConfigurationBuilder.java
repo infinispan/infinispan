@@ -25,6 +25,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
    private boolean testOnBorrow = false;
    private boolean testOnReturn = false;
    private boolean testWhileIdle = true;
+   private int maxPendingRequests = 5;
 
    ConnectionPoolConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -190,6 +191,22 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
    }
 
    /**
+    * Specifies maximum number of requests sent over single connection at one instant.
+    * Connections with more concurrent requests will be ignored in the pool when choosing available connection
+    * and the pool will try to create a new connection if all connections are utilized. Only if the new connection
+    * cannot be created and the {@link #exhaustedAction(ExhaustedAction) exhausted action}
+    * is set to {@link ExhaustedAction#WAIT} the pool will allow sending the request over one of the over-utilized
+    * connections.
+    * The rule of thumb is that this should be set to higher values if the values are small (< 1kB) and to lower values
+    * if the entries are big (> 10kB).
+    * Default setting for this parameter is 5.
+    */
+   public ConnectionPoolConfigurationBuilder maxPendingRequests(int maxPendingRequests) {
+      this.maxPendingRequests = maxPendingRequests;
+      return this;
+   }
+
+   /**
     * Configures the connection pool parameter according to properties
     */
    public ConnectionPoolConfigurationBuilder withPoolProperties(Properties properties) {
@@ -207,6 +224,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
       testOnBorrow(typed.getBooleanProperty("testOnBorrow", testOnBorrow, true));
       testOnReturn(typed.getBooleanProperty("testOnReturn", testOnReturn, true));
       testWhileIdle(typed.getBooleanProperty("testWhileIdle", testWhileIdle, true));
+      maxPendingRequests(typed.getIntProperty("maxPendingRequests", maxPendingRequests, true));
       return this;
    }
 
@@ -217,7 +235,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
    @Override
    public ConnectionPoolConfiguration create() {
       return new ConnectionPoolConfiguration(exhaustedAction, lifo, maxActive, maxTotal, maxWait, maxIdle, minIdle, numTestsPerEvictionRun, timeBetweenEvictionRuns,
-            minEvictableIdleTime, testOnBorrow, testOnReturn, testWhileIdle);
+            minEvictableIdleTime, testOnBorrow, testOnReturn, testWhileIdle, maxPendingRequests);
    }
 
    @Override
@@ -235,6 +253,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
       testOnBorrow = template.testOnBorrow();
       testOnReturn = template.testOnReturn();
       testWhileIdle = template.testWhileIdle();
+      maxPendingRequests = template.maxPendingRequests();
       return this;
    }
 

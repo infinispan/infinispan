@@ -20,6 +20,7 @@ abstract class EventDispatcher<T> extends HintedReplayingDecoder<Void> {
    static final boolean trace = log.isTraceEnabled();
    static final AtomicReferenceFieldUpdater<EventDispatcher, DispatcherStatus> statusUpdater
          = AtomicReferenceFieldUpdater.newUpdater(EventDispatcher.class, DispatcherStatus.class, "status");
+   public static final String NAME = "event-dispatcher";
 
    final ClientListenerNotifier notifier;
    final Object listener;

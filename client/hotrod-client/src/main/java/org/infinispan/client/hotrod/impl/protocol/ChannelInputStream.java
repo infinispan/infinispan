@@ -8,8 +8,11 @@ import org.infinispan.client.hotrod.impl.transport.netty.ChannelInboundHandlerDe
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.timeout.IdleStateEvent;
 
 public class ChannelInputStream extends AbstractVersionedInputStream implements ChannelInboundHandlerDefaults {
+   public static final String NAME = "stream";
+
    private final int totalLength;
    private final LinkedList<ByteBuf> bufs = new LinkedList<>();
    private int totalReceived, totalRead;
@@ -84,7 +87,7 @@ public class ChannelInputStream extends AbstractVersionedInputStream implements 
             int nowRead = buf.readerIndex() - prevReaderIndex;
             numRead += nowRead;
             totalRead += nowRead;
-            assert totalRead <= totalLength;
+            assert totalRead <= totalLength : "Now read: " + nowRead + ", read: " + totalRead + ", length" + totalLength;
             if (numRead >= len) {
                return numRead;
             }
@@ -100,12 +103,16 @@ public class ChannelInputStream extends AbstractVersionedInputStream implements 
       if (msg instanceof ByteBuf) {
          ByteBuf buf = (ByteBuf) msg;
          if (totalReceived + buf.readableBytes() <= totalLength) {
-            bufs.addLast(buf);
+            bufs.add(buf);
             totalReceived += buf.readableBytes();
+            if (totalReceived == totalLength) {
+               ctx.pipeline().remove(this);
+            }
          } else if (totalReceived < totalLength) {
             bufs.add(buf.retainedSlice(buf.readerIndex(), totalLength - totalReceived));
             buf.readerIndex(buf.readerIndex() + totalLength - totalReceived);
             totalReceived = totalLength;
+            ctx.pipeline().remove(this);
             ctx.fireChannelRead(buf);
          } else {
             ctx.fireChannelRead(buf);
@@ -123,10 +130,28 @@ public class ChannelInputStream extends AbstractVersionedInputStream implements 
    }
 
    @Override
+   public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+      if (evt instanceof IdleStateEvent) {
+         // swallow the event, this channel is not idle
+      } else {
+         ctx.fireUserEventTriggered(evt);
+      }
+   }
+
+   @Override
    public synchronized void close() throws IOException {
       super.close();
       for (ByteBuf buf : bufs) {
          buf.release();
       }
+   }
+
+   public boolean moveReadable(ByteBuf buf) {
+      if (buf.isReadable()) {
+         int numReceived = Math.min(totalLength - totalReceived, buf.readableBytes());
+         bufs.add(buf.readBytes(numReceived));
+         totalReceived += numReceived;
+      }
+      return totalReceived < totalLength;
    }
 }

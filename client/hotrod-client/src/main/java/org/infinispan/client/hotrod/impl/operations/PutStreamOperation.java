@@ -12,10 +12,10 @@ import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.ChannelOutputStream;
 import org.infinispan.client.hotrod.impl.protocol.ChannelOutputStreamListener;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -42,7 +42,7 @@ public class PutStreamOperation extends AbstractKeyOperation<OutputStream> imple
                              Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
                              int flags, Configuration cfg, long version,
                              long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      super(codec, channelFactory, key, keyBytes, cacheName, topologyId,
+      super(PUT_STREAM_REQUEST, PUT_STREAM_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
          flags, cfg);
       this.version = version;
       this.lifespan = lifespan;
@@ -53,8 +53,7 @@ public class PutStreamOperation extends AbstractKeyOperation<OutputStream> imple
 
    @Override
    public void executeOperation(Channel channel) {
-      HeaderParams header = headerParams(PUT_STREAM_REQUEST);
-      scheduleRead(channel, header);
+      scheduleRead(channel);
 
       ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + ByteBufUtil.estimateArraySize(keyBytes) +
             codec.estimateExpirationSize(lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit) + 8);
@@ -64,7 +63,6 @@ public class PutStreamOperation extends AbstractKeyOperation<OutputStream> imple
       codec.writeExpirationParams(buf, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
       buf.writeLong(version);
       channel.writeAndFlush(buf);
-
 
       complete(new ChannelOutputStream(channel, this));
    }
@@ -80,13 +78,12 @@ public class PutStreamOperation extends AbstractKeyOperation<OutputStream> imple
    }
 
    @Override
-   public OutputStream decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isSuccess(status) || HotRodConstants.isNotExecuted(status) && (version != VERSION_PUT)) {
          closeFuture.complete(null);
       } else {
          closeFuture.completeExceptionally(new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status)));
       }
-      return null;
    }
 
    @Override

@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 
@@ -20,7 +21,7 @@ public abstract class ParallelHotRodOperation<T, SUBOP extends HotRodOperation<T
 
    protected ParallelHotRodOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicInteger
          topologyId, int flags, Configuration cfg) {
-      super(codec, flags, cfg, cacheName, topologyId, channelFactory);
+      super(ILLEGAL_OP_CODE, ILLEGAL_OP_CODE, codec, flags, cfg, cacheName, topologyId, channelFactory);
       this.channelFactory = channelFactory;
    }
 
@@ -74,7 +75,7 @@ public abstract class ParallelHotRodOperation<T, SUBOP extends HotRodOperation<T
    protected abstract void combine(T collector, T result);
 
    @Override
-   public T decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       throw new UnsupportedOperationException();
    }
 }

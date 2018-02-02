@@ -9,10 +9,12 @@ import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.DecoderException;
 
 /**
  * A fault tolerant ping operation that can survive to node failures.
@@ -25,20 +27,20 @@ public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingOper
    protected FaultTolerantPingOperation(Codec codec, ChannelFactory channelFactory,
                                         byte[] cacheName, AtomicInteger topologyId, int flags,
                                         Configuration cfg) {
-      super(codec, channelFactory, cacheName, topologyId, flags, cfg);
+      super(PING_REQUEST, PING_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg);
    }
 
    @Override
    protected void executeOperation(Channel channel) {
-      sendHeaderAndRead(channel, HotRodConstants.PING_REQUEST);
+      sendHeaderAndRead(channel);
    }
 
    @Override
-   public PingOperation.PingResult decodePayload(ByteBuf buf, short status) {
+   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isSuccess(status)) {
-         return HotRodConstants.hasCompatibility(status)
+         complete(HotRodConstants.hasCompatibility(status)
                ? PingOperation.PingResult.SUCCESS_WITH_COMPAT
-               : PingOperation.PingResult.SUCCESS;
+               : PingOperation.PingResult.SUCCESS);
       } else {
          String hexStatus = Integer.toHexString(status);
          if (trace)
@@ -51,11 +53,13 @@ public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingOper
 
    @Override
    protected Throwable handleException(Throwable cause, ChannelHandlerContext ctx, SocketAddress address) {
-      cause = super.handleException(cause, ctx, address);
+      while (cause instanceof DecoderException && cause.getCause() != null) {
+         cause = cause.getCause();
+      }
       if (cause instanceof HotRodClientException && cause.getMessage().contains("CacheNotFoundException")) {
          complete(PingOperation.PingResult.CACHE_DOES_NOT_EXIST);
          return null;
       }
-      return cause;
+      return super.handleException(cause, ctx, address);
    }
 }
