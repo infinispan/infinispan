@@ -13,8 +13,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 import java.util.Queue;
+import java.util.stream.Stream;
 
 import org.junit.Test;
 
@@ -152,6 +152,14 @@ public class MediaTypeTest {
    }
 
    @Test
+   public void testWildCard2() {
+      MediaType mediaType = MediaType.fromString("*");
+
+      assertEquals("*", mediaType.getType());
+      assertEquals("*", mediaType.getSubType());
+   }
+
+   @Test
    public void testParseList() {
       Stream<MediaType> mediaTypes = MediaType.parseList("text/html, image/png,*/*");
       Iterator<MediaType> mediaTypeIterator = mediaTypes.iterator();
@@ -170,6 +178,17 @@ public class MediaTypeTest {
       assertEquals("text/html", iterator.next().getTypeSubtype());
       assertEquals("application/xhtml+xml", iterator.next().getTypeSubtype());
       assertEquals("application/xml", iterator.next().getTypeSubtype());
+      assertEquals("*/*", iterator.next().getTypeSubtype());
+   }
+
+   @Test
+   public void testParseSingleAsterix() {
+      Stream<MediaType> list = MediaType.parseList("text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2");
+      Iterator<MediaType> iterator = list.iterator();
+
+      assertEquals("text/html", iterator.next().getTypeSubtype());
+      assertEquals("image/gif", iterator.next().getTypeSubtype());
+      assertEquals("image/jpeg", iterator.next().getTypeSubtype());
       assertEquals("*/*", iterator.next().getTypeSubtype());
    }
 
@@ -288,27 +307,27 @@ public class MediaTypeTest {
       }
 
       @Override
-      public int read() throws IOException {
+      public int read() {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public int read(byte[] b) throws IOException {
+      public int read(byte[] b) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public int read(byte[] b, int off, int len) throws IOException {
+      public int read(byte[] b, int off, int len) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public long skip(long n) throws IOException {
+      public long skip(long n) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public int available() throws IOException {
+      public int available() {
          throw new UnsupportedOperationException();
       }
 
@@ -318,157 +337,157 @@ public class MediaTypeTest {
       }
 
       @Override
-      public void write(int b) throws IOException {
+      public void write(int b) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public void write(byte[] b) throws IOException {
+      public void write(byte[] b) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public void write(byte[] b, int off, int len) throws IOException {
+      public void write(byte[] b, int off, int len) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public void writeBoolean(boolean v) throws IOException {
+      public void writeBoolean(boolean v) {
          buffer.add(v);
       }
 
       @Override
-      public void writeByte(int v) throws IOException {
+      public void writeByte(int v) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public void writeShort(int v) throws IOException {
+      public void writeShort(int v) {
          buffer.add((short) v);
       }
 
       @Override
-      public void writeChar(int v) throws IOException {
+      public void writeChar(int v) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public void writeInt(int v) throws IOException {
+      public void writeInt(int v) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public void writeLong(long v) throws IOException {
+      public void writeLong(long v) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public void writeFloat(float v) throws IOException {
+      public void writeFloat(float v) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public void writeDouble(double v) throws IOException {
+      public void writeDouble(double v) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public void writeBytes(String s) throws IOException {
+      public void writeBytes(String s) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public void writeChars(String s) throws IOException {
+      public void writeChars(String s) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public void writeUTF(String s) throws IOException {
+      public void writeUTF(String s) {
          buffer.add(s);
       }
 
       @Override
-      public void flush() throws IOException {
+      public void flush() {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public void close() throws IOException {
+      public void close() {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public void readFully(byte[] b) throws IOException {
+      public void readFully(byte[] b) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public void readFully(byte[] b, int off, int len) throws IOException {
+      public void readFully(byte[] b, int off, int len) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public int skipBytes(int n) throws IOException {
+      public int skipBytes(int n) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public boolean readBoolean() throws IOException {
+      public boolean readBoolean() {
          return (boolean) buffer.poll();
       }
 
       @Override
-      public byte readByte() throws IOException {
+      public byte readByte() {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public int readUnsignedByte() throws IOException {
+      public int readUnsignedByte() {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public short readShort() throws IOException {
+      public short readShort() {
          return (short) buffer.poll();
       }
 
       @Override
-      public int readUnsignedShort() throws IOException {
+      public int readUnsignedShort() {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public char readChar() throws IOException {
+      public char readChar() {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public int readInt() throws IOException {
+      public int readInt() {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public long readLong() throws IOException {
+      public long readLong() {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public float readFloat() throws IOException {
+      public float readFloat() {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public double readDouble() throws IOException {
+      public double readDouble() {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public String readLine() throws IOException {
+      public String readLine() {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public String readUTF() throws IOException {
+      public String readUTF() {
          return (String) buffer.poll();
       }
    }
