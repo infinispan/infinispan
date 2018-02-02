@@ -34,11 +34,9 @@ import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.write.AbstractDataWriteCommand;
+import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
-import org.infinispan.commands.write.BackupMultiKeyWriteRpcCommand;
-import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
@@ -78,7 +76,7 @@ import org.infinispan.util.logging.LogFactory;
  * The {@link GetKeyValueCommand} reads the value locally if it is available (the node is an owner or the value is
  * stored in L1). If it isn't available, a remote request is made. The {@link DataWriteCommand} is performed as follow:
  * <ul> <li>The command if forwarded to the primary owner of the key.</li> <li>The primary owner locks the key and
- * executes the operation; sends the {@link BackupWriteRpcCommand} to the backup owners; releases the lock; sends the
+ * executes the operation; sends the {@link BackupWriteCommand} to the backup owners; releases the lock; sends the
  * {@link SuccessfulResponse} or {@link UnsuccessfulResponse} back to the originator.</li>
  * <li>The backup owner applies the update and sends a {@link
  * BackupAckCommand} back to the originator.</li> <li>The originator collects the ack from all the owners and
@@ -113,49 +111,49 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
          throws Throwable {
-      return handleSingleKeyWriteCommand(ctx, command);
+      return handleSingleKeyWriteCommand(ctx, command, TriangleFunctionsUtil::backupFrom);
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      return handleSingleKeyWriteCommand(ctx, command);
+      return handleSingleKeyWriteCommand(ctx, command, TriangleFunctionsUtil::backupFrom);
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      return handleSingleKeyWriteCommand(ctx, command);
+      return handleSingleKeyWriteCommand(ctx, command, TriangleFunctionsUtil::backupFrom);
    }
 
    @Override
    public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
-      return handleSingleKeyWriteCommand(ctx, command);
+      return handleSingleKeyWriteCommand(ctx, command, TriangleFunctionsUtil::backupFrom);
    }
 
    @Override
    public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
-      return handleSingleKeyWriteCommand(ctx, command);
+      return handleSingleKeyWriteCommand(ctx, command, TriangleFunctionsUtil::backupFrom);
    }
 
    @Override
    public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command)
          throws Throwable {
-      return handleSingleKeyWriteCommand(ctx, command);
+      return handleSingleKeyWriteCommand(ctx, command, TriangleFunctionsUtil::backupFrom);
    }
 
    @Override
    public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
-      return handleSingleKeyWriteCommand(ctx, command);
+      return handleSingleKeyWriteCommand(ctx, command, TriangleFunctionsUtil::backupFrom);
    }
 
    @Override
    public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command)
          throws Throwable {
-      return handleSingleKeyWriteCommand(ctx, command);
+      return handleSingleKeyWriteCommand(ctx, command, TriangleFunctionsUtil::backupFrom);
    }
 
    @Override
    public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
-      return handleSingleKeyWriteCommand(ctx, command);
+      return handleSingleKeyWriteCommand(ctx, command, TriangleFunctionsUtil::backupFrom);
    }
 
    @Override
@@ -164,8 +162,11 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
             handleLocalManyKeysCommand(ctx, command,
                   TriangleFunctionsUtil::copy,
                   TriangleFunctionsUtil::mergeHashMap,
-                  HashMap::new) :
-            handleRemoteManyKeysCommand(ctx, command, PutMapCommand::isForwarded);
+                  HashMap::new,
+                  TriangleFunctionsUtil::backupFrom) :
+            handleRemoteManyKeysCommand(ctx, command,
+                  PutMapCommand::isForwarded,
+                  TriangleFunctionsUtil::backupFrom);
    }
 
    @Override
@@ -174,8 +175,11 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
             handleLocalManyKeysCommand(ctx, command,
                   TriangleFunctionsUtil::copy,
                   TriangleFunctionsUtil::voidMerge,
-                  () -> null) :
-            handleRemoteManyKeysCommand(ctx, command, WriteOnlyManyEntriesCommand::isForwarded);
+                  () -> null,
+                  TriangleFunctionsUtil::backupFrom) :
+            handleRemoteManyKeysCommand(ctx, command,
+                  WriteOnlyManyEntriesCommand::isForwarded,
+                  TriangleFunctionsUtil::backupFrom);
    }
 
    @Override
@@ -184,8 +188,11 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
             handleLocalManyKeysCommand(ctx, command,
                   TriangleFunctionsUtil::copy,
                   TriangleFunctionsUtil::voidMerge,
-                  () -> null) :
-            handleRemoteManyKeysCommand(ctx, command, WriteOnlyManyCommand::isForwarded);
+                  () -> null,
+                  TriangleFunctionsUtil::backupFrom) :
+            handleRemoteManyKeysCommand(ctx, command,
+                  WriteOnlyManyCommand::isForwarded,
+                  TriangleFunctionsUtil::backupFrom);
    }
 
    @Override
@@ -194,10 +201,11 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
             handleLocalManyKeysCommand(ctx, command,
                   TriangleFunctionsUtil::copy,
                   TriangleFunctionsUtil::mergeList,
-                  LinkedList::new) :
+                  LinkedList::new,
+                  TriangleFunctionsUtil::backupFrom) :
             handleRemoteManyKeysCommand(ctx, command,
-                  ReadWriteManyCommand::isForwarded
-            );
+                  ReadWriteManyCommand::isForwarded,
+                  TriangleFunctionsUtil::backupFrom);
    }
 
    @Override
@@ -207,31 +215,36 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
             handleLocalManyKeysCommand(ctx, command,
                   TriangleFunctionsUtil::copy,
                   TriangleFunctionsUtil::mergeList,
-                  LinkedList::new) :
+                  LinkedList::new,
+                  TriangleFunctionsUtil::backupFrom) :
             handleRemoteManyKeysCommand(ctx, command,
-                  ReadWriteManyEntriesCommand::isForwarded
-            );
+                  ReadWriteManyEntriesCommand::isForwarded,
+                  TriangleFunctionsUtil::backupFrom);
    }
 
    private <R, C extends WriteCommand> Object handleLocalManyKeysCommand(InvocationContext ctx, C command,
          SubsetCommandCopy<C> commandCopy,
          MergeResults<R> mergeResults,
-         Supplier<R> emptyResult) {
+         Supplier<R> emptyResult,
+         MultiKeyBackupBuilder<C> backupBuilder) {
 
       //local command. we need to split by primary owner to send the command to them
       final LocalizedCacheTopology cacheTopology = checkTopologyId(command);
       final PrimaryOwnerClassifier filter = new PrimaryOwnerClassifier(cacheTopology, command.getAffectedKeys());
 
       return isSynchronous(command) ?
-            syncLocalManyKeysWrite(ctx, command, cacheTopology, filter, commandCopy, mergeResults, emptyResult) :
-            asyncLocalManyKeysWrite(ctx, command, cacheTopology, filter, commandCopy);
+            syncLocalManyKeysWrite(ctx, command, cacheTopology, filter, commandCopy, mergeResults, emptyResult,
+                  backupBuilder) :
+            asyncLocalManyKeysWrite(ctx, command, cacheTopology, filter, commandCopy, backupBuilder);
    }
 
    private <C extends WriteCommand> Object handleRemoteManyKeysCommand(InvocationContext ctx, C command,
-         Predicate<C> isBackup) {
+         Predicate<C> isBackup,
+         MultiKeyBackupBuilder<C> backupBuilder) {
       return isBackup.test(command) ?
             remoteBackupManyKeysWrite(ctx, command, InfinispanCollections.toObjectSet(command.getAffectedKeys())) :
-            remotePrimaryManyKeysWrite(ctx, command, InfinispanCollections.toObjectSet(command.getAffectedKeys()));
+            remotePrimaryManyKeysWrite(ctx, command, InfinispanCollections.toObjectSet(command.getAffectedKeys()),
+                  backupBuilder);
    }
 
    private <C extends WriteCommand> Object remoteBackupManyKeysWrite(InvocationContext ctx, C command,
@@ -243,11 +256,12 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
    }
 
    private <C extends WriteCommand> Object remotePrimaryManyKeysWrite(InvocationContext ctx, C command,
-         Set<Object> keys) {
+         Set<Object> keys,
+         MultiKeyBackupBuilder<C> backupBuilder) {
       //primary owner & remote
       final LocalizedCacheTopology cacheTopology = checkTopologyId(command);
       //primary, we need to send the command to the backups ordered!
-      sendToBackups(command, keys, cacheTopology);
+      sendToBackups(command, keys, cacheTopology, backupBuilder);
       return asyncInvokeNext(ctx, command,
             checkRemoteGetIfNeeded(ctx, command, keys, cacheTopology, command.loadType() == OWNER));
    }
@@ -257,7 +271,8 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
          PrimaryOwnerClassifier filter,
          SubsetCommandCopy<C> commandCopy,
          MergeResults<R> mergeResults,
-         Supplier<R> emptyResult) {
+         Supplier<R> emptyResult,
+         MultiKeyBackupBuilder<C> backupBuilder) {
       //local & sync
       final Set<Object> localKeys = filter.primaries.remove(localAddress);
       Collector<R> collector = commandAckCollector.createSegmentBasedCollector(command.getCommandInvocationId().getId(),
@@ -272,7 +287,8 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
          return null;
       });
       if (localKeys != null) {
-         return makeStage(invokeNextWriteManyKeysInPrimary(ctx, command, localKeys, cacheTopology, commandCopy))
+         return makeStage(invokeNextWriteManyKeysInPrimary(ctx, command, localKeys, cacheTopology, commandCopy,
+               backupBuilder))
                .andHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
                   if (throwable != null) {
                      localResult.completeExceptionally(CompletableFutures.extractException(throwable));
@@ -291,28 +307,30 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
    private <C extends WriteCommand> Object asyncLocalManyKeysWrite(InvocationContext ctx, C command,
          LocalizedCacheTopology cacheTopology,
          PrimaryOwnerClassifier filter,
-         SubsetCommandCopy<C> commandCopy) {
+         SubsetCommandCopy<C> commandCopy,
+         MultiKeyBackupBuilder<C> backupBuilder) {
       //local & async
       final Set<Object> localKeys = filter.primaries.remove(localAddress);
       forwardToPrimaryOwners(command, filter, commandCopy);
       return localKeys != null ?
-            invokeNextWriteManyKeysInPrimary(ctx, command, localKeys, cacheTopology, commandCopy) :
+            invokeNextWriteManyKeysInPrimary(ctx, command, localKeys, cacheTopology, commandCopy, backupBuilder) :
             null; //no local keys to handle
    }
 
    private <C extends WriteCommand> Object invokeNextWriteManyKeysInPrimary(InvocationContext ctx, C command,
          Set<Object> keys,
          LocalizedCacheTopology cacheTopology,
-         SubsetCommandCopy<C> commandCopy) {
+         SubsetCommandCopy<C> commandCopy,
+         MultiKeyBackupBuilder<C> backupBuilder) {
       final VisitableCommand.LoadType loadType = command.loadType();
-      sendToBackups(command, keys, cacheTopology);
+      sendToBackups(command, keys, cacheTopology, backupBuilder);
       C primaryCmd = commandCopy.copySubset(command, keys);
       return asyncInvokeNext(ctx, primaryCmd,
             checkRemoteGetIfNeeded(ctx, primaryCmd, keys, cacheTopology, loadType == PRIMARY || loadType == OWNER));
    }
 
-   private void sendToBackups(WriteCommand command, Collection<Object> keysToSend,
-         LocalizedCacheTopology cacheTopology) {
+   private <C extends WriteCommand> void sendToBackups(C command, Collection<Object> keysToSend,
+         LocalizedCacheTopology cacheTopology, MultiKeyBackupBuilder<C> backupBuilder) {
       int topologyId = command.getTopologyId();
       for (Map.Entry<Integer, Collection<Object>> entry : filterBySegment(cacheTopology, keysToSend).entrySet()) {
          int segmentId = entry.getKey();
@@ -322,9 +340,9 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
             continue;
          }
          long sequence = triangleOrderManager.next(segmentId, topologyId);
-         BackupMultiKeyWriteRpcCommand backupCommand = commandsFactory
-               .buildBackupMultiKeyWriteRpcCommand(command, entry.getValue());
+         BackupWriteCommand backupCommand = backupBuilder.build(commandsFactory, command, entry.getValue());
          backupCommand.setSequence(sequence);
+         backupCommand.setSegmentId(segmentId);
          if (trace) {
             log.tracef("Command %s got sequence %s for segment %s", command.getCommandInvocationId(), segmentId,
                   sequence);
@@ -359,7 +377,8 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
       return future;
    }
 
-   private Object handleSingleKeyWriteCommand(InvocationContext context, AbstractDataWriteCommand command) {
+   private <C extends DataWriteCommand> Object handleSingleKeyWriteCommand(InvocationContext context, C command,
+         BackupBuilder<C> backupBuilder) {
       assert !context.isInTxScope();
       if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          //don't go through the triangle
@@ -371,8 +390,8 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
       if (distributionInfo.isPrimary()) {
          assert context.lookupEntry(command.getKey()) != null;
          return context.isOriginLocal() ?
-               localPrimaryOwnerWrite(context, command, distributionInfo) :
-               remotePrimaryOwnerWrite(context, command, distributionInfo);
+               localPrimaryOwnerWrite(context, command, distributionInfo, backupBuilder) :
+               remotePrimaryOwnerWrite(context, command, distributionInfo, backupBuilder);
       } else if (distributionInfo.isWriteBackup()) {
          return context.isOriginLocal() ?
                localWriteInvocation(context, command, distributionInfo) :
@@ -396,7 +415,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
    }
 
    private <C extends DataWriteCommand> Object localPrimaryOwnerWrite(InvocationContext context, C command,
-         DistributionInfo distributionInfo) {
+         DistributionInfo distributionInfo, BackupBuilder<C> backupBuilder) {
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
       }
@@ -422,17 +441,17 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
             //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
             checkTopologyId(topologyId, collector);
             collector.primaryResult(rv, true);
-            sendToBackups(distributionInfo.segmentId(), dwCommand, backupOwners);
+            sendToBackups(distributionInfo.segmentId(), dwCommand, backupOwners, backupBuilder);
             return asyncValue(collector.getFuture());
          } else {
-            sendToBackups(distributionInfo.segmentId(), dwCommand, backupOwners);
+            sendToBackups(distributionInfo.segmentId(), dwCommand, backupOwners, backupBuilder);
             return rv;
          }
       });
    }
 
    private <C extends DataWriteCommand> Object remotePrimaryOwnerWrite(InvocationContext context, C command,
-         final DistributionInfo distributionInfo) {
+         final DistributionInfo distributionInfo, BackupBuilder<C> backupBuilder) {
       //we are the primary owner. we need to execute the command, check if successful, send to backups and reply to originator is needed.
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
@@ -449,25 +468,27 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
             }
             return rv;
          }
-         sendToBackups(distributionInfo.segmentId(), dwCommand, backupOwners);
+         sendToBackups(distributionInfo.segmentId(), dwCommand, backupOwners, backupBuilder);
          return rv;
       });
    }
 
-   private void sendToBackups(int segmentId, DataWriteCommand command, Collection<Address> backupOwners) {
+   private <C extends DataWriteCommand> void sendToBackups(int segmentId, C command, Collection<Address> backupOwners,
+         BackupBuilder<C> backupBuilder) {
       CommandInvocationId id = command.getCommandInvocationId();
       if (trace) {
          log.tracef("Command %s send to backup owner %s.", id, backupOwners);
       }
       long sequenceNumber = triangleOrderManager.next(segmentId, command.getTopologyId());
-      BackupWriteRpcCommand backupWriteRpcCommand = commandsFactory.buildBackupWriteRpcCommand(command);
-      backupWriteRpcCommand.setSequence(sequenceNumber);
+      BackupWriteCommand backupCommand = backupBuilder.build(commandsFactory, command);
+      backupCommand.setSequence(sequenceNumber);
+      backupCommand.setSegmentId(segmentId);
       if (trace) {
          log.tracef("Command %s got sequence %s for segment %s", id, sequenceNumber, segmentId);
       }
       // TODO Should we use sendToAll in replicated mode?
       // we must send the message only after the collector is registered in the map
-      rpcManager.sendToMany(backupOwners, backupWriteRpcCommand, DeliverOrder.NONE);
+      rpcManager.sendToMany(backupOwners, backupCommand, DeliverOrder.NONE);
    }
 
    private Object localWriteInvocation(InvocationContext context, DataWriteCommand command,
@@ -561,6 +582,14 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
    }
 
    private interface MergeResults<T> extends BiFunction<ValidResponse, T, T> {
+   }
+
+   private interface BackupBuilder<C> {
+      BackupWriteCommand build(CommandsFactory factory, C command);
+   }
+
+   private interface MultiKeyBackupBuilder<C> {
+      BackupWriteCommand build(CommandsFactory factory, C command, Collection<Object> keys);
    }
 
    /**

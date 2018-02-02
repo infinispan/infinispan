@@ -7,8 +7,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
-import org.infinispan.commands.write.BackupMultiKeyWriteRpcCommand;
-import org.infinispan.commands.write.BackupWriteRpcCommand;
+import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -22,31 +21,31 @@ import org.infinispan.commands.write.ValueMatcher;
 * @since 6.0
 */
 public enum TestWriteOperation {
-   PUT_CREATE(PutKeyValueCommand.class, BackupWriteRpcCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, null, null, "v1"),
-   PUT_OVERWRITE(PutKeyValueCommand.class, BackupWriteRpcCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, "v0", "v0", "v1"),
-   PUT_IF_ABSENT(PutKeyValueCommand.class, BackupWriteRpcCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, null, null),
-   REPLACE(ReplaceCommand.class, BackupWriteRpcCommand.class, "v1", ValueMatcher.MATCH_NON_NULL, "v0", "v0", "v1"),
-   REPLACE_EXACT(ReplaceCommand.class, BackupWriteRpcCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, "v0", true, true),
-   REMOVE(RemoveCommand.class, BackupWriteRpcCommand.class, null, ValueMatcher.MATCH_NON_NULL, "v0", "v0", null),
-   REMOVE_EXACT(RemoveCommand.class, BackupWriteRpcCommand.class, null, ValueMatcher.MATCH_EXPECTED, "v0", true, true),
-   PUT_MAP_CREATE(PutMapCommand.class, BackupMultiKeyWriteRpcCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, false, false),
+   PUT_CREATE(PutKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, null, null, "v1"),
+   PUT_OVERWRITE(PutKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, "v0", "v0", "v1"),
+   PUT_IF_ABSENT(PutKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, null, null),
+   REPLACE(ReplaceCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_NON_NULL, "v0", "v0", "v1"),
+   REPLACE_EXACT(ReplaceCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, "v0", true, true),
+   REMOVE(RemoveCommand.class, BackupWriteCommand.class, null, ValueMatcher.MATCH_NON_NULL, "v0", "v0", null),
+   REMOVE_EXACT(RemoveCommand.class, BackupWriteCommand.class, null, ValueMatcher.MATCH_EXPECTED, "v0", true, true),
+   PUT_MAP_CREATE(PutMapCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, false, false),
 
    // Functional put create must return null even on retry (as opposed to non-functional)
-   PUT_CREATE_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteRpcCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, null, null, null),
+   PUT_CREATE_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, null, null, null),
    // Functional put overwrite must return the previous value (as opposed to non-functional)
-   PUT_OVERWRITE_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteRpcCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, "v0", "v0", "v0"),
-   PUT_IF_ABSENT_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteRpcCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, null, null),
+   PUT_OVERWRITE_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, "v0", "v0", "v0"),
+   PUT_IF_ABSENT_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, null, null),
    // Functional replace must return the previous value (as opposed to non-functional)
-   REPLACE_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteRpcCommand.class, "v1", ValueMatcher.MATCH_NON_NULL, "v0", "v0", "v0"),
-   REMOVE_FUNCTIONAL(ReadWriteKeyCommand.class, BackupWriteRpcCommand.class, null, ValueMatcher.MATCH_NON_NULL, "v0", "v0", null),
-   REPLACE_EXACT_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteRpcCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, "v0", true, true),
-   REMOVE_EXACT_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteRpcCommand.class, null, ValueMatcher.MATCH_EXPECTED, "v0", true, true),
+   REPLACE_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_NON_NULL, "v0", "v0", "v0"),
+   REMOVE_FUNCTIONAL(ReadWriteKeyCommand.class, BackupWriteCommand.class, null, ValueMatcher.MATCH_NON_NULL, "v0", "v0", null),
+   REPLACE_EXACT_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, "v0", true, true),
+   REMOVE_EXACT_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteCommand.class, null, ValueMatcher.MATCH_EXPECTED, "v0", true, true),
    // Functional replace
-   REPLACE_META_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteRpcCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, true, true)
+   REPLACE_META_FUNCTIONAL(ReadWriteKeyValueCommand.class, BackupWriteCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, true, true)
    ;
 
    private final Class<? extends VisitableCommand> commandClass;
-   private Class<? extends ReplicableCommand> backupCommandClass;
+   private final Class<? extends ReplicableCommand> backupCommandClass;
    private final Object value;
    private final ValueMatcher valueMatcher;
    private final Object previousValue;

@@ -53,6 +53,11 @@ import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
+import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
+import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
+import org.infinispan.commands.triangle.SingleKeyBackupWriteCommand;
+import org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -60,8 +65,6 @@ import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
-import org.infinispan.commands.write.BackupMultiKeyWriteRpcCommand;
-import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
@@ -110,7 +113,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
  */
 public class ControlledCommandFactory implements CommandsFactory {
 
-   private static Log log = LogFactory.getLog(ControlledCommandFactory.class);
+   private final static Log log = LogFactory.getLog(ControlledCommandFactory.class);
 
    public final CommandsFactory actual;
    public final ReclosableLatch gate = new ReclosableLatch(true);
@@ -504,16 +507,6 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public BackupWriteRpcCommand buildBackupWriteRpcCommand(WriteCommand command) {
-      return actual.buildBackupWriteRpcCommand(command);
-   }
-
-   @Override
-   public BackupMultiKeyWriteRpcCommand buildBackupMultiKeyWriteRpcCommand(WriteCommand command, Collection<Object> keys) {
-      return actual.buildBackupMultiKeyWriteRpcCommand(command, keys);
-   }
-
-   @Override
    public InvalidateVersionsCommand buildInvalidateVersionsCommand(int topologyId, Object[] keys, int[] topologyIds, long[] versions, boolean removed) {
       return actual.buildInvalidateVersionsCommand(topologyId, keys, topologyIds, versions, removed);
    }
@@ -528,4 +521,29 @@ public class ControlledCommandFactory implements CommandsFactory {
       return actual.buildRenewBiasCommand(keys);
    }
 
+
+   @Override
+   public SingleKeyBackupWriteCommand buildSingleKeyBackupWriteCommand() {
+      return actual.buildSingleKeyBackupWriteCommand();
+   }
+
+   @Override
+   public SingleKeyFunctionalBackupWriteCommand buildSingleKeyFunctionalBackupWriteCommand() {
+      return actual.buildSingleKeyFunctionalBackupWriteCommand();
+   }
+
+   @Override
+   public PutMapBackupWriteCommand buildPutMapBackupWriteCommand() {
+      return actual.buildPutMapBackupWriteCommand();
+   }
+
+   @Override
+   public MultiEntriesFunctionalBackupWriteCommand buildMultiEntriesFunctionalBackupWriteCommand() {
+      return actual.buildMultiEntriesFunctionalBackupWriteCommand();
+   }
+
+   @Override
+   public MultiKeyFunctionalBackupWriteCommand buildMultiKeyFunctionalBackupWriteCommand() {
+      return actual.buildMultiKeyFunctionalBackupWriteCommand();
+   }
 }

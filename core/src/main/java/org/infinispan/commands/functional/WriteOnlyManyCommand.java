@@ -10,7 +10,6 @@ import java.util.function.Consumer;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
-import org.infinispan.commands.write.BackupMultiKeyWriteRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -49,6 +48,10 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    }
 
    public WriteOnlyManyCommand() {
+   }
+
+   public Consumer<WriteEntryView<V>> getConsumer() {
+      return f;
    }
 
    public void setKeys(Collection<?> keys) {
@@ -159,9 +162,4 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
          ((InjectableComponent) f).inject(componentRegistry);
    }
 
-   @Override
-   public void initBackupMultiKeyWriteRpcCommand(BackupMultiKeyWriteRpcCommand command, Collection<Object> keys) {
-      //noinspection unchecked
-      command.setWriteOnly(commandInvocationId, keys, f, params, getFlagsBitSet(), getTopologyId(), keyDataConversion, valueDataConversion);
-   }
 }

@@ -13,7 +13,6 @@ import java.util.function.Function;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
-import org.infinispan.commands.write.BackupMultiKeyWriteRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
@@ -58,6 +57,10 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    }
 
    public ReadWriteManyCommand() {
+   }
+
+   public Function<ReadWriteEntryView<K, V>, R> getBiFunction() {
+      return f;
    }
 
    public void setKeys(Collection<?> keys) {
@@ -177,9 +180,4 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
       }
    }
 
-   @Override
-   public void initBackupMultiKeyWriteRpcCommand(BackupMultiKeyWriteRpcCommand command, Collection<Object> keys) {
-      //noinspection unchecked
-      command.setReadWrite(commandInvocationId, keys, f, params, getFlagsBitSet(), getTopologyId(), keyDataConversion, valueDataConversion);
-   }
 }

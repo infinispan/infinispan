@@ -164,11 +164,6 @@ public class RemoveExpiredCommand extends RemoveCommand {
       return FlagBitSets.SKIP_CACHE_LOAD;
    }
 
-   @Override
-   public void initBackupWriteRpcCommand(BackupWriteRpcCommand command) {
-      command.setRemoveExpired(commandInvocationId, key, value, FlagBitSets.SKIP_CACHE_LOAD, getTopologyId());
-   }
-
    public void init(CacheNotifier notifier, IncrementableEntryVersion nonExistentVersion) {
       super.init(notifier);
       this.nonExistentVersion = nonExistentVersion;

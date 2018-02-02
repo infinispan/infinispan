@@ -16,8 +16,8 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.write.BackupAckCommand;
-import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
@@ -119,7 +119,7 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       // So that we can install the spy ClusteringDependentLogic on cache1 before state transfer is applied
       final CheckPoint checkPoint = new CheckPoint();
       ControlledRpcManager blockingRpcManager0 = ControlledRpcManager.replaceRpcManager(cache0);
-      blockingRpcManager0.excludeCommands(BackupWriteRpcCommand.class, BackupAckCommand.class);
+      blockingRpcManager0.excludeCommands(BackupWriteCommand.class, BackupAckCommand.class);
 
       // Block the rebalance confirmation on coordinator (to avoid the retrying of commands)
       blockRebalanceConfirmation(manager(0), checkPoint, preJoinTopologyId + 1);

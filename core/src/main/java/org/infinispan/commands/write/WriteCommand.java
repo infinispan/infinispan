@@ -79,25 +79,4 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand, Top
     */
    CommandInvocationId getCommandInvocationId();
 
-   /**
-    * Initializes the {@link BackupWriteRpcCommand} to send the update to backup owner of a key.
-    * <p>
-    * This method will be invoked in the primary owner only.
-    *
-    * @param command the {@link BackupWriteRpcCommand} to initialize.
-    */
-   default void initBackupWriteRpcCommand(BackupWriteRpcCommand command) {
-      throw new UnsupportedOperationException();
-   }
-
-   /**
-    * Initializes the {@link BackupMultiKeyWriteRpcCommand} to send the update to backup owner of a key.
-    * <p>
-    * This method will be invoked in the primary owner only.
-    *
-    * @param command the {@link BackupMultiKeyWriteRpcCommand} to initialize.
-    */
-   default void initBackupMultiKeyWriteRpcCommand(BackupMultiKeyWriteRpcCommand command, Collection<Object> keys) {
-      throw new UnsupportedOperationException();
-   }
 }

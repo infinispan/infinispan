@@ -224,16 +224,10 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
       return isConditional() || super.isReturnValueExpected();
    }
 
-   @Override
-   public void initBackupWriteRpcCommand(BackupWriteRpcCommand command) {
-      command.setRemove(commandInvocationId, key, getFlagsBitSet(), getTopologyId());
-   }
-
    protected Object performRemove(MVCCEntry e, Object prevValue, InvocationContext ctx) {
       notify(ctx, prevValue, e.getMetadata(), true);
 
       e.setRemoved(true);
-      e.setValid(false);
       e.setChanged(true);
       e.setValue(null);
       if (metadata != null) {

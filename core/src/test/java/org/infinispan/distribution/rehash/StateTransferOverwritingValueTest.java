@@ -18,8 +18,8 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
-import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -139,7 +139,7 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       // Block any state response commands on cache0
       CheckPoint checkPoint = new CheckPoint();
       ControlledRpcManager blockingRpcManager0 = replaceRpcManager(cache0);
-      blockingRpcManager0.excludeCommands(WriteCommand.class, BackupWriteRpcCommand.class,
+      blockingRpcManager0.excludeCommands(WriteCommand.class, BackupWriteCommand.class,
                                           RevokeBiasCommand.class, InvalidateVersionsCommand.class,
                                           AbstractTransactionBoundaryCommand.class,
                                           TxCompletionNotificationCommand.class);

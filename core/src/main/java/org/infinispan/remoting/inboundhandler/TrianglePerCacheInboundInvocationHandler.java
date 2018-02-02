@@ -12,10 +12,14 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.commands.triangle.BackupWriteCommand;
+import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
+import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
+import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
+import org.infinispan.commands.triangle.SingleKeyBackupWriteCommand;
+import org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
-import org.infinispan.commands.write.BackupMultiKeyWriteRpcCommand;
-import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.PrimaryAckCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -87,11 +91,14 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
             case SingleRpcCommand.COMMAND_ID:
                handleSingleRpcCommand((SingleRpcCommand) command, reply, order);
                return;
-            case BackupWriteRpcCommand.COMMAND_ID:
-               handleBackupWriteRpcCommand((BackupWriteRpcCommand) command);
-               return;
-            case BackupMultiKeyWriteRpcCommand.COMMAND_ID:
-               handleBackupPutMapRpcCommand((BackupMultiKeyWriteRpcCommand) command);
+            case SingleKeyBackupWriteCommand.COMMAND_ID:
+            case SingleKeyFunctionalBackupWriteCommand.COMMAND_ID:
+               handleSingleKeyBackupCommand((BackupWriteCommand) command);
+               break;
+            case PutMapBackupWriteCommand.COMMAND_ID:
+            case MultiEntriesFunctionalBackupWriteCommand.COMMAND_ID:
+            case MultiKeyFunctionalBackupWriteCommand.COMMAND_ID:
+               handleMultiKeyBackupCommand((BackupWriteCommand) command);
                return;
             case BackupAckCommand.COMMAND_ID:
                handleBackupAckCommand((BackupAckCommand) command);
@@ -138,10 +145,6 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       return remoteCommandsExecutor;
    }
 
-   public ClusteringDependentLogic getClusteringDependentLogic() {
-      return clusteringDependentLogic;
-   }
-
    @Override
    public void onFinally(ActionState state) {
       //no-op
@@ -184,18 +187,18 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       }
    }
 
-   private void handleBackupPutMapRpcCommand(BackupMultiKeyWriteRpcCommand command) {
+   private void handleMultiKeyBackupCommand(BackupWriteCommand command) {
       final int topologyId = command.getTopologyId();
       ReadyAction readyAction = createTriangleOrderAction(command, topologyId, command.getSequence(),
             command.getSegmentId());
-      BlockingRunnable runnable = createBackupPutMapRunnable(command, topologyId, readyAction);
+      BlockingRunnable runnable = createMultiKeyBackupRunnable(command, topologyId, readyAction);
       remoteCommandsExecutor.execute(runnable);
    }
 
-   private void handleBackupWriteRpcCommand(BackupWriteRpcCommand command) {
+   private void handleSingleKeyBackupCommand(BackupWriteCommand command) {
       final int topologyId = command.getTopologyId();
       ReadyAction readyAction = createTriangleOrderAction(command, topologyId, command.getSequence(), command.getSegmentId());
-      BlockingRunnable runnable = createBackupWriteRpcRunnable(command, topologyId, readyAction);
+      BlockingRunnable runnable = createSingleKeyBackupRunnable(command, topologyId, readyAction);
       remoteCommandsExecutor.execute(runnable);
    }
 
@@ -282,7 +285,13 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       }
    }
 
-   private BlockingRunnable createBackupWriteRpcRunnable(BackupWriteRpcCommand command, int commandTopologyId,
+   private void onBackupException(BackupWriteCommand command, Throwable throwable, ReadyAction readyAction) {
+      readyAction.onException();
+      readyAction.onFinally(); //notified TriangleOrderManager before sending the ack.
+      sendExceptionAck(command.getCommandInvocationId(), throwable, command.getTopologyId(), command.getFlags());
+   }
+
+   private BlockingRunnable createSingleKeyBackupRunnable(BackupWriteCommand command, int commandTopologyId,
                                                          ReadyAction readyAction) {
       readyAction.addListener(remoteCommandsExecutor::checkForReadyTasks);
       return new DefaultTopologyRunnable(this, command, Reply.NO_OP, TopologyMode.READY_TX_DATA, commandTopologyId,
@@ -295,19 +304,15 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
          @Override
          protected void onException(Throwable throwable) {
             super.onException(throwable);
-            readyAction.onException();
-            readyAction.onFinally(); //notified TriangleOrderManager before sending the ack.
-            BackupWriteRpcCommand backupCommand = (BackupWriteRpcCommand) command;
-            sendExceptionAck(backupCommand.getCommandInvocationId(), throwable, commandTopologyId,
-backupCommand.getFlagBitSet());
+            onBackupException((BackupWriteCommand) command, throwable, readyAction);
          }
 
          @Override
          protected void afterInvoke() {
             super.afterInvoke();
             readyAction.onFinally();
-            BackupWriteRpcCommand backupCommand = (BackupWriteRpcCommand) command;
-            sendBackupAck(backupCommand.getCommandInvocationId(), commandTopologyId, backupCommand.getFlagBitSet());
+            BackupWriteCommand backupCommand = (BackupWriteCommand) command;
+            sendBackupAck(backupCommand.getCommandInvocationId(), commandTopologyId, backupCommand.getFlags());
          }
       };
    }
@@ -332,7 +337,7 @@ backupCommand.getFlagBitSet());
       }
    }
 
-   private BlockingRunnable createBackupPutMapRunnable(BackupMultiKeyWriteRpcCommand command, int commandTopologyId,
+   private BlockingRunnable createMultiKeyBackupRunnable(BackupWriteCommand command, int commandTopologyId,
                                                        ReadyAction readyAction) {
       readyAction.addListener(remoteCommandsExecutor::checkForReadyTasks);
       return new DefaultTopologyRunnable(this, command, Reply.NO_OP, TopologyMode.READY_TX_DATA, commandTopologyId,
@@ -345,20 +350,16 @@ backupCommand.getFlagBitSet());
          @Override
          protected void onException(Throwable throwable) {
             super.onException(throwable);
-            readyAction.onException();
-            readyAction.onFinally();
-            BackupMultiKeyWriteRpcCommand backupCommand = (BackupMultiKeyWriteRpcCommand) command;
-            sendExceptionAck(backupCommand.getCommandInvocationId(), throwable, commandTopologyId,
-                  backupCommand.getFlagBitSet());
+            onBackupException((BackupWriteCommand) command, throwable, readyAction);
          }
 
          @Override
          protected void afterInvoke() {
             super.afterInvoke();
             readyAction.onFinally();
-            BackupMultiKeyWriteRpcCommand backupCommand = (BackupMultiKeyWriteRpcCommand) command;
+            BackupWriteCommand backupCommand = (BackupWriteCommand) command;
             sendMultiKeyAck(backupCommand.getCommandInvocationId(), commandTopologyId, backupCommand.getSegmentId(),
-                  backupCommand.getFlagBitSet());
+                  backupCommand.getFlags());
          }
       };
    }
