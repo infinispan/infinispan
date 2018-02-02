@@ -505,6 +505,15 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>org.apache.karaf.tooling</groupId>
+            <artifactId>karaf-maven-plugin</artifactId>
+            <configuration>
+               <features>
+                  <feature>infinispan-client-hotrod,infinispan-client-hotrod-with-query,hotrod-client,hotrod-client-with-query</feature>
+               </features>
+            </configuration>
+         </plugin>
       </plugins>
    </build>
 
@@ -521,15 +530,6 @@
                         <exclude>**/*QueryDslConditions*.java</exclude>
                         <exclude>**/*QueryString*.java</exclude>
                      </excludes>
-                  </configuration>
-               </plugin>
-               <plugin>
-                  <groupId>org.apache.karaf.tooling</groupId>
-                  <artifactId>karaf-maven-plugin</artifactId>
-                  <configuration>
-                     <features>
-                        <feature>infinispan-client-hotrod,infinispan-client-hotrod-with-query,hotrod-client,hotrod-client-with-query</feature>
-                     </features>
                   </configuration>
                </plugin>
             </plugins>
