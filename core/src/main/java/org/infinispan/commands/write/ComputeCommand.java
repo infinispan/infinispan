@@ -112,7 +112,7 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
 
 
       if(computeIfPresent && oldValue == null) {
-         return oldValue;
+         return null;
       }
 
       try {
@@ -138,7 +138,6 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
             // remove when new value is null
             notifier.notifyCacheEntryRemoved(key, oldValue, e.getMetadata(), true, ctx, this);
             e.setRemoved(true);
-            e.setValid(false);
             e.setChanged(true);
             e.setValue(null);
          }
@@ -152,7 +151,6 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
             e.setCreated(true);
             e.setExpired(false);
             e.setRemoved(false);
-            e.setValid(true);
          }
       }
       return newValue;
@@ -195,11 +193,6 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
    @Override
    public LoadType loadType() {
       return LoadType.OWNER;
-   }
-
-   @Override
-   public void initBackupWriteRpcCommand(BackupWriteRpcCommand command) {
-      command.setCompute(commandInvocationId, key, remappingBiFunction, computeIfPresent, metadata, getFlagsBitSet(), getTopologyId());
    }
 
    @Override

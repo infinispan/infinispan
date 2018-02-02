@@ -115,7 +115,6 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
                e.setCreated(true);
                e.setExpired(false);
                e.setRemoved(false);
-               e.setValid(true);
             }
             e.setChanged(true);
          }
@@ -159,11 +158,6 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
    @Override
    public LoadType loadType() {
       return LoadType.PRIMARY;
-   }
-
-   @Override
-   public void initBackupWriteRpcCommand(BackupWriteRpcCommand command) {
-      command.setComputeIfAbsent(commandInvocationId, key, mappingFunction, metadata, getFlagsBitSet(), getTopologyId());
    }
 
    @Override

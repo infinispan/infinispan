@@ -8,7 +8,6 @@ import java.util.function.BiConsumer;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
-import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
@@ -128,8 +127,11 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
          ((InjectableComponent) f).inject(componentRegistry);
    }
 
-   @Override
-   public void initBackupWriteRpcCommand(BackupWriteRpcCommand command) {
-      command.setWriteOnlyKeyValue(commandInvocationId, key, f, value, params, getFlagsBitSet(), getTopologyId(), keyDataConversion, valueDataConversion);
+   public BiConsumer<V, WriteEntryView<V>> getBiConsumer() {
+      return f;
+   }
+
+   public Object getValue() {
+      return value;
    }
 }

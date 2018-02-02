@@ -23,10 +23,10 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.BackupAckCommand;
-import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
@@ -326,7 +326,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       ControlledRpcManager blockingRpcManager0 = ControlledRpcManager.replaceRpcManager(primaryOwnerCache);
       ControlledRpcManager blockingRpcManager2 = ControlledRpcManager.replaceRpcManager(nonOwnerCache);
       // The execution of the write/prepare/commit commands is controlled with the BlockingInterceptor
-      blockingRpcManager0.excludeCommands(BackupWriteRpcCommand.class, PrepareCommand.class, CommitCommand.class,
+      blockingRpcManager0.excludeCommands(BackupWriteCommand.class, PrepareCommand.class, CommitCommand.class,
                                           TxCompletionNotificationCommand.class
       );
       blockingRpcManager2.excludeCommands(BackupAckCommand.class);
@@ -375,7 +375,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       Future<Object> future = fork(() -> op.perform(primaryOwnerCache, key));
 
       // Wait for the entry to be wrapped on node 2
-      // The replicated command could be either a non-tx BackupWriteRpcCommand or a PrepareCommand
+      // The replicated command could be either a non-tx BackupWriteCommand or a PrepareCommand
       beforeCommitCache1Barrier.await(10, TimeUnit.SECONDS);
 
       // Remove the interceptor so we don't mess up any other state transfer puts
