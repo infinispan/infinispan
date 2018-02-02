@@ -34,6 +34,9 @@ public class TableManagerFactory {
    public static TableManager getManager(DbMetaData metaData, ConnectionFactory connectionFactory,
                                          TableManipulationConfiguration tableConfig) {
       switch (metaData.getType()) {
+         case DB2:
+         case DB2_390:
+            return new DB2TableManager(connectionFactory, tableConfig, metaData);
          case H2:
             return new H2TableManager(connectionFactory, tableConfig, metaData);
          case MARIA_DB:
