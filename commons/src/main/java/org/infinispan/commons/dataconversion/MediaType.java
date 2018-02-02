@@ -114,6 +114,9 @@ public final class MediaType {
       String params = emptyParams ? "" : str.substring(separatorIdx + 1);
       Map<String, String> paramMap = parseParams(params);
 
+      // "*" is not a valid MediaType according to the https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html,
+      // but we'll ignore for now to play nice with java.net.HttpURLConnection.
+      // More details on https://bugs.openjdk.java.net/browse/JDK-8163921
       if (types.trim().equals("*")) {
          return emptyParams ? MediaType.MATCH_ALL : new MediaType("*", "*", paramMap);
       }
