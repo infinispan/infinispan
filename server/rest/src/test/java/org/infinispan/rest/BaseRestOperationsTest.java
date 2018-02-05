@@ -128,7 +128,7 @@ public abstract class BaseRestOperationsTest {
       ContentResponse response = client.GET("http://localhost:" + restServer.getPort() + "/rest/default/nonExisting");
 
       //then
-      ResponseAssertion.assertThat(response).doesntExist();
+      ResponseAssertion.assertThat(response).isNotFound();
    }
 
    @Test
@@ -143,7 +143,7 @@ public abstract class BaseRestOperationsTest {
             .send();
 
       //then
-      ResponseAssertion.assertThat(response).doesntExist();
+      ResponseAssertion.assertThat(response).isNotFound();
    }
 
    @Test

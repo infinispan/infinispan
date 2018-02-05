@@ -5,6 +5,8 @@ import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.BasicCacheContainer;
@@ -45,30 +47,30 @@ public class RestCacheManager<V> {
    }
 
    @SuppressWarnings("unchecked")
-   public AdvancedCache<Object, V> getCache(String name, MediaType keyContentType, MediaType valueContentType) {
+   public AdvancedCache<Object, V> getCache(String name, MediaType keyContentType, MediaType valueContentType, Subject subject) {
       if (isCacheIgnored.test(name)) {
          throw logger.cacheUnavailable(name);
       }
       if (keyContentType == null || valueContentType == null) {
          throw logger.missingRequiredMediaType(name);
       }
-      checkCacheAvailable(name);
       String cacheKey = name + keyContentType.toString() + valueContentType.getTypeSubtype();
       AdvancedCache<Object, V> registered = knownCaches.get(cacheKey);
-      if (registered != null) return registered;
+      if (registered != null) return registered.withSubject(subject);
 
-      AdvancedCache<String, V> cache = instance.<String, V>getCache(name).getAdvancedCache();
+      checkCacheAvailable(name);
+
+      AdvancedCache<Object, V> cache = (AdvancedCache<Object, V>) SecurityActions.getCache(instance, name).getAdvancedCache();
       tryRegisterMigrationManager(cache);
 
-      AdvancedCache<Object, V> encodedCache = (AdvancedCache<Object, V>) cache.getAdvancedCache()
-            .withMediaType(keyContentType.toString(), valueContentType.toString());
+      AdvancedCache<Object, V> encodedCache = (AdvancedCache<Object, V>) cache.withMediaType(keyContentType.toString(), valueContentType.toString());
 
       knownCaches.putIfAbsent(cacheKey, encodedCache);
-      return encodedCache;
+      return encodedCache.withSubject(subject);
    }
 
    public AdvancedCache<Object, V> getCache(String name) {
-      return getCache(name, MATCH_ALL, MATCH_ALL);
+      return getCache(name, MATCH_ALL, MATCH_ALL, null);
    }
 
    private void checkCacheAvailable(String cacheName) {
@@ -81,12 +83,20 @@ public class RestCacheManager<V> {
       }
    }
 
-   public CacheEntry<Object, V> getInternalEntry(String cacheName, Object key, MediaType keyContentType, MediaType mediaType) {
-      return getInternalEntry(cacheName, key, false, keyContentType, mediaType);
+   public CacheEntry<Object, V> getInternalEntry(String cacheName, Object key, MediaType keyContentType, MediaType mediaType, Subject subject, boolean forWrite) {
+      return getInternalEntry(cacheName, key, false, keyContentType, mediaType, subject, forWrite);
    }
 
-   public void remove(String cacheName, Object key, MediaType keyContentType, boolean async) {
-      Cache<Object, V> cache = getCache(cacheName, keyContentType, MediaType.MATCH_ALL);
+   public CacheEntry<Object, V> getInternalEntry(String cacheName, Object key, boolean skipListener, MediaType keyContentType, MediaType mediaType, Subject subject, boolean forWrite) {
+      AdvancedCache<Object, V> cache = getCache(cacheName, keyContentType, mediaType, subject);
+      if (skipListener)
+         cache = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION);
+
+      return forWrite ? SecurityActions.getCacheEntry(cache, key) : cache.getCacheEntry(key);
+   }
+
+   public void remove(String cacheName, Object key, MediaType keyContentType, Subject subject, boolean async) {
+      Cache<Object, V> cache = getCache(cacheName, keyContentType, MediaType.MATCH_ALL, subject);
       if (async) {
          cache.removeAsync(key);
       } else {
@@ -96,14 +106,7 @@ public class RestCacheManager<V> {
    }
 
    public MediaType getValueConfiguredFormat(String cacheName) {
-      return getCache(cacheName).getCacheConfiguration().encoding().valueDataType().mediaType();
-   }
-
-   public CacheEntry<Object, V> getInternalEntry(String cacheName, Object key, boolean skipListener, MediaType keyContentType, MediaType mediaType) {
-      AdvancedCache<Object, V> cache =
-            skipListener ? getCache(cacheName, keyContentType, mediaType).withFlags(Flag.SKIP_LISTENER_NOTIFICATION) : getCache(cacheName, keyContentType, mediaType);
-
-      return cache.getCacheEntry(key);
+      return SecurityActions.getCacheConfiguration(getCache(cacheName)).encoding().valueDataType().mediaType();
    }
 
    public String getNodeName() {
@@ -137,7 +140,7 @@ public class RestCacheManager<V> {
 
    @SuppressWarnings("unchecked")
    private void tryRegisterMigrationManager(AdvancedCache<?, ?> cache) {
-      ComponentRegistry cr = cache.getComponentRegistry();
+      ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(cache);
       RollingUpgradeManager migrationManager = cr.getComponent(RollingUpgradeManager.class);
       if (migrationManager != null) migrationManager.addSourceMigrator(new RestSourceMigrator(cache));
    }

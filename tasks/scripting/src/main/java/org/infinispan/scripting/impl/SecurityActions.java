@@ -1,7 +1,6 @@
 package org.infinispan.scripting.impl;
 
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -11,11 +10,12 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.ContextAwarePrivilegedAction;
 import org.infinispan.security.actions.GetCacheAuthorizationManagerAction;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheEntryAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
-import org.infinispan.security.impl.SecureCacheImpl;
+import org.infinispan.security.actions.UnwrapCacheAction;
 
 /**
  * SecurityActions for the org.infinispan.scripting.impl package.
@@ -27,11 +27,13 @@ import org.infinispan.security.impl.SecureCacheImpl;
  * @since 7.2
  */
 final class SecurityActions {
-   private static <T> T doPrivileged(PrivilegedAction<T> action) {
+   private static <T> T doPrivileged(ContextAwarePrivilegedAction<T> action) {
       if (System.getSecurityManager() != null) {
          return AccessController.doPrivileged(action);
-      } else {
+      } else if (action.contextRequiresSecurity()) {
          return Security.doPrivileged(action);
+      } else {
+         return action.run();
       }
    }
 
@@ -55,11 +57,8 @@ final class SecurityActions {
       return doPrivileged(action);
    }
 
-   static <K, V> Cache<K, V> getUnwrappedCache(final Cache<K, V> cache) {
-      if (cache instanceof SecureCacheImpl) {
-         return doPrivileged(() -> ((SecureCacheImpl) cache).getDelegate());
-      } else {
-         return cache;
-      }
+   static <K, V> AdvancedCache<K, V> getUnwrappedCache(final Cache<K, V> cache) {
+      UnwrapCacheAction<K, V> action = new UnwrapCacheAction(cache.getAdvancedCache());
+      return doPrivileged(action);
    }
 }

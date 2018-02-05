@@ -31,7 +31,7 @@ public class SearchOperations extends AbstractOperations {
    public InfinispanSearchResponse search(String cacheName, QueryRequest query, InfinispanSearchRequest request) {
       InfinispanSearchResponse searchResponse = InfinispanSearchResponse.inReplyTo(request);
       MediaType keyContentType = request.getKeyContentType();
-      AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, MediaType.APPLICATION_JSON);
+      AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, MediaType.APPLICATION_JSON, request.getSubject());
       String queryString = query.getQuery();
       try {
          RemoteQueryManager remoteQueryManager = cache.getComponentRegistry().getComponent(RemoteQueryManager.class);

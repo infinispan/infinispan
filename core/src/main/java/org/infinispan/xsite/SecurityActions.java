@@ -1,14 +1,14 @@
 package org.infinispan.xsite;
 
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.ContextAwarePrivilegedAction;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
-import org.infinispan.security.impl.SecureCacheImpl;
+import org.infinispan.security.actions.UnwrapCacheAction;
 
 /**
  * SecurityActions for the org.infinispan.xsite package.
@@ -20,11 +20,13 @@ import org.infinispan.security.impl.SecureCacheImpl;
  * @since 9.0
  */
 final class SecurityActions {
-   private static <T> T doPrivileged(PrivilegedAction<T> action) {
+   private static <T> T doPrivileged(ContextAwarePrivilegedAction<T> action) {
       if (System.getSecurityManager() != null) {
          return AccessController.doPrivileged(action);
-      } else {
+      } else if (action.contextRequiresSecurity()) {
          return Security.doPrivileged(action);
+      } else {
+         return action.run();
       }
    }
 
@@ -33,11 +35,8 @@ final class SecurityActions {
       return doPrivileged(action);
    }
 
-   static <K, V> Cache<K, V> getUnwrappedCache(final Cache<K, V> cache) {
-      if (cache instanceof SecureCacheImpl) {
-         return doPrivileged(() ->  ((SecureCacheImpl)cache).getDelegate() );
-      } else {
-         return cache;
-      }
+   static <K, V> AdvancedCache<K, V> getUnwrappedCache(final Cache<K, V> cache) {
+      UnwrapCacheAction<K, V> action = new UnwrapCacheAction(cache.getAdvancedCache());
+      return doPrivileged(action);
    }
 }

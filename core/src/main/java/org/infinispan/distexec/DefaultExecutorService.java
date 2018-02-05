@@ -123,7 +123,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    public static ExecutorService createLocalExecutor(Cache<?, ?> masterCacheNode) {
-      String nodeName = masterCacheNode != null ? SecurityActions.getConfiguredNodeName(masterCacheNode) : null;
+      String nodeName = masterCacheNode != null ? SecurityActions.getUnwrappedCache(masterCacheNode).getCacheManager().getCacheManagerConfiguration().transport().nodeName() : null;
       return Executors.newSingleThreadExecutor(
             new DefaultThreadFactory(null, Thread.NORM_PRIORITY, DefaultThreadFactory.DEFAULT_PATTERN, nodeName,
                                      "DefaultExecutorService"));

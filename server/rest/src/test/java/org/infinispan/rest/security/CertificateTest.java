@@ -1,4 +1,4 @@
-package org.infinispan.rest;
+package org.infinispan.rest.security;
 
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -7,12 +7,13 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.authentication.impl.ClientCertAuthenticator;
 import org.infinispan.rest.helper.RestServerHelper;
+import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "rest.AuthenticationTest")
+@Test(groups = "functional", testName = "rest.security.CertificateTest")
 public class CertificateTest extends AbstractInfinispanTest {
 
    public static final String TRUST_STORE_PATH = CertificateTest.class.getClassLoader().getResource("./default_client_truststore.jks").getPath();
@@ -46,8 +47,11 @@ public class CertificateTest extends AbstractInfinispanTest {
       client = new HttpClient(sslContextFactory);
       client.start();
 
+      SimpleServerAuthenticationProvider ssap = new SimpleServerAuthenticationProvider();
+      ssap.addUser("CN=HotRod_1,OU=Infinispan,O=JBoss,L=Red Hat,ST=World,C=WW", "", "".toCharArray());
+
       restServer = RestServerHelper.defaultRestServer()
-            .withAuthenticator(new ClientCertAuthenticator())
+            .withAuthenticator(new ClientCertAuthenticator(ssap))
             .withKeyStore(KEY_STORE_PATH, "secret")
             .withTrustStore(TRUST_STORE_PATH, "secret")
             .withClientAuth()

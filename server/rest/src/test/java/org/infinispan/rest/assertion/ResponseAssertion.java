@@ -25,11 +25,6 @@ public class ResponseAssertion {
       return this;
    }
 
-   public ResponseAssertion doesntExist() {
-      Assertions.assertThat(response.getStatus()).isEqualTo(404);
-      return this;
-   }
-
    public ResponseAssertion hasReturnedText(String text) {
       Assertions.assertThat(response.getContentAsString()).isEqualTo(text);
       return this;
@@ -90,6 +85,11 @@ public class ResponseAssertion {
    public ResponseAssertion isUnauthorized() {
       Assertions.assertThat(response.getStatus()).isEqualTo(401);
       Assertions.assertThat(response.getHeaders().get(HttpHeader.WWW_AUTHENTICATE)).isNotNull().isNotEmpty();
+      return this;
+   }
+
+   public ResponseAssertion isForbidden() {
+      Assertions.assertThat(response.getStatus()).isEqualTo(403);
       return this;
    }
 

@@ -36,12 +36,36 @@ public class GlobalRoleConfigurationBuilder extends AbstractGlobalConfigurationB
    }
 
    /**
+    * Adds multiple permissions to a role
+    *
+    * @param permissions the names of the permissions to add to the role. See {@link AuthorizationPermission}
+    */
+   public GlobalRoleConfigurationBuilder permission(String... permissions) {
+      for (String permission : permissions) {
+         this.permissions.add(AuthorizationPermission.valueOf(permission));
+      }
+      return this;
+   }
+
+   /**
     * Adds a permission to a role
     *
     * @param permission the permission to add to the role. See {@link AuthorizationPermission}
     */
    public GlobalRoleConfigurationBuilder permission(AuthorizationPermission permission) {
       permissions.add(permission);
+      return this;
+   }
+
+   /**
+    * Adds multiple permissions to a role
+    *
+    * @param permissions the permissions to add to the role. See {@link AuthorizationPermission}
+    */
+   public GlobalRoleConfigurationBuilder permission(AuthorizationPermission... permissions) {
+      for(AuthorizationPermission permission : permissions) {
+         this.permissions.add(permission);
+      }
       return this;
    }
 

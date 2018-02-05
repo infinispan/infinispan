@@ -51,7 +51,7 @@ abstract class AbstractOperations {
    MediaType tryNarrowMediaType(MediaType negotiated, AdvancedCache<?, ?> cache) {
       if (!negotiated.matchesAll()) return negotiated;
 
-      Configuration cacheConfiguration = cache.getCacheConfiguration();
+      Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache);
       boolean compat = cacheConfiguration.compatibility().enabled();
       MediaType valueStorageFormat = cache.getValueDataConversion().getStorageMediaType();
       if (compat) {
