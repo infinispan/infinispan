@@ -16,6 +16,7 @@ import org.infinispan.rest.authentication.impl.BasicAuthenticator;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.server.core.security.simple.SimpleUserPrincipal;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.mockito.internal.stubbing.answers.ThrowsExceptionClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
@@ -56,7 +57,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
       doReturn(userPrincipal).when(securityDomainMock).authenticate(eq("test"), eq("test"));
 
       BasicAuthenticator basicAuthenticator = new BasicAuthenticator(securityDomainMock, "ApplicationRealm");
-      restServer = RestServerHelper.defaultRestServer().withAuthenticator(basicAuthenticator).start();
+      restServer = RestServerHelper.defaultRestServer().withAuthenticator(basicAuthenticator).start(TestResourceTracker.getCurrentTestShortName());
 
       //when
       ContentResponse response = client
@@ -76,7 +77,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
 
       BasicAuthenticator basicAuthenticator = new BasicAuthenticator(securityDomainMock, "ApplicationRealm");
 
-      restServer = RestServerHelper.defaultRestServer().withAuthenticator(basicAuthenticator).start();
+      restServer = RestServerHelper.defaultRestServer().withAuthenticator(basicAuthenticator).start(TestResourceTracker.getCurrentTestShortName());
 
       //when
       ContentResponse response = client
@@ -96,7 +97,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
 
       BasicAuthenticator basicAuthenticator = new BasicAuthenticator(securityDomainMock, "ApplicationRealm");
 
-      restServer = RestServerHelper.defaultRestServer().withAuthenticator(basicAuthenticator).start();
+      restServer = RestServerHelper.defaultRestServer().withAuthenticator(basicAuthenticator).start(TestResourceTracker.getCurrentTestShortName());
 
       //when
       ContentResponse response = client

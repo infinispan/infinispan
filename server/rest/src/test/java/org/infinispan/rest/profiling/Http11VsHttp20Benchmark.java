@@ -81,7 +81,7 @@ public class Http11VsHttp20Benchmark {
          } else {
             client = new BenchmarkHttpClient();
          }
-         restServer.start();
+         restServer.start(this.getClass().getSimpleName());
          restServer.getCacheManager().getCache().put(EXISTING_KEY, "test");
          client.start(restServer.getHost(), restServer.getPort(), httpClientThreads, useHttp2);
       }

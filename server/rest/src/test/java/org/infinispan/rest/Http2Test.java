@@ -23,6 +23,8 @@ import java.util.Queue;
 import org.assertj.core.api.Assertions;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.rest.http2.Http2Client;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -39,7 +41,7 @@ import io.netty.util.CharsetUtil;
  *
  * @author Sebastian Łaskawiec
  */
-public final class Http2Test {
+public final class Http2Test extends AbstractInfinispanTest {
 
     public static final String KEY_STORE_PATH = Http2Test.class.getClassLoader().getResource("./default_client_truststore.jks").getPath();
 
@@ -65,7 +67,7 @@ public final class Http2Test {
         //given
         restServer = RestServerHelper.defaultRestServer("http2testcache")
               .withKeyStore(KEY_STORE_PATH, "secret")
-              .start();
+              .start(TestResourceTracker.getCurrentTestShortName());
 
         client = Http2Client.newClientWithAlpn(KEY_STORE_PATH, "secret");
         client.start(restServer.getHost(), restServer.getPort());
@@ -86,7 +88,7 @@ public final class Http2Test {
     @Test
     public void shouldUpgradeUsingHTTP11Upgrade() throws Exception {
         //given
-        restServer = RestServerHelper.defaultRestServer("http2testcache").start();
+        restServer = RestServerHelper.defaultRestServer("http2testcache").start(TestResourceTracker.getCurrentTestShortName());
 
         client = Http2Client.newClientWithHttp11Upgrade();
         client.start(restServer.getHost(), restServer.getPort());
