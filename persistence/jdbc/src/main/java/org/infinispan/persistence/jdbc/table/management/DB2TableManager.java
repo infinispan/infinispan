@@ -40,4 +40,9 @@ class DB2TableManager extends AbstractTableManager {
       ps.setLong(2, timestamp);
       ps.setBinaryStream(3, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
    }
+
+   @Override
+   protected String getDropTimestampSql() {
+      return String.format("DROP INDEX %s", getIndexName(true));
+   }
 }
