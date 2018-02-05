@@ -14,7 +14,16 @@ import org.jboss.logging.annotations.MessageLogger;
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
    String LOCK_DELETE_MSG = "The lock was deleted.";
+   String NODE_LEFT_MSG = "The node has left the cluster.";
+   String UNLOCK_FAILED_MSG = "LOCK[%s] Unlock failed from node %s";
 
    @Message(value = LOCK_DELETE_MSG, id = 29001)
    ClusteredLockException lockDeleted();
+
+   @Message(value = NODE_LEFT_MSG, id = 29002)
+   ClusteredLockException nodeShutdown();
+
+   @Message(value = UNLOCK_FAILED_MSG, id = 29003)
+   ClusteredLockException unlockFailed(String lockName, Object originator);
+
 }
