@@ -5,7 +5,26 @@
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-license</artifactId>
    <name>Infinispan License Bundle</name>
-   
+   <description>Infinispan License Bundle module</description>
+   <url>http://www.infinispan.org</url>
+   <organization>
+      <name>JBoss, a division of Red Hat</name>
+      <url>http://www.jboss.org</url>
+   </organization>
+   <licenses>
+      <license>
+         <name>Apache License 2.0</name>
+         <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+         <distribution>repo</distribution>
+      </license>
+   </licenses>
+   <developers>
+      <developer>
+         <id>placeholder</id>
+         <name>See http://www.infinispan.org for a complete list of contributors</name>
+      </developer>
+   </developers>
+
    <properties>
       <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
@@ -84,3 +103,4 @@
    
 
 </project>
+
