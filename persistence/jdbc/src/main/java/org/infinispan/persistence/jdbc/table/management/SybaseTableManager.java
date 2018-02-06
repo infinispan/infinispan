@@ -16,6 +16,11 @@ class SybaseTableManager extends AbstractTableManager {
    }
 
    @Override
+   protected String getDropTimestampSql() {
+      return String.format("DROP INDEX %s.%s", getTableName(), getIndexName(true));
+   }
+
+   @Override
    public String getUpdateRowSql() {
       if (updateRowSql == null) {
          updateRowSql = String.format("UPDATE %s SET %s = ? , %s = ? WHERE %s = convert(%s,?)",
