@@ -28,7 +28,7 @@
         <module name="org.jboss.staxmapper"/>
         <module name="org.jboss.threads"/>
         <module name="org.jgroups" slot="${slot}"/>
-        <module name="org.jgroups.kubernetes.kubernetes" slot="${slot}"/>
+        <module name="org.jgroups.kubernetes" slot="${slot}"/>
         <module name="org.wildfly.security.manager"/>
         <module name="org.wildfly.security.elytron-private" services="import"/>
         <module name="sun.jdk"/>
