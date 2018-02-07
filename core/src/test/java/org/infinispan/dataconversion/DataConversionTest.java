@@ -31,6 +31,7 @@ import org.infinispan.configuration.cache.ContentTypeConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
@@ -50,10 +51,11 @@ import org.testng.annotations.Test;
  * @since 9.1
  */
 @Test(groups = "functional", testName = "core.DataConversionTest")
+@SuppressWarnings("unchecked")
 public class DataConversionTest extends AbstractInfinispanTest {
 
    @Test
-   public void testReadUnencoded() throws Exception {
+   public void testReadUnencoded() {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.memory().storageType(StorageType.OFF_HEAP);
 
@@ -79,7 +81,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testUTF8Encoders() throws Exception {
+   public void testUTF8Encoders() {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
 
       withCacheManager(new CacheManagerCallable(
@@ -92,7 +94,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
          }
 
          @Override
-         public void call() throws IOException, InterruptedException {
+         public void call() throws IOException {
             Cache<byte[], byte[]> cache = cm.getCache();
 
             String keyUnencoded = "1";
@@ -114,11 +116,11 @@ public class DataConversionTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testObjectEncoder() throws Exception {
+   public void testObjectEncoder() {
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder())) {
 
-         private byte[] marshall(Object o) throws IOException, InterruptedException {
+         private byte[] marshall(Object o) throws InterruptedException {
             return (byte[]) GenericJbossMarshallerEncoder.INSTANCE.toStorage(o);
          }
 
@@ -146,7 +148,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testCompatModeEncoder() throws Exception {
+   public void testCompatModeEncoder() {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
 
       JavaSerializationMarshaller marshaller = new JavaSerializationMarshaller();
@@ -192,7 +194,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testExtractIndexable() throws Exception {
+   public void testExtractIndexable() {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
 
       cfg.customInterceptors().addInterceptor().after(EntryWrappingInterceptor.class).interceptor(new TestInterceptor(1));
@@ -201,7 +203,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
             TestCacheManagerFactory.createCacheManager(cfg)) {
 
          @Override
-         public void call() throws IOException, InterruptedException {
+         public void call() throws InterruptedException {
             ConfigurationBuilder offHeapConfig = new ConfigurationBuilder();
             offHeapConfig.memory().storageType(StorageType.OFF_HEAP);
             offHeapConfig.customInterceptors().addInterceptor().after(EntryWrappingInterceptor.class).interceptor(new TestInterceptor(1));
@@ -399,6 +401,29 @@ public class DataConversionTest extends AbstractInfinispanTest {
             Cache<byte[], byte[]> utf16ValueCache = (Cache<byte[], byte[]>) cache.getAdvancedCache().withMediaType("text/plain; charset=ISO-8859-1", "text/plain; charset=UTF-16");
 
             assertEquals(utf16ValueCache.get(key), new byte[]{-2, -1, 0, 97, 0, 118, 0, 105, 0, -29, 0, 111});
+         }
+      });
+   }
+
+   public void testWithCustomEncoder() {
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder())) {
+         @Override
+         public void call() {
+            GlobalComponentRegistry registry = cm.getGlobalComponentRegistry();
+            EncoderRegistry encoderRegistry = registry.getComponent(EncoderRegistry.class);
+            encoderRegistry.registerEncoder(new GzipEncoder());
+
+            AdvancedCache<String, String> cache = cm.<String, String>getCache().getAdvancedCache();
+
+            AdvancedCache<String, String> compressingCache = (AdvancedCache<String, String>) cache.withEncoding(IdentityEncoder.class, GzipEncoder.class);
+
+            compressingCache.put("297931749", "0412c789a37f5086f743255cfa693dd502b6a2ecb2ceee68380ff58ad15e7b56");
+
+            assertEquals(compressingCache.get("297931749"), "0412c789a37f5086f743255cfa693dd502b6a2ecb2ceee68380ff58ad15e7b56");
+
+            Object value = compressingCache.withEncoding(IdentityEncoder.class).get("297931749");
+            assert value instanceof byte[];
          }
       });
    }

@@ -1,0 +1,178 @@
+===  Encoding
+
+==== Overview
+
+Encoding is the data conversion operation done by Infinispan caches before storing data, and when reading back from storage.
+
+It allows dealing with a certain data format during API calls (map, listeners, stream, etc) while the format effectively stored
+is different.
+
+The data conversions are handled by instances of _org.infinispan.commons.dataconversion.Encoder_ :
+
+[source,java]
+----
+public interface Encoder {
+
+   /**
+    * Convert data in the read/write format to the storage format.
+    *
+    * @param content data to be converted, never null.
+    * @return Object in the storage format.
+    */
+   Object toStorage(Object content);
+
+   /**
+    * Convert from storage format to the read/write format.
+    *
+    * @param content data as stored in the cache, never null.
+    * @return data in the read/write format
+    */
+   Object fromStorage(Object content);
+
+   /**
+     * Returns the {@link MediaType} produced by this encoder or null if the storage format is not known.
+     */
+   MediaType getStorageFormat();
+}
+----
+
+
+==== Default encoders
+
+Infinispan automatically picks the Encoder depending on the cache configuration. The table below shows which internal Encoder is used for several configurations:
+
+[options="header",cols="1,2,3,10"]
+|==============================================================================
+| Mode | Configuration | Encoder | Description
+| Embedded/Server | Default | IdentityEncoder | Passthrough  encoder, no conversion done
+| Embedded | StorageType.OFF_HEAP  | GlobalMarshallerEncoder | Uses Infinispan internal marshaller to convert to byte[]. May delegate to the configured marshaller in the cache manager.
+| Embedded | <<store.binary,StorageType.BINARY>> | BinaryEncoder | Uses infinispan internal marshaller to convert to byte[], except for primitives and String.
+| Server |  <<compat.mode, Compatibility Mode>> | CompatModeEncoder | Uses the configured compatibility mode marshaller to unmarshall byte[] to its deserialized form, storing data as POJOs
+| Server | StorageType.OFF_HEAP  | IdentityEncoder | Just store byte[] directly as received by remote clients
+|==============================================================================
+
+
+
+==== Overriding programmatically
+
+Is is possible to override programmatically the encoding used for both keys and values, by calling the _.withEncoding()_ method variants from _AdvancedCache_.
+
+Example, consider the following cache configured as OFF_HEAP:
+
+[source,java]
+----
+// Read and write POJO, storage will be byte[] since for
+// OFF_HEAP the GlobalMarshallerEncoder is used internally:
+cache.put(1, new Pojo())
+Pojo value = cache.get(1)
+
+// Get the content in its stored format by overriding
+// the internal encoder with a no-op encoder (IdentityEncoder)
+Cache<?,?> rawContent = cache.getAdvancedCache().withValueEncoding(IdentityEncoder.class)
+byte[] marshalled = rawContent.get(1)
+----
+
+The override can be useful if any operation in the cache does not require decoding, such as counting number of entries,
+or calculating the size of byte[] of an OFF_HEAP cache.
+
+
+==== Defining custom Encoders
+
+A custom encoder can be registered in the _EncoderRegistry_.
+
+CAUTION: Ensure that the registration is done in every node of the cluster, before starting the caches.
+
+
+Consider a custom encoder used to compress/decompress with gzip:
+
+
+[source,java]
+----
+public class GzipEncoder implements Encoder {
+
+   @Override
+   public Object toStorage(Object content) {
+      assert content instanceof String;
+      return compress(content.toString());
+   }
+
+   @Override
+   public Object fromStorage(Object content) {
+      assert content instanceof byte[];
+      return decompress((byte[]) content);
+   }
+
+   private byte[] compress(String str) {
+      try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+           GZIPOutputStream gis = new GZIPOutputStream(baos)) {
+         gis.write(str.getBytes("UTF-8"));
+         gis.close();
+         return baos.toByteArray();
+      } catch (IOException e) {
+         throw new RuntimeException("Unabled to compress", e);
+      }
+   }
+
+   private String decompress(byte[] compressed) {
+      try (GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(compressed));
+           BufferedReader bf = new BufferedReader(new InputStreamReader(gis, "UTF-8"))) {
+         StringBuilder result = new StringBuilder();
+         String line;
+         while ((line = bf.readLine()) != null) {
+            result.append(line);
+         }
+         return result.toString();
+      } catch (IOException e) {
+         throw new RuntimeException("Unable to decompress", e);
+      }
+   }
+
+   @Override
+   public MediaType getStorageFormat() {
+      return MediaType.parse("application/gzip");
+   }
+
+   @Override
+   public boolean isStorageFormatFilterable() {
+      return false;
+   }
+
+   @Override
+   public short id() {
+      return 10000;
+   }
+}
+----
+
+It can be registered by:
+
+[source,java]
+----
+GlobalComponentRegistry registry = cacheManager.getGlobalComponentRegistry();
+EncoderRegistry encoderRegistry = registry.getComponent(EncoderRegistry.class);
+encoderRegistry.registerEncoder(new GzipEncoder());
+----
+
+
+And then be used to write and read data from a cache:
+
+[source,java]
+----
+AdvancedCache<String, String> cache = ...
+
+// Decorate cache with the newly registered encoder, without encoding keys (IdentityEncoder)
+// but compressing values
+AdvancedCache<String, String> compressingCache = (AdvancedCache<String, String>) cache.withEncoding(IdentityEncoder.class, GzipEncoder.class);
+
+// All values will be stored compressed...
+compressingCache.put("297931749", "0412c789a37f5086f743255cfa693dd5");
+
+// ... but API calls deals with String
+String value = compressingCache.get("297931749");
+
+// Bypassing the value encoder to obtain the value as it is stored
+Object value = compressingCache.withEncoding(IdentityEncoder.class).get("297931749");
+
+// value is a byte[] which is the compressed value
+----
+

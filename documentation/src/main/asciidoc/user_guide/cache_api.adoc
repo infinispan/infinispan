@@ -567,3 +567,4 @@ To make this move, locks would have been acquired on:
 The current Infinispan listeners have been designed with key/value store notifications in mind, and hence they do not map to tree cache events correctly. Tree cache specific listeners that map directly to tree cache events (i.e. adding a child...etc) are desirable but these are not yet available. If you're interested in this type of listeners, please follow link:https://issues.jboss.org/browse/ISPN-1935[this issue] to find out about any progress in this area.
 
 include::functional_api.adoc[]
+include::encoding.adoc[]
