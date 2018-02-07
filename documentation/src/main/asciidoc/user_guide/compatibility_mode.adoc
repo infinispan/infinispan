@@ -1,4 +1,4 @@
-==  Embedded/Remote Compatibility
+==  Embedded/Remote Compatibility[[compat.mode]]
 Infinispan offers the possibility to store and retrieve data in a <<_the_cache_interface, local embedded way>>, and also <<_server_modules, remotely thanks to the multiple endpoints offered>>, but until now if you choose one way to access the data, you were stuck with it. For example, you could not store data using the embedded interface and retrieve it via REST.
 
 Starting with Infinispan 5.3, it is now possible to configure Infinispan caches to work in a special, compatibility mode for those users interested in accessing Infinispan in multiple ways. Achieving such compatibility requires extra work from Infinispan in order to make sure that contents are converted back and forth between the different formats of each endpoint and this is the reason why compatibility mode is disabled by default.
