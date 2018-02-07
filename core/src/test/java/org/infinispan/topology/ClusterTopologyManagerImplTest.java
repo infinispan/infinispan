@@ -88,7 +88,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       transport.expectTopologyCommand(CacheTopologyControlCommand.Type.GET_STATUS).finish();
 
       // CTMI fetches rebalance status/confirm members are available
-      transport.expectTopologyCommand(CacheTopologyControlCommand.Type.POLICY_GET_STATUS).finish();
+      transport.expectHeartBeatCommand().finish();
 
       // First node joins the cache
       CacheStatusResponse joinResponseA = ctm.handleJoin(CACHE_NAME, A, joinInfoA, 1);
@@ -111,7 +111,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       managerNotifier.notifyViewChange(asList(A, B), singletonList(A), A, 2);
 
       // CTMI confirms availability
-      transport.expectTopologyCommand(CacheTopologyControlCommand.Type.POLICY_GET_STATUS).finish();
+      transport.expectHeartBeatCommand().finish();
 
       // Second node joins the cache, receives the initial topology
       CacheStatusResponse joinResponseB = ctm.handleJoin(CACHE_NAME, B, joinInfoB, 2);
@@ -174,7 +174,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
 
       // When CTMI starts as regular member it requests the rebalancing status from the coordinator
       runConcurrently(
-         () -> ctm.start(),
+         ctm::start,
          () -> transport.expectTopologyCommand(CacheTopologyControlCommand.Type.POLICY_GET_STATUS)
                         .singleResponse(A, SuccessfulResponse.create(true)));
 
@@ -207,15 +207,14 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       });
 
       // CTMI confirms members are available in case it needs to starts a rebalance
-      transport.expectTopologyCommand(CacheTopologyControlCommand.Type.POLICY_GET_STATUS).finish();
+      transport.expectHeartBeatCommand().finish();
 
       // Node A restarts
       transport.updateView(4, asList(B, A));
       managerNotifier.notifyViewChange(asList(B, A), singletonList(B), A, 4);
 
       // CTMI confirms members are available in case it needs to starts a rebalance
-      transport.expectTopologyCommand(CacheTopologyControlCommand.Type.POLICY_GET_STATUS)
-               .singleResponse(A, SuccessfulResponse.create(true));
+      transport.expectHeartBeatCommand().finish();
 
       // Node A rejoins
       ctm.handleJoin(CACHE_NAME, A, joinInfoA, 4);

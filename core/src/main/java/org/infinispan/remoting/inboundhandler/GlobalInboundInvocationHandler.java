@@ -22,6 +22,7 @@ import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -67,7 +68,9 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
    public void handleFromCluster(Address origin, ReplicableCommand command, Reply reply, DeliverOrder order) {
       command.setOrigin(origin);
       try {
-         if (command instanceof CacheRpcCommand) {
+         if (command.getCommandId() == HeartBeatCommand.COMMAND_ID) {
+            reply.reply(null);
+         } else if (command instanceof CacheRpcCommand) {
             handleCacheRpcCommand(origin, (CacheRpcCommand) command, reply, order);
          } else {
             handleReplicableCommand(origin, command, reply, order);
