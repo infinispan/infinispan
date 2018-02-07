@@ -98,6 +98,10 @@
             <maven-resource group="com.thoughtworks.xstream" artifact="xstream" />
         </module-def>
 
+        <module-def name="net.oauth.core" slot="${infinispan.slot}">
+            <maven-resource group="net.oauth.core" artifact="oauth" />
+        </module-def>
+
         <module-def name="org.antlr.antlr-runtime" slot="${infinispan.slot}">
             <maven-resource group="org.antlr" artifact="antlr-runtime" />
         </module-def>
@@ -205,9 +209,8 @@
             <maven-resource group="org.jgroups" artifact="jgroups" />
         </module-def>
 
-        <module-def name="org.jgroups.kubernetes.kubernetes" slot="${infinispan.slot}">
+        <module-def name="org.jgroups.kubernetes" slot="${infinispan.slot}">
             <maven-resource group="org.jgroups.kubernetes" artifact="jgroups-kubernetes" />
-            <maven-resource group="net.oauth.core" artifact="oauth" />
         </module-def>
 
         <module-def name="org.jgroups.extension" slot="${infinispan.slot}">
