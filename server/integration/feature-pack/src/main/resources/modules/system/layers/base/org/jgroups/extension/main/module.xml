@@ -28,6 +28,7 @@
         <module name="org.jboss.staxmapper"/>
         <module name="org.jboss.threads"/>
         <module name="org.jgroups"/>
+        <module name="org.jgroups.azure"/>
         <module name="org.jgroups.kubernetes"/>
         <module name="org.wildfly.security.elytron-private" services="import"/>
         <module name="org.wildfly.security.manager"/>

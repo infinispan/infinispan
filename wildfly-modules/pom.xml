@@ -184,6 +184,11 @@
       </dependency>
 
       <dependency>
+         <groupId>com.microsoft.azure</groupId>
+         <artifactId>azure-storage</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-search-modules</artifactId>
          <version>${version.hibernate.search}</version>
@@ -241,6 +246,12 @@
          <groupId>org.jgroups.kubernetes</groupId>
          <artifactId>jgroups-kubernetes</artifactId>
       </dependency>
+
+      <dependency>
+         <groupId>org.jgroups.azure</groupId>
+         <artifactId>jgroups-azure</artifactId>
+      </dependency>
+
       <dependency>
          <groupId>net.oauth.core</groupId>
          <artifactId>oauth</artifactId>

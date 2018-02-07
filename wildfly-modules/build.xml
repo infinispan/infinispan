@@ -86,6 +86,10 @@
             <maven-resource group="com.github.ben-manes.caffeine" artifact="caffeine" />
         </module-def>
 
+        <module-def name="com.microsoft.azure.storage" slot="${infinispan.slot}">
+            <maven-resource group="com.microsoft.azure" artifact="azure-storage" />
+        </module-def>
+
         <module-def name="io.reactivex.rxjava2" slot="${infinispan.slot}">
             <maven-resource group="io.reactivex.rxjava2" artifact="rxjava" />
         </module-def>
@@ -207,6 +211,10 @@
 
         <module-def name="org.jgroups" slot="${infinispan.slot}">
             <maven-resource group="org.jgroups" artifact="jgroups" />
+        </module-def>
+
+        <module-def name="org.jgroups.azure" slot="${infinispan.slot}">
+            <maven-resource group="org.jgroups.azure" artifact="jgroups-azure" />
         </module-def>
 
         <module-def name="org.jgroups.kubernetes" slot="${infinispan.slot}">

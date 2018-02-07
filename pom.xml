@@ -286,6 +286,7 @@
       <version.maven.surefire>2.20.1</version.maven.surefire>
       <version.mc4j>1.2.6</version.mc4j>
       <version.metainf-services>1.7</version.metainf-services>
+      <version.microsoft.azure.storage>6.1.0</version.microsoft.azure.storage>
       <version.mockito>2.7.21</version.mockito>
       <version.mockito_dep.bytebuddy>1.6.11</version.mockito_dep.bytebuddy>
       <version.mockito_dep.hamcrest>1.3</version.mockito_dep.hamcrest>
@@ -516,6 +517,11 @@
             <groupId>com.martiansoftware</groupId>
             <artifactId>jsap</artifactId>
             <version>${version.jsap}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>azure-storage</artifactId>
+            <version>${version.microsoft.azure.storage}</version>
          </dependency>
          <dependency>
             <groupId>org.javassist</groupId>
