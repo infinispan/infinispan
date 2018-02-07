@@ -43,6 +43,7 @@ import org.infinispan.manager.impl.ReplicableCommandManagerFunction;
 import org.infinispan.manager.impl.ReplicableCommandRunnable;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.topology.CacheTopologyControlCommand;
+import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
 
 /**
@@ -133,7 +134,8 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
             WriteOnlyManyCommand.class, WriteOnlyManyEntriesCommand.class,
             ReadWriteManyCommand.class, ReadWriteManyEntriesCommand.class,
             TxReadOnlyKeyCommand.class, TxReadOnlyManyCommand.class,
-            ReplicableCommandRunnable.class, ReplicableCommandManagerFunction.class);
+            ReplicableCommandRunnable.class, ReplicableCommandManagerFunction.class,
+            HeartBeatCommand.class);
       // Search only those commands that replicable and not cache specific replicable commands
       Collection<Class<? extends ReplicableCommand>> moduleCommands = globalComponentRegistry.getModuleProperties().moduleOnlyReplicableCommands();
       if (moduleCommands != null && !moduleCommands.isEmpty()) coreCommands.addAll(moduleCommands);

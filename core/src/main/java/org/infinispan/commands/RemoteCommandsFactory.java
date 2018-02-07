@@ -74,6 +74,7 @@ import org.infinispan.stream.impl.StreamRequestCommand;
 import org.infinispan.stream.impl.StreamResponseCommand;
 import org.infinispan.stream.impl.StreamSegmentResponseCommand;
 import org.infinispan.topology.CacheTopologyControlCommand;
+import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.XSiteAdminCommand;
@@ -198,6 +199,9 @@ public class RemoteCommandsFactory {
                break;
             case TxReadOnlyManyCommand.COMMAND_ID:
                command = new TxReadOnlyManyCommand<>();
+               break;
+            case HeartBeatCommand.COMMAND_ID:
+               command = HeartBeatCommand.INSTANCE;
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

@@ -547,8 +547,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    private void confirmMembersAvailable() throws Exception {
-      ReplicableCommand heartbeatCommand = new CacheTopologyControlCommand(null, CacheTopologyControlCommand.Type.POLICY_GET_STATUS, transport.getAddress(), -1);
-      transport.invokeRemotely(null, heartbeatCommand, ResponseMode.SYNCHRONOUS, getGlobalTimeout(), null, DeliverOrder.NONE, false);
+      transport.invokeRemotely(null, HeartBeatCommand.INSTANCE, ResponseMode.SYNCHRONOUS, getGlobalTimeout(), null, DeliverOrder.NONE, false);
    }
 
    /**

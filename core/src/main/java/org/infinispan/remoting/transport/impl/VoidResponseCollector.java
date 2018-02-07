@@ -16,18 +16,17 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @since 9.2
  */
 public class VoidResponseCollector extends ValidResponseCollector<Void> {
-   private static VoidResponseCollector VALID_ONLY = new VoidResponseCollector(false);
-   private static VoidResponseCollector IGNORE_LEAVERS = new VoidResponseCollector(true);
 
+   //note: can't be a singleton since it has state (exception field)
    private final boolean ignoreLeavers;
    private Exception exception;
 
    public static VoidResponseCollector validOnly() {
-      return VALID_ONLY;
+      return new VoidResponseCollector(false);
    }
 
    public static VoidResponseCollector ignoreLeavers() {
-      return IGNORE_LEAVERS;
+      return new VoidResponseCollector(true);
    }
 
    private VoidResponseCollector(boolean ignoreLeavers) {

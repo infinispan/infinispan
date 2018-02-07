@@ -30,6 +30,7 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.topology.CacheTopologyControlCommand;
+import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -100,6 +101,10 @@ public class MockTransport implements Transport {
    public BlockedRequest expectTopologyCommand(CacheTopologyControlCommand.Type type)
       throws InterruptedException {
       return expectTopologyCommand(type, c -> {});
+   }
+
+   public BlockedRequest expectHeartBeatCommand() throws InterruptedException {
+      return expectCommand(HeartBeatCommand.class);
    }
 
    /**
