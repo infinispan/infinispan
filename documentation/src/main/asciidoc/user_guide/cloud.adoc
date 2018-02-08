@@ -14,10 +14,14 @@ In order to turn on Cloud support for Infinispan library mode, one needs to add 
 
 The above dependency adds `infinispan-core` to the classpath as well as some default configurations.
 
-=== Amazon Web Services
-Infinispan can be used on the Amazon Web Service (AWS) platform and similar cloud based environment in several ways. As Infinispan uses JGroups as the underlying communication technology, the majority of the configuration work is done JGroups. The default auto discovery won't work on EC2 as multicast is not allowed, but JGroups provides several other discovery protocols so we only have to choose one.
+=== Generic Discovery protocols
 
-==== TCPPing, GossipRouter, S3_PING
+The main difference between running Infinispan in a private environment and a cloud provider is
+that in the latter node discovery becomes a bit trickier because things like multicast don't work.
+To circumvent this you can use alternate JGroups PING protocols. Before delving into the cloud-specific,
+lets look at some generic discovery protocols.
+
+==== TCPPing
 The TCPPing approach contains a static list of the IP address of each member of the cluster in the JGroups configuration file.
 While this works it doesn't really help when cluster nodes are dynamically added to the cluster.
 
@@ -38,9 +42,12 @@ While this works it doesn't really help when cluster nodes are dynamically added
 See link:http://community.jboss.org/wiki/JGroupsTCPPING[] for more information about TCPPing.
 
 ==== GossipRouter
-Another approach is to have a central server (Gossip, which each node will be configured to contact. This central server will tell each node in the cluster about each other node.
+Another approach is to have a central server (Gossip, which each node will be configured to contact.
+This central server will tell each node in the cluster about each other node.
 
-The address (ip:port) that the Gossip router is listening on can be injected into the JGroups configuration used by Infinispan. To do this pass the gossip routers address as a system property to the JVM e.g. `-DGossipRouterAddress="10.10.2.4[12001]"` and reference this property in the JGroups configuration that Infinispan is using e.g.
+The address (ip:port) that the Gossip router is listening on can be injected into the JGroups configuration used by Infinispan.
+To do this pass the gossip routers address as a system property to the JVM e.g. `-DGossipRouterAddress="10.10.2.4[12001]"`
+and reference this property in the JGroups configuration that Infinispan is using e.g.
 
 .Sample TCPGOSSIP configuration
 [source,xml]
@@ -57,8 +64,12 @@ The address (ip:port) that the Gossip router is listening on can be injected int
 
 More on Gossip Router @ link:http://community.jboss.org/docs/DOC-10890[http://www.jboss.org/community/wiki/JGroupsGossipRouter]
 
+=== Amazon Web Services
+When running on Amazon Web Service (AWS) platform and similar cloud based environment you can use the S3_PING protocol for discovery.
+
 ==== S3_PING
-Finally you can configure your JGroups instances to use a shared storage to exchange the details of the cluster nodes. S3_PING was added to JGroups in 2.6.12 and 2.8, and allows the Amazon S3 to be used as the shared storage. It is experimental at the moment but offers another method of clustering without a central server. Be sure that you have signed up for Amazon S3 as well as EC2 to use this method.
+You can configure your JGroups instances to use a shared storage to exchange the details of the cluster nodes.
+S3_PING allows Amazon S3 to be used as the shared storage. Be sure that you have signed up for Amazon S3 as well as EC2 to use this method.
 
 .Sample S3PING configuration
 [source,xml]
@@ -75,6 +86,41 @@ Finally you can configure your JGroups instances to use a shared storage to exch
 
 ==== JDBC_PING
 A similar approach to S3_PING, but using a JDBC connection to a shared database. On EC2 that is quite easy using Amazon RDS. See the link:http://community.jboss.org/wiki/JDBCPING[JDBC_PING Wiki page] for details.
+
+=== Microsoft Azure
+Infinispan can be used on the Azure platform. Aside from using TCP_PING or GossipRouter, there is an Azure-specific
+discovery protocol:
+
+==== AZURE_PING
+AZURE_PING uses a shared Azure Blob Storage to store discovery information. Configuration is as follows:
+
+[source,xml]
+----
+<azure.AZURE_PING
+	storage_account_name="replace this with your account name"
+	storage_access_key="replace this with your access key"
+	container="replace this with your container name"
+/>
+
+----
+
+=== Google Compute Engine
+
+Infinispan can be used on the Google Compute Engine (GCE) platform. Aside from using TCP_PING or GossipRouter, there is a GCE-specific
+discovery protocol:
+
+==== GOOGLE_PING
+GOOGLE_PING uses Google Cloud Storage (GCS) to store information about the cluster members.
+
+[source,xml]
+----
+<protocol type="GOOGLE_PING">
+  <property name="location">The name of the bucket</property>
+  <property name="access_key">The access key</property>
+  <property name="secret_access_key">The secret access key</property>
+</protocol>
+
+----
 
 === Kubernetes and OpenShift
 
@@ -211,4 +257,3 @@ For both Kubernetes and OpenShift, the Rolling Upgrade procedure is almost the s
 The last step in the Rolling Upgrade (removing a Remote Cache Store) needs to be performed differently. We need to use link:$$http://kubernetes.io/docs/user-guide/rolling-updates/$$[Kubernetes/OpenShift Rolling update] command and replace Pods configuration with the one which does not contain Remote Cache Store.
 
 A detailed instruction might be found in link:$$https://issues.jboss.org/browse/ISPN-6673[ISPN-6673] ticket.
-
