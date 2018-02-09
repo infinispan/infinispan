@@ -17,6 +17,7 @@ import java.util.stream.IntStream;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
+import org.infinispan.CacheSet;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.commons.util.ByRef;
@@ -26,6 +27,7 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -296,6 +298,47 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       CacheLoader cl = TestingUtil.getCacheLoader(cache);
       if (cl != null)
          IntStream.range(0, numberOfEntries).forEach(i -> assertNotNull(cl.load(Integer.toString(i))));
+   }
+
+   public void testLoadEntrySet() {
+      int numberOfEntries = 10;
+      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      createCacheStoreConfig(cb.persistence(), true);
+      cacheManager.defineConfiguration("testLoadKeySet", cb.build());
+      Cache<String, Object> cache = cacheManager.getCache("testLoadKeySet");
+
+      Map<String, Object> entriesMap = IntStream.range(0, numberOfEntries).boxed()
+            .collect(Collectors.toMap(i -> i.toString(), i -> wrap(i.toString(), "Val"+i)));
+      cache.putAll(entriesMap);
+
+      cache.stop();
+      cache.start();
+
+      CacheSet<Map.Entry<String, Object>> set = cache.entrySet();
+      assertEquals(numberOfEntries, cache.size());
+      assertEquals(numberOfEntries, set.size());
+      set.forEach(e -> assertEquals(entriesMap.get(e.getKey()), e.getValue()));
+   }
+
+   public void testReloadWithEviction() {
+      int numberOfEntries = 10;
+      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      createCacheStoreConfig(cb.persistence(), false).memory().size(numberOfEntries/2).evictionType(EvictionType.COUNT);
+      cacheManager.defineConfiguration("testReload", cb.build());
+      Cache<String, Object> cache = cacheManager.getCache("testReload");
+
+      Map<String, Object> entriesMap = IntStream.range(0, numberOfEntries).boxed()
+            .collect(Collectors.toMap(i -> i.toString(), i -> wrap(i.toString(), "Val"+i)));
+      cache.putAll(entriesMap);
+
+      assertEquals(numberOfEntries, cache.size());
+      entriesMap.forEach((k, v) -> assertEquals(v, cache.get(k)));
+
+      cache.stop();
+      cache.start();
+
+      assertEquals(numberOfEntries, cache.size());
+      entriesMap.forEach((k, v) -> assertEquals(v, cache.get(k)));
    }
 
    private ConfigurationBuilder configureCacheLoader(ConfigurationBuilder base, boolean purge) {
