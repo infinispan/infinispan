@@ -357,6 +357,12 @@
                 <transport initial-cluster-size="2"/>
                 <global-state/>
                 <distributed-cache name="default"/>
+                <local-cache name="localCache"/>
+                <replicated-cache name="replicatedCache"/>
+                <counters>
+                    <strong-counter />
+                    <weak-counter />
+                </counters>
             </cache-container>
         </subsystem>
         <subsystem xmlns="urn:infinispan:server:endpoint:9.2">
