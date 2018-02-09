@@ -20,6 +20,7 @@
       <module name="org.codehaus.jackson.jackson-jaxrs" />
       <module name="org.codehaus.jackson.jackson-xc" />
       <module name="org.infinispan" slot="${slot}"/>
+      <module name="org.infinispan.objectfilter" slot="${slot}"/>
       <module name="org.infinispan.server" slot="${slot}" services="import"/>
       <module name="org.jboss.logging" />
       <module name="org.jboss.marshalling" slot="${slot}" services="import"/>
