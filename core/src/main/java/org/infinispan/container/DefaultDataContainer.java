@@ -414,7 +414,9 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
          while (it.hasNext()) {
             InternalCacheEntry<K, V> entry = it.next();
             if (includeExpired || !entry.canExpire()) {
-               log.tracef("Return next entry %s", entry);
+               if (trace) {
+                  log.tracef("Return next entry %s", entry);
+               }
                return entry;
             } else {
                if (!initializedTime) {
@@ -422,14 +424,18 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
                   initializedTime = true;
                }
                if (!entry.isExpired(now)) {
-                  log.tracef("Return next entry %s", entry);
+                  if (trace) {
+                     log.tracef("Return next entry %s", entry);
+                  }
                   return entry;
-               } else {
+               } else if (trace) {
                   log.tracef("%s is expired", entry);
                }
             }
          }
-         log.tracef("Return next null");
+         if (trace) {
+            log.tracef("Return next null");
+         }
          return null;
       }
 
