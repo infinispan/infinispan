@@ -16,10 +16,12 @@
     <description>The Infinispan Documentation</description>
 
     <properties>
+        <infinispan.version>9.2</infinispan.version>
         <javadoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/apidocs</javadoc.root>
         <configdoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/configdocs/</configdoc.root>
         <wildfly.docroot>https://docs.jboss.org/author/display/WFLY11</wildfly.docroot>
-        <jdk.docroot>https://docs.oracle.com/javase/8/docs/api</jdk.docroot>
+        <jdk.root>https://docs.oracle.com/javase/8/docs</jdk.root>
+        <jdk.docroot>${jdk.root}/api</jdk.docroot>
         <javaee.docroot>https://docs.oracle.com/javaee/7/api</javaee.docroot>
         <skipTests>true</skipTests>
         <defaults.file>${project.build.directory}/default-attributes.adoc</defaults.file>

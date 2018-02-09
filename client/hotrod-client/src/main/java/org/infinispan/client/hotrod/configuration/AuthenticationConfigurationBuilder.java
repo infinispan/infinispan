@@ -28,6 +28,7 @@ import org.infinispan.commons.util.Util;
  */
 public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<AuthenticationConfiguration> {
    private static final Log log = LogFactory.getLog(AuthenticationConfigurationBuilder.class);
+   public static final String DEFAULT_REALM = "ApplicationRealm";
    private CallbackHandler callbackHandler;
    private boolean enabled = false;
    private String serverName;
@@ -76,23 +77,26 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    /**
-    * Selects the SASL mechanism to use for the connection to the server
+    * Selects the SASL mechanism to use for the connection to the server.
+    * Setting this property also implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder saslMechanism(String saslMechanism) {
       this.saslMechanism = saslMechanism;
-      return this;
+      return enable();
    }
 
    /**
-    * Sets the SASL properties
+    * Sets the SASL properties.
+    * Setting this property also implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder saslProperties(Map<String, String> saslProperties) {
       this.saslProperties = saslProperties;
-      return this;
+      return enable();
    }
 
    /**
-    * Sets the SASL QOP property. If multiple values are specified they will determine preference order
+    * Sets the SASL QOP property. If multiple values are specified they will determine preference order.
+    * Setting this property also implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder saslQop(SaslQop... qop) {
       StringBuilder s = new StringBuilder();
@@ -103,11 +107,12 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
          s.append(qop[i].toString());
       }
       this.saslProperties.put(Sasl.QOP, s.toString());
-      return this;
+      return enable();
    }
 
    /**
-    * Sets the SASL strength property. If multiple values are specified they will determine preference order
+    * Sets the SASL strength property. If multiple values are specified they will determine preference order.
+    * Setting this property also implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder saslStrength(SaslStrength... strength) {
       StringBuilder s = new StringBuilder();
@@ -118,56 +123,63 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
          s.append(strength[i].toString());
       }
       this.saslProperties.put(Sasl.STRENGTH, s.toString());
-      return this;
+      return enable();
    }
 
    /**
     * Sets the name of the server as expected by the SASL protocol
+    * Setting this property also implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder serverName(String serverName) {
       this.serverName = serverName;
-      return this;
+      return enable();
    }
 
    /**
-    * Sets the client subject, necessary for those SASL mechanisms which require it to access client credentials (i.e. GSSAPI)
+    * Sets the client subject, necessary for those SASL mechanisms which require it to access client credentials (i.e. GSSAPI).
+    * Setting this property also implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder clientSubject(Subject clientSubject) {
       this.clientSubject = clientSubject;
-      return this;
+      return enable();
    }
 
    /**
     * Specifies the username to be used for authentication. This will use a simple CallbackHandler.
-    * This is mutually exclusive with explicitly providing the CallbackHandler
+    * This is mutually exclusive with explicitly providing the CallbackHandler.
+    * Setting this property also implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder username(String username) {
       this.username = username;
-      return this;
+      return enable();
    }
 
    /**
-    * Specifies the password to be used for authentication. A username is also required
+    * Specifies the password to be used for authentication. A username is also required.
+    * Setting this property also implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder password(String password) {
       this.password = password != null ? password.toCharArray() : null;
-      return this;
+      return enable();
    }
 
    /**
-    * Specifies the password to be used for authentication. A username is also required
+    * Specifies the password to be used for authentication. A username is also required.
+    * Setting this property also implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder password(char[] password) {
       this.password = password;
-      return this;
+      return enable();
    }
 
    /**
-    * Specifies the realm to be used for authentication. Username and password also need to be supplied.
+    * Specifies the realm to be used for authentication. Username and password also need to be supplied. If none
+    * is specified, this defaults to 'ApplicationRealm'.
+    * Setting this property also implicitly enables authentication (see {@link #enable()}
     */
    public AuthenticationConfigurationBuilder realm(String realm) {
       this.realm = realm;
-      return this;
+      return enable();
    }
 
    @Override
@@ -175,7 +187,7 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
       String mech = saslMechanism == null ? "DIGEST-MD5" : saslMechanism;
       CallbackHandler cbh;
       if (username != null) {
-         cbh = new BasicCallbackHandler(username, realm, password);
+         cbh = new BasicCallbackHandler(username, realm != null ? realm : DEFAULT_REALM, password);
       } else if ("EXTERNAL".equals(mech) && callbackHandler == null) {
          cbh = new VoidCallbackHandler();
       } else {
@@ -213,23 +225,33 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    @Override
    public ConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
-      this.enabled(typed.getBooleanProperty(ConfigurationProperties.USE_AUTH, enabled, true));
-      this.saslMechanism(typed.getProperty(ConfigurationProperties.SASL_MECHANISM, saslMechanism, true));
+
+      if (typed.containsKey(ConfigurationProperties.SASL_MECHANISM))
+        saslMechanism(typed.getProperty(ConfigurationProperties.SASL_MECHANISM, saslMechanism, true));
+
       Object prop = typed.get(ConfigurationProperties.AUTH_CALLBACK_HANDLER);
       if (prop instanceof String) {
          String cbhClassName = StringPropertyReplacer.replaceProperties((String) prop);
          CallbackHandler handler = Util.getInstance(cbhClassName, builder.getBuilder().classLoader());
          this.callbackHandler(handler);
-      } else {
+      } else if (prop instanceof CallbackHandler) {
          this.callbackHandler((CallbackHandler) prop);
       }
-      this.username(typed.getProperty(ConfigurationProperties.AUTH_USERNAME, username, true));
-      if (typed.containsKey(ConfigurationProperties.AUTH_PASSWORD))
-         this.password(typed.getProperty(ConfigurationProperties.AUTH_PASSWORD, null, true));
-      this.realm(typed.getProperty(ConfigurationProperties.AUTH_REALM));
 
-      this.serverName(typed.getProperty(ConfigurationProperties.AUTH_SERVER_NAME, serverName, true));
-      this.clientSubject((Subject) typed.get(ConfigurationProperties.AUTH_CLIENT_SUBJECT));
+      if (typed.containsKey(ConfigurationProperties.AUTH_USERNAME))
+         username(typed.getProperty(ConfigurationProperties.AUTH_USERNAME, username, true));
+
+      if (typed.containsKey(ConfigurationProperties.AUTH_PASSWORD))
+         password(typed.getProperty(ConfigurationProperties.AUTH_PASSWORD, null, true));
+
+      if (typed.containsKey(ConfigurationProperties.AUTH_REALM))
+         realm(typed.getProperty(ConfigurationProperties.AUTH_REALM, realm, true));
+
+      if (typed.containsKey(ConfigurationProperties.AUTH_SERVER_NAME))
+         serverName(typed.getProperty(ConfigurationProperties.AUTH_SERVER_NAME, serverName, true));
+
+      if (typed.containsKey(ConfigurationProperties.AUTH_CLIENT_SUBJECT))
+         this.clientSubject((Subject) typed.get(ConfigurationProperties.AUTH_CLIENT_SUBJECT));
 
       Map<String, String> saslProperties = typed.entrySet().stream()
             .filter(e -> ((String) e.getKey()).startsWith(ConfigurationProperties.SASL_PROPERTIES_PREFIX))
@@ -237,7 +259,11 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
                   e -> ConfigurationProperties.SASL_PROPERTIES_PREFIX_REGEX
                         .matcher((String) e.getKey()).replaceFirst(""),
                   e -> StringPropertyReplacer.replaceProperties((String) e.getValue())));
-      this.saslProperties(saslProperties);
+      if (!saslProperties.isEmpty())
+         this.saslProperties(saslProperties);
+
+      if (typed.containsKey(ConfigurationProperties.USE_AUTH))
+         this.enabled(typed.getBooleanProperty(ConfigurationProperties.USE_AUTH, enabled, true));
 
       return builder.getBuilder();
    }
