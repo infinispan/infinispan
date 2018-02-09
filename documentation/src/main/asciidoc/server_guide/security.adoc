@@ -2,7 +2,7 @@
 
 === General concepts
 
-==== Authorization configuration
+==== Authorization
 
 Just like embedded mode, the server supports cache authorization using the same configuration, e.g.:
 
@@ -68,9 +68,9 @@ Refer to the link:{wildflydocroot}/Security%20subsystem%20configuration[WildFly 
 Alternatively you can also set your custom audit logger by using the same configuration as for embedded mode.
 Refer to the The link:../user_guide/user_guide.html#Security_chapter[Security] chapter in the user guide for details.
 
-=== Hot Rod authentication
+=== Hot Rod authentication [[security:hotrod_auth]]
 
-The Hot Rod protocol supports authentication since version 2.0 (Infinispan 7.0) by leveraging the SASL mechanisms.
+The Hot Rod protocol supports authentication by leveraging the SASL mechanisms.
 The supported SASL mechanisms (usually shortened as mechs) are:
 
 * PLAIN - This is the most insecure mech, since credentials are sent over the wire in plain-text format, however it is the simplest to get to work. In combination with encryption (i.e. TLS) it can be used safely
@@ -78,7 +78,7 @@ The supported SASL mechanisms (usually shortened as mechs) are:
 * GSSAPI - This mech uses Kerberos tickets, and therefore requires the presence of a properly configured Kerberos Domain Controller (such as Microsoft Active Directory)
 * EXTERNAL - This mech obtains credentials from the underlying transport (i.e. from a X.509 client certificate) and therefore requires encryption using client-certificates to be enabled.
 
-The following configuration enables authentication against ApplicationRealm, using the DIGEST-MD5 SASL mechanism and only enables the *auth* QOP:
+The following configuration enables authentication against ApplicationRealm, using the DIGEST-MD5 SASL mechanism and only enables the *auth* QoP (see <<server:saslqop>>):
 
 .Hot Rod connector configuration
 [source,xml]
@@ -93,7 +93,7 @@ Notice the server-name attribute: it is the name that the server declares to inc
 It is particularly important when using GSSAPI as it is equivalent to the Kerberos service name.
 You can specify multiple mechanisms and they will be attempted in order.
 
-==== SASL Quality of Protection
+==== SASL Quality of Protection [[security:saslqop]]
 
 While the main purpose of SASL is to provide authentication, some mechanisms also support integrity and privacy protection, also known as Quality of Protection (or qop).
 During authentication negotiation, ciphers are exchanged between client and server, and they can be used to add checksums and encryption to all subsequent traffic.
@@ -148,88 +148,6 @@ The following configuration selects all available mechanisms, but effectively on
 </hotrod-connector>
 ----
 
-
-==== Configuring the Hot Rod client for authentication
-
-Once you have configured a secured Hot Rod connector, you can connect to it using the Hot Rod client. If you are using PLAIN and DIGEST-MD5 mechs
-you can pass your credentials directly to the ConfigurationBuilder:
-
-.Hot Rod client configuration with simple authentication
-[source,java]
-----
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-    .addServer()
-        .host("127.0.0.1")
-        .port(11222)
-    .security()
-        .authentication()
-            .enable()
-            .serverName("myhotrodserver")
-            .saslMechanism("DIGEST-MD5")
-            .username("myuser")
-            .realm("ApplicationRealm")
-            .password("qwer1234!");
-remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
-----
-
-If instead you want to use your own callback handler:
-
-.Hot Rod client configuration with authentication via callback
-[source,java]
-----
-public class MyCallbackHandler implements CallbackHandler {
-   final private String username;
-   final private char[] password;
-   final private String realm;
-
-   public MyCallbackHandler(String username, String realm, char[] password) {
-      this.username = username;
-      this.password = password;
-      this.realm = realm;
-   }
-
-   @Override
-   public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-      for (Callback callback : callbacks) {
-         if (callback instanceof NameCallback) {
-            NameCallback nameCallback = (NameCallback) callback;
-            nameCallback.setName(username);
-         } else if (callback instanceof PasswordCallback) {
-            PasswordCallback passwordCallback = (PasswordCallback) callback;
-            passwordCallback.setPassword(password);
-         } else if (callback instanceof AuthorizeCallback) {
-            AuthorizeCallback authorizeCallback = (AuthorizeCallback) callback;
-            authorizeCallback.setAuthorized(authorizeCallback.getAuthenticationID().equals(
-                  authorizeCallback.getAuthorizationID()));
-         } else if (callback instanceof RealmCallback) {
-            RealmCallback realmCallback = (RealmCallback) callback;
-            realmCallback.setText(realm);
-         } else {
-            throw new UnsupportedCallbackException(callback);
-         }
-      }
-   }
-}
-
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-    .addServer()
-        .host("127.0.0.1")
-        .port(11222)
-    .security()
-        .authentication()
-            .enable()
-            .serverName("myhotrodserver")
-            .saslMechanism("DIGEST-MD5")
-            .callbackHandler(new MyCallbackHandler("myuser", "ApplicationRealm", "qwer1234!".toCharArray()));
-remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
-----
-
-The actual type of callbacks that your CallbackHandler will need to be able to handle are mech-specific, so the above is just a simple example.
-
 ==== Using GSSAPI/Kerberos
 
 If you want to use GSSAPI/Kerberos, setup and configuration differs. First we need to define a Kerberos login module using the security domain subsystem:
@@ -270,85 +188,7 @@ Next we need to modify the Hot Rod connector
 </hotrod-connector>
 ----
 
-On the client side you will also need to define a login module in a login configuration file:
-
-.gss.conf
-[source]
-----
-GssExample {
-    com.sun.security.auth.module.Krb5LoginModule required client=TRUE;
-};
-----
-Also you will need to set the following system properties:
-
-+java.security.auth.login.config=gss.conf+
-
-+java.security.krb5.conf=/etc/krb5.conf+
-
-The +krb5.conf+ file is dependent on your environment and needs to point to your KDC.
-
-.Hot Rod client configuration
-[source,java]
-----
-public class MyCallbackHandler implements CallbackHandler {
-   final private String username;
-   final private char[] password;
-   final private String realm;
-
-   public MyCallbackHandler() { }
-
-   public MyCallbackHandler (String username, String realm, char[] password) {
-      this.username = username;
-      this.password = password;
-      this.realm = realm;
-   }
-
-   @Override
-   public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-      for (Callback callback : callbacks) {
-         if (callback instanceof NameCallback) {
-            NameCallback nameCallback = (NameCallback) callback;
-            nameCallback.setName(username);
-         } else if (callback instanceof PasswordCallback) {
-            PasswordCallback passwordCallback = (PasswordCallback) callback;
-            passwordCallback.setPassword(password);
-         } else if (callback instanceof AuthorizeCallback) {
-            AuthorizeCallback authorizeCallback = (AuthorizeCallback) callback;
-            authorizeCallback.setAuthorized(authorizeCallback.getAuthenticationID().equals(
-                  authorizeCallback.getAuthorizationID()));
-         } else if (callback instanceof RealmCallback) {
-            RealmCallback realmCallback = (RealmCallback) callback;
-            realmCallback.setText(realm);
-         } else {
-            throw new UnsupportedCallbackException(callback);
-         }
-      }
-   }
-}
-
-LoginContext lc = new LoginContext("GssExample", new MyCallbackHandler("krb_user", "krb_password".toCharArray()));
-lc.login();
-Subject clientSubject = lc.getSubject();
-
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-    .addServer()
-        .host("127.0.0.1")
-        .port(11222)
-    .security()
-        .authentication()
-            .enable()
-            .serverName("infinispan-server")
-            .saslMechanism("GSSAPI")
-            .clientSubject(clientSubject)
-            .callbackHandler(new MyCallbackHandler());
-remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
-----
-
-For brevity we used the same callback handler both for obtaining the client subject and for handling authentication in the SASL GSSAPI mech, however different callbacks will actually be invoked: NameCallback and PasswordCallback are needed to construct the client subject, while the AuthorizeCallback will be called during the SASL authentication.
-
-=== Hot Rod and REST encryption (TLS/SSL)
+=== Hot Rod and REST encryption (TLS/SSL) [[security:hotrod_rest_encryption]]
 
 Both Hot Rod and REST protocols support encryption using SSL/TLS with optional TLS/SNI support (link:https://en.wikipedia.org/wiki/Server_Name_Indication[Server Name Indication]). To set this up you need to create a keystore using the +keytool+ application which is part of the JDK to store your server certificate. Then add a +<server-identities>+ element to your security realm:
 
@@ -386,7 +226,7 @@ in the keystore element as shown below:
 
 [NOTE]
 ====
-There are three basic principles of automatically generated keystores that need be remembered:
+There are three basic principles that you should remember when using automatically generated keystores:
 
 - They shouldn't be used on a production environment
 - They are generated when necessary (e.g. while obtaining the first connection from the client)
@@ -414,7 +254,7 @@ Optionally add SNI configuration:
 </rest-connector>
 ----
 
-In order to connect to the server using the Hot Rod protocol, the client needs a trust store containing the public key
+NOTE: To configure the client In order to connect to the server using the Hot Rod protocol, the client needs a trust store containing the public key
 of the server(s) you are going to connect to, unless the key was signed by a Certification Authority (CA) trusted by
 the JRE.
 
@@ -463,21 +303,5 @@ And then tell the connector to require a client certificate:
 ----
 
 The client, at this point, will also need to specify a keyStore which contains its certificate on top of the trustStore
-which trusts the server certificate.
-
-[source,java]
-----
-ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-clientBuilder
-    .addServer()
-        .host("127.0.0.1")
-        .port(11222)
-     .security()
-        .ssl()
-           .enabled(true)
-           .trustStoreFileName("truststore_client.jks")
-           .trustStorePassword("secret".toCharArray())
-           .keyStoreFileName("keystore_client.jks")
-           .keyStorePassword("secret".toCharArray());
-remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-----
+which trusts the server certificate. See the link:../user_guide/user_guide.html#hr:encryption[Hot Rod client encryption]
+section to learn how.
