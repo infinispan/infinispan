@@ -47,4 +47,22 @@ public class KeyValueEntity implements Serializable, ExternalPojo {
    public String toString() {
       return String.format("{key=%s, value=%s}", k, value);
    }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      KeyValueEntity that = (KeyValueEntity) o;
+
+      if (k != null ? !k.equals(that.k) : that.k != null) return false;
+      return value != null ? value.equals(that.value) : that.value == null;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = k != null ? k.hashCode() : 0;
+      result = 31 * result + (value != null ? value.hashCode() : 0);
+      return result;
+   }
 }
