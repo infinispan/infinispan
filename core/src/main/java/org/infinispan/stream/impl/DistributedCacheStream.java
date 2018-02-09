@@ -652,8 +652,11 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
          Map<Address, IntSet> targets = determineTargets(ch, segmentsToFilter);
          Iterator<Map.Entry<Address, IntSet>> targetIter = targets.entrySet().iterator();
 
+         int publisherAmount = Math.min(4, targets.size());
+
          // Parallel distribution is enabled by default, so it is only false if explicitly disabled
-         if (parallelDistribution == Boolean.FALSE) {
+         // Also if the batch size is less than number of publishers just use 1
+         if (parallelDistribution == Boolean.FALSE || distributedBatchSize < publisherAmount) {
             Supplier<Map.Entry<Address, IntSet>> supplier = () -> targetIter.hasNext() ? targetIter.next() : null;
             ClusterStreamManager.RemoteIteratorPublisher<S> remotePublisher = csm.remoteIterationPublisher(false,
                   supplier, keysToFilter, keysToExclude, includeLoader, intermediateOperations);
@@ -670,18 +673,24 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
             };
             PriorityMergingProcessor.Builder<S> builder = PriorityMergingProcessor.builder();
             // TODO: do we want to cap number of parallel distributions like this?
-            for (int i = 0; i < 4 && i < targets.size(); ++i) {
+            for (int i = 0; i < publisherAmount; ++i) {
                ClusterStreamManager.RemoteIteratorPublisher<S> remotePublisher = csm.remoteIterationPublisher(false,
                      supplier, keysToFilter, keysToExclude, includeLoader, intermediateOperations);
                Publisher<S> publisher = publisherFunction.decorateRemote(remotePublisher);
 
-               builder.addPublisher(publisher, distributedBatchSize);
+               builder.addPublisher(publisher, fixBatch(distributedBatchSize, i == 0, publisherAmount));
             }
 
             // Local publisher is always last
             return builder.addPublisher(localPublisher, 64).build().iterator();
          }
       }
+   }
+
+   private int fixBatch(int distributedBatchSize, boolean first, int publisherAmount) {
+      // Split up the batch between how many publishers we are creating
+      // The first gets any remainder as it is called more often
+      return distributedBatchSize / publisherAmount + (first ? distributedBatchSize % publisherAmount : 0);
    }
 
    private Map<Address, IntSet> determineTargets(ConsistentHash ch, IntSet segments) {
