@@ -1,6 +1,6 @@
 ===  Using Hot Rod Server
 The Infinispan Server distribution contains a server module that implements Infinispan's custom binary protocol called Hot Rod. The protocol was designed to enable faster client/server interactions compared to other existing text based protocols and to allow clients to make more intelligent decisions with regards to load balancing, failover and even data location operations.
-Please refer to Infinispan Server's link:../infinispan_server_guide/infinispan_server_guide.html[documentation] for instructions on how to configure and run a HotRod server.
+Please refer to Infinispan Server's link:../server_guide/server_guide.html[documentation] for instructions on how to configure and run a HotRod server.
 
 To connect to Infinispan over this highly efficient Hot Rod protocol you can
 either use one of the clients described in this chapter, or use higher level
@@ -36,7 +36,8 @@ RemoteCacheManager rmc = new RemoteCacheManager(cb.build());
 
 ----
 
-For a complete reference to the available configuration option please refer to the link:{javadocroot}/org/infinispan/client/hotrod/configuration/ConfigurationBuilder.html[ConfigurationBuilder]'s javadoc.
+For a complete reference to the available configuration option please refer to the
+link:{javadocroot}/org/infinispan/client/hotrod/configuration/ConfigurationBuilder.html[ConfigurationBuilder]'s javadoc.
 
 It is also possible to configure the Java Hot Rod client using an properties file, e.g.:
 
@@ -82,6 +83,284 @@ In the above example the value of the _infinispan.client.hotrod.server_list_ pro
 which means that the value should be taken from a system property named jboss.bind.address.management and if it is not defined use 127.0.0.1.
 
 For a complete reference of the available configuration options for the properties file please refer to link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager]'s javadoc.
+
+==== Authentication
+
+If the server has set up authentication, you need to configure your client accordingly. Depending on the mechs enabled on the server,
+the client must provide the required information.
+
+NOTE: This section is about client configuration. If you want to set up the server to require authentication, read the
+link:link:../server_guide/server_guide.html#security:hotrod_auth[Hot Rod server authentication] section.
+
+===== DIGEST-MD5
+DIGEST-MD5 is the recommended approach for simple username/password authentication scenarios. If you are using the default
+realm on the server (_"ApplicationRealm"_), all you need to do is provide your credentials as follows:
+
+.Hot Rod client configuration with DIGEST-MD5 authentication
+[source,java]
+----
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(11222)
+    .security()
+        .authentication()
+            .username("myuser")
+            .password("qwer1234!");
+remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+----
+
+===== PLAIN
+The PLAIN mechanism is not really recommended unless the connection is also encrypted, as anyone can sniff the clear-text
+password being sent along the wire.
+
+.Hot Rod client configuration with DIGEST-MD5 authentication
+[source,java]
+----
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(11222)
+    .security()
+        .authentication()
+            .saslMechanism("PLAIN")
+            .username("myuser")
+            .password("qwer1234!");
+remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+----
+
+===== EXTERNAL
+The EXTERNAL mechanism is special in that it doesn't explicitly provide credentials but uses the client certificate as
+identity. In order for this to work, in addition to the _TrustStore_ (to validate the server certificate) you need to
+provide a _KeyStore_ (to supply the client certificate).
+
+.Hot Rod client configuration with EXTERNAL authentication (client cert)
+[source,java]
+----
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(11222)
+    .security()
+        .encryption()
+            // TrustStore is a KeyStore which contains part of the server certificate chain (e.g. the CA Root public cert)
+            .trustStoreFileName("/path/to/truststore")
+            .trustStorePassword("truststorepassword".toCharArray())
+            // KeyStore containing this client's own certificate
+            .keyStoreFileName("/path/to/keystore")
+            .keyStorePassword("keystorepassword".toCharArray())
+        .authentication()
+            .saslMechanism("EXTERNAL");
+remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+----
+
+For more details, read the <<hr:encryption>> section below.
+
+===== GSSAPI (Kerberos)
+
+GSSAPI/Kerberos requires a much more complex setup, but it is used heavily in enterprises with centralized authentication
+servers. To successfully authenticate with Kerberos, you need to create a _LoginContext_. This will obtain
+a Ticket Granting Ticket (TGT) which will be used as a token to authenticate with the service.
+
+You will need to define a login module in a login configuration file:
+
+.gss.conf
+[source]
+----
+GssExample {
+    com.sun.security.auth.module.Krb5LoginModule required client=TRUE;
+};
+----
+If you are using the IBM JDK, the above becomes:
+
+.gss-ibm.conf
+[source]
+----
+GssExample {
+    com.ibm.security.auth.module.Krb5LoginModule required client=TRUE;
+};
+----
+
+You will also need to set the following system properties:
+
++java.security.auth.login.config=gss.conf+
+
++java.security.krb5.conf=/etc/krb5.conf+
+
+The +krb5.conf+ file is dependent on your environment and needs to point to your KDC. Ensure that you can authenticate
+via Kerberos using _kinit_.
+
+Next up, configure your client as follows:
+
+.Hot Rod client GSSAPI configuration
+[source,java]
+----
+LoginContext lc = new LoginContext("GssExample", new BasicCallbackHandler("krb_user", "krb_password".toCharArray()));
+lc.login();
+Subject clientSubject = lc.getSubject();
+
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(11222)
+    .security()
+        .authentication()
+            .enable()
+            .serverName("infinispan-server")
+            .saslMechanism("GSSAPI")
+            .clientSubject(clientSubject)
+            .callbackHandler(new BasicCallbackHandler());
+remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+----
+
+For brevity we used the same callback handler both for obtaining the client subject and for handling authentication in the SASL GSSAPI mech, however different callbacks will actually be invoked: NameCallback and PasswordCallback are needed to construct the client subject, while the AuthorizeCallback will be called during the SASL authentication.
+
+===== Custom CallbackHandlers
+
+In all of the above examples, the Hot Rod client is setting up a default _CallbackHandler_ for you that supplies the
+provided credentials to the SASL mechanism. For advanced scenarios it may be necessary to provide your own custom
+_CallbackHandler_:
+
+.Hot Rod client configuration with authentication via callback
+[source,java]
+----
+public class MyCallbackHandler implements CallbackHandler {
+   final private String username;
+   final private char[] password;
+   final private String realm;
+
+   public MyCallbackHandler(String username, String realm, char[] password) {
+      this.username = username;
+      this.password = password;
+      this.realm = realm;
+   }
+
+   @Override
+   public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+      for (Callback callback : callbacks) {
+         if (callback instanceof NameCallback) {
+            NameCallback nameCallback = (NameCallback) callback;
+            nameCallback.setName(username);
+         } else if (callback instanceof PasswordCallback) {
+            PasswordCallback passwordCallback = (PasswordCallback) callback;
+            passwordCallback.setPassword(password);
+         } else if (callback instanceof AuthorizeCallback) {
+            AuthorizeCallback authorizeCallback = (AuthorizeCallback) callback;
+            authorizeCallback.setAuthorized(authorizeCallback.getAuthenticationID().equals(
+                  authorizeCallback.getAuthorizationID()));
+         } else if (callback instanceof RealmCallback) {
+            RealmCallback realmCallback = (RealmCallback) callback;
+            realmCallback.setText(realm);
+         } else {
+            throw new UnsupportedCallbackException(callback);
+         }
+      }
+   }
+}
+
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(11222)
+    .security()
+        .authentication()
+            .enable()
+            .serverName("myhotrodserver")
+            .saslMechanism("DIGEST-MD5")
+            .callbackHandler(new MyCallbackHandler("myuser", "ApplicationRealm", "qwer1234!".toCharArray()));
+remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+----
+
+The actual type of callbacks that your CallbackHandler will need to be able to handle are mech-specific, so the above is just a simple example.
+
+==== Encryption [[hr:encryption]]
+
+NOTE: This section is about client configuration. If you want to set up the server to require encryption, read the
+link:link:../server_guide/server_guide.html#security:hotrod_rest_encryption[Hot Rod server encryption] section.
+
+Encryption uses TLS/SSL, so it requires setting up an appropriate server certificate chain. Generally, a certificate chain looks like the following:
+
+image::images/cert_chain.png[align="center", title="Certificate chain"]
+
+In the above example there is one certificate authority _"CA"_ which has issued a certificate for _"HotRodServer"_.
+In order for a client to trust the server, it needs at least a portion of the above chain (usually, just the public certificate for _"CA"_).
+This certificate needs to placed in a keystore and used as a _TrustStore_ on the client and used as shown below:
+
+.Hot Rod client configuration with TLS (server cert)
+[source,java]
+----
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(11222)
+    .security()
+        .encryption()
+            // TrustStore is a KeyStore which contains part of the server certificate chain (e.g. the CA Root public cert)
+            .trustStoreFileName("/path/to/truststore")
+            .trustStorePassword("truststorepassword".toCharArray());
+RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+----
+
+===== SNI
+The server may have been configured with TLS/SNI support (link:https://en.wikipedia.org/wiki/Server_Name_Indication[Server Name Indication]).
+This means that the server is presenting multiple identities (probably bound to separate cache containers). The client
+can specify which identity to connect to by specifying its name:
+
+.Hot Rod client configuration with SNI (server cert)
+[source,java]
+----
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(11222)
+    .security()
+        .encryption()
+            .sniHostName("myservername")
+            // TrustStore is a KeyStore which contains part of the server certificate chain (e.g. the CA Root public cert)
+            .trustStoreFileName("/path/to/truststore")
+            .trustStorePassword("truststorepassword".toCharArray());
+RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+----
+
+===== Client certificates
+With the above configurations the client trusts the server. For increased security, a server administrator may have
+set up the server to require the client to offer a valid certificate for mutual trust. This kind of configuration
+requires the client to present its own certificate, usually issued by the same certificate authority as the server.
+This certificate must be stored in a keystore and used as follows:
+
+.Hot Rod client configuration with TLS (server and client cert)
+[source,java]
+----
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(11222)
+    .security()
+        .encryption()
+            // TrustStore is a KeyStore which contains part of the server certificate chain (e.g. the CA Root public cert)
+            .trustStoreFileName("/path/to/truststore")
+            .trustStorePassword("truststorepassword".toCharArray())
+            // KeyStore containing this client's own certificate
+            .keyStoreFileName("/path/to/keystore")
+            .keyStorePassword("keystorepassword".toCharArray())
+RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+----
+
+Please read the link:{jdkroot}/technotes/tools/unix/keytool.html[KeyTool] documentation for more details on KeyStores.
+Additionally, the link:http://keystore-explorer.org/[KeyStore Explorer] is a great GUI tool for easily managing KeyStores.
 
 ==== Basic API [[hr:basic-api]]
 Below is a sample code snippet on how the client API can be used to store or retrieve information from a Hot Rod server using the Java Hot Rod client. It assumes that a Hot Rod server has been started bound to the default location (localhost:11222)
