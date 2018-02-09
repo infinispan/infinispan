@@ -50,6 +50,11 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+/**
+ * We make node 2 a backup owner for segment 0, but we block state transfer so that it doesn't have any entries.
+ * We verify that when the prepare command is invoked remotely on node 2, a remote get is sent to nodes 0 and 1,
+ * and that the remote thread is not blocked while waiting for the remote get responses.
+ */
 @Test(groups = "functional", testName = "tx.EntryWrappingInterceptorDoesNotBlockTest")
 @CleanupAfterMethod
 public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManagersTest {
@@ -110,7 +115,6 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
 
    protected void test(int expectRemoteGets, BiFunction<MagicKey, Integer, Object> operation, MagicKey... keys) throws Exception {
       ControlledRpcManager crm0 = ControlledRpcManager.replaceRpcManager(cache(0));
-      ControlledRpcManager crm1 = ControlledRpcManager.replaceRpcManager(cache(1));
       ControlledRpcManager crm2 = ControlledRpcManager.replaceRpcManager(cache(2));
       CountDownLatch topologyChangeLatch = new CountDownLatch(2);
       cache(0).addListener(new TopologyChangeListener(topologyChangeLatch));
@@ -124,7 +128,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
          assertEquals("r" + i, returnValue);
       }
 
-      // node 2 should be backup for both segment 0 (new) and segment 1 (already there)
+      // node 2 should become backup for both segment 0 (new) and segment 1 (already there)
       chFactory.setOwnerIndexes(new int[][]{{0, 2}, {0, 2}});
 
       addClusterEnabledCacheManager(cb);
@@ -141,12 +145,22 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
 
       ControlledRpcManager.SentRequest sentPrepare = crm0.expectCommand(PrepareCommand.class).send();
 
-      // the node should load all moving keys
-      for (int i = 0; i < expectRemoteGets; i++) {
+      // The PrepareCommand attempts to load moving keys, and we allow the request to be sent
+      // but block receiving the responses. Here we'll intercept only the first remote get because the second one
+      // is not fired until the first is received (implementation inefficiency).
+      ControlledRpcManager.SentRequest firstRemoteGet = crm2.expectCommand(ClusteredGetCommand.class).send();
+
+      // The topmost interceptor gets the InvocationStage from the PrepareCommand and verifies
+      // that it is not completed yet (as we are waiting for the remote gets). Receiving the invocation stage
+      // means that the stack is really non-blocking.
+      // If the remote get responses hadn't been blocked this verification would fail with assertion.
+      prepareExpectingInterceptor.await();
+
+      // Allow the remote gets to be completed
+      firstRemoteGet.receiveAll();
+      for (int i = 1; i < expectRemoteGets; ++i) {
          crm2.expectCommand(ClusteredGetCommand.class).send().receiveAll();
       }
-
-      prepareExpectingInterceptor.await();
 
       sentPrepare.receiveAll();
       crm0.expectCommand(CommitCommand.class).send().receiveAll();
