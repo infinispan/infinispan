@@ -268,4 +268,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Native Epoll transport not available, using NIO instead: %s", id = 4074)
    void epollNotAvailable(String cause);
+
+   @Message(value = "TrustStoreFileName and TrustStorePath are mutually exclusive", id = 4075)
+   CacheConfigurationException trustStoreFileAndPathExclusive();
 }

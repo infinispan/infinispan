@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
+import java.io.File;
 import java.net.SocketAddress;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -116,6 +117,9 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
                      ssl.trustStoreType(),
                      ssl.trustStorePassword(),
                      configuration.classLoader()));
+            }
+            if (ssl.trustStorePath() != null) {
+               builder.trustManager(new File(ssl.trustStorePath()));
             }
             if (ssl.protocol() != null) {
                builder.protocols(ssl.protocol());

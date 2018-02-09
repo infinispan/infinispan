@@ -84,17 +84,19 @@ public class SslTest extends SingleCacheManagerTest {
             .security()
             .authentication()
                .disable()
-            .ssl()
-               .enabled(sslClient)
+            .ssl();
+      if (sslClient) {
+         clientSSLConfig
                .trustStoreFileName(clientTrustStore)
                .trustStorePassword(STORE_PASSWORD);
-      if (clientAuth) {
-         clientSSLConfig
-               .keyStoreFileName(clientKeyStore)
-               .keyStorePassword(STORE_PASSWORD);
-         if (altCertPassword) {
+         if (clientAuth) {
             clientSSLConfig
-                  .keyStoreCertificatePassword(ALT_CERTIFICATE_PASSWORD);
+                  .keyStoreFileName(clientKeyStore)
+                  .keyStorePassword(STORE_PASSWORD);
+            if (altCertPassword) {
+               clientSSLConfig
+                     .keyStoreCertificatePassword(ALT_CERTIFICATE_PASSWORD);
+            }
          }
       }
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());

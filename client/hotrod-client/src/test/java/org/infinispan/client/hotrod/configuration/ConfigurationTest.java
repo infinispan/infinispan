@@ -306,6 +306,8 @@ public class ConfigurationTest {
    public void testWithPropertiesSni() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       Properties p = new Properties();
+      p.put(TRUST_STORE_FILE_NAME, "my-trust-store.file");
+      p.put(TRUST_STORE_PASSWORD, "my-trust-store.password");
       p.put(SNI_HOST_NAME, "sni");
       Configuration configuration = builder.withProperties(p).build();
       validateSniContextConfiguration(configuration);

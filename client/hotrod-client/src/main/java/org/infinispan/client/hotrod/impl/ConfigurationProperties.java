@@ -47,6 +47,7 @@ public class ConfigurationProperties {
    public static final String KEY_ALIAS = "infinispan.client.hotrod.key_alias";
    public static final String KEY_STORE_CERTIFICATE_PASSWORD = "infinispan.client.hotrod.key_store_certificate_password";
    public static final String TRUST_STORE_FILE_NAME = "infinispan.client.hotrod.trust_store_file_name";
+   public static final String TRUST_STORE_PATH = "infinispan.client.hotrod.trust_store_path";
    public static final String TRUST_STORE_TYPE = "infinispan.client.hotrod.trust_store_type";
    public static final String TRUST_STORE_PASSWORD = "infinispan.client.hotrod.trust_store_password";
    public static final String SSL_PROTOCOL = "infinispan.client.hotrod.ssl_protocol";

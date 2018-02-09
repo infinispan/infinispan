@@ -1,7 +1,5 @@
 package org.infinispan.client.hotrod.security;
 
-import java.io.IOException;
-
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -21,6 +19,10 @@ public class BasicCallbackHandler implements CallbackHandler {
     private final String realm;
     private final char[] password;
 
+    public BasicCallbackHandler() {
+        this(null, null, null);
+    }
+
     public BasicCallbackHandler(String username, char[] password) {
         this(username, null, password);
     }
@@ -32,7 +34,7 @@ public class BasicCallbackHandler implements CallbackHandler {
     }
 
     @Override
-    public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+    public void handle(Callback[] callbacks) throws UnsupportedCallbackException {
         for (Callback callback : callbacks) {
             if (callback instanceof NameCallback) {
                 NameCallback nameCallback = (NameCallback) callback;
