@@ -66,7 +66,7 @@ public class IterationFilter<K, V, C> extends AbstractKeyValueFilterConverter<K,
    @Inject
    public void injectDependencies(Cache cache) {
       filterMarshaller = compat ? cache.getCacheConfiguration().compatibility().marshaller() :
-            marshaller.orElse(MarshallerBuilder.genericFromInstance(providedFilter));
+            marshaller.orElseGet(() -> MarshallerBuilder.genericFromInstance(providedFilter));
       providedFilter.ifPresent(kvfc -> cache.getAdvancedCache().getComponentRegistry().wireDependencies(kvfc));
 
    }

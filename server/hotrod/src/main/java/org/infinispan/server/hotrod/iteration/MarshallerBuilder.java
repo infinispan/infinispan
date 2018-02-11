@@ -30,13 +30,13 @@ class MarshallerBuilder {
          } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new CacheException(e);
          }
-      })).orElse(marshallerClass.map(c -> {
+      })).orElseGet(() -> marshallerClass.map(c -> {
          try {
             return c.newInstance();
          } catch (InstantiationException | IllegalAccessException e) {
             throw new CacheException(e);
          }
-      }).orElse(genericFromInstance(filter)));
+      }).orElseGet(() -> genericFromInstance(filter)));
    }
 
    static Marshaller genericFromInstance(Optional<?> instance) {

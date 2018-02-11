@@ -178,7 +178,7 @@ public class DefaultIterationManager implements IterationManager {
    }
 
    private Object[] unmarshallParams(byte[][] params, Object factory) {
-      Marshaller m = marshaller.orElse(MarshallerBuilder.genericFromInstance(Optional.of(factory)));
+      Marshaller m = marshaller.orElseGet(() -> MarshallerBuilder.genericFromInstance(Optional.of(factory)));
       try {
          Object[] objectParams = new Object[params.length];
          int i = 0;
