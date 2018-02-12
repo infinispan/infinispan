@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -24,6 +23,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
+import io.reactivex.internal.fuseable.SimplePlainQueue;
 import io.reactivex.internal.queue.SpscArrayQueue;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 
@@ -107,14 +107,14 @@ public class PriorityMergingProcessor<T> implements CloseableIterable<T> {
 
       private final Condition condition;
 
-      private final AtomicBoolean signalled;
+      private boolean signalled;
 
       volatile Throwable error;
 
       MultiSubscriberIterator(Collection<PublisherIntPair<T>> pairs) {
          this.queueSubscribers = new QueueSubscriber[pairs.size()];
 
-         this.signalled = new AtomicBoolean();
+         this.signalled = false;
          this.lock = new ReentrantLock();
          this.condition = lock.newCondition();
 
@@ -153,12 +153,6 @@ public class PriorityMergingProcessor<T> implements CloseableIterable<T> {
       protected T getNext() {
          do {
             boolean allDone = true;
-            // Set this to false just in case we get a signal while iterating
-            signalled.set(false);
-
-            if (error != null) {
-               throw wrapOrThrow(error);
-            }
             for (QueueSubscriber<T> t : queueSubscribers) {
                T nextValue = t.poll();
                if (nextValue != null) {
@@ -166,16 +160,23 @@ public class PriorityMergingProcessor<T> implements CloseableIterable<T> {
                }
                allDone &= t.isDone();
             }
+            // We check error afterwards to avoid additional read for vast majority of cases
+            if (error != null) {
+               throw wrapOrThrow(error);
+            }
             if (allDone) {
                return null;
             }
             lock.lock();
             try {
-               while (!signalled.get()) {
+               while (true) {
+                  if (signalled) {
+                     signalled = false;
+                     break;
+                  }
                   try {
                      if (!condition.await(30, TimeUnit.SECONDS)) {
-                        log.debugf("Timeout encountered: signaled %s, error %s, queues %s", signalled.get(), error,
-                              Arrays.toString(queueSubscribers));
+                        log.debugf("Timeout encountered: error %s, queues %s", error, Arrays.toString(queueSubscribers));
                         throw new TimeoutException();
                      }
                   } catch (InterruptedException e) {
@@ -197,8 +198,11 @@ public class PriorityMergingProcessor<T> implements CloseableIterable<T> {
       void signalConsumer() {
          lock.lock();
          try {
-            signalled.set(true);
-            condition.signalAll();
+            // Only signal the condition if we had someone fail to take a value
+            if (!signalled) {
+               signalled = true;
+               condition.signalAll();
+            }
          } finally {
             lock.unlock();
          }
@@ -207,7 +211,7 @@ public class PriorityMergingProcessor<T> implements CloseableIterable<T> {
 
    static private final class QueueSubscriber<T> extends AtomicReference<Subscription> implements Subscriber<T>, AutoCloseable {
       private final Publisher<T> publisher;
-      private final SpscArrayQueue<T> queue;
+      private final SimplePlainQueue<T> queue;
       private final long batchSize;
       private final long limit;
       private MultiSubscriberIterator notifier;
@@ -218,7 +222,7 @@ public class PriorityMergingProcessor<T> implements CloseableIterable<T> {
 
       QueueSubscriber(Publisher<T> publisher, int batchSize, MultiSubscriberIterator subscriber) {
          this.publisher = publisher;
-         this.queue = new SpscArrayQueue<T>(batchSize);
+         this.queue = new SpscArrayQueue<>(batchSize);
          this.batchSize = batchSize;
          this.notifier = subscriber;
          this.limit = batchSize - (batchSize >> 2);
@@ -257,7 +261,7 @@ public class PriorityMergingProcessor<T> implements CloseableIterable<T> {
          if (!queue.offer(t)) {
             SubscriptionHelper.cancel(this);
 
-            onError(new IllegalStateException("Too many items requested, this is a bug!"));
+            onError(new IllegalStateException("Too many items requested, this is a bug! - produced=" + produced + ", subscription=" + get()));
          } else {
             // This is just to wake them up - in case if they are waiting for an item
             notifier.signalConsumer();

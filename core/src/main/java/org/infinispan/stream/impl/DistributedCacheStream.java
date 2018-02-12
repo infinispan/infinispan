@@ -511,8 +511,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
             }
             // For each completed segment we remove that segment and decrement our counter
             completed.get().forEachRemaining((int i) -> {
-               // This way keys are able to be GC'd
-               receivedKeys.set(i, null);
+               // This way keys are able to be GC'd - lazySet is fine as we synchronize below
+               receivedKeys.lazySet(i, null);
                if (intSet != null) {
                   intSet.set(i);
                }
