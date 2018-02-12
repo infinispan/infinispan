@@ -784,8 +784,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       final CacheMode cacheMode = config.clustering().cacheMode();
       FilterIndexingServiceProvider indexingProvider = null;
       boolean foundMethods = false;
-      DataConversion keyConversion = keyDataConversion == null ? DataConversion.DEFAULT_KEY : keyDataConversion;
-      DataConversion valueConversion = valueDataConversion == null ? DataConversion.DEFAULT_VALUE : valueDataConversion;
+      // We use identity for null as this means it was invoked by a non encoder cache
+      DataConversion keyConversion = keyDataConversion == null ? DataConversion.IDENTITY_KEY : keyDataConversion;
+      DataConversion valueConversion = valueDataConversion == null ? DataConversion.IDENTITY_VALUE: valueDataConversion;
       if (filter instanceof IndexedFilter) {
          IndexedFilter indexedFilter = (IndexedFilter) filter;
          indexingProvider = findIndexingServiceProvider(indexedFilter);
@@ -1050,8 +1051,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 
       FilterIndexingServiceProvider indexingProvider = null;
       boolean foundMethods = false;
-      DataConversion keyConversion = keyDataConversion == null ? DataConversion.DEFAULT_KEY : keyDataConversion;
-      DataConversion valueConversion = valueDataConversion == null ? DataConversion.DEFAULT_VALUE : valueDataConversion;
+      // We use identity for null as this means it was invoked by a non encoder cache
+      DataConversion keyConversion = keyDataConversion == null ? DataConversion.IDENTITY_KEY : keyDataConversion;
+      DataConversion valueConversion = valueDataConversion == null ? DataConversion.IDENTITY_VALUE : valueDataConversion;
       if (filter instanceof IndexedFilter) {
          IndexedFilter indexedFilter = (IndexedFilter) filter;
          indexingProvider = findIndexingServiceProvider(indexedFilter);

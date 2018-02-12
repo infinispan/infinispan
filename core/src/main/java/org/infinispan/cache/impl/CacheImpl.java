@@ -67,6 +67,8 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -619,29 +621,41 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> encoderClass) {
-      return new EncoderCache<>(this, DataConversion.DEFAULT_KEY.withEncoding(encoderClass), DataConversion.DEFAULT_VALUE.withEncoding(encoderClass));
+      if (encoderClass == IdentityEncoder.class) {
+         return this;
+      }
+      return new EncoderCache<>(this, getKeyDataConversion().withEncoding(encoderClass), getValueDataConversion().withEncoding(encoderClass));
    }
 
    @Override
    public AdvancedCache<?, ?> withKeyEncoding(Class<? extends Encoder> encoderClass) {
-      return new EncoderCache<>(this, DataConversion.DEFAULT_KEY.withEncoding(encoderClass), DataConversion.DEFAULT_VALUE);
+      if (encoderClass == IdentityEncoder.class) {
+         return this;
+      }
+      return new EncoderCache<>(this, getKeyDataConversion().withEncoding(encoderClass), getValueDataConversion());
    }
 
    @Override
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass) {
-      return new EncoderCache<>(this, DataConversion.DEFAULT_KEY.withEncoding(keyEncoderClass), DataConversion.DEFAULT_VALUE.withEncoding(valueEncoderClass));
+      if (keyEncoderClass == IdentityEncoder.class && valueEncoderClass == IdentityEncoder.class) {
+         return this;
+      }
+      return new EncoderCache<>(this, getKeyDataConversion().withEncoding(keyEncoderClass), getValueDataConversion().withEncoding(valueEncoderClass));
    }
 
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapperClass) {
-      return new EncoderCache<>(this, DataConversion.DEFAULT_KEY.withWrapping(wrapperClass), DataConversion.DEFAULT_VALUE.withWrapping(wrapperClass));
+      if (wrapperClass == IdentityWrapper.class) {
+         return this;
+      }
+      return new EncoderCache<>(this, getKeyDataConversion().withWrapping(wrapperClass), getValueDataConversion().withWrapping(wrapperClass));
    }
 
    @Override
    public AdvancedCache<K, V> withMediaType(String keyMediaType, String valueMediaType) {
       MediaType km = MediaType.fromString(keyMediaType);
       MediaType vm = MediaType.fromString(valueMediaType);
-      return new EncoderCache<>(this, DataConversion.DEFAULT_KEY.withRequestMediaType(km), DataConversion.DEFAULT_VALUE.withRequestMediaType(vm));
+      return new EncoderCache<>(this, getKeyDataConversion().withRequestMediaType(km), getValueDataConversion().withRequestMediaType(vm));
    }
 
 
@@ -667,17 +681,20 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
-      return new EncoderCache<>(this, DataConversion.DEFAULT_KEY.withWrapping(keyWrapperClass), DataConversion.DEFAULT_VALUE.withWrapping(valueWrapperClass));
+      if (keyWrapperClass == IdentityWrapper.class && valueWrapperClass == IdentityWrapper.class) {
+         return this;
+      }
+      return new EncoderCache<>(this, getKeyDataConversion().withWrapping(keyWrapperClass), getValueDataConversion().withWrapping(valueWrapperClass));
    }
 
    @Override
    public DataConversion getKeyDataConversion() {
-      return DataConversion.DEFAULT_KEY;
+      return DataConversion.IDENTITY_KEY;
    }
 
    @Override
    public DataConversion getValueDataConversion() {
-      return DataConversion.DEFAULT_VALUE;
+      return DataConversion.IDENTITY_VALUE;
    }
 
    @ManagedOperation(
