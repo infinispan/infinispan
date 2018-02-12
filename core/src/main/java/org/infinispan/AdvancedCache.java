@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -78,6 +79,38 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * applied.
     */
    AdvancedCache<K, V> withFlags(Flag... flags);
+
+   /**
+    * An alternative to {@link #withFlags(Flag...)} not requiring array allocation.
+    * @param flags
+    * @return
+    */
+   default AdvancedCache<K, V> withFlags(Collection<Flag> flags) {
+      if (flags == null) return this;
+      int numFlags = flags.size();
+      if (numFlags == 0) return this;
+      return withFlags(flags.toArray(new Flag[numFlags]));
+   }
+
+   /**
+    * Unset all flags set on this cache using {@link #withFlags(Flag...)} or {@link #withFlags(Collection)} methods.
+    *
+    * @return Cache not applying any flags to the command; possibly <code>this</code>.
+    */
+   default AdvancedCache<K, V> noFlags() {
+      throw new UnsupportedOperationException();
+   }
+
+   /**
+    * Apply the <code>transformation</code> on each {@link AdvancedCache} instance in a delegation chain, starting
+    * with the innermost implementation.
+    *
+    * @param transformation
+    * @return The outermost transformed cache.
+    */
+   default AdvancedCache<K, V> transform(Function<AdvancedCache<K, V>, ? extends AdvancedCache<K, V>> transformation) {
+      throw new UnsupportedOperationException();
+   }
 
    /**
     * Performs any cache operations using the specified {@link Subject}. Only applies to caches with authorization
@@ -372,6 +405,10 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     */
    void putAll(Map<? extends K, ? extends V> map, Metadata metadata);
 
+   default CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> map, Metadata metadata) {
+      return putAllAsync(map, metadata.lifespan(), TimeUnit.MILLISECONDS, metadata.maxIdle(), TimeUnit.MILLISECONDS);
+   }
+
    /**
     * An overloaded form of {@link #replace(K, V)}, which takes in an instance of {@link Metadata} which can be used to
     * provide metadata information for the entry being stored, such as lifespan, version of value...etc. The {@link
@@ -387,6 +424,22 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    V replace(K key, V value, Metadata metadata);
 
    /**
+    * An overloaded form of {@link #replaceAsync(K, V)}, which takes in an instance of {@link Metadata} which can be used to
+    * provide metadata information for the entry being stored, such as lifespan, version of value...etc. The {@link
+    * Metadata} is only stored if the call is successful.
+    *
+    * @param key      key with which the specified value is associated
+    * @param value    value to be associated with the specified key
+    * @param metadata information to store alongside the new value
+    * @return the future that contains previous value associated with the specified key, or <tt>null</tt>
+    *    if there was no mapping for the key.
+    * @since 9.3
+    */
+   default CompletableFuture<V> replaceAsync(K key, V value, Metadata metadata) {
+      return replaceAsync(key, value, metadata.lifespan(), TimeUnit.MILLISECONDS, metadata.maxIdle(), TimeUnit.MILLISECONDS);
+   }
+
+   /**
     * An overloaded form of {@link #replace(K, V, V)}, which takes in an instance of {@link Metadata} which can be used
     * to provide metadata information for the entry being stored, such as lifespan, version of value...etc. The {@link
     * Metadata} is only stored if the call is successful.
@@ -399,6 +452,10 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @since 5.3
     */
    boolean replace(K key, V oldValue, V newValue, Metadata metadata);
+
+   default CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, Metadata metadata) {
+      return replaceAsync(key, oldValue, newValue, metadata.lifespan(), TimeUnit.MILLISECONDS, metadata.maxIdle(), TimeUnit.MILLISECONDS);
+   }
 
    /**
     * An overloaded form of {@link #putIfAbsent(K, V)}, which takes in an instance of {@link Metadata} which can be used
@@ -413,6 +470,22 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @since 5.3
     */
    V putIfAbsent(K key, V value, Metadata metadata);
+
+   /**
+    * An overloaded form of {@link #putIfAbsentAsync(K, V)}, which takes in an instance of {@link Metadata} which can be used
+    * to provide metadata information for the entry being stored, such as lifespan, version of value...etc. The {@link
+    * Metadata} is only stored if the call is successful.
+    *
+    * @param key      key with which the specified value is to be associated
+    * @param value    value to be associated with the specified key
+    * @param metadata information to store alongside the new value
+    * @return A future containing the previous value associated with the specified key, or <tt>null</tt> if there was no mapping for the
+    * key.
+    * @since 9.3
+    */
+   default CompletableFuture<V> putIfAbsentAsync(K key, V value, Metadata metadata) {
+      return putIfAbsentAsync(key, value, metadata.lifespan(), TimeUnit.MILLISECONDS, metadata.maxIdle(), TimeUnit.MILLISECONDS);
+   }
 
    /**
     * An overloaded form of {@link #putForExternalRead(K, V)}, which takes in an instance of {@link Metadata} which can
@@ -559,6 +632,18 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @since 5.3
     */
    CacheEntry<K, V> getCacheEntry(Object key);
+
+   /**
+    * Retrieves a CacheEntry corresponding to a specific key.
+    *
+    * @param key the key whose associated cache entry is to be returned
+    * @return a future with the cache entry to which the specified key is mapped, or with {@code null}
+    * if this map contains no mapping for the key
+    * @since 9.3
+    */
+   default CompletableFuture<CacheEntry<K, V>> getCacheEntryAsync(Object key) {
+      throw new UnsupportedOperationException("getCacheEntryAsync");
+   }
 
    /**
     * Gets a collection of entries from the {@link AdvancedCache}, returning them as {@link Map} of the cache entries

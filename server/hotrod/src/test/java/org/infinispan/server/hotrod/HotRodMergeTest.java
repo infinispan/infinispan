@@ -73,6 +73,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
       waitForClusterToForm();
    }
 
+   @Test(enabled = false)
    public void testNewTopologySentAfterCleanMerge(Method m) {
       TestingUtil.waitForNoRebalance(caches());
       int initialTopology = advancedCache(0).getRpcManager().getTopologyId();
@@ -88,6 +89,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
       eventuallyExpectCompleteTopology(client, initialTopology + 8);
    }
 
+   @Test(enabled = false)
    public void testNewTopologySentAfterOverlappingMerge(Method m) {
       TestingUtil.waitForNoRebalance(caches());
       int initialTopology = advancedCache(0).getRpcManager().getTopologyId();

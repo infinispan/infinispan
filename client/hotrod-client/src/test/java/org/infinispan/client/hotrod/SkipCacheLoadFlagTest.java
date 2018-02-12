@@ -224,7 +224,12 @@ public class SkipCacheLoadFlagTest extends SingleCacheManagerTest {
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
          if (command instanceof FlagAffectedCommand) {
-            boolean hasFlag = ((FlagAffectedCommand) command).hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD);
+            FlagAffectedCommand cmd = (FlagAffectedCommand) command;
+            if (cmd.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
+               // this is the fast non-blocking read
+               return super.handleDefault(ctx, command);
+            }
+            boolean hasFlag = cmd.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD);
             if (expectSkipLoadFlag && !hasFlag) {
                throw new CacheException("SKIP_CACHE_LOAD flag is expected!");
             } else if (!expectSkipLoadFlag && hasFlag) {

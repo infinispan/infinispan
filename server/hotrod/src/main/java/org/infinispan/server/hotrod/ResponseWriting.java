@@ -19,17 +19,16 @@ public class ResponseWriting {
    }
 
    private final static Log log = LogFactory.getLog(ContextHandler.class, Log.class);
+   private final static boolean trace = log.isTraceEnabled();
 
    /**
     * Writes the response to the channel
-    *
-    * @param ctx
-    * @param ch
+    *  @param ch
     * @param response
     */
-   public static void writeResponse(CacheDecodeContext ctx, Channel ch, Object response) {
+   public static void writeResponse(Channel ch, Object response) {
       if (response != null) {
-         if (CacheDecodeContext.isTrace) {
+         if (trace) {
             log.tracef("Write response %s", response);
          }
          if (response instanceof Response) {

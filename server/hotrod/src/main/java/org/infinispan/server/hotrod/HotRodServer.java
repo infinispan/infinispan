@@ -147,7 +147,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    @Override
    public HotRodDecoder getDecoder() {
-      return new HotRodDecoder(cacheManager, transport, this, this::isCacheIgnored);
+      return new HotRodDecoder(transport, this, this::isCacheIgnored);
    }
 
    /**
@@ -267,10 +267,10 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    public ChannelInitializer<Channel> getInitializer() {
       if (configuration.idleTimeout() > 0)
          return new NettyInitializers(Arrays.asList(new HotRodChannelInitializer(this, transport, getEncoder(), getDecoder(),
-               getExecutor(getQualifiedName())), new TimeoutEnabledChannelInitializer<>(this)));
+               cacheManager, getExecutor(getQualifiedName())), new TimeoutEnabledChannelInitializer<>(this)));
       else // Idle timeout logic is disabled with -1 or 0 values
          return new NettyInitializers(new HotRodChannelInitializer(this, transport, getEncoder(), getDecoder(),
-               getExecutor(getQualifiedName())));
+               cacheManager, getExecutor(getQualifiedName())));
    }
 
    private <T> void loadFilterConverterFactories(Class<T> c, BiConsumer<String, T> biConsumer) {
