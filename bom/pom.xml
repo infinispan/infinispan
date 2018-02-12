@@ -80,7 +80,7 @@
       <version.hikaricp>2.4.6</version.hikaricp>
       <version.java>1.8</version.java>
       <version.javax.cache>1.1.0</version.javax.cache>
-      <version.jboss.logging>3.3.0.Final</version.jboss.logging>
+      <version.jboss.logging>3.3.1.Final</version.jboss.logging>
       <version.jboss.marshalling>2.0.2.Final</version.jboss.marshalling>
       <version.jgroups>4.0.10.Final</version.jgroups>
       <version.jta>1.0.1.Final</version.jta>
