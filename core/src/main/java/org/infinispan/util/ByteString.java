@@ -22,8 +22,8 @@ public class ByteString {
    private final transient int hash;
 
    private ByteString(byte[] b) {
-      if (b.length > 127) {
-         throw new IllegalArgumentException("ByteString must be shorter than 127 bytes");
+      if (b.length > 255) {
+         throw new IllegalArgumentException("ByteString must be shorter than 255 bytes");
       }
       this.b = b;
       this.hash = Arrays.hashCode(b);
@@ -69,8 +69,8 @@ public class ByteString {
       }
    }
 
-   public static ByteString readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      short len = input.readByte();
+   public static ByteString readObject(ObjectInput input) throws IOException {
+      int len = input.readUnsignedByte();
       if (len == 0)
          return EMPTY;
 
