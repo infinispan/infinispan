@@ -25,6 +25,8 @@ import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.commands.read.AbstractCloseableIteratorCollection;
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.CloseableIterator;
@@ -518,6 +520,12 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass) {
       checkSubclass(keyEncoderClass, Encoder.class);
       checkSubclass(valueEncoderClass, Encoder.class);
+
+      if (allIdentity(keyEncoderClass, valueEncoderClass, keyDataConversion.getWrapperClass(),
+            valueDataConversion.getWrapperClass())) {
+         return cache;
+      }
+
       DataConversion newKeyDataConversion = keyDataConversion.withEncoding(keyEncoderClass);
       DataConversion newValueDataConversion = valueDataConversion.withEncoding(valueEncoderClass);
       EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, newKeyDataConversion, newValueDataConversion);
@@ -528,6 +536,12 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> encoderClass) {
       checkSubclass(encoderClass, Encoder.class);
+
+      if (allIdentity(encoderClass, encoderClass, keyDataConversion.getWrapperClass(),
+            valueDataConversion.getWrapperClass())) {
+         return cache;
+      }
+
       DataConversion newKeyDataConversion = keyDataConversion.withEncoding(encoderClass);
       DataConversion newValueDataConversion = valueDataConversion.withEncoding(encoderClass);
       EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, newKeyDataConversion, newValueDataConversion);
@@ -538,6 +552,12 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public AdvancedCache<K, V> withKeyEncoding(Class<? extends Encoder> encoderClass) {
       checkSubclass(encoderClass, Encoder.class);
+
+      if (allIdentity(encoderClass, valueDataConversion.getEncoderClass(), keyDataConversion.getWrapperClass(),
+            valueDataConversion.getWrapperClass())) {
+         return cache;
+      }
+
       DataConversion newKeyDataConversion = keyDataConversion.withEncoding(encoderClass);
       EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, newKeyDataConversion, valueDataConversion);
       initState(encoderCache, this);
@@ -550,10 +570,30 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       }
    }
 
+   /**
+    * If encoders and wrappers are all identity we should just return the normal cache and avoid all wrappings
+    * @param keyEncoderClass the key encoder class
+    * @param valueEncoderClass the value encoder class
+    * @param keyWrapperClass the key wrapper class
+    * @param valueWrapperClass the value wrapper class
+    * @return true if all classes are identity oness
+    */
+   private boolean allIdentity(Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass,
+         Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
+      return keyEncoderClass == IdentityEncoder.class && valueEncoderClass == IdentityEncoder.class &&
+            keyWrapperClass == IdentityWrapper.class && valueWrapperClass == IdentityWrapper.class;
+   }
+
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
       checkSubclass(keyWrapperClass, Wrapper.class);
       checkSubclass(valueWrapperClass, Wrapper.class);
+
+      if (allIdentity(keyDataConversion.getEncoderClass(), valueDataConversion.getEncoderClass(), keyWrapperClass,
+            valueWrapperClass)) {
+         return cache;
+      }
+
       DataConversion newKeyDataConversion = keyDataConversion.withWrapping(keyWrapperClass);
       DataConversion newValueDataConversion = valueDataConversion.withWrapping(valueWrapperClass);
       EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, newKeyDataConversion, newValueDataConversion);
