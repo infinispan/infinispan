@@ -49,10 +49,18 @@ public class ByteStringTest extends AbstractInfinispanTest {
       }
    }
 
-   @Test(expectedExceptions = IllegalArgumentException.class)
    public void testLargeString() throws Exception {
       StringBuilder sb = new StringBuilder(128);
       for (int i = 0; i < 128; i++) {
+         sb.append("a");
+      }
+      ByteString.fromString(sb.toString());
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testTooLargeString() throws Exception {
+      StringBuilder sb = new StringBuilder(256);
+      for (int i = 0; i < 256; i++) {
          sb.append("a");
       }
       ByteString.fromString(sb.toString());
