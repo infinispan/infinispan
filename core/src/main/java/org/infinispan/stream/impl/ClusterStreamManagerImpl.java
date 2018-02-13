@@ -510,10 +510,13 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
          if (n <= 0) {
             throw new IllegalArgumentException("request amount must be greater than 0");
          }
-         long batchAmount = requestedAmount.addAndGet(n);
+         requestedAmount.addAndGet(n);
          // If there is no pending request we can submit a new one
          if (!pendingRequest.getAndSet(true)) {
-            sendRequest(batchAmount);
+            // We can only send the batch amount after we have confirmed that we will send the request
+            // otherwise we could request too much since this requestedAmount is not decremented until
+            // all entries have been sent via onNext. However the amount is decremented before updating pendingRequest
+            sendRequest(requestedAmount.get());
          }
       }
 
