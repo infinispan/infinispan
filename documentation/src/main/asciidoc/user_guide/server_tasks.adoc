@@ -1,5 +1,118 @@
 === Server Tasks
 
-TODO: This section needs to be completed still
+Server tasks are server-side scripts defined in Java language.
+To develop a server task, you should define a class that extends
+link:{javadocroot}/org/infinispan/tasks/ServerTask.html[`org.infinispan.tasks.ServerTask`]
+interface, defined in `infinispan-tasks-api` module.
 
+A typical server task implementation would implement these methods:
 
+* link:{javadocroot}/org/infinispan/tasks/ServerTask.html#setTaskContext-org.infinispan.tasks.TaskContext-[`setTaskContext`]
+allows server tasks implementors to access execution context information.
+This includes task parameters, cache reference on which the task is executed...etc.
+Normally, implementors would store this information locally and use it when the task is actually executed.
+* link:{javadocroot}/org/infinispan/tasks/Task.html#getName--[`getName`]
+should return a unique name for the task.
+The client will use this name to to invoke the task.
+* link:{javadocroot}/org/infinispan/tasks/Task.html#getExecutionMode--[`getExecutionMode`]
+is used to decide whether to invoke the task in 1 node in a cluster of N nodes or invoke it in N nodes.
+For example, server tasks that invoke stream processing are only required to be executed in 1 node in the cluster.
+This is because stream processing itself makes sure processing is distributed to all nodes in cluster.
+* http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Callable.html?is-external=true#call--[`call`]
+is the method that's invoked when the user invokes the server task.
+
+Here's an example of a hello greet task that takes as parameter the name of the person to greet.
+
+[source,java]
+----
+package example;
+
+import org.infinispan.tasks.ServerTask;
+import org.infinispan.tasks.TaskContext;
+
+public class HelloTask implements ServerTask<String> {
+
+   private TaskContext ctx;
+
+   @Override
+   public void setTaskContext(TaskContext ctx) {
+      this.ctx = ctx;
+   }
+
+   @Override
+   public String call() throws Exception {
+      String name = (String) ctx.getParameters().get().get("name");
+      return "Hello " + name;
+   }
+
+   @Override
+   public String getName() {
+      return "hello-task";
+   }
+
+}
+----
+
+Once the task has been implemented, it needs to be wrapped inside a jar.
+The jar is then deployed to the Infinispan Server and from them on it can be invoked.
+The Infinispan Server uses
+https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html[service loader pattern]
+to load the task, so implementations need to adhere to these requirements.
+For example, server task implementations must have a zero-argument constructor.
+
+Moreover, the jar must contain a
+`META-INF/services/org.infinispan.tasks.ServerTask`
+file containing the fully qualified name(s) of the server tasks included in the jar.
+For example:
+
+[source]
+----
+example.HelloTask
+----
+
+With jar packaged, the next step is to push the jar to the Infinispan Server.
+The server is powered by WildFly Application Server, so if using Maven
+https://docs.jboss.org/wildfly/plugins/maven/latest/index.html[Wildfly's Maven plugin]
+can be used for this:
+
+[source, xml]
+----
+<plugin>
+   <groupId>org.wildfly.plugins</groupId>
+   <artifactId>wildfly-maven-plugin</artifactId>
+   <version>1.2.0.Final</version>
+</plugin>
+----
+
+Then call the following from command line:
+
+[source, bash]
+----
+$ mvn package wildfly:deploy
+----
+
+Alternative ways of deployment jar files to Wildfly Application Server are explained
+https://docs.jboss.org/author/display/WFLY10/Application+deployment[here].
+
+Executing the task can be done using the following code:
+
+[source, java]
+----
+// Create a configuration for a locally-running server
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder.addServer().host("127.0.0.1").port(11222);
+
+// Connect to the server
+RemoteCacheManager cacheManager = new RemoteCacheManager(builder.build());
+
+// Obtain the remote cache
+RemoteCache<String, String> cache = cacheManager.getCache();
+
+// Create task parameters
+Map<String, String> parameters = new HashMap<>();
+parameters.put("name", "developer");
+
+// Execute task
+String greet = cache.execute("hello-task", parameters);
+System.out.println(greet);
+----
