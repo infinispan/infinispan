@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentMap;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheEntryListenerInvocation;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -53,7 +52,7 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
    private ClusteringDependentLogic clusteringDependentLogic;
 
    @Inject
-   protected void injectDependencies(CacheNotifier cacheNotifier, ClusteringDependentLogic clusteringDependentLogic, EncoderRegistry encoderRegistry) {
+   protected void injectDependencies(CacheNotifier cacheNotifier, ClusteringDependentLogic clusteringDependentLogic) {
       this.cacheNotifier = (CacheNotifierImpl) cacheNotifier;
       this.clusteringDependentLogic = clusteringDependentLogic;
    }

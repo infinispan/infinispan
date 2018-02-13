@@ -1263,7 +1263,7 @@ public interface Log extends BasicLogger {
    TimeoutException remoteTransactionStatusMissing(GlobalTransaction gtx);
 
    @LogMessage(level = WARN)
-   @Message(value = "No filter indexing service provider found for filter of type %s", id = 363)
+   @Message(value = "No filter indexing service provider found for indexed filter of type %s", id = 363)
    void noFilterIndexingServiceProviderFound(String filterClassName);
 
    @Message(value = "Attempted to register cluster listener of class %s, but listener is annotated as only observing pre events!", id = 364)
