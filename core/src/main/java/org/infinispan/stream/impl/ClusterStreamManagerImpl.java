@@ -2,11 +2,11 @@ package org.infinispan.stream.impl;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.PrimitiveIterator;
 import java.util.Set;
+import java.util.Spliterator;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -24,7 +24,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import io.reactivex.internal.subscriptions.EmptySubscription;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IntSet;
@@ -49,6 +48,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+
+import io.reactivex.internal.subscriptions.EmptySubscription;
 
 /**
  * Cluster stream manager that sends all requests using the {@link RpcManager} to do the underlying communications.
@@ -555,13 +556,12 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
                         if (trace) {
                            log.tracef("Received valid response %s for id %s from node %s", iteratorResponse, id, target.getKey());
                         }
-                        long returnedAmount = 0;
-                        Iterator<V> iter = iteratorResponse.getIterator();
-                        while (iter.hasNext()) {
-                           returnedAmount++;
-                           s.onNext(iter.next());
+                        Spliterator<V> spliterator = iteratorResponse.getSpliterator();
+                        long returnedAmount = spliterator.getExactSizeIfKnown();
+                        if (trace) {
+                           log.tracef("Received %d entries for id %s from %s", returnedAmount, id, sendee);
                         }
-                        log.tracef("Received %d entries for id %s from %s", returnedAmount, id, sendee);
+                        spliterator.forEachRemaining(s::onNext);
 
                         if (iteratorResponse.isComplete()) {
                            Set<Integer> lostSegments = iteratorResponse.getSuspectedSegments();

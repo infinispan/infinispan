@@ -7,7 +7,8 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.stream.Stream;
+import java.util.Spliterator;
+import java.util.Spliterators;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
@@ -26,14 +27,20 @@ public abstract class IteratorResponses implements IteratorResponse {
    private final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private final Iterator<Object> iterator;
+   private final Spliterator<Object> spliterator;
 
-   IteratorResponses(Iterator<Object> iterator) {
+   IteratorResponses(Iterator<Object> iterator, Spliterator<Object> spliterator) {
       this.iterator = iterator;
+      this.spliterator = spliterator;
+   }
+
+   public Iterator<Object> getIterator() {
+      return iterator;
    }
 
    @Override
-   public Iterator<Object> getIterator() {
-      return iterator;
+   public Spliterator<Object> getSpliterator() {
+      return spliterator;
    }
 
    /**
@@ -45,7 +52,7 @@ public abstract class IteratorResponses implements IteratorResponse {
       private final long batchSize;
 
       RemoteResponse(Iterator<Object> iterator, Set<Integer> suspectedSegments, long batchSize) {
-         super(iterator);
+         super(iterator, null);
          this.suspectedSegments = suspectedSegments;
          this.batchSize = batchSize;
       }
@@ -58,8 +65,8 @@ public abstract class IteratorResponses implements IteratorResponse {
 
    private static class BatchResponse extends IteratorResponses {
 
-      BatchResponse(Iterator<Object> iterator) {
-         super(iterator);
+      BatchResponse(Spliterator<Object> spliterator) {
+         super(null, spliterator);
       }
 
       @Override
@@ -76,8 +83,8 @@ public abstract class IteratorResponses implements IteratorResponse {
    private static class LastResponse extends IteratorResponses {
       private final Set<Integer> suspectedSegments;
 
-      LastResponse(Iterator<Object> iterator, Set<Integer> suspectedSegments) {
-         super(iterator);
+      LastResponse(Spliterator<Object> spliterator, Set<Integer> suspectedSegments) {
+         super(null, spliterator);
          this.suspectedSegments = suspectedSegments;
       }
 
@@ -125,6 +132,11 @@ public abstract class IteratorResponses implements IteratorResponse {
          // This special handling is because we don't know if we are done with the iterator until we have iterated
          // upon it
          RemoteResponse resp = (RemoteResponse) object;
+         if (resp.batchSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("We don't yet support greater than int entries returned");
+         }
+         // This way we can allocate to fit in the batch size
+         output.writeInt((int) resp.batchSize);
          Iterator<Object> iter = resp.getIterator();
          long i = 0;
          for (; i < resp.batchSize && iter.hasNext(); ++i) {
@@ -148,23 +160,25 @@ public abstract class IteratorResponses implements IteratorResponse {
 
       @Override
       public IteratorResponses readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         int batchSize = input.readInt();
          Object object = input.readObject();
-         Iterator<Object> iterator;
+         Spliterator<Object> spliterator;
          if (object != EndIterator.getInstance()) {
-            Stream.Builder<Object> builder = Stream.builder();
-            builder.accept(object);
+            Object[] results = new Object[batchSize];
+            results[0] = object;
+            int offset = 1;
             while ((object = input.readObject()) != EndIterator.getInstance()) {
-               builder.accept(object);
+               results[offset++] = object;
             }
-            iterator = builder.build().iterator();
+            spliterator = Spliterators.spliterator(results, 0, offset, Spliterator.DISTINCT | Spliterator.NONNULL);
          } else {
-            iterator = Collections.emptyIterator();
+            spliterator = Spliterators.emptySpliterator();
          }
          boolean complete = input.readBoolean();
          if (complete) {
-            return new LastResponse(iterator, (Set<Integer>) input.readObject());
+            return new LastResponse(spliterator, (Set<Integer>) input.readObject());
          } else {
-            return new BatchResponse(iterator);
+            return new BatchResponse(spliterator);
          }
       }
    }
