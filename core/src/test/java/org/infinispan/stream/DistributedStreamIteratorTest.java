@@ -458,7 +458,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
                checkPoint.awaitStrict("post_iterator_released", 10, TimeUnit.SECONDS);
             }
          }
-      }).when(mocaContainer).iterator();
+      }).when(mocaContainer).spliterator();
       TestingUtil.replaceComponent(cache, DataContainer.class, mocaContainer, true);
    }
 }

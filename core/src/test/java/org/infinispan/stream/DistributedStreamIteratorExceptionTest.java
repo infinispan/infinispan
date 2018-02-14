@@ -35,7 +35,7 @@ public class DistributedStreamIteratorExceptionTest extends BaseSetupStreamItera
       DataContainer dataContainer = TestingUtil.extractComponent(cache1, DataContainer.class);
       try {
          Throwable t = new AssertionError();
-         DataContainer mockContainer = when(mock(DataContainer.class).iterator()).thenThrow(t).getMock();
+         DataContainer mockContainer = when(mock(DataContainer.class).spliterator()).thenThrow(t).getMock();
          TestingUtil.replaceComponent(cache1, DataContainer.class, mockContainer, true);
 
          try {

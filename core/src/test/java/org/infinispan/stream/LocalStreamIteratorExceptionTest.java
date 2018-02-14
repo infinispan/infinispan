@@ -30,7 +30,7 @@ public class LocalStreamIteratorExceptionTest extends BaseSetupStreamIteratorTes
       DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
       try {
          Throwable t = new CacheException();
-         DataContainer mockContainer = when(mock(DataContainer.class).iterator()).thenThrow(t).getMock();
+         DataContainer mockContainer = when(mock(DataContainer.class).spliterator()).thenThrow(t).getMock();
          TestingUtil.replaceComponent(cache, DataContainer.class, mockContainer, true);
 
          try {

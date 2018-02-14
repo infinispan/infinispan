@@ -22,6 +22,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.stream.impl.local.EntryStreamSupplier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
@@ -38,9 +39,11 @@ import org.infinispan.util.EntryWrapper;
  */
 public class EntrySetCommand<K, V> extends AbstractLocalCommand implements VisitableCommand {
    private final Cache<K, V> cache;
+   private final boolean isRemoteIteration;
 
    public EntrySetCommand(Cache<K, V> cache, long flagsBitSet) {
       setFlagsBitSet(flagsBitSet);
+      isRemoteIteration = EnumUtil.containsAny(flagsBitSet, FlagBitSets.REMOTE_ITERATION);
       cache = AbstractDelegatingCache.unwrapCache(cache);
       if (flagsBitSet != EnumUtil.EMPTY_BIT_SET) {
          this.cache = cache.getAdvancedCache().withFlags(EnumUtil.enumArrayOf(flagsBitSet, Flag.class));
@@ -63,9 +66,9 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
    public Set<CacheEntry<K, V>> perform(InvocationContext ctx) throws Throwable {
       Object lockOwner = ctx.getLockOwner();
       if (ctx.getLockOwner() != null) {
-         return new BackingEntrySet<>(cache.getAdvancedCache().lockAs(lockOwner));
+         return new BackingEntrySet<>(cache.getAdvancedCache().lockAs(lockOwner), isRemoteIteration);
       }
-      return new BackingEntrySet<>(cache);
+      return new BackingEntrySet<>(cache, isRemoteIteration);
    }
 
    @Override
@@ -77,9 +80,11 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
 
    static class BackingEntrySet<K, V> extends AbstractCloseableIteratorCollection<CacheEntry<K, V>, K, V>
          implements CacheSet<CacheEntry<K, V>> {
+      private final boolean isRemoteIteration;
 
-      BackingEntrySet(Cache cache) {
+      BackingEntrySet(Cache cache, boolean isRemoteIteration) {
          super(cache);
+         this.isRemoteIteration = isRemoteIteration;
       }
 
       @Override
@@ -89,11 +94,19 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
          return Closeables.iterator(new IteratorMapper<>(removableIterator, e -> new EntryWrapper<>(cache, e)));
       }
 
+      static <K, V> CloseableSpliterator<CacheEntry<K, V>> cast(Spliterator spliterator) {
+         if (spliterator instanceof CloseableSpliterator) {
+            return (CloseableSpliterator<CacheEntry<K, V>>) spliterator;
+         }
+         return Closeables.spliterator((Spliterator<CacheEntry<K, V>>) spliterator);
+      }
+
       @Override
       public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
          DataContainer<K, V> dc = cache.getAdvancedCache().getDataContainer();
-         return Closeables.spliterator(Closeables.iterator(new DataContainerRemoveIterator<>(cache, dc)), dc.sizeIncludingExpired(),
-                 Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
+
+         // Spliterator doesn't support remove so just return it without wrapping
+         return cast(dc.spliterator());
       }
 
       @Override
@@ -143,13 +156,13 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
 
       @Override
       public CacheStream<CacheEntry<K, V>> stream() {
-         return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, getSegmentMapper(cache),
+         return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, isRemoteIteration, getSegmentMapper(cache),
                  () -> super.stream()), false, cache.getAdvancedCache().getComponentRegistry());
       }
 
       @Override
       public CacheStream<CacheEntry<K, V>> parallelStream() {
-         return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, getSegmentMapper(cache),
+         return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, isRemoteIteration, getSegmentMapper(cache),
                  () -> super.stream()), true, cache.getAdvancedCache().getComponentRegistry());
       }
    }

@@ -16,9 +16,11 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.EntrySizeCalculator;
 import org.infinispan.commons.util.EvictionListener;
@@ -349,12 +351,23 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
    @Override
    public Iterator<InternalCacheEntry<K, V>> iterator() {
-      return new EntryIterator(entries.values().iterator(), false);
+      return new EntryIterator(entries.values().iterator());
+   }
+
+   @Override
+   public Spliterator<InternalCacheEntry<K, V>> spliterator() {
+      return new EntrySpliterator(entries.values().spliterator());
    }
 
    @Override
    public Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpired() {
-      return new EntryIterator(entries.values().iterator(), true);
+      return entries.values().iterator();
+   }
+
+   @Override
+   public Spliterator<InternalCacheEntry<K, V>> spliteratorIncludingExpired() {
+      // Technically this spliterator is distinct, but it won't be set - we assume that is okay for now
+      return entries.values().spliterator();
    }
 
    @Override
@@ -387,7 +400,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
    private class ImmutableEntryIterator extends EntryIterator {
       ImmutableEntryIterator(Iterator<InternalCacheEntry<K, V>> it){
-         super(it, false);
+         super(it);
       }
 
       @Override
@@ -399,13 +412,11 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    public class EntryIterator implements Iterator<InternalCacheEntry<K, V>> {
 
       private final Iterator<InternalCacheEntry<K, V>> it;
-      private final boolean includeExpired;
 
       private InternalCacheEntry<K, V> next;
 
-      EntryIterator(Iterator<InternalCacheEntry<K, V>> it, boolean includeExpired){
+      EntryIterator(Iterator<InternalCacheEntry<K, V>> it) {
          this.it=it;
-         this.includeExpired = includeExpired;
       }
 
       private InternalCacheEntry<K, V> getNext() {
@@ -413,7 +424,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
          long now = 0;
          while (it.hasNext()) {
             InternalCacheEntry<K, V> entry = it.next();
-            if (includeExpired || !entry.canExpire()) {
+            if (!entry.canExpire()) {
                if (trace) {
                   log.tracef("Return next entry %s", entry);
                }
@@ -463,6 +474,93 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       @Override
       public void remove() {
          throw new UnsupportedOperationException();
+      }
+   }
+
+   /**
+    * Spliterator that wraps another to make sure to now return expired entries. This class also implements
+    * CloseableSpliterator to prevent additional allocations if user needs it to be closeable.
+    */
+   private class EntrySpliterator implements CloseableSpliterator<InternalCacheEntry<K, V>> {
+      private final Spliterator<InternalCacheEntry<K, V>> spliterator;
+      // We assume that spliterator is not used concurrently - normally it is split so we can use these variables safely
+      private final Consumer<? super InternalCacheEntry<K, V>> consumer = ice -> current = ice;
+
+      private InternalCacheEntry<K, V> current;
+
+      private EntrySpliterator(Spliterator<InternalCacheEntry<K, V>> spliterator) {
+         this.spliterator = spliterator;
+      }
+
+      @Override
+      public void close() {
+         // Do nothing
+      }
+
+      @Override
+      public boolean tryAdvance(Consumer<? super InternalCacheEntry<K, V>> action) {
+         InternalCacheEntry<K, V> entryToUse = null;
+         boolean initializedTime = false;
+         long now = 0;
+         while (entryToUse == null && spliterator.tryAdvance(consumer)) {
+            entryToUse = current;
+            if (entryToUse.canExpire()) {
+               if (!initializedTime) {
+                  now = timeService.wallClockTime();
+                  initializedTime = true;
+               }
+               if (entryToUse.isExpired(now)) {
+                  entryToUse = null;
+               }
+            }
+         }
+         if (entryToUse != null) {
+            action.accept(entryToUse);
+            return true;
+         }
+
+         return false;
+      }
+
+      @Override
+      public void forEachRemaining(Consumer<? super InternalCacheEntry<K, V>> action) {
+         // We don't call the forEachRemaining on the actual spliterator since, we want to keep the time between
+         // invocations
+         boolean initializedTime = false;
+         long now = 0;
+
+         while (spliterator.tryAdvance(consumer)) {
+            InternalCacheEntry<K, V> currentEntry = current;
+            if (currentEntry.canExpire()) {
+               if (!initializedTime) {
+                  now = timeService.wallClockTime();
+                  initializedTime = true;
+               }
+               if (currentEntry.isExpired(now)) {
+                  continue;
+               }
+            }
+            action.accept(currentEntry);
+         }
+      }
+
+      @Override
+      public Spliterator<InternalCacheEntry<K, V>> trySplit() {
+         Spliterator<InternalCacheEntry<K, V>> split = spliterator.trySplit();
+         if (split != null) {
+            return new EntrySpliterator(split);
+         }
+         return null;
+      }
+
+      @Override
+      public long estimateSize() {
+         return spliterator.estimateSize();
+      }
+
+      @Override
+      public int characteristics() {
+         return spliterator.characteristics() | Spliterator.DISTINCT;
       }
    }
 

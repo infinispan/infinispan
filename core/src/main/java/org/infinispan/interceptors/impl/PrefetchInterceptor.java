@@ -568,13 +568,13 @@ public class PrefetchInterceptor extends DDAsyncInterceptor {
 
       @Override
       public CacheStream<CacheEntry<K, V>> stream() {
-         return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, dm.getCacheTopology()::getSegment,
+         return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, false, dm.getCacheTopology()::getSegment,
             () -> super.stream()), false, cache.getAdvancedCache().getComponentRegistry());
       }
 
       @Override
       public CacheStream<CacheEntry<K, V>> parallelStream() {
-         return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, dm.getCacheTopology()::getSegment,
+         return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, false, dm.getCacheTopology()::getSegment,
             () -> super.stream()), true, cache.getAdvancedCache().getComponentRegistry());
       }
    }

@@ -21,7 +21,6 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
@@ -55,11 +54,16 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    private static final boolean trace = log.isTraceEnabled();
 
    private AdvancedCache<K, V> cache;
+   @Inject
    private ComponentRegistry registry;
+   @Inject
    private DistributionManager dm;
+   @Inject
    private RpcManager rpc;
+   @Inject
    private CommandsFactory factory;
    private boolean hasLoader;
+   @Inject
    private IteratorHandler iteratorHandler;
 
    private Address localAddress;
@@ -109,24 +113,26 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       }
    }
 
+   /**
+    * Injects the cache - unfortunately this cannot be in start. Tests will rewire certain components which will in
+    * turn reinject the cache, but they won't call the start method! If the latter is fixed we can add this to start
+    * method and add @Inject to the variable.
+    * @param cache
+    */
    @Inject
-   public void inject(Cache<K, V> cache, ComponentRegistry registry, DistributionManager dm, RpcManager rpc,
-           Configuration configuration, CommandsFactory factory, IteratorHandler iterationHandler) {
+   public void inject(Cache<K, V> cache) {
       // We need to unwrap the cache as a local stream should only deal with BOXED values and obviously only
       // with local entries.  Any mappings will be provided by the originator node in their intermediate operation
       // stack in the operation itself.
-      this.cache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
-      this.cacheName = ByteString.fromString(cache.getName());
-      this.registry = registry;
-      this.dm = dm;
-      this.rpc = rpc;
-      this.factory = factory;
-      this.hasLoader = configuration.persistence().usingStores();
-      this.iteratorHandler = iterationHandler;
+      // Also this class manages iterations that were called for remotely so make sure our commands know this
+      this.cache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL,
+            Flag.REMOTE_ITERATION);
    }
 
    @Start
    public void start() {
+      cacheName = ByteString.fromString(cache.getName());
+      hasLoader = cache.getCacheConfiguration().persistence().usingStores();
       localAddress = rpc.getAddress();
       cache.addListener(this);
       cacheMode = cache.getCacheConfiguration().clustering().cacheMode();
