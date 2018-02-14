@@ -49,8 +49,6 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
-import org.infinispan.hibernate.cache.commons.timestamp.ClusteredTimestampsRegionImpl;
-import org.infinispan.hibernate.cache.commons.timestamp.TimestampsRegionImpl;
 import org.infinispan.hibernate.cache.commons.tm.HibernateTransactionManagerLookup;
 import org.infinispan.hibernate.cache.commons.util.CacheCommandFactory;
 import org.infinispan.hibernate.cache.commons.util.Caches;
@@ -294,7 +292,7 @@ public class InfinispanRegionFactory implements RegionFactory {
    }
 
    private InternalRegionFactory findInternalRegionFactory() {
-      ServiceLoader<InternalRegionFactory> loader = ServiceLoader.load(InternalRegionFactory.class);
+      ServiceLoader<InternalRegionFactory> loader = ServiceLoader.load(InternalRegionFactory.class, InternalRegionFactory.class.getClassLoader());
       return loader.iterator().next();
    }
 
