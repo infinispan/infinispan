@@ -1,7 +1,7 @@
 package org.infinispan.stream.impl;
 
-import java.util.Iterator;
 import java.util.Set;
+import java.util.Spliterator;
 
 /**
  * Iterator response returned when an iterator batch is sent back which contains the iterator, if any segments
@@ -11,10 +11,11 @@ import java.util.Set;
  */
 public interface IteratorResponse<V> {
    /**
-    * The iterator containing the elements from the response
-    * @return the iterator
+    * The spliterator containing the elements from the response. This spliterator is guaranteed to have a known
+    * exact size when invoking {@link Spliterator#getExactSizeIfKnown()}.
+    * @return the spliterator
     */
-   Iterator<V> getIterator();
+   Spliterator<V> getSpliterator();
 
    /**
     * Whether the iterator is the end or if more requests are needed
