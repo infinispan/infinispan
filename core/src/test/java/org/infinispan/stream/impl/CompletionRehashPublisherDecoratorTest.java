@@ -21,6 +21,7 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.reactivestreams.Publisher;
@@ -42,7 +43,7 @@ public class CompletionRehashPublisherDecoratorTest {
          Consumer<Object> entryConsumer) {
       return new CompletionRehashPublisherDecorator<>(AbstractCacheStream.IteratorOperation.NO_MAP, null, null, userListener,
             // Just ignore early completed segments and lost ones
-            i -> {}, i -> {}, entryConsumer);
+            i -> {}, i -> {}, new WithinThreadExecutor(), entryConsumer);
    }
 
    <S> CompletionRehashPublisherDecorator<S> createDecorator(ConsistentHash ch, Set<Integer> segmentsForOwner,
@@ -61,7 +62,7 @@ public class CompletionRehashPublisherDecoratorTest {
 
       return new CompletionRehashPublisherDecorator<>(AbstractCacheStream.IteratorOperation.NO_MAP, dm, address,
             // Just ignore early completed segments and lost ones
-            internalListener, i -> {}, i -> {}, entryConsumer);
+            internalListener, i -> {}, i -> {}, new WithinThreadExecutor(), entryConsumer);
    }
 
    void simpleAssert(Publisher<Object> resultingPublisher, PublishProcessor<Object> valuePublisher,
