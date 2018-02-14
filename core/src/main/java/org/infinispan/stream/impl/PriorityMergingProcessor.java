@@ -3,6 +3,7 @@ package org.infinispan.stream.impl;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -39,6 +40,7 @@ import io.reactivex.internal.subscriptions.SubscriptionHelper;
 public class PriorityMergingProcessor<T> implements CloseableIterable<T> {
    private final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
+   private final PublisherIntPair<T> firstPair;
    private final Collection<PublisherIntPair<T>> pairs;
 
    public static <T> PriorityMergingProcessor<T> build(Publisher<T> publisher, int firstbatchSize, Publisher<T> secondPublisher,
@@ -64,25 +66,31 @@ public class PriorityMergingProcessor<T> implements CloseableIterable<T> {
    }
 
    public static class Builder<T> {
+      PublisherIntPair<T> firstPair;
       Stream.Builder<PublisherIntPair<T>> current = Stream.builder();
 
       Builder<T> addPublisher(Publisher<T> publisher, int batchSize) {
-         current.accept(new PublisherIntPair<T>(publisher, batchSize));
+         if (firstPair == null) {
+            firstPair = new PublisherIntPair<>(publisher, batchSize);
+         } else {
+            current.accept(new PublisherIntPair<>(publisher, batchSize));
+         }
          return this;
       }
 
       PriorityMergingProcessor<T> build() {
-         return new PriorityMergingProcessor<>(current.build().collect(Collectors.toList()));
+         return new PriorityMergingProcessor<>(firstPair, current.build().collect(Collectors.toList()));
       }
    }
 
    private PriorityMergingProcessor(Publisher<T> publisher, int firstbatchSize, Publisher<T> secondPublisher,
          int secondBatchSize) {
-      this.pairs = Arrays.asList(new PublisherIntPair<T>(publisher, firstbatchSize),
-            new PublisherIntPair<T>(secondPublisher, secondBatchSize));
+      this.firstPair = new PublisherIntPair<>(publisher, firstbatchSize);
+      this.pairs = Collections.singleton(new PublisherIntPair<>(secondPublisher, secondBatchSize));
    }
 
-   private PriorityMergingProcessor(Collection<PublisherIntPair<T>> pairs) {
+   private PriorityMergingProcessor(PublisherIntPair<T> firstPair, Collection<PublisherIntPair<T>> pairs) {
+      this.firstPair = firstPair;
       this.pairs = pairs;
    }
 
@@ -93,7 +101,7 @@ public class PriorityMergingProcessor<T> implements CloseableIterable<T> {
 
    @Override
    public CloseableIterator<T> iterator() {
-      MultiSubscriberIterator<T> iterator = new MultiSubscriberIterator<>(pairs);
+      MultiSubscriberIterator<T> iterator = new MultiSubscriberIterator<>(firstPair, pairs);
       iterator.start();
       return iterator;
    }
@@ -101,6 +109,7 @@ public class PriorityMergingProcessor<T> implements CloseableIterable<T> {
 
    private static final class MultiSubscriberIterator<T> extends AbstractIterator<T> implements CloseableIterator<T> {
 
+      private final QueueSubscriber<T> firstQueueSubscriber;
       private final QueueSubscriber<T>[] queueSubscribers;
 
       private final Lock lock;
@@ -111,7 +120,8 @@ public class PriorityMergingProcessor<T> implements CloseableIterable<T> {
 
       volatile Throwable error;
 
-      MultiSubscriberIterator(Collection<PublisherIntPair<T>> pairs) {
+      MultiSubscriberIterator(PublisherIntPair<T> firstPair, Collection<PublisherIntPair<T>> pairs) {
+         this.firstQueueSubscriber = new QueueSubscriber<>(firstPair.publisher, firstPair.batchSize, this);
          this.queueSubscribers = new QueueSubscriber[pairs.size()];
 
          this.signalled = false;
@@ -129,6 +139,7 @@ public class PriorityMergingProcessor<T> implements CloseableIterable<T> {
        * Actually starts each subscriber - needed because otherwise subscriber could call back while in constructor
        */
       public void start() {
+         firstQueueSubscriber.start();
          for (QueueSubscriber<T> queueSubscriber : queueSubscribers) {
             queueSubscriber.start();
          }
@@ -143,6 +154,7 @@ public class PriorityMergingProcessor<T> implements CloseableIterable<T> {
 
       @Override
       public void close() {
+         firstQueueSubscriber.close();
          for (QueueSubscriber<T> queueSubscriber : queueSubscribers) {
             queueSubscriber.close();
          }
@@ -152,9 +164,13 @@ public class PriorityMergingProcessor<T> implements CloseableIterable<T> {
       @Override
       protected T getNext() {
          do {
-            boolean allDone = true;
+            T nextValue = firstQueueSubscriber.poll();
+            if (nextValue != null) {
+               return nextValue;
+            }
+            boolean allDone = firstQueueSubscriber.isDone();
             for (QueueSubscriber<T> t : queueSubscribers) {
-               T nextValue = t.poll();
+               nextValue = t.poll();
                if (nextValue != null) {
                   return nextValue;
                }
