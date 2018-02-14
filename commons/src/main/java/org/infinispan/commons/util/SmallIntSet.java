@@ -256,6 +256,9 @@ public class SmallIntSet implements IntSet {
 
    @Override
    public boolean containsAll(Collection<?> c) {
+      if (c instanceof IntSet) {
+         return containsAll((IntSet) c);
+      }
       return c.stream().allMatch(this::contains);
    }
 

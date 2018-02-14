@@ -273,7 +273,12 @@ public enum Flag {
    /**
     * Flag to identity that data is being written as part of a Rolling Upgrade.
     */
-   ROLLING_UPGRADE
+   ROLLING_UPGRADE,
+
+   /**
+    * Flag to identify that this iteration is done on a remote node and thus no additional wrappings are required
+    */
+   REMOTE_ITERATION,
 
    ;
 

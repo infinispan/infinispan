@@ -1581,13 +1581,13 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CacheStream<Entry<K, V>> stream() {
-         return cacheStreamCast(new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, null,
+         return cacheStreamCast(new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, false, null,
                getStreamSupplier(false)), false, componentRegistry));
       }
 
       @Override
       public CacheStream<Entry<K, V>> parallelStream() {
-         return cacheStreamCast(new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, null,
+         return cacheStreamCast(new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, false, null,
                getStreamSupplier(false)), true, componentRegistry));
       }
    }
@@ -1621,13 +1621,13 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CacheStream<CacheEntry<K, V>> stream() {
-         return new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, null, getStreamSupplier(false)),
+         return new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, false, null, getStreamSupplier(false)),
                false, componentRegistry);
       }
 
       @Override
       public CacheStream<CacheEntry<K, V>> parallelStream() {
-         return new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, null, getStreamSupplier(true)),
+         return new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, false, null, getStreamSupplier(true)),
                true, componentRegistry);
       }
    }
@@ -1704,14 +1704,14 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       @Override
       public CacheStream<V> stream() {
          LocalCacheStream<CacheEntry<K, V>> lcs = new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this,
-               null, getStreamSupplier(false)), false, componentRegistry);
+               false, null, getStreamSupplier(false)), false, componentRegistry);
          return lcs.map(CacheEntry::getValue);
       }
 
       @Override
       public CacheStream<V> parallelStream() {
          LocalCacheStream<CacheEntry<K, V>> lcs = new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this,
-               null, getStreamSupplier(false)), true, componentRegistry);
+               false, null, getStreamSupplier(false)), true, componentRegistry);
          return lcs.map(CacheEntry::getValue);
       }
    }

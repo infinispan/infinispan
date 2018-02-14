@@ -3,6 +3,8 @@ package org.infinispan.container;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.function.BiConsumer;
 
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -198,10 +200,30 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
    Iterator<InternalCacheEntry<K, V>> iterator();
 
    /**
+    * {@inheritDoc}
+    * <p>This spliterator only returns entries that are not expired, however it will not remove them while doing so.</p>
+    * @return spliterator that doesn't produce expired entries
+    */
+   @Override
+   default Spliterator<InternalCacheEntry<K, V>> spliterator() {
+      return Spliterators.spliterator(iterator(), sizeIncludingExpired(),
+            Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
+   }
+
+   /**
     * Same as {@link DataContainer#iterator()} except that is also returns expired entries.
     * @return iterator that returns all entries including expired ones
     */
    Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpired();
+
+   /**
+    * Same as {@link DataContainer#spliterator()} except that is also returns expired entries.
+    * @return spliterator that returns all entries including expired ones
+    */
+   default Spliterator<InternalCacheEntry<K, V>> spliteratorIncludingExpired() {
+      return Spliterators.spliterator(iteratorIncludingExpired(), sizeIncludingExpired(),
+            Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
+   }
 
    interface ComputeAction<K, V> {
 
