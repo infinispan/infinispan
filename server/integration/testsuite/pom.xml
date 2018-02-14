@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>org.infinispan.server</groupId>
         <artifactId>infinispan-server-versions</artifactId>
-        <version>8.2.9-SNAPSHOT</version>
+        <version>8.2.10-SNAPSHOT</version>
         <relativePath>../versions/pom.xml</relativePath>
     </parent>
 
@@ -427,7 +427,7 @@
                                     <property name="new.server.schema.version" value="${new.server.schema.version}" />
                                 </ant>
                                 
-                                <echo message="Removing empty xmlns attributes (xmlns=&apos;&apos;) which IBM JDK could produce" />
+                                <echo message="Removing empty xmlns attributes (xmlns='') which IBM JDK could produce" />
                                 <replace dir="target" value="">
                                     <include name="server/node*/standalone/configuration/**/*.xml" />
                                     <replacetoken>xmlns=""</replacetoken>
