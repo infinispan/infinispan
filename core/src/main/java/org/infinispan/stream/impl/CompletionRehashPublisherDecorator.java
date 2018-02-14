@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.PrimitiveIterator;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -33,8 +34,9 @@ public class CompletionRehashPublisherDecorator<S> extends RehashPublisherDecora
    CompletionRehashPublisherDecorator(AbstractCacheStream.IteratorOperation iteratorOperation, DistributionManager dm,
          Address localAddress, Consumer<? super Supplier<PrimitiveIterator.OfInt>> userListener,
          Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments,
-         Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments, Consumer<Object> keyConsumer) {
-      super(iteratorOperation, dm, localAddress, completedSegments, lostSegments, keyConsumer);
+         Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments, Executor executor,
+         Consumer<Object> keyConsumer) {
+      super(iteratorOperation, dm, localAddress, completedSegments, lostSegments, executor, keyConsumer);
       this.userListener = userListener;
       this.completionListeners = Collections.synchronizedList(new ArrayList<>(4));
    }
@@ -70,8 +72,8 @@ public class CompletionRehashPublisherDecorator<S> extends RehashPublisherDecora
          kwcl.accept(i);
       }, lostSegments);
       // We have to track each key received from this publisher as it would map to all segments when completed
-      return Flowable.fromPublisher(iteratorOperation.handlePublisher(convertedPublisher, keyConsumer)).doOnNext(
-            kwcl::valueAdded);
+      return Flowable.fromPublisher(iteratorOperation.handlePublisher(applySubscribeExecutor(convertedPublisher), keyConsumer))
+            .doOnNext(kwcl::valueAdded);
    }
 
    @Override

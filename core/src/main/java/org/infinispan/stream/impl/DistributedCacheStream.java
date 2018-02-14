@@ -559,7 +559,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       PublisherDecorator<S> publisherDecorator(Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments,
             Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments, Consumer<Object> keyConsumer) {
          return new RehashPublisherDecorator<>(iteratorOperation, dm, localAddress, completedSegments, lostSegments,
-               keyConsumer);
+               executor, keyConsumer);
       }
 
       @Override
@@ -601,7 +601,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       PublisherDecorator<S> publisherDecorator(Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments,
             Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments, Consumer<Object> keyConsumer) {
          completionRehashPublisherDecorator = new CompletionRehashPublisherDecorator<>(iteratorOperation, dm,
-               localAddress, userListener, completedSegments, lostSegments, keyConsumer);
+               localAddress, userListener, completedSegments, lostSegments, executor, keyConsumer);
 
          return completionRehashPublisherDecorator;
       }
