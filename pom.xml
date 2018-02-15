@@ -155,6 +155,7 @@
       <module>integrationtests/spring-boot-it</module>
       <module>client/marshaller</module>
       <module>hibernate</module>
+      <module>documentation</module>
    </modules>
    <properties>
 
@@ -172,7 +173,8 @@
       <dir.jacoco.report>../jacoco/report/</dir.jacoco.report>
       <forkJvmArgs>-Xmx1G -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}</forkJvmArgs>
       <infinispan.codename>Bastille</infinispan.codename>
-      <infinispan.core.schema.version>9.2</infinispan.core.schema.version>
+      <infinispan.base.version>9.2</infinispan.base.version>
+      <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
       <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
       <infinispan.test.parallel.threads>15</infinispan.test.parallel.threads>
@@ -1937,7 +1939,6 @@
       <profile>
          <id>distribution</id>
          <modules>
-            <module>documentation</module>
             <module>javadoc/javadoc-embedded</module>
             <module>javadoc/javadoc-remote</module>
             <module>javadoc/javadoc-all</module>
