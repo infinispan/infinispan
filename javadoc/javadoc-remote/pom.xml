@@ -64,7 +64,7 @@
                         <artifactId>infinispan-tools</artifactId>
                         <version>${project.version}</version>
                      </docletArtifact>
-                     <doctitle>Infinispan ${project.version} Remote API</doctitle>
+                     <doctitle>Infinispan ${infinispan.base.version} Remote API</doctitle>
 
                      <docfilessubdirs>true</docfilessubdirs>
                      <detectLinks>false</detectLinks>

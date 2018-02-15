@@ -186,7 +186,7 @@
                         <artifactId>infinispan-tools</artifactId>
                         <version>${project.version}</version>
                      </docletArtifact>
-                     <doctitle>Infinispan ${project.version} Embedded API</doctitle>
+                     <doctitle>Infinispan ${infinispan.base.version} Embedded API</doctitle>
 
                      <docfilessubdirs>true</docfilessubdirs>
                      <detectLinks>false</detectLinks>

@@ -177,7 +177,7 @@ Returns `true` when the lock is locked and `false` when the lock is released.
 Returns `true` when the lock is owned by the caller and `false` when the lock is owned by someone else or it's released.
 
 
-===== Usage Examples
+==== Usage Examples
 
 [source,java]
 ----

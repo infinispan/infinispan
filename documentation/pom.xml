@@ -16,14 +16,15 @@
     <description>The Infinispan Documentation</description>
 
     <properties>
-        <infinispan.version>9.2</infinispan.version>
-        <javadoc.root>https://docs.jboss.org/infinispan/${infinispan.version}/apidocs</javadoc.root>
-        <configdoc.root>https://docs.jboss.org/infinispan/${infinispan.version}/configdocs/</configdoc.root>
-        <wildfly.docroot>https://docs.jboss.org/author/display/WFLY10</wildfly.docroot>
+        <javadoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/apidocs</javadoc.root>
+        <configdoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/configdocs/</configdoc.root>
+        <wildfly.docroot>https://docs.jboss.org/author/display/WFLY11</wildfly.docroot>
         <jdk.docroot>https://docs.oracle.com/javase/8/docs/api</jdk.docroot>
         <javaee.docroot>https://docs.oracle.com/javaee/7/api</javaee.docroot>
         <skipTests>true</skipTests>
         <defaults.file>${project.build.directory}/default-attributes.adoc</defaults.file>
+        <asciidoctor.version>1.5.6</asciidoctor.version>
+        <asciidoctorj.pdf.version>1.5.0-alpha.16</asciidoctorj.pdf.version>
     </properties>
 
     <dependencies>
@@ -122,17 +123,17 @@
             <plugin>
                 <groupId>org.asciidoctor</groupId>
                 <artifactId>asciidoctor-maven-plugin</artifactId>
-                <version>1.5.5</version>
+                <version>${asciidoctor.version}</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.asciidoctor</groupId>
                         <artifactId>asciidoctorj</artifactId>
-                        <version>1.5.5</version>
+                        <version>${asciidoctor.version}</version>
                     </dependency>
                     <dependency>
                         <groupId>org.asciidoctor</groupId>
                         <artifactId>asciidoctorj-pdf</artifactId>
-                        <version>1.5.0-alpha.11</version>
+                        <version>${asciidoctorj.pdf.version}</version>
                     </dependency>
                 </dependencies>
                 <executions>
@@ -161,7 +162,7 @@
                                 <icons>font</icons>
                                 <docinfo>true</docinfo>
                                 <experimental>true</experimental>
-                                <infinispanversion>${infinispan.version}</infinispanversion>
+                                <infinispanversion>${infinispan.base.version}</infinispanversion>
                                 <infinispanslot>ispn-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</infinispanslot>
                                 <defaults>${defaults.file}</defaults>
                                 <javadocroot>${javadoc.root}</javadocroot>
@@ -172,96 +173,126 @@
                             </attributes>
                         </configuration>
                     </execution>
-                    <execution>
-                        <id>pdf</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>process-asciidoc</goal>
-                        </goals>
-                        <configuration>
-                            <backend>pdf</backend>
-                            <doctype>book</doctype>
-                            <outputDirectory>${project.build.directory}/generated-pdf</outputDirectory>
-                            <imagesDir>.</imagesDir>
-                            <preserveDirectories>false</preserveDirectories>
-                            <relativeBaseDir>true</relativeBaseDir>
-                            <sourceDocumentExtensions>
-                                <sourceDocumentExtension>asciidoc</sourceDocumentExtension>
-                            </sourceDocumentExtensions>
-                            <sourceHighlighter>coderay</sourceHighlighter>
-                            <attributes>
-                                <idprefix />
-                                <sectanchors>true</sectanchors>
-                                <toclevels>3</toclevels>
-                                <numbered>true</numbered>
-                                <icons>font</icons>
-                                <docinfo>true</docinfo>
-                                <experimental>true</experimental>
-                                <infinispanversion>${infinispan.version}</infinispanversion>
-                                <defaults>${defaults.file}</defaults>
-                                <infinispanslot>ispn-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</infinispanslot>
-                                <javadocroot>${javadoc.root}</javadocroot>
-                                <configdocroot>${configdoc.root}</configdocroot>
-                                <wildflydocroot>${wildfly.docroot}</wildflydocroot>
-                                <jdkdocroot>${jdk.docroot}</jdkdocroot>
-                                <javaeedocroot>${javaee.docroot}</javaeedocroot>
-                            </attributes>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>optimize-pdf</id>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <target>
-                                <ant antfile="optimize-pdf.xml" inheritRefs="true">
-                                    <target name="optimize-pdf" />
-                                </ant>
-                            </target>
-                        </configuration>
-                    </execution>
-                </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.codehaus.groovy</groupId>
-                        <artifactId>groovy-all</artifactId>
-                        <version>${version.groovy}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>assemble-html</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <configuration>
-                            <descriptors>
-                                <descriptor>src/main/assemblies/html.xml</descriptor>
-                                <descriptor>src/main/assemblies/pdf.xml</descriptor>
-                            </descriptors>
-                            <attach>true</attach>
-                            <recompressZippedFiles>true</recompressZippedFiles>
-                            <finalName>${project.artifactId}-${project.version}</finalName>
-                            <appendAssemblyId>true</appendAssemblyId>
-                            <outputDirectory>${project.build.directory}</outputDirectory>
-                            <workDirectory>${project.build.directory}/assembly/work</workDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>distribution</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.asciidoctor</groupId>
+                        <artifactId>asciidoctor-maven-plugin</artifactId>
+                        <version>${asciidoctor.version}</version>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.asciidoctor</groupId>
+                                <artifactId>asciidoctorj</artifactId>
+                                <version>${asciidoctor.version}</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>org.asciidoctor</groupId>
+                                <artifactId>asciidoctorj-pdf</artifactId>
+                                <version>${asciidoctorj.pdf.version}</version>
+                            </dependency>
+                        </dependencies>
+                        <executions>
+                            <execution>
+                                <id>pdf</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>process-asciidoc</goal>
+                                </goals>
+                                <configuration>
+                                    <backend>pdf</backend>
+                                    <doctype>book</doctype>
+                                    <outputDirectory>${project.build.directory}/generated-pdf</outputDirectory>
+                                    <imagesDir>.</imagesDir>
+                                    <preserveDirectories>false</preserveDirectories>
+                                    <relativeBaseDir>true</relativeBaseDir>
+                                    <sourceDocumentExtensions>
+                                        <sourceDocumentExtension>asciidoc</sourceDocumentExtension>
+                                    </sourceDocumentExtensions>
+                                    <sourceHighlighter>coderay</sourceHighlighter>
+                                    <attributes>
+                                        <idprefix />
+                                        <sectanchors>true</sectanchors>
+                                        <toclevels>3</toclevels>
+                                        <numbered>true</numbered>
+                                        <icons>font</icons>
+                                        <docinfo>true</docinfo>
+                                        <experimental>true</experimental>
+                                        <infinispanversion>${infinispan.base.version}</infinispanversion>
+                                        <defaults>${defaults.file}</defaults>
+                                        <infinispanslot>ispn-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</infinispanslot>
+                                        <javadocroot>${javadoc.root}</javadocroot>
+                                        <configdocroot>${configdoc.root}</configdocroot>
+                                        <wildflydocroot>${wildfly.docroot}</wildflydocroot>
+                                        <jdkdocroot>${jdk.docroot}</jdkdocroot>
+                                        <javaeedocroot>${javaee.docroot}</javaeedocroot>
+                                    </attributes>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>optimize-pdf</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <target>
+                                        <ant antfile="optimize-pdf.xml" inheritRefs="true">
+                                            <target name="optimize-pdf" />
+                                        </ant>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.codehaus.groovy</groupId>
+                                <artifactId>groovy-all</artifactId>
+                                <version>${version.groovy}</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>assemble-html</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>src/main/assemblies/html.xml</descriptor>
+                                        <descriptor>src/main/assemblies/pdf.xml</descriptor>
+                                    </descriptors>
+                                    <attach>true</attach>
+                                    <recompressZippedFiles>true</recompressZippedFiles>
+                                    <finalName>${project.artifactId}-${project.version}</finalName>
+                                    <appendAssemblyId>true</appendAssemblyId>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                    <workDirectory>${project.build.directory}/assembly/work</workDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
