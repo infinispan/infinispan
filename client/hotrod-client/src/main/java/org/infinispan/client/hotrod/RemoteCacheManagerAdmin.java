@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod;
 import java.util.EnumSet;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.BasicConfiguration;
 
@@ -38,7 +37,7 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     * @throws HotRodClientException
     */
    @Override
-   <K, V> BasicCache<K, V> createCache(String name, BasicConfiguration configuration) throws HotRodClientException;
+   <K, V> RemoteCache<K, V> createCache(String name, BasicConfiguration configuration) throws HotRodClientException;
 
    /**
     * Retrieves a an existing cache on the remote server cluster. If it doesn't exist, it will be created using the
@@ -65,7 +64,7 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     * @throws HotRodClientException
     */
    @Override
-   <K, V> BasicCache<K, V> getOrCreateCache(String name, BasicConfiguration configuration) throws HotRodClientException;
+   <K, V> RemoteCache<K, V> getOrCreateCache(String name, BasicConfiguration configuration) throws HotRodClientException;
 
    /**
     * Creates a cache on the remote server cluster using the specified template and flags.

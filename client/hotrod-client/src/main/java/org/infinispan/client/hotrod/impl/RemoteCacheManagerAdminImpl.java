@@ -15,7 +15,6 @@ import org.infinispan.client.hotrod.RemoteCacheManagerAdmin;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.configuration.BasicConfiguration;
 
 /**
@@ -50,7 +49,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    }
 
    @Override
-   public <K, V> BasicCache<K, V> createCache(String name, BasicConfiguration configuration) throws HotRodClientException {
+   public <K, V> RemoteCache<K, V> createCache(String name, BasicConfiguration configuration) throws HotRodClientException {
       Map<String, byte[]> params = new HashMap<>(2);
       params.put(CACHE_NAME, string(name));
       if (configuration != null) params.put(CACHE_CONFIGURATION, string(configuration.toXMLString()));
@@ -70,7 +69,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    }
 
    @Override
-   public <K, V> BasicCache<K, V> getOrCreateCache(String name, BasicConfiguration configuration) throws HotRodClientException {
+   public <K, V> RemoteCache<K, V> getOrCreateCache(String name, BasicConfiguration configuration) throws HotRodClientException {
       Map<String, byte[]> params = new HashMap<>(2);
       params.put(CACHE_NAME, string(name));
       if (configuration != null) params.put(CACHE_CONFIGURATION, string(configuration.toXMLString()));
