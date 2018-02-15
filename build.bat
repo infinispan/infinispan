@@ -16,7 +16,7 @@ GOTO :EOF
 
 :RUN_MVN
 SET GOAL=%1
-IF "%GOAL%"=="" SET GOAL=install
+IF "%GOAL%"=="" SET GOAL="clean install"
 
 echo Running %M2_HOME%\bin\mvn.bat -s maven-settings.xml %GOAL% %2 %3 %4 %5 %6 %7 %8 %9
 
