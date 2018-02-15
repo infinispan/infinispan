@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.counter.impl.HotRodCounterEvent;
-import org.infinispan.client.hotrod.event.ClientEvent;
+import org.infinispan.client.hotrod.event.impl.AbstractClientEvent;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
@@ -23,7 +23,6 @@ import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.util.Either;
 
 import io.netty.buffer.ByteBuf;
 
@@ -116,8 +115,14 @@ public class Codec10 implements Codec {
    }
 
    @Override
-   public short readHeader(ByteBuf buf, HeaderParams params, ChannelFactory channelFactory, SocketAddress serverAddress) {
+   public short readOpCode(ByteBuf buf) {
       short receivedOpCode = buf.readUnsignedByte();
+      if (trace) getLog().tracef("Received operation code is: %#04x", receivedOpCode);
+      return receivedOpCode;
+   }
+
+   @Override
+   public short readHeader(ByteBuf buf, double receivedOpCode, HeaderParams params, ChannelFactory channelFactory, SocketAddress serverAddress) {
       // Read both the status and new topology (if present),
       // before deciding how to react to error situations.
       short status = buf.readUnsignedByte();
@@ -134,23 +139,18 @@ public class Codec10 implements Codec {
                "Invalid response operation. Expected %#x and received %#x",
                params.opRespCode, receivedOpCode));
       }
-      if (trace) getLog().tracef("Received operation code is: %#04x", receivedOpCode);
+
 
       return status;
    }
 
    @Override
-   public ClientEvent readEvent(ByteBuf buf, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist, SocketAddress serverAddress) {
+   public AbstractClientEvent readCacheEvent(ByteBuf buf, Marshaller marshaller, short eventTypeId, List<String> whitelist, SocketAddress serverAddress) {
       return null;  // No events sent in Hot Rod 1.x protocol
    }
 
    @Override
-   public Either<Short, ClientEvent> readHeaderOrEvent(ByteBuf buf, HeaderParams params, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist, ChannelFactory channelFactory, SocketAddress serverAddress) {
-      return null;  // No events sent in Hot Rod 1.x protocol
-   }
-
-   @Override
-   public HotRodCounterEvent readCounterEvent(ByteBuf buf, byte[] listenerId) {
+   public HotRodCounterEvent readCounterEvent(ByteBuf buf) {
       return null;  // No events sent in Hot Rod 1.x protocol
    }
 

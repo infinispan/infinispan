@@ -1,26 +1,24 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.event.impl.ClientEventDispatcher;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.client.hotrod.impl.transport.netty.HeaderOrEventDecoder;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.commons.util.Util;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -28,24 +26,16 @@ import io.netty.channel.Channel;
 /**
  * @author Galder Zamarreño
  */
-public class AddClientListenerOperation extends RetryOnFailureOperation<Short> implements Consumer<ClientEvent> {
+public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
 
    private static final Log log = LogFactory.getLog(AddClientListenerOperation.class, Log.class);
 
    public final byte[] listenerId;
-   private final String cacheNameString;
-
-   /**
-    * Decicated transport instance for adding client listener. This transport
-    * is used to send events back to client and it's only released when the
-    * client listener is removed.
-    */
-   private Channel dedicatedChannel;
-
-   private final ClientListenerNotifier listenerNotifier;
    public final Object listener;
-   public final byte[][] filterFactoryParams;
-   public final byte[][] converterFactoryParams;
+   private final String cacheNameString;
+   private final ClientListenerNotifier listenerNotifier;
+   private final byte[][] filterFactoryParams;
+   private final byte[][] converterFactoryParams;
 
    protected AddClientListenerOperation(Codec codec, ChannelFactory channelFactory,
                                         String cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
@@ -55,10 +45,10 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> i
             listenerNotifier, listener, filterFactoryParams, converterFactoryParams);
    }
 
-   protected AddClientListenerOperation(Codec codec, ChannelFactory channelFactory,
-                                        String cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
-                                        byte[] listenerId, ClientListenerNotifier listenerNotifier, Object listener,
-                                        byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
+   private AddClientListenerOperation(Codec codec, ChannelFactory channelFactory,
+                                      String cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
+                                      byte[] listenerId, ClientListenerNotifier listenerNotifier, Object listener,
+                                      byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
       super(ADD_CLIENT_LISTENER_REQUEST, ADD_CLIENT_LISTENER_RESPONSE, codec, channelFactory, RemoteCacheManager.cacheNameBytes(cacheName), topologyId, flags, cfg);
       this.listenerId = listenerId;
       this.listenerNotifier = listenerNotifier;
@@ -93,34 +83,22 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> i
       return cacheNameString;
    }
 
-   public Channel getDedicatedChannel() {
-      return dedicatedChannel;
-   }
-
    @Override
    protected void executeOperation(Channel channel) {
-      // wait until all scheduled operations complete since we'll be using the channel exclusively
-      CompletableFuture<Void> allCompleteFuture = channel.pipeline().get(HeaderDecoder.class).allCompleteFuture();
-      if (allCompleteFuture.isDone()) {
-         execute(channel);
-      } else {
-         allCompleteFuture.whenComplete((nil, throwable) -> execute(channel));
-      }
-   }
-
-   private void execute(Channel channel) {
+      // Note: since the HeaderDecoder now supports decoding both operations and events we don't have to
+      // wait until all operations complete; the server will deliver responses and we'll just handle them regardless
+      // of the order
       if (!channel.isActive()) {
          channelInactive(channel);
          return;
       }
       ClientListener clientListener = extractClientListener();
 
-      channel.pipeline().replace(HeaderDecoder.class, HeaderDecoder.NAME,
-            new HeaderOrEventDecoder(codec, header, channelFactory, this, this, listenerId, cfg));
-      scheduleTimeout(channel.eventLoop());
+      channel.pipeline().get(HeaderDecoder.class).registerOperation(channel, this);
 
-      dedicatedChannel = channel;
-      listenerNotifier.addDispatcher(ClientEventDispatcher.create(this, listenerNotifier));
+      listenerNotifier.addDispatcher(ClientEventDispatcher.create(this,
+            ChannelRecord.of(channel).getUnresolvedAddress(),
+            () -> cleanup(channel)));
 
       ByteBuf buf = channel.alloc().buffer();
 
@@ -131,14 +109,31 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> i
       channel.writeAndFlush(buf);
    }
 
+   private void cleanup(Channel channel) {
+      channel.eventLoop().execute(() -> {
+         if (!codec.allowOperationsAndEvents()) {
+            if (channel.isOpen()) {
+               channelFactory.releaseChannel(channel);
+            }
+         }
+         HeaderDecoder decoder = channel.pipeline().get(HeaderDecoder.class);
+         if (decoder != null) {
+            decoder.removeListener(listenerId);
+         }
+      });
+   }
+
    @Override
    public void releaseChannel(Channel channel) {
-      // Do not release the channel
+      if (codec.allowOperationsAndEvents()) {
+         super.releaseChannel(channel);
+      }
    }
 
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isSuccess(status)) {
+         decoder.addListener(listenerId);
          listenerNotifier.startClientListener(listenerId);
       } else {
          // this releases the channel
@@ -149,12 +144,22 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> i
    }
 
    @Override
-   public void accept(ClientEvent clientEvent) {
-      listenerNotifier.invokeEvent(listenerId, clientEvent);
+   public boolean completeExceptionally(Throwable ex) {
+      if (!isDone()) {
+         listenerNotifier.removeClientListener(listenerId);
+      }
+      return super.completeExceptionally(ex);
    }
 
    public void postponeTimeout(Channel channel) {
+      assert !isDone();
       timeoutFuture.cancel(false);
+      timeoutFuture = null;
       scheduleTimeout(channel.eventLoop());
+   }
+
+   @Override
+   protected void addParams(StringBuilder sb) {
+      sb.append("listenerId=").append(Util.printArray(listenerId));
    }
 }

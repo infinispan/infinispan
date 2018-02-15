@@ -42,6 +42,7 @@ public class BulkGetKeysOperation<K> extends RetryOnFailureOperation<Set<K>> {
 
    @Override
    protected void reset() {
+      super.reset();
       result.clear();
    }
 

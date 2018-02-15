@@ -168,7 +168,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
 
    @Override
    public Set<String> getCacheNames() {
-      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, codec, configuration);
+      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, codec, configuration, listenerNotifier);
       String names = await(operationsFactory.newAdminOperation("@@cache@names", Collections.emptyMap()).execute());
       Set<String> cacheNames = new HashSet<>();
       // Simple pattern that matches the result which is represented as a JSON string array, e.g. ["cache1","cache2"]
@@ -235,7 +235,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
       }
       ExecutorService asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
       channelFactory.start(codec, configuration, defaultCacheTopologyId, marshaller, asyncExecutorService,
-            Collections.singletonList(listenerNotifier::failoverListeners));
+            listenerNotifier, Collections.singletonList(listenerNotifier::failoverListeners));
       counterManager.start(channelFactory, codec, configuration, listenerNotifier);
 
       synchronized (cacheName2RemoteCache) {
@@ -368,7 +368,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    }
 
    public RemoteCacheManagerAdmin administration() {
-      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, codec, configuration);
+      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, codec, configuration, listenerNotifier);
       return new RemoteCacheManagerAdminImpl(this, operationsFactory, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
             name -> {
                synchronized (cacheName2RemoteCache) {

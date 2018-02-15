@@ -34,6 +34,7 @@ import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ServerConfiguration;
+import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.TopologyInfo;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
@@ -94,7 +95,7 @@ public class ChannelFactory {
 
    public void start(Codec codec, Configuration configuration, AtomicInteger defaultCacheTopologyId,
                      Marshaller marshaller, ExecutorService executorService,
-                     Collection<Consumer<Set<SocketAddress>>> failedServerNotifier) {
+                     ClientListenerNotifier listenerNotifier, Collection<Consumer<Set<SocketAddress>>> failedServerNotifier) {
       lock.writeLock().lock();
       try {
          this.marshaller = marshaller;
@@ -127,7 +128,7 @@ public class ChannelFactory {
          }
          currentClusterName = DEFAULT_CLUSTER_NAME;
          topologyInfo = new TopologyInfo(defaultCacheTopologyId, Collections.unmodifiableCollection(servers), configuration);
-         operationsFactory = new OperationsFactory(this, codec, configuration);
+         operationsFactory = new OperationsFactory(this, codec, configuration, listenerNotifier);
          maxRetries = configuration.maxRetries();
 
          if (log.isDebugEnabled()) {
@@ -574,6 +575,10 @@ public class ChannelFactory {
 
    public int getNumIdle() {
       return channelPoolMap.values().stream().mapToInt(ChannelPool::getIdle).sum();
+   }
+
+   public Configuration getConfiguration() {
+      return configuration;
    }
 
    public enum ClusterSwitchStatus {

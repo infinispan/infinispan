@@ -150,6 +150,7 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
    }
 
    public void scheduleTimeout(EventLoop eventLoop) {
+      assert timeoutFuture == null;
       this.timeoutFuture = eventLoop.schedule(this, channelFactory.socketTimeout(), TimeUnit.MILLISECONDS);
    }
 

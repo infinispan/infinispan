@@ -27,7 +27,7 @@ public class RemoveListenerOperation extends BaseCounterOperation<Boolean> {
 
    public RemoveListenerOperation(Codec codec, ChannelFactory transportFactory, AtomicInteger topologyId,
                                   Configuration cfg, String counterName, byte[] listenerId, SocketAddress server) {
-      super(COUNTER_ADD_LISTENER_REQUEST, COUNTER_ADD_LISTENER_RESPONSE, codec, transportFactory, topologyId, cfg, counterName);
+      super(COUNTER_REMOVE_LISTENER_REQUEST, COUNTER_REMOVE_LISTENER_RESPONSE, codec, transportFactory, topologyId, cfg, counterName);
       this.listenerId = listenerId;
       this.server = server;
    }
@@ -43,6 +43,9 @@ public class RemoveListenerOperation extends BaseCounterOperation<Boolean> {
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       checkStatus(status);
+      if (status == NO_ERROR_STATUS) {
+         decoder.removeListener(listenerId);
+      }
       complete(status == NO_ERROR_STATUS);
    }
 

@@ -46,6 +46,7 @@ public class GetKeyMultimapOperation<V> extends AbstractKeyOperation<Collection<
 
    @Override
    protected void reset() {
+      super.reset();
       result = null;
    }
 

@@ -8,6 +8,7 @@ import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -22,8 +23,6 @@ import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.server.hotrod.counter.impl.BaseCounterImplTest;
 import org.infinispan.test.ExceptionRunnable;
 import org.testng.annotations.Test;
-
-import io.netty.channel.Channel;
 
 /**
  * A base test class for {@link org.infinispan.counter.api.StrongCounter} and {@link
@@ -160,8 +159,8 @@ public abstract class BaseCounterAPITest<T> extends AbstractCounterTest {
    private InetSocketAddress findEventServer() {
       Object notificationManager = extractField(RemoteCounterManager.class, counterManager(), "notificationManager");
       Object dispatcher = extractField(NotificationManager.class, notificationManager, "dispatcher");
-      Channel channel = extractField(dispatcher, "channel");
-      return (InetSocketAddress) channel.remoteAddress();
+      SocketAddress address = extractField(dispatcher, "address");
+      return (InetSocketAddress) address;
    }
 
    private void awaitFuture(Future<?> future) {
