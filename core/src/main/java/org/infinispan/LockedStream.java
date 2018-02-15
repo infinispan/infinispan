@@ -3,6 +3,7 @@ package org.infinispan;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -136,18 +137,54 @@ public interface LockedStream<K, V> extends BaseCacheStream<CacheEntry<K, V>, Lo
    }
 
    /**
+    * {@inheritDoc}
+    */
+   @Override
+   LockedStream<K, V> sequentialDistribution();
+
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   LockedStream<K, V> parallelDistribution();
+
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   LockedStream<K, V> filterKeySegments(Set<Integer> segments);
+
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   LockedStream<K, V> filterKeys(Set<?> keys);
+
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   LockedStream<K, V> distributedBatchSize(int batchSize);
+
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   LockedStream<K, V> disableRehashAware();
+
+   /**
     * Sets the timeout for the acquisition of the lock for each entry.
     * @param time the maximum time to wait
     * @param unit the time unit of the timeout argument
     * @return a LockedStream with the timeout applied
     */
-   LockedStream timeout(long time, TimeUnit unit);
+   LockedStream<K, V> timeout(long time, TimeUnit unit);
 
    /**
     * This method is not supported when using a {@link LockedStream}
     */
    @Override
-   LockedStream segmentCompletionListener(SegmentCompletionListener listener) throws UnsupportedOperationException;
+   LockedStream<K, V> segmentCompletionListener(SegmentCompletionListener listener) throws UnsupportedOperationException;
 
    /**
     * This method is not supported when using a {@link LockedStream}

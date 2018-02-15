@@ -16,7 +16,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import org.infinispan.BaseCacheStream;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
@@ -113,27 +112,27 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
    }
 
    @Override
-   public BaseCacheStream sequentialDistribution() {
+   public LockedStream<K, V> sequentialDistribution() {
       return newOrReuse(realStream.sequentialDistribution());
    }
 
    @Override
-   public BaseCacheStream parallelDistribution() {
+   public LockedStream<K, V> parallelDistribution() {
       return newOrReuse(realStream.parallelDistribution());
    }
 
    @Override
-   public BaseCacheStream filterKeySegments(Set<Integer> segments) {
+   public LockedStream<K, V> filterKeySegments(Set<Integer> segments) {
       return newOrReuse(realStream.filterKeySegments(segments));
    }
 
    @Override
-   public BaseCacheStream filterKeys(Set<?> keys) {
+   public LockedStream<K, V> filterKeys(Set<?> keys) {
       return newOrReuse(realStream.filterKeys(keys));
    }
 
    @Override
-   public BaseCacheStream distributedBatchSize(int batchSize) {
+   public LockedStream<K, V> distributedBatchSize(int batchSize) {
       return newOrReuse(realStream.distributedBatchSize(batchSize));
    }
 
@@ -143,7 +142,7 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
    }
 
    @Override
-   public BaseCacheStream disableRehashAware() {
+   public LockedStream<K, V> disableRehashAware() {
       return newOrReuse(realStream.disableRehashAware());
    }
 
