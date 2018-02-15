@@ -52,9 +52,9 @@ public class AddListenerOperation extends BaseCounterOperation<Boolean> {
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       checkStatus(status);
       if (status != NO_ERROR_STATUS) {
-         this.channel = null;
          complete(false);
       } else {
+         decoder.addListener(listenerId);
          complete(true);
       }
    }
@@ -70,9 +70,27 @@ public class AddListenerOperation extends BaseCounterOperation<Boolean> {
 
    @Override
    public void releaseChannel(Channel channel) {
-      if (this.channel != channel) {
+      if (codec.allowOperationsAndEvents()) {
          //we aren't using this channel. we can release it
          super.releaseChannel(channel);
       }
+   }
+
+   public void cleanup() {
+      // To prevent releasing concurrently from the channel and closing it
+      channel.eventLoop().execute(() -> {
+         if (trace) {
+            log.tracef("Cleanup for %s on %s", this, channel);
+         }
+         if (!codec.allowOperationsAndEvents()) {
+            if (channel.isOpen()) {
+               super.releaseChannel(channel);
+            }
+         }
+         HeaderDecoder decoder = channel.pipeline().get(HeaderDecoder.class);
+         if (decoder != null) {
+            decoder.removeListener(listenerId);
+         }
+      });
    }
 }

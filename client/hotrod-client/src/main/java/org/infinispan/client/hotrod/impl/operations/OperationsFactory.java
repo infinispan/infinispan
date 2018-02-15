@@ -60,8 +60,8 @@ public class OperationsFactory implements HotRodConstants {
       this.cfg = cfg;
    }
 
-   public OperationsFactory(ChannelFactory channelFactory, Codec codec, Configuration cfg) {
-      this(channelFactory, null, false, codec, null, cfg);
+   public OperationsFactory(ChannelFactory channelFactory, Codec codec, Configuration cfg, ClientListenerNotifier listenerNotifier) {
+      this(channelFactory, null, false, codec, listenerNotifier, cfg);
    }
 
    public ClientListenerNotifier getListenerNotifier() {

@@ -10,13 +10,12 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.counter.impl.HotRodCounterEvent;
-import org.infinispan.client.hotrod.event.ClientEvent;
+import org.infinispan.client.hotrod.event.impl.AbstractClientEvent;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.Either;
 
 import io.netty.buffer.ByteBuf;
 
@@ -51,15 +50,15 @@ public interface Codec {
 
    long readMessageId(ByteBuf buf);
 
+   short readOpCode(ByteBuf buf);
+
    /**
     * Reads a response header from the transport and returns the status
     * of the response.
     */
-   short readHeader(ByteBuf buf, HeaderParams params, ChannelFactory channelFactory, SocketAddress serverAddress);
+   short readHeader(ByteBuf buf, double receivedOpCode, HeaderParams params, ChannelFactory channelFactory, SocketAddress serverAddress);
 
-   ClientEvent readEvent(ByteBuf buf, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist, SocketAddress serverAddress);
-
-   Either<Short, ClientEvent> readHeaderOrEvent(ByteBuf buf, HeaderParams params, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist, ChannelFactory channelFactory, SocketAddress serverAddress);
+   AbstractClientEvent readCacheEvent(ByteBuf buf, Marshaller marshaller, short eventTypeId, List<String> whitelist, SocketAddress serverAddress);
 
    Object returnPossiblePrevValue(ByteBuf buf, short status, int flags, List<String> whitelist, Marshaller marshaller);
 
@@ -78,7 +77,14 @@ public interface Codec {
    /**
     * Reads a {@link HotRodCounterEvent} with the {@code listener-id}.
     */
-   HotRodCounterEvent readCounterEvent(ByteBuf buf, byte[] listenerId);
+   HotRodCounterEvent readCounterEvent(ByteBuf buf);
+
+   /**
+    * @return True if we can send operations after registering a listener on given channel
+    */
+   default boolean allowOperationsAndEvents() {
+      return false;
+   }
 
    /**
     * Iteration read for projection size

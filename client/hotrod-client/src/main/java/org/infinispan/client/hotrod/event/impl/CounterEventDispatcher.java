@@ -9,19 +9,15 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.infinispan.client.hotrod.counter.impl.HotRodCounterEvent;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 
 public class CounterEventDispatcher extends EventDispatcher<HotRodCounterEvent> {
    private final ConcurrentMap<String, List<Consumer<HotRodCounterEvent>>> clientListeners;
    private final Supplier<CompletableFuture<Short>> failover;
 
-   public CounterEventDispatcher(ClientListenerNotifier notifier, byte[] listenerId,
+   public CounterEventDispatcher(byte[] listenerId,
                                  ConcurrentMap<String, List<Consumer<HotRodCounterEvent>>> clientListeners,
-                                 Channel channel, Supplier<CompletableFuture<Short>> failover) {
-      super(notifier, "", null, listenerId, channel);
+                                 SocketAddress address, Supplier<CompletableFuture<Short>> failover, Runnable cleanup) {
+      super("", null, listenerId, address, cleanup);
       this.clientListeners = clientListeners;
       this.failover = failover;
    }
@@ -32,11 +28,6 @@ public class CounterEventDispatcher extends EventDispatcher<HotRodCounterEvent> 
    }
 
    @Override
-   protected HotRodCounterEvent readEvent(ByteBuf buf) {
-      return notifier.codec().readCounterEvent(buf, listenerId);
-   }
-
-   @Override
    protected void invokeEvent(HotRodCounterEvent event) {
       if (trace) {
          log.tracef("Received counter event %s", event);
@@ -44,14 +35,5 @@ public class CounterEventDispatcher extends EventDispatcher<HotRodCounterEvent> 
       clientListeners.getOrDefault(event.getCounterName(), Collections.emptyList())
             .parallelStream()
             .forEach(handle -> handle.accept(event));
-   }
-
-
-   public SocketAddress address() {
-      return ChannelRecord.of(channel).getUnresolvedAddress();
-   }
-
-   public void close() {
-      channel.close();
    }
 }

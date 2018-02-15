@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.event.impl;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -27,8 +28,6 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.Util;
 
-import io.netty.buffer.ByteBuf;
-
 public class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
    private static final Map<Class<? extends Annotation>, Class<?>[]> allowedListeners = new HashMap<>(4);
 
@@ -43,15 +42,15 @@ public class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
    final Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables;
    final AddClientListenerOperation op;
 
-   ClientEventDispatcher(ClientListenerNotifier notifier, AddClientListenerOperation op, Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables, String cacheName) {
-      super(notifier, cacheName, op.listener, op.listenerId, op.getDedicatedChannel());
+   ClientEventDispatcher(AddClientListenerOperation op, SocketAddress address, Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables, String cacheName, Runnable cleanup) {
+      super(cacheName, op.listener, op.listenerId, address, cleanup);
       this.op = op;
       this.invocables = invocables;
    }
 
-   public static ClientEventDispatcher create(AddClientListenerOperation op, ClientListenerNotifier notifier) {
+   public static ClientEventDispatcher create(AddClientListenerOperation op, SocketAddress address, Runnable cleanup) {
       Map<Class<? extends Annotation>, List<ClientEventDispatcher.ClientListenerInvocation>> invocables = findMethods(op.listener);
-      return new ClientEventDispatcher(notifier, op, invocables, op.getCacheName());
+      return new ClientEventDispatcher(op, address, invocables, op.getCacheName(), cleanup);
    }
 
    public static Map<Class<? extends Annotation>, List<ClientEventDispatcher.ClientListenerInvocation>> findMethods(Object listener) {
@@ -87,11 +86,6 @@ public class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
          throw log.incorrectClientListener(annotationName, Arrays.asList(allowedParameters));
       if (!m.getReturnType().equals(void.class))
          throw log.incorrectClientListener(annotationName);
-   }
-
-   @Override
-   protected ClientEvent readEvent(ByteBuf in) {
-      return notifier.codec().readEvent(in, listenerId, notifier.marshaller(), notifier.whitelist(), channel.remoteAddress());
    }
 
    @Override

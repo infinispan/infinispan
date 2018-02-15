@@ -70,7 +70,11 @@ public class RemoveClientListenerOperation extends HotRodOperation<Void> impleme
 
    @Override
    public CompletableFuture<Void> execute() {
-      fetchChannelAndInvoke();
+      try {
+         fetchChannelAndInvoke();
+      } catch (Exception e) {
+         completeExceptionally(e);
+      }
       return this;
    }
 }

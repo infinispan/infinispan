@@ -14,6 +14,7 @@ the custom TCP client/server Hot Rod protocol.
 * link:#hot_rod_protocol_2_5[Hot Rod Protocol 2.5]
 * link:#hot_rod_protocol_2_6[Hot Rod Protocol 2.6]
 * link:#hot_rod_protocol_2_7[Hot Rod Protocol 2.7]
+* link:#hot_rod_protocol_2_8[Hot Rod Protocol 2.8]
 
 ==== Hot Rod Protocol 1.0
 
@@ -2744,3 +2745,26 @@ Returns the cache names as a JSON array of strings, e.g. ["cache1", "cache2"]
 | name  | The name of the cache to reindex. | Yes
 | flags | See the flags table above. |No, all flags will be ignored
 |==============================================================================
+
+==== Hot Rod Protocol 2.8
+
+.Infinispan versions
+TIP: This version of the protocol is implemented since Infinispan 9.3
+
+The protocol allows clients to send requests on the same connection that was previously used for Add Client Listener
+operation, and in protocol < 2.8 is reserved for sending events to the client. This includes registering additional
+listeners, therefore receiving events for multiple listeners.
+
+The binary format of requests/responses/events does not change but the previously meaningless `messageId` in events
+must be set to:
+
+* `messageId` of the Add Client Listener operation for the include-current-state events
+* `0` for the events sent after the Add Client Listener operation has been finished (response sent).
+
+The same holds for counter events: client can send further requests after Counter Add Listener.
+Previously meaningless `messageId` in counter event is always set to `0`.
+
+These modifications of the protocol do not require any changes on the client side (as the client simply
+won't send additional operations if it does not support that; the changes are more permissive to the clients)
+but the server has to handle load on the connection correctly.
+

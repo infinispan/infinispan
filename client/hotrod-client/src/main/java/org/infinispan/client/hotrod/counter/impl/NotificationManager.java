@@ -79,7 +79,7 @@ public class NotificationManager {
          AddListenerOperation op = factory.newAddListenerOperation(counterName, listenerId, address);
          if (await(op.execute())) {
             if (address == null) {
-               this.dispatcher = new CounterEventDispatcher(notifier, listenerId, clientListeners, op.getChannel(), this::failover);
+               this.dispatcher = new CounterEventDispatcher(listenerId, clientListeners, op.getChannel().remoteAddress(), this::failover, op::cleanup);
                notifier.addDispatcher(dispatcher);
                notifier.startClientListener(listenerId);
             }
@@ -96,7 +96,6 @@ public class NotificationManager {
       clientListeners.compute(counterName, (name, list) -> {
          list.remove(handle);
          if (list.isEmpty()) {
-            CounterEventDispatcher dispatcher = this.dispatcher;
             if (dispatcher != null) {
                RemoveListenerOperation op = factory.newRemoveListenerOperation(counterName, listenerId, dispatcher.address());
                if (!await(op.execute())) {
@@ -131,8 +130,8 @@ public class NotificationManager {
                SocketAddress address;
                try {
                   if (useChannel) {
-                     log.debugf("Creating new counter event dispatcher on channel %s", op.getChannel());
-                     dispatcher = new CounterEventDispatcher(notifier, listenerId, clientListeners, op.getChannel(), this::failover);
+                     log.debugf("Creating new counter event dispatcher on %s", op.getChannel());
+                     dispatcher = new CounterEventDispatcher(listenerId, clientListeners, op.getChannel().remoteAddress(), this::failover, op::cleanup);
                      notifier.addDispatcher(dispatcher);
                      notifier.startClientListener(listenerId);
                   }
@@ -178,12 +177,11 @@ public class NotificationManager {
       log.debugf("Stopping %s (%s)", this, lock);
       lock.lock();
       try {
+         CompletableFuture[] futures = clientListeners.keySet().stream().map(counterName ->
+               factory.newRemoveListenerOperation(counterName, listenerId, dispatcher.address()).execute())
+               .toArray(CompletableFuture[]::new);
+         await(CompletableFuture.allOf(futures));
          clientListeners.clear();
-         // Rather than de-registering all the listeners we'll terminate the channel and let server deal with it
-         if (dispatcher != null) {
-            dispatcher.close();
-            dispatcher = null;
-         }
       } finally {
          lock.unlock();
       }

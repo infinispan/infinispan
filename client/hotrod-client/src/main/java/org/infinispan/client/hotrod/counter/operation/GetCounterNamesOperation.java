@@ -38,6 +38,7 @@ public class GetCounterNamesOperation extends BaseCounterOperation<Collection<St
 
    @Override
    protected void reset() {
+      super.reset();
       names = null;
    }
 

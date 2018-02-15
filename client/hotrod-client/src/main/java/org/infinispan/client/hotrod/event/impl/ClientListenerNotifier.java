@@ -15,8 +15,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
-import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
@@ -68,18 +66,21 @@ public class ClientListenerNotifier {
       List<WrappedByteArray> failoverListenerIds = new ArrayList<>();
       for (Map.Entry<WrappedByteArray, EventDispatcher<?>> entry : dispatchers.entrySet()) {
          EventDispatcher<?> dispatcher = entry.getValue();
-         if (failedServers.contains(ChannelRecord.of(dispatcher.channel).getUnresolvedAddress()))
+         if (failedServers.contains(dispatcher.address()))
             failoverListenerIds.add(entry.getKey());
       }
       if (trace && failoverListenerIds.isEmpty())
          log.tracef("No event listeners registered in failed servers: %s", failedServers);
 
       // Remove tracking listeners and read to the fallback transport
-      failoverListenerIds.forEach(this::failoverClientListener);
+      failoverListenerIds.forEach(wrapped -> failoverClientListener(wrapped.getBytes()));
    }
 
-   public void failoverClientListener(WrappedByteArray listenerId) {
+   public void failoverClientListener(byte[] listenerId) {
       EventDispatcher<?> dispatcher = removeClientListener(listenerId);
+      if (dispatcher == null) {
+         return;
+      }
       // Invoke failover event callback, if presents
       dispatcher.invokeFailoverEvent();
       // Re-execute adding client listener in one of the remaining nodes
@@ -95,12 +96,9 @@ public class ClientListenerNotifier {
                reconnectTask.setCancellationFuture(scheduledFuture);
             }
          } else {
-            // This is the old dispatcher
-            dispatcher.status = EventDispatcher.DispatcherStatus.STOPPED;
             if (trace) {
-               SocketAddress failedServerAddress = dispatcher.channel.remoteAddress();
                log.tracef("Fallback listener id %s from a failed server %s",
-                     Util.printArray(listenerId.getBytes()), failedServerAddress);
+                     Util.printArray(listenerId), dispatcher.address());
             }
          }
       });
@@ -108,13 +106,11 @@ public class ClientListenerNotifier {
 
    public void startClientListener(byte[] listenerId) {
       EventDispatcher eventDispatcher = dispatchers.get(new WrappedByteArray(listenerId));
-      if (EventDispatcher.statusUpdater.compareAndSet(eventDispatcher, EventDispatcher.DispatcherStatus.STOPPED, EventDispatcher.DispatcherStatus.RUNNING)) {
-         eventDispatcher.channel.pipeline().replace(HeaderDecoder.NAME, EventDispatcher.NAME, eventDispatcher);
-      }
+      eventDispatcher.start();
    }
 
-   public void removeClientListener(byte[] listenerId) {
-      removeClientListener(new WrappedByteArray(listenerId));
+   public EventDispatcher<?> removeClientListener(byte[] listenerId) {
+      return removeClientListener(new WrappedByteArray(listenerId));
    }
 
    private EventDispatcher<?> removeClientListener(WrappedByteArray listenerId) {
@@ -123,9 +119,8 @@ public class ClientListenerNotifier {
          if (trace) {
             log.tracef("Client listener %s not present (removed concurrently?)", Util.printArray(listenerId.getBytes()));
          }
-      } else if (EventDispatcher.statusUpdater.compareAndSet(dispatcher, EventDispatcher.DispatcherStatus.RUNNING, EventDispatcher.DispatcherStatus.STOPPED)) {
-         dispatcher.channel.pipeline().replace(dispatcher, HeaderDecoder.NAME, new HeaderDecoder(codec, channelFactory));
-         channelFactory.releaseChannel(dispatcher.channel);
+      } else {
+         dispatcher.stop();
       }
       if (trace)
          log.tracef("Remove client listener with id %s", Util.printArray(listenerId.getBytes()));
@@ -143,13 +138,13 @@ public class ClientListenerNotifier {
    public boolean isListenerConnected(byte[] listenerId) {
       EventDispatcher<?> dispatcher = dispatchers.get(new WrappedByteArray(listenerId));
       // If listener not present, is not active
-      return dispatcher != null && dispatcher.status == EventDispatcher.DispatcherStatus.RUNNING;
+      return dispatcher != null && dispatcher.isRunning();
    }
 
    public SocketAddress findAddress(byte[] listenerId) {
       EventDispatcher<?> dispatcher = dispatchers.get(new WrappedByteArray(listenerId));
       if (dispatcher != null)
-         return ChannelRecord.of(dispatcher.channel).getUnresolvedAddress();
+         return dispatcher.address();
 
       return null;
    }
@@ -175,6 +170,9 @@ public class ClientListenerNotifier {
 
    public <T> void invokeEvent(byte[] listenerId, T event) {
       EventDispatcher<T> eventDispatcher = (EventDispatcher<T>) dispatchers.get(new WrappedByteArray(listenerId));
+      if (eventDispatcher == null) {
+         throw log.unexpectedListenerId(Util.printArray(listenerId));
+      }
       eventDispatcher.invokeEvent(event);
    }
 

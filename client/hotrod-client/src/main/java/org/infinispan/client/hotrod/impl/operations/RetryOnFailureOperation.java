@@ -51,11 +51,16 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
    @Override
    public CompletableFuture<T> execute() {
       assert !isDone();
-      currentClusterName = channelFactory.getCurrentClusterName();
-      if (trace) {
-         log.tracef("Requesting channel for operation %s", this);
+      try {
+         currentClusterName = channelFactory.getCurrentClusterName();
+         if (trace) {
+            log.tracef("Requesting channel for operation %s", this);
+         }
+         fetchChannelAndInvoke(retryCount, failedServers);
+      } catch (Exception e) {
+         // if there's a bug before the operation is registered the operation wouldn't be completed
+         completeExceptionally(e);
       }
-      fetchChannelAndInvoke(retryCount, failedServers);
       return this;
    }
 
@@ -83,15 +88,25 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
    }
 
    private void retryIfNotDone() {
-      if (!isDone()) {
+      if (isDone()) {
+         if (trace) {
+            log.tracef("Not retrying as done (exceptionally=%s), retryCount=%d", this.isCompletedExceptionally(), retryCount);
+         }
+      } else {
          reset();
          currentClusterName = channelFactory.getCurrentClusterName();
          fetchChannelAndInvoke(retryCount, failedServers);
       }
    }
 
+   // hook for stateful operations
    protected void reset() {
-      // hook for stateful operations
+      // The exception may happen when we try to fetch the channel; at this time the operation
+      // is not registered yet and timeoutFuture is null
+      if (timeoutFuture != null) {
+         timeoutFuture.cancel(false);
+         timeoutFuture = null;
+      }
    }
 
    private Set<SocketAddress> updateFailedServers(SocketAddress address) {

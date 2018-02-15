@@ -42,6 +42,7 @@ public class BulkGetOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
 
    @Override
    protected void reset() {
+      super.reset();
       result.clear();
    }
 

@@ -37,6 +37,7 @@ public class StatsOperation extends RetryOnFailureOperation<Map<String, String>>
 
    @Override
    protected void reset() {
+      super.reset();
       result = null;
       numStats = -1;
    }

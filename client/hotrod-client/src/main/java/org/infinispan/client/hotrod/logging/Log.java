@@ -133,7 +133,7 @@ public interface Log extends BasicLogger {
    CacheConfigurationException invalidSaslMechanism(String saslMechanism);
 
    @Message(value = "Connection dedicated to listener with id=%s but received event for listener with id=%s", id = 4033)
-   IllegalStateException unexpectedListenerId(String listenerId, String expectedListenerId);
+   IllegalStateException unexpectedListenerId(String expectedListenerId, String receivedListenerId);
 
    @Message(value = "Unable to unmarshall bytes %s", id = 4034)
    HotRodClientException unableToUnmarshallBytes(String bytes, @Cause Exception e);
@@ -282,4 +282,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "This channel is about to be closed and does not accept any further operations.", id = 4078)
    HotRodClientException noMoreOperationsAllowed();
+
+   @Message(value = "Unexpected listenerId %s", id = 4078)
+   IllegalStateException unexpectedListenerId(String listenerId);
+
+   @Message(value = "Event should use messageId of previous Add Client Listener operation but id is %d and operation is %s", id = 4079)
+   IllegalStateException operationIsNotAddClientListener(long messageId, String operation);
 }
