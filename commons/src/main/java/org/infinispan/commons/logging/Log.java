@@ -6,6 +6,7 @@ import static org.jboss.logging.Logger.Level.WARN;
 import java.io.IOException;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -144,4 +145,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "end() failed for %s", id = 928)
    void xaResourceEndFailed(String xaResource, @Cause Throwable t);
+
+   @Message(value = "Class '%s' blocked by deserialization white list. Adjust the client configuration serialization white list regular expression to include this class.", id = 28023)
+   CacheException classNotInWhitelist(String className);
+
 }
