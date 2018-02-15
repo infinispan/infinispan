@@ -172,7 +172,7 @@
       <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
       <dir.jacoco.report>../jacoco/report/</dir.jacoco.report>
       <forkJvmArgs>-Xmx1G -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}</forkJvmArgs>
-      <infinispan.codename>Bastille</infinispan.codename>
+      <infinispan.codename>Gaina</infinispan.codename>
       <infinispan.base.version>9.2</infinispan.base.version>
       <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
       <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
