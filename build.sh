@@ -121,7 +121,7 @@ main() {
         esac
     done
     #  Default goal if none specified.
-    if [ -z "$MVN_GOAL" ]; then MVN_GOAL="install"; fi
+    if [ -z "$MVN_GOAL" ]; then MVN_GOAL="clean install"; fi
 
     MVN_GOAL="$MVN_GOAL $TESTS"
 
