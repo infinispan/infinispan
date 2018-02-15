@@ -12,7 +12,7 @@ public interface SessionAccess {
    long getTimestamp(Object session);
 
    static SessionAccess findSessionAccess() {
-      ServiceLoader<SessionAccess> loader = ServiceLoader.load(SessionAccess.class);
+      ServiceLoader<SessionAccess> loader = ServiceLoader.load(SessionAccess.class, SessionAccess.class.getClassLoader());
       return loader.iterator().next();
    }
 
