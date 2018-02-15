@@ -75,7 +75,7 @@ pipeline {
         always {
             // Archive logs and dump files
             sh 'find . \\( -name "*.log" -o -name "*.dump*" -o -name "hs_err_*" \\) -exec xz {} \\;'
-            archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.xz'
+            archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.xz,documentation/target/generated-html/**'
 
             // Clean
             sh 'git clean -fdx -e "*.hprof" || echo "git clean failed, exit code $?"'
