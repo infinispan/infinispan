@@ -1,5 +1,6 @@
 package org.infinispan.commons.util;
 
+import javax.annotation.Nonnull;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Arrays;
@@ -44,8 +45,7 @@ public abstract class ArrayMap<K, V> extends java.util.AbstractMap<K, V> {
    }
 
    @Override
-   public boolean containsValue(Object value) {
-      Objects.requireNonNull(value);
+   public boolean containsValue(@Nonnull Object value) {
       for (int i = 0; i < values.length; ++i) {
          Object v = values[i];
          if (v != null && v.equals(value)) return true;
