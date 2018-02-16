@@ -189,48 +189,9 @@
       </dependency>
 
       <dependency>
-         <groupId>org.hibernate</groupId>
-         <artifactId>hibernate-search-modules</artifactId>
-         <version>${version.hibernate.search}</version>
-         <classifier>wildfly-11-dist</classifier>
-         <type>zip</type>
-      </dependency>
-
-      <dependency>
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>jboss-marshalling-osgi</artifactId>
       </dependency>
-      <!-- Deps for the lucene module, will eventually be replaced by https://github.com/hibernate/lucene-modules -->
-      <dependency>
-         <groupId>org.apache.lucene</groupId>
-         <artifactId>lucene-queryparser</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.apache.lucene</groupId>
-         <artifactId>lucene-highlighter</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.apache.lucene</groupId>
-         <artifactId>lucene-grouping</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.apache.lucene</groupId>
-         <artifactId>lucene-facet</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.apache.lucene</groupId>
-         <artifactId>lucene-misc</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.apache.lucene</groupId>
-         <artifactId>lucene-backward-codecs</artifactId>
-      </dependency>
-
       <dependency>
          <groupId>org.xerial.snappy</groupId>
          <artifactId>snappy-java</artifactId>
@@ -261,6 +222,24 @@
 
    <build>
       <plugins>
+         <plugin>
+            <groupId>org.wildfly.build</groupId>
+            <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
+            <version>${version.org.wildfly.build-tools}</version>
+            <executions>
+               <execution>
+                  <id>provision-hibernatesearch-modules</id>
+                  <goals>
+                     <goal>build</goal>
+                  </goals>
+                  <phase>compile</phase>
+                  <configuration>
+                     <config-file>provisioning-of-hibernatesearch.xml</config-file>
+                     <server-name>hibernate-search-featurepack-expanded</server-name>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
