@@ -2,6 +2,7 @@
 
     <property name="output.dir" value="${project.build.directory}/infinispan-wildfly-modules" />
     <property name="hibernate-search-modules.dir" value="${project.build.directory}/hibernate-search-modules" />
+    <property name="expanded-featurepacks.dir" value="${project.build.directory}/hibernate-search-featurepack-expanded/modules/system/layers/base" />
 
     <import file="lib.xml" />
 
@@ -24,17 +25,22 @@
         </copy>
     </target>
 
+    <target name="prepare-lucene-module">
+        <module-section-copy-asis source="${expanded-featurepacks.dir}" dest="${hibernate-search-modules.dir}" section="org/apache/lucene" />
+    </target>
+
+    <target name="prepare-elasticsearch-module">
+        <module-section-copy-asis source="${expanded-featurepacks.dir}" dest="${hibernate-search-modules.dir}" section="org/elasticsearch" />
+    </target>
+
+    <target name="prepare-gson-module">
+        <module-section-copy-asis source="${expanded-featurepacks.dir}" dest="${hibernate-search-modules.dir}" section="com/google" />
+    </target>
+
     <target name="prepare-hibernate-search-module">
-        <external-module-zip group="org.hibernate" artifact="hibernate-search-modules" classifier="wildfly-11-dist"
-                             dest="${hibernate-search-modules.dir}"
-                             source-slot="${version.hibernate.search}" target-slot="${infinispan.slot}" >
-            <exclusions>
-                <!-- Exclude lucene module since Infinispan also ship it -->
-                <exclude name="org/apache/lucene/**"/>
-                <!-- Exclude aliases -->
-                <exclude name="**/${hibernate.search.slot}/**"/>
-            </exclusions>
-        </external-module-zip>
+        <external-module-dir dest="${hibernate-search-modules.dir}/org/hibernate/search"
+                             source="${expanded-featurepacks.dir}/org/hibernate/search"
+                             source-slot="${version.hibernate.search}" target-slot="${infinispan.slot}" />
 
         <!-- replace optional directory provider link -->
         <replaceregexp>
@@ -229,21 +235,6 @@
             <maven-resource group="org.rocksdb" artifact="rocksdbjni" />
         </module-def>
 
-        <module-def name="org.apache.lucene" slot="${lucene.slot}">
-            <maven-resource group="org.apache.lucene" artifact="lucene-core" />
-            <maven-resource group="org.apache.lucene" artifact="lucene-queries" />
-            <maven-resource group="org.apache.lucene" artifact="lucene-analyzers-common" />
-            <maven-resource group="org.apache.lucene" artifact="lucene-queryparser" />
-            <maven-resource group="org.apache.lucene" artifact="lucene-highlighter" />
-            <maven-resource group="org.apache.lucene" artifact="lucene-grouping" />
-            <maven-resource group="org.apache.lucene" artifact="lucene-facet" />
-        </module-def>
-
-        <module-def name="org.apache.lucene.internal" slot="${lucene.slot}">
-            <maven-resource group="org.apache.lucene" artifact="lucene-misc" />
-            <maven-resource group="org.apache.lucene" artifact="lucene-backward-codecs" />
-        </module-def>
-
         <module-def name="org.infinispan.remote" slot="${infinispan.slot}"/>
 
         <module-def name="org.infinispan.extension" slot="${infinispan.slot}">
@@ -306,7 +297,7 @@
             <maven-resource group="xpp3" artifact="xpp3"/>
         </module-def>
 
-        <!-- ORDER MATTERS - following tasks apper to mess with global properties, so run them last -->
+        <!-- ORDER MATTERS - following tasks appear to mess with global properties, so run them last -->
 
         <!-- Infinispan/Lucene targeting the latest community release of Hibernate Search which we support -->
         <hibernatesearch-directoryprovide-module
@@ -318,5 +309,5 @@
 
     </target>
 
-    <target name="all" depends="clean, prepare-hibernate-search-module, copy-files, modules"/>
+    <target name="all" depends="clean, prepare-lucene-module, prepare-elasticsearch-module, prepare-gson-module, prepare-hibernate-search-module, copy-files, modules"/>
 </project>

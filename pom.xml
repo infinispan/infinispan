@@ -223,6 +223,12 @@
       <version.rxjava>2.1.3</version.rxjava>
       <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
 
+      <!-- Versions of feature packs we consume: must match expected versions manually for the time being
+        See also note in wildfly-modules/provisioning-of-hibernatesearch.xml -->
+      <version.lucene.featurepack>5.5.5.hibernate05</version.lucene.featurepack>
+      <version.elasticsearch-client.featurepack>5.6.7.hibernate01</version.elasticsearch-client.featurepack>
+      <version.gson.featurepack>2.8.2.hibernate03</version.gson.featurepack>
+
       <!-- Dependency versions *not* duplicated in BOM -->
       <version.ant-contrib>1.0b3</version.ant-contrib>
       <version.ant>1.10.1</version.ant>

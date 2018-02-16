@@ -20,9 +20,9 @@
     <fileSet>
       <directory>${project.build.directory}/hibernate-search-modules</directory>
       <outputDirectory />
-      <excludes>
-        <exclude>org/apache/lucene/**</exclude>
-      </excludes>
+      <includes>
+        <include>**/**</include>
+      </includes>
     </fileSet>
   </fileSets>
 </assembly>
