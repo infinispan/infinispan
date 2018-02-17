@@ -123,7 +123,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration combine.self="override">
-                    <argLine>-javaagent:${project.build.directory}/agents/byteman.jar=port:9091,boot:${project.build.directory}/agents/byteman.jar ${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
+                    <argLine>-javaagent:${project.build.directory}/agents/byteman.jar=port:9091,boot:${project.build.directory}/agents/byteman.jar ${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                     <groups combine.self="override">${defaultJUnitGroups}</groups>
                     <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
                     <systemPropertyVariables>

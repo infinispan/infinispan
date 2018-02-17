@@ -188,7 +188,7 @@
                         <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                         <build.directory>${project.build.directory}</build.directory>
                     </systemPropertyVariables>
-                    <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
+                    <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                 </configuration>
                 <dependencies>
                     <dependency>

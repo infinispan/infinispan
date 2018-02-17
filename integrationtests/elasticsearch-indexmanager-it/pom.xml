@@ -84,7 +84,7 @@
                             <value>${testNGListeners}</value>
                         </property>
                     </properties>
-                    <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
+                    <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                 </configuration>
                 <executions>
                     <execution>

@@ -158,7 +158,7 @@
                           <version.hibernate.search>${version.hibernate.search}</version.hibernate.search>
                           <version.hibernate.core>${version.hibernate.core}</version.hibernate.core>
                       </systemPropertyVariables>
-                     <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
+                     <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                   </configuration>
                </execution>
             </executions>

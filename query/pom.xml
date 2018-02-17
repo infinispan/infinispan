@@ -193,7 +193,7 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
                <argLine>-javaagent:${project.build.directory}/agents/byteman.jar=port:9091,boot:${project.build.directory}/agents/byteman.jar
-                  ${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
+                  ${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                <systemPropertyVariables>
                   <org.jboss.byteman.contrib.bmunit.agent.inhibit>true</org.jboss.byteman.contrib.bmunit.agent.inhibit>
                </systemPropertyVariables>

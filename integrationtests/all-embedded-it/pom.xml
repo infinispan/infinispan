@@ -84,7 +84,7 @@
                                 <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
                                 <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                             </systemPropertyVariables>
-                           <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
+                           <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -121,7 +121,7 @@
                         <build.directory>${project.build.directory}</build.directory>
                     </systemPropertyVariables>
                     <trimStackTrace>false</trimStackTrace>
-                    <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
+                    <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                 </configuration>
                 <dependencies>
                     <dependency>

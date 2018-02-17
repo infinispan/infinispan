@@ -34,7 +34,7 @@
       <server.dir.parent>${project.build.directory}</server.dir.parent>
       <server.dir.name>infinispan-server-${project.version}</server.dir.name>
       <server.dir>${server.dir.parent}/${server.dir.name}</server.dir>
-      <serverMemoryJvmArgs>-Xmx500m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}</serverMemoryJvmArgs>
+      <serverMemoryJvmArgs>-Xmx500m ${testjvm.commonArgs}</serverMemoryJvmArgs>
 
       <failsafe.reportdir.embedded>${project.build.directory}/failsafe-reports-embedded</failsafe.reportdir.embedded>
       <failsafe.reportdir.remote>${project.build.directory}/failsafe-reports-remote</failsafe.reportdir.remote>
@@ -166,7 +166,7 @@
                   <configuration>
                      <skip>${skipTests}</skip>
                      <jbossHome>${server.dir}</jbossHome>
-                     <jvm-args>${serverMemoryJvmArgs} ${jigsawForkJvmArgs}</jvm-args>
+                     <jvm-args>${serverMemoryJvmArgs} ${testjvm.jigsawArgs}</jvm-args>
                      <!--java-opts>
                         <java-opt>-agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y</java-opt>
                      </java-opts-->
@@ -214,7 +214,7 @@
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
                </systemPropertyVariables>
-               <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                <properties>
                   <property>
                      <name>listener</name>

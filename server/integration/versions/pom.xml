@@ -22,8 +22,8 @@
       <maven.compiler.target>1.8</maven.compiler.target>
       <maven.compiler.source>1.8</maven.compiler.source>
       <server.output.dir.prefix>infinispan-server</server.output.dir.prefix>
-      <forkJvmArgs>-Xmx500m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}</forkJvmArgs>
-      <jigsawForkJvmArgs/>
+      <forkJvmArgs>-Xmx500m ${testjvm.commonArgs}</forkJvmArgs>
+      <testjvm.jigsawArgs/>
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
 
       <version.org.jboss.marshalling.jboss-marshalling>2.0.2.Final</version.org.jboss.marshalling.jboss-marshalling>
@@ -465,7 +465,7 @@
                <artifactId>maven-surefire-plugin</artifactId>
                <configuration>
                   <trimStackTrace>false</trimStackTrace>
-                  <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
+                  <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                </configuration>
             </plugin>
             <plugin>
@@ -570,7 +570,7 @@
               java.text, java.awt.font: XStream, server/rest
               java.security: Wildfly, server/integration/*
             -->
-            <jigsawForkJvmArgs>
+            <testjvm.jigsawArgs>
                -Dsun.reflect.debugModuleAccessChecks=true
                --add-opens=java.base/java.lang=ALL-UNNAMED
                --add-opens=java.base/java.util=ALL-UNNAMED
@@ -593,7 +593,7 @@
                --add-exports=java.security.sasl/com.sun.security.sasl.ntlm=ALL-UNNAMED
                --add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED
                --add-opens=java.management/javax.management=ALL-UNNAMED
-            </jigsawForkJvmArgs>
+            </testjvm.jigsawArgs>
          </properties>
          <build>
             <pluginManagement>

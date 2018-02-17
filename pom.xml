@@ -171,7 +171,9 @@
       <dir.jacoco>${session.executionRootDirectory}/jacoco/</dir.jacoco>
       <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
       <dir.jacoco.report>../jacoco/report/</dir.jacoco.report>
-      <forkJvmArgs>-Xmx1G -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}</forkJvmArgs>
+      <testjvm.commonArgs>-XX:+UseG1GC -XX:-TieredCompilation -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}</testjvm.commonArgs>
+      <testjvm.jigsawArgs />
+      <forkJvmArgs>-Xmx1G ${testjvm.commonArgs}</forkJvmArgs>
       <infinispan.codename>Gaina</infinispan.codename>
       <infinispan.base.version>9.2</infinispan.base.version>
       <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
@@ -180,7 +182,6 @@
       <infinispan.test.parallel.threads>15</infinispan.test.parallel.threads>
       <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
-      <jigsawForkJvmArgs />
       <junitListener>org.infinispan.commons.test.JUnitTestListener</junitListener>
       <m2e.apt.activation>jdt_apt</m2e.apt.activation>
       <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
@@ -1288,7 +1289,7 @@
                   <systemPropertyVariables>
                      <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                   </systemPropertyVariables>
-                  <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
+                  <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
                </configuration>
             </plugin>
             <plugin>
@@ -1710,7 +1711,7 @@
                      <value>${testNGListeners}</value>
                   </property>
                </properties>
-               <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
             </configuration>
          </plugin>
 
@@ -2015,7 +2016,7 @@
               java.text, java.awt.font: XStream, server/rest
               java.security: Wildfly, server/integration/*
             -->
-            <jigsawForkJvmArgs>
+            <testjvm.jigsawargs>
                -Dsun.reflect.debugModuleAccessChecks=true
                --add-opens=java.base/java.lang=ALL-UNNAMED
                --add-opens=java.base/java.util=ALL-UNNAMED
@@ -2040,7 +2041,7 @@
                --add-opens=java.management/javax.management=ALL-UNNAMED
                --add-exports=java.management/com.sun.jmx.mbeanserver=ALL-UNNAMED
                --add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED
-            </jigsawForkJvmArgs>
+            </testjvm.jigsawargs>
          </properties>
          <build>
             <pluginManagement>
