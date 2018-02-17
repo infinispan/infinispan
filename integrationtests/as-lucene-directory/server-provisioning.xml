@@ -1,0 +1,17 @@
+<server-provisioning xmlns="urn:wildfly:server-provisioning:1.1">
+
+	<feature-packs>
+
+		<feature-pack
+				groupId="org.hibernate"
+				artifactId="hibernate-search-jbossmodules-orm"
+				version="${version.hibernate.search}" />
+
+		<feature-pack
+				groupId="org.hibernate"
+				artifactId="hibernate-search-jbossmodules-hibernate-orm"
+				version="${version.hibernate.search}" />
+
+	</feature-packs>
+
+</server-provisioning>
