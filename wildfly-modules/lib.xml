@@ -130,7 +130,7 @@
         <attribute name="target-slot"/>
         <sequential>
             <mkdir dir="@{dest}"/>
-            <copy todir="@{dest}" failonerror="true">
+            <copy todir="@{dest}" failonerror="true" overwrite="true">
                 <fileset dir="@{source}"/>
                 <regexpmapper from="(.*)/@{source-slot}(/(.*))?" to="\1/@{target-slot}/\2"/>
             </copy>
@@ -148,7 +148,7 @@
         <attribute name="section"/>
         <sequential>
             <mkdir dir="@{dest}/@{section}"/>
-            <copy todir="@{dest}/@{section}" failonerror="true">
+            <copy todir="@{dest}/@{section}" failonerror="true" overwrite="true">
                 <fileset dir="@{source}/@{section}"/>
             </copy>
         </sequential>

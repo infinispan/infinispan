@@ -164,6 +164,43 @@
             </executions>
          </plugin>
          <plugin>
+            <groupId>org.wildfly.build</groupId>
+            <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
+            <version>${version.org.wildfly.build-tools}</version>
+            <executions>
+               <execution>
+                  <id>server-provisioning-node1</id>
+                  <goals>
+                     <goal>build</goal>
+                  </goals>
+                  <phase>compile</phase>
+                  <configuration>
+                     <config-file>server-provisioning.xml</config-file>
+                     <server-name>node1</server-name>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>server-provisioning-node2</id>
+                  <goals>
+                     <goal>build</goal>
+                  </goals>
+                  <phase>compile</phase>
+                  <configuration>
+                     <config-file>server-provisioning.xml</config-file>
+                     <server-name>node2</server-name>
+                  </configuration>
+               </execution>
+            </executions>
+            <dependencies>
+               <dependency>
+                  <groupId>org.hibernate</groupId>
+                  <artifactId>hibernate-search-jbossmodules-orm</artifactId>
+                  <version>${version.hibernate.search}</version>
+                  <type>zip</type>
+               </dependency>
+            </dependencies>
+         </plugin>
+         <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
             <executions>
                <execution>
@@ -176,67 +213,12 @@
                      <skip>${skipTests}</skip>
                      <artifactItems>
                         <artifactItem>
-                           <groupId>org.wildfly</groupId>
-                           <artifactId>wildfly-dist</artifactId>
-                           <version>${version.org.wildfly}</version>
-                           <type>zip</type>
-                           <overWrite>false</overWrite>
-                           <outputDirectory>${project.build.directory}/node1</outputDirectory>
-                        </artifactItem>
-                        <artifactItem>
-                           <groupId>org.wildfly</groupId>
-                           <artifactId>wildfly-dist</artifactId>
-                           <version>${version.org.wildfly}</version>
-                           <type>zip</type>
-                           <overWrite>false</overWrite>
-                           <outputDirectory>${project.build.directory}/node2</outputDirectory>
-                        </artifactItem>
-                        <artifactItem>
-                            <groupId>org.hibernate</groupId>
-                            <artifactId>hibernate-search-modules</artifactId>
-                            <version>${version.hibernate.search}</version>
-                            <classifier>wildfly-11-dist</classifier>
-                            <type>zip</type>
-                            <overWrite>false</overWrite>
-                            <outputDirectory>${project.build.directory}/node1/wildfly-${version.org.wildfly}/modules</outputDirectory>
-                        </artifactItem>
-                        <artifactItem>
-                            <groupId>org.hibernate</groupId>
-                            <artifactId>hibernate-search-modules</artifactId>
-                            <version>${version.hibernate.search}</version>
-                            <classifier>wildfly-11-dist</classifier>
-                            <type>zip</type>
-                            <overWrite>false</overWrite>
-                            <outputDirectory>${project.build.directory}/node2/wildfly-${version.org.wildfly}/modules</outputDirectory>
-                        </artifactItem>
-                        <artifactItem>
-                            <groupId>org.hibernate</groupId>
-                            <artifactId>hibernate-orm-modules</artifactId>
-                            <version>${version.hibernate.core}</version>
-                            <classifier>wildfly-11-dist</classifier>
-                            <type>zip</type>
-                            <overWrite>false</overWrite>
-                            <outputDirectory>${project.build.directory}/node1/wildfly-${version.org.wildfly}/modules</outputDirectory>
-                        </artifactItem>
-                        <artifactItem>
-                            <groupId>org.hibernate</groupId>
-                            <artifactId>hibernate-orm-modules</artifactId>
-                            <version>${version.hibernate.core}</version>
-                            <classifier>wildfly-11-dist</classifier>
-                            <type>zip</type>
-                            <overWrite>false</overWrite>
-                            <outputDirectory>${project.build.directory}/node2/wildfly-${version.org.wildfly}/modules</outputDirectory>
-                        </artifactItem>
-                        <!-- Order matters: it might happen that both the Infinispan and the Hibernate Search modules
-                            contain the same org.apache.lucene modules. The Infinispan "edition" contains a superset of the Lucene libraries,
-                            so make sure these overwrite the other one. See also HSEARCH-2578 -->
-                        <artifactItem>
                            <groupId>org.infinispan</groupId>
                            <artifactId>infinispan-wildfly-modules</artifactId>
                            <version>${project.version}</version>
                            <type>zip</type>
                            <overWrite>true</overWrite>
-                           <outputDirectory>${project.build.directory}/node1/wildfly-${version.org.wildfly}/modules</outputDirectory>
+                           <outputDirectory>${project.build.directory}/node1/modules</outputDirectory>
                         </artifactItem>
                         <artifactItem>
                            <groupId>org.infinispan</groupId>
@@ -244,7 +226,7 @@
                            <version>${project.version}</version>
                            <type>zip</type>
                            <overWrite>true</overWrite>
-                           <outputDirectory>${project.build.directory}/node2/wildfly-${version.org.wildfly}/modules</outputDirectory>
+                           <outputDirectory>${project.build.directory}/node2/modules</outputDirectory>
                         </artifactItem>
                      </artifactItems>
                   </configuration>
@@ -264,7 +246,7 @@
                   </goals>
                   <configuration>
                      <skip>${skipTests}</skip>
-                     <outputDirectory>${project.build.directory}/node1/wildfly-${version.org.wildfly}</outputDirectory>
+                     <outputDirectory>${project.build.directory}/node1</outputDirectory>
                      <overwrite>true</overwrite>
                      <resources>
                          <resource>
@@ -281,7 +263,7 @@
                   </goals>
                   <configuration>
                      <skip>${skipTests}</skip>
-                     <outputDirectory>${project.build.directory}/node2/wildfly-${version.org.wildfly}</outputDirectory>
+                     <outputDirectory>${project.build.directory}/node2</outputDirectory>
                          <overwrite>true</overwrite>
                           <resources>
                               <resource>
