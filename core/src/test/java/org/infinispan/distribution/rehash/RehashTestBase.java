@@ -147,7 +147,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
    /**
     * A stress test.  One node is constantly modified while a rehash occurs.
     */
-   @Test(groups = "stress", timeOut = 15*60*1000, invocationCount = 100)
+   @Test(groups = "stress", timeOut = 15*60*1000)
    public void testNonTransactionalStress() throws Throwable {
       TestResourceTracker.testThreadStarted(this);
       stressTest(false);

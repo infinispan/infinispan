@@ -3,8 +3,13 @@ package org.infinispan.test;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +27,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import javax.transaction.TransactionManager;
 
+import org.infinispan.commons.api.BasicCache;
+import org.infinispan.functional.FunctionalMap;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.manager.CacheContainer;
+import org.infinispan.partitionhandling.BasePartitionHandlingTest;
+import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.test.fwk.ChainMethodInterceptor;
 import org.infinispan.test.fwk.NamedTestMethod;
 import org.infinispan.test.fwk.TestResourceTracker;
@@ -32,6 +44,7 @@ import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jgroups.stack.Protocol;
 import org.testng.IMethodInstance;
 import org.testng.IMethodInterceptor;
 import org.testng.ITestContext;
@@ -115,6 +128,7 @@ public class AbstractInfinispanTest {
    @AfterClass(alwaysRun = true)
    protected final void testClassFinished() {
       killSpawnedThreads();
+      nullOutFields();
       TestResourceTracker.testFinished(getTestName());
    }
 
@@ -375,6 +389,58 @@ public class AbstractInfinispanTest {
       } catch (Exception e) {
          //ignored
       }
+   }
+
+
+   protected void nullOutFields() {
+      // TestNG keeps test instances in memory forever, make them leaner by clearing direct references to caches
+      for (Field field : getAllFields()) {
+         if (!Modifier.isFinal(field.getModifiers()) && fieldIsMemoryHog(field)) {
+            field.setAccessible(true);
+            try {
+               field.set(this, null);
+            } catch (IllegalArgumentException | IllegalAccessException e) {
+               log.error(e);
+            }
+         }
+      }
+   }
+
+   private boolean fieldIsMemoryHog(Field field) {
+      Class<?>[] memoryHogs = {CacheContainer.class, BasicCache.class, FunctionalMap.class, Protocol.class,
+                               AsyncInterceptor.class, RequestRepository.class,
+                               BasePartitionHandlingTest.Partition.class};
+      return Stream.of(memoryHogs).anyMatch(clazz -> fieldIsMemoryHog(field, clazz));
+   }
+
+   private boolean fieldIsMemoryHog(Field field, Class<?> clazz) {
+      if (clazz.isAssignableFrom(field.getType())) {
+         return true;
+      } else if (field.getType().isArray()) {
+         return (clazz.isAssignableFrom(field.getType().getComponentType()));
+      } else if (Collection.class.isAssignableFrom(field.getType())) {
+         ParameterizedType collectionType = (ParameterizedType) field.getGenericType();
+         Type elementType = collectionType.getActualTypeArguments()[0];
+         if (elementType instanceof ParameterizedType) {
+            return clazz.isAssignableFrom(((Class) ((ParameterizedType) elementType).getRawType()));
+         } else if (elementType instanceof Class<?>) {
+            return clazz.isAssignableFrom(((Class) elementType));
+         } else {
+            return false;
+         }
+      } else {
+         return false;
+      }
+   }
+
+   private Collection<Field> getAllFields() {
+      Collection<Field> fields = new ArrayList<>();
+      Class<?> clazz = this.getClass();
+      while (clazz != null) {
+         fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
+         clazz = clazz.getSuperclass();
+      }
+      return fields;
    }
 
    private class ThreadCleaner extends TestResourceTracker.Cleaner<Thread> {
