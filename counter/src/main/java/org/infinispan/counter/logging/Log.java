@@ -83,10 +83,13 @@ public interface Log extends org.infinispan.commons.logging.Log {
    @Message(value = "Invalid scope for tag <counter>. Expected CACHE_CONTAINER but was %s", id = 28020)
    CounterConfigurationException invalidScope(ParserScope scope);
 
-   @Message(value = "Clustered counters only available with clustered cache manager.", id = 28021)
-   CounterException expectedClusteredEnvironment();
+//   @Message(value = "Clustered counters only available with clustered cache manager.", id = 28021)
+//   CounterException expectedClusteredEnvironment();
 
    //28022 is in commons log
 
    //28023 is in hot rod log
+
+   @Message(value = "Lower bound (%s) and upper bound (%s) can't be the same.", id = 28024)
+   CounterConfigurationException invalidSameLowerAndUpperBound(long lower, long upper);
 }

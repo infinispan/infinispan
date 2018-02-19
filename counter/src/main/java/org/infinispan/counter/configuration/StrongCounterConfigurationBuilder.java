@@ -1,10 +1,8 @@
 package org.infinispan.counter.configuration;
 
-import static org.infinispan.counter.util.Utils.isValid;
+import static org.infinispan.counter.util.Utils.validateStrongCounterBounds;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.counter.logging.Log;
 
 /**
  * {@link org.infinispan.counter.api.StrongCounter} configuration builder.
@@ -14,8 +12,6 @@ import org.infinispan.counter.logging.Log;
  */
 public class StrongCounterConfigurationBuilder extends
       AbstractCounterConfigurationBuilder<StrongCounterConfiguration, StrongCounterConfigurationBuilder> {
-
-   private static final Log log = LogFactory.getLog(StrongCounterConfigurationBuilder.class, Log.class);
 
    StrongCounterConfigurationBuilder(CounterManagerConfigurationBuilder builder) {
       super(builder, StrongCounterConfiguration.attributeDefinitionSet());
@@ -69,9 +65,7 @@ public class StrongCounterConfigurationBuilder extends
          long min = attributes.attribute(StrongCounterConfiguration.LOWER_BOUND).get();
          long max = attributes.attribute(StrongCounterConfiguration.UPPER_BOUND).get();
          long init = attributes.attribute(StrongCounterConfiguration.INITIAL_VALUE).get();
-         if (isValid(min, init, max)) {
-            throw log.invalidInitialValueForBoundedCounter(min, max, init);
-         }
+         validateStrongCounterBounds(min, init, max);
       }
    }
 }

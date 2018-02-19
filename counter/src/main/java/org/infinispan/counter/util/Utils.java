@@ -1,7 +1,10 @@
 package org.infinispan.counter.util;
 
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.api.Storage;
+import org.infinispan.counter.exception.CounterConfigurationException;
+import org.infinispan.counter.logging.Log;
 import org.infinispan.functional.Param;
 
 /**
@@ -12,19 +15,28 @@ import org.infinispan.functional.Param;
  */
 public final class Utils {
 
+   //use utils log?
+   private static final Log log = LogFactory.getLog(Utils.class, Log.class);
+
    private Utils() {
    }
 
    /**
-    * Checks if the value is inside the boundaries.
+    * Validates the lower and upper bound for a strong counter.
+    * <p>
+    * It throws a {@link CounterConfigurationException} is not valid.
     *
-    * @param lowerBound the lower bound.
-    * @param value      the value to check.
-    * @param upperBound the upper bound.
-    * @return {@code true} if the value is inside the boundaries, {@code false} otherwise.
+    * @param lowerBound   The counter's lower bound value.
+    * @param initialValue The counter's initial value.
+    * @param upperBound   The counter's upper bound value.
+    * @throws CounterConfigurationException if the upper or lower bound aren't valid.
     */
-   public static boolean isValid(long lowerBound, long value, long upperBound) {
-      return lowerBound > value || value > upperBound;
+   public static void validateStrongCounterBounds(long lowerBound, long initialValue, long upperBound) {
+      if (lowerBound > initialValue || initialValue > upperBound) {
+         throw log.invalidInitialValueForBoundedCounter(lowerBound, upperBound, initialValue);
+      } else if (lowerBound == upperBound) {
+         throw log.invalidSameLowerAndUpperBound(lowerBound, upperBound);
+      }
    }
 
    /**
