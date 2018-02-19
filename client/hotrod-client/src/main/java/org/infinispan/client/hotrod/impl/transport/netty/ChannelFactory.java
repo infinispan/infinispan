@@ -24,6 +24,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -210,7 +211,7 @@ public class ChannelFactory {
    public void destroy() {
       try {
          channelPoolMap.values().forEach(ChannelPool::close);
-         eventLoopGroup.shutdownGracefully().sync().getNow();
+         eventLoopGroup.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS).get();
          executorService.shutdownNow();
       } catch (Exception e) {
          log.warn("Exception while shutting down the connection pool.", e);
