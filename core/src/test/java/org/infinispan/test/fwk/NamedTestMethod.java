@@ -178,6 +178,11 @@ public class NamedTestMethod implements ITestNGMethod {
    }
 
    @Override
+   public int getTotalInvocationCount() {
+      return method.getTotalInvocationCount();
+   }
+
+   @Override
    public int getSuccessPercentage() {
       return method.getSuccessPercentage();
    }
@@ -230,6 +235,11 @@ public class NamedTestMethod implements ITestNGMethod {
    @Override
    public String getDescription() {
       return method.getDescription();
+   }
+
+   @Override
+   public void setDescription(String s) {
+      method.setDescription(s);
    }
 
    @Override

@@ -313,7 +313,7 @@
       <version.spring4>4.3.4.RELEASE</version.spring4>
       <version.spymemcached>2.12.1</version.spymemcached>
       <version.testng.arquillian>6.5.2</version.testng.arquillian>
-      <version.testng>6.8.8</version.testng>
+      <version.testng>6.9.9</version.testng>
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld-se>2.3.4.Final</version.weld-se>
       <version.weld>2.3.4.Final</version.weld>

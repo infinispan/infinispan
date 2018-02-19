@@ -1,5 +1,7 @@
 package org.infinispan.test;
 
+import static java.util.Arrays.asList;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -507,10 +509,17 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       } catch (NoSuchMethodException e) {
          throw new IllegalStateException("Every class should have factory method, at least inherited", e);
       }
-      Consumer<MultipleCacheManagersTest>[] cacheModeModifiers = getModifiers(InCacheMode.class, InCacheMode::value,
-            MultipleCacheManagersTest::cacheMode);
-      Consumer<MultipleCacheManagersTest>[] transactionModifiers = getModifiers(InTransactionMode.class, InTransactionMode::value, (t, m) -> t.transactional(m.isTransactional()));
-      List<Consumer<MultipleCacheManagersTest>[]> allModifiers = Arrays.asList(cacheModeModifiers, transactionModifiers);
+      List<Consumer<MultipleCacheManagersTest>[]> allModifiers;
+      try {
+         Consumer<MultipleCacheManagersTest>[] cacheModeModifiers =
+            getModifiers(InCacheMode.class, InCacheMode::value, MultipleCacheManagersTest::cacheMode);
+         Consumer<MultipleCacheManagersTest>[] transactionModifiers =
+            getModifiers(InTransactionMode.class, InTransactionMode::value,
+                         (t, m) -> t.transactional(m.isTransactional()));
+         allModifiers = asList(cacheModeModifiers, transactionModifiers);
+      } catch (Exception e) {
+         return new Object[]{new IllegalFactoryMethod(e.getMessage())};
+      }
 
       int numTests = allModifiers.stream().mapToInt(m -> m.length).reduce(1, (m1, m2) -> m1 * m2);
       Object[] tests = new Object[numTests];
@@ -519,13 +528,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       try {
          ctor = getClass().getConstructor();
       } catch (NoSuchMethodException e) {
-         throw new IllegalArgumentException("Missing no-arg constructor in " + getClass());
+         return new Object[]{new IllegalFactoryMethod("Missing no-arg constructor in " + getClass())};
       }
       for (int i = 1; i < tests.length; ++i) {
          try {
             tests[i] = ctor.newInstance();
          } catch (Exception e) {
-            throw new IllegalStateException("Cannot create test instances", e);
+            return new Object[]{new IllegalFactoryMethod("Cannot create test instances")};
          }
       }
       int stride = 1;
@@ -566,25 +575,16 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
       Set<Mode> allModes = new HashSet<>();
       if (classModes != null) {
-         allModes.addAll(Arrays.asList(classModes));
+         allModes.addAll(asList(classModes));
       }
-      if (methodModes != null) {
-         allModes.addAll(methodModes);
+      if (methodModes != null && !allModes.containsAll(methodModes)) {
+         throw new IllegalStateException(
+            "Test methods cannot declare cache mode/transaction filters that the test class hasn't declared");
       }
       // if there are only method-level annotations, add a version without setting mode at all
-      if (classModes == null) {
-         Consumer<MultipleCacheManagersTest>[] modifiers = new Consumer[methodModes.size() + 1];
-         modifiers[0] = t -> {};
-         int i = 1;
-         for (Mode mode : methodModes) {
-            // we have already added setting with this cache mode, don't do it twice
-         if (mode == cacheMode) continue;
-            modifiers[i++] = t -> applier.accept(t, mode);
-         }
-         return i == modifiers.length ? modifiers : Arrays.copyOf(modifiers, i);
-      } else {
-         return allModes.stream().map(mode -> (Consumer<MultipleCacheManagersTest>) t -> applier.accept(t, mode)).toArray(Consumer[]::new);
-      }
+      return allModes.stream()
+                     .map(mode -> (Consumer<MultipleCacheManagersTest>) t -> applier.accept(t, mode))
+                     .toArray(Consumer[]::new);
    }
 
    protected <Mode, A extends Annotation> Set<Mode> methodModes(Class<A> annotationClass, Function<A, Mode[]> modeRetriever) {
@@ -917,7 +917,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
 
       public boolean test(CM mode, IMethodInstance method) {
-         // If both method and class have the annotation, class annotation has priority.
+         // If both method and class have the annotation, method annotation has priority.
          A clazzAnnotation = method.getInstance().getClass().getAnnotation(annotationClazz);
          A methodAnnotation = method.getMethod().getConstructorOrMethod().getMethod().getAnnotation(annotationClazz);
          if (methodAnnotation != null) {

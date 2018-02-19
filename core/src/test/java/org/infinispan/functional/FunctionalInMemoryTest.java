@@ -206,7 +206,7 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
       testReadOnMissingValue(getKey(isOwner, DIST), ro, method);
    }
 
-   @Test(dataProvider = "methods")
+   @Test(dataProvider = "readMethods")
    public void testOnMissingValueLocal(ReadMethod method) {
       testReadOnMissingValue(0, ReadOnlyMapImpl.create(fmapL1), method);
    }
