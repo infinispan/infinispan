@@ -304,7 +304,7 @@
       <version.oauth.core>20090531</version.oauth.core>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
       <version.org.wildfly.arquillian>1.0.2.Final</version.org.wildfly.arquillian>
-      <version.org.wildfly.build-tools>1.2.3.Final</version.org.wildfly.build-tools>
+      <version.org.wildfly.build-tools>1.2.6.Final</version.org.wildfly.build-tools>
       <version.org.wildfly.core>3.0.10.Final</version.org.wildfly.core>
       <version.org.wildfly.maven-plugin>1.2.1.Final</version.org.wildfly.maven-plugin>
       <version.org.wildfly>11.0.0.Final</version.org.wildfly>
@@ -1210,6 +1210,16 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-plugin-plugin</artifactId>
                <version>${version.maven.plugin}</version>
+            </plugin>
+            <plugin>
+               <groupId>org.wildfly.build</groupId>
+               <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
+               <version>${version.org.wildfly.build-tools}</version>
+            </plugin>
+            <plugin>
+               <groupId>org.wildfly.build</groupId>
+               <artifactId>wildfly-feature-pack-build-maven-plugin</artifactId>
+               <version>${version.org.wildfly.build-tools}</version>
             </plugin>
             <plugin>
                <groupId>org.antlr</groupId>
