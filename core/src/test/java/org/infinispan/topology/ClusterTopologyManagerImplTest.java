@@ -5,12 +5,14 @@ import static java.util.Collections.singletonList;
 import static org.mockito.Mockito.mock;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.CacheMode;
@@ -31,11 +33,14 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.MockTransport;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "topology.ClusterTopologyManagerImplTest")
 public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
    private static final String CACHE_NAME = "testCache";
+
+   ExecutorService transportExecutor = Executors.newSingleThreadExecutor(getTestThreadFactory("Transport"));
 
    private static final Address A = new TestAddress(0, "A");
    private static final Address B = new TestAddress(1, "B");
@@ -68,7 +73,6 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
       gcr.registerComponent(persistentUUIDManager, PersistentUUIDManager.class);
 
-      ExecutorService transportExecutor = Executors.newSingleThreadExecutor(getTestThreadFactory("Transport"));
       gcr.registerComponent(transportExecutor, KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR);
 
       MockLocalTopologyManager ltm = new MockLocalTopologyManager(CACHE_NAME);
@@ -143,7 +147,6 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
       gcr.registerComponent(persistentUUIDManager, PersistentUUIDManager.class);
 
-      ExecutorService transportExecutor = Executors.newFixedThreadPool(2, getTestThreadFactory("Transport"));
       gcr.registerComponent(transportExecutor, KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR);
 
       MockLocalTopologyManager ltm = new MockLocalTopologyManager(CACHE_NAME);
@@ -290,4 +293,9 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       assertEquals(asList(members), ch.getMembers());
    }
 
+   @AfterClass(alwaysRun = true)
+   public void shutdownExecutor() throws InterruptedException {
+      transportExecutor.shutdownNow();
+      assertTrue(transportExecutor.awaitTermination(10, TimeUnit.SECONDS));
+   }
 }
