@@ -1,7 +1,7 @@
 package org.infinispan.counter.impl.manager;
 
 import static org.infinispan.counter.impl.Util.awaitCounterOperation;
-import static org.infinispan.counter.util.Utils.isValid;
+import static org.infinispan.counter.util.Utils.validateStrongCounterBounds;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -55,11 +55,10 @@ public class EmbeddedCounterManager implements CounterManager {
    private final Map<String, Object> counters;
    private final CompletableFuture<CacheHolder> future;
    private final boolean allowPersistence;
+   private final CounterManagerNotificationManager notificationManager;
 
    @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
    private Executor asyncExecutor;
-
-   private CounterManagerNotificationManager notificationManager;
 
    public EmbeddedCounterManager(CompletableFuture<CacheHolder> future, boolean allowPersistence) {
       this.allowPersistence = allowPersistence;
@@ -293,10 +292,8 @@ public class EmbeddedCounterManager implements CounterManager {
       }
       switch (configuration.type()) {
          case BOUNDED_STRONG:
-            if (isValid(configuration.lowerBound(), configuration.initialValue(), configuration.upperBound())) {
-               throw log.invalidInitialValueForBoundedCounter(configuration.lowerBound(), configuration.upperBound(),
-                     configuration.initialValue());
-            }
+            validateStrongCounterBounds(configuration.lowerBound(), configuration.initialValue(),
+                  configuration.upperBound());
             break;
          case WEAK:
             if (configuration.concurrencyLevel() < 1) {

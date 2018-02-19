@@ -9,7 +9,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
+import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.Storage;
 import org.infinispan.counter.configuration.AbstractCounterConfiguration;
 import org.infinispan.counter.configuration.CounterManagerConfiguration;
@@ -19,10 +21,12 @@ import org.infinispan.counter.configuration.StrongCounterConfiguration;
 import org.infinispan.counter.configuration.WeakCounterConfiguration;
 import org.infinispan.counter.exception.CounterConfigurationException;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
+import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.test.AbstractCacheTest;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.AssertJUnit;
@@ -245,13 +249,13 @@ public class ConfigurationTest extends AbstractCacheTest {
             .addWeakCounter().name("weak-5").initialValue(5).concurrencyLevel(10).storage(Storage.VOLATILE);
       GlobalConfiguration config = builder.build();
       CounterManagerConfiguration counterConfig = config.module(CounterManagerConfiguration.class);
-      assertUnboundedStrongCounter(counterConfig, Storage.VOLATILE);
+      assertUnboundedStrongCounter(counterConfig);
       assertBoundedStrongCounter(counterConfig, "lower-bounded-strong-2", 2, -10, Long.MAX_VALUE,
             Storage.PERSISTENT);
       assertBoundedStrongCounter(counterConfig, "upper-bounded-strong-3", 3, Long.MIN_VALUE, 10,
             Storage.VOLATILE);
       assertBoundedStrongCounter(counterConfig, "bounded-strong-4", 4, -20, 20, Storage.PERSISTENT);
-      assertWeakCounter(counterConfig, Storage.VOLATILE);
+      assertWeakCounter(counterConfig);
 
       TestingUtil.withCacheManager(() -> new DefaultCacheManager(builder.build()), cacheManager -> {
          CounterManager manager = asCounterManager(cacheManager);
@@ -264,24 +268,38 @@ public class ConfigurationTest extends AbstractCacheTest {
       });
    }
 
-   private void assertUnboundedStrongCounter(CounterManagerConfiguration config, Storage storage) {
+   public void testInvalidEqualsUpperAndLowerBound() {
+      final GlobalConfigurationBuilder builder = defaultGlobalConfigurationBuilder(false);
+      CounterManagerConfigurationBuilder counterBuilder = builder.addModule(CounterManagerConfigurationBuilder.class);
+      counterBuilder.addStrongCounter().name("invalid").initialValue(10).lowerBound(10).upperBound(10);
+      assertCounterConfigurationException(builder);
+   }
+
+   public void testInvalidEqualsUpperAndLowerBoundInManager() {
+      EmbeddedCounterManager manager = new EmbeddedCounterManager(null, true);
+      CounterConfiguration cfg = CounterConfiguration.builder(CounterType.BOUNDED_STRONG).initialValue(10)
+            .lowerBound(10).upperBound(10).build();
+      Exceptions.expectException(CounterConfigurationException.class, () -> manager.defineCounter("invalid", cfg));
+   }
+
+   private void assertUnboundedStrongCounter(CounterManagerConfiguration config) {
       for (AbstractCounterConfiguration counterConfig : config.counters()) {
          if (counterConfig.name().equals("unbounded-strong-1")) {
             AssertJUnit.assertTrue(counterConfig instanceof StrongCounterConfiguration);
             AssertJUnit.assertEquals(1, counterConfig.initialValue());
-            AssertJUnit.assertEquals(storage, counterConfig.storage());
+            AssertJUnit.assertEquals(Storage.VOLATILE, counterConfig.storage());
             return;
          }
       }
       AssertJUnit.fail();
    }
 
-   private void assertWeakCounter(CounterManagerConfiguration config, Storage storage) {
+   private void assertWeakCounter(CounterManagerConfiguration config) {
       for (AbstractCounterConfiguration counterConfig : config.counters()) {
          if (counterConfig.name().equals("weak-5")) {
             AssertJUnit.assertTrue(counterConfig instanceof WeakCounterConfiguration);
             AssertJUnit.assertEquals(5, counterConfig.initialValue());
-            AssertJUnit.assertEquals(storage, counterConfig.storage());
+            AssertJUnit.assertEquals(Storage.VOLATILE, counterConfig.storage());
             AssertJUnit.assertEquals(10, ((WeakCounterConfiguration) counterConfig).concurrencyLevel());
             return;
          }
