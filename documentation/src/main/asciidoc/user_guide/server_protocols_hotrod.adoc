@@ -1249,12 +1249,28 @@ The number of connections per server, total number of connections, how long shou
 ==== Marshalling data
 The Hot Rod client allows one to plug in a custom marshaller for transforming user objects into byte arrays and the other way around. This transformation is needed because of Hot Rod's binary nature - it doesn't know about objects.
 
-.WARNING: If developing your own custom marshaller, take care of potential injection attacks.
-To avoid such attacks, make the marshaller verify that any class names read, before instantiating it, is amongst the expected/allowed class names.
-
 The marshaller can be plugged through the "marshaller" configuration element (see Configuration section): the value should be the fully qualified name of a class implementing the link:{javadocroot}/org/infinispan/marshall/Marshaller.html[Marshaller] interface. This is a optional parameter, if not specified it defaults to the link:{javadocroot}/org/infinispan/marshall/jboss/GenericJBossMarshaller.html[GenericJBossMarshaller] - a highly optimized implementation based on the link:http://www.jboss.org/jbossmarshalling[JBoss Marshalling] library.
 
 Since version 6.0, there's a new marshaller available to Java Hot Rod clients based on Protostream which generates portable payloads. You can find more information about it <<_querying_via_the_java_hot_rod_client,here>>
+
+.WARNING: If developing your own custom marshaller, take care of potential injection attacks.
+
+To avoid such attacks, make the marshaller verify that any class names read, before instantiating it, is amongst the expected/allowed class names.
+
+Starting with Infinispan 9.2, the client configuration can be enhanced with a list of regular expressions for classes that are allowed to be read.
+
+.WARNING: These checks are opt-in, so if not configured, any class can be read.
+
+In the example below, only classes with fully qualified names containing `Person` or `Employee` would be allowed:
+
+[source,java]
+----
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+
+...
+ConfigurationBuilder configBuilder = ...
+configBuilder.addJavaSerialWhiteList(".*Person.*", ".*Employee.*");
+----
 
 ==== Statistics
 Various server usage statistics can be obtained through the link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache] .stats() method. This returns a link:{javadocroot}/org/infinispan/client/hotrod/ServerStatistics.html[ServerStatistics] object - please refer to javadoc for details on the available statistics.
