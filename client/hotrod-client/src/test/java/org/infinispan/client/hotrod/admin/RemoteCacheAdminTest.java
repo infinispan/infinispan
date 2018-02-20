@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.admin;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
@@ -111,6 +112,14 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       assertEquals(10000, configuration.expiration().wakeUpInterval());
       assertEquals(10, configuration.expiration().lifespan());
       assertEquals(10, configuration.expiration().maxIdle());
+   }
+
+   public void cacheCreateWithXMLConfigurationAndGetCacheTest(Method m) {
+      String cacheName = m.getName();
+      client(0).administration().createCache(cacheName,
+         new XMLStringConfiguration("<infinispan><cache-container><distributed-cache name=\"configuration\"/></cache-container></infinispan>"));
+      final RemoteCache<Object, Object> cache = client(0).getCache(cacheName);
+      assertNotNull(cache);
    }
 
    public void cacheCreateWithEmbeddedConfigurationTest(Method m) {

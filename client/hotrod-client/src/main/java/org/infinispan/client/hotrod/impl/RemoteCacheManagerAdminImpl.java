@@ -54,7 +54,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       params.put(CACHE_NAME, string(name));
       if (configuration != null) params.put(CACHE_CONFIGURATION, string(configuration.toXMLString()));
       if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationsFactory.newExecuteOperation("@@cache@create", params).execute();
+      await(operationsFactory.newExecuteOperation("@@cache@create", params).execute());
       return cacheManager.getCache(name);
    }
 
