@@ -76,7 +76,7 @@ Choosing the right protocol depends on a number of factors.
 | Bulk ops           | [green]*Y* | [red]*N*        | [red]*N*
 | Transactions       | [red]*N*   | [red]*N*        | [red]*N*
 | Listeners          | [green]*Y* | [red]*N*        | [red]*N*
-| Query              | [green]*Y* | [red]*N*        | [red]*N*
+| Query              | [green]*Y* | [green]*Y*      | [red]*N*
 | Execution          | [green]*Y* | [red]*N*        | [red]*N*
 | Cross-site failover| [green]*Y* | [red]*N*        | [red]*N*
 |============================================================

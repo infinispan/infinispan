@@ -1,7 +1,36 @@
 ===  REST Server
 
-The Infinispan Server distribution contains a server module that implements link:http://en.wikipedia.org/wiki/Representational_State_Transfer[RESTful] HTTP access to the Infinispan data grid, built on https://github.com/netty/netty[Netty].
-Please refer to Infinispan Server's link:../infinispan_server_guide/infinispan_server_guide.html[documentation] for instructions on how to configure and run a REST server.
+The Infinispan Server distribution contains a module that implements link:http://en.wikipedia.org/wiki/Representational_State_Transfer[RESTful] HTTP access to the Infinispan data grid, built on https://github.com/netty/netty[Netty].
+
+==== Running the REST server
+
+The REST server endpoint is part of the Infinispan Server and by default listens on port 8080. To run the server locally,
+link:http://infinispan.org/download/[download] the zip distribution and execute in the extracted directory:
+
+[source]
+----
+bin/standalone.sh -b 0.0.0.0
+----
+
+or alternatively, run via docker:
+
+[source]
+----
+docker run -it -p 8080:8080 -e "APP_USER=user" -e "APP_PASS=changeme" jboss/infinispan-server
+----
+
+===== Security
+
+The REST server is protected by authentication, so before usage it is necessary to create an application login.
+When running via docker, this is achieved by the APP_USER and APP_PASS command line arguments, but when running
+locally, this can be done with:
+
+
+[source]
+----
+bin/add-user.sh -u user -p changeme -a
+----
+
 
 ==== Supported protocols
 
@@ -12,18 +41,129 @@ Note: TLS/ALPN with JDK8 requires additional steps from the client perspective. 
 that you will need Jetty ALPN Agent or OpenSSL bindings.
 
 ==== REST API
-HTTP PUT and POST methods are used to place data in the cache, with URLs to address the cache name and key(s) - the data being the body of the request (the data can be anything you like). It is important that a Content-Type header is set. Other headers are used to control the cache settings and behaviour (detailed in that link).
+HTTP PUT and POST methods are used to place data in the cache, with URLs to address the cache name and key(s) - the data being the body of the request (the data can be anything you like). Other headers are used to control the cache settings and behaviour.
+
+===== Data formats
+
+====== Configuration
+
+Each cache exposed via REST stores data in a configurable data format defined by a https://en.wikipedia.org/wiki/Media_type[MediaType].
+
+An example of storage configuration is as follows:
+
+[source,xml]
+----
+<cache>
+   <encoding>
+      <key media-type="application/x-java-object; type=java.lang.Integer"/>
+      <value media-type="application/xml; charset=UTF-8"/>
+   </encoding>
+</cache>
+----
+
+When no MediaType is configured, Infinispan assumes "application/octet-stream" for both keys and values, with the following exceptions:
+
+* If the cache is indexed, it assumes "application/x-protostream"
+* If the cache is configured with compatibility mode, it assumes "application/x-java-object"
+
+====== Supported formats
+
+Data can be written and read in different formats than the storage format; Infinispan can convert between those formats when required.
+
+The following "standard" formats can be converted interchangeably:
+
+* _application/x-java-object_
+* _application/octet-stream_
+* _application/x-www-form-urlencoded_
+* _text/plain_
+
+The following formats can be converted to/from the formats above:
+
+* __application/xml__
+* _application/json_
+* _application/x-jboss-marshalling_
+* _application/x-protostream_
+* _application/x-java-serialized_
+
+Finally, the following conversion is also supported:
+
+* Between _application/x-protostream_ and _application/json_
+
+All the REST API calls can provide headers describing the content written or the required format of the content
+when reading. Infinispan supports the standard HTTP/1.1 headers "Content-Type" and "Accept" that are applied for values,
+plus the "Key-Content-Type" with similar effect for keys.
+
+
+====== Accept header [[rest.accept]]
+
+The REST server is compliant with the https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html[RFC-2616] Accept header,
+and will negotiate the correct MediaType based on the conversions supported. Example, sending the following header when reading data:
+
+   Accept: text/plain;q=0.7, application/json;q=0.8, */*;q=0.6
+
+will cause Infinispan to try first to return content in JSON format (higher priority 0.8). If it's not possible to convert the storage format
+to JSON, next format tried will be _text/plain_ (second highest priority 0.7), and finally it falls back to _*/*_, that will pick a format
+suitable for displaying automatically based on the cache configuration.
+
+====== Key-Content-Type header [[rest.key_content_type]]
+
+Most REST API calls have the Key included in the URL. Infinispan will assume the Key is a _java.lang.String_ when handling those calls, but
+it's possible to use a specific header _Key-Content-Type_ for keys in different formats.
+
+Examples:
+
+* Specifying a byte[] Key as a Base64 string:
+
+API call:
+
+   PUT /my-cache/AQIDBDM=
+
+Headers:
+
+   Key-Content-Type: application/octet-stream
+
+* Specifying a byte[] Key as a hexadecimal string:
+
+API call:
+
+   GET /my-cache/0x01CA03042F
+
+Headers:
+
+   Key-Content-Type: application/octet-stream; encoding=hex
+
+
+* Specifying a double Key:
+
+API call:
+
+   POST /my-cache/3.141456
+
+Headers:
+
+   Key-Content-Type: application/x-java-object;type=java.lang.Double
+
+
+The _type_ parameter for _application/x-java-object_ is restricted to:
+
+* Primitive wrapper types
+* java.lang.String
+* Bytes, making _application/x-java-object;type=Bytes_ equivalent to _application/octet-stream;encoding=hex_
+
 
 ===== Putting data in
+
 ====== `PUT /{cacheName}/{cacheKey}`
-A PUT request of the above URL form will place the payload (body) in the given cache, with the given key (the named cache must exist on the server). For example `http://someserver/hr/payRoll/3` (in which case `hr` is the cache name, and `payRoll/3` is the key). Any existing data will be replaced, and Time-To-Live and Last-Modified values etc will updated (if applicable).
+A PUT request of the above URL form will place the payload (body) in the given cache, with the given key (the named cache must exist on the server). For example `http://someserver/hr/payRoll-3` (in which case `hr` is the cache name, and `payRoll-3` is the key). Any existing data will be replaced, and Time-To-Live and Last-Modified values etc will updated (if applicable).
 
 ====== `POST /{cacheName}/{cacheKey}`
 Exactly the same as PUT, only if a value in a cache/key already exists, it will return a Http CONFLICT status (and the content will not be updated).
 
-====== Headers
+.Headers
 
-*  Content-Type : MANDATORY (use link:http://www.iana.org/assignments/media-types/[media/mime-types] for example: "application/json").  If you set the Content-Type to `application/x-java-serialized-object`, then it will be stored as a Java object
+*  <<rest.key_content_type,Key-Content-Type>> : OPTIONAL The content type for the Key present in the URL.
+
+*  Content-Type : OPTIONAL The https://en.wikipedia.org/wiki/Media_type[MediaType] of the Value being sent.
 
 *  performAsync : OPTIONAL true/false (if true, this will return immediately, and then replicate data to the cluster on its own. Can help with bulk data inserts/large clusters.)
 
@@ -36,11 +176,54 @@ Exactly the same as PUT, only if a value in a cache/key already exists, it will 
 *  If _only_ `maxIdleTimeSeconds` is 0, it uses the `timeToLiveSeconds` value passed as parameter (or -1 if not present), and default `maxIdle` configured in XML/programmatically
 *  If _only_ `timeToLiveSeconds` is 0, it uses default `lifespan` configured in XML/programmatically, and `maxIdle` is set to whatever came as parameter (or -1 if not present)
 
+.JSON/Protostream conversion
+
+When caches are indexed, or specifically configured to store _application/x-protostream_, it's possible to send and receive
+JSON documents that are automatically converted to/from protostream. In order for the conversion to work, a protobuf schema must be registered.
+
+The registration can be done via REST, by doing a POST/PUT in the ____protobuf_metadata_ cache. Example using cURL:
+
+[source,bash]
+----
+curl -u user:password -X POST --data-binary @./schema.proto http://127.0.0.1:8080/rest/___protobuf_metadata/schema.proto
+----
+
+When writing a JSON document, a special field *__type_* must be present in the document to identity the protobuf _Message_
+corresponding to the document.
+
+For example, consider the following schema:
+
+[source,protobuf]
+----
+message Person  {
+  required string name = 1;
+  required int32 age = 2;
+}
+----
+
+A conformant JSON document would be:
+
+
+[source,json]
+----
+{
+   "_type": "Person",
+   "name": "user1",
+   "age": 32
+}
+----
+
+
 ===== Getting data back out
 HTTP GET and HEAD are used to retrieve data from entries.
 
 ====== `GET /{cacheName}/{cacheKey}`
-This will return the data found in the given cacheName, under the given key - as the body of the response. A Content-Type header will be supplied which matches what the data was inserted as (other then if it is a Java object, see below). Browsers can use the cache directly of course (eg as a CDN). An link:http://en.wikipedia.org/wiki/HTTP_ETag[ETag] will be returned unique for each entry, as will the Last-Modified and Expires headers field indicating the state of the data at the given URL. ETags allow browsers (and other clients) to ask for data only in the case where it has changed (to save on bandwidth) - this is standard HTTP and is honoured by Infinispan.
+This will return the data found in the given cacheName, under the given key - as the body of the response. A Content-Type header will be present in the response according to the Media Type negotiation. Browsers can use the cache directly of course (eg as a CDN). An link:http://en.wikipedia.org/wiki/HTTP_ETag[ETag] will be returned unique for each entry, as will the Last-Modified and Expires headers field indicating the state of the data at the given URL. ETags allow browsers (and other clients) to ask for data only in the case where it has changed (to save on bandwidth) - this is standard HTTP and is honoured by Infinispan.
+
+.Headers
+
+*  <<rest.key_content_type,Key-Content-Type>> : OPTIONAL The content type for the Key present in the URL. When omitted, _application/x-java-object; type=java.lang.String_ is assumed
+*  <<rest.accept,Accept>>: OPTIONAL The required format to return the content
 
 Since Infinispan 5.3 it is possible to obtain additional information by appending the "extended" parameter on the query string, as follows:
 
@@ -58,15 +241,18 @@ The same as GET, only no content is returned (only the header fields). You will 
 
 Similarly to the GET method, the HEAD method also supports returning extended information via headers. See above.
 
+.Headers
+
+*  <<rest.key_content_type,Key-Content-Type>> : OPTIONAL The content type for the Key present in the URL. When omitted, _application/x-java-object; type=java.lang.String_ is assumed
+
 ===== Listing keys
 ====== `GET /{cacheName}`
 
 This will return a list of keys present in the given cacheName as the body of the response. The format of the response can be controlled via the Accept header as follows:
 
-* application/xml - the list of keys will be returned in XML format.
-* application/json - the list of keys will be return in JSON format.
-* text/html - the list of keys will be returned in HTML format.
-* text/plain - the list of keys will be returned in plain text format, one key per line
+* _application/xml_ - the list of keys will be returned in XML format.
+* _application/json_ - the list of keys will be return in JSON format.
+* _text/plain_ - the list of keys will be returned in plain text format, one key per line
 
 If the cache identified by cacheName is distributed, only the keys owned by the node handling the request will be returned. To return all keys, append the "global" parameter to the query, as follows:
 
@@ -79,11 +265,80 @@ Data can be removed at the cache key/element level, or via a whole cache name us
 
 Removes the given key name from the cache.
 
+
+.Headers
+
+*  <<rest.key_content_type,Key-Content-Type>> : OPTIONAL The content type for the Key present in the URL. When omitted, _application/x-java-object; type=java.lang.String_ is assumed
+
 ====== `DELETE /{cacheName}`
 Removes ALL the entries in the given cache name (i.e., everything from that path down). If the operation is successful, it returns 200 code.
 
 .Make it quicker!
 TIP: Set the header performAsync to true to return immediately and let the removal happen in the background.
+
+
+===== Querying
+
+The REST server supports Ickle Queries in JSON format. It's important that the cache is configured with
+_application/x-protostream_ for both Keys and Values. If the cache is indexed, no configuration is needed.
+
+====== `GET /{cacheName}?action=search&query={ickle query}`
+
+Will execute an Ickle query in the given cache name.
+
+.Request parameters
+
+* _query_: REQUIRED the query string
+* _max_results_: OPTIONAL the number of results to return, default is _10_
+* _offset_: OPTIONAL the index of the first result to return, default is _0_
+* _query_mode_: OPTIONAL the <<query.clustered-query-api,execution mode>> of the query once it's received by server. Valid values are _FETCH_ and _BROADCAST_. Default is _FETCH_.
+
+.Query Result
+
+Results are JSON documents containing one or more hits. Example:
+
+[source, json]
+----
+{
+  "total_results" : 150,
+  "hits" : [ {
+    "hit" : {
+      "name" : "user1",
+      "age" : 35
+    }
+  }, {
+    "hit" : {
+       "name" : "user2",
+       "age" : 42
+    }
+  }, {
+    "hit" : {
+       "name" : "user3",
+       "age" : 12
+    }
+  } ]
+}
+----
+
+* _total_results_: NUMBER, the total number of results from the query.
+* _hits_: ARRAY, list of matches from the query
+* _hit_: OBJECT, each result from the query. Can contain all fields or just a subset of fields in case a _Select_ clause is used.
+
+
+====== `POST /{cacheName}?action=search`
+
+Similar to que query using GET, but the body of the request is used instead to specify the query parameters.
+
+Example:
+
+[source,json]
+----
+{
+ "query":"from Entity where name:\"user1\"",
+ "max_results":20,
+ "offset":10
+}
+----
 
 ==== Client side code
 Part of the point of a RESTful service is that you don't need to have tightly coupled client libraries/bindings. All you need is a HTTP client library. For Java, Apache HTTP Commons Client works just fine (and is used in the integration tests), or you can use java.net API.
@@ -99,59 +354,108 @@ Part of the point of a RESTful service is that you don't need to have tightly co
 #
 require 'net/http'
 
-http = Net::HTTP.new('localhost', 8080)
+uri = URI.parse('http://localhost:8080/rest/default/MyKey')
+http = Net::HTTP.new(uri.host, uri.port)
 
 #Create new entry
-http.post('/infinispan/rest/MyData/MyKey', 'DATA HERE', {"Content-Type" => "text/plain"})
+
+post = Net::HTTP::Post.new(uri.path, {"Content-Type" => "text/plain"})
+post.basic_auth('user','pass')
+post.body = "DATA HERE"
+
+resp = http.request(post)
+
+puts "POST response code : " + resp.code
 
 #get it back
-puts http.get('/infinispan/rest/MyData/MyKey').body
+
+get = Net::HTTP::Get.new(uri.path)
+get.basic_auth('user','pass')
+resp = http.request(get)
+
+puts "GET response code: " + resp.code
+puts "GET Body: " + resp.body
 
 #use PUT to overwrite
-http.put('/infinispan/rest/MyData/MyKey', 'MORE DATA', {"Content-Type" => "text/plain"})
+
+put = Net::HTTP::Put.new(uri.path, {"Content-Type" => "text/plain"})
+put.basic_auth('user','pass')
+put.body = "ANOTHER DATA HERE"
+
+resp = http.request(put)
+
+puts "PUT response code : " + resp.code
 
 #and remove...
-http.delete('/infinispan/rest/MyData/MyKey')
+delete = Net::HTTP::Delete.new(uri.path)
+delete.basic_auth('user','pass')
+
+resp = http.request(delete)
+
+puts "DELETE response code : " + resp.code
 
 #Create binary data like this... just the same...
-http.put('/infinispan/rest/MyImages/Image.png', File.read('/Users/michaelneale/logo.png'), {"Content-Type" => "image/png"})
 
+uri = URI.parse('http://localhost:8080/rest/default/MyLogo')
+put = Net::HTTP::Put.new(uri.path, {"Content-Type" => "application/octet-stream"})
+put.basic_auth('user','pass')
+put.body = File.read('./logo.png')
+
+resp = http.request(put)
+
+puts "PUT response code : " + resp.code
 
 #and if you want to do json...
 require 'rubygems'
 require 'json'
 
 #now for fun, lets do some JSON !
-data = {:name => "michael", :age => 42 }
-http.put('/infinispan/rest/Users/data/0', data.to_json, {"Content-Type" => "application/json"})
+uri = URI.parse('http://localhost:8080/rest/jsonCache/user')
+put = Net::HTTP::Put.new(uri.path, {"Content-Type" => "application/json"})
+put.basic_auth('user','pass')
 
+data = {:name => "michael", :age => 42 }
+put.body = data.to_json
+
+resp = http.request(put)
+
+puts "PUT response code : " + resp.code
+
+get = Net::HTTP::Get.new(uri.path)
+get.basic_auth('user','pass')
+resp = http.request(get)
+
+puts "GET Body: " + resp.body
 ----
 
-===== Python example
+===== Python 3 example
 
 [source,python]
 ----
 
-# Sample python code using the standard http lib only
-#
+import urllib.request
 
-import httplib
+# Setup basic auth
+base_uri = 'http://localhost:8080/rest/default'
+auth_handler = urllib.request.HTTPBasicAuthHandler()
+auth_handler.add_password(user='user', passwd='pass', realm='ApplicationRealm', uri=base_uri)
+opener = urllib.request.build_opener(auth_handler)
+urllib.request.install_opener(opener)
 
+# putting data in
+data = "SOME DATA HERE \!"
 
-#putting data in
-conn = httplib.HTTPConnection("localhost:8080")
-data = "SOME DATA HERE \!" #could be string, or a file...
-conn.request("POST", "/infinispan/rest/Bucket/0", data, {"Content-Type": "text/plain"})
-response = conn.getresponse()
-print response.status
+req = urllib.request.Request(url=base_uri + '/Key', data=data.encode("UTF-8"), method='PUT',
+                             headers={"Content-Type": "text/plain"})
+with urllib.request.urlopen(req) as f:
+    pass
 
-#getting data out
-import httplib
-conn = httplib.HTTPConnection("localhost:8080")
-conn.request("GET", "/infinispan/rest/Bucket/0")
-response = conn.getresponse()
-print response.status
-print response.read()
+print(f.status)
+print(f.reason)
+
+# getting data out
+resp = urllib.request.urlopen(base_uri + '/Key')
+print(resp.read().decode('utf-8'))
 
 ----
 
@@ -160,6 +464,7 @@ print response.read()
 
 [source,java]
 ----
+package org.infinispan;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -167,97 +472,107 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Base64;
 
 /**
  * Rest example accessing Infinispan Cache.
- * @author Samuel Tauil (samuel@redhat.com)
  *
+ * @author Samuel Tauil (samuel@redhat.com)
  */
 public class RestExample {
 
-   /**
-    * Method that puts a String value in cache.
-    * @param urlServerAddress
-    * @param value
-    * @throws IOException
-    */
-   public void putMethod(String urlServerAddress, String value) throws IOException {
-      System.out.println("----------------------------------------");
-      System.out.println("Executing PUT");
-      System.out.println("----------------------------------------");
-      URL address = new URL(urlServerAddress);
-      System.out.println("executing request " + urlServerAddress);
-      HttpURLConnection connection = (HttpURLConnection) address.openConnection();
-      System.out.println("Executing put method of value: " + value);
-      connection.setRequestMethod("PUT");
-      connection.setRequestProperty("Content-Type", "text/plain");
-      connection.setDoOutput(true);
+    /**
+     * Method that puts a String value in cache.
+     *
+     * @param urlServerAddress URL containing the cache and the key to insert
+     * @param value            Text to insert
+     * @param user             Used for basic auth
+     * @param password         Used for basic auth
+     */
+    public void putMethod(String urlServerAddress, String value, String user, String password) throws IOException {
+        System.out.println("----------------------------------------");
+        System.out.println("Executing PUT");
+        System.out.println("----------------------------------------");
+        URL address = new URL(urlServerAddress);
+        System.out.println("executing request " + urlServerAddress);
+        HttpURLConnection connection = (HttpURLConnection) address.openConnection();
+        System.out.println("Executing put method of value: " + value);
+        connection.setRequestMethod("PUT");
+        connection.setRequestProperty("Content-Type", "text/plain");
+        addAuthorization(connection, user, password);
+        connection.setDoOutput(true);
 
-      OutputStreamWriter outputStreamWriter = new OutputStreamWriter(connection.getOutputStream());
-      outputStreamWriter.write(value);
-         
-      connection.connect();
-      outputStreamWriter.flush();
-       
-      System.out.println("----------------------------------------");
-      System.out.println(connection.getResponseCode() + " " + connection.getResponseMessage());
-      System.out.println("----------------------------------------");
-         
-      connection.disconnect();
-   }
+        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(connection.getOutputStream());
+        outputStreamWriter.write(value);
 
-   /**
-    * Method that gets a value by a key in url as param value.
-    * @param urlServerAddress
-    * @return String value
-    * @throws IOException
-    */
-   public String getMethod(String urlServerAddress) throws IOException {
-      String line = new String();
-      StringBuilder stringBuilder = new StringBuilder();
+        connection.connect();
+        outputStreamWriter.flush();
+        System.out.println("----------------------------------------");
+        System.out.println(connection.getResponseCode() + " " + connection.getResponseMessage());
+        System.out.println("----------------------------------------");
+        connection.disconnect();
+    }
 
-      System.out.println("----------------------------------------");
-      System.out.println("Executing GET");
-      System.out.println("----------------------------------------");
+    /**
+     * Method that gets a value by a key in url as param value.
+     *
+     * @param urlServerAddress URL containing the cache and the key to read
+     * @param user             Used for basic auth
+     * @param password         Used for basic auth
+     * @return String value
+     */
+    public String getMethod(String urlServerAddress, String user, String password) throws IOException {
+        String line;
+        StringBuilder stringBuilder = new StringBuilder();
 
-      URL address = new URL(urlServerAddress);
-      System.out.println("executing request " + urlServerAddress);
+        System.out.println("----------------------------------------");
+        System.out.println("Executing GET");
+        System.out.println("----------------------------------------");
 
-      HttpURLConnection connection = (HttpURLConnection) address.openConnection();
-      connection.setRequestMethod("GET");
-      connection.setRequestProperty("Content-Type", "text/plain");
-      connection.setDoOutput(true);
+        URL address = new URL(urlServerAddress);
+        System.out.println("executing request " + urlServerAddress);
 
-      BufferedReader&nbsp; bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        HttpURLConnection connection = (HttpURLConnection) address.openConnection();
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Content-Type", "text/plain");
+        addAuthorization(connection, user, password);
+        connection.setDoOutput(true);
 
-      connection.connect();
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 
-      while ((line = bufferedReader.readLine()) \!= null) {
-         stringBuilder.append(line + '\n');
-      }
+        connection.connect();
 
-      System.out.println("Executing get method of value: " + stringBuilder.toString());
+        while ((line = bufferedReader.readLine()) != null) {
+            stringBuilder.append(line).append('\n');
+        }
 
-      System.out.println("----------------------------------------");
-      System.out.println(connection.getResponseCode() + " " + connection.getResponseMessage());
-      System.out.println("----------------------------------------");
+        System.out.println("Executing get method of value: " + stringBuilder.toString());
 
-      connection.disconnect();
+        System.out.println("----------------------------------------");
+        System.out.println(connection.getResponseCode() + " " + connection.getResponseMessage());
+        System.out.println("----------------------------------------");
 
-      return stringBuilder.toString();
-   }
+        connection.disconnect();
 
-   /**
-    * Main method example.
-    * @param args
-    * @throws IOException
-    */
-   public static void main(String\[\] args) throws IOException {
-      //Attention to the cache name "cacheX" it was configured in xml file with tag <*-cache name="cacheX">
-      RestExample restExample = new RestExample();
-      restExample.putMethod("http://localhost:8080/infinispan/rest/cacheX/1", "Infinispan REST Test");
-      restExample.getMethod("http://localhost:8080/infinispan/rest/cacheX/1");         
-   }
+        return stringBuilder.toString();
+    }
+
+    private void addAuthorization(HttpURLConnection connection, String user, String pass) {
+        String credentials = user + ":" + pass;
+        String basic = Base64.getEncoder().encodeToString(credentials.getBytes());
+        connection.setRequestProperty("Authorization", "Basic " + basic);
+    }
+
+    /**
+     * Main method example.
+     */
+    public static void main(String[] args) throws IOException {
+        RestExample restExample = new RestExample();
+        String user = "user";
+        String pass = "pass";
+        restExample.putMethod("http://localhost:8080/rest/default/1", "Infinispan REST Test", user, pass);
+        restExample.getMethod("http://localhost:8080/rest/default/1", user, pass);
+    }
 }
 
 ----
