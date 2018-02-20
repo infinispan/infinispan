@@ -128,9 +128,6 @@
       <module>tasks/manager</module>
       <module>tasks/scripting</module>
       <module>demos/gui</module>
-      <module>demos/distexec</module>
-      <module>demos/lucene-directory-demo</module>
-      <module>demos/gridfs-webdav</module>
       <module>cdi</module>
       <module>cdi/common</module>
       <module>cdi/embedded</module>
@@ -275,7 +272,6 @@
       <version.jetty.http.client>9.4.5.v20170502</version.jetty.http.client>
       <version.jgoodies.forms>1.0.7</version.jgoodies.forms>
       <version.jmh>1.12</version.jmh>
-      <version.jsap>2.1</version.jsap>
       <version.jstl>1.2</version.jstl>
       <version.junit>4.12</version.junit>
       <version.karaf-maven-plugin>4.1.4</version.karaf-maven-plugin>
@@ -320,7 +316,6 @@
       <version.spymemcached>2.12.1</version.spymemcached>
       <version.testng.arquillian>6.5.2</version.testng.arquillian>
       <version.testng>6.9.9</version.testng>
-      <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld-se>2.3.4.Final</version.weld-se>
       <version.weld>2.3.4.Final</version.weld>
       <version.netty-tcnative-boringssl-static>2.0.7.Final</version.netty-tcnative-boringssl-static>
@@ -526,11 +521,6 @@
             <version>${version.mojo.execturo}</version>
          </dependency>
          <dependency>
-            <groupId>com.martiansoftware</groupId>
-            <artifactId>jsap</artifactId>
-            <version>${version.jsap}</version>
-         </dependency>
-         <dependency>
             <groupId>com.microsoft.azure</groupId>
             <artifactId>azure-storage</artifactId>
             <version>${version.microsoft.azure.storage}</version>
@@ -616,11 +606,6 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>${version.assertj}</version>
-         </dependency>
-         <dependency>
-            <groupId>net.sf.webdav-servlet</groupId>
-            <artifactId>webdav-servlet</artifactId>
-            <version>${version.webdav.servlet}</version>
          </dependency>
          <dependency>
             <groupId>org.aspectj</groupId>

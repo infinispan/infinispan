@@ -26,7 +26,7 @@ and all additional optional modules.
    * configs: contains sample configurations
    * docs: contains documentation for the API, for the configuration schemas 
      and for the available JMX beans, attributes and operations
-   * demos: contains a variety of demos showcasing Infinispan's capabilities.
+   * demos: contains demos showcasing Infinispan's capabilities.
 
 Requirements
 ------------

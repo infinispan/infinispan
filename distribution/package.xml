@@ -43,9 +43,6 @@
       <!-- Demos -->
       <mkdir dir="${output.dir}/demos" />
       <demo target="${output.dir}" demo="gui" />
-      <demo target="${output.dir}" demo="distexec" />
-      <demo target="${output.dir}" demo="gridfs-webdav" />
-      <demo target="${output.dir}" demo="lucene-directory-demo" />
 
       <fix-permissions dir="${output.dir}/bin" />
 
