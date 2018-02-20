@@ -798,7 +798,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
 
    @Override
    public AdvancedCache<K, V> with(ClassLoader classLoader) {
-      return new SecureCacheImpl(delegate.with(classLoader));
+      return new SecureCacheImpl(delegate.with(classLoader), authzManager, subject);
    }
 
    @Override
