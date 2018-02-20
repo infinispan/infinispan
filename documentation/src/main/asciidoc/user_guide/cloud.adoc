@@ -257,3 +257,4 @@ For both Kubernetes and OpenShift, the Rolling Upgrade procedure is almost the s
 The last step in the Rolling Upgrade (removing a Remote Cache Store) needs to be performed differently. We need to use link:$$http://kubernetes.io/docs/user-guide/rolling-updates/$$[Kubernetes/OpenShift Rolling update] command and replace Pods configuration with the one which does not contain Remote Cache Store.
 
 A detailed instruction might be found in link:$$https://issues.jboss.org/browse/ISPN-6673[ISPN-6673] ticket.
+
