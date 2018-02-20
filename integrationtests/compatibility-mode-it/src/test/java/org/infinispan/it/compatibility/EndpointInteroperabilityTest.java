@@ -28,6 +28,7 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
@@ -308,6 +309,29 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       assertEquals(bytesRemoteCache.get(newKey), value);
    }
 
+   @Test
+   public void testCustomKeysAndByteValues() throws Exception {
+
+      String customKeyType = "application/x-java-object; type=ByteArray";
+
+      CustomKey objectKey = new CustomKey("a", 1.0d, 1.0f, true);
+      byte[] key = new GenericJBossMarshaller().objectToByteBuffer(objectKey);
+      byte[] value = {12};
+
+      // Write <byte[], byte[]> via Hot Rod (the HR client is configured with the default marshaller)
+      bytesRemoteCache.put(key, value);
+      assertEquals(value, bytesRemoteCache.get(key));
+
+      String restKey = StandardConversions.bytesToHex(key);
+
+      // Read via Rest
+      Object bytesFromRest = new RestRequest().cache(BYTES_CACHE_NAME)
+            .key(restKey, customKeyType).accept(APPLICATION_OCTET_STREAM)
+            .read();
+
+      assertArrayEquals((byte[]) bytesFromRest, value);
+   }
+
    String getEndpoint(String cache) {
       return String.format("http://localhost:%s/rest/%s", restServer.getPort(), cache);
    }
@@ -391,7 +415,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
             get.setRequestHeader("Key-Content-Type", this.keyContentType);
          }
          restClient.executeMethod(get);
-         assertEquals(HttpStatus.SC_OK, get.getStatusCode());
+         assertEquals(get.getStatusCode(), HttpStatus.SC_OK);
          return get.getResponseBody();
       }
    }
