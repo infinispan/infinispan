@@ -142,7 +142,7 @@ public final class CacheDecodeContext {
          // version generator, the factory does not get invoked.
          NumericVersionGenerator newVersionGenerator = new NumericVersionGenerator()
                .clustered(registry.getComponent(RpcManager.class) != null);
-         registry.registerComponent(newVersionGenerator, VersionGenerator.class);
+         registry.registerVersionGenerator(newVersionGenerator);
          return newVersionGenerator.generateNew();
       } else {
          return cacheVersionGenerator.generateNew();
