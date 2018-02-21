@@ -46,6 +46,29 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "org.infinispan.client.hotrod.BulkOperationsTest")
 public class BulkOperationsTest extends MultipleCacheManagersTest {
 
+   enum CollectionOp {
+      ENTRYSET(RemoteCache::entrySet),
+      KEYSET(RemoteCache::keySet),
+      VALUES(RemoteCache::values);
+
+      private Function<RemoteCache<?, ?>, CloseableIteratorCollection<?>> function;
+
+      CollectionOp(Function<RemoteCache<?, ?>, CloseableIteratorCollection<?>> function) {
+         this.function = function;
+      }
+   }
+
+   enum ItemTransform {
+      IDENTITY(Function.identity()),
+      COPY_ENTRY((Function) o -> new AbstractMap.SimpleEntry<>(o, o));
+
+      private final Function<Object, Object> function;
+
+      ItemTransform(Function<Object, Object> function) {
+         this.function = function;
+      }
+   }
+
    protected HotRodServer[] hotrodServers;
    protected RemoteCacheManager remoteCacheManager;
    protected RemoteCache<Object, Object> remoteCache;
@@ -115,80 +138,82 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
    @DataProvider(name = "collections-item")
    public Object[][] collectionItemProvider() {
       return new Object[][] {
-            { (Function<RemoteCache<?, ?>, Collection<?>>) RemoteCache::keySet, Function.identity() },
-            { (Function<RemoteCache<?, ?>, Collection<?>>) RemoteCache::values, Function.identity() },
-            { (Function<RemoteCache<?, ?>, Collection<?>>) RemoteCache::entrySet, (Function) o -> new AbstractMap.SimpleEntry<>(o, o) },
+            {CollectionOp.KEYSET, ItemTransform.IDENTITY },
+            {CollectionOp.VALUES, ItemTransform.IDENTITY },
+            {CollectionOp.ENTRYSET, ItemTransform.COPY_ENTRY},
       };
    }
 
    @Test(dataProvider = "collections-item")
-   public void testContains(Function<RemoteCache<?, ?>, Collection<?>> collFunction, Function<Object, Object> itemFunction) {
+   public void testContains(CollectionOp op, ItemTransform transform) {
       populateCacheManager();
-      Collection<?> collection = collFunction.apply(remoteCache);
+      Collection<?> collection = op.function.apply(remoteCache);
       for (int i = 0; i < 100; i++) {
-         assertTrue(collection.contains(itemFunction.apply(i)));
+         assertTrue(collection.contains(transform.function.apply(i)));
       }
-      assertFalse(collection.contains(itemFunction.apply(104)));
-      assertFalse(collection.contains(itemFunction.apply(-1)));
+      assertFalse(collection.contains(transform.function.apply(104)));
+      assertFalse(collection.contains(transform.function.apply(-1)));
    }
 
    @Test(dataProvider = "collections-item")
-   public void testContainsAll(Function<RemoteCache<?, ?>, Collection<?>> collFunction, Function<Object, Object> itemFunction) {
+   public void testContainsAll(CollectionOp op, ItemTransform transform) {
       populateCacheManager();
-      Collection<?> collection = collFunction.apply(remoteCache);
-      assertFalse(collection.containsAll(Arrays.asList(itemFunction.apply(204), itemFunction.apply(4))));
-      assertTrue(collection.containsAll(Arrays.asList(itemFunction.apply(4), itemFunction.apply(10))));
-      assertTrue(collection.containsAll(IntStream.range(0, 100).mapToObj(itemFunction::apply).collect(Collectors.toList())));
+      Collection<?> collection = op.function.apply(remoteCache);
+      assertFalse(collection.containsAll(Arrays.asList(transform.function.apply(204), transform.function.apply(4))));
+      assertTrue(collection.containsAll(Arrays.asList(transform.function.apply(4), transform.function.apply(10))));
+      assertTrue(collection.containsAll(IntStream.range(0, 100).mapToObj(transform.function::apply).collect(Collectors.toList())));
    }
 
    @Test(dataProvider = "collections-item")
-   public void testRemove(Function<RemoteCache<?, ?>, Collection<?>> collFunction, Function<Object, Object> itemFunction) {
+   public void testRemove(CollectionOp op, ItemTransform transform) {
       populateCacheManager();
-      Collection<?> collection = collFunction.apply(remoteCache);
-      collection.remove(itemFunction.apply(4));
-      collection.remove(itemFunction.apply(23));
-      collection.remove(itemFunction.apply(1001));
+      Collection<?> collection = op.function.apply(remoteCache);
+      collection.remove(transform.function.apply(4));
+      collection.remove(transform.function.apply(23));
+      collection.remove(transform.function.apply(1001));
       assertEquals(98, collection.size());
    }
 
    @Test(dataProvider = "collections-item")
-   public void testRemoveAll(Function<RemoteCache<?, ?>, Collection<Object>> collFunction, Function<Object, Object> itemFunction) {
+   public void testRemoveAll(CollectionOp op, ItemTransform transform) {
       populateCacheManager();
-      Collection<Object> collection = collFunction.apply(remoteCache);
+      CloseableIteratorCollection<?> collection = op.function.apply(remoteCache);
       // 105 can't be removed
-      collection.removeAll(Arrays.asList(itemFunction.apply(5), itemFunction.apply(10), itemFunction.apply(23), itemFunction.apply(18), itemFunction.apply(105)));
+      collection.removeAll(Arrays.asList(transform.function.apply(5), transform.function.apply(10),
+                                         transform.function.apply(23), transform.function.apply(18),
+                                         transform.function.apply(105)));
       assertEquals(96, collection.size());
-      collection.removeAll(Arrays.asList(itemFunction.apply(5), itemFunction.apply(890)));
+      collection.removeAll(Arrays.asList(transform.function.apply(5), transform.function.apply(890)));
       assertEquals(96, collection.size());
    }
 
    @Test(dataProvider = "collections-item")
-   public void testRetainAll(Function<RemoteCache<?, ?>, Collection<?>> collFunction, Function<Object, Object> itemFunction) {
+   public void testRetainAll(CollectionOp op, ItemTransform transform) {
       populateCacheManager();
-      Collection<?> collection = collFunction.apply(remoteCache);
-      collection.retainAll(Arrays.asList(itemFunction.apply(1), itemFunction.apply(23), itemFunction.apply(102)));
+      Collection<?> collection = op.function.apply(remoteCache);
+      collection.retainAll(Arrays.asList(transform.function.apply(1), transform.function.apply(23), transform.function.apply(102)));
       assertEquals(2, collection.size());
    }
 
    @Test(dataProvider = "collections-item", expectedExceptions = UnsupportedOperationException.class)
-   public void testAdd(Function<RemoteCache<?, ?>, CloseableIteratorCollection<Object>> function, Function<Object, Object> itemFunction) {
-      CloseableIteratorCollection<Object> collection = function.apply(remoteCache);
-      collection.add(itemFunction.apply(1));
+   public void testAdd(CollectionOp op, ItemTransform transform) {
+      CloseableIteratorCollection collection = op.function.apply(remoteCache);
+      collection.add(transform.function.apply(1));
    }
 
    @Test(dataProvider = "collections-item", expectedExceptions = UnsupportedOperationException.class)
-   public void testAddAll(Function<RemoteCache<?, ?>, CloseableIteratorCollection<Object>> function, Function<Object, Object> itemFunction) {
-      CloseableIteratorCollection<Object> collection = function.apply(remoteCache);
-      collection.addAll(Arrays.asList(itemFunction.apply(1), itemFunction.apply(2)));
+   public void testAddAll(CollectionOp op, ItemTransform transform) {
+      CloseableIteratorCollection collection = op.function.apply(remoteCache);
+      collection.addAll(Arrays.asList(transform.function.apply(1), transform.function.apply(2)));
    }
 
    @Test(dataProvider = "collections-item")
-   public void testStreamAll(Function<RemoteCache<?, ?>, Collection<Object>> collFunction, Function<Object, Object> itemFunction) {
+   public void testStreamAll(CollectionOp op, ItemTransform transform) {
       populateCacheManager();
-      Collection<Object> collection = collFunction.apply(remoteCache);
+      Collection<?> collection = op.function.apply(remoteCache);
       // Test operator that is performed on all
       // We don't try resource stream to verify iterator is closed upon full consumption
-      List<String> strings = collection.stream().map(Object::toString).collect(Collectors.toList());
+      List<String> strings = collection.stream().map(transform.function).map(Object::toString).collect(Collectors.toList());
       assertEquals(100, strings.size());
 
       // Test parallel operator that is performed on all
@@ -197,49 +222,52 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
    }
 
    @Test(dataProvider = "collections-item")
-   public void testStreamShortCircuit(Function<RemoteCache<?, ?>, Collection<Object>> collFunction, Function<Object, Object> itemFunction) {
+   public void testStreamShortCircuit(CollectionOp op, ItemTransform transform) {
       populateCacheManager();
-      Collection<Object> collection = collFunction.apply(remoteCache);
+      CloseableIteratorCollection<?> collection = op.function.apply(remoteCache);
 
-      try (Stream<Object> stream = collection.stream()) {
+      try (Stream<?> stream = collection.stream()) {
          // Test short circuit (non parallel) - it can't match all
-         assertEquals(false, stream.allMatch(o -> Objects.equals(o, itemFunction.apply(1))));
+         assertEquals(false, stream.allMatch(o -> Objects.equals(o, transform.function.apply(1))));
       }
 
-      try (Stream<Object> stream = collection.parallelStream()) {
+      try (Stream<?> stream = collection.parallelStream()) {
          // Test short circuit (parallel) - should go through almost all until it finds 4
-         assertEquals(itemFunction.apply(4), stream.filter(o -> Objects.equals(o, itemFunction.apply(4))).findAny().get());
+         assertEquals(transform.function.apply(4),
+                      stream.filter(o -> Objects.equals(o, transform.function.apply(4)))
+                            .findAny()
+                            .get());
       }
    }
 
    @DataProvider(name = "collections")
    public Object[][] collectionProvider() {
       return new Object[][] {
-            { (Function<RemoteCache<?, ?>, CloseableIteratorCollection<?>>) RemoteCache::entrySet },
-            { (Function<RemoteCache<?, ?>, CloseableIteratorCollection<?>>) RemoteCache::keySet },
-            { (Function<RemoteCache<?, ?>, CloseableIteratorCollection<?>>) RemoteCache::values },
+            {CollectionOp.ENTRYSET},
+            {CollectionOp.KEYSET},
+            {CollectionOp.VALUES },
       };
    }
 
    @Test(dataProvider = "collections")
-   public void testSizeWithExpiration(Function<RemoteCache<?, ?>, Collection<?>> function) {
+   public void testSizeWithExpiration(CollectionOp op) {
       Map<String, String> dataIn = new HashMap<>();
       dataIn.put("aKey", "aValue");
       dataIn.put("bKey", "bValue");
       final long lifespan = 5000;
       remoteCache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
-      assertEquals(2, function.apply(remoteCache).size());
+      assertEquals(2, op.function.apply(remoteCache).size());
 
       timeService.advance(lifespan + 1);
 
-      assertEquals(0, function.apply(remoteCache).size());
+      assertEquals(0, op.function.apply(remoteCache).size());
    }
 
    @Test(dataProvider = "collections")
-   public void testIteratorRemove(Function<RemoteCache<?, ?>, CloseableIteratorCollection<?>> function) {
+   public void testIteratorRemove(CollectionOp op) {
       populateCacheManager();
-      CloseableIteratorCollection<?> collection = function.apply(remoteCache);
+      CloseableIteratorCollection<?> collection = op.function.apply(remoteCache);
       assertEquals(100, collection.size());
       try (CloseableIterator<?> iter = collection.iterator()) {
          assertTrue(iter.hasNext());
@@ -253,9 +281,9 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
    }
 
    @Test(dataProvider = "collections")
-   public void testClear(Function<RemoteCache<?, ?>, CloseableIteratorCollection<?>> function) {
+   public void testClear(CollectionOp op) {
       populateCacheManager();
-      CloseableIteratorCollection<?> collection = function.apply(remoteCache);
+      CloseableIteratorCollection<?> collection = op.function.apply(remoteCache);
       assertEquals(100, collection.size());
       collection.clear();
       assertEquals(0, remoteCache.size());
