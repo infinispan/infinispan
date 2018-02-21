@@ -79,8 +79,12 @@ public class MemoryConfiguration implements Matchable<MemoryConfiguration> {
       return evictionStrategy.get();
    }
 
+   /**
+    * Returns whether remove eviction is in use
+    * @return
+    */
    public boolean isEvictionEnabled() {
-      return size.get() > 0;
+      return size.get() > 0 && evictionStrategy.get().isRemovalBased();
    }
 
    /**
