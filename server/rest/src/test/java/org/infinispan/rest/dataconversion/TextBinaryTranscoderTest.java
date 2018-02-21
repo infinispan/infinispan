@@ -6,14 +6,14 @@ import static org.testng.Assert.assertTrue;
 import org.infinispan.commons.dataconversion.DefaultTranscoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.test.dataconversion.AbstractTranscoderTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "rest.TextBinaryTranscoderTest")
 public class TextBinaryTranscoderTest extends AbstractTranscoderTest {
    protected String dataSrc;
 
-   @BeforeTest
+   @BeforeClass(alwaysRun = true)
    public void setUp() {
       dataSrc = " !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
       transcoder = DefaultTranscoder.INSTANCE;

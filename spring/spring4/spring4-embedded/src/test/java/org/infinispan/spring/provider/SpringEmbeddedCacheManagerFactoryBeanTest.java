@@ -11,7 +11,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.builders.SpringEmbeddedCacheManagerFactoryBeanBuilder;
 import org.infinispan.transaction.TransactionMode;
-import org.testng.annotations.AfterTest;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
@@ -32,7 +32,7 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
 
    private SpringEmbeddedCacheManagerFactoryBean objectUnderTest;
 
-   @AfterTest
+   @AfterClass(alwaysRun = true)
    public void closeCacheManager() throws Exception {
       if(objectUnderTest != null) {
          objectUnderTest.destroy();

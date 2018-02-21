@@ -16,7 +16,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterTest;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -59,7 +59,7 @@ public class ConcurrentStartupTest extends AbstractCacheTest {
       Thread.sleep(5000);
    }
 
-   @AfterTest
+   @AfterClass(alwaysRun = true)
    protected void tearDown() throws Exception {
       if (ex1 != null)
          ex1.shutdownNow();

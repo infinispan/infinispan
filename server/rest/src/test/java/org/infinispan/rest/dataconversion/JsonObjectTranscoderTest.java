@@ -7,7 +7,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.test.data.Address;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.dataconversion.AbstractTranscoderTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 public class JsonObjectTranscoderTest extends AbstractTranscoderTest {
    protected Person dataSrc;
 
-   @BeforeTest
+   @BeforeClass(alwaysRun = true)
    public void setUp() {
       dataSrc = new Person("joe");
       Address address = new Address();

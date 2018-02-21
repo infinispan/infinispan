@@ -15,8 +15,8 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.TestException;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "unstable", testName = "distribution.UnknownCacheStartTest", description = "original group: functional")
@@ -25,12 +25,12 @@ public class UnknownCacheStartTest extends AbstractInfinispanTest {
    ConfigurationBuilder configuration;
    EmbeddedCacheManager cm1, cm2;
 
-   @BeforeTest
+   @BeforeClass(alwaysRun = true)
    public void setUp() {
       configuration = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
    }
 
-   @AfterTest
+   @AfterClass(alwaysRun = true)
    public void tearDown() {
       killCacheManagers(cm1, cm2);
    }

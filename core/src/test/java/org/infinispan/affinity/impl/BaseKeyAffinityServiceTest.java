@@ -18,7 +18,7 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
-import org.testng.annotations.AfterTest;
+import org.testng.annotations.AfterClass;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -30,7 +30,7 @@ public abstract class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest<
    protected ExecutorService executor  = Executors.newSingleThreadExecutor(threadFactory);
    protected KeyAffinityServiceImpl<Object> keyAffinityService;
 
-   @AfterTest
+   @AfterClass(alwaysRun = true)
    public void stopExecutorService() throws InterruptedException {
       if (keyAffinityService != null) keyAffinityService.stop();
       if (executor != null) {

@@ -44,8 +44,8 @@ import org.infinispan.util.concurrent.locks.impl.LockContainer;
 import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -74,12 +74,12 @@ public class AsyncStoreStressTest {
    private Map<Object, InternalCacheEntry> expectedState = new ConcurrentHashMap<Object, InternalCacheEntry>();
    private TestObjectStreamMarshaller marshaller;
 
-   @BeforeTest
+   @BeforeClass(alwaysRun = true)
    void startMarshaller() {
       marshaller = new TestObjectStreamMarshaller();
    }
 
-   @AfterTest
+   @AfterClass(alwaysRun = true)
    void stopMarshaller() {
       marshaller.stop();
    }

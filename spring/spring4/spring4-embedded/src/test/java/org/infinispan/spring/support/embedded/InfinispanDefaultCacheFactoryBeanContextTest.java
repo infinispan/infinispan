@@ -9,13 +9,13 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
  * <p>
- * Test {@link InfinispanDefaultCacheFactoryBean} deployed in a Spring application context.
+ * Test {@link org.infinispan.spring.InfinispanDefaultCacheFactoryBean} deployed in a Spring application context.
  * </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
@@ -28,12 +28,12 @@ public class InfinispanDefaultCacheFactoryBeanContextTest extends AbstractTestNG
 
    private static final String DEFAULT_CACHE_NAME = "testDefaultCache";
 
-   @BeforeTest(alwaysRun = true)
+   @BeforeClass(alwaysRun = true)
    public void beforeTest() {
        TestResourceTracker.testStarted(getClass().getName());
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterClass(alwaysRun = true)
    public void afterTest() {
        TestResourceTracker.testFinished(getClass().getName());
    }

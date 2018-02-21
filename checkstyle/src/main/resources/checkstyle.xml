@@ -98,6 +98,13 @@
             <!--<property name="message" value="Stop using the AssertionFailure from commons-annotations." />-->
         <!--</module>-->
 
+       <!-- In TestNG a test is a group of classes, so it's always better to use @AfterClass and @BeforeClass -->
+       <!-- This might have been faster with the IllegalImport module, but that always flags our use of sun.reflect.Reflection -->
+       <module name="RegexpSinglelineJava">
+          <property name="format" value="@AfterTest|@BeforeTest"/>
+          <property name="message" value="In TestNG a test is a group of classes, so it's always better to use @AfterClass and @BeforeClass"/>
+       </module>
+
         <!-- The severity of following rules should be eventually set to error -->
         <module name="org.infinispan.checkstyle.checks.interceptors.InterceptorDefinesAllReadsCheck">
             <property name="severity" value="${checkstyle.interceptors.reads.severity}" default="warning"/>

@@ -21,7 +21,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.AfterTest;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
@@ -71,7 +71,7 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
       remoteCache = remoteCacheManager.getCache();
    }
 
-   @AfterTest
+   @AfterClass(alwaysRun = true)
    public void tearDown() {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotRodServer1, hotRodServer2, hotRodServer3, hotRodServer4);

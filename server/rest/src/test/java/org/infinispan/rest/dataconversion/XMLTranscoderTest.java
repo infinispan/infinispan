@@ -7,14 +7,14 @@ import static org.testng.Assert.assertEquals;
 import org.infinispan.test.data.Address;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.dataconversion.AbstractTranscoderTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "rest.XMLTranscoderTest")
 public class XMLTranscoderTest extends AbstractTranscoderTest {
    protected Person dataSrc;
 
-   @BeforeTest
+   @BeforeClass(alwaysRun = true)
    public void setUp() {
       dataSrc = new Person("Joe");
       Address address = new Address();

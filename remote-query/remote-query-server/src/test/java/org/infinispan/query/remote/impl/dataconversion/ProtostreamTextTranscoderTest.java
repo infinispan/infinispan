@@ -6,7 +6,7 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.test.dataconversion.AbstractTranscoderTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -19,7 +19,7 @@ public class ProtostreamTextTranscoderTest extends AbstractTranscoderTest {
 
    protected String dataSrc;
 
-   @BeforeTest
+   @BeforeClass(alwaysRun = true)
    public void setUp() throws IOException {
       dataSrc = " !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
       SerializationContext serCtx = ProtobufUtil.newSerializationContext(Configuration.builder().build());

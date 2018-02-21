@@ -11,9 +11,9 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.springframework.cache.CacheManager;
 import org.springframework.test.context.testng.AbstractTransactionalTestNGSpringContextTests;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -31,12 +31,12 @@ public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSp
 
    protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
-   @BeforeTest(alwaysRun = true)
+   @BeforeClass(alwaysRun = true)
    public void beforeTest() {
       TestResourceTracker.testStarted(getClass().getName());
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterClass(alwaysRun = true)
    public void afterTest() {
       TestResourceTracker.testFinished(getClass().getName());
    }

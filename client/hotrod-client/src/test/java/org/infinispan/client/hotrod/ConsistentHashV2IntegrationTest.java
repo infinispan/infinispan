@@ -23,8 +23,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 /**
@@ -89,7 +89,7 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
    protected void clearContent() throws Throwable {
    }
 
-   @AfterTest
+   @AfterClass(alwaysRun = true)
    public void cleanUp() {
       ex.shutdownNow();
       kas.stop();

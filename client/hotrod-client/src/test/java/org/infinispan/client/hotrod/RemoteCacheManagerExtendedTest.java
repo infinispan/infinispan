@@ -1,5 +1,8 @@
 package org.infinispan.client.hotrod;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertTrue;
+
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
@@ -8,11 +11,8 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterTest;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -42,7 +42,7 @@ public class RemoteCacheManagerExtendedTest extends SingleCacheManagerTest {
       remoteCacheManager = null;
    }
 
-   @AfterTest
+   @AfterClass(alwaysRun = true)
    public void release() {
       TestingUtil.killCacheManagers(cacheManager);
       HotRodClientTestingUtil.killServers(hotrodServer);
