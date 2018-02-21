@@ -19,26 +19,13 @@ import org.junit.Test;
 */
 public class OperationsTestCase extends OperationTestCaseBase {
 
-    // subsystem test operations
-    // TODO
-
     // cache container test operations
-    static final ModelNode cacheContainerAddOp = getCacheContainerAddOperation("maximal2");
-    static final ModelNode cacheContainerRemovekOp = getCacheContainerRemoveOperation("maximal2");
     static final ModelNode readCacheContainerDefaultCacheOp = getCacheContainerReadOperation("maximal", "default-cache");
     static final ModelNode writeCacheContainerDefaultCacheOp = getCacheContainerWriteOperation("maximal", "default-cache", "new-default-cache");
 
-    // cache transport test operations
-    // TODO
-
     // cache test operations
-    static final ModelNode localCacheAddOp = getCacheAddOperation("maximal2", ModelKeys.LOCAL_CACHE, "new-cache");
-    static final ModelNode localCacheRemovekOp = getCacheRemoveOperation("maximal2", ModelKeys.LOCAL_CACHE, "new-cache");
     static final ModelNode readLocalCacheBatchingOp = getCacheConfigurationReadOperation("maximal", ModelKeys.LOCAL_CACHE_CONFIGURATION, "local", "batching");
     static final ModelNode writeLocalCacheBatchingOp = getCacheConfigurationWriteOperation("maximal", ModelKeys.LOCAL_CACHE_CONFIGURATION, "local", "batching", "false");
-
-    // cache locking test operations
-    // TODO
 
     // cache store test operations
     static final ModelNode readDistCacheStringJDBCStoreDatastoreOp = getStringKeyedJDBCCacheStoreReadOperation("maximal", ModelKeys.DISTRIBUTED_CACHE_CONFIGURATION, "dist", "datasource");
