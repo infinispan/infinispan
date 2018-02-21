@@ -16,7 +16,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -30,7 +30,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    private ConfigurationBuilder replCfg, distCfg;
 
-   @BeforeTest
+   @BeforeClass(alwaysRun = true)
    public void setUp() {
       replCfg = MultipleCacheManagersTest.getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       replCfg.clustering().stateTransfer().fetchInMemoryState(true);

@@ -4,7 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 public class MemoryCleanupTest {
 
 
-   @BeforeTest
+   @BeforeClass(alwaysRun = true)
    public void createCm() {
    }
 

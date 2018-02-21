@@ -31,9 +31,9 @@ import java.util.stream.Stream;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.commons.api.BasicCache;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.interceptors.AsyncInterceptor;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.test.fwk.ChainMethodInterceptor;
@@ -407,7 +407,7 @@ public class AbstractInfinispanTest {
    }
 
    private boolean fieldIsMemoryHog(Field field) {
-      Class<?>[] memoryHogs = {CacheContainer.class, BasicCache.class, FunctionalMap.class, Protocol.class,
+      Class<?>[] memoryHogs = {BasicCacheContainer.class, BasicCache.class, FunctionalMap.class, Protocol.class,
                                AsyncInterceptor.class, RequestRepository.class,
                                BasePartitionHandlingTest.Partition.class};
       return Stream.of(memoryHogs).anyMatch(clazz -> fieldIsMemoryHog(field, clazz));

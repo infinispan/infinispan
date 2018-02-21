@@ -6,7 +6,7 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.test.dataconversion.AbstractTranscoderTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -38,7 +38,7 @@ public class ProtostreamJsonTranscoderTest extends AbstractTranscoderTest {
 
    protected String dataSrc;
 
-   @BeforeTest
+   @BeforeClass(alwaysRun = true)
    public void setUp() throws IOException {
 
       dataSrc = "{\"_type\":\"Person\", \"name\":\"joe\", \"address\":{\"_type\":\"Address\", \"street\":\"\", \"city\":\"London\", \"zip\":\"0\"}}";

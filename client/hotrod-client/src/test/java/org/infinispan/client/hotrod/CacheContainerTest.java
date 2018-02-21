@@ -10,7 +10,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterTest;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
@@ -39,7 +39,7 @@ public class CacheContainerTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   @AfterTest
+   @AfterClass(alwaysRun = true)
    public void release() {
       killCacheManagers(cacheManager);
       killRemoteCacheManager(remoteCacheManager);

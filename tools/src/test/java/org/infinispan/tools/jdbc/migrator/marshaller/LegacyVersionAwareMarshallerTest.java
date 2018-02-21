@@ -42,7 +42,7 @@ import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.test.data.Key;
 import org.infinispan.test.data.Person;
 import org.infinispan.util.KeyValuePair;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -61,7 +61,7 @@ public class LegacyVersionAwareMarshallerTest {
       marshaller = new LegacyVersionAwareMarshaller(externalizerMap);
    }
 
-   @BeforeTest
+   @BeforeClass(alwaysRun = true)
    public void beforeTest() throws Exception {
       Path path = new File("src/test/resources/marshalled_bytes_8.x.bin").toPath();
       byte[] bytes = Files.readAllBytes(path);

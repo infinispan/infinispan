@@ -17,7 +17,7 @@ import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterTest;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
@@ -60,7 +60,7 @@ public class PrimitiveEmbeddedCompatTest extends SingleCacheManagerTest {
       return builder;
    }
 
-   @AfterTest
+   @AfterClass(alwaysRun = true)
    public void release() {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotRodServer);

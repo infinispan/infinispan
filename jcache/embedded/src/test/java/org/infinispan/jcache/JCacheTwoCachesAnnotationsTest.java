@@ -4,7 +4,6 @@ import static org.infinispan.test.AbstractCacheTest.getDefaultClusteredCacheConf
 
 import java.lang.reflect.Method;
 import java.net.URI;
-
 import javax.cache.Cache;
 import javax.inject.Inject;
 
@@ -19,9 +18,9 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -60,7 +59,7 @@ public class JCacheTwoCachesAnnotationsTest extends AbstractTwoCachesAnnotations
       return jCacheManager.getCache("annotation");
    }
 
-   @BeforeTest
+   @BeforeClass(alwaysRun = true)
    public void initCacheManagers() {
       cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
       cacheManager1.defineConfiguration("annotation", getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC).build());
@@ -76,7 +75,7 @@ public class JCacheTwoCachesAnnotationsTest extends AbstractTwoCachesAnnotations
       TestingUtil.clearContent(cacheManager1, cacheManager2);
    }
 
-   @AfterTest
+   @AfterClass(alwaysRun = true)
    public void killCacheManagers() {
       TestingUtil.killCacheManagers(cacheManager1, cacheManager2);
    }
