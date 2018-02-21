@@ -221,8 +221,8 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          case BINARY:
             return expected * (optimisticTransaction ? 64 : 24);
          case OFF_HEAP:
-            return expected * (optimisticTransaction ? UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(63) :
-                  UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(48));
+            return expected * (optimisticTransaction ? UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(51) :
+                  UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(33));
          default:
             throw new IllegalStateException("Unconfigured storage type: " + storageType);
       }
