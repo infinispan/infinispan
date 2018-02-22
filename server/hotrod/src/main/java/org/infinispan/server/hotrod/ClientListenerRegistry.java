@@ -21,7 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
@@ -73,7 +72,6 @@ class ClientListenerRegistry {
    private final static Log log = LogFactory.getLog(ClientListenerRegistry.class, Log.class);
    private final static boolean isTrace = log.isTraceEnabled();
 
-   private final AtomicLong messageId = new AtomicLong();
    private final ConcurrentMap<WrappedByteArray, Object> eventSenders = new ConcurrentHashMap<>();
 
    volatile private Optional<Marshaller> marshaller = Optional.empty();
@@ -122,37 +120,39 @@ class ClientListenerRegistry {
 
    void addClientListener(VersionedDecoder decoder, Channel ch, HotRodHeader h, byte[] listenerId,
                           AdvancedCache<byte[], byte[]> cache, boolean includeState,
-                          KeyValuePair<Optional<KeyValuePair<String, List<byte[]>>>, Optional<KeyValuePair<String, List<byte[]>>>> namedFactories,
+                          KeyValuePair<String, List<byte[]>> filterFactory,
+                          KeyValuePair<String, List<byte[]>> converterFactory,
                           boolean useRawData, int listenerInterests) {
-      ClientEventType eventType = ClientEventType.createType(namedFactories.getValue().isPresent(), useRawData, h.version);
-      Object clientEventSender = getClientEventSender(includeState, ch, h.version, cache, listenerId, eventType);
-      List<byte[]> binaryFilterParams = namedFactories.getKey().map(KeyValuePair::getValue).orElse(Collections.emptyList());
-      List<byte[]> binaryConverterParams = namedFactories.getValue().map(KeyValuePair::getValue).orElse(Collections.emptyList());
+      ClientEventType eventType = ClientEventType.createType(converterFactory != null, useRawData, h.version);
+      Object clientEventSender = getClientEventSender(includeState, ch, h.version, cache, listenerId, eventType, h.messageId);
+      List<byte[]> binaryFilterParams = filterFactory != null ? filterFactory.getValue() : Collections.emptyList();
+      List<byte[]> binaryConverterParams = converterFactory != null ? converterFactory.getValue() : Collections.emptyList();
       boolean compatEnabled = cache.getCacheConfiguration().compatibility().enabled();
 
-      KeyValuePair<CacheEventFilter<byte[], byte[]>, CacheEventConverter<byte[], byte[], byte[]>> kvp;
-      if (namedFactories.getKey().isPresent()) {
-         KeyValuePair<String, List<byte[]>> filterFactory = namedFactories.getKey().get();
-         if (namedFactories.getValue().isPresent()) {
-            KeyValuePair<String, List<byte[]>> converterFactory = namedFactories.getValue().get();
+      CacheEventFilter<byte[], byte[]> filter;
+      CacheEventConverter<byte[], byte[], byte[]> converter;
+      if (filterFactory != null) {
+         if (converterFactory != null) {
             if (filterFactory.getKey().equals(converterFactory.getKey())) {
                List<byte[]> binaryParams = binaryFilterParams.isEmpty() ? binaryConverterParams : binaryFilterParams;
                CacheEventFilterConverter<byte[], byte[], byte[]> filterConverter = getFilterConverter(
                      filterFactory.getKey(), compatEnabled, useRawData, binaryParams);
-               kvp = new KeyValuePair<>(filterConverter, filterConverter);
+               filter = filterConverter;
+               converter = filterConverter;
             } else {
-               kvp = new KeyValuePair<>(getFilter(filterFactory.getKey(), compatEnabled, useRawData, binaryFilterParams),
-                     getConverter(converterFactory.getKey(), compatEnabled, useRawData, binaryConverterParams));
+               filter = getFilter(filterFactory.getKey(), compatEnabled, useRawData, binaryFilterParams);
+               converter = getConverter(converterFactory.getKey(), compatEnabled, useRawData, binaryConverterParams);
             }
          } else {
-            kvp = new KeyValuePair<>(getFilter(namedFactories.getKey().get().getKey(), compatEnabled, useRawData, binaryFilterParams), null);
+            filter = getFilter(filterFactory.getKey(), compatEnabled, useRawData, binaryFilterParams);
+            converter = null;
          }
+      } else if (converterFactory != null) {
+         filter = null;
+         converter = getConverter(converterFactory.getKey(), compatEnabled, useRawData, binaryConverterParams);
       } else {
-         if (namedFactories.getValue().isPresent()) {
-            kvp = new KeyValuePair<>(null, getConverter(namedFactories.getValue().get().getKey(), compatEnabled, useRawData, binaryConverterParams));
-         } else {
-            kvp = new KeyValuePair<>(null, null);
-         }
+         filter = null;
+         converter = null;
       }
 
       eventSenders.put(new WrappedByteArray(listenerId), clientEventSender);
@@ -160,7 +160,7 @@ class ClientListenerRegistry {
       if (includeState) {
          // If state included, do it async
          CompletableFuture<Void> cf = CompletableFuture.runAsync(() ->
-               addCacheListener(cache, clientEventSender, kvp, listenerInterests), addListenerExecutor);
+               addCacheListener(cache, clientEventSender, filter, converter, listenerInterests), addListenerExecutor);
 
          cf.whenComplete((t, cause) -> {
             Response resp;
@@ -176,13 +176,13 @@ class ClientListenerRegistry {
             ch.writeAndFlush(resp);
          });
       } else {
-         addCacheListener(cache, clientEventSender, kvp, listenerInterests);
+         addCacheListener(cache, clientEventSender, filter, converter, listenerInterests);
          ch.writeAndFlush(decoder.createSuccessResponse(h, null));
       }
    }
 
    private void addCacheListener(AdvancedCache<byte[], byte[]> cache, Object clientEventSender,
-                                 KeyValuePair<CacheEventFilter<byte[], byte[]>, CacheEventConverter<byte[], byte[], byte[]>> kvp,
+                                 CacheEventFilter<byte[], byte[]> filter, CacheEventConverter<byte[], byte[], byte[]> converter,
                                  int listenerInterests) {
       Set<Class<? extends Annotation>> filterAnnotations;
       if (listenerInterests == 0x00) {
@@ -201,7 +201,7 @@ class ClientListenerRegistry {
             filterAnnotations.add(CacheEntryExpired.class);
       }
 
-      cache.addFilteredListener(clientEventSender, kvp.getKey(), kvp.getValue(), filterAnnotations);
+      cache.addFilteredListener(clientEventSender, filter, converter, filterAnnotations);
    }
 
    CacheEventFilter<byte[], byte[]> getFilter(String name, Boolean compatEnabled, Boolean useRawData, List<byte[]> binaryParams) {
@@ -299,11 +299,18 @@ class ClientListenerRegistry {
    // listener calls out of the Netty event loop thread
    @Listener(clustered = true, includeCurrentState = true)
    private class StatefulClientEventSender extends BaseClientEventSender {
+      private final long messageId;
 
       protected StatefulClientEventSender(Cache cache, Channel ch, byte[] listenerId, byte version,
                                           ClientEventType targetEventType, DataConversion keyDataConversion,
-                                          DataConversion valueDataConversion) {
+                                          DataConversion valueDataConversion, long messageId) {
          super(cache, ch, listenerId, version, targetEventType, keyDataConversion, valueDataConversion);
+         this.messageId = messageId;
+      }
+
+      @Override
+      protected long getEventId(CacheEntryEvent event) {
+         return event.isCurrentState() ? messageId : 0;
       }
    }
 
@@ -427,7 +434,6 @@ class ClientListenerRegistry {
       }
 
       private Object createRemoteEvent(byte[] key, byte[] value, long dataVersion, CacheEntryEvent event) {
-         long id = messageId.incrementAndGet(); // increment message id
          // Embedded listener event implementation implements all interfaces,
          // so can't pattern match on the event instance itself. Instead, pattern
          // match on the type and the cast down to the expected event instance type
@@ -437,23 +443,27 @@ class ClientListenerRegistry {
                   case CACHE_ENTRY_CREATED:
                   case CACHE_ENTRY_MODIFIED:
                      KeyValuePair<HotRodOperation, Boolean> responseType = getEventResponseType(event);
-                     return keyWithVersionEvent(key, dataVersion, responseType.getKey(), responseType.getValue());
+                     return new Events.KeyWithVersionEvent(version, getEventId(event), responseType.getKey(), listenerId, responseType.getValue(), key, dataVersion);
                   case CACHE_ENTRY_REMOVED:
                   case CACHE_ENTRY_EXPIRED:
                      responseType = getEventResponseType(event);
-                     return new Events.KeyEvent(version, id, responseType.getKey(), listenerId, responseType.getValue(), key);
+                     return new Events.KeyEvent(version, getEventId(event), responseType.getKey(), listenerId, responseType.getValue(), key);
                   default:
                      throw log.unexpectedEvent(event);
                }
             case CUSTOM_PLAIN:
                KeyValuePair<HotRodOperation, Boolean> responseType = getEventResponseType(event);
-               return new Events.CustomEvent(version, id, responseType.getKey(), listenerId, responseType.getValue(), value);
+               return new Events.CustomEvent(version, getEventId(event), responseType.getKey(), listenerId, responseType.getValue(), value);
             case CUSTOM_RAW:
                responseType = getEventResponseType(event);
-               return new Events.CustomRawEvent(version, id, responseType.getKey(), listenerId, responseType.getValue(), value);
+               return new Events.CustomRawEvent(version, getEventId(event), responseType.getKey(), listenerId, responseType.getValue(), value);
             default:
                throw new IllegalArgumentException("Event type not supported: " + targetEventType);
          }
+      }
+
+      protected long getEventId(CacheEntryEvent event) {
+         return 0;
       }
 
       private KeyValuePair<HotRodOperation, Boolean> getEventResponseType(CacheEntryEvent event) {
@@ -473,19 +483,14 @@ class ClientListenerRegistry {
                throw log.unexpectedEvent(event);
          }
       }
-
-      private Events.KeyWithVersionEvent keyWithVersionEvent(byte[] key, long dataVersion, HotRodOperation op, boolean isRetried) {
-         return new Events.KeyWithVersionEvent(version, messageId.get(), op, listenerId, isRetried, key, dataVersion);
-      }
-
    }
 
    Object getClientEventSender(boolean includeState, Channel ch, byte version,
-                               Cache cache, byte[] listenerId, ClientEventType eventType) {
+                               Cache cache, byte[] listenerId, ClientEventType eventType, long messageId) {
       DataConversion keyDataConversion = cache.getAdvancedCache().getKeyDataConversion();
       DataConversion valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
       if (includeState) {
-         return new StatefulClientEventSender(cache, ch, listenerId, version, eventType, keyDataConversion, valueDataConversion);
+         return new StatefulClientEventSender(cache, ch, listenerId, version, eventType, keyDataConversion, valueDataConversion, messageId);
       } else {
          return new StatelessClientEventSender(cache, ch, listenerId, version, eventType, keyDataConversion, valueDataConversion);
       }

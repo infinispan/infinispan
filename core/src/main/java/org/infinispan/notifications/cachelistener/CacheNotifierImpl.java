@@ -995,6 +995,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          preEvent = EventImpl.createEvent(cache, CACHE_ENTRY_CREATED);
          preEvent.setKey(entry.getKey());
          preEvent.setPre(true);
+         preEvent.setCurrentState(true);
       }
 
       EventImpl postEvent = EventImpl.createEvent(cache, CACHE_ENTRY_CREATED);
@@ -1002,6 +1003,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       postEvent.setValue(entry.getValue());
       postEvent.setMetadata(entry.getMetadata());
       postEvent.setPre(false);
+      postEvent.setCurrentState(true);
 
       for (CacheEntryListenerInvocation<K, V> invocation : cacheEntryCreatedListeners) {
          // Now notify all our methods of the creates

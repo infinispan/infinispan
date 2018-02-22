@@ -818,7 +818,7 @@ public abstract class AbstractRemoteCacheIT {
 
     @Test
     public void testGetProtocolVersion() throws Exception {
-       assertEquals("HotRod client, protocol version: 2.7", remoteCache.getProtocolVersion());
+       assertEquals("HotRod client, protocol version: 2.8", remoteCache.getProtocolVersion());
     }
 
     @Test

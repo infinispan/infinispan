@@ -23,6 +23,7 @@ public enum HotRodVersion {
    HOTROD_25(2, 5),
    HOTROD_26(2, 6),
    HOTROD_27(2, 7),
+   HOTROD_28(2, 8),
    ;
 
    private final int major;

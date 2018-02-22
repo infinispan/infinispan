@@ -17,12 +17,10 @@ public final class ClientCounterEvent {
 
    private final String counterName;
    private final CounterEvent event;
-   private final long messageId;
    private final byte version;
    private final byte[] listenerId;
 
-   ClientCounterEvent(byte[] listenerId, long messageId, byte version, String counterName, CounterEvent event) {
-      this.messageId = messageId;
+   ClientCounterEvent(byte[] listenerId, byte version, String counterName, CounterEvent event) {
       this.version = version;
       this.counterName = counterName;
       this.event = event;
@@ -55,10 +53,6 @@ public final class ClientCounterEvent {
       }
    }
 
-   public long getMessageId() {
-      return messageId;
-   }
-
    public byte getVersion() {
       return version;
    }
@@ -76,7 +70,6 @@ public final class ClientCounterEvent {
       return "ClientCounterEvent{" +
              "counterName='" + counterName + '\'' +
              ", event=" + event +
-             ", messageId=" + messageId +
              ", version=" + version +
              ", listenerId=" + Util.printArray(listenerId) +
              '}';

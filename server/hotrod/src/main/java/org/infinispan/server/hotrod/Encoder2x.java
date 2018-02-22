@@ -97,7 +97,7 @@ class Encoder2x implements VersionedEncoder {
 
    @Override
    public void writeCounterEvent(ClientCounterEvent event, ByteBuf buffer) {
-      writeHeaderNoTopology(buffer, event.getMessageId(), HotRodOperation.COUNTER_EVENT);
+      writeHeaderNoTopology(buffer, 0, HotRodOperation.COUNTER_EVENT);
       event.writeTo(buffer);
    }
 

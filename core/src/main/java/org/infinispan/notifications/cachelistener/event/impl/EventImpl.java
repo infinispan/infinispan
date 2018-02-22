@@ -55,6 +55,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    private Map<? extends K, ? extends V> entries;
    private boolean created;
    private boolean commandRetried;
+   private boolean isCurrentState;
    private AvailabilityMode mode;
 
    public EventImpl() {
@@ -160,6 +161,15 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       return metadata;
    }
 
+   @Override
+   public boolean isCurrentState() {
+      return isCurrentState;
+   }
+
+   public void setCurrentState(boolean currentState) {
+      isCurrentState = currentState;
+   }
+
    public void setOldMetadata(Metadata metadata) {
       this.oldMetadata = metadata;
    }
@@ -233,6 +243,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       if (!Util.safeEquals(unionConsistentHash, event.unionConsistentHash)) return false;
       if (newTopologyId != event.newTopologyId) return false;
       if (created != event.created) return false;
+      if (isCurrentState != event.isCurrentState) return false;
       if (oldValue != null ? !oldValue.equals(event.oldValue) : event.oldValue != null) return false;
 
       return true;
@@ -254,7 +265,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       result = 31 * result + (writeConsistentHashAtEnd != null ? writeConsistentHashAtEnd.hashCode() : 0);
       result = 31 * result + (unionConsistentHash != null ? unionConsistentHash.hashCode() : 0);
       result = 31 * result + newTopologyId;
-      result = 31 * result + (created ? 1 : 0);
+      result = 31 * result + (created ? 1 : 0) + (isCurrentState ? 2 : 0);
       result = 31 * result + (oldValue != null ? oldValue.hashCode() : 0);
       return result;
    }
@@ -285,6 +296,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
             ", transactionSuccessful=" + transactionSuccessful +
             ", entries=" + entries +
             ", created=" + created +
+            ", isCurrentState=" + isCurrentState +
             '}';
    }
 

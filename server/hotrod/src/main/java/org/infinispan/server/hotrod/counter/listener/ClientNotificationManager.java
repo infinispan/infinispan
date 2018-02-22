@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.ByRef;
@@ -37,7 +36,6 @@ class ClientNotificationManager {
 
    private final Map<String, Handle<Listener>> counterListener;
    private final CounterManager counterManager;
-   private final AtomicLong messageId;
    private final Channel channel;
    private final Queue<ClientCounterEvent> eventQueue;
    private final byte[] listenerId;
@@ -47,7 +45,6 @@ class ClientNotificationManager {
       this.counterManager = counterManager;
       this.channel = channel;
       counterListener = new ConcurrentHashMap<>();
-      messageId = new AtomicLong();
       eventQueue = new ConcurrentLinkedQueue<>();
    }
 
@@ -151,7 +148,7 @@ class ClientNotificationManager {
          if (trace) {
             log.tracef("Event received! %s", entry);
          }
-         eventQueue.add(new ClientCounterEvent(listenerId, messageId.incrementAndGet(), version, counterName, entry));
+         eventQueue.add(new ClientCounterEvent(listenerId, version, counterName, entry));
          trySendEvents();
       }
    }

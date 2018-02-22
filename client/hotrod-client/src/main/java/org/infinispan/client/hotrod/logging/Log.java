@@ -283,9 +283,9 @@ public interface Log extends BasicLogger {
    @Message(value = "This channel is about to be closed and does not accept any further operations.", id = 4078)
    HotRodClientException noMoreOperationsAllowed();
 
-   @Message(value = "Unexpected listenerId %s", id = 4078)
+   @Message(value = "Unexpected listenerId %s", id = 4079)
    IllegalStateException unexpectedListenerId(String listenerId);
 
-   @Message(value = "Event should use messageId of previous Add Client Listener operation but id is %d and operation is %s", id = 4079)
+   @Message(value = "Event should use messageId of previous Add Client Listener operation but id is %d and operation is %s", id = 4080)
    IllegalStateException operationIsNotAddClientListener(long messageId, String operation);
 }
