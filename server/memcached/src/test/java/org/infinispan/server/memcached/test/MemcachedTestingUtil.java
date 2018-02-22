@@ -11,7 +11,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.memcached.MemcachedDecoder;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
-import org.infinispan.server.memcached.logging.JavaLog;
+import org.infinispan.server.memcached.logging.Log;
 import org.infinispan.test.fwk.TestResourceTracker;
 
 import io.netty.channel.ChannelInboundHandler;
@@ -25,7 +25,7 @@ import net.spy.memcached.MemcachedClient;
  * @since 4.1
  */
 public class MemcachedTestingUtil {
-   private static final JavaLog log = LogFactory.getLog(MemcachedTestingUtil.class, JavaLog.class);
+   private static final Log log = LogFactory.getLog(MemcachedTestingUtil.class, Log.class);
 
    private static final String host = "127.0.0.1";
 

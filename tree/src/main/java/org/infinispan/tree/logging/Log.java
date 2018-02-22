@@ -1,5 +1,6 @@
 package org.infinispan.tree.logging;
 
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.MessageLogger;
 
 /**
@@ -10,5 +11,5 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 5.0
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.util.logging.Log {
+public interface Log extends BasicLogger {
 }

@@ -16,8 +16,7 @@ import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.remote.impl.logging.Log;
-
+import org.infinispan.util.logging.Log;
 
 /**
  * @since 9.2

@@ -3,6 +3,7 @@ package org.infinispan.scripting.logging;
 import static org.jboss.logging.Logger.Level.ERROR;
 
 import org.infinispan.commons.CacheException;
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -16,7 +17,7 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 7.2
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.util.logging.Log {
+public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Could not register interpreter MBean", id = 27501)
    void jmxRegistrationFailed();

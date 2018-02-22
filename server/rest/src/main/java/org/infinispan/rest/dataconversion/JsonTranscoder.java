@@ -17,7 +17,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
-import org.infinispan.rest.logging.Log;
+import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**

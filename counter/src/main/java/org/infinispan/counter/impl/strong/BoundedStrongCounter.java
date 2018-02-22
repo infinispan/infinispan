@@ -6,13 +6,13 @@ import static org.infinispan.counter.exception.CounterOutOfBoundsException.UPPER
 import java.util.concurrent.CompletionException;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
-import org.infinispan.counter.logging.Log;
 
 /**
  * A bounded strong consistent counter.

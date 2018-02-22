@@ -13,9 +13,11 @@ import javax.transaction.Transaction;
 
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.exception.SearchException;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.remoting.transport.Address;
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -30,7 +32,9 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 5.0
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.util.logging.Log {
+public interface Log extends BasicLogger {
+   @Message(value = "The configured entity class %s is not indexable. Please remove it from the indexing configuration.", id = 404)
+   CacheConfigurationException classNotIndexable(String className);
 
    @LogMessage(level = ERROR)
    @Message(value = "Could not locate key class %s", id = 14001)
@@ -138,18 +142,11 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "The type %s is not an indexed entity.", id = 14030)
    IllegalArgumentException getNoIndexedEntityException(String typeName);
 
-   @Message(value = "Could not locate error handler class %s", id = 14032)
-   IllegalArgumentException unsupportedErrorHandlerConfigurationValueType(Class<?> type);
-
    @Message(value = "Unable to resume suspended transaction %s", id = 14033)
    CacheException unableToResumeSuspendedTx(Transaction transaction, @Cause Throwable cause);
 
    @Message(value = "Unable to suspend transaction", id = 14034)
    CacheException unableToSuspendTx(@Cause Throwable cause);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Error occurred while applying changes to the index", id = 14035)
-   void errorOccurredApplyingChanges(@Cause Throwable cause);
 
    @Message(value = "Prefix, wildcard or regexp queries cannot be fuzzy: %s", id = 14036)
    ParsingException getPrefixWildcardOrRegexpQueriesCannotBeFuzzy(String s); //todo [anistor] this should be thrown earlier at parsing time

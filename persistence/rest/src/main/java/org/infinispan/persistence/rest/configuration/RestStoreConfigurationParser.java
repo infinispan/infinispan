@@ -14,7 +14,7 @@ import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
-import org.infinispan.persistence.rest.logging.Log;
+import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 

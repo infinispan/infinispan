@@ -7,6 +7,7 @@ import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.counter.exception.CounterConfigurationException;
 import org.infinispan.counter.exception.CounterException;
 import org.infinispan.util.ByteString;
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -19,7 +20,7 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 9.0
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.commons.logging.Log {
+public interface Log extends BasicLogger {
 
    //28001 is in commons log
 
@@ -63,12 +64,14 @@ public interface Log extends org.infinispan.commons.logging.Log {
    @Message(value = "Exception while waiting for counter manager caches.", id = 28013)
    void exceptionWhileWaitingForCached(@Cause Throwable cause);
 
-   //28014 is in commons log
+   @Message(value = "Invalid counter type. Expected=%s but got %s", id = 28014)
+   CounterException invalidCounterType(String expected, String actual);
 
    @Message(value = "Unable to fetch counter manager caches.", id = 28015)
    CounterException unableToFetchCaches();
 
-   //28016 is in commons log
+   @Message(value = "Counter '%s' is not defined.", id = 28016)
+   CounterException undefinedCounter(String name);
 
    @Message(value = "Duplicated counter name found. Counter '%s' already exists.", id = 28017)
    CounterConfigurationException duplicatedCounterName(String counter);

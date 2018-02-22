@@ -299,9 +299,9 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Problems creating the directory: %s", id = 64)
 //   void problemsCreatingDirectory(File dir);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Exception while marshalling object: %s", id = 65)
-   void errorMarshallingObject(@Cause Throwable ioe, Object obj);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Exception while marshalling object: %s", id = 65)
+//   void errorMarshallingObject(@Cause Throwable ioe, Object obj);
 
    @LogMessage(level = ERROR)
    @Message(value = "Unable to read version id from first two bytes of stream, barfing.", id = 66)
@@ -323,9 +323,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Unexpected error while replicating", id = 73)
    void unexpectedErrorReplicating(@Cause Throwable t);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Message or message buffer is null or empty.", id = 77)
-   void msgOrMsgBufferEmpty();
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Message or message buffer is null or empty.", id = 77)
+//   void msgOrMsgBufferEmpty();
 
    @LogMessage(level = INFO)
    @Message(value = "Starting JGroups channel %s", id = 78)
@@ -343,9 +343,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Problem closing channel %s; setting it to null", id = 81)
    void problemClosingChannel(@Cause Exception e, String cluster);
 
-   @LogMessage(level = INFO)
-   @Message(value = "Stopping the RpcDispatcher for channel %s", id = 82)
-   void stoppingRpcDispatcher(String cluster);
+//   @LogMessage(level = INFO)
+//   @Message(value = "Stopping the RpcDispatcher for channel %s", id = 82)
+//   void stoppingRpcDispatcher(String cluster);
 
    @LogMessage(level = ERROR)
    @Message(value = "Class [%s] cannot be cast to JGroupsChannelLookup! Not using a channel lookup.", id = 83)
@@ -821,9 +821,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Shutdown while handling command %s", id = 219)
    void shutdownHandlingCommand(ReplicableCommand command);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Problems un-marshalling remote command from byte buffer", id = 220)
-   void errorUnMarshallingCommand(@Cause Throwable throwable);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Problems un-marshalling remote command from byte buffer", id = 220)
+//   void errorUnMarshallingCommand(@Cause Throwable throwable);
 
    //@LogMessage(level = WARN)
    //@Message(value = "Unknown response value [%s]. Expected [%s]", id = 221)
@@ -1170,8 +1170,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to invoke method %s on Object instance %s ", id = 331)
    void unableToInvokeListenerMethod(Method m, Object target, @Cause Throwable e);
 
-   @Message(value = "Remote transaction %s rolled back because originator is no longer in the cluster", id = 332)
-   CacheException orphanTransactionRolledBack(GlobalTransaction gtx);
+//   @Message(value = "Remote transaction %s rolled back because originator is no longer in the cluster", id = 332)
+//   CacheException orphanTransactionRolledBack(GlobalTransaction gtx);
 
 //   @Message(value = "The site must be specified.", id = 333)
 //   CacheConfigurationException backupSiteNullName();
@@ -1371,8 +1371,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Received unsolicited state from node %s for segment %d of cache %s", id = 396)
    void ignoringUnsolicitedState(Address node, int segment, String cacheName);
 
-   @Message(value = "Could not migrate data for cache %s, check remote store config in the target cluster. Make sure only one remote store is present and is pointing to the source cluster", id = 397)
-   CacheException couldNotMigrateData(String name);
+//   @Message(value = "Could not migrate data for cache %s, check remote store config in the target cluster. Make sure only one remote store is present and is pointing to the source cluster", id = 397)
+//   CacheException couldNotMigrateData(String name);
 
    @Message(value = "CH Factory '%s' cannot restore a persisted CH of class '%s'", id = 398)
    IllegalStateException persistentConsistentHashMismatch(String hashFactory, String consistentHashClass);
@@ -1394,8 +1394,8 @@ public interface Log extends BasicLogger {
    @Message(value = "No indexable classes were defined for this indexed cache; switching to autodetection (support for autodetection will be removed in Infinispan 10.0).", id = 403)
    void noIndexableClassesDefined();
 
-   @Message(value = "The configured entity class %s is not indexable. Please remove it from the indexing configuration.", id = 404)
-   CacheConfigurationException classNotIndexable(String className);
+//   @Message(value = "The configured entity class %s is not indexable. Please remove it from the indexing configuration.", id = 404)
+//   CacheConfigurationException classNotIndexable(String className);
 
    @LogMessage(level = ERROR)
    @Message(value = "Caught exception while invoking a cache manager listener!", id = 405)
@@ -1594,8 +1594,8 @@ public interface Log extends BasicLogger {
    @Message(value = "The partition handling 'enable' attribute has been deprecated. Please update your configuration file to use the 'type' attribute instead", id = 464)
    void partitionHandlingConfigurationEnabledDeprecated();
 
-   @Message(value = "Keys '%s' are not available. No owners exist in this partition", id = 465)
-   AvailabilityException degradedModeNoOwnersExist(Object key);
+//   @Message(value = "Keys '%s' are not available. No owners exist in this partition", id = 465)
+//   AvailabilityException degradedModeNoOwnersExist(Object key);
 
    @LogMessage(level = WARN)
    @Message(value = "Exception encountered when trying to resolve conflict on Keys '%s': %s", id = 466)
@@ -1686,11 +1686,11 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot find transcoder between '%s' to '%s'", id = 492)
    EncodingException cannotFindTranscoder(MediaType mediaType, MediaType another);
 
-   @Message(value = "Invalid text format: '%s'", id = 493)
-   EncodingException invalidTextFormat(Object content);
+//   @Message(value = "Invalid text format: '%s'", id = 493)
+//   EncodingException invalidTextFormat(Object content);
 
-   @Message(value = "Invalid binary format: '%s'", id = 494)
-   EncodingException invalidBinaryFormat(Object content);
+//   @Message(value = "Invalid binary format: '%s'", id = 494)
+//   EncodingException invalidBinaryFormat(Object content);
 
    @Message(value = "Error transcoding content", id = 495)
    EncodingException errorTranscoding(@Cause Throwable cause);

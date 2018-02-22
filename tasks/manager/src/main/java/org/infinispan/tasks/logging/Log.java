@@ -1,5 +1,6 @@
 package org.infinispan.tasks.logging;
 
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
@@ -11,7 +12,7 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 8.1
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.util.logging.Log {
+public interface Log extends BasicLogger {
    @Message(value = "Task Engine '%s' has already been registered", id = 27001)
    IllegalStateException duplicateTaskEngineRegistration(String taskEngineName);
 

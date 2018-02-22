@@ -11,6 +11,7 @@ import javax.cache.CacheException;
 import javax.cache.configuration.Configuration;
 import javax.cache.processor.EntryProcessorException;
 
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -23,7 +24,7 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 5.3
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.commons.logging.Log {
+public interface Log extends BasicLogger {
 
    @Message(value = "Allocation stack trace:", id = 21001)
    LeakDescription cacheManagerNotClosed();

@@ -22,9 +22,13 @@
 
 package org.infinispan.persistence.rest.logging;
 
+import static org.jboss.logging.Logger.Level.ERROR;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
+import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
@@ -36,9 +40,10 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 6.0
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.util.logging.Log {
-   @Message(value = "The REST cache store needs to have at least one server configured", id = 22001)
-   CacheConfigurationException noServersConfigured();
+public interface Log extends BasicLogger {
+   @LogMessage(level = ERROR)
+   @Message(value = "Error executing parallel store task", id = 252)
+   void errorExecutingParallelStoreTask(@Cause Throwable cause);
 
    @Message(value = "HTTP error: %s", id = 22002)
    PersistenceException httpError(String status);

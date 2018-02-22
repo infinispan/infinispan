@@ -13,9 +13,9 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.rest.RestStore;
-import org.infinispan.persistence.rest.logging.Log;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.upgrade.TargetMigrator;
+import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 

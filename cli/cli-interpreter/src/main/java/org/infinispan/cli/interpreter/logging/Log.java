@@ -10,6 +10,7 @@ import javax.transaction.SystemException;
 import org.infinispan.cli.interpreter.codec.CodecException;
 import org.infinispan.cli.interpreter.result.StatementException;
 import org.infinispan.commons.CacheException;
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -23,7 +24,7 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 5.2
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.util.logging.Log {
+public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Could not register interpreter MBean", id = 19001)
    void jmxRegistrationFailed();
