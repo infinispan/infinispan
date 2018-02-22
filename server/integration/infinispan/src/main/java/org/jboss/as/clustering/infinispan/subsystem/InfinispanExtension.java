@@ -43,7 +43,6 @@ import org.kohsuke.MetaInfServices;
 public class InfinispanExtension implements Extension {
     public static final String SUBSYSTEM_NAME = InfinispanSubsystem.SUBSYSTEM_NAME;
     static final PathElement SUBSYSTEM_PATH = PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM, SUBSYSTEM_NAME);
-    public static final String RESOURCE_NAME = InfinispanExtension.class.getPackage().getName() + ".LocalDescriptions";
 
     /**
      * {@inheritDoc}
@@ -67,7 +66,7 @@ public class InfinispanExtension implements Extension {
             pathManager = null;
         }
 
-        subsystem.registerSubsystemModel(new InfinispanSubsystemRootResource(resolvePathHandler, pathManager, context.isRuntimeOnlyRegistrationValid()));
+        subsystem.registerSubsystemModel(InfinispanSubsystemRootResource.create(resolvePathHandler, pathManager, context.isRuntimeOnlyRegistrationValid()));
         subsystem.registerXMLElementWriter(new InfinispanSubsystemXMLWriter());
     }
 

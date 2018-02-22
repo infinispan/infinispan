@@ -38,6 +38,19 @@
                 <property name="serverConfig">standalone-test.xml</property>
             </configuration>
         </container>
+        <container qualifier="container.no-ispn">
+            <configuration>
+                <property name="jbossHome">${basedir}/target/node1/wildfly-${version.org.wildfly}</property>
+                <property name="javaVmArguments">
+                    ${testjvm.jigsawArgs}
+                    -Xmx500m ${testjvm.commonArgs}
+                    -Djboss.socket.binding.port-offset=300
+                    -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -Djgroups.join_timeout=2000
+                </property>
+                <property name="managementPort">10290</property>
+                <property name="serverConfig">standalone-no-ispn.xml</property>
+            </configuration>
+        </container>
     </group>
 
 </arquillian>
