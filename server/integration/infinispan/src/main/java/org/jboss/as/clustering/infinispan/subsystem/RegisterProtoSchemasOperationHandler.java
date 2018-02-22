@@ -81,7 +81,6 @@ public class RegisterProtoSchemasOperationHandler implements OperationStepHandle
             }
          }
       }
-      context.stepCompleted();
    }
 
    private void validateParameters(ModelNode name, ModelNode contents) {

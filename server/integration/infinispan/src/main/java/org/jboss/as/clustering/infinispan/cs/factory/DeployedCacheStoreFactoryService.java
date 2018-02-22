@@ -5,7 +5,6 @@ import org.jboss.as.clustering.infinispan.InfinispanLogger;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.StartContext;
-import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 
 /**
@@ -20,7 +19,7 @@ public class DeployedCacheStoreFactoryService implements Service<CacheStoreFacto
    private final DeployedCacheStoreFactory internalImplementation = new DeployedCacheStoreFactory();
 
    @Override
-   public void start(StartContext context) throws StartException {
+   public void start(StartContext context) {
       InfinispanLogger.ROOT_LOGGER.debugf("Starting DeployedCacheStoreFactoryService " + internalImplementation);
    }
 

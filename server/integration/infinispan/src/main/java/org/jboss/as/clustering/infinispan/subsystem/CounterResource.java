@@ -152,8 +152,7 @@ public class CounterResource extends SimpleResourceDefinition {
         private static final CounterResetCommand INSTANCE = new CounterResetCommand();
 
         @Override
-        protected ModelNode invoke(CounterManager counterManager, ModelNode operation)
-                throws Exception {
+        protected ModelNode invoke(CounterManager counterManager, ModelNode operation) {
             final String counterName = counterName(operation);
             final String counterType = counterType(operation);
             if (counterManager.isDefined(counterName)) {
@@ -174,8 +173,7 @@ public class CounterResource extends SimpleResourceDefinition {
         private static final CounterIncreaseCommand INSTANCE = new CounterIncreaseCommand();
 
         @Override
-        protected ModelNode invoke(CounterManager counterManager, ModelNode operation)
-                throws Exception {
+        protected ModelNode invoke(CounterManager counterManager, ModelNode operation) {
             final String counterName = counterName(operation);
             final String counterType = counterType(operation);
             if (counterManager.isDefined(counterName)) {
@@ -196,8 +194,7 @@ public class CounterResource extends SimpleResourceDefinition {
         private static final CounterDecreaseCommand INSTANCE = new CounterDecreaseCommand();
 
         @Override
-        protected ModelNode invoke(CounterManager counterManager, ModelNode operation)
-                throws Exception {
+        protected ModelNode invoke(CounterManager counterManager, ModelNode operation) {
             final String counterName = counterName(operation);
             final String counterType = counterType(operation);
             if (counterManager.isDefined(counterName)) {
@@ -222,7 +219,7 @@ public class CounterResource extends SimpleResourceDefinition {
         }
 
         abstract ModelNode invoke(CounterManager counterManager, ModelNode operation)
-                throws Exception;
+              ;
 
         @Override
         protected final ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context,

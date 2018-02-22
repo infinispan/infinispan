@@ -65,20 +65,6 @@ public class RestartServiceWriteAttributeHandler extends RestartParentWriteAttri
     }
 
     @Override
-    protected void removeServices(OperationContext context, ServiceName parentService, ModelNode parentModel)
-            throws OperationFailedException {
-        /*String containerName = parentService.getParent().getSimpleName();
-        String cacheName = parentService.getSimpleName();
-        ModelNode resolvedValue = null;
-        String jndiName = (resolvedValue = CacheResource.JNDI_NAME.resolveModelAttribute(context, parentModel)).isDefined() ? resolvedValue.asString() : null;
-        ContextNames.BindInfo bindInfo;
-        bindInfo = ContextNames.bindInfoFor(InfinispanJndiName.createCacheJndiName(jndiName, containerName, cacheName));
-        context.removeService(bindInfo.getBinderServiceName());*/
-        super.removeServices(context, parentService, parentModel);
-        //context.removeService(CacheServiceName.CONFIGURATION.getServiceName(containerName, cacheName));
-    }
-
-    @Override
     protected boolean isResourceServiceRestartAllowed(OperationContext context, ServiceController<?> service) {
         return true;
     }

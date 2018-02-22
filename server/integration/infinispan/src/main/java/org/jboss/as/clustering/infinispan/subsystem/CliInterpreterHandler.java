@@ -33,7 +33,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.jboss.as.controller.OperationContext;
-import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.dmr.ModelNode;
@@ -50,7 +49,7 @@ public class CliInterpreterHandler implements OperationStepHandler {
    public static final CliInterpreterHandler INSTANCE = new CliInterpreterHandler();
 
    @Override
-   public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
+   public void execute(OperationContext context, ModelNode operation) {
       final ModelNode result = new ModelNode();
       try {
          final String command = operation.require("command").asString();
@@ -77,9 +76,6 @@ public class CliInterpreterHandler implements OperationStepHandler {
          e.printStackTrace();
          context.getFailureDescription().set(e.getLocalizedMessage());
          context.getResult().set(result);
-      } finally {
-         context.stepCompleted();
-
       }
    }
 

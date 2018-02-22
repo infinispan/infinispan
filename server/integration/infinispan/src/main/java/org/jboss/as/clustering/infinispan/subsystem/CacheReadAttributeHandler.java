@@ -41,10 +41,6 @@ public class CacheReadAttributeHandler implements OperationStepHandler {
     public static final CacheReadAttributeHandler INSTANCE = new CacheReadAttributeHandler();
     private final ParametersValidator nameValidator = new ParametersValidator();
 
-    private CacheReadAttributeHandler() {
-
-    }
-
     /**
      * A read handler which performs special processing for MODE attributes
      *
@@ -62,8 +58,5 @@ public class CacheReadAttributeHandler implements OperationStepHandler {
         final ModelNode currentValue = submodel.get(attributeName).clone();
 
         context.getResult().set(currentValue);
-
-        // since we are not updating the model, there is no need for a RUNTIME step
-        context.stepCompleted();
     }
 }

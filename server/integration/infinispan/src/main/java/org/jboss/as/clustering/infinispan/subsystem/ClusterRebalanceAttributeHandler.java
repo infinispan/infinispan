@@ -63,7 +63,7 @@ public class ClusterRebalanceAttributeHandler extends AbstractRuntimeOnlyHandler
                             context.getResult().set(new ModelNode().set(topologyManager.isRebalancingEnabled()));
                         }
                     } catch (Exception e) {
-                        throw new OperationFailedException(new ModelNode().set(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage())));
+                        throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()));
                     }
                 }
             }

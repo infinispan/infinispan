@@ -48,18 +48,7 @@ class CacheConfigOperationHandlers {
     static final OperationStepHandler CONTAINER_CONFIGURATIONS_ADD = new ReloadRequiredAddStepHandler();
     static final OperationStepHandler CONTAINER_SECURITY_ADD = new ReloadRequiredAddStepHandler();
 
-    static final OperationStepHandler LOADER_ADD = new CacheLoaderAdd();
-    static final OperationStepHandler LOADER_PROPERTY_ADD = new ReloadRequiredAddStepHandler(new AttributeDefinition[]{LoaderPropertyResource.VALUE});
-    static final OperationStepHandler CLUSTER_LOADER_ADD = new ClusterCacheLoaderAdd();
-    static final OperationStepHandler STORE_ADD = new CacheStoreAdd();
     static final OperationStepHandler STORE_WRITE_BEHIND_ADD = new ReloadRequiredAddStepHandler(StoreWriteBehindResource.ATTRIBUTES);
-    static final OperationStepHandler FILE_STORE_ADD = new FileCacheStoreAdd();
-    static final OperationStepHandler STRING_KEYED_JDBC_STORE_ADD = new StringKeyedJDBCCacheStoreAdd();
-    static final OperationStepHandler REMOTE_STORE_ADD = new RemoteCacheStoreAdd();
-    static final OperationStepHandler ROCKSDB_STORE_ADD = new RocksDBCacheStoreAdd();
-    static final OperationStepHandler ROCKSDB_EXPIRATION_ADD = new ReloadRequiredAddStepHandler(RocksDBExpirationConfigurationResource.ATTRIBUTES);
-    static final OperationStepHandler LEVELDB_COMPRESSION_ADD = new ReloadRequiredAddStepHandler(RocksDBCompressionConfigurationResource.ATTRIBUTES);
-    static final OperationStepHandler REST_STORE_ADD = new RestCacheStoreAdd();
 
     /**
      * Base class for adding cache loaders.
@@ -137,7 +126,7 @@ class CacheConfigOperationHandlers {
         }
 
         @Override
-        protected void populateModel(ModelNode operation, ModelNode model) throws OperationFailedException {
+        protected void populateModel(ModelNode operation, ModelNode model) {
             // do nothing
         }
     }

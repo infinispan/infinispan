@@ -9,7 +9,7 @@ import org.junit.Test;
 public class DeployedCacheStoreMetadataTest {
 
    @Test
-   public void testImportingMetadataWithLoaderWriterClassOnly() throws Exception {
+   public void testImportingMetadataWithLoaderWriterClassOnly() {
       //given
       Object loaderWriterRawInstance = new CustomStoreWithoutConfiguration();
 
@@ -24,7 +24,7 @@ public class DeployedCacheStoreMetadataTest {
    }
 
    @Test
-   public void testImportingMetadataWithLoaderWriterWithConfiguration() throws Exception {
+   public void testImportingMetadataWithLoaderWriterWithConfiguration() {
       //given
       Object loaderWriterRawInstance = new CustomStoreWithConfiguration();
 
@@ -37,7 +37,7 @@ public class DeployedCacheStoreMetadataTest {
    }
 
    @Test
-   public void testImportingMetadataWithLoaderWriterWithConfigurationAndBuilder() throws Exception {
+   public void testImportingMetadataWithLoaderWriterWithConfigurationAndBuilder() {
       //given
       Object loaderWriterRawInstance = new CustomStoreWithConfigurationAndBuilder();
 

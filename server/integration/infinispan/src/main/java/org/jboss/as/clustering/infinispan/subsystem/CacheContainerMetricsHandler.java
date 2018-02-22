@@ -46,7 +46,6 @@ import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
-import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.StringListAttributeDefinition;
@@ -106,7 +105,7 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
 
         STALE_STATS_THRESHOLD(ClusterWideMetricKeys.STALE_STATS_THRESHOLD, ModelType.LONG, true);
 
-        private static final Map<String, CacheManagerMetrics> MAP = new HashMap<String, CacheManagerMetrics>();
+        private static final Map<String, CacheManagerMetrics> MAP = new HashMap<>();
 
         static {
             for (CacheManagerMetrics metric : CacheManagerMetrics.values()) {
@@ -137,7 +136,7 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
             if (innerType != ModelType.STRING) {
                 throw new IllegalArgumentException();
             }
-            this.definition = new StringListAttributeDefinition.Builder(attributeName).setAllowNull(allowNull).build();
+            this.definition = new StringListAttributeDefinition.Builder(attributeName).setRequired(!allowNull).build();
             this.clustered = false;
         }
 
@@ -161,7 +160,7 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
      * of the system. Therefore in such cases, as message will be logged and a ModelNode of undefined will be returned.
      */
     @Override
-    protected void executeRuntimeStep(OperationContext context, ModelNode operation) throws OperationFailedException {
+    protected void executeRuntimeStep(OperationContext context, ModelNode operation) {
         final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
         final String cacheContainerName = address.getLastElement().getValue();
         final String attrName = operation.require(ModelDescriptionConstants.NAME).asString();
@@ -312,7 +311,6 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
             }
             context.getResult().set(result);
         }
-        context.stepCompleted();
     }
 
     public void registerMetrics(ManagementResourceRegistration container) {

@@ -44,7 +44,7 @@ public abstract class AbstractSimpleExternalizer<T> implements SimpleExternalize
 
     @Override
     public Set<Class<? extends T>> getTypeClasses() {
-        return Collections.<Class<? extends T>>singleton(this.targetClass);
+        return Collections.singleton(this.targetClass);
     }
 
     @Override

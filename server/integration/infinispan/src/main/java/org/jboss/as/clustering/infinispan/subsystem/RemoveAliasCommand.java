@@ -69,15 +69,11 @@ public class RemoveAliasCommand implements OperationStepHandler {
 
         // since we modified the model, set reload required
         if (requiresRuntime(context)) {
-            context.addStep(new OperationStepHandler() {
-                @Override
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    context.reloadRequired();
-                    context.completeStep(OperationContext.RollbackHandler.REVERT_RELOAD_REQUIRED_ROLLBACK_HANDLER);
-                }
+            context.addStep((context1, operation1) -> {
+                context1.reloadRequired();
+                context1.completeStep(OperationContext.RollbackHandler.REVERT_RELOAD_REQUIRED_ROLLBACK_HANDLER);
             }, OperationContext.Stage.RUNTIME);
         }
-        context.stepCompleted();
     }
 
     /**

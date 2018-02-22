@@ -83,7 +83,7 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
     }
 
     @Override
-    protected String getSubsystemXsdPath() throws Exception {
+    protected String getSubsystemXsdPath() {
         return xsdPath;
     }
 
@@ -96,18 +96,13 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
     }
 
     @Override
-    public void testSchemaOfSubsystemTemplates() throws Exception {
+    public void testSchemaOfSubsystemTemplates() {
         // TODO: implement once the schema validator supports supplements
     }
 
     @Override
     protected AdditionalInitialization createAdditionalInitialization() {
         return new org.infinispan.server.jgroups.subsystem.JGroupsSubsystemInitialization();
-    }
-
-    @Override
-    protected void compareXml(String configId, String original, String marshalled) throws Exception {
-        super.compareXml(configId, original, marshalled);
     }
 
     @Override
@@ -154,7 +149,7 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
         Assert.assertTrue(model.get(InfinispanSubsystemRootResource.PATH.getKey()).hasDefined(InfinispanSubsystemRootResource.PATH.getValue()));
     }
 
-    private KernelServicesBuilder createKernelServicesBuilder() throws Exception {
+    private KernelServicesBuilder createKernelServicesBuilder() {
         return this.createKernelServicesBuilder(this.createAdditionalInitialization());
     }
 

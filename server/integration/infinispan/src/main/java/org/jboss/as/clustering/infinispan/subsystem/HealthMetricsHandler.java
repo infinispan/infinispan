@@ -44,7 +44,6 @@ import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
-import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.StringListAttributeDefinition;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
@@ -80,7 +79,7 @@ public class HealthMetricsHandler extends AbstractRuntimeOnlyHandler {
     }
 
     @Override
-    protected void executeRuntimeStep(OperationContext context, ModelNode operation) throws OperationFailedException {
+    protected void executeRuntimeStep(OperationContext context, ModelNode operation) {
         /*
          * This is a kind of operation we are parsing:
          *    {
@@ -119,9 +118,9 @@ public class HealthMetricsHandler extends AbstractRuntimeOnlyHandler {
                     case CACHE_HEALTH:
                         List<CacheHealth> cacheHealths = health.getCacheHealth();
                         List<String> perCacheHealth = new LinkedList<>();
-                        for (int i = 0; i < cacheHealths.size(); ++i) {
-                            perCacheHealth.add(cacheHealths.get(i).getCacheName());
-                            perCacheHealth.add(cacheHealths.get(i).getStatus().toString());
+                        for (CacheHealth cacheHealth : cacheHealths) {
+                            perCacheHealth.add(cacheHealth.getCacheName());
+                            perCacheHealth.add(cacheHealth.getStatus().toString());
                         }
                         result.set(toModelNodeCollection(perCacheHealth));
                         break;
@@ -187,7 +186,7 @@ public class HealthMetricsHandler extends AbstractRuntimeOnlyHandler {
         CACHE_HEALTH(MetricKeys.CACHE_HEALTH, ModelType.LIST),
         LOG_TAIL(MetricKeys.LOG_TAIL, ModelType.LIST);
 
-        private static final Map<String, HealthMetrics> MAP = new HashMap<String, HealthMetrics>();
+        private static final Map<String, HealthMetrics> MAP = new HashMap<>();
 
         static {
             for (HealthMetrics metric : HealthMetrics.values()) {
@@ -199,7 +198,7 @@ public class HealthMetricsHandler extends AbstractRuntimeOnlyHandler {
 
         HealthMetrics(String attributeName, ModelType type) {
             this.definition = new StringListAttributeDefinition.Builder(attributeName)
-                    .setAllowNull(false)
+                    .setRequired(false)
                     .setStorageRuntime()
                     .build();
         }

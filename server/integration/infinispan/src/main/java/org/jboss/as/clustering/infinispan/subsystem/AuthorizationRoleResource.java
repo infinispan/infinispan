@@ -25,7 +25,7 @@ public class AuthorizationRoleResource extends SimpleResourceDefinition {
     static final SimpleAttributeDefinition NAME = new SimpleAttributeDefinitionBuilder(ModelKeys.NAME, ModelType.STRING, true)
         .setXmlName(Attribute.NAME.getLocalName())
         .setAllowExpression(true)
-        .setAllowNull(false)
+        .setRequired(true)
         .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
         .build()
     ;

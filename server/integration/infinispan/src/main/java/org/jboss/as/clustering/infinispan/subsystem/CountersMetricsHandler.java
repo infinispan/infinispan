@@ -13,7 +13,6 @@ import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
-import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
@@ -34,7 +33,7 @@ public class CountersMetricsHandler extends AbstractRuntimeOnlyHandler {
     private static final int CACHE_CONTAINER_INDEX = 1;
 
     @Override
-    protected void executeRuntimeStep(OperationContext context, ModelNode operation) throws OperationFailedException {
+    protected void executeRuntimeStep(OperationContext context, ModelNode operation) {
         ModelNode attributeRead = operation.require(NAME);
         final ModelNode result = new ModelNode();
         final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
@@ -78,7 +77,7 @@ public class CountersMetricsHandler extends AbstractRuntimeOnlyHandler {
         final AttributeDefinition definition;
 
         CounterConfigurationMetrics(String attributeName, ModelType type) {
-            this.definition = new SimpleAttributeDefinitionBuilder(attributeName, type).setAllowNull(false)
+            this.definition = new SimpleAttributeDefinitionBuilder(attributeName, type).setRequired(true)
                     .setStorageRuntime().build();
         }
 

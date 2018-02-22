@@ -91,8 +91,8 @@ public class DefaultCacheContainer extends AbstractDelegatingEmbeddedCacheManage
      */
     @Override
     public <K, V> Cache<K, V> getCache(String cacheName, boolean start) {
-        Cache<K, V> cache = this.cm.<K, V>getCache(this.getCacheName(cacheName), start);
-        return (cache != null) ? new DelegatingCache<K, V>(cache) : null;
+        Cache<K, V> cache = this.cm.getCache(this.getCacheName(cacheName), start);
+        return (cache != null) ? new DelegatingCache<>(cache) : null;
     }
 
     /**
@@ -101,7 +101,7 @@ public class DefaultCacheContainer extends AbstractDelegatingEmbeddedCacheManage
      */
     @Override
     public Set<String> getCacheNames() {
-        Set<String> names = new HashSet<String>(this.cm.getCacheNames());
+        Set<String> names = new HashSet<>(this.cm.getCacheNames());
         names.add(this.defaultCache);
         return names;
     }
@@ -144,7 +144,7 @@ public class DefaultCacheContainer extends AbstractDelegatingEmbeddedCacheManage
 
     @Override
     public EmbeddedCacheManager startCaches(String... names) {
-        Set<String> cacheNames = new LinkedHashSet<String>();
+        Set<String> cacheNames = new LinkedHashSet<>();
         for (String name: names) {
             cacheNames.add(this.getCacheName(name));
         }
@@ -195,7 +195,7 @@ public class DefaultCacheContainer extends AbstractDelegatingEmbeddedCacheManage
             super(cache, new AdvancedCacheWrapper<K, V>() {
                     @Override
                     public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
-                        return new DelegatingCache<K, V>(cache);
+                        return new DelegatingCache<>(cache);
                     }
                 }
             );

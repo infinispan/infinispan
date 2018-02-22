@@ -7,7 +7,6 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -94,7 +93,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
       }
 
       @Override
-      protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
+      protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) {
          final String siteNameParameter = CacheContainerResource.SITE_NAME.getName();
          final ModelNode siteName = operation.require(siteNameParameter);
          GlobalXSiteAdminOperations xsiteAdminOperations = cacheManager.getGlobalComponentRegistry().getComponent(GlobalXSiteAdminOperations.class);
@@ -110,7 +109,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
       }
 
       @Override
-      protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
+      protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) {
          final String siteNameParameter = CacheContainerResource.SITE_NAME.getName();
          final ModelNode siteName = operation.require(siteNameParameter);
          GlobalXSiteAdminOperations xsiteAdminOperations = cacheManager.getGlobalComponentRegistry().getComponent(GlobalXSiteAdminOperations.class);
@@ -126,7 +125,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
       }
 
       @Override
-      protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
+      protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) {
          final String siteNameParameter = CacheContainerResource.SITE_NAME.getName();
          final ModelNode siteName = operation.require(siteNameParameter);
          GlobalXSiteAdminOperations xsiteAdminOperations = cacheManager.getGlobalComponentRegistry().getComponent(GlobalXSiteAdminOperations.class);
@@ -142,7 +141,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
       }
 
       @Override
-      protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
+      protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) {
          final String siteNameParameter = CacheContainerResource.SITE_NAME.getName();
          final ModelNode siteName = operation.require(siteNameParameter);
          GlobalXSiteAdminOperations xsiteAdminOperations = cacheManager.getGlobalComponentRegistry().getComponent(GlobalXSiteAdminOperations.class);
@@ -192,10 +191,10 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
         }
 
         @Override
-        protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
+        protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) {
             TaskManager taskManager = cacheManager.getGlobalComponentRegistry().getComponent(TaskManager.class);
             List<Task> tasks = taskManager.getTasks();
-            Collections.sort(tasks, Comparator.comparing(Task::getName));
+            tasks.sort(Comparator.comparing(Task::getName));
             final ModelNode result = new ModelNode().setEmptyList();
             for (Task task : tasks) {
                 ModelNode node = result.addEmptyObject();
@@ -249,10 +248,10 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
         }
 
         @Override
-        protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
+        protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) {
             TaskManager taskManager = cacheManager.getGlobalComponentRegistry().getComponent(TaskManager.class);
             List<TaskExecution> taskExecutions = taskManager.getCurrentTasks();
-            Collections.sort(taskExecutions, (task1, task2) -> { return task1.getStart().compareTo(task2.getStart()); });
+            taskExecutions.sort(Comparator.comparing(TaskExecution::getStart));
             final ModelNode result = new ModelNode().setEmptyList();
             for (TaskExecution execution : taskExecutions) {
                 ModelNode node = result.addEmptyObject();

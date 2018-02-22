@@ -147,7 +147,7 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
         return readResource(SUBSYSTEM_XML_FILE) ;
     }
 
-    protected void assertServerState(final KernelServices services, String expected) throws Exception {
+    protected void assertServerState(final KernelServices services, String expected) {
         ModelTestModelControllerService controllerService = extractField(services, "controllerService");
         ControlledProcessState processState = extractField(controllerService, "processState");
         assertEquals(expected, processState.getState().toString());

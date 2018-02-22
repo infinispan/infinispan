@@ -29,7 +29,7 @@ public class DeployedCacheStoreFactory implements CacheStoreFactory {
    public <T> T createInstance(StoreConfiguration cfg) {
       if (cfg instanceof DeployedStoreConfiguration) {
          DeployedStoreConfiguration deployedConfiguration = (DeployedStoreConfiguration) cfg;
-         DeployedCacheStoreMetadata deployedCacheStoreMetadata = null;
+         DeployedCacheStoreMetadata deployedCacheStoreMetadata;
          try {
             InfinispanLogger.ROOT_LOGGER.debug(String.format("Waiting for deployment of Custom Cache Store (%s).", deployedConfiguration.getCustomStoreClassName()));
             deployedCacheStoreMetadata = getPromise(deployedConfiguration.getCustomStoreClassName()).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);

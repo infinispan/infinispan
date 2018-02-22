@@ -53,7 +53,7 @@ public class CacheAuthorizationConfigurationResource extends CacheConfigurationC
             .setXmlName(Attribute.ROLES.getLocalName())
             .setAllowExpression(true)
             .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-            .setAllowNull(true)
+            .setRequired(false)
             .build()
     ;
 

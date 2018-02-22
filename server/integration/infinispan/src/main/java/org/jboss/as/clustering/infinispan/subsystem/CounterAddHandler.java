@@ -70,7 +70,7 @@ public class CounterAddHandler extends AbstractAddStepHandler implements  Restar
 
     @Override
     public void removeRuntimeServices(OperationContext context, ModelNode operation, ModelNode containerModel,
-            ModelNode cacheModel) throws OperationFailedException {
+            ModelNode cacheModel) {
 
         String counterName = getCounterName(operation);
         String containerName = getContainerName(operation);

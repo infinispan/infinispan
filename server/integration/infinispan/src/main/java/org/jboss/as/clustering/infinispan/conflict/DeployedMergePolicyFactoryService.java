@@ -5,7 +5,6 @@ import org.jboss.as.clustering.infinispan.InfinispanLogger;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.StartContext;
-import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 
 public class DeployedMergePolicyFactoryService implements Service<DeployedMergePolicyFactory> {
@@ -15,7 +14,7 @@ public class DeployedMergePolicyFactoryService implements Service<DeployedMergeP
    private final DeployedMergePolicyFactory factory = new DeployedMergePolicyFactory();
 
    @Override
-   public void start(StartContext context) throws StartException {
+   public void start(StartContext context) {
       InfinispanLogger.ROOT_LOGGER.debugf("Starting DeployedMergePolicyFactoryService");
    }
 

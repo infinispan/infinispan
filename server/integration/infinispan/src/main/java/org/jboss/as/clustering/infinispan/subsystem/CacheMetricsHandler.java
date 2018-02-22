@@ -54,7 +54,6 @@ import org.infinispan.xsite.status.SiteStatus;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
-import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.StringListAttributeDefinition;
@@ -122,7 +121,7 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         OFFLINE_SITES(MetricKeys.SITES_OFFLINE, ModelType.LIST, ModelType.STRING, false),
         MIXED_SITES(MetricKeys.SITES_MIXED, ModelType.LIST, ModelType.STRING, false);
 
-        private static final Map<String, CacheMetrics> MAP = new HashMap<String, CacheMetrics>();
+        private static final Map<String, CacheMetrics> MAP = new HashMap<>();
 
         static {
             for (CacheMetrics metric : CacheMetrics.values()) {
@@ -153,7 +152,7 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
             if (innerType != ModelType.STRING) {
                 throw new IllegalArgumentException();
             }
-            this.definition = new StringListAttributeDefinition.Builder(attributeName).setAllowNull(allowNull).build();
+            this.definition = new StringListAttributeDefinition.Builder(attributeName).setRequired(!allowNull).build();
             this.clustered = false;
         }
 
@@ -177,7 +176,7 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
      * of the system. Therefore in such cases, as message will be logged and a ModelNode of undefined will be returned.
      */
     @Override
-    protected void executeRuntimeStep(OperationContext context, ModelNode operation) throws OperationFailedException {
+    protected void executeRuntimeStep(OperationContext context, ModelNode operation) {
         final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
         final String cacheContainerName = address.getElement(address.size() - 2).getValue();
         final String cacheName = address.getLastElement().getValue();
@@ -382,7 +381,6 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
             }
             context.getResult().set(result);
         }
-        context.stepCompleted();
     }
 
     public void registerCommonMetrics(ManagementResourceRegistration container) {

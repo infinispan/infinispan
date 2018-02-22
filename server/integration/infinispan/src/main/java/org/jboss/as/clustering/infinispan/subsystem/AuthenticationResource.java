@@ -75,11 +75,6 @@ public class AuthenticationResource extends SimpleResourceDefinition {
    }
 
    @Override
-   public void registerChildren(ManagementResourceRegistration resourceRegistration) {
-      super.registerChildren(resourceRegistration);
-   }
-
-   @Override
    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
        super.registerAttributes(resourceRegistration);
 

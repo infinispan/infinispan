@@ -884,6 +884,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
     }
 
     private static void writeAttribute(XMLExtendedStreamWriter writer, ModelNode model, AttributeDefinition attribute) throws XMLStreamException {
-        attribute.getAttributeMarshaller().marshallAsAttribute(attribute, model, true, writer);
+        attribute.getMarshaller().marshallAsAttribute(attribute, model, true, writer);
     }
 }

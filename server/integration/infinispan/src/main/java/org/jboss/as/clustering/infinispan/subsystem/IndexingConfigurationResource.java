@@ -45,7 +45,7 @@ public class IndexingConfigurationResource extends CacheConfigurationChildResour
                 .build();
 
     static final StringListAttributeDefinition INDEXED_ENTITIES = new StringListAttributeDefinition.Builder(ModelKeys.INDEXED_ENTITIES)
-          .setAllowNull(true)
+          .setRequired(false)
           .setAllowExpression(false)
           .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
           .build();

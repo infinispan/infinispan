@@ -95,8 +95,7 @@ public class MemoryOffHeapConfigurationResource extends CacheConfigurationChildR
         resourceRegistration.registerReadWriteAttribute(EVICTION, CacheReadAttributeHandler.INSTANCE, restartCacheWriteHandler);
         resourceRegistration.registerReadWriteAttribute(ADDRESS_COUNT, CacheReadAttributeHandler.INSTANCE, restartCacheWriteHandler);
         resourceRegistration.registerReadWriteAttribute(STRATEGY, CacheReadAttributeHandler.INSTANCE, restartCacheWriteHandler);
-        resourceRegistration.registerReadWriteAttribute(SIZE, CacheReadAttributeHandler.INSTANCE, new RuntimeCacheConfigurationWriteAttributeHandler(SIZE, (configuration, newSize) -> {
-            configuration.memory().size(newSize.asLong());
-        }));
+        resourceRegistration.registerReadWriteAttribute(SIZE, CacheReadAttributeHandler.INSTANCE,
+              new RuntimeCacheConfigurationWriteAttributeHandler(SIZE, (configuration, newSize) -> configuration.memory().size(newSize.asLong())));
     }
 }

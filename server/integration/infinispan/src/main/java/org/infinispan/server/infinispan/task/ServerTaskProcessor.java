@@ -9,7 +9,6 @@ import org.jboss.as.clustering.infinispan.InfinispanMessages;
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
-import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
 import org.jboss.as.server.deployment.ServicesAttachment;
 import org.jboss.modules.Module;
@@ -32,7 +31,7 @@ public class ServerTaskProcessor implements DeploymentUnitProcessor {
    public static final String EXTERNAL_TASK = "ExternalTask";
 
    @Override
-   public void deploy(DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
+   public void deploy(DeploymentPhaseContext phaseContext) {
       DeploymentUnit deploymentUnit = phaseContext.getDeploymentUnit();
       Module module = deploymentUnit.getAttachment(Attachments.MODULE);
       ServicesAttachment servicesAttachment = deploymentUnit.getAttachment(Attachments.SERVICES);

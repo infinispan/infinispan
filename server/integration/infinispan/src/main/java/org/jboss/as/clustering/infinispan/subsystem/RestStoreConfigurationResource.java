@@ -57,14 +57,14 @@ public class RestStoreConfigurationResource extends BaseStoreConfigurationResour
                     .setXmlName(Attribute.APPEND_CACHE_NAME_TO_PATH.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(RestStoreConfiguration.APPEND_CACHE_NAME_TO_PATH.getDefaultValue().booleanValue()))
+                    .setDefaultValue(new ModelNode().set(RestStoreConfiguration.APPEND_CACHE_NAME_TO_PATH.getDefaultValue()))
                     .build();
     static final SimpleAttributeDefinition MAX_CONTENT_LENGTH =
           new SimpleAttributeDefinitionBuilder(ModelKeys.MAX_CONTENT_LENGTH, ModelType.INT, true)
                 .setXmlName(Attribute.MAX_CONTENT_LENGTH.getLocalName())
                 .setAllowExpression(true)
                 .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                .setDefaultValue(new ModelNode().set(RestStoreConfiguration.MAX_CONTENT_LENGTH.getDefaultValue().intValue()))
+                .setDefaultValue(new ModelNode().set(RestStoreConfiguration.MAX_CONTENT_LENGTH.getDefaultValue()))
                 .build();
     // connection pool attributes
     static final SimpleAttributeDefinition BUFFER_SIZE =
@@ -73,7 +73,7 @@ public class RestStoreConfigurationResource extends BaseStoreConfigurationResour
                     .setMeasurementUnit(MeasurementUnit.BYTES)
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.BUFFER_SIZE.getDefaultValue().intValue()))
+                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.BUFFER_SIZE.getDefaultValue()))
                     .build();
     static final SimpleAttributeDefinition CONNECTION_TIMEOUT =
             new SimpleAttributeDefinitionBuilder(ModelKeys.CONNECTION_TIMEOUT, ModelType.INT, true)
@@ -81,21 +81,21 @@ public class RestStoreConfigurationResource extends BaseStoreConfigurationResour
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.CONNECTION_TIMEOUT.getDefaultValue().intValue()))
+                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.CONNECTION_TIMEOUT.getDefaultValue()))
                     .build();
     static final SimpleAttributeDefinition MAX_CONNECTIONS_PER_HOST =
             new SimpleAttributeDefinitionBuilder(ModelKeys.MAX_CONNECTIONS_PER_HOST, ModelType.INT, true)
                     .setXmlName(Attribute.MAX_CONNECTIONS_PER_HOST.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.MAX_CONNECTIONS_PER_HOST.getDefaultValue().intValue()))
+                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.MAX_CONNECTIONS_PER_HOST.getDefaultValue()))
                     .build();
     static final SimpleAttributeDefinition MAX_TOTAL_CONNECTIONS =
             new SimpleAttributeDefinitionBuilder(ModelKeys.MAX_TOTAL_CONNECTIONS, ModelType.INT, true)
                     .setXmlName(Attribute.MAX_TOTAL_CONNECTIONS.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.MAX_TOTAL_CONNECTIONS.getDefaultValue().intValue()))
+                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.MAX_TOTAL_CONNECTIONS.getDefaultValue()))
                     .build();
     static final SimpleAttributeDefinition SOCKET_TIMEOUT =
             new SimpleAttributeDefinitionBuilder(ModelKeys.SOCKET_TIMEOUT, ModelType.INT, true)
@@ -103,22 +103,22 @@ public class RestStoreConfigurationResource extends BaseStoreConfigurationResour
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.SOCKET_TIMEOUT.getDefaultValue().intValue()))
+                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.SOCKET_TIMEOUT.getDefaultValue()))
                     .build();
     static final SimpleAttributeDefinition TCP_NO_DELAY =
             new SimpleAttributeDefinitionBuilder(ModelKeys.TCP_NO_DELAY, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.TCP_NO_DELAY.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.TCP_NO_DELAY.getDefaultValue().booleanValue()))
+                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.TCP_NO_DELAY.getDefaultValue()))
                     .build();
     static final ObjectTypeAttributeDefinition CONNECTION_POOL = ObjectTypeAttributeDefinition.
             Builder.of(ModelKeys.CONNECTION_POOL, BUFFER_SIZE, CONNECTION_TIMEOUT, MAX_CONNECTIONS_PER_HOST, MAX_TOTAL_CONNECTIONS, SOCKET_TIMEOUT, TCP_NO_DELAY).
-            setAllowNull(true).
+            setRequired(false).
             build();
 
     // remote server attributes
-    static final SimpleAttributeDefinition OUTBOUND_SOCKET_BINDING = new SimpleAttributeDefinition("outbound-socket-binding", ModelType.STRING, true);
+    static final SimpleAttributeDefinition OUTBOUND_SOCKET_BINDING = new SimpleAttributeDefinitionBuilder(ModelKeys.OUTBOUND_SOCKET_BINDING, ModelType.STRING, true).build();
 
     static final SimpleAttributeDefinition NAME =
             new SimpleAttributeDefinitionBuilder(BaseStoreConfigurationResource.NAME)
@@ -127,12 +127,12 @@ public class RestStoreConfigurationResource extends BaseStoreConfigurationResour
 
     static final ObjectTypeAttributeDefinition REMOTE_SERVER = ObjectTypeAttributeDefinition.
             Builder.of(ModelKeys.REMOTE_SERVER, OUTBOUND_SOCKET_BINDING).
-            setAllowNull(true).
-            setSuffix("remote-server").
+            setRequired(false).
+            setSuffix(ModelKeys.REMOTE_SERVER).
             build();
 
     static final ObjectListAttributeDefinition REMOTE_SERVERS = ObjectListAttributeDefinition.Builder.of(ModelKeys.REMOTE_SERVERS, REMOTE_SERVER).
-            setAllowNull(false).
+            setRequired(true).
             build();
 
     static final AttributeDefinition[] REST_STORE_ATTRIBUTES = {PATH, APPEND_CACHE_NAME_TO_PATH, MAX_CONTENT_LENGTH, CONNECTION_POOL, REMOTE_SERVERS};

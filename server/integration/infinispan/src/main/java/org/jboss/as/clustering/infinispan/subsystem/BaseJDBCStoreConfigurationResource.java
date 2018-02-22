@@ -129,25 +129,25 @@ public class BaseJDBCStoreConfigurationResource extends BaseStoreConfigurationRe
 
     static final ObjectTypeAttributeDefinition ID_COLUMN = ObjectTypeAttributeDefinition.
             Builder.of("id-column", COLUMN_NAME, COLUMN_TYPE).
-            setAllowNull(true).
+            setRequired(false).
             setSuffix("column").
             build();
 
     static final ObjectTypeAttributeDefinition DATA_COLUMN = ObjectTypeAttributeDefinition.
             Builder.of("data-column", COLUMN_NAME, COLUMN_TYPE).
-            setAllowNull(true).
+            setRequired(false).
             setSuffix("column").
             build();
 
     static final ObjectTypeAttributeDefinition TIMESTAMP_COLUMN = ObjectTypeAttributeDefinition.
             Builder.of("timestamp-column", COLUMN_NAME, COLUMN_TYPE).
-            setAllowNull(true).
+            setRequired(false).
             setSuffix("column").
             build();
 
     static final ObjectTypeAttributeDefinition STRING_KEYED_TABLE = ObjectTypeAttributeDefinition.
             Builder.of(ModelKeys.STRING_KEYED_TABLE, PREFIX, BATCH_SIZE, FETCH_SIZE, CREATE_ON_START, DROP_ON_EXIT, ID_COLUMN, DATA_COLUMN, TIMESTAMP_COLUMN).
-            setAllowNull(true).
+            setRequired(false).
             setSuffix("table").
             build();
 

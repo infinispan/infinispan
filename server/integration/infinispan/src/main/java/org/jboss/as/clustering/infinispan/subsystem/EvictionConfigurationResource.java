@@ -88,8 +88,7 @@ public class EvictionConfigurationResource extends CacheConfigurationChildResour
 
         resourceRegistration.registerReadWriteAttribute(EVICTION_STRATEGY, CacheReadAttributeHandler.INSTANCE, restartCacheWriteHandler);
         resourceRegistration.registerReadWriteAttribute(TYPE, CacheReadAttributeHandler.INSTANCE, restartCacheWriteHandler);
-        resourceRegistration.registerReadWriteAttribute(SIZE, CacheReadAttributeHandler.INSTANCE, new RuntimeCacheConfigurationWriteAttributeHandler(SIZE, (configuration, newSize) -> {
-            configuration.eviction().size(newSize.asLong());
-        }));
+        resourceRegistration.registerReadWriteAttribute(SIZE, CacheReadAttributeHandler.INSTANCE,
+              new RuntimeCacheConfigurationWriteAttributeHandler(SIZE, (configuration, newSize) -> configuration.eviction().size(newSize.asLong())));
     }
 }

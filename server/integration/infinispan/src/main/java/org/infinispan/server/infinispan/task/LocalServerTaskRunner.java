@@ -14,7 +14,7 @@ public class LocalServerTaskRunner implements ServerTaskRunner {
 
    @Override
    public <T> CompletableFuture<T> execute(String taskName, TaskContext context) {
-      ServerTaskWrapper<T> task = getRegistry(context).<T>getTask(taskName);
+      ServerTaskWrapper<T> task = getRegistry(context).getTask(taskName);
       try {
          task.inject(context);
          return CompletableFuture.completedFuture(task.run());

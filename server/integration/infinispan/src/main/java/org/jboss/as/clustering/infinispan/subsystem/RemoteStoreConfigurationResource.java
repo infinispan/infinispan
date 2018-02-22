@@ -89,7 +89,7 @@ public class RemoteStoreConfigurationResource extends BaseStoreConfigurationReso
                     .setDefaultValue(new ModelNode().set(60000))
                     .build();
 
-    static final SimpleAttributeDefinition OUTBOUND_SOCKET_BINDING = new SimpleAttributeDefinition("outbound-socket-binding", ModelType.STRING, true);
+    static final SimpleAttributeDefinition OUTBOUND_SOCKET_BINDING = new SimpleAttributeDefinitionBuilder(ModelKeys.OUTBOUND_SOCKET_BINDING, ModelType.STRING, true).build();
 
     static final SimpleAttributeDefinition NAME =
             new SimpleAttributeDefinitionBuilder(BaseStoreConfigurationResource.NAME)
@@ -98,12 +98,12 @@ public class RemoteStoreConfigurationResource extends BaseStoreConfigurationReso
 
     static final ObjectTypeAttributeDefinition REMOTE_SERVER = ObjectTypeAttributeDefinition.
             Builder.of(ModelKeys.REMOTE_SERVER, OUTBOUND_SOCKET_BINDING).
-            setAllowNull(true).
+            setRequired(false).
             setSuffix("remote-server").
             build();
 
     static final ObjectListAttributeDefinition REMOTE_SERVERS = ObjectListAttributeDefinition.Builder.of(ModelKeys.REMOTE_SERVERS, REMOTE_SERVER).
-            setAllowNull(false).
+            setRequired(true).
             build();
 
     static final AttributeDefinition[] REMOTE_STORE_ATTRIBUTES = {CACHE, HOTROD_WRAPPING, TCP_NO_DELAY, RAW_VALUES, SOCKET_TIMEOUT, REMOTE_SERVERS, PROTOCOL_VERSION};
