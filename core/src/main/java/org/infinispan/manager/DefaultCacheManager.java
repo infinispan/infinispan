@@ -132,6 +132,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    private static final Log log = LogFactory.getLog(DefaultCacheManager.class);
 
    private final ConcurrentMap<String, CompletableFuture<Cache<?, ?>>> caches = CollectionFactory.makeConcurrentMap();
+   private final ConcurrentMap<String, Cache<?, ?>> wiredCaches = CollectionFactory.makeConcurrentMap();
    private final GlobalComponentRegistry globalComponentRegistry;
    private final AuthorizationHelper authzHelper;
    private final DependencyGraph<String> cacheDependencyGraph = new DependencyGraph<>();
@@ -390,8 +391,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          throw log.illegalCacheName(DEFAULT_CACHE_NAME);
       Configuration existing = configurationManager.getConfiguration(configurationName, false);
       if (existing != null) {
-         for (CompletableFuture<Cache<?, ?>> cacheFuture : caches.values()) {
-            Cache<?, ?> cache = cacheFuture.exceptionally(t -> null).join();
+         for (Cache<?, ?> cache : wiredCaches.values()) {
             if (cache != null && cache.getCacheConfiguration() == existing && cache.getStatus() != ComponentStatus.TERMINATED) {
                throw log.configurationInUse(configurationName);
             }
@@ -630,6 +630,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          if (cache.getAdvancedCache().getAuthorizationManager() != null) {
             cache = new SecureCacheImpl<K, V>(cache.getAdvancedCache());
          }
+         wiredCaches.putIfAbsent(cacheName, cache);
 
          boolean notStartedYet =
                cr.getStatus() != ComponentStatus.RUNNING && cr.getStatus() != ComponentStatus.INITIALIZING;
@@ -678,7 +679,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    private void terminate(String cacheName) {
       CompletableFuture<Cache<?, ?>> cacheFuture = this.caches.get(cacheName);
       if (cacheFuture != null) {
-         Cache<?, ?> cache = cacheFuture.join();
+         Cache<?, ?> cache;
+         if (cacheFuture.isDone()) {
+            cache = cacheFuture.join();
+         } else {
+            cacheFuture.cancel(true);
+            cache = wiredCaches.get(cacheName);
+         }
          unregisterCacheMBean(cache);
          if (cache.getStatus().isTerminated()) {
             log.tracef("Ignoring cache %s, it is already terminated.", cacheName);
