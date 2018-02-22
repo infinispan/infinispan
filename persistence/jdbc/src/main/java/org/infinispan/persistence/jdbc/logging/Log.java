@@ -11,6 +11,7 @@ import javax.naming.NamingException;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -24,7 +25,10 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 5.0
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.util.logging.Log {
+public interface Log extends BasicLogger {
+   @LogMessage(level = ERROR)
+   @Message(value = "Exception while marshalling object: %s", id = 65)
+   void errorMarshallingObject(@Cause Throwable ioe, Object obj);
 
    @LogMessage(level = ERROR)
    @Message(value = "Failed clearing cache store", id = 8001)

@@ -1,6 +1,7 @@
 package org.infinispan.lock.impl.log;
 
 import org.infinispan.lock.exception.ClusteredLockException;
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
@@ -11,7 +12,7 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 9.2
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.util.logging.Log {
+public interface Log extends BasicLogger {
    String LOCK_DELETE_MSG = "The lock was deleted.";
 
    @Message(value = LOCK_DELETE_MSG, id = 29001)

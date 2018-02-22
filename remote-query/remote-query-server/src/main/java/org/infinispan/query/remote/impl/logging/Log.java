@@ -1,6 +1,7 @@
 package org.infinispan.query.remote.impl.logging;
 
 import org.infinispan.commons.CacheException;
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
@@ -13,7 +14,7 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 6.0
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.util.logging.Log {
+public interface Log extends BasicLogger {
 
    @Message(value = "Unknown field %s in type %s", id = 28001)
    IllegalArgumentException unknownField(String fieldName, String fullyQualifiedTypeName);

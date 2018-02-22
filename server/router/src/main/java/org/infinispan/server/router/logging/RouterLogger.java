@@ -5,6 +5,7 @@ import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.INFO;
 
 import org.infinispan.server.router.RoutingTable;
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -19,7 +20,7 @@ import io.netty.util.DomainNameMapping;
  * @author Sebastian Łaskawiec
  */
 @MessageLogger(projectCode = "ISPN")
-public interface RouterLogger extends org.infinispan.util.logging.Log {
+public interface RouterLogger extends BasicLogger {
 
     @LogMessage(level = DEBUG)
     @Message(value = "Using SNI Handler with domain mapping %s", id = 14001)

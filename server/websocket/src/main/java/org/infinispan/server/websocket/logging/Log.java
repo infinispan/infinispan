@@ -1,6 +1,7 @@
 package org.infinispan.server.websocket.logging;
 
 import org.infinispan.server.websocket.json.JsonConversionException;
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
@@ -13,7 +14,7 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 5.0
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.util.logging.Log {
+public interface Log extends BasicLogger {
 
    @Message(value = "Could not convert from String to Json: %s", id = 13001)
    JsonConversionException unableToConvertFromStringToJson(String json, @Cause Throwable e);

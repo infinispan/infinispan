@@ -9,6 +9,7 @@ import java.io.IOException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -23,7 +24,10 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 5.0
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.util.logging.Log {
+public interface Log extends BasicLogger {
+   @LogMessage(level = ERROR)
+   @Message(value = "Error executing parallel store task", id = 252)
+   void errorExecutingParallelStoreTask(@Cause Throwable cause);
 
    @LogMessage(level = ERROR)
    @Message(value = "Error in suspending transaction", id = 15001)

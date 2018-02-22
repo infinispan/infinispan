@@ -8,9 +8,11 @@ import java.util.Set;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.counter.exception.CounterException;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.server.hotrod.MissingFactoryException;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -24,7 +26,34 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 5.0
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.server.core.logging.Log {
+public interface Log extends BasicLogger {
+   @LogMessage(level = ERROR)
+   @Message(value = "Exception reported", id = 5003)
+   void exceptionReported(@Cause Throwable t);
+
+   @LogMessage(level = WARN)
+   @Message(value = "No members for new topology after applying consistent hash %s filtering into base topology %s", id = 5019)
+   void noMembersInHashTopology(ConsistentHash ch, String topologyMap);
+
+   @LogMessage(level = WARN)
+   @Message(value = "No members in new topology", id = 5020)
+   void noMembersInTopology();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Server endpoint topology is empty, and cluster members are %s", id = 5021)
+   void serverEndpointTopologyEmpty(String clusterMembers);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Exception writing response with messageId=%s", id = 5022)
+   void errorWritingResponse(long msgId, @Cause Throwable t);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Exception encoding message %s", id = 5023)
+   void errorEncodingMessage(Object msg, @Cause Throwable t);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Request to encode unexpected message %s", id = 5024)
+   void errorUnexpectedMessage(Object msg);
 
    @LogMessage(level = WARN)
    @Message(value = "While trying to detect a crashed member, current view returned null", id = 6000)

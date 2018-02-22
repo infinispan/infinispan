@@ -37,7 +37,7 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
-import org.infinispan.server.memcached.logging.JavaLog;
+import org.infinispan.server.memcached.logging.Log;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -634,7 +634,7 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 class NoReplyListener {
    private final CountDownLatch latch;
 
-   JavaLog log = LogFactory.getLog(NoReplyListener.class, JavaLog.class);
+   Log log = LogFactory.getLog(NoReplyListener.class, Log.class);
 
    NoReplyListener(CountDownLatch latch) {
       this.latch = latch;

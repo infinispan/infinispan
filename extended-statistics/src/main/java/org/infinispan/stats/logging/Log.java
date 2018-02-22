@@ -5,6 +5,7 @@ import static org.jboss.logging.Logger.Level.WARN;
 
 import org.infinispan.stats.container.ExtendedStatistic;
 import org.infinispan.stats.percentiles.PercentileStatistic;
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -18,7 +19,7 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 6.0
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.util.logging.Log {
+public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(id = 25001, value = "Extended Statistic [%s] not found while tried to add a percentile sample.")

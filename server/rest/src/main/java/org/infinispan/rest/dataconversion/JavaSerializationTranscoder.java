@@ -7,7 +7,7 @@ import java.util.Set;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
-import org.infinispan.rest.logging.Log;
+import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**

@@ -6,6 +6,7 @@ import static org.jboss.logging.Logger.Level.WARN;
 import javax.naming.NamingException;
 
 import org.hibernate.search.exception.SearchException;
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -19,7 +20,7 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 4.0
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.commons.logging.Log {
+public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(id = 26001, value = "Unable to retrieve CacheManager from JNDI [%s]")

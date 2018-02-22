@@ -1,14 +1,14 @@
 package org.infinispan.rest.logging;
 
-import static org.jboss.logging.Logger.Level.ERROR;
-import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.TRACE;
 import static org.jboss.logging.Logger.Level.WARN;
 
+import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.rest.cachemanager.exceptions.CacheUnavailableException;
 import org.infinispan.rest.operations.exceptions.NoCacheFoundException;
 import org.infinispan.rest.operations.exceptions.ServiceUnavailableException;
 import org.infinispan.rest.operations.exceptions.UnacceptableDataFormatException;
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -22,19 +22,9 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 5.0
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.util.logging.Log {
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Error reading configuration file for REST server: %s", id = 12001)
-   void errorReadingConfigurationFile(@Cause Throwable t, String path);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Error while retrieving cache manager from JBoss Microcontainer", id = 12002)
-   void errorRetrievingCacheManagerFromMC(@Cause Throwable t);
-
-   @LogMessage(level = INFO)
-   @Message(value = "REST server starting, listening on %s:%s", id = 12003)
-   void startRestServer(String host, int port);
+public interface Log extends BasicLogger {
+   @Message(value = "Error transcoding content", id = 495)
+   EncodingException errorTranscoding(@Cause Throwable cause);
 
    @Message(value = "Unsupported configuration option", id = 12004)
    UnsupportedOperationException unsupportedConfigurationOption();

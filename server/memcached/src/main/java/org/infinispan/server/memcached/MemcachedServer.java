@@ -14,7 +14,7 @@ import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
-import org.infinispan.server.memcached.logging.JavaLog;
+import org.infinispan.server.memcached.logging.Log;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInboundHandler;
@@ -33,7 +33,7 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
       super("Memcached");
    }
 
-   private final static JavaLog log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), JavaLog.class);
+   private final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    protected ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
    private AdvancedCache<String, byte[]> memcachedCache;
 

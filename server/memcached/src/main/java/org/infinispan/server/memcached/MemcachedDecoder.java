@@ -66,7 +66,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.server.core.transport.NettyTransport;
-import org.infinispan.server.memcached.logging.JavaLog;
+import org.infinispan.server.memcached.logging.Log;
 import org.infinispan.stats.Stats;
 import org.infinispan.util.KeyValuePair;
 
@@ -108,7 +108,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    protected final NettyTransport transport;
    protected final Predicate<? super String> ignoreCache;
 
-   private final static JavaLog log = LogFactory.getLog(MemcachedDecoder.class, JavaLog.class);
+   private final static Log log = LogFactory.getLog(MemcachedDecoder.class, Log.class);
    private final static boolean isTrace = log.isTraceEnabled();
 
    private static final int SecondsInAMonth = 60 * 60 * 24 * 30;
