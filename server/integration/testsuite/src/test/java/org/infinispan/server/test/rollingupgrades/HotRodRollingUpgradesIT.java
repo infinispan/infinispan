@@ -1,7 +1,7 @@
 package org.infinispan.server.test.rollingupgrades;
 
-import static junit.framework.TestCase.assertNull;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import javax.management.ObjectName;
 
