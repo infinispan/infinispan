@@ -50,7 +50,7 @@ public class AuthorizationHelper {
    }
 
    public AuthorizationHelper(GlobalSecurityConfiguration security, AuditContext context, String name) {
-      this(security, context, name, CollectionFactory.makeBoundedConcurrentMap(10));
+      this(security, context, name, security.authorization().enabled() ? CollectionFactory.makeBoundedConcurrentMap(10) : null);
    }
 
    public void checkPermission(AuthorizationPermission perm) {
