@@ -35,7 +35,6 @@ import org.infinispan.stats.ClusterCacheStats;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
-import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
@@ -85,7 +84,7 @@ public class ClusteredCacheMetricsHandler extends AbstractRuntimeOnlyHandler {
 
       STALE_STATS_THRESHOLD(ClusterWideMetricKeys.STALE_STATS_THRESHOLD, ModelType.LONG, true);
 
-      private static final Map<String, ClusteredCacheMetrics> MAP = new HashMap<String, ClusteredCacheMetrics>();
+      private static final Map<String, ClusteredCacheMetrics> MAP = new HashMap<>();
 
       static {
          for (ClusteredCacheMetrics metric : ClusteredCacheMetrics.values()) {
@@ -126,7 +125,7 @@ public class ClusteredCacheMetricsHandler extends AbstractRuntimeOnlyHandler {
     * undefined will be returned.
     */
    @Override
-   protected void executeRuntimeStep(OperationContext context, ModelNode operation) throws OperationFailedException {
+   protected void executeRuntimeStep(OperationContext context, ModelNode operation) {
       final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
       final String cacheContainerName = address.getElement(address.size() - 2).getValue();
       final String cacheName = address.getLastElement().getValue();

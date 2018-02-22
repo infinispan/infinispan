@@ -66,9 +66,9 @@ public class BaseLoaderConfigurationResource extends CacheConfigurationChildReso
                     .build();
 
     // used to pass in a list of properties to the loader add command
-    static final AttributeDefinition PROPERTY = new SimpleAttributeDefinition(ModelKeys.PROPERTY, ModelType.PROPERTY, true);
+    static final AttributeDefinition PROPERTY = new SimpleAttributeDefinitionBuilder(ModelKeys.PROPERTY, ModelType.PROPERTY, true).build();
     static final SimpleListAttributeDefinition PROPERTIES = SimpleListAttributeDefinition.Builder.of(ModelKeys.PROPERTIES, PROPERTY).
-            setAllowNull(true).
+            setRequired(false).
             build();
 
     static final AttributeDefinition[] BASE_LOADER_ATTRIBUTES = {SHARED, PRELOAD};

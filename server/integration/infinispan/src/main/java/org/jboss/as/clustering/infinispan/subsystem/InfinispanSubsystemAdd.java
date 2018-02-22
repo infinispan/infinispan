@@ -26,8 +26,8 @@ import static org.jboss.as.clustering.infinispan.InfinispanLogger.ROOT_LOGGER;
 
 import org.infinispan.server.infinispan.task.ServerTaskProcessor;
 import org.infinispan.server.infinispan.task.ServerTaskRegistryService;
-import org.jboss.as.clustering.infinispan.conflict.DeployedMergePolicyProcessor;
 import org.jboss.as.clustering.infinispan.conflict.DeployedMergePolicyFactoryService;
+import org.jboss.as.clustering.infinispan.conflict.DeployedMergePolicyProcessor;
 import org.jboss.as.clustering.infinispan.cs.deployment.AdvancedCacheLoaderExtensionProcessor;
 import org.jboss.as.clustering.infinispan.cs.deployment.AdvancedCacheWriterExtensionProcessor;
 import org.jboss.as.clustering.infinispan.cs.deployment.AdvancedLoadWriteStoreExtensionProcessor;
@@ -38,9 +38,6 @@ import org.jboss.as.clustering.infinispan.cs.deployment.ServerExtensionDependenc
 import org.jboss.as.clustering.infinispan.cs.factory.DeployedCacheStoreFactoryService;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationContext;
-import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
-import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.server.AbstractDeploymentChainStep;
 import org.jboss.as.server.DeploymentProcessorTarget;
 import org.jboss.as.server.deployment.Phase;
@@ -51,29 +48,22 @@ import org.jboss.dmr.ModelNode;
  */
 public class InfinispanSubsystemAdd extends AbstractAddStepHandler {
 
-   public static final InfinispanSubsystemAdd INSTANCE = new InfinispanSubsystemAdd();
    private static final int POST_MODULE_PRIORITY = 0x1300;
    private static final int DEPENDENCIES_PRIORITY_PRIORITY = 0x1300;
 
-   private static final String INFINISPAN_SUBSYSTEM_NAME = "infinispan";
+   private static final String INFINISPAN_SUBSYSTEM_NAME = "datagrid-infinispan";
 
-   static ModelNode createOperation(ModelNode address, ModelNode existing) throws OperationFailedException {
-      ModelNode operation = Util.getEmptyOperation(ModelDescriptionConstants.ADD, address);
-      populate(existing, operation);
-      return operation;
-   }
-
-   private static void populate(ModelNode source, ModelNode target) throws OperationFailedException {
+   private static void populate(ModelNode source, ModelNode target) {
       target.get(ModelKeys.CACHE_CONTAINER).setEmptyObject();
    }
 
    @Override
-   protected void populateModel(ModelNode operation, ModelNode model) throws OperationFailedException {
+   protected void populateModel(ModelNode operation, ModelNode model) {
       populate(operation, model);
    }
 
    @Override
-   protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
+   protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model) {
       ROOT_LOGGER.activatingSubsystem();
       addDeployableExtensionProcessors(context);
    }
@@ -98,10 +88,5 @@ public class InfinispanSubsystemAdd extends AbstractAddStepHandler {
       context.getServiceTarget().addService(DeployedCacheStoreFactoryService.SERVICE_NAME, new DeployedCacheStoreFactoryService()).install();
       context.getServiceTarget().addService(ServerTaskRegistryService.SERVICE_NAME, new ServerTaskRegistryService()).install();
       context.getServiceTarget().addService(DeployedMergePolicyFactoryService.SERVICE_NAME, new DeployedMergePolicyFactoryService()).install();
-   }
-
-   @Override
-   protected boolean requiresRuntimeVerification() {
-      return false;
    }
 }

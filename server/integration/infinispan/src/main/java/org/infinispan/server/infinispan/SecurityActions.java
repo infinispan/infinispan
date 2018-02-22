@@ -79,28 +79,22 @@ public final class SecurityActions {
     }
 
     public static void registerAndStartContainer(final EmbeddedCacheManager container, final Object listener) {
-        PrivilegedAction<Void> action = new PrivilegedAction<Void>() {
-            @Override
-            public Void run() {
-                container.addListener(listener);
-                container.start();
-                return null;
-            }
+        PrivilegedAction<Void> action = () -> {
+            container.addListener(listener);
+            container.start();
+            return null;
         };
         doPrivileged(action);
     }
 
     public static boolean stopAndUnregisterContainer(final EmbeddedCacheManager container, final Object listener) {
-        PrivilegedAction<Boolean> action = new PrivilegedAction<Boolean>() {
-            @Override
-            public Boolean run() {
-                if (container.getStatus().allowInvocations()) {
-                    container.stop();
-                    container.removeListener(listener);
-                    return true;
-                } else {
-                    return false;
-                }
+        PrivilegedAction<Boolean> action = () -> {
+            if (container.getStatus().allowInvocations()) {
+                container.stop();
+                container.removeListener(listener);
+                return true;
+            } else {
+                return false;
             }
         };
         return doPrivileged(action);
@@ -108,57 +102,42 @@ public final class SecurityActions {
 
     public static void defineContainerConfiguration(final EmbeddedCacheManager container, final String name,
             final Configuration config) {
-        PrivilegedAction<Void> action = new PrivilegedAction<Void>() {
-            @Override
-            public Void run() {
-                container.defineConfiguration(name, config);
-                return null;
-            }
+        PrivilegedAction<Void> action = () -> {
+            container.defineConfiguration(name, config);
+            return null;
         };
         doPrivileged(action);
     }
 
     public static void undefineContainerConfiguration(final EmbeddedCacheManager container, final String name) {
-        PrivilegedAction<Void> action = new PrivilegedAction<Void>() {
-            @Override
-            public Void run() {
-                container.undefineConfiguration(name);
-                return null;
-            }
+        PrivilegedAction<Void> action = () -> {
+            container.undefineConfiguration(name);
+            return null;
         };
         doPrivileged(action);
     }
 
     public static <K, V> Cache<K, V> startCache(final EmbeddedCacheManager container, final String name, final String configurationName) {
-        PrivilegedAction<Cache<K, V>> action = new PrivilegedAction<Cache<K, V>>() {
-            @Override
-            public Cache<K, V> run() {
-                Cache<K, V> cache = container.getCache(name, configurationName);
-                cache.start();
-                return cache;
-            }
+        PrivilegedAction<Cache<K, V>> action = () -> {
+            Cache<K, V> cache = container.getCache(name, configurationName);
+            cache.start();
+            return cache;
         };
         return doPrivileged(action);
     }
 
     public static void stopCache(final Cache<?, ?> cache) {
-        PrivilegedAction<Void> action = new PrivilegedAction<Void>() {
-            @Override
-            public Void run() {
-                cache.stop();
-                return null;
-            }
+        PrivilegedAction<Void> action = () -> {
+            cache.stop();
+            return null;
         };
         doPrivileged(action);
     }
 
     public static void shutdownCache(final Cache<?, ?> cache) {
-        PrivilegedAction<Void> action = new PrivilegedAction<Void>() {
-            @Override
-            public Void run() {
-                cache.shutdown();
-                return null;
-            }
+        PrivilegedAction<Void> action = () -> {
+            cache.shutdown();
+            return null;
         };
         doPrivileged(action);
     }
@@ -286,12 +265,7 @@ public final class SecurityActions {
 
     public static Map<String, String> executeInterpreter(final Interpreter interpreter, final String sessionId,
             final String command) throws Exception {
-        PrivilegedExceptionAction<Map<String, String>> action = new PrivilegedExceptionAction<Map<String, String>>() {
-            @Override
-            public Map<String, String> run() throws Exception {
-                return interpreter.execute(sessionId, command);
-            }
-        };
+        PrivilegedExceptionAction<Map<String, String>> action = () -> interpreter.execute(sessionId, command);
         return doPrivileged(action);
     }
 

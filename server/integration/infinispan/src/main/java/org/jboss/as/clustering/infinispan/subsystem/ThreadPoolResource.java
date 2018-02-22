@@ -37,7 +37,6 @@ import org.infinispan.server.commons.controller.validation.LongRangeValidatorBui
 import org.infinispan.server.commons.controller.validation.ParameterValidatorBuilder;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
@@ -51,7 +50,6 @@ import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ImmutableManagementResourceRegistration;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.as.controller.transform.description.ResourceTransformationDescriptionBuilder;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 import org.jboss.msc.service.ServiceName;
@@ -99,7 +97,7 @@ public enum ThreadPoolResource implements ResourceDefinition, ThreadPoolDefiniti
     private static SimpleAttributeDefinitionBuilder createBuilder(String name, ModelType type, ModelNode defaultValue, ParameterValidatorBuilder validatorBuilder) {
         return new SimpleAttributeDefinitionBuilder(name, type)
                 .setAllowExpression(true)
-                .setAllowNull(true)
+                .setRequired(false)
                 .setDefaultValue(defaultValue)
                 .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                 .setMeasurementUnit((type == ModelType.LONG) ? MeasurementUnit.MILLISECONDS : null)
@@ -189,9 +187,5 @@ public enum ThreadPoolResource implements ResourceDefinition, ThreadPoolDefiniti
 
     Collection<AttributeDefinition> getAttributes() {
         return Arrays.asList(this.minThreads, this.maxThreads, this.queueLength, this.keepAliveTime);
-    }
-
-    void buildTransformation(ModelVersion version, ResourceTransformationDescriptionBuilder parent) {
-        // Nothing to transform yet
     }
 }

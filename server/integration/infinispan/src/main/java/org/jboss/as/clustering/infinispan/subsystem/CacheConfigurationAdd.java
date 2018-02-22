@@ -238,8 +238,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
     }
 
     @Override
-    public void removeRuntimeServices(OperationContext context, ModelNode operation, ModelNode containerModel, ModelNode cacheModel)
-            throws OperationFailedException {
+    public void removeRuntimeServices(OperationContext context, ModelNode operation, ModelNode containerModel, ModelNode cacheModel) {
         // get container and cache addresses
         final PathAddress configurationAddress = getCacheConfigurationAddressFromOperation(operation) ;
         final PathAddress containerAddress = getCacheContainerAddressFromOperation(operation) ;
@@ -422,11 +421,10 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
 
 
         // locking is a child resource
-        IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
         if (cache.hasDefined(ModelKeys.LOCKING) && cache.get(ModelKeys.LOCKING, ModelKeys.LOCKING_NAME).isDefined()) {
             ModelNode locking = cache.get(ModelKeys.LOCKING, ModelKeys.LOCKING_NAME);
 
-            isolationLevel = IsolationLevel.valueOf(LockingConfigurationResource.ISOLATION.resolveModelAttribute(context, locking).asString());
+            IsolationLevel isolationLevel = IsolationLevel.valueOf(LockingConfigurationResource.ISOLATION.resolveModelAttribute(context, locking).asString());
             final boolean striping = LockingConfigurationResource.STRIPING.resolveModelAttribute(context, locking).asBoolean();
             final long acquireTimeout = LockingConfigurationResource.ACQUIRE_TIMEOUT.resolveModelAttribute(context, locking).asLong();
             final int concurrencyLevel = LockingConfigurationResource.CONCURRENCY_LEVEL.resolveModelAttribute(context, locking).asInt();

@@ -245,7 +245,7 @@ public class CacheContainerAddHandler extends AbstractAddStepHandler {
         }
     }
 
-    static void removeRuntimeServices(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
+    static void removeRuntimeServices(OperationContext context, ModelNode operation, ModelNode model) {
         String name = context.getCurrentAddressValue();
 
         // remove the BinderService entry

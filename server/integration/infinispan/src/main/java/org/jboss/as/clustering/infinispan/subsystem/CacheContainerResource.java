@@ -66,7 +66,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                     .build();
 
     static final SimpleListAttributeDefinition ALIASES = SimpleListAttributeDefinition.Builder.of(ModelKeys.ALIASES, ALIAS).
-            setAllowNull(true).
+            setRequired(false).
             build();
 
     static final SimpleAttributeDefinition CACHE_CONTAINER_MODULE =
@@ -75,7 +75,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setValidator(new ModuleIdentifierValidator(true))
-                    .setDefaultValue(new ModelNode().set("org.infinispan.extension"))
+                    .setDefaultValue(new ModelNode().set(InfinispanExtension.MODULE_NAME))
                     .build();
 
     // make default-cache non required (AS7-3488)
@@ -141,7 +141,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                .build();
 
     static final SimpleAttributeDefinition PROTO_NAME =
-           new SimpleAttributeDefinition("file-name", ModelType.STRING, false);
+           new SimpleAttributeDefinitionBuilder("file-name", ModelType.STRING, false).build();
 
     static final ListAttributeDefinition PROTO_NAMES =
            new StringListAttributeDefinition.Builder("file-names")

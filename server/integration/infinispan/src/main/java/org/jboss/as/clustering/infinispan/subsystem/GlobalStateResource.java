@@ -74,21 +74,21 @@ public class GlobalStateResource extends SimpleResourceDefinition {
 
     static final ObjectTypeAttributeDefinition PERSISTENT_LOCATION_PATH =
             ObjectTypeAttributeDefinition.Builder.of(ModelKeys.PERSISTENT_LOCATION, PATH, PERSISTENT_RELATIVE_TO)
-                .setAllowNull(true)
+                .setRequired(false)
                 .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                 .setXmlName(ModelKeys.PERSISTENT_LOCATION)
                 .build();
 
     static final ObjectTypeAttributeDefinition SHARED_PERSISTENT_LOCATION_PATH =
           ObjectTypeAttributeDefinition.Builder.of(ModelKeys.SHARED_PERSISTENT_LOCATION, PATH, SHARED_PERSISTENT_RELATIVE_TO)
-                .setAllowNull(true)
+                .setRequired(false)
                 .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                 .setXmlName(ModelKeys.PERSISTENT_LOCATION)
                 .build();
 
     static final ObjectTypeAttributeDefinition TEMPORARY_STATE_PATH =
             ObjectTypeAttributeDefinition.Builder.of(ModelKeys.TEMPORARY_LOCATION, PATH, TEMPORARY_RELATIVE_TO)
-                .setAllowNull(true)
+                .setRequired(false)
                 .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                 .setXmlName(ModelKeys.TEMPORARY_LOCATION)
                 .build();

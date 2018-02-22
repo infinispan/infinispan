@@ -185,7 +185,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
         final BinderService binder = new BinderService(bindInfo.getBindName());
         return target.addService(bindInfo.getBinderServiceName(), binder)
                 .addAliases(ContextNames.JAVA_CONTEXT_SERVICE_NAME.append(jndiName))
-                .addDependency(cacheServiceName, Cache.class, new ManagedReferenceInjector<Cache>(binder.getManagedObjectInjector()))
+                .addDependency(cacheServiceName, Cache.class, new ManagedReferenceInjector<>(binder.getManagedObjectInjector()))
                 .addDependency(bindInfo.getParentContextServiceName(), ServiceBasedNamingStore.class, binder.getNamingStoreInjector())
                 .setInitialMode(ServiceController.Mode.PASSIVE)
                 .install()

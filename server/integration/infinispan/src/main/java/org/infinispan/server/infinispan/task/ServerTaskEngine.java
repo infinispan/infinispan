@@ -42,7 +42,7 @@ public class ServerTaskEngine implements TaskEngine {
 
    @Override
    public <T> CompletableFuture<T> runTask(String taskName, TaskContext context, Executor executor) {
-      ServerTaskWrapper<T> task = registry.<T>getTask(taskName);
+      ServerTaskWrapper<T> task = registry.getTask(taskName);
       if (task == null) {
          throw new IllegalArgumentException("Task not found: " + taskName);
       }

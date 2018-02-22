@@ -68,7 +68,7 @@ public class StoreWriteBehindResource extends SimpleResourceDefinition {
 
     static final ObjectTypeAttributeDefinition WRITE_BEHIND_OBJECT = ObjectTypeAttributeDefinition.
             Builder.of(ModelKeys.WRITE_BEHIND, ATTRIBUTES).
-            setAllowNull(true).
+            setRequired(false).
             setSuffix("write-behind").
             build();
 

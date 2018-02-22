@@ -30,7 +30,6 @@ import java.util.Set;
 
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
-import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.concurrent.TimeoutException;
 
 /**
@@ -81,8 +80,6 @@ public class RetryingCacheInvoker implements CacheInvoker {
                 return this.invoker.invoke(cache, operation, (i < this.backOffIntervals.length) ? attemptFlags : allFlags);
             } catch (TimeoutException e) {
                 exception = e;
-            } catch (SuspectException e) {
-                exception = e;
             }
 
             if (i < this.backOffIntervals.length) {
@@ -100,6 +97,6 @@ public class RetryingCacheInvoker implements CacheInvoker {
             }
         }
 
-        throw MESSAGES.abortingCacheOperation(exception, Integer.valueOf(this.backOffIntervals.length + 1));
+        throw MESSAGES.abortingCacheOperation(exception, this.backOffIntervals.length + 1);
     }
 }

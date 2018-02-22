@@ -45,7 +45,6 @@ public class UnregisterProtoSchemasOperationHandler implements OperationStepHand
             }
          }
       }
-      context.stepCompleted();
    }
 
    private void validateParameters(ModelNode names) {

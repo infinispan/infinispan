@@ -75,8 +75,7 @@ public class MemoryObjectConfigurationResource extends CacheConfigurationChildRe
               resource.getPathElement().getKey(), resource.getServiceInstaller(), CacheServiceName.CONFIGURATION, attributes);
 
         resourceRegistration.registerReadWriteAttribute(STRATEGY, CacheReadAttributeHandler.INSTANCE, restartCacheWriteHandler);
-        resourceRegistration.registerReadWriteAttribute(SIZE, CacheReadAttributeHandler.INSTANCE, new RuntimeCacheConfigurationWriteAttributeHandler(SIZE, (configuration, newSize) -> {
-            configuration.memory().size(newSize.asLong());
-        }));
+        resourceRegistration.registerReadWriteAttribute(SIZE, CacheReadAttributeHandler.INSTANCE,
+              new RuntimeCacheConfigurationWriteAttributeHandler(SIZE, (configuration, newSize) -> configuration.memory().size(newSize.asLong())));
     }
 }

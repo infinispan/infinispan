@@ -128,7 +128,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
                 .addDependency(ScheduledThreadPoolResource.REPLICATION_QUEUE.getServiceName(this.name), ThreadPoolConfiguration.class, this.replicationQueueThreadPool)
         ;
         if (module != null) {
-            if (!module.getName().equals("org.infinispan.extension")) {
+            if (!module.getName().equals(InfinispanExtension.MODULE_NAME)) {
                 // todo [anistor] only works for dynamic modules (see https://issues.jboss.org/browse/ISPN-8441)
                 builder.addDependency(ServiceModuleLoader.moduleServiceName(module));
             }

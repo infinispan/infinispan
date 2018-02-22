@@ -11,7 +11,6 @@ import org.infinispan.tasks.ServerTask;
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
-import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
 import org.jboss.as.server.deployment.ServicesAttachment;
 import org.jboss.as.server.deployment.module.ModuleDependency;
@@ -32,7 +31,7 @@ public class ServerExtensionDependenciesProcessor implements DeploymentUnitProce
    private static final ModuleIdentifier TASKS_API = ModuleIdentifier.create("org.infinispan.tasks.api");
 
    @Override
-   public void deploy(DeploymentPhaseContext ctx) throws DeploymentUnitProcessingException {
+   public void deploy(DeploymentPhaseContext ctx) {
       DeploymentUnit deploymentUnit = ctx.getDeploymentUnit();
       if (hasServerTaskExtensions(deploymentUnit)) {
          addDependencies(deploymentUnit, API, TASKS_API);

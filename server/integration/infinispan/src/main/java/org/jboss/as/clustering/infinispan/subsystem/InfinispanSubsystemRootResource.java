@@ -69,12 +69,6 @@ public class InfinispanSubsystemRootResource extends SimpleResourceDefinition {
     }
 
     @Override
-    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
-        super.registerAttributes(resourceRegistration);
-        // resourceRegistration.registerReadWriteAttribute(DEFAULT_STACK, null, SubsystemWriteAttributeHandler.INSTANCE);
-    }
-
-    @Override
     public void registerChildren(ManagementResourceRegistration resourceRegistration) {
         resourceRegistration.registerSubModel(new CacheContainerResource(resolvePathHandler, pathManager, runtimeRegistration));
     }

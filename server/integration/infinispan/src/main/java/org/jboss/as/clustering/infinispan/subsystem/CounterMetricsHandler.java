@@ -11,7 +11,6 @@ import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
-import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
@@ -33,7 +32,7 @@ public class CounterMetricsHandler extends AbstractRuntimeOnlyHandler {
     private static final int COUNTER_INDEX = 3;
 
     @Override
-    protected void executeRuntimeStep(OperationContext context, ModelNode operation) throws OperationFailedException {
+    protected void executeRuntimeStep(OperationContext context, ModelNode operation) {
 
         final ModelNode result = new ModelNode();
         final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
@@ -43,7 +42,7 @@ public class CounterMetricsHandler extends AbstractRuntimeOnlyHandler {
         final ServiceController<?> controller = context.getServiceRegistry(false)
                 .getService(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(cacheContainerName));
 
-        Long value = null;
+        Long value;
         if (controller != null) {
             DefaultCacheContainer cacheManager = (DefaultCacheContainer) controller.getValue();
             CounterManager counterManager = EmbeddedCounterManagerFactory.asCounterManager(cacheManager);
@@ -72,7 +71,7 @@ public class CounterMetricsHandler extends AbstractRuntimeOnlyHandler {
         final AttributeDefinition definition;
 
         CounterMetrics(String attributeName, ModelType type) {
-            this.definition = new SimpleAttributeDefinitionBuilder(attributeName, type).setAllowNull(false)
+            this.definition = new SimpleAttributeDefinitionBuilder(attributeName, type).setRequired(true)
                     .setStorageRuntime().build();
         }
 
