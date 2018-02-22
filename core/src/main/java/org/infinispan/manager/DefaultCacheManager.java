@@ -247,11 +247,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             defaultCacheName = null;
          }
       }
-      this.authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.globalJmxStatistics().cacheManagerName());
       this.globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
       this.globalComponentRegistry.registerComponent(configurationManager, ConfigurationManager.class);
       this.globalComponentRegistry.registerComponent(cacheDependencyGraph, CACHE_DEPENDENCY_GRAPH, false);
+
+      this.authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.globalJmxStatistics().cacheManagerName());
       this.globalComponentRegistry.registerComponent(authzHelper, AuthorizationHelper.class);
+
       this.stats = new CacheContainerStatsImpl(this);
       health = new HealthImpl(this);
       globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
@@ -323,10 +325,14 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
          globalComponentRegistry.registerComponent(configurationManager, ConfigurationManager.class);
          globalComponentRegistry.registerComponent(cacheDependencyGraph, CACHE_DEPENDENCY_GRAPH, false);
-         authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.globalJmxStatistics().cacheManagerName());
+
          stats = new CacheContainerStatsImpl(this);
          health = new HealthImpl(this);
          globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
+
+         authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.globalJmxStatistics().cacheManagerName());
+         this.globalComponentRegistry.registerComponent(authzHelper, AuthorizationHelper.class);
+
          cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authzHelper, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class));
       } catch (CacheConfigurationException ce) {
          throw ce;
