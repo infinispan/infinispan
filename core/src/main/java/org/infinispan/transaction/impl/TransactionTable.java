@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import javax.transaction.Status;
 import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
 import javax.transaction.TransactionSynchronizationRegistry;
 import javax.transaction.xa.XAException;
 
@@ -102,6 +103,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    @Inject @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
    private ScheduledExecutorService timeoutExecutor;
    @Inject private TransactionOriginatorChecker transactionOriginatorChecker;
+   @Inject private TransactionManager transactionManager;
 
    /**
     * minTxTopologyId is the minimum topology ID across all ongoing local and remote transactions.
@@ -203,11 +205,29 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
          SynchronizationAdapter sync =
                new SynchronizationAdapter(localTransaction, this);
          if (transactionSynchronizationRegistry != null) {
+            boolean needsSuspend = false;
             try {
+               // ISPN-8853: TransactionSynchronizationRegistry retrieves the running transaction from
+               // thread-local context in TM, so we need to set it there if it's not set already.
+               Transaction currentTransaction = transactionManager.getTransaction();
+               if (currentTransaction == null) {
+                  transactionManager.resume(transaction);
+                  needsSuspend = true;
+               } else {
+                  assert currentTransaction == transaction;
+               }
                transactionSynchronizationRegistry.registerInterposedSynchronization(sync);
             } catch (Exception e) {
                log.failedSynchronizationRegistration(e);
                throw new CacheException(e);
+            } finally {
+               if (needsSuspend) {
+                  try {
+                     transactionManager.suspend();
+                  } catch (Exception e) {
+                     throw new CacheException(e);
+                  }
+               }
             }
 
          } else {
