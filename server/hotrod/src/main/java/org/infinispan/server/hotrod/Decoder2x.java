@@ -543,8 +543,8 @@ class Decoder2x implements VersionedDecoder {
                requestCtx = (ClientListenerRequestContext) hrCtx.operationDecodeContext;
             }
             if (requestCtx.getFilterFactoryInfo() == null) {
-               if (!readMaybeNamedFactory(buffer).map(f -> {
-                  requestCtx.setFilterFactoryInfo(f);
+               if (!readMaybeNamedFactory(buffer).map(filter -> {
+                  requestCtx.setFilterFactoryInfo(filter);
                   buffer.markReaderIndex();
                   return requestCtx;
                }).isPresent()) {
@@ -645,6 +645,10 @@ class Decoder2x implements VersionedDecoder {
       }
    }
 
+   /**
+    * Returns Optional.empty() if there was not enough data in the buffer, Optional.of(Optional.empty())
+    * when the factory was not set and Optional.of(Optional.of(...)) when the factory is used.
+    */
    private Optional<Optional<KeyValuePair<String, List<byte[]>>>> readMaybeNamedFactory(ByteBuf buffer) {
       return readMaybeString(buffer).flatMap(name -> {
          if (!name.isEmpty()) {

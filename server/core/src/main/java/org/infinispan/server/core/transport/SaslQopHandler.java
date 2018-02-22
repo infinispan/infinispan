@@ -48,6 +48,24 @@ public class SaslQopHandler extends ByteToMessageDecoder implements ChannelOutbo
 
      @Override
      public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+        // Since this handler produces more than a single ByteBuf, we need to keep the order in order
+        // to not interleave bits from different responses and events
+        // Therefore we'll synchronize it through the event loop.
+        if (ctx.channel().eventLoop().inEventLoop()) {
+           writeInternal(ctx, msg, promise);
+        } else {
+           ctx.channel().eventLoop().execute(() -> {
+              try {
+                 writeInternal(ctx, msg, promise);
+              } catch (Exception e) {
+                 ctx.fireExceptionCaught(e);
+              }
+           });
+           return;
+        }
+     }
+
+     private void writeInternal(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
          ByteBuf buffer = (ByteBuf) msg;
          byte[] bytes;
          int offset;

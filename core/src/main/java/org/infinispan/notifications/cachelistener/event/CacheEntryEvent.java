@@ -1,6 +1,7 @@
 package org.infinispan.notifications.cachelistener.event;
 
 import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.Listener;
 
 /**
  * A transactional event subtype that additionally expose a key as such events pertain to a specific cache entry.
@@ -29,4 +30,12 @@ public interface CacheEntryEvent<K, V> extends TransactionalEvent<K, V> {
     */
    Metadata getMetadata();
 
+   /**
+    * @return True if this event is generated from an existing entry as the listener
+    *     has {@link Listener#includeCurrentState()} set to <code>true</code>.
+    * @since 9.3
+    */
+   default boolean isCurrentState() {
+      return false;
+   }
 }

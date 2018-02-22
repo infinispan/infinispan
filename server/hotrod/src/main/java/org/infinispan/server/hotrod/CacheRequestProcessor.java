@@ -21,7 +21,6 @@ import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.logging.Log;
-import org.infinispan.util.KeyValuePair;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -496,8 +495,10 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       try {
          ClientListenerRequestContext clientContext = (ClientListenerRequestContext) cdc.operationDecodeContext;
          listenerRegistry.addClientListener(cdc.decoder, channel, cdc.header, clientContext.getListenerId(),
-               cdc.cache(), clientContext.isIncludeCurrentState(), new KeyValuePair<>(clientContext.getFilterFactoryInfo(),
-                     clientContext.getConverterFactoryInfo()), clientContext.isUseRawData(), clientContext.getListenerInterests());
+               cdc.cache(), clientContext.isIncludeCurrentState(),
+               clientContext.getFilterFactoryInfo().orElse(null),
+               clientContext.getConverterFactoryInfo().orElse(null),
+               clientContext.isUseRawData(), clientContext.getListenerInterests());
       } catch (Throwable t) {
          writeException(cdc, t);
       }
