@@ -60,9 +60,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Invocation of %s threw an exception %s. Exception is ignored.", id = 902)
    void ignoringException(String methodName, String exceptionName, @Cause Throwable t);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Unable to set value!", id = 903)
-   void unableToSetValue(@Cause Exception e);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Unable to set value!", id = 903)
+//   void unableToSetValue(@Cause Exception e);
 
    @Message(value = "Error while initializing SSL context", id = 904)
    CacheConfigurationException sslInitializationException(@Cause Throwable e);
@@ -107,8 +107,8 @@ public interface Log extends BasicLogger {
    @Message(value = "No attribute copier for type '%s'", id = 916)
    IllegalArgumentException noAttributeCopierForType(Class<?> klass);
 
-   @Message(value = "Cannot resize unbounded container", id = 917)
-   UnsupportedOperationException cannotResizeUnboundedContainer();
+//   @Message(value = "Cannot resize unbounded container", id = 917)
+//   UnsupportedOperationException cannotResizeUnboundedContainer();
 
    @Message(value = "Cannot find resource '%s'", id = 918)
    IOException cannotFindResource(String fileName);

@@ -1,11 +1,9 @@
 package org.infinispan.jcache.logging;
 
 
-import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.Closeable;
-import java.util.Collection;
 
 import javax.cache.CacheException;
 import javax.cache.configuration.Configuration;
@@ -51,8 +49,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to instantiate CacheKeyGenerator with type '%s'", id = 21008)
    CacheException unableToInstantiateCacheKeyGenerator(Class<?> type, @Cause Throwable cause);
 
-   @Message(value = "The provider implementation cannot be unwrapped to '%s'", id = 21009)
-   IllegalArgumentException unableToUnwrapProviderImplementation(Class<?> type);
+//   @Message(value = "The provider implementation cannot be unwrapped to '%s'", id = 21009)
+//   IllegalArgumentException unableToUnwrapProviderImplementation(Class<?> type);
 
    @Message(value = "'%s' parameter must not be null", id = 21010)
    NullPointerException parameterMustNotBeNull(String parameterName);
@@ -60,21 +58,17 @@ public interface Log extends BasicLogger {
    @Message(value = "Incompatible cache value types specified, expected %s but %s was specified", id = 21011)
    ClassCastException incompatibleType(Class<?> type, Class<?> cfgType);
 
-   @Message(value = "Cache %s was defined with specific types Cache<%s, %s> in which case CacheManager.getCache(String, Class, Class) must be used", id = 21012)
-   IllegalArgumentException unsafeTypedCacheRequest(String cacheName, Class<?> keyType, Class<?> valueType);
-
-   @Message(value = "Can't use store-by-reference and transactions together", id = 21013)
-   IllegalArgumentException storeByReferenceAndTransactionsNotAllowed();
+//   @Message(value = "Cache %s was defined with specific types Cache<%s, %s> in which case CacheManager.getCache(String, Class, Class) must be used", id = 21012)
+//   IllegalArgumentException unsafeTypedCacheRequest(String cacheName, Class<?> keyType, Class<?> valueType);
+//
+//   @Message(value = "Can't use store-by-reference and transactions together", id = 21013)
+//   IllegalArgumentException storeByReferenceAndTransactionsNotAllowed();
 
    @Message(value = "Cache %s already registered with configuration %s, and can not be registered again with a new given configuration %s", id = 21015)
    CacheException cacheAlreadyRegistered(String cacheName, Configuration cacheCfg, Configuration newCfg);
 
    @Message(value = "Unknown expiry operation: %s", id = 21016)
    IllegalStateException unknownExpiryOperation(String op);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Error loading %s keys from persistence store", id = 21017)
-   void errorLoadingAll(Collection<?> keysToLoad, @Cause Throwable t);
 
    @Message(value = "The configuration class %s is not supported by this implementation", id = 21018)
    IllegalArgumentException configurationClassNotSupported(Class clazz);
@@ -88,20 +82,20 @@ public interface Log extends BasicLogger {
    @Message(value = "Cache is closed.", id = 21023)
    IllegalStateException cacheClosed();
 
-   @Message(value = "'%s' parameter must not contain null keys", id = 21024)
-   NullPointerException parameterMustNotContainNullKeys(String parameterName);
+//   @Message(value = "'%s' parameter must not contain null keys", id = 21024)
+//   NullPointerException parameterMustNotContainNullKeys(String parameterName);
 
-   @Message(value = "'%s' parameter must not contain null values", id = 21025)
-   NullPointerException parameterMustNotContainNullValues(String parameterName);
+//   @Message(value = "'%s' parameter must not contain null values", id = 21025)
+//   NullPointerException parameterMustNotContainNullValues(String parameterName);
 
-   @Message(value = "'%s' parameter must not contain null elements", id = 21026)
-   NullPointerException parameterMustNotContainNullElements(String parameterName);
+//   @Message(value = "'%s' parameter must not contain null elements", id = 21026)
+//   NullPointerException parameterMustNotContainNullElements(String parameterName);
 
-   @Message(value = "Failed to add local cache '%s' on the server", id = 21027)
-   CacheException cacheCreationFailed(String cacheName, @Cause Throwable t);
+//   @Message(value = "Failed to add local cache '%s' on the server", id = 21027)
+//   CacheException cacheCreationFailed(String cacheName, @Cause Throwable t);
 
-   @Message(value = "The server management operation failed.", id = 21028)
-   CacheException serverManagementOperationFailed(@Cause Throwable t);
+//   @Message(value = "The server management operation failed.", id = 21028)
+//   CacheException serverManagementOperationFailed(@Cause Throwable t);
 
    @Message(value = "Cache manager is already closed.", id = 21030)
    IllegalStateException cacheManagerClosed();
