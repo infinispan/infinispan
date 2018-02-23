@@ -143,11 +143,7 @@ public final class StandardConversions {
    }
 
    /**
-    * Converts a java object to a sequence of bytes.
-    * It applies the following rules:
-    * - java.lang.String objects are converted to UTF-8
-    * - byte[] are not converted
-    * - all other objects are serialized using standard java serialization.
+    * Converts a java object to a sequence of bytes applying standard java serialization.
     *
     * @param source source the java object to convert.
     * @param sourceMediaType the MediaType matching application/x-application-object describing the source.
