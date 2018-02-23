@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -416,6 +417,14 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          partitions[i] = p;
          p.partition();
       }
+   }
+
+   protected AdvancedCache[] getPartitionCaches(PartitionDescriptor descriptor) {
+      int[] nodes = descriptor.getNodes();
+      AdvancedCache[] caches = new AdvancedCache[nodes.length];
+      for (int i = 0; i < nodes.length; i++)
+         caches[i] = advancedCache(nodes[i]);
+      return caches;
    }
 
    protected void isolatePartition(int[] isolatedPartition) {
