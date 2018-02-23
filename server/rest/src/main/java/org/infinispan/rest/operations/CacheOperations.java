@@ -1,6 +1,7 @@
 package org.infinispan.rest.operations;
 
 import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 
 import java.util.Date;
 import java.util.Optional;
@@ -61,7 +62,7 @@ public class CacheOperations extends AbstractOperations {
          String accept = request.getAcceptContentType().orElse(MATCH_ALL_TYPE);
 
          MediaType contentType = negotiateMediaType(accept, cacheName);
-         AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, contentType, contentType);
+         AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, TEXT_PLAIN, TEXT_PLAIN);
          CacheSet<Object> keys = cache.keySet();
          Charset charset = request.getAcceptContentType()
                .map(Charset::fromMediaType)

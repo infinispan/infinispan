@@ -6,16 +6,23 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.nio.charset.Charset;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParserFactory;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.rest.logging.Log;
-import org.infinispan.rest.operations.mediatypes.impl.JSONOutputPrinter;
 import org.infinispan.util.logging.LogFactory;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.XStreamException;
@@ -27,7 +34,8 @@ import com.thoughtworks.xstream.XStreamException;
  */
 public class XMLTranscoder extends OneToManyTranscoder {
 
-   protected final static Log logger = LogFactory.getLog(JSONOutputPrinter.class, Log.class);
+   protected final static Log logger = LogFactory.getLog(XMLTranscoder.class, Log.class);
+   private static final SAXParserFactory SAXFACTORY = SAXParserFactory.newInstance();
 
    private static class XStreamHolder {
       static final XStream XStream = new XStream();
@@ -45,13 +53,22 @@ public class XMLTranscoder extends OneToManyTranscoder {
             return XStreamHolder.XStream.toXML(decoded);
          }
          if (contentType.match(TEXT_PLAIN)) {
+            validate(content, contentType.getCharset());
             return StandardConversions.convertCharset(content, contentType.getCharset(), destinationType.getCharset());
          }
          if (contentType.match(APPLICATION_OCTET_STREAM)) {
-            byte[] bytes = StandardConversions.decodeOctetStream(content, destinationType);
-            return XStreamHolder.XStream.toXML(bytes);
+            byte[] bytes = StandardConversions.decodeOctetStream(content, contentType);
+            validate(content, contentType.getCharset());
+            return StandardConversions.convertOctetStreamToText(bytes, destinationType);
          }
-      } else {
+      }
+      if (destinationType.match(APPLICATION_OCTET_STREAM)) {
+         return StandardConversions.convertTextToOctetStream(content, contentType);
+      }
+      if (destinationType.match(TEXT_PLAIN)) {
+         return StandardConversions.convertCharset(content, contentType.getCharset(), destinationType.getCharset());
+      }
+      if (destinationType.match(APPLICATION_OBJECT)) {
          try {
             Reader xmlReader = content instanceof byte[] ?
                   new InputStreamReader(new ByteArrayInputStream((byte[]) content)) :
@@ -62,6 +79,17 @@ public class XMLTranscoder extends OneToManyTranscoder {
          }
       }
       throw logger.unsupportedDataFormat(contentType.toString());
+   }
+
+   private void validate(Object content, Charset contentType) {
+      XMLReader xmlReader;
+      try {
+         xmlReader = SAXFACTORY.newSAXParser().getXMLReader();
+         byte[] source = content instanceof byte[] ? (byte[]) content : content.toString().getBytes(contentType);
+         xmlReader.parse(new InputSource(new ByteArrayInputStream(source)));
+      } catch (SAXException | IOException | ParserConfigurationException e) {
+         throw logger.cannotConvertToXML(e);
+      }
    }
 
 }
