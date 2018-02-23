@@ -128,3 +128,5 @@ case JGroups) you can use this mechanism.
 The stats provided here are coalesced from all of the active caches in this manager.
 These stats can be useful to see if there is something wrong going on with your
 cluster overall.
+
+
