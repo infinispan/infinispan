@@ -1,5 +1,6 @@
 package org.infinispan.conflict.impl;
 
+import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
@@ -67,25 +68,22 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
    @Override
    public Object[] factory() {
       return new Object[] {
-            new OperationsDuringMergeConflictTest().mergeAction(MergeAction.NONE),
-            new OperationsDuringMergeConflictTest().mergeAction(MergeAction.PUT),
-            new OperationsDuringMergeConflictTest().mergeAction(MergeAction.REMOVE)
+            new OperationsDuringMergeConflictTest(MergeAction.NONE),
+            new OperationsDuringMergeConflictTest(MergeAction.PUT),
+            new OperationsDuringMergeConflictTest(MergeAction.REMOVE)
       };
    }
 
    private MergeAction mergeAction;
 
-   public OperationsDuringMergeConflictTest() {
-      super();
-      this.mergePolicy = ((preferredEntry, otherEntries) -> TestInternalCacheEntryFactory.create(conflictKey, MERGE_RESULT));
-      this.setPartitions(null, new int[]{0,1}, new int[]{2,3});
-   }
+   public OperationsDuringMergeConflictTest(){}
 
-   OperationsDuringMergeConflictTest mergeAction(MergeAction mergeAction) {
+   public OperationsDuringMergeConflictTest(MergeAction mergeAction) {
+      super(DIST_SYNC, null, new int[]{0,1}, new int[]{2,3});
+      this.mergePolicy = ((preferredEntry, otherEntries) -> TestInternalCacheEntryFactory.create(conflictKey, MERGE_RESULT));
       this.description = mergeAction.toString();
       this.mergeAction = mergeAction;
       this.valueAfterMerge = mergeAction.value;
-      return this;
    }
 
    @Override
