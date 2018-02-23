@@ -488,4 +488,73 @@ public abstract class AbstractRESTClientIT {
       assertNotNull(get.getHeaders("Last-Modified")[0].getValue());
       assertEquals(APPLICATION_OCTET_STREAM_TYPE, get.getHeaders("Content-Type")[0].getValue());
    }
+
+   @Test
+   public void testIntegerKeysXmlToPlainValues() throws Exception {
+
+      String keyContentType = "application/x-java-object; type=java.lang.Integer";
+      String valueContentType = "application/xml; charset=UTF-8";
+
+      Object key = 1;
+      Object value = "<foo>bar</foo>";
+
+      URI fullPathKey = rest.fullPathKey(key.toString());
+
+      rest.put(fullPathKey, value.toString(), valueContentType, HttpStatus.SC_OK, new String[]{
+            "Key-Content-Type", keyContentType
+      });
+
+      HttpResponse resp = rest.get(fullPathKey, null, HttpStatus.SC_OK, false, new String[]{
+            "Key-Content-Type", keyContentType,
+            "Accept", MediaType.TEXT_PLAIN_TYPE
+      });
+
+      assertEquals(value.toString(), EntityUtils.toString(resp.getEntity()));
+   }
+
+   @Test
+   public void testIntegerKeysPlainTextValues() throws Exception {
+
+      String keyContentType = "application/x-java-object; type=java.lang.Integer";
+      String valueContentType = "text/plain; charset=UTF-8";
+
+      Object key = 1;
+      Object value = "fooBar";
+
+      URI fullPathKey = rest.fullPathKey(key.toString());
+
+      rest.put(fullPathKey, value.toString(), valueContentType, HttpStatus.SC_OK, new String[]{
+            "Key-Content-Type", keyContentType
+      });
+
+      HttpResponse resp = rest.get(fullPathKey, null, HttpStatus.SC_OK, false, new String[]{
+            "Key-Content-Type", keyContentType,
+            "Accept", MediaType.TEXT_PLAIN_TYPE
+      });
+
+      assertEquals(value.toString(), EntityUtils.toString(resp.getEntity()));
+   }
+
+   @Test
+   public void testIntegerKeysPlainTextToXmlValues() throws Exception {
+
+      String keyContentType = "application/x-java-object; type=java.lang.Integer";
+      String valueContentType = "text/plain; charset=UTF-8";
+
+      Object key = 1;
+      Object value = "<foo>bar</foo>";
+
+      URI fullPathKey = rest.fullPathKey(key.toString());
+
+      rest.put(fullPathKey, value.toString(), valueContentType, HttpStatus.SC_OK, new String[]{
+            "Key-Content-Type", keyContentType
+      });
+
+      HttpResponse resp = rest.get(fullPathKey, null, HttpStatus.SC_OK, false, new String[]{
+            "Key-Content-Type", keyContentType,
+            "Accept", MediaType.APPLICATION_XML_TYPE
+      });
+
+      assertEquals(value.toString(), EntityUtils.toString(resp.getEntity()));
+   }
 }
