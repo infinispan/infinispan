@@ -14,6 +14,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.Signal;
 
 public class HeaderDecoder<T> extends HintedReplayingDecoder<HeaderDecoder.State> implements Runnable {
+   public static final String NAME = "header-decoder";
    private final Codec codec;
    private final HeaderParams headerParams;
    private final ChannelFactory channelFactory;
@@ -28,6 +29,11 @@ public class HeaderDecoder<T> extends HintedReplayingDecoder<HeaderDecoder.State
       this.headerParams = headerParams;
       this.channelFactory = channelFactory;
       this.operation = operation;
+   }
+
+   @Override
+   public boolean isSharable() {
+      return false;
    }
 
    @Override

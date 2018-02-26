@@ -81,7 +81,8 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
 
    protected HeaderDecoder<T> scheduleRead(Channel channel, HeaderParams header) {
       HeaderDecoder<T> decoder = new HeaderDecoder<>(codec, header, channelFactory, this);
-      channel.pipeline().addLast(decoder, this);
+      channel.pipeline().addLast(HeaderDecoder.NAME, decoder);
+      channel.pipeline().addLast(getClass().getSimpleName(), this);
       return decoder;
    }
 

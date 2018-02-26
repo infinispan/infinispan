@@ -11,16 +11,20 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.commons.CacheException;
 
 public class Util {
+   private final static long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
    private Util() {
    }
 
    public static <T> T await(CompletableFuture<T> cf) {
       try {
-         return cf.get();
+         // timed wait does not do busy waiting
+         return cf.get(BIG_DELAY_NANOS, TimeUnit.NANOSECONDS);
       } catch (InterruptedException e) {
          throw new CacheException(e);
       } catch (ExecutionException e) {
          throw rewrap(e);
+      } catch (TimeoutException e) {
+         throw new IllegalStateException(e);
       }
    }
 
