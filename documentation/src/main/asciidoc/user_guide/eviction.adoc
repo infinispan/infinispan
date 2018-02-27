@@ -1,12 +1,12 @@
 [[eviction_anchor]]
 ==  Eviction and Data Container
 
-Infinispan supports eviction of entries, such that you do not run out of memory.
+{brandname} supports eviction of entries, such that you do not run out of memory.
 Eviction is typically used in conjunction with a cache store, so that entries are
 not permanently lost when evicted, since eviction only removes entries from
 memory and not from cache stores or the rest of the cluster.
 
-Infinispan supports storing data in a few different formats.  Data can be
+{brandname} supports storing data in a few different formats.  Data can be
 stored as the object iself, binary as a byte[], and off-heap which stores the
 byte[] in native memory.
 
@@ -83,9 +83,9 @@ below.
 
 ==== Storage type
 
-Infinispan allows the user to configure in what form their data is stored.  Each
-form supports the same features of Infinispan, however eviction can be limited
-for some forms.  There are currently three storage formats that Infinispan
+{brandname} allows the user to configure in what form their data is stored.  Each
+form supports the same features of {brandname}, however eviction can be limited
+for some forms.  There are currently three storage formats that {brandname}
 provides, they are:
 
 .`OBJECT`
@@ -200,8 +200,8 @@ Configuration c = new ConfigurationBuilder()
 ==== Memory Based Eviction Configuration
 
 Memory based eviction may require some additional configuration options if you
-are using your own custom types (as Infinispan is normally used).  In this case
-Infinispan cannot estimate the memory usage of your classes and as such you are
+are using your own custom types (as {brandname} is normally used).  In this case
+{brandname} cannot estimate the memory usage of your classes and as such you are
 required to use `storeAsBinary` when memory based eviction is used.
 
 [source,xml]

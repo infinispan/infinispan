@@ -15,7 +15,7 @@ Alternatively, you can execute the tests _and_ generate a report with:
  $ mvn surefire-report:report
 
 If you are running the tests on a Unix-like operating system, the default limits per user are typically low.
-The Infinispan test suite creates a lot of processes/threads, thus you will have to increase your user's limits and reboot the system to pick up the new values.
+The {brandname} test suite creates a lot of processes/threads, thus you will have to increase your user's limits and reboot the system to pick up the new values.
 Open up `/etc/security/limits.conf` and add the following lines replacing the user name with your username. 
 
 ./etc/security/limits.conf
@@ -44,7 +44,7 @@ Also, you can always pass your own Log4j configuration file via `-Dlog4.configur
 
 ==== Skipping the test run
 
-It is sometimes desirable to install the Infinispan package in your local repository without performing a full test run.
+It is sometimes desirable to install the {brandname} package in your local repository without performing a full test run.
 To do this, simply use the `skipTests` property: 
 
  $ mvn -DskipTests install
@@ -65,7 +65,7 @@ This file is not fully closed, so to extract the log file, execute:
  $ gunzip -c trace-infinispan.log.gz > trace-infinsipan.log
 
 ==== Enabling code coverage generation
-When you run tests, you can enable code coverage recorder for calculating and analysing the Infinispan code coverage.
+When you run tests, you can enable code coverage recorder for calculating and analysing the {brandname} code coverage.
 You can do this using `coverage` and `jacocoReport` profiles. As a code coverage evaluation tool, the JaCoCo is used. 
 
  $ mvn test -Pcoverage -Dmaven.test.failure.ignore=true
@@ -77,26 +77,26 @@ These are the JaCoCo execution data files, which contain full data about the spe
 
 As soon as the coverage execution command is finished, you will need to generate the JaCoCo report, which will merge the generated `jacoco.exec` files as well as will create the code coverage report. 
 
-For having the report in place, run the following command from your Infinispan home directory:
+For having the report in place, run the following command from your {brandname} home directory:
 
  $ mvn install -pl parent -PjacocoReport
 
-The `jacoco-html/` directory will be generated in Infinispan Home directory, which will contain the code coverage report. 
+The `jacoco-html/` directory will be generated in {brandname} Home directory, which will contain the code coverage report.
 
 === Test groups
 Each test should belong to one or more group.
 The group acts as a filter, and is used to select which tests are ran as part of the maven test lifecycle.
 
 ==== Which group should I use?
-The following test groups are used by Infinispan.
+The following test groups are used by {brandname}.
 
 TIP: If your test does not fit into one of these groups, a new group should be added.
 
 [options="header"]
 |===============
 | Test Group|Description
-| _unit_ |Unit tests using stubs to isolate and test each major class in Infinispan. This is the default group run if no test group is specified
-| _functional_ |Tests which test the general functionality of Infinispan
+| _unit_ |Unit tests using stubs to isolate and test each major class in {brandname}. This is the default group run if no test group is specified
+| _functional_ |Tests which test the general functionality of {brandname}
 | _jgroups_ |Tests which need to send data on a JGroups Channel
 | _transaction_ |Tests which use a transaction manager
 | _profiling_ |Tests used for manual profiling, not meant for automated test runs
@@ -125,7 +125,7 @@ Or, to use JBoss JTA (Arjuna TM) instead of the EmbeddedTransactionManager in a 
 Please refer to the POM file for more properties and permutations. 
 
 === The Parallel Test Suite
-Infinispan runs its unit test suite in parallel; Infinispan tests are often IO rather than processor bound, so executing them in parallel offers significant speed up in executing the entire test suite.
+{brandname} runs its unit test suite in parallel; {brandname} tests are often IO rather than processor bound, so executing them in parallel offers significant speed up in executing the entire test suite.
 
 ==== Tips for writing and debugging parallel tests
 There are a number of constraints and best practices that need to be followed in order to ensure correctness and keep the execution time to a minimum.
@@ -174,7 +174,7 @@ This ensures that no JMX collisions will takes place between any tests executed 
 If you want to enforce a JMX domain name, this can be done by using one of the `TestCacheManagerFactory.createCacheManagerEnforceJmxDomain` methods.
 These methods must be used with care, and you are responsible for ensuring no domain name collisions happen when the parallel suite is executed. 
 * Use obscure words. Insert uncommon or obscure words into the cache that has been generated with a random word generator.
-In a multi-threaded environment like Infinispan's testsuite, grepping for these words can greatly help the debugging process.
+In a multi-threaded environment like {brandname}'s testsuite, grepping for these words can greatly help the debugging process.
 You may find link:http://watchout4snakes.com/creativitytools/RandomWord/RandomWordPlus.aspx[this random word generator] useful. 
 * Use the test method name as the key. Grab the test method and use it as part of the cached key.
 You can dynamically grab the test method using code like this: 

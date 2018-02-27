@@ -1,7 +1,6 @@
 == Clustered Lock
 
-Clustered lock is a new building block introduced in Infinispan 9.2
-It is a lock which is distributed and shared among all nodes in the Infinispan cluster and currently provides a way to execute
+A _clustered lock_ is a lock which is distributed and shared among all nodes in the {brandname} cluster and currently provides a way to execute
 code that will be synchronized between the nodes in a given cluster.
 
 === Installation
@@ -14,7 +13,7 @@ In order to start using the clustered locks, you needs to add the dependency in 
 <dependency>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-clustered-lock</artifactId>
-   <version>...</version> <!-- 9.2.0.Final or higher -->
+   <version>...</version>
 </dependency>
 ----
 

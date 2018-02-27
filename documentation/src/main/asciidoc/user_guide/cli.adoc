@@ -1,15 +1,15 @@
 ===  Command-Line Interface (CLI)
-Infinispan offers a simple Command-Line Interface (CLI) with which it is possible to interact with the data within the caches and with most of the internal components (e.g. transactions, cross-site backups, rolling upgrades).
+{brandname} offers a simple Command-Line Interface (CLI) with which it is possible to interact with the data within the caches and with most of the internal components (e.g. transactions, cross-site backups, rolling upgrades).
 
-The CLI is built out of two elements: a server-side module and the  client command tool. The server-side module (`infinispan-cli-server-$VERSION.jar`) provides  the actual interpreter for the commands and needs to be included alongside your application. Infinispan Server includes CLI support out of the box. 
+The CLI is built out of two elements: a server-side module and the  client command tool. The server-side module (`infinispan-cli-server-$VERSION.jar`) provides  the actual interpreter for the commands and needs to be included alongside your application. {brandname} Server includes CLI support out of the box.
 
 Currently the server (and the  client) use the JMX protocol to communicate, but in a future release we  plan to support other communication protocols (in particular our own Hot Rod).
 
-The CLI offers both an interactive and a batch mode. To invoke the client, just run the provided _bin/ispn-cli.[sh|bat]_ script. The following is a list of command-line switches which affect how the CLI can be started: 
+The CLI offers both an interactive and a batch mode. To invoke the client, just run the provided _bin/ispn-cli.[sh|bat]_ script. The following is a list of command-line switches which affect how the CLI can be started:
 
 
 ----
--c, --connect=URL       connects to a running instance of Infinispan.
+-c, --connect=URL       connects to a running instance of {brandname}.
                         JMX over RMI jmx://[username[:password]]@host:port[/container[/cache]]
                         JMX over JBoss remoting remoting://[username[:password]]@host:port[/container[/cache]]
 -f, --file=FILE         reads input from the specified file instead of using                          
@@ -22,7 +22,7 @@ The CLI offers both an interactive and a batch mode. To invoke the client, just 
 * JMX over RMI is the traditional way in which JMX clients connect to MBeanServers. Please refer to the link:http://docs.oracle.com/javase/6/docs/technotes/guides/management/agent.html[JDK Monitoring and Management] documentation for details on how to configure the process to be monitored
 
 
-* JMX over JBoss Remoting is the protocol of choice when your Infinispan application is running within JBoss AS7 or EAP6.
+* JMX over JBoss Remoting is the protocol of choice when your {brandname} application is running within WildFly or EAP.
 
 The connection to the application can also be initiated from within the CLI using the connect command.
 
@@ -32,7 +32,7 @@ The connection to the application can also be initiated from within the CLI usin
 [jmx://localhost:12000/MyCacheManager/>
 ----
 
-The CLI prompt will show the active connection information, including the currently selected CacheManager. Initially no cache is selected so, before performing any cache operations, one must be selected. For this the _cache_ command is used. The CLI supports tab-completion for all commands and options and for most parameters where it makes sense to do so. Therefore typing _cache_ and pressing TAB will show a list of active caches: 
+The CLI prompt will show the active connection information, including the currently selected CacheManager. Initially no cache is selected so, before performing any cache operations, one must be selected. For this the _cache_ command is used. The CLI supports tab-completion for all commands and options and for most parameters where it makes sense to do so. Therefore typing _cache_ and pressing TAB will show a list of active caches:
 
 
 ----
@@ -51,11 +51,11 @@ abort       clearcache  create      end         help    
 begin       commit      disconnect  evict       info        quit        rollback    stats     
 ----
 
-The CLI is based on link:https://github.com/aeshell/aesh[Æsh] and therefore offers many keyboard shortcuts to navigate and search the history of commands, to manipulate the cursor at the prompt, including both Emacs and VI modes of operation. 
+The CLI is based on link:https://github.com/aeshell/aesh[Æsh] and therefore offers many keyboard shortcuts to navigate and search the history of commands, to manipulate the cursor at the prompt, including both Emacs and VI modes of operation.
 
 ==== Commands
 ===== abort
-The _abort_ command is used to abort a running batch initiated by the _start_ command 
+The _abort_ command is used to abort a running batch initiated by the _start_ command
 
 
 ----
@@ -67,7 +67,7 @@ null
 ----
 
 ===== begin
-The _begin_ command starts a transaction. In order for this command to work, the cache(s) on which the subsequent operations are invoked must have transactions enabled. 
+The _begin_ command starts a transaction. In order for this command to work, the cache(s) on which the subsequent operations are invoked must have transactions enabled.
 
 
 ----
@@ -78,7 +78,7 @@ The _begin_ command starts a transaction. In order for this command to work, the
 ----
 
 ===== cache
-The _cache_ command selects the cache to use as default for all subsequent operations. If it is invoked without parameters it shows the currently selected cache. 
+The _cache_ command selects the cache to use as default for all subsequent operations. If it is invoked without parameters it shows the currently selected cache.
 
 
 ----
@@ -89,7 +89,7 @@ ___defaultcache
 ----
 
 ===== clearcache
-The _clearcache_ command clears a cache from all content. 
+The _clearcache_ command clears a cache from all content.
 
 
 ----
@@ -100,7 +100,7 @@ null
 ----
 
 ===== commit
-The _commit_ command commits an ongoing transaction 
+The _commit_ command commits an ongoing transaction
 
 
 ----
@@ -111,7 +111,7 @@ The _commit_ command commits an ongoing transaction
 ----
 
 ===== container
-The _container_ command selects the default container (cache manager). Invoked without parameters it lists all available containers 
+The _container_ command selects the default container (cache manager). Invoked without parameters it lists all available containers
 
 
 ----
@@ -122,7 +122,7 @@ MyCacheManager OtherCacheManager
 ----
 
 ===== create
-The _create_ command creates a new cache based on the configuration of an existing cache definition 
+The _create_ command creates a new cache based on the configuration of an existing cache definition
 
 
 ----
@@ -137,10 +137,10 @@ The _deny_ command can be used to deny roles previously assigned to a principal:
 
 ----
 [remoting://localhost:9999]> deny supervisor to user1
----- 
+----
 
 ===== disconnect
-The _disconnect_ command disconnects the currently active connection allowing the CLI to connect to another instance. 
+The _disconnect_ command disconnects the currently active connection allowing the CLI to connect to another instance.
 
 
 ----
@@ -149,7 +149,7 @@ The _disconnect_ command disconnects the currently active connection allowing th
 ----
 
 ===== encoding
-The _encoding_ command is used to set a default codec to use when reading/writing entries from/to a cache. When invoked without arguments it shows the currently selected codec. This command is useful since currently remote protocols such as HotRod and Memcached wrap keys and values in specialized structures. 
+The _encoding_ command is used to set a default codec to use when reading/writing entries from/to a cache. When invoked without arguments it shows the currently selected codec. This command is useful since currently remote protocols such as HotRod and Memcached wrap keys and values in specialized structures.
 
 
 ----
@@ -164,7 +164,7 @@ rest
 ----
 
 ===== end
-The _end_ command is used to successfully end a running batch initiated by the _start_ command 
+The _end_ command is used to successfully end a running batch initiated by the _start_ command
 
 
 ----
@@ -176,7 +176,7 @@ a
 ----
 
 ===== evict
-The _evict_ command is used to evict from the cache the entry associated with a specific key. 
+The _evict_ command is used to evict from the cache the entry associated with a specific key.
 
 
 ----
@@ -185,7 +185,7 @@ The _evict_ command is used to evict from the cache the entry associated with a 
 ----
 
 ===== get
-The _get_ command is used to show the value associated to a specified key. For primitive types and Strings, the _get_ command will simply print the default representation. For other objects, a JSON representation of the object will be printed. 
+The _get_ command is used to show the value associated to a specified key. For primitive types and Strings, the _get_ command will simply print the default representation. For other objects, a JSON representation of the object will be printed.
 
 
 ----
@@ -200,10 +200,10 @@ The _grant_ command can be used to grant new roles to a principal:
 
 ----
 [remoting://localhost:9999]> grant supervisor to user1
----- 
+----
 
 ===== info
-The _info_ command is used to show the configuration of the currently selected cache or container. 
+The _info_ command is used to show the configuration of the currently selected cache or container.
 
 
 ----
@@ -212,7 +212,7 @@ GlobalConfiguration{asyncListenerExecutor=ExecutorFactoryConfiguration{factory=o
 ----
 
 ===== locate
-The _locate_ command shows the physical location of a specified entry in a distributed cluster. 
+The _locate_ command shows the physical location of a specified entry in a distributed cluster.
 
 
 ----
@@ -241,7 +241,7 @@ The put command can optionally specify a lifespan and a maximum idle time.
 ----
 
 ===== replace
-The _replace_ command replaces an existing entry in the cache. If an old value is specified, then the replacement happens only if the value in the cache coincides. 
+The _replace_ command replaces an existing entry in the cache. If an old value is specified, then the replacement happens only if the value in the cache coincides.
 
 
 ----
@@ -264,10 +264,10 @@ The _roles_ command can be used to list the roles associated to a specific user,
 ----
 [remoting://localhost:9999]> roles user1
 [supervisor, reader]
----- 
+----
 
 ===== rollback
-The _rollback_ command rolls back an ongoing transaction 
+The _rollback_ command rolls back an ongoing transaction
 
 
 ----
@@ -278,7 +278,7 @@ The _rollback_ command rolls back an ongoing transaction
 ----
 
 ===== site
-The _site_ command performs operations related to the administration of cross-site replication. It can be used to obtain information related to the status of a site and to change the status (online/offline) 
+The _site_ command performs operations related to the administration of cross-site replication. It can be used to obtain information related to the status of a site and to change the status (online/offline)
 
 ----
 [jmx://localhost:12000/MyCacheManager/namedCache]> site --status NYC
@@ -291,7 +291,7 @@ offline
 ----
 
 ===== start
-The _start_ command initiates a batch of operations. 
+The _start_ command initiates a batch of operations.
 
 
 ----
@@ -302,7 +302,7 @@ The _start_ command initiates a batch of operations.
 ----
 
 ===== stats
-The _stats_ command displays statistics about a cache 
+The _stats_ command displays statistics about a cache
 
 
 ----
@@ -340,7 +340,7 @@ The _upgrade_ command performs operations used during the rolling upgrade proced
 ----
 
 ==== version
-The _version_ command displays version information about both the CLI client and the server 
+The _version_ command displays version information about both the CLI client and the server
 
 
 ----
@@ -354,13 +354,13 @@ Server Version 5.2.1.Final
 The CLI understands the following types:
 
 
-*  string strings can either be quoted between single (') or double (") quotes, or left unquoted. In this case it must not contain spaces, punctuation and cannot begin with a number  e.g. 'a string', key001 
+*  string strings can either be quoted between single (') or double (") quotes, or left unquoted. In this case it must not contain spaces, punctuation and cannot begin with a number  e.g. 'a string', key001
 
 
-*  int an integer is identified by a sequence of decimal digits, e.g. 256 
+*  int an integer is identified by a sequence of decimal digits, e.g. 256
 
 
-*  long a long is identified by a sequence of decimal digits suffixed by 'l', e.g. 1000l 
+*  long a long is identified by a sequence of decimal digits suffixed by 'l', e.g. 1000l
 
 
 * double
@@ -375,13 +375,13 @@ The CLI understands the following types:
 ** a single precision number is identified by a floating point number(with optional exponent part) and an 'f' suffix, e.g. 10.3f
 
 
-*  boolean a boolean is represented either by the keywords true and false 
+*  boolean a boolean is represented either by the keywords true and false
 
 
-*  UUID a UUID is represented by its canonical form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX 
+*  UUID a UUID is represented by its canonical form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
 
 
-*  JSON serialized Java classes can be represented using JSON notation, e.g. {"package.MyClass":{"i":5,"x":null,"b":true}}. Please note that the specified class must be available to the CacheManager's class loader. 
+*  JSON serialized Java classes can be represented using JSON notation, e.g. {"package.MyClass":{"i":5,"x":null,"b":true}}. Please note that the specified class must be available to the CacheManager's class loader.
 
 ==== Time Values
 A time value is an integer number followed by time unit suffix: days (d), hours (h), minutes (m), seconds (s), milliseconds (ms).

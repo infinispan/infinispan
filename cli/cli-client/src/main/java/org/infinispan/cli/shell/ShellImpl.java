@@ -233,7 +233,7 @@ public class ShellImpl implements Shell {
 
    private void help() {
       System.out.println("Usage: ispn-cli [OPTION]...");
-      System.out.println("Command-line interface for interacting with a running instance of Infinispan");
+      System.out.printf("%s command-line interface\n", Version.class.getPackage().getImplementationTitle());
       System.out.println();
       System.out.println("Options:");
       System.out.println("  -c, --connect=URL       connects to a running instance of Infinispan. ");
@@ -249,7 +249,7 @@ public class ShellImpl implements Shell {
 
    private void version() {
       System.out.println("ispn-cli " + Version.class.getPackage().getImplementationVersion());
-      System.out.println("Copyright (C) 2009-2014 Red Hat Inc. and/or its affiliates and other contributors");
+      System.out.println("Copyright (C) Red Hat Inc. and/or its affiliates and other contributors");
       System.out.println("License Apache License, v. 2.0. http://www.apache.org/licenses/LICENSE-2.0");
       System.exit(0);
    }

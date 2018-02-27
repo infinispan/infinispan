@@ -1,7 +1,7 @@
 ==== Soft-Index File Store
 
-In Infinispan 7.0 we have added a new experimental local file-based cache store
-- Soft-Index File Store. It is a pure Java implementation that tries to get
+The Soft-Index File Store is an experimental local file-based.
+It is a pure Java implementation that tries to get
 around Single File Store's drawbacks by implementing a variant of B+ tree that
 is cached in-memory using Java's soft references - here's where the name
 Soft-Index File Store comes from. This B+ tree (called Index) is offloaded on

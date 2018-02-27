@@ -1,6 +1,6 @@
 [[_custom_interceptors_chapter]]
 == Custom Interceptors
-It is possible to add custom interceptors to Infinispan, both declaratively and programatically. Custom interceptors are a way of extending Infinispan by being able to influence or respond to any modifications to cache. Example of such modifications are: elements are added/removed/updated or transactions are committed. For a detailed list refer to link:{javadoc.root}/org/infinispan/interceptors/base/CommandInterceptor.html[CommandInterceptor] API.
+It is possible to add custom interceptors to {brandname}, both declaratively and programatically. Custom interceptors are a way of extending {brandname} by being able to influence or respond to any modifications to cache. Example of such modifications are: elements are added/removed/updated or transactions are committed. For a detailed list refer to link:{javadoc.root}/org/infinispan/interceptors/base/CommandInterceptor.html[CommandInterceptor] API.
 
 === Adding custom interceptors declaratively
 Custom interceptors can be added on a per named cache basis. This is because each named cache have its own interceptor stack. Following xml snippet depicts the ways in which a custom interceptor can be added.

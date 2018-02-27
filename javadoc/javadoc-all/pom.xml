@@ -196,7 +196,7 @@
                         <artifactId>infinispan-tools</artifactId>
                         <version>${project.version}</version>
                      </docletArtifact>
-                     <doctitle>Infinispan ${infinispan.base.version} API</doctitle>
+                     <doctitle>${infinispan.brand.name} ${infinispan.base.version} API</doctitle>
                      <docfilessubdirs>true</docfilessubdirs>
                      <detectLinks>false</detectLinks>
                      <footer>${analytics.code}</footer>

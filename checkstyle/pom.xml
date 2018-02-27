@@ -14,6 +14,10 @@
    <name>Infinispan Checkstyle Rules</name>
    <description>Contains the definitions for the Infinispan commons code style and conventions</description>
 
+   <properties>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>com.puppycrawl.tools</groupId>

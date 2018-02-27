@@ -1,7 +1,7 @@
 ==  Example with Groovy
-The idea by this tutorial is to give an introduction in the use of the link:{javadocroot}[Infinispan API] and its configuration file. As trying to do it in a more interactive fashion, the tutorial makes use of the link:http://groovy.codehaus.org/[Groovy] dynamic language that will allow to interact with the API by using a console.
+The idea by this tutorial is to give an introduction in the use of the link:{javadocroot}[{brandname} API] and its configuration file. As trying to do it in a more interactive fashion, the tutorial makes use of the link:http://groovy.codehaus.org/[Groovy] dynamic language that will allow to interact with the API by using a console.
 
-The tutorial will start by showing the basic usage of the link:{javadocroot}[Infinispan API] and a use of a simple cache configuration, then it will walk through different configuration scenarios and use cases. By the end of the tutorial you should have a clear understanding of the use the Infinispan API and some of the various configuration options.
+The tutorial will start by showing the basic usage of the link:{javadocroot}[{brandname} API] and a use of a simple cache configuration, then it will walk through different configuration scenarios and use cases. By the end of the tutorial you should have a clear understanding of the use the {brandname} API and some of the various configuration options.
 
 The scenarios and use cases shown are:
 
@@ -17,13 +17,13 @@ All the sample configurations are in the sample-configurations.xml file attached
 
 === Introduction
 
-The Infinispan tutorial makes use of Groovy to get a more interactive experience when starting to learn about how to use the Infinispan API. So you will need to install a few prerequisites before getting started:
+The {brandname} tutorial makes use of Groovy to get a more interactive experience when starting to learn about how to use the {brandname} API. So you will need to install a few prerequisites before getting started:
 
 
 * link:http://www.groovy-lang.org/[The Groovy Platform] (I used Groovy 1.6.3)
-* Java and Infinispan
+* Java and {brandname}
 
-Download those and extract/install where you feel appropriate, depending on your operating system and personal preferences you will either have installers or compressed distributions. You can read more about read installing Java and Infinispan in link:https://docs.jboss.org/author/pages/viewpage.action?pageId=3737054[Installing Infinispan for the tutorials] .
+Download those and extract/install where you feel appropriate, depending on your operating system and personal preferences you will either have installers or compressed distributions. You can read more about read installing Java and {brandname} in link:https://docs.jboss.org/author/pages/viewpage.action?pageId=3737054[Installing {brandname} for the tutorials] .
 
 ==== Installing Groovy
 You can use the installer or compressed file to install the Groovy Platform, I used the compressed file and decompressed at C:\Program Files\groovy\groovy-1.6.3. Once you have installed the Groovy Platform you should set some environment variables:
@@ -47,8 +47,8 @@ Groovy Version: 1.6.3 JVM: 1.6.0_14
 
 If you get a similar result as shown, everything went well.
 
-==== Installing Infinispan
-Now you should add the Infinispan libraries to the Groovy Platform so you will able to access the API from the Groovy console. Add the infinispan-core.jar and its dependencies to the $USER_HOME/.groovy/lib directory, the jar is located in $INFINISPAN_HOME/modules/core and the dependencies at $INIFINISPAN_HOME/modules/core/lib.
+==== Installing {brandname}
+Now you should add the {brandname} libraries to the Groovy Platform so you will able to access the API from the Groovy console. Add the infinispan-core.jar and its dependencies to the $USER_HOME/.groovy/lib directory, the jar is located in $INFINISPAN_HOME/modules/core and the dependencies at $INIFINISPAN_HOME/modules/core/lib.
 
 For example, on Windows, you need to copy it to:
 
@@ -64,7 +64,7 @@ or on Linux:
 
 ----
 
-and $INFINISPAN_HOME is where you decompressed the Infinispan distribution.
+and $INFINISPAN_HOME is where you decompressed the {brandname} distribution.
 
 To test the installation, download the attached file infinispantest.groovy and in a Command Shell/Terminal execute
 
@@ -142,7 +142,7 @@ The basic configuration, is the simplest configuration that you can have, its ma
 
 ----
 
-That's all you have to add to the configuration file to have a simple named cache, now its time to interact with the cache by using the Infinispan API. Lets start by getting the named cache and put some objects inside it.
+That's all you have to add to the configuration file to have a simple named cache, now its time to interact with the cache by using the {brandname} API. Lets start by getting the named cache and put some objects inside it.
 
 
 ----
@@ -174,9 +174,9 @@ groovy:000> localCache.isEmpty()
 
 ----
 
-So you have seen the basic of the Infinispan API, adding, getting and removing from the cache, there is more, but don't forget that you are working with a cache that are an extension of java.util.ConcurrentHasMap and the rest of the API is as simple as the one shown above, many of the cool things in Infinispan are totally transparent (that's actually the coolest thing about Infinispan) and depends only on the configuration of your cache.
+So you have seen the basic of the {brandname} API, adding, getting and removing from the cache, there is more, but don't forget that you are working with a cache that are an extension of java.util.ConcurrentHasMap and the rest of the API is as simple as the one shown above, many of the cool things in {brandname} are totally transparent (that's actually the coolest thing about {brandname}) and depends only on the configuration of your cache.
 
-If you check the Infinispan JavaDoc you will see that the Cache#put() method has been overridden several times.
+If you check the {brandname} JavaDoc you will see that the Cache#put() method has been overridden several times.
 
 ----
 //YOU WILL NEED TO IMPORT ANOTHER LIBRARY
@@ -200,7 +200,7 @@ groovy:000> localCache.size()
 
 ----
 
-The Infinispan API also allows you to manage the life cycle of the cache, you can stop and start a cache but by default you will loose the content of the cache except if you configure a cache store, more about that later in the tutorial. lets check what happens when you restart the cache
+The {brandname} API also allows you to manage the life cycle of the cache, you can stop and start a cache but by default you will loose the content of the cache except if you configure a cache store, more about that later in the tutorial. lets check what happens when you restart the cache
 
 ----
 groovy:000> localCache.size()
@@ -215,11 +215,11 @@ groovy:000> localCache.size()
 === > 0
 ----
 
-Thats all related to the use of the Infinispan API, now lets check some different behaviors depending on the configuration of the cache.
+Thats all related to the use of the {brandname} API, now lets check some different behaviors depending on the configuration of the cache.
 
 === Cache with transaction management
 
-You are able to specify the cache to use a transaction manager, and even explicitly control the transactions. Start by configuring the cache to use a specific TransactionManagerLookup class. Infinispan implements a couple TransactionManagerLookup classes.
+You are able to specify the cache to use a transaction manager, and even explicitly control the transactions. Start by configuring the cache to use a specific TransactionManagerLookup class. {brandname} implements a couple TransactionManagerLookup classes.
 
 
 *  link:{javadocroot}/org/infinispan/transaction/lookup/EmbeddedTransactionManager.html[org.infinispan.transaction.lookup.EmbeddedTransactionManager]
@@ -230,7 +230,7 @@ You are able to specify the cache to use a transaction manager, and even explici
 
 *  link:{javadocroot}/org/infinispan/transaction/lookup/JBossStandaloneJTAManagerLookup.html[org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup]
 
-Each use different methods to lookup the transaction manager, depending on the environment you are running Infinispan you should figure out which one to use. Check the JavaDoc for more details.
+Each use different methods to lookup the transaction manager, depending on the environment you are running {brandname} you should figure out which one to use. Check the JavaDoc for more details.
 
 For the tutorial its enough to use:
 
@@ -284,9 +284,9 @@ As shown in the example, the transaction is controlled explicitly and the change
 
 === Cache with a cache store
 
-Infinispan allows you to configure a persistent store that can be used to persist the content of the cache, so if the cache is restarted the cache will be able to keep the content. It can also be used if you want to limit the size of the cache, then the cache will start putting the objects in the store to keep the size limit, more on that when looking at the eviction configuration.
+{brandname} allows you to configure a persistent store that can be used to persist the content of the cache, so if the cache is restarted the cache will be able to keep the content. It can also be used if you want to limit the size of the cache, then the cache will start putting the objects in the store to keep the size limit, more on that when looking at the eviction configuration.
 
-Infinispan provides several cache store implementations:
+{brandname} provides several cache store implementations:
 
 
 * FileCacheStore
@@ -309,7 +309,7 @@ Infinispan provides several cache store implementations:
 
 * BdbjeCacheStore
 
- The tutorial uses the FileCacheStore, that saves the objects in files in a configured directory, in this case the /tmp directory. If the directory is not set it defaults to Infinispan-FileCacheStore in the current working directory.
+ The tutorial uses the FileCacheStore, that saves the objects in files in a configured directory, in this case the /tmp directory. If the directory is not set it defaults to {brandname}-FileCacheStore in the current working directory.
 
 [source,xml]
 ----
@@ -408,7 +408,7 @@ Now you are sure that your cache wont consume all your memory and hang your syst
 
 === Cache with eviction and cache store
 
-Ok, the cache has a limited size but you don't want to loose your objects in the cache. Infinispan is aware of these issues, so it makes it very simple for you combing the cache store with the eviction policy. When the cache is full it will persist an object and remove it from the cache, but if you want to recover an object that has been persisted the the cache transparently will bring it to you from the cache store.
+Ok, the cache has a limited size but you don't want to loose your objects in the cache. {brandname} is aware of these issues, so it makes it very simple for you combing the cache store with the eviction policy. When the cache is full it will persist an object and remove it from the cache, but if you want to recover an object that has been persisted the the cache transparently will bring it to you from the cache store.
 
 The configuration is simple, just combine eviction and cache store configuration
 

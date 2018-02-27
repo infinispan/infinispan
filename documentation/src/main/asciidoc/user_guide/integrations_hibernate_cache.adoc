@@ -1,15 +1,15 @@
 === JPA/Hibernate 2L Cache
 
 Hibernate manages a second-level cache where it moves data into and out as a result of operations performed by `Session` or `EntityManager` (JPA).
-The second-level cache is pluggable via an SPI which Infinispan implements.
-This enables Infinispan to be used as second-level cache for Hibernate.
+The second-level cache is pluggable via an SPI which {brandname} implements.
+This enables {brandname} to be used as second-level cache for Hibernate.
 
 link:https://docs.jboss.org/hibernate/orm/5.2/userguide/html_single/Hibernate_User_Guide.html#caching[Hibernate documentation]
 contains a lot of information about second-level cache, types of caches...etc.
-This chapter focuses on what you need to know to use Infinispan as second-level cache provider with Hibernate.
+This chapter focuses on what you need to know to use {brandname} as second-level cache provider with Hibernate.
 
-Applications running in environments where Infinispan is not default cache provider for Hibernate will need to depend on the correct cache provider version.
-The Infinispan cache provider version suitable for your application depends on the Hibernate version in use:
+Applications running in environments where {brandname} is not default cache provider for Hibernate will need to depend on the correct cache provider version.
+The {brandname} cache provider version suitable for your application depends on the Hibernate version in use:
 
 If using Hibernate 5.2 or higher, the Maven coordinates are the following:
 
@@ -29,11 +29,11 @@ If using Hibernate 5.1, the Maven coordinates are the following:
    <version>${version.infinispan}</version> <!-- 9.2.0.Final or higher -->
 </dependency>
 
-NOTE: For earlier Hibernate versions (e.g. Hibernate 5.0 or before), the Infinispan cache provider was shipped by Hibernate.
+NOTE: For earlier Hibernate versions (e.g. Hibernate 5.0 or before), the {brandname} cache provider was shipped by Hibernate.
 This means that the documentation on how to use it and it's Maven coordinates are located in the
 link:https://docs.jboss.org/hibernate/orm/5.0/userguide/html_single/Hibernate_User_Guide.html#caching-provider-infinispan[Hibernate documentation].
 
-Apart from Infinispan specific configuration, it's worth noting that enabling second cache requires some changes to the descriptor file
+Apart from {brandname} specific configuration, it's worth noting that enabling second cache requires some changes to the descriptor file
 (`persistence.xml` for JPA, `hibernate.cfg.xml` for Hibernate or `application.properties` for Spring).
 To use second level cache, you first need to enable the second level cache so that entities and/or collections can be cached:
 
@@ -84,19 +84,19 @@ Statistics are disabled by default, so it is recommended that you enable statist
 
 ==== Deployment Scenarios
 
-How to configure Infinispan to be the second level cache provider varies slightly depending on the deployment scenario:
+How to configure {brandname} to be the second level cache provider varies slightly depending on the deployment scenario:
 
 ===== Single-Node Standalone Hibernate Application
 
-In standalone library mode, a JPA/Hibernate application runs inside a Java SE application or inside containers that don’t offer Infinispan integration.
+In standalone library mode, a JPA/Hibernate application runs inside a Java SE application or inside containers that don’t offer {brandname} integration.
 
-Enabling Infinispan second level cache provider inside a JPA/Hibernate application that runs in single node is very straightforward.
-First, make sure the Hibernate Infinispan cache provider is available in the classpath.
+Enabling {brandname} second level cache provider inside a JPA/Hibernate application that runs in single node is very straightforward.
+First, make sure the Hibernate {brandname} cache provider is available in the classpath.
 Then, modify the persistence.xml to include these properties:
 
 [source, XML, indent=0]
 ----
-<!-- Use Infinispan second level cache provider -->
+<!-- Use {brandname} second level cache provider -->
 <property name="hibernate.cache.region.factory_class" value="infinispan"/>
 
 <!--
@@ -107,91 +107,91 @@ Then, modify the persistence.xml to include these properties:
      value="org/infinispan/hibernate/cache/commons/builder/infinispan-configs-local.xml"/>
 ----
 
-By default when running standalone, the Infinispan second-level cache provider uses an Infinispan configuration that’s designed for clustered environments.
-However, Infinispan also provides a configuration designed for local, single node, environments.
+By default when running standalone, the {brandname} second-level cache provider uses an {brandname} configuration that’s designed for clustered environments.
+However, {brandname} also provides a configuration designed for local, single node, environments.
 To enable that configuration, set `hibernate.cache.infinispan.cfg` to `org/infinispan/hibernate/cache/commons/builder/infinispan-configs-local.xml` value.
 You can find more about the configuration check the <<_default_local_configuration,local configuration>> section.
 
-A simple tutorial showing how to use Infinispan as Hibernate cache provider in a standalone application can be found
+A simple tutorial showing how to use {brandname} as Hibernate cache provider in a standalone application can be found
 link:https://github.com/infinispan/infinispan-simple-tutorials/tree/master/hibernate-cache/local[here].
 
 ===== Single-Node Standalone Spring Application
 
 Using Hibernate within Spring applications is a very common use case.
-In this section you will learn what you need to do configure Hibernate within Spring to use Infinispan as second-level cache provider.
+In this section you will learn what you need to do configure Hibernate within Spring to use {brandname} as second-level cache provider.
 
-As in the previous case, start by making sure that Hibernate Infinispan Cache provider is available in the classpath.
+As in the previous case, start by making sure that Hibernate {brandname} Cache provider is available in the classpath.
 Then, modify `application.properties` file to contain:
 
-    # Use Infinispan second level cache provider
+    # Use {brandname} second level cache provider
     spring.jpa.properties.hibernate.cache.region.factory_class=infinispan
     # 
     # Force using local configuration when only using a single node.
     # Otherwise a clustered configuration is loaded.
     spring.jpa.properties.hibernate.cache.infinispan.cfg=org/infinispan/hibernate/cache/commons/builder/infinispan-configs-local.xml
 
-By default when running standalone, the Infinispan second-level cache provider uses an Infinispan configuration that’s designed for clustered environments.
-However, Infinispan also provides a configuration designed for local, single node, environments.
+By default when running standalone, the {brandname} second-level cache provider uses an {brandname} configuration that’s designed for clustered environments.
+However, {brandname} also provides a configuration designed for local, single node, environments.
 To enable that configuration, set `spring.jpa.properties.hibernate.cache.infinispan.cfg` to `org/infinispan/hibernate/cache/commons/builder/infinispan-configs-local.xml` value.
 You can find more about the configuration check the <<_default_local_configuration,local configuration>> section.
 
-A simple tutorial showing how to use Infinispan as Hibernate cache provider in a Spring application can be found
+A simple tutorial showing how to use {brandname} as Hibernate cache provider in a Spring application can be found
 link:https://github.com/infinispan/infinispan-simple-tutorials/tree/master/hibernate-cache/spring-local[here].
 
 ===== Single-Node WildFly Application
 
-In WildFly, Infinispan is the default second level cache provider for JPA/Hibernate.
+In WildFly, {brandname} is the default second level cache provider for JPA/Hibernate.
 This means that when using JPA in WildFly, region factory is already set to `infinispan`.
-Infinispan's configuration is located in WildFly's `standalone.xml` file.
+{brandname}'s configuration is located in WildFly's `standalone.xml` file.
 It follows the same settings explained in <<_default_local_configuration,local configuration>> section.
 
-Several aspects of the Infinispan second level cache provider can be configured directly in `persistence.xml`.
+Several aspects of the {brandname} second level cache provider can be configured directly in `persistence.xml`.
 This means that some of those tweaks do not require changing WildFly's `standalone.xml` file.
 You can find out more about these changes in the <<_configuration_properties, configuration properties>> section.
 
-So, to enable Hibernate to use Infinispan as second-level cache, all you need to do is enable second-level cache.
+So, to enable Hibernate to use {brandname} as second-level cache, all you need to do is enable second-level cache.
 This is explained in detail in the introduction of this chapter.
 
-A simple tutorial showing how to use Infinispan as Hibernate cache provider in a WildFly application can be found
+A simple tutorial showing how to use {brandname} as Hibernate cache provider in a WildFly application can be found
 link:https://github.com/infinispan/infinispan-simple-tutorials/tree/master/hibernate-cache/wildfly-local[here].
 
 ===== Multi-Node Standalone Hibernate Application
 
-When running a JPA/Hibernate in a multi-node environment and enabling Infinispan second-level cache, it is necessary to cluster the second-level cache so that cache consistency can be guaranteed.
-Clustering the Infinispan second-level cache provider is as simple as adding the following property to the `persistence.xml` file:
+When running a JPA/Hibernate in a multi-node environment and enabling {brandname} second-level cache, it is necessary to cluster the second-level cache so that cache consistency can be guaranteed.
+Clustering the {brandname} second-level cache provider is as simple as adding the following property to the `persistence.xml` file:
 
 [source, XML, indent=0]
-<!-- Use Infinispan second level cache provider -->
+<!-- Use {brandname} second level cache provider -->
 <property name="hibernate.cache.region.factory_class" value="infinispan"/>
 
-The default Infinispan configuration used by the second-level cache provider is already configured to work in a cluster environment, so no need to add any extra properties.
+The default {brandname} configuration used by the second-level cache provider is already configured to work in a cluster environment, so no need to add any extra properties.
 You can find more about the configuration check the <<_default_cluster_configuration,cluster configuration>> section.
 
 ===== Multi-Node Standalone Spring Application
 
-If interested in running a Spring application that uses Hibernate and Infinispan as second level cache, the cache needs to be clustered.
-Clustering the Infinispan second-level cache provider is as simple as adding the following property to the `application.properties` file:
+If interested in running a Spring application that uses Hibernate and {brandname} as second level cache, the cache needs to be clustered.
+Clustering the {brandname} second-level cache provider is as simple as adding the following property to the `application.properties` file:
 
-    # Use Infinispan second level cache provider
+    # Use {brandname} second level cache provider
     spring.jpa.properties.hibernate.cache.region.factory_class=infinispan
 
-The default Infinispan configuration used by the second-level cache provider is already configured to work in a cluster environment, so no need to add any extra properties.
+The default {brandname} configuration used by the second-level cache provider is already configured to work in a cluster environment, so no need to add any extra properties.
 You can find more about the configuration check the <<_default_cluster_configuration,cluster configuration>> section.
 
 ===== Multi-Node Wildfly Application
 
-As mentioned in the single node Wildfly case, Infinispan is the default second level cache provider for JPA/Hibernate when running inside Wildfly.
+As mentioned in the single node Wildfly case, {brandname} is the default second level cache provider for JPA/Hibernate when running inside Wildfly.
 This means that when using JPA in WildFly, region factory is already set to `infinispan`.
 
 When running Wildfly multi-node clusters, it is recommended that you start off by using `standalone-ha.xml` configuration file.
-Within this file you can find Hibernate Infinispan caches configured with the correct settings to work in a clustered environment.
+Within this file you can find Hibernate {brandname} caches configured with the correct settings to work in a clustered environment.
 You can find more about the configuration check the <<_default_cluster_configuration,cluster configuration>> section.
 
-Several aspects of the Infinispan second level cache provider can be configured directly in `persistence.xml`.
+Several aspects of the {brandname} second level cache provider can be configured directly in `persistence.xml`.
 This means that some of those tweaks do not require changing WildFly's `standalone-ha.xml` file.
 You can find out more about these changes in the <<_configuration_properties, configuration properties>> section.
 
-So, to enable Hibernate to use Infinispan as second-level cache, all you need to do is enable second-level cache.
+So, to enable Hibernate to use {brandname} as second-level cache, all you need to do is enable second-level cache.
 Enabling second-level cache is explained in detail in the introduction of this chapter.
 
 ==== Configuration Reference
@@ -200,7 +200,7 @@ This section is dedicated at explaining configuration in detail as well as some 
 
 ===== Default Local Configuration
 
-Infinispan second-level cache provider comes with a configuration designed for local, single node, environments.
+{brandname} second-level cache provider comes with a configuration designed for local, single node, environments.
 These are the characteristics of such configuration:
 
 Entities, collections, queries and timestamps are stored in non-transactional local caches.
@@ -219,7 +219,7 @@ _No eviction/expiration is configured for timestamp caches_, nor it's allowed.
 
 ===== Default Cluster Configuration
 
-Infinispan second-level cache provider default configuration is designed for multi-node clustered environments.
+{brandname} second-level cache provider default configuration is designed for multi-node clustered environments.
 The aim of this section is to explain the default settings for each of the different global data type caches (entity, collection, query and timestamps), why these were chosen and what are the available alternatives.
 These are the characteristics of such configuration:
 
@@ -272,7 +272,7 @@ As a result, _no eviction/expiration is allowed for timestamp caches either_.
 
 IMPORTANT: Asynchronous replication was selected as default for timestamps cache for performance reasons.
 A side effect of this choice is that when an entity/collection is updated, for a very brief period of time stale queries might be returned.
-It's important to note that due to how Infinispan deals with asynchronous replication, stale queries might be found even query is done right after an entity/collection update on same node.
+It's important to note that due to how {brandname} deals with asynchronous replication, stale queries might be found even query is done right after an entity/collection update on same node.
 The reason why asynchronous replication works this way is because there's a single node that's owner for a given key, and that enables changes to be applied in the same order in all nodes.
 Without it, it could happen that an older value could replace a newer value in certain nodes.
 
@@ -285,7 +285,7 @@ If any of these is higher, the cached query result is discarded and the query is
 
 ===== Configuration Properties
 
-As explained above, Infinispan second-level cache provider comes with default configuration in `infinispan-config.xml` that is suited for clustered use.
+As explained above, {brandname} second-level cache provider comes with default configuration in `infinispan-config.xml` that is suited for clustered use.
 If there's only single JVM accessing the DB, you can use more performant `infinispan-config-local.xml` by setting the `hibernate.cache.infinispan.cfg` property.
 If you require further tuning of the cache, you can provide your own configuration.
 Caches that are not specified in the provided configuration will default to `infinispan-config.xml` (if the provided configuration uses clustering) or `infinispan-config-local.xml`.
@@ -295,7 +295,7 @@ Cache configuration changes in Wildfly should be done either modifying the cache
 See examples below on how entity/collection specific configurations can be applied.
 
 [[caching-provider-infinispan-config-example]]
-.Use custom Infinispan configuration
+.Use custom {brandname} configuration
 ====
 [source, XML, indent=0]
 <property
@@ -303,7 +303,7 @@ See examples below on how entity/collection specific configurations can be appli
     value="my-infinispan-configuration.xml" />
 ====
 
-NOTE: If the cache is configured as transactional, Infinispan cache provider automatically sets transaction manager so that the TM used by Infinispan is the same as TM used by Hibernate.
+NOTE: If the cache is configured as transactional, {brandname} cache provider automatically sets transaction manager so that the TM used by {brandname} is the same as TM used by Hibernate.
 
 Cache configuration can differ for each type of data stored in the cache.
 In order to override the cache configuration template, use property `hibernate.cache.infinispan._data-type_.cfg` where `_data-type_` can be one of:
@@ -374,7 +374,7 @@ Lifespan of entry from last read/modification (in milliseconds).
 * `hibernate.cache.infinispan._something_.expiration.wake_up_interval`:
 Period of thread checking expired entries.
 * `hibernate.cache.infinispan.statistics`:
-Globally enables/disable Infinispan statistics collection, and their exposure via JMX.
+Globally enables/disable {brandname} statistics collection, and their exposure via JMX.
 
 Example:
 ====
@@ -391,7 +391,7 @@ Example:
    value= "30000"/>
 ====
 
-With the above configuration, you're overriding whatever eviction/expiration settings were defined for the default entity cache name in the Infinispan cache configuration used.
+With the above configuration, you're overriding whatever eviction/expiration settings were defined for the default entity cache name in the {brandname} cache configuration used.
 This happens regardless of whether it's the default one or user defined.
 More specifically, we're defining the following:
 
@@ -427,7 +427,7 @@ link:https://github.com/infinispan/infinispan-simple-tutorials/tree/master/hiber
 
 ==== Cache Strategies
 
-Infinispan cache provider supports all Hibernate cache strategies:
+{brandname} cache provider supports all Hibernate cache strategies:
 `transactional`, `read-write`, `nonstrict-read-write` and `read-only`.
 
 However, when running in a cluster configuration combinations are limited:
@@ -474,13 +474,13 @@ Tx3: read A = 1, B = 1 // reads after TX1 commit completes are consistent again
 ----
 ====
 
-==== Remote Infinispan Caching
+==== Remote {brandname} Caching
 
 Several questions (
 link:http://community.jboss.org/message/575814#575814[here]
 and
 link:http://community.jboss.org/message/585841#585841[here]
-) have appeared in the Infinispan user forums asking whether it'd be possible to have an Infinispan second level cache that instead of living in the same JVM as the Hibernate code, it resides in a remote server, i.e. an Infinispan Hot Rod server.
+) have appeared in the {brandname} user forums asking whether it'd be possible to have an {brandname} second level cache that instead of living in the same JVM as the Hibernate code, it resides in a remote server, i.e. an {brandname} Hot Rod server.
 It's important to understand that trying to set up second level cache in this way is generally not a good idea for the following reasons:
 
 * The purpose of a JPA/Hibernate second level cache is to store entities/collections recently retrieved from database or to maintain results of recent queries.

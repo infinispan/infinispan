@@ -1,11 +1,11 @@
-==  Using Infinispan as an embedded cache in Java SE
-Running Infinispan in embedded mode is very easy. First, we'll set up a project, and then we'll run Infinispan, and start adding data.
+==  Using {brandname} as an embedded cache in Java SE
+Running {brandname} in embedded mode is very easy. First, we'll set up a project, and then we'll run {brandname}, and start adding data.
 
 .embedded-cache quickstart
 TIP: All the code discussed in this tutorial is available in the link:https://github.com/infinispan/infinispan-quickstart/tree/master/embedded-cache[embedded-cache quickstart].
 
-=== Creating a new Infinispan project
-The only thing you need to set up Infinispan is add it's dependencies to your project.
+=== Creating a new {brandname} project
+The only thing you need to set up {brandname} is add it's dependencies to your project.
 
 ==== Maven users
 If you are using Maven (or another build system like Gradle or Ivy which can use Maven dependencies), then this is easy. Just add:
@@ -24,19 +24,19 @@ If you are using Maven (or another build system like Gradle or Ivy which can use
 ----
 
 to the `<dependencies>` section of the POM.
-You'll need to substitute `${infinispan.version}` for the version of Infinispan you wish to use. 
+You'll need to substitute `${infinispan.version}` for the version of {brandname} you wish to use.
 
-.Which version of Infinispan should I use?
-TIP: We recommend using the latest stable version of Infinispan. All releases are displayed on the link:http://www.infinispan.org/download[downloads page]. 
+.Which version of {brandname} should I use?
+TIP: We recommend using the latest stable version of {brandname}. All releases are displayed on the link:http://www.infinispan.org/download[downloads page].
 
 Alternatively, you can link:https://raw.github.com/infinispan/infinispan-quickstart/master/embedded-cache/pom.xml[use the POM] from the quickstart that accompanies this tutorial. 
 
 ==== Ant users
-If you are using Ant, or another build system which doesn't provide declarative dependency management, then the Infinispan distribution zip contains a lib/ directory. Add the contents of this to the build classpath.
+If you are using Ant, or another build system which doesn't provide declarative dependency management, then the {brandname} distribution zip contains a lib/ directory. Add the contents of this to the build classpath.
 
-=== Running Infinispan on a single node
-In order to run Infinispan, we're going to create a `main()` method in the `Quickstart` class.
-Infinispan comes configured to run out of the box; once you have set up your dependencies, all you need to do to start using Infinispan is to create a new cache manager and get a handle on the default cache. 
+=== Running {brandname} on a single node
+In order to run {brandname}, we're going to create a `main()` method in the `Quickstart` class.
+{brandname} comes configured to run out of the box; once you have set up your dependencies, all you need to do to start using {brandname} is to create a new cache manager and get a handle on the default cache.
 
 [source,java]
 .Quickstart.java
@@ -56,13 +56,13 @@ If you are using Maven:
 
  $ mvn compile exec:java -Dexec.mainClass="org.infinispan.quickstart.embeddedcache.Quickstart"
 
-You should see Infinispan start up, and the version in use logged to the console.
+You should see {brandname} start up, and the version in use logged to the console.
 
-Congratulations, you now have Infinispan running as a local cache!
+Congratulations, you now have {brandname} running as a local cache!
 
 
 === Use the default cache
-Infinispan exposes a Map-like, JSR-107-esque interface for accessing and mutating the data stored in the cache. For example:
+{brandname} exposes a Map-like, JSR-107-esque interface for accessing and mutating the data stored in the cache. For example:
 
 [source,java]
 .DefaultCacheQuickstart.java
@@ -78,7 +78,7 @@ Object v = cache.remove("key");
 assertEqual("value", v);
 ----
 
-Infinispan offers a thread-safe data-structure:
+{brandname} offers a thread-safe data-structure:
 
 [source,java]
 .DefaultCacheQuickstart.java
@@ -106,7 +106,7 @@ to run using maven:
  $ mvn compile exec:java -Dexec.mainClass="org.infinispan.quickstart.embeddedcache.DefaultCacheQuickstart"
 
 === Use a custom cache
-Each cache in Infinispan can offer a different set of features (for example transaction support, different replication modes or support for eviction), and you may want to use different caches for different classes of data in your application. To get a custom cache, you need to register it with the manager first:
+Each cache in {brandname} can offer a different set of features (for example transaction support, different replication modes or support for eviction), and you may want to use different caches for different classes of data in your application. To get a custom cache, you need to register it with the manager first:
 
 [source,java]
 .CustomCacheQuickstart.java
@@ -120,7 +120,7 @@ public static void main(String args[]) throws Exception {
 }
 ----
 
-The example above uses Infinispan's fluent configuration, which offers the ability to configure your cache programmatically. However, should you prefer to use XML, then you may. We can create an identical cache to the one created with a programmatic configuration:
+The example above uses {brandname}'s fluent configuration, which offers the ability to configure your cache programmatically. However, should you prefer to use XML, then you may. We can create an identical cache to the one created with a programmatic configuration:
 
 To run using maven:
 

@@ -21,7 +21,7 @@
 <head>
 <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
 <meta content="all" name="robots" />
-<title>Infinispan Server: REST Server</title>
+<title>{infinispan.brand.name} Server: REST Server</title>
 <link rel="stylesheet" href="index.css">
 <script type="text/javascript" src="jquery-1.9.1.min.js"></script>
 <script type="text/javascript" src="console.js"></script>
@@ -30,10 +30,10 @@
 <body>
 
     <div id="banner">
-        <h1 class="title">Infinispan Server</h1>
+        <h1 class="title">{infinispan.brand.name} Server</h1>
     </div>
     <div id="main">
-        <h2>Welcome to the Infinispan Server</h2>
+        <h2>Welcome to the {infinispan.brand.name} Server</h2>
         <p>
             This server provides easy to use <a
                 target="info" href="http://en.wikipedia.org/wiki/Representational_State_Transfer">RESTful</a>
@@ -42,7 +42,7 @@
 
         <h4>1. Configuration</h4>
         <p>
-            Out of the box, Infinispan Server will use its default cache defined in
+            Out of the box, {infinispan.brand.name} Server will use its default cache defined in
             &lt;ISPN_HOME&gt;/standalone/configuration/standalone.xml
             . To set a custom configuration, modify the configuration file and
             restart Infinispan Server
@@ -178,13 +178,13 @@
 
         <h4>5. Clients</h4>
         Any HTTP client will do - from any language. See <a
-            target="docs" href="http://infinispan.org/docs/9.0.x/user_guide/user_guide.html#_infinispan_rest_server">here</a>
+            target="docs" href="http://infinispan.org/docs/{infinispan.base.version}.x/user_guide/user_guide.html#_infinispan_rest_server">here</a>
         for more details.
 
         <h4>6. Deployment</h4>
-        Infinispan Server is a distributed data grid, it shouldn"t matter
+        {infinispan.brand.name} Server is a distributed data grid, it shouldn"t matter
         how many or which instance of the Server you access, as long as it is
-        part of the Infinispan Server cluster, it will find your data, and
+        part of the {infinispan.brand.name} Server cluster, it will find your data, and
         manage it. You can have as many instances (including the one you are
         looking at) as you need.
 

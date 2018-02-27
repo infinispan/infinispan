@@ -40,7 +40,7 @@ Detailed instructions of this process are presented in your browser if you attem
 
 === JMX
 
-You can monitor an Infinispan Server over JMX in two ways:
+You can monitor an {brandname} Server over JMX in two ways:
 
 * Use JConsole or VisualVM running locally as the same user. This will use a local link:http://www.oracle.com/technetwork/java/jvmstat-142257.html[jvmstat] connection and requires no additional setup
 * Use JMX remoting (aka JSR-160) to connect from any host. This requires connecting through the management port (usually 9990) using a special protocol which respects the server security configuration

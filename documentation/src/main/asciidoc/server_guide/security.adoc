@@ -28,7 +28,7 @@ Just like embedded mode, the server supports cache authorization using the same 
 
 ==== Server Realms
 
-Infinispan Server security is built around the features provided by the underlying server realm and security domains.
+{brandname} Server security is built around the features provided by the underlying server realm and security domains.
 Security Realms are used by the server to provide authentication and authorization information for both the management and application interfaces.
 
 .Security Realm configuration
@@ -52,7 +52,7 @@ Security Realms are used by the server to provide authentication and authorizati
 </server>
 ----
 
-Infinispan Server comes with an add-user.sh script (add-user.bat for Windows) to ease the process of adding new user/role mappings to the above property files.
+{brandname} Server comes with an add-user.sh script (add-user.bat for Windows) to ease the process of adding new user/role mappings to the above property files.
 An example invocation for adding a user to the ApplicationRealm with an initial set of roles:
 
 +./bin/add-user.sh -a -u myuser -p "qwer1234!" -ro supervisor,reader,writer+
@@ -63,7 +63,7 @@ Bear in mind that the choice of authentication mechanism you select for the prot
 
 === Security Audit
 
-The Infinispan subsystem security audit by default sends audit logs to the audit manager configured at the server level.
+The {brandname} subsystem security audit by default sends audit logs to the audit manager configured at the server level.
 Refer to the link:{wildflydocroot}/Security%20subsystem%20configuration[WildFly security subsystem guide] on how to configure the server audit manager.
 Alternatively you can also set your custom audit logger by using the same configuration as for embedded mode.
 Refer to the The link:../user_guide/user_guide.html#Security_chapter[Security] chapter in the user guide for details.
