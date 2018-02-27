@@ -61,7 +61,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    @Override
    @Stop
    public void stop() {
-      if (trace) log.tracef("Stop called on StateReceiverImpl for cache %s", cacheName);
+      if (trace) log.tracef("Cache %s Stop called on StateReceiverImpl", cacheName);
       for (SegmentRequest request : requestMap.values())
          request.cancel(null);
    }
@@ -70,6 +70,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    @SuppressWarnings("WeakerAccess")
    public void onDataRehash(DataRehashedEvent dataRehashedEvent) {
       if (dataRehashedEvent.isPre()) {
+         if (trace) log.tracef("Cache %s received event: %s", cacheName, dataRehashedEvent);
          for (SegmentRequest request : requestMap.values())
             request.cancel(new CacheException("Cancelling replica request as the owners of the requested " +
                "segment have changed."));
@@ -92,9 +93,11 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
       int segmentId = stateChunks.iterator().next().getSegmentId();
       SegmentRequest request = requestMap.get(segmentId);
       if (request == null) {
-         if (trace) log.tracef("Cache %s Ignoring received state because the associated request was completed or cancelled %s", cacheName);
+         if (trace) log.tracef("Cache %s Ignoring received state because the associated request was completed or cancelled", cacheName);
          return;
       }
+
+      if (trace) log.tracef("Cache %s received state for %s", cacheName, request);
       request.receiveState(sender, topologyId, stateChunks);
    }
 
@@ -151,7 +154,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
 
          // If an exception is thrown by any of the inboundTransferTasks, then remove all segment results and cancel all tasks
          allSegmentRequests.exceptionally(throwable -> {
-            if (trace) log.tracef(throwable, "Exception when processing InboundTransferTask for cache %s", cacheName);
+            if (trace) log.tracef(throwable, "Cache %s Exception when processing InboundTransferTask", cacheName);
             cancel(throwable);
             return null;
          });
@@ -175,7 +178,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
       synchronized void receiveState(Address sender, int topologyId, Collection<StateChunk> stateChunks) {
          if (topologyId < topology.getTopologyId()) {
             if (trace)
-               log.tracef("Discarding state response with old topology id %d for cache %s, the smallest allowed topology id is %d",
+               log.tracef("Cache %s Discarding state response with old topology id %d, the smallest allowed topology id is %d",
                      topologyId, topology.getTopologyId(), cacheName);
             return;
          }
@@ -183,11 +186,11 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
          InboundTransferTask transferTask = transferTaskMap.get(sender);
          if (transferTask == null) {
             if (trace)
-               log.tracef("State received for an unknown request. No record of a state request exists for node %s", sender);
+               log.tracef("Cache %s State received for an unknown request. No record of a state request exists for node %s", cacheName, sender);
             return;
          }
 
-         if (trace) log.tracef("State chunks received from %s, with topologyId %s, statechunks %s", sender, topologyId, stateChunks);
+         if (trace) log.tracef("Cache %s State chunks received from %s, with topologyId %s, statechunks %s", cacheName, sender, topologyId, stateChunks);
          for (StateChunk chunk : stateChunks) {
             boolean isLastChunk = chunk.isLastChunk();
             chunk.getCacheEntries().forEach(ice -> addKeyToReplicaMap(sender, ice));
@@ -199,7 +202,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
       }
 
       synchronized void cancel(Throwable throwable) {
-         log.debugf(throwable, "Cancelling request for segment %s on cache %s", segmentId, cacheName);
+         log.debugf(throwable, "Cache %s Cancelling request for segment %s", cacheName, segmentId);
          transferTaskMap.forEach((address, inboundTransferTask) -> inboundTransferTask.cancel());
          if (throwable != null) {
             future.completeExceptionally(throwable);
