@@ -1,7 +1,7 @@
 ===  Command-Line Interface (CLI)
-Infinispan offers a simple Command-Line Interface (CLI) with which it is possible to interact with the data within the caches and with most of the internal components (e.g. transactions, cross-site backups, rolling upgrades).
+{brandname} offers a simple Command-Line Interface (CLI) with which it is possible to interact with the data within the caches and with most of the internal components (e.g. transactions, cross-site backups, rolling upgrades).
 
-The CLI is built out of two elements: a server-side module and the  client command tool. The server-side module (`infinispan-cli-server-$VERSION.jar`) provides  the actual interpreter for the commands and needs to be included alongside your application. Infinispan Server includes CLI support out of the box. 
+The CLI is built out of two elements: a server-side module and the  client command tool. The server-side module (`infinispan-cli-server-$VERSION.jar`) provides  the actual interpreter for the commands and needs to be included alongside your application. {brandname} Server includes CLI support out of the box.
 
 Currently the server (and the  client) use the JMX protocol to communicate, but in a future release we  plan to support other communication protocols (in particular our own Hot Rod).
 
@@ -9,7 +9,7 @@ The CLI offers both an interactive and a batch mode. To invoke the client, just 
 
 
 ----
--c, --connect=URL       connects to a running instance of Infinispan.
+-c, --connect=URL       connects to a running instance of {brandname}.
                         JMX over RMI jmx://[username[:password]]@host:port[/container[/cache]]
                         JMX over JBoss remoting remoting://[username[:password]]@host:port[/container[/cache]]
 -f, --file=FILE         reads input from the specified file instead of using                          
@@ -22,7 +22,7 @@ The CLI offers both an interactive and a batch mode. To invoke the client, just 
 * JMX over RMI is the traditional way in which JMX clients connect to MBeanServers. Please refer to the link:http://docs.oracle.com/javase/6/docs/technotes/guides/management/agent.html[JDK Monitoring and Management] documentation for details on how to configure the process to be monitored
 
 
-* JMX over JBoss Remoting is the protocol of choice when your Infinispan application is running within JBoss AS7 or EAP6.
+* JMX over JBoss Remoting is the protocol of choice when your {brandname} application is running within JBoss AS7 or EAP6.
 
 The connection to the application can also be initiated from within the CLI using the connect command.
 

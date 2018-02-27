@@ -15,7 +15,7 @@
 .I cache
 .B ]]
 .SH DESCRIPTION
-Connects to an Infinispan instance using the specified protocol, host and port and with the supplied credentials.
+Connects to an ${infinispan.brand.name} instance using the specified protocol, host and port and with the supplied credentials.
 .SH ARGUMENTS
 .IP protocol
 The currently supported protocols are

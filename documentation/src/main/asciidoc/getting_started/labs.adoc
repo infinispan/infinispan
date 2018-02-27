@@ -1,12 +1,12 @@
 ==  Labs
 
-=== Lab - Getting Started with Infinispan
+=== Lab - Getting Started with {brandname}
 
 ==== Introduction
 
- This lab was developed for Devoxx 2011, by Pete Muir, Mircea Markus and Sanne Grinovero. It is designed to last around 1h 45m, and has an accompanying introduction and conclusion. Full slide deck is link:https://docs.jboss.org/author/download/attachments/12484897/Real_world_deep_dive_into_Infinispan.ppt[attached] .
+ This lab was developed for Devoxx 2011, by Pete Muir, Mircea Markus and Sanne Grinovero. It is designed to last around 1h 45m, and has an accompanying introduction and conclusion. Full slide deck is link:https://docs.jboss.org/author/download/attachments/12484897/Real_world_deep_dive_into_{brandname}.ppt[attached] .
 
-The lab has been updated by Galder Zamarreño for Infinispan 5.1 and has been featured in the Neuchatel JBUG and JUDCon India 2012
+The lab has been updated by Galder Zamarreño for {brandname} 5.1 and has been featured in the Neuchatel JBUG and JUDCon India 2012
 
 ==== Setup
 
@@ -15,7 +15,7 @@ The lab has been updated by Galder Zamarreño for Infinispan 5.1 and has been fe
  _presented by Pete_ _5 minutes_
 
 
-* Using Infinispan 5.1.0.FINAL
+* Using {brandname} 5.1.0.FINAL
 
 
 * Download the lab zip from [...]
@@ -51,7 +51,7 @@ git checkout -b checkpointX checkpointX
 
 ==== Introduction
 
-===== Use cases, key features and benefits of Infinispan
+===== Use cases, key features and benefits of {brandname}
 
  _slides, presented by Pete_ _20 minutes_
 
@@ -127,16 +127,16 @@ Topics covered include:
 
 * LAN/WAN based: multicast or TCP for transport
 
-==== Infinispan as a local cache and JMX
+==== {brandname} as a local cache and JMX
 
  _presented by Sanne_ _10 minutes_
 
-===== Adding Infinispan to the demo
+===== Adding {brandname} to the demo
 
- _Use Case: Take advantage of the features of Infinispan_
+ _Use Case: Take advantage of the features of {brandname}_
 
 
-*  Uncomment the Infinispan dependencies in pom.xml
+*  Uncomment the {brandname} dependencies in pom.xml
 
 
 *  Copy in Resources.java and TicketAllocationCache.java and explain what they are doing; you will find them in LAB_HOME/lab1/src/samples/java
@@ -145,7 +145,7 @@ Topics covered include:
 * Explain about configuring caches programmatically with qualifier
 
 
-*  Copy SimpleTicketService to InfinispanTicketService
+*  Copy SimpleTicketService to {brandname}TicketService
 
 
 *  Make SimpleTicketService an alternative
@@ -166,7 +166,7 @@ private Cache<String, TicketAllocation> tickets;
 
 ----
 
- to inject the Infinispan cache. Change the allocateTicket method to:
+ to inject the {brandname} cache. Change the allocateTicket method to:
 
 
 ----
@@ -219,7 +219,7 @@ if (tickets.getConfiguration().getCacheMode() != CacheMode.LOCAL) {
 
 ----
 
-===== Show Infinispan in use with basic monitoring
+===== Show {brandname} in use with basic monitoring
 
  _Use Case: Can see how our cache is performing_
 
@@ -236,7 +236,7 @@ if (tickets.getConfiguration().getCacheMode() != CacheMode.LOCAL) {
 *  Run jconsole or jvisualvm , and select the "jboss-modules" process
 
 
-*  Open up the Infinispan statistics (via MBeans tab in jvisualvm - you might need to install the MBeans plugin first)
+*  Open up the {brandname} statistics (via MBeans tab in jvisualvm - you might need to install the MBeans plugin first)
 
 
 * Allocate a ticket, show the stores change
@@ -307,18 +307,18 @@ public void registerAbuseListener(@New AbuseListener abuseListener) {
 
 ----
 
- to the InfinispanTicketService .
+ to the {brandname}TicketService .
 
 
-*  this code simply creates a new abuse listener (injected by CDI with a logger!) and registers it with Infinispan. It will do it automatically when the InfinispanTicketService is created
+*  this code simply creates a new abuse listener (injected by CDI with a logger!) and registers it with {brandname}. It will do it automatically when the {brandname}TicketService is created
 
  _Increase expiration to 3 minutes, otherwise the demo will get tiresome!_
 
  _Checkpoint 4_
 
-===== Interlude. What can you listen to in Infinispan?
+===== Interlude. What can you listen to in {brandname}?
 
-==== Transactions with Infinispan
+==== Transactions with {brandname}
 
  _presented by Mircea_ _15 minutes_
 
@@ -339,7 +339,7 @@ public void registerAbuseListener(@New AbuseListener abuseListener) {
 *  Copy the PaymentProcessor into .services
 
 
-*  Inject JMS into InfinispanTicketService
+*  Inject JMS into {brandname}TicketService
 
 
 ----
@@ -523,7 +523,7 @@ Topics discussed include:
 * Explain management options (CLI, web, maven plugin, XML, filesystem)
 
 
-* Talk about Infinispan as managed service in AS7 vs embedded - we could have used either, but to get started quickly it's easy to embed!
+* Talk about {brandname} as managed service in AS7 vs embedded - we could have used either, but to get started quickly it's easy to embed!
 
 
 *  Show 5 servers configured in $JBOSS_HOME/domain/configuration/host.xml - explain about port bindings. If you are following along, add only these servers
@@ -627,9 +627,9 @@ Topics discussed include:
 * show that we can still find any entry, it's just not local any more
 
 
-* show that we can put an entry, and then find it in one of the caches in Infinispan (10 mins)
+* show that we can put an entry, and then find it in one of the caches in {brandname} (10 mins)
 
-===== Interlude - What modes can Infinispan run in? When would you want to use them?
+===== Interlude - What modes can {brandname} run in? When would you want to use them?
 
 Topics discussed include:
 
@@ -695,7 +695,7 @@ Topics discussed include:
 *  Deploy infinispan-server-rest.war from the lab to JBoss AS 7 using the JBoss AS 7 CLI deploy &lt;path/to/&gt;infinispan-server-rest.war --server-groups=rest-server-group
 
 
-* REST server actually joins the Infinispan cluster as a node, and it needs to know which caches to use, so we added this to the war, and we also needed to add the domain class* * * Visit a couple of the UIs to seed data and start caches
+* REST server actually joins the {brandname} cluster as a node, and it needs to know which caches to use, so we added this to the war, and we also needed to add the domain class* * * Visit a couple of the UIs to seed data and start caches
 
 
 *  check that connection REST is correctly deployed: link:http://localhost:8080/infinispan-server-rest/[]
@@ -703,7 +703,7 @@ Topics discussed include:
 
 *  Use a rest client to GET link:http://localhost:9080/infinispan-server-rest/rest/ticketAllocationCache/manik-Best%20of%20Abba[]
 
-===== Interlude - what client-server modes does Infinispan offer?
+===== Interlude - what client-server modes does {brandname} offer?
 
 Topics discussed include:
 
@@ -790,7 +790,7 @@ Topics discussed include:
 
 ==== Bonus topics
 
-===== Querying Infinispan
+===== Querying {brandname}
 
  _presented by Sanne_ _8 minutes_
 

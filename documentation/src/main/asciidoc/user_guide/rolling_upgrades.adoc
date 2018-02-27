@@ -1,27 +1,27 @@
 [[_Rolling_chapter]]
 ==  Rolling upgrades
-Rolling upgrades is the process by which an Infinispan installation is
-upgraded without a service shutdown. In the case of Infinispan library/embedded mode, it refers to an
-installation to the nodes where Infinispan is running in library/embedded mode.
-For Infinispan servers, it refers to the server side components, not
+Rolling upgrades is the process by which an {brandname} installation is
+upgraded without a service shutdown. In the case of {brandname} library/embedded mode, it refers to an
+installation to the nodes where {brandname} is running in library/embedded mode.
+For {brandname} servers, it refers to the server side components, not
 the client side. The upgrade could involve hardware change, or software
-change, such as upgrading the Infinispan version in use.
+change, such as upgrading the {brandname} version in use.
 
-Rolling upgrades can be done in Infinispan installations using Infinispan in
+Rolling upgrades can be done in {brandname} installations using {brandname} in
 embedded or library mode, or in server mode. Here are the instructions for
 each use case:
 
-=== Rolling upgrades for Infinispan library/embedded mode
+=== Rolling upgrades for {brandname} library/embedded mode
 
-Rolling upgrades for Infinispan library/embedded mode are done taking
-advantage of the Command-Line Interface (CLI) that Infinispan provides
-in order to interact with a remote Infinispan cluster. When a new cluster is
+Rolling upgrades for {brandname} library/embedded mode are done taking
+advantage of the Command-Line Interface (CLI) that {brandname} provides
+in order to interact with a remote {brandname} cluster. When a new cluster is
 started, it will get the data from the existing cluster using the
 CLI, so the existing cluster must be ready to receive CLI requests. Please
 check the <<_CLI_chapter, Command-Line Interface (CLI) chapter>> for information on how to set
 up a cluster to receive CLI requests.
 
-NOTE: Rolling upgrades for Infinispan library/embedded mode are only supported
+NOTE: Rolling upgrades for {brandname} library/embedded mode are only supported
 for caches using standard JDK types as keys. Custom keys are not currently
 supported. Custom value types are supported, using JSON as the format to ship
 them between source and target cluster.
@@ -29,7 +29,7 @@ them between source and target cluster.
 ==== Steps
 
 .  Start a new cluster ( _Target Cluster_ ) with the new version of
-Infinispan, using either different network settings or JGroups cluster name so
+{brandname}, using either different network settings or JGroups cluster name so
 that the old cluster ( _Source Cluster_ ) and the new one don't overlap.
 
 
@@ -87,16 +87,16 @@ _--all_ switch can be used to disconnect all caches in the cluster)
 
 
 
-=== Rolling upgrades for Infinispan Servers
+=== Rolling upgrades for {brandname} Servers
 
-This process is used for  installations making use of Infinispan as a remote grid, via Hot Rod.   This assumes an upgrade of the Infinispan grid, and _not_ the client application. 
+This process is used for  installations making use of {brandname} as a remote grid, via Hot Rod.   This assumes an upgrade of the {brandname} grid, and _not_ the client application.
 
 In  the following description we will refer to the Source and Target  clusters, where the Source cluster is the old cluster which is currently  in use and the Target cluster is the new cluster to which the data will  be migrated to.
 
 === Steps
 
 
-.  Start a new cluster ( _Target Cluster_ ) with the new version of Infinispan, using either different network settings or JGroups cluster name so that the old cluster ( _Source Cluster_ ) and the new one don't overlap. 
+.  Start a new cluster ( _Target Cluster_ ) with the new version of {brandname}, using either different network settings or JGroups cluster name so that the old cluster ( _Source Cluster_ ) and the new one don't overlap.
 
 
 .  For each cache to be migrated, the _Target Cluster_ is configured with a RemoteCacheStore with the following settings: 

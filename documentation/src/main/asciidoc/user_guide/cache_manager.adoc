@@ -1,12 +1,12 @@
 == The Embedded CacheManager
-The CacheManager is Infinispan's main entry point. You use a CacheManager to
+The CacheManager is {brandname}'s main entry point. You use a CacheManager to
 
 * configure and obtain caches
 * manage and monitor your nodes
 * execute code across a cluster
 * more...
 
-Depending on whether you are embedding Infinispan in your application or you are using it remotely, you will be
+Depending on whether you are embedding {brandname} in your application or you are using it remotely, you will be
 dealing with either an `EmbeddedCacheManager` or a `RemoteCacheManager`. While they share some methods and properties,
 be aware that there are semantic differences between them. The following chapters focus mostly on the _embedded_
 implementation. For details on the _remote_ implementation refer to <<hotrod:java-client>>.

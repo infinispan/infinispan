@@ -1,4 +1,4 @@
-   Copyright 2009 - 2013, Red Hat Inc. and/or its affiliates.
+   Copyright 2009 - ${current.year}, Red Hat Inc. and/or its affiliates.
 
    All files in this repository or distribution are licensed under the
    Apache License, Version 2.0 (the "License");

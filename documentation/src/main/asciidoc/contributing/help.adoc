@@ -1,6 +1,6 @@
 ==  Helping Others Out
 
-Infinispan is reliant on the whole community helping each other out.
+{brandname} is reliant on the whole community helping each other out.
 Less experienced contributors are often able to help out answering the "newbie" questions, leaving more experienced contributors to handle the more complex questions.
 
 Users are encouraged to follow the link:http://community.jboss.org/wiki/HowToAskAForumQuestion[How to ask a forum question] guide. 
@@ -12,5 +12,5 @@ Community members are encouraged to regularly view the open questions and answer
 
 In order to track what questions are still open, you are encouraged to mark questions as "assumed answered" if you provide information that you think resolves the query and you don't hear back to the contrary after a week or so.
 
-Approximately every month, a member of the Infinispan team will go through any open questions for the past month and clear up any unanswered questions, either by chasing for an answer from core team, or by checking with the user if they require more info.
+Approximately every month, a member of the {brandname} team will go through any open questions for the past month and clear up any unanswered questions, either by chasing for an answer from core team, or by checking with the user if they require more info.
 

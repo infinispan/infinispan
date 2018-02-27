@@ -1,10 +1,10 @@
-==  Accessing an Infinispan data grid remotely
-=== Using Hot Rod to access an Infinispan data-grid
+==  Accessing an {brandname} data grid remotely
+=== Using Hot Rod to access an {brandname} data-grid
 *TODO*
 
 === Using REST to access an Infinipsan data-grid
 *TODO*
 
-=== Using memcached to access an Infinispan data-grid
+=== Using memcached to access an {brandname} data-grid
 *TODO*
 

@@ -1,5 +1,5 @@
-==  Building Infinispan
-Infinispan uses link:http://maven.apache.org/[Maven] as a build system. 
+==  Building {brandname}
+{brandname} uses link:http://maven.apache.org/[Maven] as a build system.
 
 === Requirements
 * Java 8 or above
@@ -144,14 +144,14 @@ Simply running
 
  $ mvn clean deploy -DskipTests
 
-in the Infinispan root directory will deploy a snapshot.
+in the {brandname} root directory will deploy a snapshot.
 
 ===== Publishing releases
 Use the `bin/release.py` script.
 
 ==== The Maven Archetypes
-Infinispan currently has 2 separate Maven link:http://maven.apache.org/guides/introduction/introduction-to-archetypes.html[archetypes] you can use to create a skeleton project and get started using Infinispan.
-This is an easy way to get started using Infinispan as the archetype generates sample code, a sample Maven pom.xml with necessary dependencies, etc. 
+{brandname} currently has 2 separate Maven link:http://maven.apache.org/guides/introduction/introduction-to-archetypes.html[archetypes] you can use to create a skeleton project and get started using {brandname}.
+This is an easy way to get started using {brandname} as the archetype generates sample code, a sample Maven pom.xml with necessary dependencies, etc.
 
 You don't need to have any experience with or knowledge of Maven's Archetypes to use this!  Just follow the simple steps below.
 
@@ -168,7 +168,7 @@ You will be prompted for a few things, including the artifactId , groupId and ve
 And that's it - you're ready to go! 
 
 ====== Exploring your new project
-The skeleton project ships with a sample application class for interacting with Infinispan.
+The skeleton project ships with a sample application class for interacting with {brandname}.
 You can open this new project in your IDE - most good IDEs such as IntelliJ and Eclipse allow you to import Maven projects, see link:https://www.jetbrains.com/idea/help/importing-project-from-maven-model.html[this guide] and link:http://m2eclipse.sonatype.org/[this guide].
 Once you open your project in your IDE, you should examine the generated classes and read through the comments. 
 
@@ -179,8 +179,8 @@ Try running
 
 in your newly generated project. This runs the `main()` method in the generated application class.
 
-===== Writing a test case for Infinispan
-This archetype is useful if you wish to contribute a test to the Infinispan project and helps you get set up to use Infinispan's testing harness and related tools.
+===== Writing a test case for {brandname}
+This archetype is useful if you wish to contribute a test to the {brandname} project and helps you get set up to use {brandname}'s testing harness and related tools.
 Use
 
  $ mvn archetype:generate \
@@ -190,7 +190,7 @@ Use
     -DarchetypeRepository=http://repository.jboss.org/nexus/content/groups/public
 
 As above, this will prompt you for project details and again as above, you should open this project in your IDE.
-Once you have done so, you will see some sample tests written for Infinispan making use of Infinispan's test harness and testing tools along with extensive comments and links for further reading.
+Once you have done so, you will see some sample tests written for {brandname} making use of {brandname}'s test harness and testing tools along with extensive comments and links for further reading.
 
 ====== On the command line...
 Try running
@@ -207,12 +207,12 @@ The profiles available in the generated sample project are:
 
 * udp: use UDP for network communications rather than TCP
 * tcp: use TCP for network communications rather than UDP
-* jbosstm: Use the embedded link:http://www.jboss.org/jbosstm[JBoss Transaction Manager] rather than Infinispan's embedded transaction manager
+* jbosstm: Use the embedded link:http://www.jboss.org/jbosstm[JBoss Transaction Manager] rather than {brandname}'s embedded transaction manager
 
-===== Contributing tests back to Infinispan
-If you have written a functional, unit or stress test for Infinispan and want to contribute this back to Infinispan, your best bet is to link:https://github.com/infinispan/infinispan[fork the Infinispan sources on GitHub].
-The test you would have prototyped and tested in an isolated project created using this archetype can be simply dropped in to Infinispan's test suite.
-Make your changes, add your test, prove that it fails even on Infinispan's upstream source tree and issue a link:http://help.github.com/pull-requests/[pull request] . 
+===== Contributing tests back to {brandname}
+If you have written a functional, unit or stress test for {brandname} and want to contribute this back to {brandname}, your best bet is to link:https://github.com/infinispan/infinispan[fork the {brandname} sources on GitHub].
+The test you would have prototyped and tested in an isolated project created using this archetype can be simply dropped in to {brandname}'s test suite.
+Make your changes, add your test, prove that it fails even on {brandname}'s upstream source tree and issue a link:http://help.github.com/pull-requests/[pull request] .
 
 ===== Checking coding style
 If you have written any new code, it is highly recommended to validate formatting before submitting a Pull Request.
@@ -221,8 +221,8 @@ This might be done by invoking:
  $ mvn checktyle:check
 
 ===== Versions
-The archetypes generate poms with dependencies to specific versions of Infinispan.
-You should edit these generated poms by hand to point to other versions of Infinispan that you are interested in.
+The archetypes generate poms with dependencies to specific versions of {brandname}.
+You should edit these generated poms by hand to point to other versions of {brandname} that you are interested in.
 
 ===== Source Code
 

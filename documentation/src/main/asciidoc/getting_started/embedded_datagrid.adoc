@@ -1,6 +1,6 @@
-==  Using Infinispan as an embedded data grid in Java SE
-Clustering Infinispan is simple.
-Under the covers, Infinispan uses link:http://www.jgroups.org[JGroups] as a network transport, and JGroups handles all
+==  Using {brandname} as an embedded data grid in Java SE
+Clustering {brandname} is simple.
+Under the covers, {brandname} uses link:http://www.jgroups.org[JGroups] as a network transport, and JGroups handles all
 the hard work of forming a cluster.
 
 .clustered-cache quickstart
@@ -19,7 +19,7 @@ Cache<Object, Object> replAsyncCache = cm.getCache("replAsyncCache");
 Cache<Object, Object> invalidationSyncCache = cm.getCache("invalidationSyncCache");
 ----
 
-=== Running Infinispan in a cluster
+=== Running {brandname} in a cluster
 It is easy set up a clustered cache. This tutorial will show you how to create two nodes in different processes on the
 same local machine.
 The quickstart follows the same structure as the embedded-cache quickstart, using Maven to compile the project, and a
@@ -67,7 +67,7 @@ You can also see that each node holds a different set of entries by pressing Ent
 === clustered-cache quickstart architecture
 
 ====  Logging changes to the cache
-An easy way to see what is going on with your cache is to log mutated entries. An Infinispan listener is notified of any mutations:
+An easy way to see what is going on with your cache is to log mutated entries. An {brandname} listener is notified of any mutations:
 
 [source,java]
 ----
@@ -114,7 +114,7 @@ any changes, and starts storing entries of the form `key-<counter> = <local addr
 
 .State transfer
 
-Infinispan automatically replicates the cache contents from the existing members to joining members. This can be
+{brandname} automatically replicates the cache contents from the existing members to joining members. This can be
 controlled in two ways:
 
 * If you don't want the `getCache()` call to block until the entire cache is transferred, you can configure
@@ -125,7 +125,7 @@ by configuring `clustering.stateTransfer.fetchInMemoryState = false`.
 
 === Configuring the cluster
 First, we need to ensure that the cache manager is cluster aware.
-Infinispan provides a default configuration for a clustered cache manager:
+{brandname} provides a default configuration for a clustered cache manager:
 
 [source,java]
 ----
@@ -156,7 +156,7 @@ Very useful for testing a cluster where all nodes are on one machine.
 
 *TODO - add more tips!*
 
-You can also configure the JGroups configuration to use in Infinispan's XML configuration:
+You can also configure the JGroups configuration to use in {brandname}'s XML configuration:
 
 [source,xml]
 ----
@@ -174,7 +174,7 @@ You can also configure the JGroups configuration to use in Infinispan's XML conf
 ----
 
 === Configuring a replicated data-grid
-In replicated mode, Infinispan will store every entry on every node in the grid. This offers high durability and
+In replicated mode, {brandname} will store every entry on every node in the grid. This offers high durability and
 availability of data, but means the storage capacity is limited by the available heap space on the node with least
 memory.
 The cache should be configured to work in replication mode (either synchronous or asynchronous), and can otherwise be
@@ -213,13 +213,13 @@ private static EmbeddedCacheManager createCacheManagerFromXml() throws IOExcepti
 ----
 
 === Configuring a distributed data-grid
-In distributed mode, Infinispan will store every entry on a subset of the nodes in the grid (the parameter numOwners
+In distributed mode, {brandname} will store every entry on a subset of the nodes in the grid (the parameter numOwners
 controls how many owners each entry will have). Compared to replication, distribution offers increased storage capacity,
 but with increased latency to access data from non-owner nodes, and durability (data may be lost if all the owners are
 stopped in a short time interval).
 Adjusting the number of owners allows you to obtain the trade off between space, durability, and latency.
 
-Infinispan also offers a _topology aware consistent hash_ which will ensure that the owners of entries are located in
+{brandname} also offers a _topology aware consistent hash_ which will ensure that the owners of entries are located in
 different data centers, racks, or physical machines, to offer improved durability in case of node crashes or network
 outages.
 

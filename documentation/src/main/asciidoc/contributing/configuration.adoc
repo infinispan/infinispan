@@ -1,6 +1,6 @@
 == Adding Configuration
 
-WARNING: We still use the old configuration system internally within Infinispan.
+WARNING: We still use the old configuration system internally within {brandname}.
 This makes things a little complicated. This will be switched out soon!
 For now, you need to also add your property to the old config system as well as the new.
 
@@ -14,7 +14,7 @@ We call the configuration group XXX in the steps below.
 . Add the property to the relevant XXXConfiguration class.
 Add a private final field, add a parameter to the constructor, and assign the value to the field in the constructor body.
 Add a accessor for the property. If the property should be mutable at runtime, then add a mutator as well.
-Most configuration properties are not mutable at runtime - if the configuration is runtime mutable, then Infinispan needs to take notice of this update whilst the cache is running (you can't cache the value of the configuration in your implementation class).
+Most configuration properties are not mutable at runtime - if the configuration is runtime mutable, then {brandname} needs to take notice of this update whilst the cache is running (you can't cache the value of the configuration in your implementation class).
 Mutators and accessors don't use the classic JavaBean pattern of prepending accessors with "get" and mutators with "set".
 Instead, the name of the property is used for an accessor.
 A mutator is an overloaded version of the accessor which takes a parameter, the new value.
@@ -39,7 +39,7 @@ Call the builder mutator you created above, performing any XML related validatio
 
 === Adding a group
 In some situations you may additionally want to add a configuration grouping object, represented in XML as an element.
-You might want to do this if you are adding a new area of functionality to Infinispan.
+You might want to do this if you are adding a new area of functionality to {brandname}.
 Identify the location of the new configuration grouping object.
 It might be added to the root Configuration object, or it might be added to one it's children, children's children.
 We'll call the parent YYY in the steps below. Create the XXXConfiguration object.

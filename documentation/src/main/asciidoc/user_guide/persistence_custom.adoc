@@ -53,4 +53,4 @@ the `AdvancedCacheWriter` interface than you need to create the following file:
 
    * `/META-INF/services/org.infinispan.persistence.spi.AdvancedCacheWriter`
 
-3. Deploy the JAR file in the Infinispan Server.
+3. Deploy the JAR file in the {brandname} Server.

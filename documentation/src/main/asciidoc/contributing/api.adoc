@@ -1,5 +1,5 @@
 == API, Commons and Core
-In order to provide proper separation between public APIs, common utilities and the actual implementation of Infinispan,
+In order to provide proper separation between public APIs, common utilities and the actual implementation of {brandname},
 these are split into 3 Maven modules: `infinispan-api`, `infinispan-commons` and `infinispan-core`.
 This separation also makes sure that modules, such as the remote clients, don't have to depend on infinispan-core and its transitive dependencies. 
 The following paragraphs describe the role of each of these modules and give indication as to what goes where.

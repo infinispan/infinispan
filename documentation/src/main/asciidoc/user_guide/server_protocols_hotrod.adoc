@@ -1,8 +1,8 @@
 ===  Using Hot Rod Server
-The Infinispan Server distribution contains a server module that implements Infinispan's custom binary protocol called Hot Rod. The protocol was designed to enable faster client/server interactions compared to other existing text based protocols and to allow clients to make more intelligent decisions with regards to load balancing, failover and even data location operations.
-Please refer to Infinispan Server's link:../server_guide/server_guide.html[documentation] for instructions on how to configure and run a HotRod server.
+The {brandname} Server distribution contains a server module that implements {brandname}'s custom binary protocol called Hot Rod. The protocol was designed to enable faster client/server interactions compared to other existing text based protocols and to allow clients to make more intelligent decisions with regards to load balancing, failover and even data location operations.
+Please refer to {brandname} Server's link:../server_guide/server_guide.html[documentation] for instructions on how to configure and run a HotRod server.
 
-To connect to Infinispan over this highly efficient Hot Rod protocol you can
+To connect to {brandname} over this highly efficient Hot Rod protocol you can
 either use one of the clients described in this chapter, or use higher level
 tools such as <<integrations:hibernate-ogm,Hibernate OGM>>.
 
@@ -10,7 +10,7 @@ include::server_protocols_hotrod_wire.adoc[]
 
 
 ===  Java Hot Rod client [[hotrod:java-client]]
-Hot Rod is a binary, language neutral protocol. This article explains how a Java client can interact with a server via the Hot Rod protocol. A reference implementation of the protocol written in Java can be found in all Infinispan distributions, and this article focuses on the capabilities of this java client.
+Hot Rod is a binary, language neutral protocol. This article explains how a Java client can interact with a server via the Hot Rod protocol. A reference implementation of the protocol written in Java can be found in all {brandname} distributions, and this article focuses on the capabilities of this java client.
 
 TIP: Looking for more clients?  Visit link:http://infinispan.org/hotrod-clients[this website] for clients written in a variety of different languages.
 
@@ -509,7 +509,7 @@ public class MyKeyValueFilterConverterFactory implements KeyValueFilterConverter
 
 * Create a jar with a `META-INF/services/org.infinispan.filter.KeyValueFilterConverterFactory` file and within it, write the fully qualified class name of the filter factory class implementation.
 * Optional: If the filter uses custom key/value classes, these must be included in the JAR so that the filter can correctly unmarshall key and/or value instances.
-* Deploy the JAR file in the Infinispan Server.
+* Deploy the JAR file in the {brandname} Server.
 
 ==== Versioned API [[hr:versioned-api]]
 A RemoteCacheManager provides instances of link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache] interface that represents a handle to the named or default cache on the remote cluster.
@@ -547,7 +547,7 @@ For more details on versioned operations refer to link:{javadocroot}/org/infinis
 
 ==== Async API
 
-This is "borrowed" from the Infinispan core and it is largely discussed <<_asynchronous_api, here>>
+This is "borrowed" from the {brandname} core and it is largely discussed <<_asynchronous_api, here>>
 
 ==== Streaming API
 
@@ -599,7 +599,7 @@ been completely sent to the server (i.e. when the `close()` method has been invo
 
 ==== Creating Event Listeners
 
-Starting with Infinispan 7.0, Java Hot Rod clients can register listeners to
+Starting with {brandname} 7.0, Java Hot Rod clients can register listeners to
 receive cache-entry level events. In 7.0, cache entry created, modified and
 removed events are supported.
 
@@ -691,7 +691,7 @@ class StaticCacheEventFilterFactory implements CacheEventFilterFactory {
    }
 }
 
-// Serializable, Externalizable or marshallable with Infinispan Externalizers
+// Serializable, Externalizable or marshallable with {brandname} Externalizers
 // needed when running in a cluster
 class StaticCacheEventFilter implements CacheEventFilter<Integer, String>, Serializable {
    @Override
@@ -711,7 +711,7 @@ which statically filter out all entries except the one whose key is `1`.
 To be able to register a listener with this cache event filter factory,
 the factory has to be given a unique name, and the Hot Rod server needs to be
 plugged with the name and the cache event filter factory instance. Plugging the
-Infinispan Server with a custom filter involves the following steps:
+{brandname} Server with a custom filter involves the following steps:
 
 1. Create a JAR file with the filter implementation within it.
 2. Optional: If the cache uses custom key/value classes, these must be
@@ -722,7 +722,7 @@ provided in binary format.
 3. Create a `META-INF/services/org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory` file
 within the JAR file and within it, write the fully qualified class name of the
 filter class implementation.
-4. Deploy the JAR file in the Infinispan Server.
+4. Deploy the JAR file in the {brandname} Server.
 
 On top of that, the client listener needs to be linked with this cache event
 filter factory by adding the factory's name to the @ClientListener annotation:
@@ -757,7 +757,7 @@ class DynamicCacheEventFilterFactory implements CacheEventFilterFactory {
    }
 }
 
-// Serializable, Externalizable or marshallable with Infinispan Externalizers
+// Serializable, Externalizable or marshallable with {brandname} Externalizers
 // needed when running in a cluster
 class DynamicCacheEventFilter implements CacheEventFilter<Integer, String>, Serializable {
    final Object[] params;
@@ -815,7 +815,7 @@ class StaticConverterFactory implements CacheEventConverterFactory {
    }
 }
 
-// Serializable, Externalizable or marshallable with Infinispan Externalizers
+// Serializable, Externalizable or marshallable with {brandname} Externalizers
 // needed when running in a cluster
 class StaticCacheEventConverter implements CacheEventConverter<Integer, String, CustomEvent>, Serializable {
    public CustomEvent convert(Integer key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
@@ -823,7 +823,7 @@ class StaticCacheEventConverter implements CacheEventConverter<Integer, String, 
    }
 }
 
-// Needs to be Serializable, Externalizable or marshallable with Infinispan Externalizers
+// Needs to be Serializable, Externalizable or marshallable with {brandname} Externalizers
 // regardless of cluster or local caches
 static class CustomEvent implements Serializable {
    final Integer key;
@@ -875,7 +875,7 @@ modification or removal.
 Similar to filtering, to be able to register a listener with this converter factory,
 the factory has to be given a unique name, and the Hot Rod server needs to be
 plugged with the name and the cache event converter factory instance. Plugging the
-Infinispan Server with an event converter involves the following steps:
+{brandname} Server with an event converter involves the following steps:
 
 1. Create a JAR file with the converter implementation within it.
 2. Optional: If the cache uses custom key/value classes, these must be
@@ -886,7 +886,7 @@ provided in binary format.
 3. Create a `META-INF/services/org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory` file
 within the JAR file and within it, write the fully qualified class name of the
 converter class implementation.
-4. Deploy the JAR file in the Infinispan Server.
+4. Deploy the JAR file in the {brandname} Server.
 
 On top of that, the client listener needs to be linked with this converter
 factory by adding the factory's name to the @ClientListener annotation:
@@ -921,7 +921,7 @@ class DynamicCacheEventConverterFactory implements CacheEventConverterFactory {
    }
 }
 
-// Serializable, Externalizable or marshallable with Infinispan Externalizers needed when running in a cluster
+// Serializable, Externalizable or marshallable with {brandname} Externalizers needed when running in a cluster
 class DynamicCacheEventConverter implements CacheEventConverter<Integer, String, CustomEvent>, Serializable {
    final Object[] params;
 
@@ -977,7 +977,7 @@ class DynamicCacheEventFilterConverterFactory implements CacheEventFilterConvert
    }
 }
 
-// Serializable, Externalizable or marshallable with Infinispan Externalizers needed when running in a cluster
+// Serializable, Externalizable or marshallable with {brandname} Externalizers needed when running in a cluster
 //
 class DynamicCacheEventFilterConverter extends AbstractCacheEventFilterConverter<Integer, String, CustomEvent>, Serializable {
    final Object[] params;
@@ -1000,7 +1000,7 @@ class DynamicCacheEventFilterConverter extends AbstractCacheEventFilterConverter
 Similar to filters and converters, to be able to register a listener with this
 combined filter/converter factory, the factory has to be given a unique name via the
 `@NamedFactory` annotation, and the Hot Rod server needs to be plugged with the
-name and the cache event converter factory instance. Plugging the Infinispan
+name and the cache event converter factory instance. Plugging the {brandname}
 Server with an event converter involves the following steps:
 
 1. Create a JAR file with the converter implementation within it.
@@ -1012,7 +1012,7 @@ provided in binary format.
 3. Create a `META-INF/services/org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory` file
 within the JAR file and within it, write the fully qualified class name of the
 converter class implementation.
-4. Deploy the JAR file in the Infinispan Server.
+4. Deploy the JAR file in the {brandname} Server.
 
 From a client perspective, to be able to use the combined filter and
 converter class, the client listener must define the same filter factory and
@@ -1060,7 +1060,7 @@ used to deploy `CacheEventConverter` or `CacheEventFilter` instances:
 2. Create a `META-INF/services/org.infinispan.commons.marshall.Marshaller` file
 within the JAR file and within it, write the fully qualified class name of the
 marshaller class implementation.
-3. Deploy the JAR file in the Infinispan Server.
+3. Deploy the JAR file in the {brandname} Server.
 
 Note that the Marshaller could be deployed in either a separate jar, or in the
 same jar as the `CacheEventConverter` and/or `CacheEventFilter` instances. Also, currently
@@ -1237,9 +1237,9 @@ cache.remove("key2"); //this is dispatched to s1 again, and so on...
 Custom types of balancing policies can defined by implementing the link:{javadocroot}/org/infinispan/client/hotrod/impl/transport/tcp/FailoverRequestBalancingStrategy.html[FailoverRequestBalancingStrategy] and by specifying it through the infinispan.client.hotrod.request-balancing-strategy configuration property. Please refer to configuration section for more details on this.
 
 .WARNING: link:{javadocroot}/org/infinispan/client/hotrod/impl/transport/tcp/FailoverRequestBalancingStrategy.html[FailoverRequestBalancingStrategy]
-is a newly added interface in Infinispan 7.0. Previously, users had to provide
+is a newly added interface in {brandname} 7.0. Previously, users had to provide
 implementations of link:{javadocroot}/org/infinispan/client/hotrod/impl/transport/tcp/FailoverRequestBalancingStrategy.html[FailoverRequestBalancingStrategy]
-, which it has been deprecated starting with Infinispan 7.0.
+, which it has been deprecated starting with {brandname} 7.0.
 
 ==== Persistent connections
 In order to avoid creating a TCP connection on each request (which is a costly operation), the client keeps a pool of persistent connections to all the available servers and it reuses these connections whenever it is possible. The validity of the connections is checked using an async thread that iterates over the connections in the pool and sends a HotRod ping command to the server. By using this connection validation process the client is being proactive: there's a hight chance for broken connections to be found while being idle in the pool and no on actual request from the application.
@@ -1257,7 +1257,7 @@ Since version 6.0, there's a new marshaller available to Java Hot Rod clients ba
 
 To avoid such attacks, make the marshaller verify that any class names read, before instantiating it, is amongst the expected/allowed class names.
 
-Starting with Infinispan 9.2, the client configuration can be enhanced with a list of regular expressions for classes that are allowed to be read.
+Starting with {brandname} 9.2, the client configuration can be enhanced with a list of regular expressions for classes that are allowed to be read.
 
 .WARNING: These checks are opt-in, so if not configured, any class can be read.
 
@@ -1309,7 +1309,7 @@ avoid incorrect conditional operations or return values.
 On top of the in-cluster failover, Hot Rod clients are also able to failover
 to different clusters, which could be represented as an independent site.
 
-NOTE: This feature was introduced in Infinispan 8.1.
+NOTE: This feature was introduced in {brandname} 8.1.
 
 The way site cluster failover works is that if all the main cluster nodes
 are not available, the client checks to see if any other clusters have been
@@ -1345,9 +1345,9 @@ To switch to the initial servers defined in the client configuration, call
 `switchToDefaultCluster()`.
 
 ====  Concurrent Updates
-Data structures, such as Infinispan link:{javadocroot}/org/infinispan/Cache.html[Cache] , that are accessed and modified concurrently can suffer from data consistency issues unless there're mechanisms to guarantee data correctness. Infinispan Cache, since it implements link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[ConcurrentMap] , provides operations such as link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#replace-K-V-V-[conditional replace] , link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#putIfAbsent-K-V-[putIfAbsent] , and link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#remove-java.lang.Object-java.lang.Object-[conditional remove] to its clients in order to guarantee data correctness. It even allows clients to operate against cache instances within JTA transactions, hence providing the necessary data consistency guarantees.
+Data structures, such as {brandname} link:{javadocroot}/org/infinispan/Cache.html[Cache] , that are accessed and modified concurrently can suffer from data consistency issues unless there're mechanisms to guarantee data correctness. {brandname} Cache, since it implements link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[ConcurrentMap] , provides operations such as link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#replace-K-V-V-[conditional replace] , link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#putIfAbsent-K-V-[putIfAbsent] , and link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#remove-java.lang.Object-java.lang.Object-[conditional remove] to its clients in order to guarantee data correctness. It even allows clients to operate against cache instances within JTA transactions, hence providing the necessary data consistency guarantees.
 
-However, when it comes to link:http://community.jboss.org/wiki/HotRodProtocol[Hot Rod protocol] backed servers, clients do not yet have the ability to start remote transactions but they can call instead versioned operations to mimic the conditional methods provided by the embedded Infinispan cache instance API.  Let's look at a real example to understand how it works.
+However, when it comes to link:http://community.jboss.org/wiki/HotRodProtocol[Hot Rod protocol] backed servers, clients do not yet have the ability to start remote transactions but they can call instead versioned operations to mimic the conditional methods provided by the embedded {brandname} cache instance API.  Let's look at a real example to understand how it works.
 
 ===== Data Consistency Problem
 Imagine you have two ATMs that connect using Hot Rod to a bank where an account's balance is stored.  Two closely followed operations to retrieve the latest balance could return 500 CHF (swiss francs) as shown below:
@@ -1358,11 +1358,11 @@ Next a customer connects to the first ATM and requests 400 CHF to be retrieved. 
 
 image::images/server_modules_7.png[Concurrent updates]
 
-Obviously, this would be wrong.  Two concurrent updates have resulted in an incorrect account balance.  The second update should not have been allowed since the balance the second ATM had was incorrect. Even if the ATM would have retrieved the balance before calculating the new balance, someone could have updated between the new balance being retrieved and the update. Before finding out how to solve this issue in a client-server scenario with Hot Rod, let's look at how this is solved when Infinispan clients run in peer-to-peer mode where clients and Infinispan live within the same JVM.
+Obviously, this would be wrong.  Two concurrent updates have resulted in an incorrect account balance.  The second update should not have been allowed since the balance the second ATM had was incorrect. Even if the ATM would have retrieved the balance before calculating the new balance, someone could have updated between the new balance being retrieved and the update. Before finding out how to solve this issue in a client-server scenario with Hot Rod, let's look at how this is solved when {brandname} clients run in peer-to-peer mode where clients and {brandname} live within the same JVM.
 
 ===== Embedded-mode Solution
 
-If the ATM and the Infinispan instance storing the bank account lived in the same JVM, the ATM could use the link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#replace-K-V-V-[conditional replace API] referred at the beginning of this article.  So, it could send the previous known value to verify whether it has changed since it was last read.  By doing so, the first operation could double check that the balance is still 500 CHF when it was to update to 100 CHF.  Now, when the second operation comes, the current balance would not be 500 CHF any more and hence the conditional replace call would fail, hence avoiding data consistency issues:
+If the ATM and the {brandname} instance storing the bank account lived in the same JVM, the ATM could use the link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#replace-K-V-V-[conditional replace API] referred at the beginning of this article.  So, it could send the previous known value to verify whether it has changed since it was last read.  By doing so, the first operation could double check that the balance is still 500 CHF when it was to update to 100 CHF.  Now, when the second operation comes, the current balance would not be 500 CHF any more and hence the conditional replace call would fail, hence avoiding data consistency issues:
 
 image::images/server_modules_8.png[align="center", title="P2P solution"]
 

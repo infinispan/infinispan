@@ -3,9 +3,9 @@ A cache store which relies on the provided JDBC driver to load/store values in t
 
 Each key in the cache is stored in its own row in the database. In order to store each key in its own row, this store relies
 on a (pluggable) bijection that maps the each key to a String object. The bijection is defined by the Key2StringMapper interface.
-Infinispans ships a default implementation (smartly named DefaultTwoWayKey2StringMapper) that knows how to handle primitive types.
+{brandname}s ships a default implementation (smartly named DefaultTwoWayKey2StringMapper) that knows how to handle primitive types.
 
-NOTE: By default Infinispan shares are not stored, meaning that all nodes in the cluster will write to the underlying store upon each update.
+NOTE: By default {brandname} shares are not stored, meaning that all nodes in the cluster will write to the underlying store upon each update.
 If you wish for an operation to only be written to the underlying database once, you must configure the JDBC store to be shared.
 
 ==== Connection management (pooling)
@@ -14,7 +14,7 @@ implementation. The connection factory is specified programmatically using one o
 or simpleConnection() methods on the JdbcStringBasedStoreConfigurationBuilder class or declaratively using one of the
 `<connectionPool />`, `<dataSource />` or `<simpleConnection />` elements.
 
-Infinispan ships with three ConnectionFactory implementations:
+{brandname} ships with three ConnectionFactory implementations:
 
 
 *  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/PooledConnectionFactory.html[PooledConnectionFactory]
@@ -126,13 +126,13 @@ builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
 NOTE: If you're connecting to an Apache Derby database, make sure you set dataColumnType to BLOB: `<data-column name="DATA_COLUMN" type="BLOB"/>`
 
 ==== JDBC Migrator
-The JDBC Mixed and Binary stores have been removed in Infinispan 9.0.0 due to the poor performance associated with storing entries in buckets.
+The JDBC Mixed and Binary stores have been removed in {brandname} 9.0.0 due to the poor performance associated with storing entries in buckets.
 Storing entries in buckets is non-optimal as each read/write to the store requires an existing bucket for a given hash to be retrieved,
 deserialised, updated, serialised and then re-inserted back into the db. To assist users, we have created a migration tool
 `JDBCMigrator.java`, that reads data from an existing Mixed/Binary store and then stores it in a string keyed table via the
 <<_JDBC_String_based_Cache_Store, JdbcStringBasedStore>>.
 
-NOTE: The marshaller changes introduced in Infinispan 9 mean that existing stores that were populated by 8.x are no longer
+NOTE: The marshaller changes introduced in {brandname} 9 mean that existing stores that were populated by 8.x are no longer
 compatible. The JDBCMigrator can be used to migrate existing JdbcStringBasedStores from the legacy 8.x marshaller to the latest
 9.x compatible marshaller.
 

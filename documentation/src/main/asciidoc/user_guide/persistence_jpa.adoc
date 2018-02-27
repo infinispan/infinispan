@@ -1,8 +1,8 @@
 === JPA Cache Store
 The implementation depends on JPA 2.0 specification to access entity meta model.
 
-In normal use cases, it's recommended to leverage Infinispan for JPA second level cache and/or query cache.
-However, if you'd like to use only Infinispan API and you want Infinispan to persist into a cache store using a common format (e.g., a database with well defined schema), then JPA Cache Store could be right for you.
+In normal use cases, it's recommended to leverage {brandname} for JPA second level cache and/or query cache.
+However, if you'd like to use only {brandname} API and you want {brandname} to persist into a cache store using a common format (e.g., a database with well defined schema), then JPA Cache Store could be right for you.
 
 .Things to note
 * When using JPA Cache Store, the key should be the ID of the entity, while the value should be the entity object.
@@ -61,7 +61,7 @@ usersCache.put("raytsang", new User(...));
 
 ----
 
-Normally a single Infinispan cache can store multiple types of key/value pairs, for example:
+Normally a single {brandname} cache can store multiple types of key/value pairs, for example:
 
 [source,java]
 ----

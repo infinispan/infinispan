@@ -2,7 +2,7 @@
 
 ==== Overview
 
-Encoding is the data conversion operation done by Infinispan caches before storing data, and when reading back from storage.
+Encoding is the data conversion operation done by {brandname} caches before storing data, and when reading back from storage.
 
 It allows dealing with a certain data format during API calls (map, listeners, stream, etc) while the format effectively stored
 is different.
@@ -39,13 +39,13 @@ public interface Encoder {
 
 ==== Default encoders
 
-Infinispan automatically picks the Encoder depending on the cache configuration. The table below shows which internal Encoder is used for several configurations:
+{brandname} automatically picks the Encoder depending on the cache configuration. The table below shows which internal Encoder is used for several configurations:
 
 [options="header",cols="1,2,3,10"]
 |==============================================================================
 | Mode | Configuration | Encoder | Description
 | Embedded/Server | Default | IdentityEncoder | Passthrough  encoder, no conversion done
-| Embedded | StorageType.OFF_HEAP  | GlobalMarshallerEncoder | Uses Infinispan internal marshaller to convert to byte[]. May delegate to the configured marshaller in the cache manager.
+| Embedded | StorageType.OFF_HEAP  | GlobalMarshallerEncoder | Uses {brandname} internal marshaller to convert to byte[]. May delegate to the configured marshaller in the cache manager.
 | Embedded | <<store.binary,StorageType.BINARY>> | BinaryEncoder | Uses infinispan internal marshaller to convert to byte[], except for primitives and String.
 | Server |  <<compat.mode, Compatibility Mode>> | CompatModeEncoder | Uses the configured compatibility mode marshaller to unmarshall byte[] to its deserialized form, storing data as POJOs
 | Server | StorageType.OFF_HEAP  | IdentityEncoder | Just store byte[] directly as received by remote clients
