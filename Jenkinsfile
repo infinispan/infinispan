@@ -22,6 +22,7 @@ pipeline {
                 script {
                     env.MAVEN_HOME = tool('Maven')
                     env.MAVEN_OPTS = "-Xmx800m -XX:+HeapDumpOnOutOfMemoryError"
+                    env.JAVA_HOME = tool('Oracle JDK 8')
                 }
 
                 sh returnStdout: true, script: 'cleanup.sh'
