@@ -317,35 +317,24 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             return false;
 
          ConsistentHash currentCH = cacheTopology.getCurrentCH();
+         ConsistentHash pendingCH = cacheTopology.getPendingCH();
          ConsistentHash unionCH = null;
-         if (cacheTopology.getPendingCH() != null) {
+         if (pendingCH != null) {
             ConsistentHashFactory chf = cacheStatus.getJoinInfo().getConsistentHashFactory();
             switch (cacheTopology.getPhase()) {
                case READ_NEW_WRITE_ALL:
                   // When removing members from topology, we have to make sure that the unionCH has
                   // owners from pendingCH (which is used as the readCH in this phase) before
                   // owners from currentCH, as primary owners must match in readCH and writeCH.
-                  unionCH = chf.union(cacheTopology.getPendingCH(), cacheTopology.getCurrentCH());
-                  break;
-               case CONFLICT_RESOLUTION:
-                  // Ensure that this node utilises it's old partitions readConsistentHash during conflict resolution
-                  // But has an updated write consistent hash which contains owners from the pre and post merge hashes
-
-                  if (existingTopology != null) {
-                     ConsistentHash existingWriteHash = existingTopology.getPhase() == CacheTopology.Phase.NO_REBALANCE ? existingTopology.getCurrentCH() : existingTopology.getPendingCH();
-                     unionCH = chf.union(existingWriteHash, cacheTopology.getPendingCH());
-                     currentCH = existingTopology.getCurrentCH();
-                  } else {
-                     unionCH = cacheTopology.getPendingCH();
-                  }
+                  unionCH = chf.union(pendingCH, currentCH);
                   break;
                default:
-                  unionCH = chf.union(cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
+                  unionCH = chf.union(currentCH, pendingCH);
             }
          }
 
          CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(),
-               currentCH, cacheTopology.getPendingCH(), unionCH, cacheTopology.getPhase(),
+               currentCH, pendingCH, unionCH, cacheTopology.getPhase(),
                cacheTopology.getActualMembers(), persistentUUIDManager.mapAddresses(cacheTopology.getActualMembers()));
          unionTopology.logRoutingTableInformation();
 

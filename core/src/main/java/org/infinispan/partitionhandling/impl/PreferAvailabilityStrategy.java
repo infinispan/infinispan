@@ -222,12 +222,15 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       if (mergedTopology != null && survivingMembers.retainAll(mergedTopology.getMembers())) {
          checkForLostData(context, survivingMembers);
       }
-      if (survivingMembers.isEmpty()) {
-         // No surviving members, use the expected members instead
-         survivingMembers = newMembers;
-      }
-      context.updateCurrentTopology(survivingMembers);
 
+      // No need to update topology if conflict resolution has already occurred because pendingCh != null
+      if (!resolveConflicts) {
+         if (survivingMembers.isEmpty()) {
+            // No surviving members, use the expected members instead
+            survivingMembers = newMembers;
+         }
+         context.updateCurrentTopology(survivingMembers);
+      }
       // Then start a rebalance with the merged members
       context.queueRebalance(newMembers);
    }
