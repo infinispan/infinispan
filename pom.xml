@@ -297,7 +297,6 @@
       <version.mockito_dep.objenesis>2.5</version.mockito_dep.objenesis>
       <version.mojo.execturo>2.2.0</version.mojo.execturo>
       <version.mysql.driver>5.1.19</version.mysql.driver>
-      <version.oauth.core>20090531</version.oauth.core>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
       <version.org.wildfly.arquillian>1.0.2.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.build-tools>1.2.6.Final</version.org.wildfly.build-tools>
@@ -1058,11 +1057,6 @@
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-generator-annprocess</artifactId>
             <version>${version.jmh}</version>
-         </dependency>
-         <dependency>
-            <groupId>net.oauth.core</groupId>
-            <artifactId>oauth</artifactId>
-            <version>${version.oauth.core}</version>
          </dependency>
          <dependency>
             <groupId>org.latencyutils</groupId>

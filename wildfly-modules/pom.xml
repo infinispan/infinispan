@@ -212,12 +212,6 @@
          <groupId>org.jgroups.azure</groupId>
          <artifactId>jgroups-azure</artifactId>
       </dependency>
-
-      <dependency>
-         <groupId>net.oauth.core</groupId>
-         <artifactId>oauth</artifactId>
-      </dependency>
-
    </dependencies>
 
    <build>
