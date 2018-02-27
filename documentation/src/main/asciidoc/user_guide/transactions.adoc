@@ -1,8 +1,8 @@
 == Transactions
-Infinispan can be configured to use and to participate in JTA compliant transactions.
+{brandname} can be configured to use and to participate in JTA compliant transactions.
 Alternatively, if transaction support is disabled, it is equivalent to using autocommit in JDBC calls, where modifications are potentially replicated after every change (if replication is enabled).
 
-On every cache operation Infinispan does the following:
+On every cache operation {brandname} does the following:
 
 . Retrieves the current link:{javaeedocroot}/javax/transaction/Transaction.html[Transaction] associated with the thread
 . If not already done, registers link:{javaeedocroot}/javax/transaction/xa/XAResource.html[XAResource] with the transaction manager to be notified when a transaction commits or is rolled back.
@@ -11,7 +11,7 @@ In order to do this, the cache has to be provided with a reference to the enviro
 This is usually done by configuring the cache with the class name of an implementation of the link:{javadocroot}/org/infinispan/transaction/lookup/TransactionManagerLookup.html[TransactionManagerLookup] interface.
 When the cache starts, it will create an instance of this class and invoke its `getTransactionManager()` method, which returns a reference to the `TransactionManager`.
 
-Infinispan ships with several transaction manager lookup classes:
+{brandname} ships with several transaction manager lookup classes:
 
 .Transaction manager lookup implementations
 *  link:{javadocroot}/org/infinispan/transaction/lookup/EmbeddedTransactionManagerLookup.html[EmbeddedTransactionManagerLookup]:
@@ -19,7 +19,7 @@ This provides with a basic transaction manager which should only be used for emb
 This implementation has some severe limitations to do with concurrent transactions and recovery.
 
 *  link:{javadocroot}/org/infinispan/transaction/lookup/JBossStandaloneJTAManagerLookup.html[JBossStandaloneJTAManagerLookup]:
-If you're running Infinispan in a standalone environment, this should be your default choice for transaction manager.
+If you're running {brandname} in a standalone environment, this should be your default choice for transaction manager.
 It's a fully fledged transaction manager based on link:http://narayana.io/[JBoss Transactions] which overcomes all the deficiencies of the `EmbeddedTransactionManager`.
 
 *  link:{javadocroot}/org/infinispan/transaction/lookup/GenericTransactionManagerLookup.html[GenericTransactionManagerLookup]:
@@ -122,15 +122,15 @@ Default is `org.infinispan.transaction.lookup.GenericTransactionManagerLookup`.
 Check section <<tx:write-skew>> for more details. Default is `NONE`.
 
 
-For more details on how Two-Phase-Commit (2PC) is implemented in Infinispan and how locks are being acquired see the section below.
+For more details on how Two-Phase-Commit (2PC) is implemented in {brandname} and how locks are being acquired see the section below.
 More details about the configuration settings are available in link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/[Configuration reference].
 
 === Isolation levels [[tx:isolation-levels]]
-Infinispan offers two isolation levels - link:https://en.wikipedia.org/wiki/Isolation_(database_systems)#Read_committed[READ_COMMITTED] and link:https://en.wikipedia.org/wiki/Isolation_(database_systems)#Repeatable_reads[REPEATABLE_READ].
+{brandname} offers two isolation levels - link:https://en.wikipedia.org/wiki/Isolation_(database_systems)#Read_committed[READ_COMMITTED] and link:https://en.wikipedia.org/wiki/Isolation_(database_systems)#Repeatable_reads[REPEATABLE_READ].
 
 These isolation levels determine when readers see a concurrent write, and are internally implemented using different subclasses of `MVCCEntry`, which have different behaviour in how state is committed back to the data container.
 
-Here's a more detailed example that should help understand the difference between `READ_COMMITTED` and `REPEATABLE_READ` in the context of Infinispan.
+Here's a more detailed example that should help understand the difference between `READ_COMMITTED` and `REPEATABLE_READ` in the context of {brandname}.
 With `READ_COMMITTED`, if between two consecutive read calls on the same key, the key has been updated by another transaction, the second read may return the new updated value:
 
 [source,java]
@@ -298,26 +298,26 @@ NOTE: deadlock detection only runs on an a per cache basis: deadlocks that sprea
 If a link:{javadocroot}/org/infinispan/commons/CacheException.html[CacheException] (or a subclass of it) is thrown by a cache method within the scope of a JTA transaction, then the transaction is automatically marked for rollback.
 
 === Enlisting Synchronizations [[tx:sync-enlist]]
-By default Infinispan registers itself as a first class participant in distributed transactions through link:{javaeedocroot}/javax/transaction/xa/XAResource.html[XAResource].
-There are situations where Infinispan is not required to be a participant in the transaction, but only to be notified by its lifecycle (prepare, complete): e.g. in the case Infinispan is used as a 2nd level cache in Hibernate.
+By default {brandname} registers itself as a first class participant in distributed transactions through link:{javaeedocroot}/javax/transaction/xa/XAResource.html[XAResource].
+There are situations where {brandname} is not required to be a participant in the transaction, but only to be notified by its lifecycle (prepare, complete): e.g. in the case {brandname} is used as a 2nd level cache in Hibernate.
 
-Starting with 5.0 release, Infinispan allows transaction enlistment through link:{javaeedocroot}/javax/transaction/Synchronization.html[Synchronisation].
+{brandname} allows transaction enlistment through link:{javaeedocroot}/javax/transaction/Synchronization.html[Synchronisation].
 To enable it just use `NON_XA` transaction mode.
 
 ``Synchronization``s have the advantage that they allow `TransactionManager` to optimize 2PC with a 1PC where only one other resource is enlisted with that transaction (link:https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.0/html/development_guide/java_transaction_api_jta#about_the_lrco_optimization_for_single_phase_commit_1pc[last resource commit optimization]).
-E.g. Hibernate second level cache: if Infinispan registers itself with the `TransactionManager` as a `XAResource` than at commit time, the `TransactionManager` sees two `XAResource` (cache and database) and does not make this optimization.
+E.g. Hibernate second level cache: if {brandname} registers itself with the `TransactionManager` as a `XAResource` than at commit time, the `TransactionManager` sees two `XAResource` (cache and database) and does not make this optimization.
 Having to coordinate between two resources it needs to write the tx log to disk.
-On the other hand, registering Infinispan as a `Synchronisation` makes the `TransactionManager` skip writing the log to the disk (performance improvement).
+On the other hand, registering {brandname} as a `Synchronisation` makes the `TransactionManager` skip writing the log to the disk (performance improvement).
 
 ===  Batching [[tx:batching]]
 Batching allows atomicity and some characteristics of a transaction, but not full-blown JTA or XA capabilities.
 Batching is often a lot lighter and cheaper than a full-blown transaction.
 
-TIP: Generally speaking, one should use batching API whenever the only participant in the transaction is an Infinispan cluster.
+TIP: Generally speaking, one should use batching API whenever the only participant in the transaction is an {brandname} cluster.
 On the other hand, JTA transactions (involving `TransactionManager`) should be used whenever the transactions involves multiple systems.
 E.g. considering the "Hello world!" of transactions: transferring money from one bank account to the other.
-If both accounts are stored within Infinispan, then batching can be used.
-If one account is in a database and the other is Infinispan, then distributed transactions are required.
+If both accounts are stored within {brandname}, then batching can be used.
+If one account is in a database and the other is {brandname}, then distributed transactions are required.
 
 NOTE: You _do not_ have to have a transaction manager defined to use batching.
 
@@ -359,22 +359,22 @@ With batching, you get:
 Recovery is a feature of XA transactions, which deal with the eventuality of a resource or possibly even the transaction manager failing, and recovering accordingly from such a situation.
 
 ==== When to use recovery
-Consider a distributed transaction in which money is transferred from an account stored in an external database to an account stored in Infinispan.
-When `TransactionManager.commit()` is invoked, both resources prepare successfully (1st phase). During the commit (2nd) phase, the database successfully applies the changes whilst Infinispan fails before receiving the commit request from the transaction manager.
-At this point the system is in an inconsistent state: money is taken from the account in the external database but not visible yet in Infinispan (since locks are only released during 2nd phase of a two-phase commit protocol).
-Recovery deals with this situation to make sure data in both the database and Infinispan ends up in a consistent state.
+Consider a distributed transaction in which money is transferred from an account stored in an external database to an account stored in {brandname}.
+When `TransactionManager.commit()` is invoked, both resources prepare successfully (1st phase). During the commit (2nd) phase, the database successfully applies the changes whilst {brandname} fails before receiving the commit request from the transaction manager.
+At this point the system is in an inconsistent state: money is taken from the account in the external database but not visible yet in {brandname} (since locks are only released during 2nd phase of a two-phase commit protocol).
+Recovery deals with this situation to make sure data in both the database and {brandname} ends up in a consistent state.
 
 ==== How does it work
 Recovery is coordinated by the transaction manager.
-The transaction manager works with Infinispan to determine the list of in-doubt transactions that require manual intervention and informs the system administrator (via email, log alerts, etc).
+The transaction manager works with {brandname} to determine the list of in-doubt transactions that require manual intervention and informs the system administrator (via email, log alerts, etc).
 This process is transaction manager specific, but generally requires some configuration on the transaction manager.  
 
-Knowing the in-doubt transaction ids, the system administrator can now connect to the Infinispan cluster and replay the commit of transactions or force the rollback.
-Infinispan provides JMX tooling for this - this is explained extensively in the <<tx:recovery-reconciliation>> section.
+Knowing the in-doubt transaction ids, the system administrator can now connect to the {brandname} cluster and replay the commit of transactions or force the rollback.
+{brandname} provides JMX tooling for this - this is explained extensively in the <<tx:recovery-reconciliation>> section.
 
 ==== Configuring recovery   
-Recovery is _not_ enabled by default in Infinispan.
-If disabled, the `TransactionManager` won't be able to work with Infinispan to determine the in-doubt transactions.
+Recovery is _not_ enabled by default in {brandname}.
+If disabled, the `TransactionManager` won't be able to work with {brandname} to determine the in-doubt transactions.
 The <<tx:configuration>> section shows how to enable it.
 
 NOTE: `recovery-cache` attribute is not mandatory and it is configured per-cache.
@@ -387,19 +387,19 @@ In order to be able to use JMX for managing recovery JMX support must be explici
 More about enabling JMX in <<jmx:chapter>> section.
 
 ==== Recovery cache
-In order to track in-doubt transactions and be able to reply them, Infinispan caches all transaction state for future use.
+In order to track in-doubt transactions and be able to reply them, {brandname} caches all transaction state for future use.
 This state is held only for in-doubt transaction, being removed for successfully completed transactions after when the commit/rollback phase completed.
 
 This in-doubt transaction data is held within a local cache: this allows one to configure swapping this info to disk through cache loader in the case it gets too big.
 This cache can be specified through the `recovery-cache` configuration attribute.
 If not specified infinispan will configure a local cache for you.
 
-It is possible (though not mandated) to share same recovery cache between all the Infinispan caches that have recovery enabled.
+It is possible (though not mandated) to share same recovery cache between all the {brandname} caches that have recovery enabled.
 If the default recovery cache is overridden, then the specified recovery cache must use a link:{javadocroot}/org/infinispan/transaction/lookup/class-use/TransactionManagerLookup.html[TransactionManagerLookup] that returns a different transaction manager than the one used by the cache itself.
 
 ==== Integration with the transaction manager
 Even though this is transaction manager specific, generally a transaction manager would need a reference to a `XAResource` implementation in order to invoke `XAResource.recover()` on it.
-In order to obtain a reference to an Infinispan `XAResource` following API can be used:
+In order to obtain a reference to an {brandname} `XAResource` following API can be used:
 
 [source,java]
 ----
@@ -416,15 +416,15 @@ At this stage it is assumed that the system administrator knows transaction's XI
 
 A normal recovery flow is:
 
-* *STEP 1*: The system administrator connects to an Infinispan server through JMX, and lists the in doubt transactions.
-The image below demonstrates JConsole connecting to an Infinispan node that has an in doubt transaction.
+* *STEP 1*: The system administrator connects to an {brandname} server through JMX, and lists the in doubt transactions.
+The image below demonstrates JConsole connecting to an {brandname} node that has an in doubt transaction.
 
 image::images/showInDoubtTx.png[align="center", title="Show in-doubt transactions"]
 
 The status of each in-doubt transaction is displayed(in this example " _PREPARED_ ").
 There might be multiple elements in the status field, e.g. "PREPARED" and "COMMITTED" in the case the transaction committed on certain nodes but not on all of them.  
 
-* *STEP 2*: The system administrator visually maps the XID received from the transaction manager to an Infinispan internal id, represented as a number.
+* *STEP 2*: The system administrator visually maps the XID received from the transaction manager to an {brandname} internal id, represented as a number.
 This step is needed because the XID, a byte array, cannot conveniently be passed to the JMX tool (e.g. JConsole) and then re-assembled on infinispan's side.
 
 * *STEP 3*: The system administrator forces the transaction's commit/rollback through the corresponding jmx operation, based on the internal id.
@@ -443,7 +443,7 @@ This process is plugged into transaction manager's recovery and has access to th
 The link:https://community.jboss.org/wiki/TransactionRecoveryDesign[recovery design document] describes in more detail the insides of transaction recovery implementation.
 
 ===  Total Order based commit protocol [[tx:total-order]]
-The Total Order based protocol is a multi-master scheme (in this context, multi-master scheme means that all nodes can update all the data) as the (optimistic/pessimist) locking mode implemented in Infinispan.
+The Total Order based protocol is a multi-master scheme (in this context, multi-master scheme means that all nodes can update all the data) as the (optimistic/pessimist) locking mode implemented in {brandname}.
 This commit protocol relies on the concept of totally ordered delivery of messages which, informally, implies that each node which delivers a set of messages, delivers them in the same order.
 
 This protocol comes with this advantages.
@@ -458,19 +458,19 @@ Thus, this protocol delivers best performance in scenarios of _high contention_ 
 Currently, the Total Order based protocol is available only in _transactional_ caches for _replicated_ and _distributed_ modes.
 
 ==== Overview
-The Total Order based commit protocol only affects how transactions are committed by Infinispan and the isolation level and write skew affects it behaviour.
+The Total Order based commit protocol only affects how transactions are committed by {brandname} and the isolation level and write skew affects it behaviour.
 
 When write skew is disabled, the transaction can be committed/rolled back in single phase.
 The data consistency is guaranteed by the `Transport` that ensures that all owners of a key will deliver the same transactions set by the same order.
 
 On other hand, when write skew is enabled, the protocol adapts and uses one phase commit when it is safe.
-In `XaResource` enlistment, we can use one phase if the `TransactionManager` request a commit in one phase (last resource commit optimization) and the Infinispan cache is configured in replicated mode.
+In `XaResource` enlistment, we can use one phase if the `TransactionManager` request a commit in one phase (last resource commit optimization) and the {brandname} cache is configured in replicated mode.
 This optimization is not safe in distributed mode because each node performs the write skew check validation in different keys subset.
-When in `Synchronization` enlistment, the `TransactionManager` does not provide any information if Infinispan is the only resource enlisted (last resource commit optimization), so it is not possible to commit in a single phase.
+When in `Synchronization` enlistment, the `TransactionManager` does not provide any information if {brandname} is the only resource enlisted (last resource commit optimization), so it is not possible to commit in a single phase.
 
 ===== Commit in one phase
-When the transaction ends, Infinispan sends the transaction (and its modification) in total order.
-This ensures all the transactions are deliver in the same order in all the involved Infinispan nodes.
+When the transaction ends, {brandname} sends the transaction (and its modification) in total order.
+This ensures all the transactions are deliver in the same order in all the involved {brandname} nodes.
 As a result, when a transaction is delivered, it performs a deterministic write skew check over the same state (if enabled), leading to the same outcome (transaction commit or rollback).
 
 image::images/total-order-1pc.png[align="center", title="1-phase commit"]

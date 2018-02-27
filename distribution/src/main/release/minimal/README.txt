@@ -1,12 +1,12 @@
-Infinispan -- a distributed, transactional, highly scalable data structure
+${infinispan.brand.name} -- a distributed, transactional, highly scalable data structure
 ==========================================================================
 
-This is the "minimal" Infinispan distribution, which contains the 
+This is the "minimal" ${infinispan.brand.name} distribution, which contains the 
 essentials to get you started.
 
    * infinispan-embedded.jar: this is the main jar which is all you need
      for setting up either a local or a clustered cache. If you are running
-     Infinispan in a plain JavaSE environment or in a basic servlet 
+     ${infinispan.brand.name} in a plain JavaSE environment or in a basic servlet 
      container (such as Tomcat) you will also need to add the Java 
      Transaction API jar (which you can find in the lib directory)
      This jar also includes support for the following additional features:
@@ -25,20 +25,5 @@ essentials to get you started.
 Requirements
 ------------
 
-Infinispan needs a JDK 8 compliant Java virtual machine.
+${infinispan.brand.name} needs a JDK 8 compliant Java virtual machine.
 
-Problems
---------
-
-Please report problems on the Infinispan user forum.  Please see
-
-   http://www.jboss.org/infinispan/community
-
-for details.
-
-Contributing
-------------
-
-If you want to contribute, head over to
-
-   http://infinispan.org/getinvolved/

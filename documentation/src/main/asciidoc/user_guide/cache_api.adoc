@@ -1,14 +1,14 @@
 == The Cache API
 
 === The Cache interface
-Infinispan's Caches are manipulated through the link:{javadocroot}/org/infinispan/Cache.html[Cache] interface.
+{brandname}'s Caches are manipulated through the link:{javadocroot}/org/infinispan/Cache.html[Cache] interface.
 
 A Cache exposes simple methods for adding, retrieving and removing entries, including atomic mechanisms exposed by the JDK's ConcurrentMap interface.  Based on the cache mode used, invoking these methods will trigger a number of things to happen, potentially even including replicating an entry to a remote node or looking up an entry from a remote node, or potentially a cache store.
 
-NOTE: For simple usage, using the Cache API should be no different from using the JDK Map API, and hence migrating from simple in-memory caches based on a Map to Infinispan's Cache should be trivial.
+NOTE: For simple usage, using the Cache API should be no different from using the JDK Map API, and hence migrating from simple in-memory caches based on a Map to {brandname}'s Cache should be trivial.
 
 ==== Performance Concerns of Certain Map Methods
-Certain methods exposed in Map have certain performance consequences when used with Infinispan, such as
+Certain methods exposed in Map have certain performance consequences when used with {brandname}, such as
 link:{javadocroot}/org/infinispan/Cache.html#size--[size()] ,
 link:{javadocroot}/org/infinispan/Cache.html#values--[values()] ,
 link:{javadocroot}/org/infinispan/Cache.html#keySet--[keySet()] and
@@ -22,15 +22,15 @@ It should be noted that using certain flags with the link:{javadocroot}/org/infi
 For more performance tips, have a look at our link:../performance_guide/performance_guide.html[Performance Guide].
 
 ==== Mortal and Immortal Data
-Further to simply storing entries, Infinispan's cache API allows you to attach mortality information to data.  For example, simply using link:{jdkdocroot}/java/util/Map.html#put-K-V-[put(key, value)] would create an _immortal_ entry, i.e., an entry that lives in the cache forever, until it is removed (or evicted from memory to prevent running out of memory).  If, however, you put data in the cache using link:{javadocroot}/org/infinispan/commons/api/BasicCache.html#put-K-V-long-java.util.concurrent.TimeUnit-[put(key, value, lifespan, timeunit)] , this creates a _mortal_ entry, i.e., an entry that has a fixed lifespan and expires after that lifespan.
+Further to simply storing entries, {brandname}'s cache API allows you to attach mortality information to data.  For example, simply using link:{jdkdocroot}/java/util/Map.html#put-K-V-[put(key, value)] would create an _immortal_ entry, i.e., an entry that lives in the cache forever, until it is removed (or evicted from memory to prevent running out of memory).  If, however, you put data in the cache using link:{javadocroot}/org/infinispan/commons/api/BasicCache.html#put-K-V-long-java.util.concurrent.TimeUnit-[put(key, value, lifespan, timeunit)] , this creates a _mortal_ entry, i.e., an entry that has a fixed lifespan and expires after that lifespan.
 
-In addition to _lifespan_ , Infinispan also supports _maxIdle_ as an additional metric with which to determine expiration.  Any combination of lifespans or maxIdles can be used.
+In addition to _lifespan_ , {brandname} also supports _maxIdle_ as an additional metric with which to determine expiration.  Any combination of lifespans or maxIdles can be used.
 
 ==== Example of Using Expiry and Mortal Data
-See <<_eviction_examples, these examples>> of using mortal data with Infinispan.
+See <<_eviction_examples, these examples>> of using mortal data with {brandname}.
 
 ==== putForExternalRead operation
-Infinispan's link:{javadocroot}/org/infinispan/Cache.html[Cache] class contains a different 'put' operation called link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead] . This operation is particularly useful when Infinispan is used as a temporary cache for data that is persisted elsewhere.  Under heavy read scenarios, contention in the cache should not delay the real transactions at hand, since caching should just be an optimization and not something that gets in the way.
+{brandname}'s link:{javadocroot}/org/infinispan/Cache.html[Cache] class contains a different 'put' operation called link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead] . This operation is particularly useful when {brandname} is used as a temporary cache for data that is persisted elsewhere.  Under heavy read scenarios, contention in the cache should not delay the real transactions at hand, since caching should just be an optimization and not something that gets in the way.
 
 To achieve this, putForExternalRead acts as a put call that only operates if the key is not present in the cache, and fails fast and silently if another thread is trying to store the same key at the same time. In this particular scenario, caching data is a way to optimise the system and it's not desirable that a failure in caching affects the on-going transaction, hence why failure is handled differently. putForExternalRead is consider to be a fast operation because regardless of whether it's successful or not, it doesn't wait for any locks, and so returns to the caller promptly.
 
@@ -66,7 +66,7 @@ if (cachedPerson == null) {
 Please note that link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead] should never be used as a mechanism to update the cache with a new Person instance originating from application execution (i.e. from a transaction that modifies a Person's address). When updating cached values, please use the standard link:{jdkdocroot}/java/util/Map.html#put-K-V-[put] operation, otherwise the possibility of caching corrupt data is likely.
 
 === The AdvancedCache interface
-In addition to the simple Cache interface, Infinispan offers an link:{javadocroot}/org/infinispan/AdvancedCache.html[AdvancedCache] interface, geared towards extension authors.  The AdvancedCache offers the ability to inject custom interceptors, access certain internal components and to apply flags to alter the default behavior of certain cache methods.  The following code snippet depicts how an AdvancedCache can be obtained:
+In addition to the simple Cache interface, {brandname} offers an link:{javadocroot}/org/infinispan/AdvancedCache.html[AdvancedCache] interface, geared towards extension authors.  The AdvancedCache offers the ability to inject custom interceptors, access certain internal components and to apply flags to alter the default behavior of certain cache methods.  The following code snippet depicts how an AdvancedCache can be obtained:
 
 [source,java]
 ----
@@ -96,7 +96,7 @@ For more information on writing custom interceptors, see <<_custom_interceptors_
 [[_Listeners_and_notifications_section]]
 ===  Listeners and Notifications
 
-Infinispan offers a listener API, where clients can register for and get notified when events take place.  This annotation-driven API applies to 2 different levels: cache level events and cache manager level events.
+{brandname} offers a listener API, where clients can register for and get notified when events take place.  This annotation-driven API applies to 2 different levels: cache level events and cache manager level events.
 
 Events trigger a notification which is dispatched to listeners.   Listeners are simple link:http://en.wikipedia.org/wiki/Plain_Old_Java_Object[POJO] s annotated with link:{javadocroot}/org/infinispan/notifications/Listener.html[@Listener] and registered using the methods defined in the link:{javadocroot}/org/infinispan/notifications/Listenable.html[Listenable] interface.
 
@@ -126,7 +126,7 @@ Cache-level events occur on a per-cache basis, and by default are only raised on
 
 Please see the link:{javadocroot}/org/infinispan/notifications/cachelistener/annotation/package-summary.html[Javadocs on the org.infinispan.notifications.cachelistener.annotation package] for a comprehensive list of all cache-level notifications, and their respective method-level annotations.
 
-NOTE: Please refer to the link:{javadocroot}/org/infinispan/notifications/cachelistener/annotation/package-summary.html[Javadocs on the org.infinispan.notifications.cachelistener.annotation package] for the list of cache-level notifications available in Infinispan.
+NOTE: Please refer to the link:{javadocroot}/org/infinispan/notifications/cachelistener/annotation/package-summary.html[Javadocs on the org.infinispan.notifications.cachelistener.annotation package] for the list of cache-level notifications available in {brandname}.
 
 ===== Cluster Listeners
 The cluster listeners should be used when it is desirable to listen to the cache events on a single node.
@@ -189,9 +189,9 @@ NOTE: This only works for clustered listeners at this time.  link:https://issues
 
 It is possible in a non transactional cache to receive duplicate events.  This is possible when the primary owner of a key goes down while trying to perform a write operation such as a put.
 
-Infinispan internally will rectify the put operation by sending it to the new primary owner for the given key automatically, however there are no guarantees in regards to if the write was first replicated to backups.  Thus more than 1 of the following write events (`CacheEntryCreatedEvent`, `CacheEntryModifiedEvent` & `CacheEntryRemovedEvent`) may be sent on a single operation.
+{brandname} internally will rectify the put operation by sending it to the new primary owner for the given key automatically, however there are no guarantees in regards to if the write was first replicated to backups.  Thus more than 1 of the following write events (`CacheEntryCreatedEvent`, `CacheEntryModifiedEvent` & `CacheEntryRemovedEvent`) may be sent on a single operation.
 
-If more than one event is generated Infinispan will mark the event that it was generated by a retried command to help the user to know when this occurs without having to pay attention to view changes.
+If more than one event is generated {brandname} will mark the event that it was generated by a retried command to help the user to know when this occurs without having to pay attention to view changes.
 
 [source,java]
 ----
@@ -227,7 +227,7 @@ public class MyAsyncListener { .... }
 To tune the thread pool used to dispatch such asynchronous notifications, use the link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[`<listener-executor />`] XML element in your configuration file.
 
 ===  Asynchronous API
-In addition to synchronous API methods like link:{jdkdocroot}/java/util/Map.html#put-K-V-[Cache.put()] , link:{jdkdocroot}/java/util/Map.html#remove-java.lang.Object-[Cache.remove()] , etc., Infinispan also has an asynchronous, non-blocking API where you can achieve the same results in a non-blocking fashion.
+In addition to synchronous API methods like link:{jdkdocroot}/java/util/Map.html#put-K-V-[Cache.put()] , link:{jdkdocroot}/java/util/Map.html#remove-java.lang.Object-[Cache.remove()] , etc., {brandname} also has an asynchronous, non-blocking API where you can achieve the same results in a non-blocking fashion.
 
 These methods are named in a similar fashion to their blocking counterparts, with "Async" appended.  E.g., link:{javadocroot}/org/infinispan/commons/api/AsyncCache.html#putAsync-K-V-[Cache.putAsync()] , link:{javadocroot}/org/infinispan/commons/api/AsyncCache.html#removeAsync-java.lang.Object-[Cache.removeAsync()] , etc.  These asynchronous counterparts return a link:{jdkdocroot}/java/util/concurrent/Future.html[Future] containing the actual result of the operation.
 
@@ -255,7 +255,7 @@ for (Future<?> f: futures) f.get();
 ----
 
 ==== Which processes actually happen asynchronously?
-There are 4 things in Infinispan that can be considered to be on the critical path of a typical write operation.
+There are 4 things in {brandname} that can be considered to be on the critical path of a typical write operation.
 These are, in order of cost:
 
 * network calls
@@ -263,7 +263,7 @@ These are, in order of cost:
 * writing to a cache store (optional)
 * locking
 
-As of Infinispan 4.0, using the async methods will take the network calls and marshalling off the critical path.  For various technical reasons, writing to a cache store and acquiring locks, however, still happens in the caller's thread.  In future, we plan to take these offline as well.  See link:http://lists.jboss.org/pipermail/infinispan-dev/2010-January/002219.html[this developer mail list thread] about this topic.
+As of {brandname} 4.0, using the async methods will take the network calls and marshalling off the critical path.  For various technical reasons, writing to a cache store and acquiring locks, however, still happens in the caller's thread.  In future, we plan to take these offline as well.  See link:http://lists.jboss.org/pipermail/infinispan-dev/2010-January/002219.html[this developer mail list thread] about this topic.
 
 ==== Notifying futures
 Strictly, these methods do not return JDK Futures, but rather a sub-interface known as a link:{javadocroot}/org/infinispan/commons/util/concurrent/NotifyingFuture.html[NotifyingFuture] .  The main difference is that you can attach a listener to a NotifyingFuture such that you could be notified when the future completes.  Here is an example of making use of a notifying future:
@@ -291,9 +291,9 @@ cache.putAsync("key", "value").attachListener(futureListener);
 The Javadocs on the link:{javadocroot}/org/infinispan/Cache.html[Cache] interface has some examples on using the asynchronous API, as does link:http://infinispan.blogspot.com/2009/05/whats-so-cool-about-asynchronous-api.html[this article] by Manik Surtani introducing the API.
 
 ===  Invocation Flags
-An important aspect of getting the most of Infinispan is the use of per-invocation flags in order to provide specific behaviour to each particular cache call. By doing this, some important optimizations can be implemented potentially saving precious time and network resources. One of the most popular usages of flags can be found right in Cache API, underneath the link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead()] method which is used to load an Infinispan cache with data read from an external resource. In order to make this call efficient, Infinispan basically calls a normal put operation passing the following flags: link:{javadocroot}/org/infinispan/context/Flag.html#FAIL_SILENTLY[FAIL_SILENTLY] , link:{javadocroot}/org/infinispan/context/Flag.html#FORCE_ASYNCHRONOUS[FORCE_ASYNCHRONOUS] , link:{javadocroot}/org/infinispan/context/Flag.html#ZERO_LOCK_ACQUISITION_TIMEOUT[ZERO_LOCK_ACQUISITION_TIMEOUT]
+An important aspect of getting the most of {brandname} is the use of per-invocation flags in order to provide specific behaviour to each particular cache call. By doing this, some important optimizations can be implemented potentially saving precious time and network resources. One of the most popular usages of flags can be found right in Cache API, underneath the link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead()] method which is used to load an {brandname} cache with data read from an external resource. In order to make this call efficient, {brandname} basically calls a normal put operation passing the following flags: link:{javadocroot}/org/infinispan/context/Flag.html#FAIL_SILENTLY[FAIL_SILENTLY] , link:{javadocroot}/org/infinispan/context/Flag.html#FORCE_ASYNCHRONOUS[FORCE_ASYNCHRONOUS] , link:{javadocroot}/org/infinispan/context/Flag.html#ZERO_LOCK_ACQUISITION_TIMEOUT[ZERO_LOCK_ACQUISITION_TIMEOUT]
 
-What Infinispan is doing here is effectively saying that when putting data read from external read, it will use an almost-zero lock acquisition time and that if the locks cannot be acquired, it will fail silently without throwing any exception related to lock acquisition. It also specifies that regardless of the cache mode, if the cache is clustered, it will replicate asynchronously and so won't wait for responses from other nodes. The combination of all these flags make this kind of operation very efficient, and the efficiency comes from the fact this type of _putForExternalRead_ calls are used with the knowledge that client can always head back to a persistent store of some sorts to retrieve the data that should be stored in memory. So, any attempt to store the data is just a best effort and if not possible, the client should try again if there's a cache miss.
+What {brandname} is doing here is effectively saying that when putting data read from external read, it will use an almost-zero lock acquisition time and that if the locks cannot be acquired, it will fail silently without throwing any exception related to lock acquisition. It also specifies that regardless of the cache mode, if the cache is clustered, it will replicate asynchronously and so won't wait for responses from other nodes. The combination of all these flags make this kind of operation very efficient, and the efficiency comes from the fact this type of _putForExternalRead_ calls are used with the knowledge that client can always head back to a persistent store of some sorts to retrieve the data that should be stored in memory. So, any attempt to store the data is just a best effort and if not possible, the client should try again if there's a cache miss.
 
 ==== Examples
 If you want to use these or any other flags available, which by the way are described in detail the link:{javadocroot}/org/infinispan/context/Flag.html[Flag enumeration] , you simply need to get hold of the advanced cache and add the flags you need via the link:{javadocroot}/org/infinispan/AdvancedCache.html#withFlags-org.infinispan.context.Flag...-[withFlags()] method call. For example:
@@ -327,7 +327,7 @@ For more information, please check the link:{javadocroot}/org/infinispan/context
 
 
 ===  Tree API Module
-link:{javadocroot}/org/infinispan/tree/package-summary.html[Infinispan's tree API module] offers clients the possibility of storing data using a tree-structure like API. This API is similar to the one link:http://docs.jboss.org/jbosscache/3.2.1.GA/apidocs/org/jboss/cache/package-summary.html[provided by JBoss Cache], hence the tree module is perfect for those users wanting to migrate their applications from JBoss Cache to Infinispan, who want to limit changes their codebase as part of the migration. Besides, it's important to understand that Infinispan provides this tree API much more efficiently than JBoss Cache did, so if you're a user of the tree API in JBoss Cache, you should consider migrating to Infinispan.
+link:{javadocroot}/org/infinispan/tree/package-summary.html[{brandname}'s tree API module] offers clients the possibility of storing data using a tree-structure like API. This API is similar to the one link:http://docs.jboss.org/jbosscache/3.2.1.GA/apidocs/org/jboss/cache/package-summary.html[provided by JBoss Cache], hence the tree module is perfect for those users wanting to migrate their applications from JBoss Cache to {brandname}, who want to limit changes their codebase as part of the migration. Besides, it's important to understand that {brandname} provides this tree API much more efficiently than JBoss Cache did, so if you're a user of the tree API in JBoss Cache, you should consider migrating to {brandname}.
 
 ==== What is Tree API about?
 The aim of this API is to store information in a hierarchical way. The hierarchy is defined using paths represented as link:{javadocroot}/org/infinispan/tree/Fqn.html[Fqn or fully qualified names] , for example: _/this/is/a/fqn/path_ or _/another/path_ . In the hierarchy, there's a special path called root which represents the starting point of all paths and it's represented as: _/_
@@ -338,7 +338,7 @@ Please remember that users should not use root as a place to store data. Instead
 
 ==== Using the Tree API
 ===== Dependencies
-For your application to use the tree API, you need to import infinispan-tree.jar which can be located in the Infinispan binary distributions, or you can simply add a dependency to this module in your pom.xml:
+For your application to use the tree API, you need to import infinispan-tree.jar which can be located in the {brandname} binary distributions, or you can simply add a dependency to this module in your pom.xml:
 
 [source,xml]
 .pom.xml
@@ -357,7 +357,7 @@ For your application to use the tree API, you need to import infinispan-tree.jar
 ----
 
 ==== Creating a Tree Cache
-The first step to use the tree API is to actually create a tree cache. To do so, you need to <<configuration, create an Infinispan Cache>> as you'd normally do, and using the link:{javadocroot}/org/infinispan/tree/TreeCacheFactory.html[TreeCacheFactory] , create an instance of link:{javadocroot}/org/infinispan/tree/TreeCache.html[TreeCache] . A very important note to remember here is that the Cache instance passed to the factory must be configured with <<_batching, invocation batching>>. For example:
+The first step to use the tree API is to actually create a tree cache. To do so, you need to <<configuration, create an {brandname} Cache>> as you'd normally do, and using the link:{javadocroot}/org/infinispan/tree/TreeCacheFactory.html[TreeCacheFactory] , create an instance of link:{javadocroot}/org/infinispan/tree/TreeCache.html[TreeCache] . A very important note to remember here is that the Cache instance passed to the factory must be configured with <<_batching, invocation batching>>. For example:
 
 [source,java]
 ----
@@ -564,7 +564,7 @@ To make this move, locks would have been acquired on:
 
 ==== Listeners for tree cache events
 
-The current Infinispan listeners have been designed with key/value store notifications in mind, and hence they do not map to tree cache events correctly. Tree cache specific listeners that map directly to tree cache events (i.e. adding a child...etc) are desirable but these are not yet available. If you're interested in this type of listeners, please follow link:https://issues.jboss.org/browse/ISPN-1935[this issue] to find out about any progress in this area.
+The current {brandname} listeners have been designed with key/value store notifications in mind, and hence they do not map to tree cache events correctly. Tree cache specific listeners that map directly to tree cache events (i.e. adding a child...etc) are desirable but these are not yet available. If you're interested in this type of listeners, please follow link:https://issues.jboss.org/browse/ISPN-1935[this issue] to find out about any progress in this area.
 
 include::functional_api.adoc[]
 include::encoding.adoc[]

@@ -1,5 +1,5 @@
 === RocksDB Cache Store
-The Infinispan Community
+The {brandname} Community
 
 ==== Introduction
 link:http://rocksdb.org/[RocksDB] is a fast key-value filesystem-based storage from Facebook. It started as a fork of

@@ -17,7 +17,7 @@ the custom TCP client/server Hot Rod protocol.
 
 ==== Hot Rod Protocol 1.0
 
-.Infinispan versions
+.{brandname} versions
 TIP: This version of the protocol is implemented since Infinispan 4.1.0.Final
 
 IMPORTANT: All key and values are sent and stored as byte arrays. Hot Rod
@@ -73,9 +73,9 @@ The header for a request is composed of:
 
 | Magic               | 1 byte     | +0xA0+ = request
 | Message ID          | vLong      | ID of the message that will be copied
-back in the response. This allows for hot rod clients to implement the
+back in the response. This allows for Hot Rod clients to implement the
 protocol in an asynchronous way.
-| Version             | 1 byte     | Infinispan hot rod server version.
+| Version             | 1 byte     | Hot Rod server version.
 In this particular case, this is +10+
 | Opcode              | 1 byte     | Request operation code: +
 +0x01+ = put (since 1.0) +
@@ -111,7 +111,7 @@ In this particular case, this is +10+
 length is +0+ (followed by no cache name), the operation will interact with
 the default cache.
 | Cache Name          | string     | Name of cache on which to operate.
-This name must match the name of predefined cache in the Infinispan
+This name must match the name of predefined cache in the {brandname}
 configuration file.
 | Flags               | vInt       |  A variable length number representing
 flags passed to the system. Each flags is represented by a bit. Note that
@@ -223,7 +223,7 @@ topology change is sent back:
 | Response header with topology change marker  | variable                 | See previous section.
 | Topology Id                                  | vInt                     | Topology ID
 | Num servers in topology                      | vInt                     |
-Number of Infinispan Hot Rod servers running within the cluster.
+Number of Hot Rod servers running within the cluster.
 This could be a subset of the entire cluster if only a fraction of those
 nodes are running Hot Rod servers.
 | m1: Host/IP length                           | vInt                     |
@@ -254,16 +254,16 @@ See previous section.
 | Topology Id                                  | vInt                     |
 Topology ID
 | Num Key Owners                               | 2 bytes (Unsigned Short) |
-Globally configured number of copies for each Infinispan distributed key
+Globally configured number of copies for each {brandname} distributed key
 | Hash Function Version                        | 1 byte                   |
 Hash function version, pointing to a specific hash function in use.
 See link:#hot_rod_hash_functions[Hot Rod hash functions] for details.
 | Hash space size                              | vInt                     |
-Modulus used by Infinispan for for all module arithmetic related to hash
+Modulus used by {brandname} for for all module arithmetic related to hash
 code generation. Clients will likely require this information in order to
 apply the correct hash calculation to the keys.
 | Num servers in topology                      | vInt                     |
-Number of Infinispan Hot Rod servers running within the cluster.
+Number of {brandname} Hot Rod servers running within the cluster.
 This could be a subset of the entire cluster if only a fraction of those
 nodes are running Hot Rod servers.
 | m1: Host/IP length                           | vInt                     |
@@ -388,7 +388,7 @@ Request (0x19):
 | Field Name          | Size       | Value
 
 | Header              | variable   | Request header
-| Entry count         | vInt       | Maximum number of Infinispan entries to
+| Entry count         | vInt       | Maximum number of {brandname} entries to
 be returned by the server (entry == key + associated value).
 Needed to support CacheLoader.load(int). If 0 then all entries are returned
 (needed for CacheLoader.loadAll()).
@@ -775,7 +775,7 @@ Error response (0x50)
 +0x8x+ = error response code +
 | Error Message Length  | vInt       | Length of error message
 | Error Message         | string     | Error message. In the case of 0x84 ,
-this error field contains the latest version supported by the hot rod server.
+this error field contains the latest version supported by the Hot Rod server.
 Length is defined by total body length.
 |==============================================================================
 
@@ -848,7 +848,7 @@ retrieve, whereas in multi-get, the client defines which keys to retrieve.
 
 ==== Hot Rod Protocol 1.1
 
-.Infinispan versions
+.{brandname} versions
 TIP: This version of the protocol is implemented since Infinispan 5.1.0.FINAL
 
 ===== Request Header
@@ -872,16 +872,16 @@ See previous section.
 | Topology Id                                  | vInt                     |
 Topology ID
 | Num Key Owners                               | 2 bytes (Unsigned Short) |
-Globally configured number of copies for each Infinispan distributed key
+Globally configured number of copies for each {brandname} distributed key
 | Hash Function Version                        | 1 byte                   |
 Hash function version, pointing to a specific hash function in use.
 See link:#hot_rod_hash_functions[Hot Rod hash functions] for details.
 | Hash space size                              | vInt                     |
-Modulus used by Infinispan for for all module arithmetic related to hash
+Modulus used by {brandname} for for all module arithmetic related to hash
 code generation. Clients will likely require this information in order to
 apply the correct hash calculation to the keys.
 | Num servers in topology                      | vInt                     |
-Number of Infinispan Hot Rod servers running within the cluster.
+Number of Hot Rod servers running within the cluster.
 This could be a subset of the entire cluster if only a fraction of those
 nodes are running Hot Rod servers.
 | Num Virtual Nodes Owners                     | vInt                     |
@@ -954,8 +954,8 @@ public static int virtualNodeHashCode(int nodeBaseHashCode, int id, Hash hashFct
 
 ==== Hot Rod Protocol 1.2
 
-.Infinispan versions
-TIP: This version of the protocol is implemented since Infinispan 5.2.0.Final. Since Infinispan 5.3.0, HotRod supports encryption via SSL. However, since this only affects the transport, the version number of the protocol has not been incremented.
+.{brandname} versions
+TIP: This version of the protocol is implemented since {brandname} 5.2.0.Final. Since {brandname} 5.3.0, HotRod supports encryption via SSL. However, since this only affects the transport, the version number of the protocol has not been incremented.
 
 ===== Request Header
 The `version` field in the header is updated to `12`.
@@ -1077,7 +1077,7 @@ link:http://community.jboss.org/docs/DOC-15592[here]
 
 ==== Hot Rod Protocol 1.3
 
-.Infinispan versions
+.{brandname} versions
 TIP: This version of the protocol is implemented since Infinispan 6.0.0.Final.
 
 ===== Request Header
@@ -1117,15 +1117,15 @@ Response (0x20):
 | Response payload | byte array | Byte array containing the protobuf encoded response object, having a length specified by previous field.
 |==============================================================================
 
-As of Infinispan 6.0, the query and response objects are specified by the protobuf message types 'org.infinispan.client.hotrod.impl.query.QueryRequest' and 'org.infinispan.client.hotrod.impl.query.QueryResponse'
+As of {brandname} 6.0, the query and response objects are specified by the protobuf message types 'org.infinispan.client.hotrod.impl.query.QueryRequest' and 'org.infinispan.client.hotrod.impl.query.QueryResponse'
 defined in link:https://github.com/infinispan/infinispan/blob/master/remote-query/remote-query-client/src/main/resources/org/infinispan/query/remote/client/query.proto[remote-query/remote-query-client/src/main/resources/org/infinispan/query/remote/client/query.proto].
-These definitions could change in future Infinispan versions, but as long as these evolutions will be kept backward
+These definitions could change in future {brandname} versions, but as long as these evolutions will be kept backward
 compatible (according to the rules defined link:https://developers.google.com/protocol-buffers/docs/proto#updating[here]) no new Hot Rod
 protocol version will be introduced to accommodate this.
 
 ==== Hot Rod Protocol 2.0
 
-.Infinispan versions
+.{brandname} versions
 TIP: This version of the protocol is implemented since Infinispan 7.0.0.Final.
 
 ===== Request Header
@@ -1207,7 +1207,7 @@ as a result of the key being modified, and the modified value follows in the res
 In Infinispan 5.2, virtual nodes based consistent hashing was abandoned and
 instead segment based consistent hash was implemented. In order to satisfy
 the ability for Hot Rod clients to find data as reliably as possible,
-Infinispan has been transforming the segment based consistent hash to fit
+{brandname} has been transforming the segment based consistent hash to fit
 Hot Rod 1.x protocol.  Starting with version 2.0, a brand new
 distribution-aware topology change header has been implemented which suppors
  segment based consistent hashing suitably and provides 100% data location
@@ -1219,7 +1219,7 @@ distribution-aware topology change header has been implemented which suppors
 | Response header with topology change marker  | variable                 |
 | Topology Id                                  | vInt                     | Topology ID
 | Num servers in topology                      | vInt                     |
-Number of Infinispan Hot Rod servers running within the cluster.
+Number of {brandname} Hot Rod servers running within the cluster.
 This could be a subset of the entire cluster if only a fraction of those
 nodes are running Hot Rod servers.
 | m1: Host/IP length                           | vInt                     |
@@ -1518,7 +1518,7 @@ converter implementation logic.
 
 ==== Hot Rod Protocol 2.1
 
-.Infinispan versions
+.{brandname} versions
 TIP: This version of the protocol is implemented since Infinispan 7.1.0.Final.
 
 ===== Request Header
@@ -1574,7 +1574,7 @@ by the converter.
 
 ==== Hot Rod Protocol 2.2
 
-.Infinispan versions
+.{brandname} versions
 TIP: This version of the protocol is implemented since Infinispan 8.0
 
 
@@ -1607,7 +1607,7 @@ DEFAULT and INFINITE can be used for default server expiration and no expiration
 
 ==== Hot Rod Protocol 2.3
 
-.Infinispan versions
+.{brandname} versions
 TIP: This version of the protocol is implemented since Infinispan 8.0
 
 ===== Operations
@@ -1693,7 +1693,7 @@ Response (0x36):
 
 ==== Hot Rod Protocol 2.4
 
-.Infinispan versions
+.{brandname} versions
 TIP: This version of the protocol is implemented since Infinispan 8.1
 
 This Hot Rod protocol version adds three new status code that gives the client
@@ -1776,7 +1776,7 @@ returned:
 
 ==== Hot Rod Protocol 2.5
 
-.Infinispan versions
+.{brandname} versions
 TIP: This version of the protocol is implemented since Infinispan 8.2
 
 This Hot Rod protocol version adds support for metadata retrieval along with entries in the iterator.
@@ -1852,7 +1852,7 @@ maxIdle of the entry in seconds. This value is returned only if the flag's
 
 ==== Hot Rod Protocol 2.6
 
-.Infinispan versions
+.{brandname} versions
 TIP: This version of the protocol is implemented since Infinispan 9.0
 
 This Hot Rod protocol version adds support for streaming get and put operations.
@@ -2017,7 +2017,7 @@ Here are the current values for each flag: +
 
 ==== Hot Rod Protocol 2.7
 
-.Infinispan versions
+.{brandname} versions
 TIP: This version of the protocol is implemented since Infinispan 9.2
 
 This Hot Rod protocol version adds support for transaction operations.
@@ -2645,7 +2645,7 @@ Response Header `Status` possible values:
 * See the <<Response Header>> for error codes.
 
 ==== Hot Rod Hash Functions
-Infinispan makes use of a consistent hash function to place nodes on a hash
+{brandname} makes use of a consistent hash function to place nodes on a hash
 wheel, and to place keys of entries on the same wheel to determine where
 entries live.
 
@@ -2656,12 +2656,12 @@ Please note that since Hot Rod clients should not assume a particular hash
 space by default, every time a hash-topology change is detected, this value is
 sent back to the client via the Hot Rod protocol.
 
-When interacting with Infinispan via the Hot Rod protocol, it is mandated
+When interacting with {brandname} via the Hot Rod protocol, it is mandated
 that keys (and values) are byte arrays, to ensure platform neutral behavior.
 As such, smart-clients which are aware of hash distribution on the backend
 would need to be able to calculate the hash codes of such byte array keys,
 again in a platform-neutral manner. To this end, the hash functions used by
-Infinispan are versioned and documented, so that it can be re-implemented by
+{brandname} are versioned and documented, so that it can be re-implemented by
 non-Java clients if needed.
 
 The version of the hash function in use is provided in the Hot Rod protocol,
@@ -2669,7 +2669,7 @@ as the hash function version parameter.
 
 .  Version 1 (single byte, 0x01) The initial version of the hash function in
 use is based on
-link:https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/hash/MurmurHash2.java[Austin Appleby's MurmurHash 2.0 algorithm] , a fast, non-cryptographic hash that exhibits excellent distribution, collision resistance and avalanche behavior.  The specific version of the algorithm used is the slightly slower, endian-neutral version that allows consistent behavior across both big- and little-endian CPU architectures.  Infinispan's version also hard-codes the hash seed as -1. For details of the algorithm, please visit link:http://sites.google.com/site/murmurhash/[Austin Appleby's MurmurHash 2.0 page].
+link:https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/hash/MurmurHash2.java[Austin Appleby's MurmurHash 2.0 algorithm] , a fast, non-cryptographic hash that exhibits excellent distribution, collision resistance and avalanche behavior.  The specific version of the algorithm used is the slightly slower, endian-neutral version that allows consistent behavior across both big- and little-endian CPU architectures.  {brandname}'s version also hard-codes the hash seed as -1. For details of the algorithm, please visit link:http://sites.google.com/site/murmurhash/[Austin Appleby's MurmurHash 2.0 page].
 Other implementations are detailed on
 link:http://en.wikipedia.org/wiki/MurmurHash[Wikipedia] .
 This hash function was the default one used by the Hot Rod server until Infinispan 4.2.1.

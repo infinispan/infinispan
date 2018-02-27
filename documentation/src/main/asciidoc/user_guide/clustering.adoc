@@ -69,7 +69,7 @@ stem:[(sum_(i=1)^"nodes""node_capacity")/"2"]
 
 
 === Local Mode
-While Infinispan is particularly interesting in clustered mode, it also offers a very
+While {brandname} is particularly interesting in clustered mode, it also offers a very
 capable local mode.
 In this mode, it acts as a simple, in-memory data cache similar to a `ConcurrentHashMap`.
 
@@ -78,10 +78,10 @@ Caches offer a lot of features over and above a simple map, including write-thro
 write-behind to a persistent store, eviction of entries to prevent running out of memory,
 and expiration.
 
-Infinispan's `Cache` interface extends JDK's `ConcurrentMap` -- making migration from a
-map to Infinispan trivial.
+{brandname}'s `Cache` interface extends JDK's `ConcurrentMap` -- making migration from a
+map to {brandname} trivial.
 
-Infinispan caches also support transactions, either integrating with an existing
+{brandname} caches also support transactions, either integrating with an existing
 transaction manager or running a separate one.
 Local caches transactions have two choices:
 
@@ -104,7 +104,7 @@ In invalidation, the caches on different nodes do not actually share any data.
 Instead, when a key is written to, the cache only aims to remove data that may be stale
 from other nodes.
 This cache mode only makes sense if you have another, permanent store for your data such
-as a database and are only using Infinispan as an optimization in a read-heavy system,
+as a database and are only using {brandname} as an optimization in a read-heavy system,
 to prevent hitting the database for every read.
 If a cache is configured for invalidation, every time data is changed in a cache, other
 caches in the cluster receive a message informing them that their data is now stale and
@@ -153,7 +153,7 @@ in the cluster, and can be retrieved locally from any node.
 Replicated mode provides a quick and easy way to share state across a cluster,
 however replication practically only performs well in small clusters (under 10 nodes),
 due to the number of messages needed for a write scaling linearly with the cluster size.
-Infinispan can be configured to use UDP multicast, which mitigates this problem to some
+{brandname} can be configured to use UDP multicast, which mitigates this problem to some
 degree.
 
 Each key has a primary owner, which serializes data container updates in order to
@@ -202,7 +202,7 @@ The number of copies represents a trade-off between performance and durability o
 The more copies you maintain, the lower performance will be, but also the lower the risk
 of losing data due to server or network failures.
 Regardless of how many copies are maintained, distribution still scales linearly, and
-this is key to Infinispan's scalability.
+this is key to {brandname}'s scalability.
 
 The owners of a key are split into one *primary owner*, which coordinates writes to the
 key, and zero or more *backup owners*.
@@ -292,7 +292,7 @@ There is no hard rule on how segments must be mapped to owners, but the goal is 
 balance the number of segments allocated to each node and at the same time minimize the
 number of segments that have to move after a node joins or leaves the cluster.
 The segment mapping is customizable, and in fact there are five implementations that
-ship with Infinispan:
+ship with {brandname}:
 
 SyncConsistentHashFactory::
   An algorithm based on
@@ -325,7 +325,7 @@ ReplicatedConsistentHashFactory::
 Capacity factors are another way to customize the mapping of segments to nodes.
 The nodes in a cluster are not always identical.
 If a node has 2x the memory of a "regular" node, configuring it with a `capacityFactor`
-of `2` tells Infinispan to allocate 2x segments to that node.
+of `2` tells {brandname} to allocate 2x segments to that node.
 The capacity factor can be any non-negative number, and the hashing algorithm will try to
 assign to each node a load weighted by its capacity factor (both as a primary owner and as
 a backup owner).
@@ -360,7 +360,7 @@ Configuration c = new ConfigurationBuilder()
 ----
 
 ==== Initial cluster size
-Infinispan's very dynamic nature in handling topology changes (i.e. nodes being added / removed
+{brandname}'s very dynamic nature in handling topology changes (i.e. nodes being added / removed
 at runtime) means that, normally, a node doesn't wait for the presence of other nodes before
 starting. While this is very flexible, it might not be suitable for applications which require
 a specific number of nodes to join the cluster before caches are started. For this reason,
@@ -521,7 +521,7 @@ being able to select the actual nodes.
 
 ===== How does it work?
 By default, the segment of a key is computed using the key's `hashCode()`.
-If you use the grouping API, Infinispan will compute the segment of the group and use
+If you use the grouping API, {brandname} will compute the segment of the group and use
 that as the segment of the key.
 See the <<key_ownership, Key Ownership>> section for more details on how segments are
 then mapped to nodes.
@@ -533,7 +533,7 @@ The group can either be intrinsic to the entry (generated by the key class) or e
 (generated by an external function).
 
 ===== How do I use the grouping API?
-First, you must enable groups. If you are configuring Infinispan programmatically, then call:
+First, you must enable groups. If you are configuring {brandname} programmatically, then call:
 
 [source,java]
 ----
@@ -626,7 +626,7 @@ public class KXGrouper implements Grouper<String> {
 ----
 
 `Grouper` implementations must be registered explicitly in the cache configuration.
-If you are configuring Infinispan programmatically:
+If you are configuring {brandname} programmatically:
 
 [source,java]
 ----
@@ -657,9 +657,6 @@ link:http://docs.jboss.org/infinispan/{infinispanVersion}/apidocs/org/infinispan
 
 Both methods iterate over the entire data container and store (if present), so they can
 be slow when a cache contains lots of small groups.
-
-NOTE: This interface is available since Infinispan 7.0.0.
-
 
 === Scattered Mode
 
@@ -751,7 +748,7 @@ In some cases, the return value may not be correct:
 3. When using asynchronous communications.
 4. When there are multiple concurrent writes to the same key, and the cache topology
 changes.
-The topology change will make Infinispan retry the write operations, and a retried
+The topology change will make {brandname} retry the write operations, and a retried
 operation's return value is not reliable.
 
 Transactional caches return the correct previous value in cases 3 and 4.
@@ -788,11 +785,11 @@ the only way protect against it is to enable write-skew checks and to catch
 
 === Partition handling
 
-An Infinispan cluster is built out of a number of nodes where data is stored. In order
-not to lose data in the presence of node failures, Infinispan copies the same data -- cache
-entry in Infinispan parlance -- over multiple nodes. This level of data redundancy is
+An {brandname} cluster is built out of a number of nodes where data is stored. In order
+not to lose data in the presence of node failures, {brandname} copies the same data -- cache
+entry in {brandname} parlance -- over multiple nodes. This level of data redundancy is
 configured through the `numOwners` configuration attribute and ensures that as long as
-fewer than `numOwners` nodes crash simultaneously, Infinispan has a copy of the data
+fewer than `numOwners` nodes crash simultaneously, {brandname} has a copy of the data
 available.
 
 However, there might be catastrophic situations in which more than `numOwners` nodes
@@ -806,11 +803,11 @@ ways to alleviate the possibility for the split brain to happen, such as redunda
  link:https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Deployment_Guide/s2-networkscripts-interfaces-chan.html[IP bonding].
  These only reduce the window of time for the problem to occur, though.
 `numOwners` nodes crash in sequence:: When at least `numOwners` nodes crash in rapid
-succession and Infinispan does not have the time to properly rebalance its state between
+succession and {brandname} does not have the time to properly rebalance its state between
 crashes, the result is partial data loss.
 
 The partition handling functionality discussed in this section allows the user to configure what operations can be
-performed on a cache in the event of a split brain occurring. Infinispan provides multiple partition handling strategies,
+performed on a cache in the event of a split brain occurring. {brandname} provides multiple partition handling strategies,
 which in terms of Brewer's link:http://en.wikipedia.org/wiki/CAP_theorem[CAP theorem] determine whether availability or
 consistency is sacrificed in the presence of partition(s). Below is a list of the provided strategies:
 
@@ -833,12 +830,12 @@ This is still a consistent approach because some entries are readable if availab
 
 The requirements of your application should determine which strategy is appropriate. For example, DENY_READ_WRITES is more
 appropriate for applications that have high consistency requirements; i.e. when the data read from the system must be accurate.
-Whereas if Infinispan is used as a best-effort cache, partitions maybe perfectly tolerable and the ALLOW_READ_WRITES might
+Whereas if {brandname} is used as a best-effort cache, partitions maybe perfectly tolerable and the ALLOW_READ_WRITES might
 be more appropriate as it favours availability over consistency.
 
-The following sections describe how Infinispan handles <<split-brain,split brain>> and
+The following sections describe how {brandname} handles <<split-brain,split brain>> and
 <<successive-node-failures,successive failures>> for each of the partition handling strategies. This is followed by a section
-describing how Infinispan allows for automatic conflict resolution upon partition merges via <<merge-policies, merge policies>>.
+describing how {brandname} allows for automatic conflict resolution upon partition merges via <<merge-policies, merge policies>>.
 Finally, we provide a section describing <<partition-handling-configuration, how to configure partition handling strategies and merge policies>>.
 
 [[split-brain]]
@@ -938,7 +935,7 @@ situation as well.
 
 [[successive-node-failures]]
 ==== Successive nodes stopped
-As mentioned in the previous section, Infinispan can't detect whether a node
+As mentioned in the previous section, {brandname} can't detect whether a node
 left the JGroups view because of a process/machine crash, or because of a
 network failure: whenever a node leaves the JGroups cluster abruptly, it is
 assumed to be because of a network problem.
@@ -948,13 +945,13 @@ cluster can remain available and will try to make new replicas of the data
 on the crashed node. However, other nodes might crash during the rebalance process.
 If more than `numOwners` nodes crash in a short interval of time, there is a
 chance that some cache entries have disappeared from the cluster altogether.
-In this case, with the DENY_READ_WRITES or ALLOW_READS strategy enabled, Infinispan
+In this case, with the DENY_READ_WRITES or ALLOW_READS strategy enabled, {brandname}
 assumes (incorrectly) that there is a split brain and enters DEGRADED mode
 as described in the split-brain section.
 
 The administrator can also shut down more than `numOwners` nodes in
 rapid succession, causing the loss of the data stored only on those nodes.
-When the administrator shuts down a node gracefully, Infinispan knows that
+When the administrator shuts down a node gracefully, {brandname} knows that
 the node can't come back.
 However, the cluster doesn't keep track of how each node left, and the cache
 still enters DEGRADED mode as if those nodes had crashed.
@@ -1002,7 +999,7 @@ with the key for which a conflict was detected.
 NOTE: EntryMergePolicy::merge is only called when a conflict has been detected, it is not called if all CacheEntrys are
 the same.
 
-Currently Infinispan provides the following implementations of EntryMergePolicy:
+Currently {brandname} provides the following implementations of EntryMergePolicy:
 |===
 | Policy | Description
 
@@ -1102,7 +1099,7 @@ public class CustomMergePolicy implements EntryMergePolicy<String, String> {
    @Override
    public CacheEntry<String, String> merge(CacheEntry<String, String> preferredEntry, List<CacheEntry<String, String>> otherEntries) {
       // decide which entry should be used
-      
+
       return the_solved_CacheEntry;
    }
 ----

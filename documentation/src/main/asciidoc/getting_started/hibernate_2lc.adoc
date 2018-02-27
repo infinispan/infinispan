@@ -1,4 +1,4 @@
-==  Using Infinispan as a second level cache for Hibernate
+==  Using {brandname} as a second level cache for Hibernate
 
 *TODO*
 

@@ -3,21 +3,21 @@ In this chapter we quickly walk through the basics on contributing; future chapt
 
 === Prequisites
 |=============
-| Java 8    | Infinispan is baselined on Java 8 (we build with Oracle JDK, OpenJDK and IBM JDK)
-| Maven 3.2 | The Infinispan build uses Maven, and you should be using at least Maven 3.2
-| Git       | The Infinispan source code is stored in Git.
+| Java 8    | {brandname} is baselined on Java 8 (we build with Oracle JDK, OpenJDK and IBM JDK)
+| Maven 3.2 | The {brandname} build uses Maven, and you should be using at least Maven 3.2
+| Git       | The {brandname} source code is stored in Git.
 |=============
 
 === Issue Management
 
-Infinispan uses JIRA for issue management, hosted on link:http://issues.jboss.org/browse/ISPN[issues.jboss.org].
+{brandname} uses JIRA for issue management, hosted on link:http://issues.jboss.org/browse/ISPN[issues.jboss.org].
 You can log in using your jboss.org username and password. 
 
 ==== Reporting Issues
 If you need to create a new issue then follow these steps.
 
 . Choose between
-  * _Feature Request_ if you want to request an enhancement or new feature for Infinispan 
+  * _Feature Request_ if you want to request an enhancement or new feature for {brandname}
   * _Bug_ if you have discovered an issue 
   * _Task_ if you wish to request a documentation, sample or process (e.g. build system) enhancement or issue 
 . Then enter a _Summary_ , describing briefly the problem - please try to be descriptive! 
@@ -32,7 +32,7 @@ If you need to create a new issue then follow these steps.
 
 [WARNING]
 ==== 
- Only Infinispan contributors should set the _Fix Version_ field. 
+ Only {brandname} contributors should set the _Fix Version_ field.
 ==== 
 
 When setting the _Fix Version_ field for bugs and issues in JIRA, the following guidelines apply: 
@@ -56,7 +56,7 @@ For example, a bug found in 4.1.0.Alpha2 (but not in 4.1.0.Alpha1) should be mar
 For example, see link:https://issues.jboss.org/browse/ISPN-416[ISPN-416]. 
 
 === Version control
-Infinispan uses link:http://git-scm.com[git], hosted on link:http://github.com[GitHub], for version control.
+{brandname} uses link:http://git-scm.com[git], hosted on link:http://github.com[GitHub], for version control.
 You can find the upstream git repository at link:https://github.com/infinispan[]. To clone the repository: 
 
 ----
@@ -79,17 +79,17 @@ Before we import the project, we need to clone the project as described above.
 . Install the m2eclipse plugin if you have not already installed it. This is bundled with Eclipse from version "Indigo" 3.7. 
 For older versions follow instructions on link:http://eclipse.org/m2e/[].
 
-. Import the Infinispan maven project. Select File -> Import in your eclipse workbench. Select the Existing Maven Project importer.
+. Import the {brandname} maven project. Select File -> Import in your eclipse workbench. Select the Existing Maven Project importer.
 +
 image::images/import_maven1.png[]
 
-. Select the root directory of your Infinispan checkout.
+. Select the root directory of your {brandname} checkout.
 +
 image::images/import_maven2.png[]
 
-. Select Infinispan modules that you want to import.
+. Select {brandname} modules that you want to import.
 
-. Finally, from Infinispan 5.0 onwards, annotation processing is used to allow log messages to be internationalized.  This processing can be done directly from Eclipse as part of compilation but it requires some set up:
+. Finally, from {brandname} 5.0 onwards, annotation processing is used to allow log messages to be internationalized.  This processing can be done directly from Eclipse as part of compilation but it requires some set up:
 
 ..  Open the properties for infinispan-core and locate Annotation Processing 
 
@@ -116,7 +116,7 @@ When you start link:http://www.jetbrains.com/idea/[IntelliJ IDEA], you will be g
 
 image::images/idea-12-import.jpg[]
 
-If you have already obtained a copy of the Infinispan sources via Github (see _'Source Control'_), then follow: _Import Project -> /directory/to/downloaded/sources_ .
+If you have already obtained a copy of the {brandname} sources via Github (see _'Source Control'_), then follow: _Import Project -> /directory/to/downloaded/sources_ .
 IntelliJ will automatically make use of Maven to import the project since it will detect a `pom.xml` file in the base directory.
 
 If you have not obtained the sources already, you can use the Git integration in IntelliJ IDEA 12. Click on _Check out from Version Control -> Github_.
@@ -126,7 +126,7 @@ image::images/idea-12-git.png[]
 
 ====== Compiler settings
 
-From Infinispan 5.0 onwards, annotation processing is used to allow log messages to be internationalized.
+From {brandname} 5.0 onwards, annotation processing is used to allow log messages to be internationalized.
 This processing can be done directly from IntelliJ as part of compilation but it requires some set up:
 
 . Go to Preferences -> Compiler -> Annotation Processor" and click on _Enable annotation processing_ 
@@ -154,24 +154,24 @@ image::images/idea-12-scala2.png[]
 Download the code style JAR file from link:https://github.com/infinispan/infinispan/blob/master/ide-settings/intellij/IntelliJ_IDEA_Code_Style.jar?raw=true[here] and import this into IntelliJ IDEA.
 
 === Builds
-Infinispan uses link:http://maven.apache.org/[Maven] for builds. Make sure you have Maven 3 installed, and properly configured.
+{brandname} uses link:http://maven.apache.org/[Maven] for builds. Make sure you have Maven 3 installed, and properly configured.
 For more information, read <<_building_infinispan,the Maven chapter>>. 
 
 ==== Continuous Integration
-Infinispan uses link:http://www.jetbrains.com/teamcity[TeamCity] for continuous integration.
+{brandname} uses link:http://www.jetbrains.com/teamcity[TeamCity] for continuous integration.
 TeamCity polls GitHub for updates and runs whenever updates are available.
 You can check the status of the latest builds link:http://ci.infinispan.org/overview.html[here] . 
 
 === Testing
-Infinispan uses link:http://testng.org/doc/index.html[TestNG] for unit and functional tests, and all Infinispan tests are run in parallel.
+{brandname} uses link:http://testng.org/doc/index.html[TestNG] for unit and functional tests, and all {brandname} tests are run in parallel.
 For more information see the chapter on the test suite; this chapter gives advice on writing tests which can safely execute in parallel. 
 
-=== Communicating with other Infinispan contributors
-Infinispan contributors use a mix of technologies to communicate.  
+=== Communicating with other {brandname} contributors
+{brandname} contributors use a mix of technologies to communicate.
 Visit link:http://infinispan.org/community/[this page] to learn more.
 
 === Style Requirements
-Infinispan uses the link:http://en.wikipedia.org/wiki/Indent_style#K.26R_style[K&amp;R code style] for all Java source files, with two exceptions: 
+{brandname} uses the link:http://en.wikipedia.org/wiki/Indent_style#K.26R_style[K&amp;R code style] for all Java source files, with two exceptions:
 
 . use 3 spaces instead of a tab character for indentations.
 . braces start on the same line for class, interface and method declarations as well as code blocks.
@@ -191,10 +191,10 @@ This helps JIRA pick out these checkins and display them on the issue, making it
 If your comment does not follow this format, your commit may not be merged into upstream. 
 
 === Logging
-Infinispan follows the JBoss logging standards, which can be found link:https://community.jboss.org/wiki/LoggingStandards[here] . 
+{brandname} follows the JBoss logging standards, which can be found link:https://community.jboss.org/wiki/LoggingStandards[here] .
 
-From Infinispan 5.0 onwards, Infinispan uses JBoss Logging to abstract over the logging backend.
-Infinispan supports localization of log message for categories of INFO or above as explained in link:http://community.jboss.org/docs/16738[the JBoss Logging guidelines] .
+From {brandname} 5.0 onwards, {brandname} uses JBoss Logging to abstract over the logging backend.
+{brandname} supports localization of log message for categories of INFO or above as explained in link:http://community.jboss.org/docs/16738[the JBoss Logging guidelines] .
 As a developer, this means that for each INFO, WARN, ERROR and FATAL message your code emits, you need to modify the Log class in your module and add an explicit method for it with the right annotations.
 
 For example: 
@@ -266,5 +266,5 @@ The last thing to figure out is which id to give to the message. Each module tha
 
 NOTE: When editing the above table, remember to update the README-i18n.txt file in the project sources!
 
-NOTE: You will need to enable annotation processing in order to be able to compile Infinispan and have the logger implementation generated.
+NOTE: You will need to enable annotation processing in order to be able to compile {brandname} and have the logger implementation generated.
 

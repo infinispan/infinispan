@@ -1,8 +1,8 @@
 ==  Introduction
 
-Welcome to the official Infinispan user guide.
-This comprehensive document will guide you through every last detail of Infinispan.
-Because of this, it can be a poor starting point if you are new to Infinispan.
+Welcome to the official {brandname} user guide.
+This comprehensive document will guide you through every last detail of {brandname}.
+Because of this, it can be a poor starting point if you are new to {brandname}.
 
 TIP: For newbies, starting with the link:../getting_started/getting_started.html[Getting Started Guide]
 or one of the link:http://www.infinispan.org/documentation[Quickstarts] is probably a better bet.
@@ -10,45 +10,45 @@ or one of the link:http://www.infinispan.org/documentation[Quickstarts] is proba
 The link:../faqs/faqs.html[Frequently Asked Questions] and link:../glossary/glossary.html[Glossary]
 are also useful documents to have alongside this user guide.
 
-=== What is Infinispan ?
+=== What is {brandname} ?
 
-Infinispan is a distributed in-memory key/value data store with optional schema, available under the Apache License 2.0.
+{brandname} is a distributed in-memory key/value data store with optional schema, available under the Apache License 2.0.
 It can be used both as an embedded Java library and as a language-independent service accessed remotely over a variety of
 protocols (Hot Rod, REST, Memcached and WebSockets). It offers advanced functionality such as transactions, events,
 querying and distributed processing as well as numerous integrations with frameworks such as the JCache API standard,
 CDI, Hibernate, WildFly, Spring Cache, Spring Session, Lucene, Spark and Hadoop.
 
-=== Why use Infinispan ?
+=== Why use {brandname} ?
 
 ==== As a local cache
 
-The primary use for Infinispan is to provide a fast in-memory cache of frequently accessed data. Suppose you have a slow
+The primary use for {brandname} is to provide a fast in-memory cache of frequently accessed data. Suppose you have a slow
 data source (database, web service, text file, etc): you could load some or all of that data in memory so that it's just a
-memory access away from your code. Using Infinispan is better than using a simple ConcurrentHashMap, since it has additional
+memory access away from your code. Using {brandname} is better than using a simple ConcurrentHashMap, since it has additional
 useful features such as expiration and eviction.
 
 ==== As a clustered cache
 
 If your data doesn't fit in a single node, or you want to invalidate entries across multiple instances of your application,
-Infinispan can scale horizontally to several hundred nodes.
+{brandname} can scale horizontally to several hundred nodes.
 
 ==== As a clustering building block for your applications
 
-If you need to make your application cluster-aware, integrate Infinispan and get access to features like topology change
+If you need to make your application cluster-aware, integrate {brandname} and get access to features like topology change
 notifications, cluster communication and clustered execution.
 
 ==== As a remote cache
 
 If you want to be able to scale your caching layer independently from your application, or you need to make your data
-available to different applications, possibly even using different languages / platforms, use Infinispan Server and its
+available to different applications, possibly even using different languages / platforms, use {brandname} Server and its
 various clients.
 
 ==== As a data grid
 
-Data you place in Infinispan doesn't have to be temporary: use Infinispan as your primary store and use its powerful features
+Data you place in {brandname} doesn't have to be temporary: use {brandname} as your primary store and use its powerful features
 such as transactions, notifications, queries, distributed execution, distributed streams, analytics to process data quickly.
 
 ==== As a geographical backup for your data
 
-Infinispan supports replication between clusters, allowing you to backup your data across geographically remote sites.
+{brandname} supports replication between clusters, allowing you to backup your data across geographically remote sites.
 

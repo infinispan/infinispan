@@ -1,14 +1,6 @@
 ==== Single File Store
 
-Starting with Infinispan 6.0, a new file cache store has been created called
-single file cache store. The old pre-6.0 file cache store has been completely
-removed, and it's no longer configurable.
-
-NOTE: Check <<_Data_migration_section,Data Migration section>> for information
-on how to migrate old file based cache store data to the new single file
-cache store.
-
-The new single file cache store keeps all data in a single file. The way it
+The single file cache store keeps all data in a single file. The way it
 looks up data is by keeping an in-memory index of keys and the positions of
 their values in this file. This results in greater performance compared to old
 file cache store. There is one caveat though. Since the single file based
@@ -24,7 +16,7 @@ the cache, the file won't shrink, and neither will be de-fragmented.
 These are the available configuration options for the single file cache store:
 
 * `path` where data will be stored. (e.g., `path="/tmp/myDataStore"`).
-By default, the location is `Infinispan-SingleFileStore`.
+By default, the location is `{brandname}-SingleFileStore`.
 
 * `max-entries` specifies the maximum number of entries to keep in this file
 store. As mentioned before, in order to speed up lookups, the single file
@@ -33,10 +25,10 @@ file. To avoid this index resulting in memory consumption problems, this
 cache store can bounded by a maximum number of entries that it stores. If
 this limit is exceeded, entries are removed permanently using the LRU
 algorithm both from  the in-memory index and the underlying file based
-cache store. So, setting a maximum limit only makes sense when Infinispan is
+cache store. So, setting a maximum limit only makes sense when {brandname} is
 used as a cache, whose contents can be recomputed or they can be retrieved
 from the authoritative data store. If this maximum limit is set when the
-Infinispan is used as an authoritative data store, it could lead to data
+{brandname} is used as an authoritative data store, it could lead to data
 loss, and hence it's not recommended for this use case. The default value is
 `-1` which means that the file store size is unlimited.
 

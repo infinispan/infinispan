@@ -1,16 +1,16 @@
 ===  Memcached Server
-The Infinispan Server distribution contains a server module that implements the link:http://github.com/memcached/memcached/blob/master/doc/protocol.txt[Memcached text protocol]. This allows Memcached clients to talk to one or several Infinispan backed Memcached servers. These servers could either be working standalone just like Memcached does where each server acts independently and does not communicate with the rest, or they could be clustered where servers replicate or distribute their contents to other Infinispan backed Memcached servers, thus providing clients with failover capabilities.
-Please refer to Infinispan Server's link:../infinispan_server_guide/infinispan_server_guide.html[documentation] for instructions on how to configure and run a Memcached server.
+The {brandname} Server distribution contains a server module that implements the link:http://github.com/memcached/memcached/blob/master/doc/protocol.txt[Memcached text protocol]. This allows Memcached clients to talk to one or several {brandname} backed Memcached servers. These servers could either be working standalone just like Memcached does where each server acts independently and does not communicate with the rest, or they could be clustered where servers replicate or distribute their contents to other {brandname} backed Memcached servers, thus providing clients with failover capabilities.
+Please refer to {brandname} Server's link:../infinispan_server_guide/infinispan_server_guide.html[documentation] for instructions on how to configure and run a Memcached server.
 
 ==== Command Clarifications
 ===== Flush All
-Even in a clustered environment, flush_all command leads to the clearing of the Infinispan Memcached server where the call lands. There's no attempt to propagate this flush to other nodes in the cluster. This is done so that flush_all with delay use case can be reproduced with the Infinispan Memcached server. The aim of passing a delay to flush_all is so that different Memcached servers in a full can be flushed at different times, and hence avoid overloading the database with requests as a result of all Memcached servers being empty. For more info, check the link:http://github.com/memcached/memcached/blob/master/doc/protocol.txt[Memcached text protocol section on flush_all] . 
+Even in a clustered environment, flush_all command leads to the clearing of the {brandname} Memcached server where the call lands. There's no attempt to propagate this flush to other nodes in the cluster. This is done so that flush_all with delay use case can be reproduced with the {brandname} Memcached server. The aim of passing a delay to flush_all is so that different Memcached servers in a full can be flushed at different times, and hence avoid overloading the database with requests as a result of all Memcached servers being empty. For more info, check the link:http://github.com/memcached/memcached/blob/master/doc/protocol.txt[Memcached text protocol section on flush_all] .
 
 ==== Unsupported Features
-This section explains those parts of the memcached text protocol that for one reason or the other, are not currently supported by the Infinispan based memcached implementation.
+This section explains those parts of the memcached text protocol that for one reason or the other, are not currently supported by the {brandname} based memcached implementation.
 
 ===== Individual Stats
-Due to difference in nature between the original memcached implementation which is C/C\+\+ based and the Infinispan implementation which is Java based, there're some general purpose stats that are not supported. For these unsupported stats, Infinispan memcached server always returns 0.
+Due to difference in nature between the original memcached implementation which is C/C\+\+ based and the {brandname} implementation which is Java based, there're some general purpose stats that are not supported. For these unsupported stats, {brandname} memcached server always returns 0.
 
 .Unsupported statistics
 *  pid 
@@ -32,19 +32,19 @@ Due to difference in nature between the original memcached implementation which 
 The settings statistics section of the text protocol has not been implemented due to its volatility.
 
 ===== Settings with Arguments Parameter
-Since the arguments that can be send to the Memcached server are not documented, Infinispan Memcached server does not support passing any arguments to stats command. If any parameters are passed, the Infinispan Memcached server will respond with a CLIENT_ERROR . 
+Since the arguments that can be send to the Memcached server are not documented, {brandname} Memcached server does not support passing any arguments to stats command. If any parameters are passed, the {brandname} Memcached server will respond with a CLIENT_ERROR .
 
 ===== Delete Hold Time Parameter
-Memcached does no longer honor the optional hold time parameter to delete command and so the Infinispan based memcached server does not implement such feature either.
+Memcached does no longer honor the optional hold time parameter to delete command and so the {brandname} based memcached server does not implement such feature either.
 
 ===== Verbosity Command
-Verbosity command is not supported since Infinispan logging cannot be simplified to defining the logging level alone.
+Verbosity command is not supported since {brandname} logging cannot be simplified to defining the logging level alone.
 
-====  Talking To Infinispan Memcached Servers From Non-Java Clients
-This section shows how to talk to Infinispan memcached server via non-java client, such as a python script.
+====  Talking To {brandname} Memcached Servers From Non-Java Clients
+This section shows how to talk to {brandname} memcached server via non-java client, such as a python script.
 
 ===== Multi Clustered Server Tutorial
-The example showcases the distribution capabilities of Infinispan memcached severs that are not available in the original memcached implementation.
+The example showcases the distribution capabilities of {brandname} memcached severs that are not available in the original memcached implementation.
 
 * Start two clustered nodes: 
 This configuration is the same one used for the GUI demo:
@@ -58,7 +58,7 @@ Alternatively use
  
 Which automatically starts two nodes.
 
-*  Execute link:https://github.com/infinispan/infinispan/tree/master/server/memcached/src/test/resources/test_memcached_write.py[test_memcached_write.py] script which basically executes several write operations against the Infinispan memcached server bound to port 11211. If the script is executed successfully, you should see an output similar to this: 
+*  Execute link:https://github.com/infinispan/infinispan/tree/master/server/memcached/src/test/resources/test_memcached_write.py[test_memcached_write.py] script which basically executes several write operations against the {brandname} memcached server bound to port 11211. If the script is executed successfully, you should see an output similar to this:
 
  Connecting to 127.0.0.1:11211
  Testing set ['Simple_Key': Simple value] ... OK

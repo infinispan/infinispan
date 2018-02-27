@@ -1,11 +1,11 @@
 ==  Management Tooling [[jmx:chapter]]
-Management of Infinispan instances is all about exposing as much relevant statistical information that allows administrators to get a view of the state of each Infinispan instance. Taking in account that a single installation could be made up of several tens or hundreds Infinispan instances, providing clear and concise information in an efficient manner is imperative. The following sections dive into the range of management tooling that Infinispan provides.
+Management of {brandname} instances is all about exposing as much relevant statistical information that allows administrators to get a view of the state of each {brandname} instance. Taking in account that a single installation could be made up of several tens or hundreds {brandname} instances, providing clear and concise information in an efficient manner is imperative. The following sections dive into the range of management tooling that {brandname} provides.
 
 === JMX
-Over the years, link:http://www.oracle.com/technetwork/java/javase/tech/javamanagement-140525.html[JMX] has become the de facto standard for management and administration of middleware and as a result, the Infinispan team has decided to standardize on this technology for the exposure of management and statistical information.
+Over the years, link:http://www.oracle.com/technetwork/java/javase/tech/javamanagement-140525.html[JMX] has become the de facto standard for management and administration of middleware and as a result, the {brandname} team has decided to standardize on this technology for the exposure of management and statistical information.
 
 ==== Understanding The Exposed MBeans
-By connecting to the VM(s) where Infinispan is running with a standard JMX GUI such as link:https://docs.oracle.com/javase/8/docs/technotes/guides/management/jconsole.html[JConsole] or link:https://docs.oracle.com/javase/8/docs/technotes/guides/visualvm/[VisualVM] you should find the following MBeans:
+By connecting to the VM(s) where {brandname} is running with a standard JMX GUI such as link:https://docs.oracle.com/javase/8/docs/technotes/guides/management/jconsole.html[JConsole] or link:https://docs.oracle.com/javase/8/docs/technotes/guides/visualvm/[VisualVM] you should find the following MBeans:
 
 *  For CacheManager level JMX statistics, without further configuration, you should see an MBean called _org.infinispan:type=CacheManager,name="DefaultCacheManager"_ with link:{javadocroot}/jmxComponents.html#CacheManager[properties specified by the CacheManager MBean] .
 
@@ -59,7 +59,7 @@ Enabling Cache statistics collections differs depending on the configuration sty
 
 ==== Monitoring cluster health
 
-It is also possible to monitor Infinispan cluster health using JMX. On CacheManager there's an additional object called `CacheContainerHealth`. It contains the following attributes:
+It is also possible to monitor {brandname} cluster health using JMX. On CacheManager there's an additional object called `CacheContainerHealth`. It contains the following attributes:
 
 * cacheHealth - a list of caches and corresponding statuses (HEALTHY, UNHEALTHY or REBALANCING)
 * clusterHealth - overall cluster health
@@ -100,7 +100,7 @@ Using either of these options should result on the CacheManager MBean name being
 For the time being, you can still set your own jmxDomain if you need to and we also allow duplicate domains, or rather duplicate JMX names, but these should be limited to very special cases where different cache managers within the same JVM are named equally.
 
 ==== Registering MBeans In Non-Default MBean Servers
-Let's discuss where Infinispan registers all these MBeans. By default, Infinispan registers them in the link:{jdkdocroot}/java/lang/management/ManagementFactory.html#getPlatformMBeanServer--[standard JVM MBeanServer platform] . However, users might want to register these MBeans in a different MBeanServer instance. For example, an application server might work with a different MBeanServer instance to the default platform one. In such cases, users should implement the link:{javadocroot}/org/infinispan/jmx/MBeanServerLookup.html[MBeanServerLookup interface] provided by Infinispan so that the link:{javadocroot}/org/infinispan/jmx/MBeanServerLookup.html#getMBeanServer--[getMBeanServer() method] returns the MBeanServer under which Infinispan should register the management MBeans. Once you have your implementation ready, simply configure Infinispan with the fully qualified name of this class. For example:
+Let's discuss where {brandname} registers all these MBeans. By default, {brandname} registers them in the link:{jdkdocroot}/java/lang/management/ManagementFactory.html#getPlatformMBeanServer--[standard JVM MBeanServer platform] . However, users might want to register these MBeans in a different MBeanServer instance. For example, an application server might work with a different MBeanServer instance to the default platform one. In such cases, users should implement the link:{javadocroot}/org/infinispan/jmx/MBeanServerLookup.html[MBeanServerLookup interface] provided by {brandname} so that the link:{javadocroot}/org/infinispan/jmx/MBeanServerLookup.html#getMBeanServer--[getMBeanServer() method] returns the MBeanServer under which {brandname} should register the management MBeans. Once you have your implementation ready, simply configure {brandname} with the fully qualified name of this class. For example:
 
 
 * Via XML:
@@ -124,19 +124,16 @@ globalConfigurationBuilder.globalJmxStatistics()
 
 ----
 
-==== MBeans added in Infinispan 5.0
-There has been a couple of noticeable additions in Infinispan 5.0 in terms of exposed MBeans:
+==== Available MBeans
 
-.  MBeans related to Infinispan servers are now available that for the moment focus on the transport layer. A new MBean named `org.infinispan:type=Server,name={Memcached|HotRod},component=Transport` offers information such as: host name, port, bytes read, byte written, number of worker threads, etc.
-
-.  When global JMX statistics are enabled, the JGroups channel MBean is also registered automatically under the name `org.infinispan:type=channel,cluster={name-of-your-cluster}`, so you can get key information of the group communication transport layer that's used to cluster Infinispan instances.
-
+For a complete list of available MBeans, refer to the link:{javadocroot}/jmxComponents.html[JMX reference documentation]
 
 include::cli.adoc[]
+
 === Hawt.io
-link:http://hawt.io[Hawt.io], a slick, fast, HTML5-based open source management console, also has support for Infinispan.
+link:http://hawt.io[Hawt.io], a slick, fast, HTML5-based open source management console, also has support for {brandname}.
 Refer to link:http://hawt.io/plugins/infinispan/[Hawt.io's documentation] for information regarding this plugin.
 
 === Writing plugins for other management tools
-Any management tool that supports JMX already has basic support for Infinispan. However, custom plugins could be written to adapt the JMX information for easier consumption.
+Any management tool that supports JMX already has basic support for {brandname}. However, custom plugins could be written to adapt the JMX information for easier consumption.
 

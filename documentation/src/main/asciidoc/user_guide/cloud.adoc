@@ -1,6 +1,6 @@
 ==  Running on Cloud Services
 
-In order to turn on Cloud support for Infinispan library mode, one needs to add a new dependency to the classpath:
+In order to turn on Cloud support for {brandname} library mode, one needs to add a new dependency to the classpath:
 
 .Cloud support in library mode
 [source,xml]
@@ -16,7 +16,7 @@ The above dependency adds `infinispan-core` to the classpath as well as some def
 
 === Generic Discovery protocols
 
-The main difference between running Infinispan in a private environment and a cloud provider is
+The main difference between running {brandname} in a private environment and a cloud provider is
 that in the latter node discovery becomes a bit trickier because things like multicast don't work.
 To circumvent this you can use alternate JGroups PING protocols. Before delving into the cloud-specific,
 lets look at some generic discovery protocols.
@@ -45,9 +45,9 @@ See link:http://community.jboss.org/wiki/JGroupsTCPPING[] for more information a
 Another approach is to have a central server (Gossip, which each node will be configured to contact.
 This central server will tell each node in the cluster about each other node.
 
-The address (ip:port) that the Gossip router is listening on can be injected into the JGroups configuration used by Infinispan.
+The address (ip:port) that the Gossip router is listening on can be injected into the JGroups configuration used by {brandname}.
 To do this pass the gossip routers address as a system property to the JVM e.g. `-DGossipRouterAddress="10.10.2.4[12001]"`
-and reference this property in the JGroups configuration that Infinispan is using e.g.
+and reference this property in the JGroups configuration that {brandname} is using e.g.
 
 .Sample TCPGOSSIP configuration
 [source,xml]
@@ -88,7 +88,7 @@ S3_PING allows Amazon S3 to be used as the shared storage. Be sure that you have
 A similar approach to S3_PING, but using a JDBC connection to a shared database. On EC2 that is quite easy using Amazon RDS. See the link:http://community.jboss.org/wiki/JDBCPING[JDBC_PING Wiki page] for details.
 
 === Microsoft Azure
-Infinispan can be used on the Azure platform. Aside from using TCP_PING or GossipRouter, there is an Azure-specific
+{brandname} can be used on the Azure platform. Aside from using TCP_PING or GossipRouter, there is an Azure-specific
 discovery protocol:
 
 ==== AZURE_PING
@@ -106,7 +106,7 @@ AZURE_PING uses a shared Azure Blob Storage to store discovery information. Conf
 
 === Google Compute Engine
 
-Infinispan can be used on the Google Compute Engine (GCE) platform. Aside from using TCP_PING or GossipRouter, there is a GCE-specific
+{brandname} can be used on the Google Compute Engine (GCE) platform. Aside from using TCP_PING or GossipRouter, there is a GCE-specific
 discovery protocol:
 
 ==== GOOGLE_PING
@@ -241,7 +241,7 @@ adjust the value of `FD_ALL` timeout and adjust it to the longest GC Pause.
 
 Even though Rolling Upgrades and Rolling Update may sound similarly, they mean different things. The link:$$https://docs.openshift.org/latest/dev_guide/deployments/deployment_strategies.html#rolling-strategy[Rolling Update]
 is a process of replacing old Pods with new ones. In other words it is a process of rolling out new version of an application. A typical example is a configuration change. Since Pods are immutable, Kubernetes/OpenShift needs to replace them one by one
-in order to use the updated configuration bits. On the other hand the <<_Rolling_chapter,Rolling Upgrade>> is a process of migrating data from one Infinispan cluster to another one.
+in order to use the updated configuration bits. On the other hand the <<_Rolling_chapter,Rolling Upgrade>> is a process of migrating data from one {brandname} cluster to another one.
 A typical example is migrating from one version to another.
 
 For both Kubernetes and OpenShift, the Rolling Upgrade procedure is almost the same. It is based on a standard <<_Rolling_chapter,Rolling Upgrade procedure>> with small changes.

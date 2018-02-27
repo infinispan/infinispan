@@ -1,18 +1,18 @@
 == Security
 
-Security within Infinispan is implemented at several layers:
+Security within {brandname} is implemented at several layers:
 
 * within the core library, to provide coarse-grained access control to CacheManagers, Caches and data
 * over remote protocols, to obtain credentials from remote clients and to secure the transport using encryption
 * between nodes in a cluster, so that only authorized nodes can join and to secure the transport using encryption
 
-In order to maximize compatibility and integration, Infinispan uses widespread security standards where possible and appropriate, such as X.509 certificates, SSL/TLS encryption and Kerberos/GSSAPI.
+In order to maximize compatibility and integration, {brandname} uses widespread security standards where possible and appropriate, such as X.509 certificates, SSL/TLS encryption and Kerberos/GSSAPI.
 Also, to avoid pulling in any external dependencies and to increase the ease of integration with third party libraries and containers, the implementation makes use of any facilities provided by the 
 standard Java security libraries (JAAS, JSSE, JCA, JCE, SASL, etc).
-For this reason, the Infinispan core library only provides interfaces and a set of basic implementations.
+For this reason, the {brandname} core library only provides interfaces and a set of basic implementations.
 
 === Embedded Security
-Applications interact with Infinispan using its API within the same JVM. The two main components which are exposed by the Infinispan API are CacheManagers and Caches. If an application wants to interact with a secured CacheManager and Cache, it should provide an identity which Infinispan’s security layer will validate against a set of required roles and permissions. If the identity provided by the user application has sufficient permissions, then access will be granted, otherwise an exception indicating a security violation will be thrown. The identity is represented by the javax.security.auth.Subject class which is a wrapper around multiple Principals, e.g. a user and all the groups it belongs to. Since the Principal name is dependent on the owning system (e.g. a Distinguished Name in LDAP), Infinispan needs to be able to map Principal names to roles.
+Applications interact with {brandname} using its API within the same JVM. The two main components which are exposed by the {brandname} API are CacheManagers and Caches. If an application wants to interact with a secured CacheManager and Cache, it should provide an identity which {brandname}’s security layer will validate against a set of required roles and permissions. If the identity provided by the user application has sufficient permissions, then access will be granted, otherwise an exception indicating a security violation will be thrown. The identity is represented by the javax.security.auth.Subject class which is a wrapper around multiple Principals, e.g. a user and all the groups it belongs to. Since the Principal name is dependent on the owning system (e.g. a Distinguished Name in LDAP), {brandname} needs to be able to map Principal names to roles.
 Roles, in turn, represent one or more permissions. The following diagram shows the relationship between the various elements:
 
 .Roles/Permissions mapping 
@@ -73,16 +73,16 @@ If you are using Java 8, the above call can be simplified to:
 Security.doAs(mySubject, PrivilegedAction<String>() -> cache.put("key", "value"));
 ----
 
-Notice the use of +Security.doAs()+ in place of the typical +Subject.doAs()+. While in Infinispan you can use either, unless you really need to modify the AccessControlContext for reasons specific to your application's security model, using +Security.doAs()+ provides much better performance. If you need the current Subject, use the following:
+Notice the use of +Security.doAs()+ in place of the typical +Subject.doAs()+. While in {brandname} you can use either, unless you really need to modify the AccessControlContext for reasons specific to your application's security model, using +Security.doAs()+ provides much better performance. If you need the current Subject, use the following:
 
 [source,java]
 ----
 Security.getSubject();
 ----
 
-which will automatically retrieve the Subject either from the Infinispan's context or from the AccessControlContext.
+which will automatically retrieve the Subject either from the {brandname}'s context or from the AccessControlContext.
 
-Infinispan also fully supports running under a full-blown SecurityManager. The Infinispan distribution contains an example security.policy file which you should customize with the appropriate paths before supplying it to your JVM.
+{brandname} also fully supports running under a full-blown SecurityManager. The {brandname} distribution contains an example security.policy file which you should customize with the appropriate paths before supplying it to your JVM.
 
 ==== Embedded Configuration
 There are two levels of configuration: global and per-cache. The global configuration defines the set of roles/permissions mappings while each cache can decide whether to enable authorization checks and the required roles.
@@ -139,7 +139,7 @@ There are two levels of configuration: global and per-cache. The global configur
 
 ===== Role Mappers
 
-In order to convert the Principals in a Subject into a set of roles to be used when authorizing, a suitable +PrincipalRoleMapper+ must be specified in the global configuration. Infinispan comes with 3 mappers and also allows you to provide a custom one:
+In order to convert the Principals in a Subject into a set of roles to be used when authorizing, a suitable +PrincipalRoleMapper+ must be specified in the global configuration. {brandname} comes with 3 mappers and also allows you to provide a custom one:
 
 * IdentityRoleMapper (Java: +org.infinispan.security.impl.IdentityRoleMapper+, XML: +<identity-role-mapper />+): this mapper just uses the Principal name as the role name
 * CommonNameRoleMapper (Java: +org.infinispan.security.impl.CommonRoleMapper+, XML: +<common-name-role-mapper />+): if the Principal name is a Distinguished Name (DN), this mapper extracts the Common Name (CN) and uses it as a role name. For example
@@ -149,7 +149,7 @@ the DN +cn=managers,ou=people,dc=example,dc=com+ will be mapped to the role +man
 
 === Security Audit
 
-Infinispan offers a pluggable audit logger which tracks whether a cache or a cache manager operation was allowed or denied.
+{brandname} offers a pluggable audit logger which tracks whether a cache or a cache manager operation was allowed or denied.
 The audit logger is configured at the cache container authorization level:
 
 .Programmatic
@@ -176,7 +176,7 @@ The audit logger is configured at the cache container authorization level:
 </infinispan>
 ----
 
-In embedded mode the default audit logger is +org.infinispan.security.impl.NullAuditLogger+ which does nothing. Infinispan also comes with the +org.infinispan.security.impl.LoggingAuditLogger+ which outputs audit logs through the available logging framework (e.g. Log4J) at level TRACE and category AUDIT. These logs look like: 
+In embedded mode the default audit logger is +org.infinispan.security.impl.NullAuditLogger+ which does nothing. {brandname} also comes with the +org.infinispan.security.impl.LoggingAuditLogger+ which outputs audit logs through the available logging framework (e.g. Log4J) at level TRACE and category AUDIT. These logs look like:
 
 ----
 [ALLOW|DENY] user READ cache[defaultCache]

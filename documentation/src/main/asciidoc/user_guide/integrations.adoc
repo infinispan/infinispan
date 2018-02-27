@@ -1,20 +1,20 @@
 ==  Integrations
-Infinispan can be integrated with a number of other projects, as detailed below.
+{brandname} can be integrated with a number of other projects, as detailed below.
 
 === Apache Spark
 
-Infinispan provides an link:http://spark.apache.org[Apache Spark] connector capable of exposing caches as an RDD, allowing batch and stream jobs to be run against data stored in Infinispan. For further details, see the link:https://github.com/infinispan/infinispan-spark/blob/master/README.md[Infinispan Spark connector documentation].
+{brandname} provides an link:http://spark.apache.org[Apache Spark] connector capable of exposing caches as an RDD, allowing batch and stream jobs to be run against data stored in {brandname}. For further details, see the link:https://github.com/infinispan/infinispan-spark/blob/master/README.md[{brandname} Spark connector documentation].
 Also check the link:https://github.com/infinispan/infinispan-spark/tree/master/examples/twitter/README.md[Docker based Twitter demo].
 
 === Apache Hadoop
 
-The Infinispan Hadoop connector can be used to expose Infinispan as a Hadoop compliant data source and sink that implements link:https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapreduce/InputFormat.html[InputFormat]/link:https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapreduce/OutputFormat.html[OutputFormat].
+The {brandname} Hadoop connector can be used to expose {brandname} as a Hadoop compliant data source and sink that implements link:https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapreduce/InputFormat.html[InputFormat]/link:https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapreduce/OutputFormat.html[OutputFormat].
 For further details, refer to the full link:https://github.com/infinispan/infinispan-hadoop/blob/master/README.md[documentation].
 
 === Apache Lucene [[integrations:lucene-directory]]
-Infinispan includes a highly scalable distributed link:http://lucene.apache.org[Apache Lucene Directory] implementation.
+{brandname} includes a highly scalable distributed link:http://lucene.apache.org[Apache Lucene Directory] implementation.
 
-This directory closely mimics the same semantics of the traditional filesystem and RAM-based directories, being able to work as a drop-in replacement for existing applications using Lucene and providing reliable index sharing and other features of Infinispan like node auto-discovery, automatic failover and rebalancing, optionally transactions, and can be backed by traditional storage solutions as filesystem, databases or cloud store engines.
+This directory closely mimics the same semantics of the traditional filesystem and RAM-based directories, being able to work as a drop-in replacement for existing applications using Lucene and providing reliable index sharing and other features of {brandname} like node auto-discovery, automatic failover and rebalancing, optionally transactions, and can be backed by traditional storage solutions as filesystem, databases or cloud store engines.
 
 The implementation extends Lucene's _org.apache.lucene.store.Directory_ so it can be used to _store_ the index in a cluster-wide shared memory, making it easy to distribute the index. Compared to rsync-based replication this solution is suited for use cases in which your application makes frequent changes to the index and you need them to be quickly distributed to all nodes. Consistency levels, synchronicity and guarantees, total elasticity and auto-discovery are all configurable; also changes applied to the index can optionally participate in a JTA transaction, optionally supporting XA transactions with recovery.
 
@@ -38,7 +38,7 @@ All you need is _org.infinispan:infinispan-lucene-directory_ :
 ----
 ==== How to use it
 
-See the below example of using the Infinispan Lucene Directory in order to index and query a single Document:
+See the below example of using the {brandname} Lucene Directory in order to index and query a single Document:
 
 [source,java]
 ----
@@ -59,7 +59,7 @@ import org.apache.lucene.store.Directory;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 
-// Create caches that will store the index. Here the Infinispan programmatic configuration is used
+// Create caches that will store the index. Here the {brandname} programmatic configuration is used
 DefaultCacheManager defaultCacheManager = new DefaultCacheManager();
 Cache metadataCache = defaultCacheManager.getCache("metadataCache");
 Cache dataCache = defaultCacheManager.getCache("dataCache");
@@ -96,7 +96,7 @@ New nodes can be added or removed dynamically, making the service administration
 
 
 ==== Configuration
-Infinispan can be configured as LOCAL clustering mode, in which case it will disable clustering features and serve as a cache for the index, or any clustering mode. A transaction manager is not mandatory, but when enabled the changes to the index can participate in transactions.
+{brandname} can be configured as LOCAL clustering mode, in which case it will disable clustering features and serve as a cache for the index, or any clustering mode. A transaction manager is not mandatory, but when enabled the changes to the index can participate in transactions.
 
 Batching was required in previous versions, it's not strictly needed anymore.
 
@@ -134,7 +134,7 @@ Example of configuration:
 
 ===== Data Cache
 
-The Infinispan Lucene directory splits large (bigger than the chunkSize configuration) files into chunks and stores them in the Data cache.
+The {brandname} Lucene directory splits large (bigger than the chunkSize configuration) files into chunks and stores them in the Data cache.
 This is the largest of the 3 index caches, and both DIST_SYNC/REPL_SYNC cache modes can be used.
 Usage of REPL_SYNC offers lower latencies for queries since each node holds the whole index locally; DIST_SYNC, on the other hand, will affect query latency due to remote calls to fetch for chunks, but offers better scalability.
 
@@ -157,7 +157,7 @@ Using a CacheLoader you can have the index content backed up to a permanent stor
 When using a CacheLoader to store a Lucene index, to get best write performance you would need to configure the CacheLoader with _async=true_ .
 
 ==== Storing the index in a database
-It might be useful to store the Lucene index in a relational database; this would be very slow but Infinispan can act as a cache between the application and the JDBC interface, making this configuration useful in both clustered and non-clustered configurations. When storing indexes in a JDBC database, it's suggested to use the _JdbcStringBasedCacheStore_ , which will need the `key-to-string-mapper` attribute to be set to `org.infinispan.lucene.LuceneKey2StringMapper`:
+It might be useful to store the Lucene index in a relational database; this would be very slow but {brandname} can act as a cache between the application and the JDBC interface, making this configuration useful in both clustered and non-clustered configurations. When storing indexes in a JDBC database, it's suggested to use the _JdbcStringBasedCacheStore_ , which will need the `key-to-string-mapper` attribute to be set to `org.infinispan.lucene.LuceneKey2StringMapper`:
 
 [source,xml]
 ----
@@ -166,12 +166,12 @@ It might be useful to store the Lucene index in a relational database; this woul
 
 ==== Loading an existing Lucene Index
 
-The _org.infinispan.lucene.cachestore.LuceneCacheLoader_ is an Infinispan CacheLoader able to have Infinispan directly load data from an existing Lucene index into the grid. Currently this supports reading only.
+The _org.infinispan.lucene.cachestore.LuceneCacheLoader_ is an {brandname} CacheLoader able to have {brandname} directly load data from an existing Lucene index into the grid. Currently this supports reading only.
 
 [options="header"]
 |===============
 |Property|Description|Default
-| _location_ |The path where the indexes are stored. Subdirectories (of first level only) should contain the indexes to be loaded, each directory matching the index name attribute of the InfinispanDirectory constructor.|none (mandatory)
+| _location_ |The path where the indexes are stored. Subdirectories (of first level only) should contain the indexes to be loaded, each directory matching the index name attribute of the {brandname}Directory constructor.|none (mandatory)
 | _autoChunkSize_ |A threshold in bytes: if any segment is larger than this, it will be transparently chunked in smaller cache entries up to this size.|32MB
 
 |===============
@@ -182,14 +182,14 @@ Implementing write-through should not be hard: you're welcome to try implementin
 
 
 ==== Architectural limitations
-This Directory implementation makes it possible to have almost real-time reads across multiple nodes. A fundamental limitation of the Lucene design is that only a single IndexWriter is allowed to make changes on the index: a pessimistic lock is acquired by the writer; this is generally ok as a single IndexWriter _instance_ is very fast and accepts update requests from multiple threads. When sharing the Directory across Infinispan nodes the IndexWriter limitation is not lifted: since you can have only one instance, that reflects in your application as having to apply all changes on the same node. There are several strategies to write from multiple nodes on the same index:
+This Directory implementation makes it possible to have almost real-time reads across multiple nodes. A fundamental limitation of the Lucene design is that only a single IndexWriter is allowed to make changes on the index: a pessimistic lock is acquired by the writer; this is generally ok as a single IndexWriter _instance_ is very fast and accepts update requests from multiple threads. When sharing the Directory across {brandname} nodes the IndexWriter limitation is not lifted: since you can have only one instance, that reflects in your application as having to apply all changes on the same node. There are several strategies to write from multiple nodes on the same index:
 
 .Index write strategies
 * One node writes, the other delegate to it sending messages
 * Each node writes on turns
 * You application makes sure it will only ever apply index writes on one node
 
-The _Infinispan Lucene Directory_ protects its content by implementing a distributed locking strategy, though this is designed as a last line of defense and is not to be considered an efficient mechanism to coordinate multiple writes: if you don't apply one of the above suggestions and get high write contention from multiple nodes you will likely get timeout exception.
+The _{brandname} Lucene Directory_ protects its content by implementing a distributed locking strategy, though this is designed as a last line of defense and is not to be considered an efficient mechanism to coordinate multiple writes: if you don't apply one of the above suggestions and get high write contention from multiple nodes you will likely get timeout exception.
 
 ==== Suggestions for optimal performance
 
@@ -197,13 +197,13 @@ The _Infinispan Lucene Directory_ protects its content by implementing a distrib
 JGroups manages all network IO and as such it is a critical component to tune for your specific environment. Make sure to read the link:http://jgroups.org/manual-3.x/html/index.html[JGroups reference documentation], and play with the performance tests included in JGroups to make sure your network stack is setup appropriately. Don't forget to check also operating system level parameters, for example buffer sizes dedicated for networking. JGroups will log warning when it detects something wrong, but there is much more you can look into.
 
 ===== Using a CacheStore
-Currently all CacheStore implementations provided by Infinispan have a significant slowdown; we hope to resolve that soon but for the time being if you need high performance on writes with the Lucene Directory the best option is to disable any CacheStore; the second best option is to configure the CacheStore as _async_ . If you only need to load a Lucene index from read-only storage, see the above description for _org.infinispan.lucene.cachestore.LuceneCacheLoader_ .
+Currently all CacheStore implementations provided by {brandname} have a significant slowdown; we hope to resolve that soon but for the time being if you need high performance on writes with the Lucene Directory the best option is to disable any CacheStore; the second best option is to configure the CacheStore as _async_ . If you only need to load a Lucene index from read-only storage, see the above description for _org.infinispan.lucene.cachestore.LuceneCacheLoader_ .
 
 ===== Apply standard Lucene tuning
-All known options of Lucene apply to the Infinispan Lucene Directory as well; of course the effect might be less significant in some cases, but you should definitely read the link:http://lucene.apache.org/core/index.html[Apache Lucene documentation] .
+All known options of Lucene apply to the {brandname} Lucene Directory as well; of course the effect might be less significant in some cases, but you should definitely read the link:http://lucene.apache.org/core/index.html[Apache Lucene documentation] .
 
 ===== Disable batching and transactions
-Early versions required Infinispan to have batching or transactions enabled. This is no longer a requirement, and in fact disabling them should provide little improvement in performance.
+Early versions required {brandname} to have batching or transactions enabled. This is no longer a requirement, and in fact disabling them should provide little improvement in performance.
 
 ===== Set the right chunk size
 The chunk size can be specified using the link:{javadocroot}/org/infinispan/lucene/directory/DirectoryBuilder.html[DirectoryBuilder] fluent API. To correctly set this variable you need to estimate what the expected size of your segments is; generally this is trivial by looking at the file size of the index segments generated by your application when it's using the standard FSDirectory. You then have to consider:
@@ -215,7 +215,7 @@ Using the _org.apache.lucene.index.IndexWriterConfig_ you can tune your index wr
 
 ==== Demo
 
-There is a simple command-line demo of its capabilities distributed with Infinispan under demos/lucene-directory; make sure you grab the "Binaries, server and demos" package from download page, which contains all demos.
+There is a simple command-line demo of its capabilities distributed with {brandname} under demos/lucene-directory; make sure you grab the "Binaries, server and demos" package from download page, which contains all demos.
 
 Start several instances, then try adding text in one instance and searching for it on the other. The configuration is not tuned at all, but should work out-of-the box without any changes. If your network interface has multicast enabled, it will cluster across the local network with other instances of the demo.
 
@@ -225,7 +225,7 @@ Start several instances, then try adding text in one instance and searching for 
 
 === Directory Provider for Hibernate Search [[integrations:directory-provider]]
 
-Hibernate Search applications can use Infinispan as a directory provider, taking advantage of Infinispan's distribution and low latency capabilities to store the Lucene indexes.
+Hibernate Search applications can use {brandname} as a directory provider, taking advantage of {brandname}'s distribution and low latency capabilities to store the Lucene indexes.
 
 ==== Maven dependencies
 
@@ -254,17 +254,17 @@ to enable it by default for all indexes:
 hibernate.search.default.directory_provider = infinispan
 ----
 
-The Infinispan cluster will start with a link:https://github.com/infinispan/infinispan/blob/master/lucene/directory-provider/src/main/resources/default-hibernatesearch-infinispan.xml[default configuration], see below how to override it.
+The {brandname} cluster will start with a link:https://github.com/infinispan/infinispan/blob/master/lucene/directory-provider/src/main/resources/default-hibernatesearch-infinispan.xml[default configuration], see below how to override it.
 
 ==== Configuration
 
-Optional properties allow for a custom Infinispan configuration or to use an existent _EmbeddedCacheManager_:
+Optional properties allow for a custom {brandname} configuration or to use an existent _EmbeddedCacheManager_:
 
 [options="header"]
 |===============
 |Property|Description|Example value
-|hibernate.search.infinispan.configuration_resourcename| Custom configuration for Infinispan | config/infinispan.xml
-|hibernate.search.infinispan.configuration.transport_override_resourcename| Overrides the JGroups stack in the Infinispan configuration file | jgroups-ec2.xml
+|hibernate.search.infinispan.configuration_resourcename| Custom configuration for {brandname} | config/infinispan.xml
+|hibernate.search.infinispan.configuration.transport_override_resourcename| Overrides the JGroups stack in the {brandname} configuration file | jgroups-ec2.xml
 |hibernate.search.infinispan.cachemanager_jndiname| Specifies the JNDI name under which the _EmbeddedCacheManager_ to use is bound. Will cause the properties above to be ignored when present| java:jboss/infinispan/container/hibernate-search
 |===============
 
@@ -272,7 +272,7 @@ Optional properties allow for a custom Infinispan configuration or to use an exi
 
 The same limitations presented in the Lucene Directory apply here, meaning the index will be shared across several nodes and only one _IndexWriter_ can have the lock.
 
-One common strategy is to use Hibernate Search's JMS Master/Slave or JGroups backend together with the Infinispan directory provider: instead of sending updates directly to the index, they are sent to a JMS queue or JGroups channel and a single node applies all the changes on behalf of all other nodes.
+One common strategy is to use Hibernate Search's JMS Master/Slave or JGroups backend together with the {brandname} directory provider: instead of sending updates directly to the index, they are sent to a JMS queue or JGroups channel and a single node applies all the changes on behalf of all other nodes.
 
 Refer to the link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/[Hibernate Search documentation] for instructions on how to setup JMS or JGroups backends.
 
@@ -282,34 +282,34 @@ include::integrations_hibernate_cache.adoc[]
 
 ===  JPA / Hibernate OGM [[integrations:hibernate-ogm]]
 
-Hibernate can perform CRUD operations directly on an Infinispan cluster.
+Hibernate can perform CRUD operations directly on an {brandname} cluster.
 
 Hibernate OGM is an extension of the popular Hibernate ORM project which makes
-the Hibernate API suited to interact with NoSQL databases such as Infinispan.
+the Hibernate API suited to interact with NoSQL databases such as {brandname}.
 
 When some of your object graphs need high scalability and elasticity, you can
-use Hibernate OGM to store these specific entities into Infinispan instead of
+use Hibernate OGM to store these specific entities into {brandname} instead of
 your traditional RDBMS.
-The drawback is that Infinispan - not being a relational database - can not run
+The drawback is that {brandname} - not being a relational database - can not run
 complex relational queries.
 
-Hibernate OGM allows you to get started with Infinispan in minutes, as:
+Hibernate OGM allows you to get started with {brandname} in minutes, as:
 
  - the JPA API and its annotations are simple and well known
  - you don't need to learn Protobuf or Externalizer encoding formats
- - no need to learn the Infinispan API
+ - no need to learn the {brandname} API
  - the Hot Rod client is also setup and managed for you
 
-It will still be beneficial to eventually learn how to configure Infinispan for
+It will still be beneficial to eventually learn how to configure {brandname} for
 top performance and learn about all capabilities it has, but you can get a proof
 of concept application done quickly with the example configuration.
 
 Hibernate OGM also gives you several more benefits; being designed and
-implemented in collaboration with the Infinispan team it incorporates experience
+implemented in collaboration with the {brandname} team it incorporates experience
 and deep understanding of how to best perform some common operations.
 
-For example a common mistake for people new to Infinispan is to "serialize"
-Java POJOs for long term storage of important information; the Infinispan API
+For example a common mistake for people new to {brandname} is to "serialize"
+Java POJOs for long term storage of important information; the {brandname} API
 allows this as it's useful for short lived caching of metadata, but you wouldn't
 be able to de-serialize your data when you make any changes to your model.
 You wouldn't want to wipe your database after any and each update of your
@@ -326,7 +326,7 @@ well defined Protobuf schema.
 Being able to "map" new domain objects by simply adding a couple of annotations
 is going to make you more productive than re-inventing such error-prone encoding
 techniques, or figuring out how to best store object graphs and relations
-into Infinispan.
+into {brandname}.
 
 Finally, using Hibernate OGM allows you to use all existing framework
 integration points, such as injecting an `EntityManager` as usual: it's not
@@ -336,22 +336,22 @@ other technologies integrating with Hibernate.
 
 It's booted like any Hibernate instance: compared to using it with an RDBMS
 you just have to change some configuration properties, and of course omit the
-`DataSource` as Infinispan won't use one.
+`DataSource` as {brandname} won't use one.
 
 For more details, check the link:http://hibernate.org/ogm/[Hibernate OGM project]
-and the link:https://docs.jboss.org/hibernate/stable/ogm/reference/en-US/html_single/#ogm-infinispan[Hibernate OGM / Infinispan]
+and the link:https://docs.jboss.org/hibernate/stable/ogm/reference/en-US/html_single/#ogm-infinispan[Hibernate OGM / {brandname}]
 section of the documentation.
 
-===  Using Infinispan with Spring Boot
+===  Using {brandname} with Spring Boot
 
-Infinispan Spring Boot Starters allow to easily turn on Infinispan and Spring integration.
-More information might be found at link:https://github.com/infinispan/infinispan-spring-boot[Infinispan Spring Boot Starters Gihub page].
+{brandname} Spring Boot Starters allow to easily turn on {brandname} and Spring integration.
+More information might be found at link:https://github.com/infinispan/infinispan-spring-boot[{brandname} Spring Boot Starters Gihub page].
 
-===  Using Infinispan as a Spring Cache provider
+===  Using {brandname} as a Spring Cache provider
 Starting with version 3.1, the link:http://spring.io/[Spring Framework] offers a link:http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html[cache abstraction], enabling users to declaratively add caching support to applications via two simple annotations, `@Cacheable` and `@CacheEvict`.
 While out of the box Spring's caching support is backed by link:http://ehcache.org[EHCache] it has been designed to easily support different cache providers.
 To that end Spring defines a simple and straightforward SPI other caching solutions may implement.
-Infinispan's very own spring modules do - amongst other things - exactly this and therefore users invested in Spring's programming model may easily have all their caching needs fulfilled through Infinispan.
+{brandname}'s very own spring modules do - amongst other things - exactly this and therefore users invested in Spring's programming model may easily have all their caching needs fulfilled through {brandname}.
 
 Here's how.
 
@@ -384,7 +384,7 @@ public class Config {
 
 ----
 
-Now, you will need to add Infinispan and Spring integration module to your classpath. For Maven users this might be achieved by adding these dependencies:
+Now, you will need to add {brandname} and Spring integration module to your classpath. For Maven users this might be achieved by adding these dependencies:
 
 .pom.xml for Spring 4 (embedded mode)
 [source,xml]
@@ -408,14 +408,14 @@ Now, you will need to add Infinispan and Spring integration module to your class
     </dependencies>
 ----
 
-==== Telling Spring to use Infinispan as its caching provider
+==== Telling Spring to use {brandname} as its caching provider
 Spring cache provider SPI comprises two interfaces, `org.springframework.cache.CacheManager` and `org.springframework.cache.Cache` where a `CacheManager` serves as a factory for named `Cache` instances.
 By default Spring will look at runtime for a `CacheManager` implementation having the bean name "cacheManager" in an application's application context. So by putting
 
 [source,xml]
 ----
 
-<!-- Infinispan cache manager -->
+<!-- {brandname} cache manager -->
 <bean id="cacheManager"
           class="org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean"
           p:configurationFileLocation="classpath:/org/infinispan/spring/provider/sample/books-infinispan-config.xml" />
@@ -442,7 +442,7 @@ public class Config {
 }
 ----
 
-somewhere in your application context you tell Spring to henceforth use Infinispan as its caching provider.
+somewhere in your application context you tell Spring to henceforth use {brandname} as its caching provider.
 
 ==== Adding caching to your application code
 As outlined above enabling caching in your application code is as simple as adding `@Cacheable` and `@CacheEvict` to select methods. Suppose you've got a DAO for, say, books and you want book instances to be cached once they've been loaded from the underlying database using `BookDao#findBook(Integer bookId)`. To that end you annotate `findBook(Integer bookId)` with `@Cacheable`, as in
@@ -471,7 +471,7 @@ and you may rest assured that no stray books be left in your application once yo
 
 ==== Externalizing session using Spring Session
 
-link:http://docs.spring.io/spring-session/docs/current/reference/html5[Spring Session] is a very convenient way to externalize user session into Infinispan cluster.
+link:http://docs.spring.io/spring-session/docs/current/reference/html5[Spring Session] is a very convenient way to externalize user session into {brandname} cluster.
 
 Spring Session integration allows to use both - embedded and client/server mode. Each mode requires using proper artifacts (`infinispan-spring4-embedded` or `infinispan-spring4-remote`).
 An example is shown below:
@@ -506,10 +506,10 @@ An example is shown below:
     </dependencies>
 ----
 
-Spring Session integration has been based on Infinispan Spring Cache support so it requires creating a `SpringEmbeddedCacheManagerFactoryBean` or `SpringRemoteCacheManagerFactoryBean`.
-The next step it to use `@EnableInfinispanEmbeddedHttpSession` or `@EnableInfinispanRemoteHttpSession` configuration annotation which turns on Spring Session.
+Spring Session integration has been based on {brandname} Spring Cache support so it requires creating a `SpringEmbeddedCacheManagerFactoryBean` or `SpringRemoteCacheManagerFactoryBean`.
+The next step it to use `@Enable{brandname}EmbeddedHttpSession` or `@Enable{brandname}RemoteHttpSession` configuration annotation which turns on Spring Session.
 
-`@EnableInfinispanEmbeddedHttpSession` or `@EnableInfinispanRemoteHttpSession` annotations have 2 optional parameters:
+`@Enable{brandname}EmbeddedHttpSession` or `@Enable{brandname}RemoteHttpSession` annotations have 2 optional parameters:
 
 * maxInactiveIntervalInSeconds - which sets session expiration time in seconds. The default is set to `1800`.
 * cacheName - cache name which is used for storing sessions. The default is set to `sessions`.
@@ -518,7 +518,7 @@ A complete, annotation based configuration example is shown below:
 
 [source, java]
 ----
-@EnableInfinispanEmbeddedHttpSession
+@Enable{brandname}EmbeddedHttpSession
 @Configuration
 public class Config {
 
@@ -538,22 +538,22 @@ public class Config {
 ----
 
 ==== Conclusion
-Hopefully you enjoyed our quick tour of Infinispan's support for Spring's cache and session abstraction and saw how easy it is for all your caching woes to be taken care of by Infinispan. More information may be found in Spring's link:http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html[reference documentation]. Also see link:http://spring.io/blog/2011/02/23/spring-3-1-m1-cache-abstraction[this link] - a very nice posting on the official Spring blog for a somewhat more comprehensive introduction to Spring's cache abstraction.
+Hopefully you enjoyed our quick tour of {brandname}'s support for Spring's cache and session abstraction and saw how easy it is for all your caching woes to be taken care of by {brandname}. More information may be found in Spring's link:http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html[reference documentation]. Also see link:http://spring.io/blog/2011/02/23/spring-3-1-m1-cache-abstraction[this link] - a very nice posting on the official Spring blog for a somewhat more comprehensive introduction to Spring's cache abstraction.
 
-===  Infinispan modules for WildFly
+===  {brandname} modules for WildFly / EAP
 
-As the Infinispan modules shipped with link:http://wildfly.org/[Wildfly application server] are tailored to its internal usage, it is recommend to install separate modules
-if you want to use Infinispan in your application that is deployed to Wildfy. By installing these modules, it is possible to deploy user applications without packaging the Infinispan JARs within the deployments (WARs, EARs, etc), thus minimizing their size.
-Also, there will be no conflict with Wildfly's internal modules since the slot will be different.
+As the {brandname} modules shipped with link:http://wildfly.org/[WildFly] / link:https://www.redhat.com/en/technologies/jboss-middleware/application-platform[EAP] are tailored to its internal usage, it is recommend to install separate modules
+if you want to use {brandname} in your application that is deployed to WildFly / EAP. By installing these modules, it is possible to deploy user applications without packaging the {brandname} JARs within the deployments (WARs, EARs, etc), thus minimizing their size.
+Also, there will be no conflict with WildFly / EAP's internal modules since the slot will be different.
 
 [[_Modules_installation_section]]
 ==== Installation
 
-The modules for Wildfly are available in the link:http://infinispan.org/download/[downloads] section of our site. The zip should be extracted to `WILDFLY_HOME/modules`, so that for example the infinispan core module would be under `WILDFLY_HOME/modules/org/infinispan/core`.
+The modules for WildFly / EAP are available in the link:http://infinispan.org/download/[downloads] section of our site. The zip should be extracted to `WILDFLY_HOME/modules`, so that for example the infinispan core module would be under `WILDFLY_HOME/modules/org/infinispan/core`.
 
 ==== Application Dependencies
 
-If you are using Maven to build your application, mark the Infinispan dependencies as _provided_ and configure your artifact archiver to generate the appropriate MANIFEST.MF file:
+If you are using Maven to build your application, mark the {brandname} dependencies as _provided_ and configure your artifact archiver to generate the appropriate MANIFEST.MF file:
 
 .pom.xml
 [source,xml,subs=attributes+]
@@ -591,11 +591,11 @@ If you are using Maven to build your application, mark the Infinispan dependenci
 
 ----
 
-The next section illustrates the manifest entries for different types of Infinispan's dependencies.
+The next section illustrates the manifest entries for different types of {brandname}'s dependencies.
 
-===== Infinispan core
+===== {brandname} core
 
-In order expose only Infinispan core dependencies to your application, add the follow to the manifest:
+In order expose only {brandname} core dependencies to your application, add the follow to the manifest:
 
 .MANIFEST.MF
 [source,subs=attributes]
@@ -608,7 +608,7 @@ Dependencies: org.infinispan:{infinispanslot} services
 
 ===== Remote
 
-If you need to connect to remote Infinispan servers via Hot Rod, including execution of remote queries, use the module ```org.infinispan.remote``` that exposes the needed dependencies conveniently:
+If you need to connect to remote {brandname} servers via Hot Rod, including execution of remote queries, use the module ```org.infinispan.remote``` that exposes the needed dependencies conveniently:
 
 .MANIFEST.MF
 [source,subs=attributes]
@@ -621,7 +621,7 @@ Dependencies: org.infinispan.remote:{infinispanslot} services
 
 ===== Embedded Query
 
-For embedded querying, including the Infinispan Query DSL, Lucene and Hibernate Search Queries, add the following:
+For embedded querying, including the {brandname} Query DSL, Lucene and Hibernate Search Queries, add the following:
 
 .MANIFEST.MF
 [source,subs=attributes]
@@ -634,7 +634,7 @@ Dependencies: org.infinispan:{infinispanslot} services, org.infinispan.query:{in
 
 ===== Lucene Directory
 
-Lucene users who wants to simple use Infinispan as a _org.apache.lucene.store.Directory_ don't need to add the query module, the entry below is sufficient:
+Lucene users who wants to simple use {brandname} as a _org.apache.lucene.store.Directory_ don't need to add the query module, the entry below is sufficient:
 
 .MANIFEST.MF
 [source,subs=attributes]
@@ -645,23 +645,23 @@ Dependencies: org.infinispan.lucene-directory:{infinispanslot}
 
 ----
 
-===== Hibernate Search directory provider for Infinispan
+===== Hibernate Search directory provider for {brandname}
 
-The Hibernate Search directory provider for Infinispan is also contained within the Infinispan modules zip. It is not necessary to add an entry to the manifest file since the Hibernate Search module already has an optional dependency to it.
-When choosing the Infinispan module zip to use, start by checking which Hibernate Search is in use, more details below.
+The Hibernate Search directory provider for {brandname} is also contained within the {brandname} modules zip. It is not necessary to add an entry to the manifest file since the Hibernate Search module already has an optional dependency to it.
+When choosing the {brandname} module zip to use, start by checking which Hibernate Search is in use, more details below.
 
 ====== Usage with Wildfy's internal Hibernate Search modules
 
 The Hibernate Search module present in Wildfly 10.x has slot "5.5", which in turn has an optional dependency to `org.infinispan.hibernate-search.directory-provider:for-hibernatesearch-5.5`.
-This dependency will be available once the Infinispan modules are <<_Modules_installation_section,installed>>.
+This dependency will be available once the {brandname} modules are <<_Modules_installation_section,installed>>.
 
 
 ====== Usage with other Hibernate Search modules
 
-The module `org.hibernate.search:{infinispanslot}` distributed with Infinispan is to be used together with Infinispan Query only (querying data from caches), and should not be used by Hibernate ORM applications.
+The module `org.hibernate.search:{infinispanslot}` distributed with {brandname} is to be used together with {brandname} Query only (querying data from caches), and should not be used by Hibernate ORM applications.
 To use a Hibernate Search with a different version that is present in Wildfly, please consult the link:https://docs.jboss.org/hibernate/search/5.6/reference/en-US/html_single/#search-configuration-deploy-on-wildfly[Hibernate Search documentation].
 
-Make sure that the chosen Hibernate Search optional slot for `org.infinispan.hibernate-search.directory-provider` matches the one distributed with Infinispan.
+Make sure that the chosen Hibernate Search optional slot for `org.infinispan.hibernate-search.directory-provider` matches the one distributed with {brandname}.
 
 ==== Usage
 There are two possible ways for your application to utilise infinispan within Wildfly: embedded mode and server mode.

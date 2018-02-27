@@ -54,8 +54,8 @@ public class HelloTask implements ServerTask<String> {
 ----
 
 Once the task has been implemented, it needs to be wrapped inside a jar.
-The jar is then deployed to the Infinispan Server and from them on it can be invoked.
-The Infinispan Server uses
+The jar is then deployed to the {brandname} Server and from them on it can be invoked.
+The {brandname} Server uses
 https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html[service loader pattern]
 to load the task, so implementations need to adhere to these requirements.
 For example, server task implementations must have a zero-argument constructor.
@@ -70,7 +70,7 @@ For example:
 example.HelloTask
 ----
 
-With jar packaged, the next step is to push the jar to the Infinispan Server.
+With jar packaged, the next step is to push the jar to the {brandname} Server.
 The server is powered by WildFly Application Server, so if using Maven
 https://docs.jboss.org/wildfly/plugins/maven/latest/index.html[Wildfly's Maven plugin]
 can be used for this:

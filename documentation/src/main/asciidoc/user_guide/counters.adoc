@@ -1,10 +1,9 @@
 == Clustered Counters
 
-Clustered counters is a new building block introduced in Infinispan 9.
-It is a counter distributed and shared among all nodes in the Infinispan cluster and it provides counters with
-different consistency levels: strong and weak.
+_Clustered counters_ are counters which are distributed and shared among all nodes in the {brandname} cluster.
+Counters can have different consistency levels: strong and weak.
 
-Although strong/weak consistent counter has a separate interfaces, both support updating its value,
+Although a strong/weak consistent counter has separate interfaces, both support updating its value,
 return the current value and they provide events when its value is updated.
 Details are provided below in this document to help you choose which one fits best your uses-case.
 
@@ -18,13 +17,13 @@ In order to start using the counters, you needs to add the dependency in your Ma
 <dependency>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-clustered-counter</artifactId>
-   <version>...</version> <!-- 9.0.0.Final or higher -->
+   <version>...</version>
 </dependency>
 ----
 
-The counters can be configured Infinispan configuration file or on-demand via the `CounterManager` interface detailed
+The counters can be configured {brandname} configuration file or on-demand via the `CounterManager` interface detailed
 later in this document.
-A counters configured in Infinispan configuration file is created at boot time when the `EmbeddedCacheManager` is starting.
+A counters configured in {brandname} configuration file is created at boot time when the `EmbeddedCacheManager` is starting.
 Theses counters are started eagerly and they are available in all the cluster's nodes.
 
 .configuration.xml
@@ -225,7 +224,7 @@ NOTE: The counter is re-created if it is accessed after a removal.
 
 ==== The `StrongCounter` interface: when the consistency or bounds matters.
 
-The strong counter provides uses a single key stored in Infinispan cache to provide the consistency needed.
+The strong counter provides uses a single key stored in {brandname} cache to provide the consistency needed.
 All the updates are performed under the key lock to updates its values.
 On other hand, the reads don't acquire any locks and reads the current value.
 Also, with this scheme, it allows to bound the counter value and provide atomic operations like compare-and-set/swap.
@@ -386,7 +385,7 @@ do {
 
 ==== The `WeakCounter` interface: when speed is needed
 
-The `WeakCounter` stores the counter's value in multiple keys in Infinispan cache.
+The `WeakCounter` stores the counter's value in multiple keys in {brandname} cache.
 The number of keys created is configured by the `concurrency-level` attribute.
 Each key stores a partial state of the counter's value and it can be updated concurrently.
 It main advantage over the `StrongCounter` is the lower contention in the cache.

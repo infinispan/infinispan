@@ -1,17 +1,17 @@
 ==  JCache (JSR-107) provider
-Starting with version 7.0.0, Infinispan provides an implementation of
-JCache 1.0.0 API ( link:http://www.jcp.org/en/jsr/detail?id=107[JSR-107] ).
+{brandname} provides an implementation of
+JCache 1.0 API ( link:http://www.jcp.org/en/jsr/detail?id=107[JSR-107] ).
 JCache specifies a standard Java API for caching temporary Java objects in
 memory. Caching java objects can help get around bottlenecks arising from
 using data that is expensive to retrieve (i.e. DB or web service), or data
 that is hard to calculate. Caching these type of objects in memory can help
 speed up application performance by retrieving the data directly from memory
 instead of doing an expensive roundtrip or recalculation. This document
-specifies how to use JCache with Infinispan's implementation of the
+specifies how to use JCache with {brandname}'s implementation of the
 specification, and explains key aspects of the API.
 
 === Dependencies
-In order to start using Infinispan JCache implementation, a single dependency
+In order to start using {brandname} JCache implementation, a single dependency
 needs to be added to the Maven pom.xml file:
 
 .pom.xml
@@ -43,14 +43,14 @@ Cache<String, String> cache = cacheManager.createCache("namedCache",
 
 WARNING: By default, the JCache API specifies that data should be stored as
 `storeByValue`, so that object state mutations outside of operations to the
-cache, won't have an impact in the objects stored in the cache. Infinispan
+cache, won't have an impact in the objects stored in the cache. {brandname}
 has so far implemented this using serialization/marshalling to make copies to
 store in the cache, and that way adhere to the spec. Hence, if using default
-JCache configuration with Infinispan, data stored
+JCache configuration with {brandname}, data stored
 <<_plugging_infinispan_with_user_defined_externalizers, must be marshallable>>.
 
 Alternatively, JCache can be configured to store data by reference
-(just like Infinispan or JDK Collections work). To do that, simply call:
+(just like {brandname} or JDK Collections work). To do that, simply call:
 
 [source,java]
 ----
@@ -162,9 +162,9 @@ The only exception is iterating over the contents of the cache:
 
 
 === Clustering JCache instances
-Infinispan JCache implementation goes beyond the specification in order to
+{brandname} JCache implementation goes beyond the specification in order to
 provide the possibility to cluster caches using the standard API. Given a
-Infinispan configuration file configured to replicate caches like this:
+{brandname} configuration file configured to replicate caches like this:
 
 .infinispan.xml
 [source,xml]

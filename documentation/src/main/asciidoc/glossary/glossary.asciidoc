@@ -1,10 +1,10 @@
-= Infinispan {infinispanversion} Glossary
-The Infinispan community
+= {brandname} {infinispanversion} Glossary
+The {brandname} community
 :toc2:
 :icons: font
 
 TIP: This glossary aims to clarify some of the terms frequently encountered in
-Infinispan's link:../user_guide/user_guide.html[User Guide],
+{brandname}'s link:../user_guide/user_guide.html[User Guide],
 link:../getting_started/getting_started.html[Getting Started Guide], link:../faqs/faqs.html[FAQs],
 etc.
 
@@ -38,7 +38,7 @@ distributed systems.  BASE has roots in Eric Brewer's _CAP Theorem_, and
 eventual consistency is the underpinning of any distributed system that aims to
  provide high availability and partition tolerance.
 
-Infinispan has traditionally followed ACID principles as far as possible,
+{brandname} has traditionally followed ACID principles as far as possible,
 however an eventually consistent mode embracing BASE is on the roadmap.
 
 .More resources
@@ -57,8 +57,8 @@ systems, which are: Consistency, Availability and Partition-tolerance
 networks and the effect this unreliability has on predictable behavior and high
 availability of dependent systems.
 
-Infinispan has traditionally been biased towards Consistency and Availability,
-sacrificing Partition-tolerance.  However, Infinispan does have a
+{brandname} has traditionally been biased towards Consistency and Availability,
+sacrificing Partition-tolerance.  However, {brandname} does have a
 Partition-tolerant, eventually-consistent mode in the pipeline.  This optional
 mode of operation will allow users to tune the degree of consistency they
 expect from their data, sacrificing partition-tolerance for this added
@@ -94,13 +94,13 @@ as evenly as possible.  Data is often redundantly stored in the grid to provide
 resilience to individual servers in the grid failing i.e. more than one copy is
 stored in the grid, transparently to the application.
 
-Data grids typically behave in a peer-to-peer fashion. Infinispan, for example,
+Data grids typically behave in a peer-to-peer fashion. {brandname}, for example,
 makes use of link:http://www.jgroups.org[JGroups] as a group communication
 library and is hence biased towards a peer-to-peer design.  Such design allows
-Infinispan to exhibit self-healing characteristics, providing service even when
+{brandname} to exhibit self-healing characteristics, providing service even when
 individual servers fail and new nodes are dynamically added to the grid.
 
-Infinispan also makes use of TCP and optionally UDP network protocols, and can
+{brandname} also makes use of TCP and optionally UDP network protocols, and can
 be configured to make use of IP multicast for efficiency if supported by the
 network.
 
@@ -121,28 +121,28 @@ arrivals, departures, and failures.
 == Externalizer
 An _Externalizer_ is a class that knows how to marshall a given object type to
 a byte array, and how to unmarshall the contents of a byte array into an
-instance of the object type. Externalizers are effectively an Infinispan
+instance of the object type. Externalizers are effectively an {brandname}
 extension that allows users to specify how their types are serialized. The
-underlying Infinispan marshalling infrastructure builds on
+underlying {brandname} marshalling infrastructure builds on
 link:http://www.jboss.org/jbossmarshalling[JBoss Marshalling] , and offers
 efficient payloads and stream caching. This provides much better performance
 than standard Java serialization.
 
 .More resources
-* link:../user_guide/user_guide.html#plugging_infinispan_with_user_defined_externalizers[Plug your own Externalizer implementation] into Infinispan
+* link:../user_guide/user_guide.html#plugging_infinispan_with_user_defined_externalizers[Plug your own Externalizer implementation] into {brandname}
 
 == Hot Rod
-_Hot Rod_ is the name of Infinispan's custom TCP client/server protocol which
+_Hot Rod_ is the name of {brandname}'s custom TCP client/server protocol which
 was created in order to overcome the deficiencies of other client/server
 protocols such as Memcached. HotRod, as opposed to other protocols, has the
-ability of handling failover on an Infinispan server cluster that undergoes a
+ability of handling failover on an {brandname} server cluster that undergoes a
 topology change. To achieve this, the Hot Rod regularly informs the clients of
 the cluster topology.
 
 Hot Rod enables clients to do smart routing of requests in partitioned, or
-distributed, Infinispan server clusters. This means that Hot Rod clients can
+distributed, {brandname} server clusters. This means that Hot Rod clients can
 determine the partition in which a key is located and communicate directly with
-the server that contains the key. This is made possible by Infinispan servers
+the server that contains the key. This is made possible by {brandname} servers
 sending the cluster topology to clients, and the clients using the same
 consistent hash as the servers.
 
@@ -173,7 +173,7 @@ Isolation is a property that defines how/when the changes made by one operation
 become visible to other concurrent operations. Isolation is one of the _ACID_
 properties.
 
-Infinispan ships with +REPEATABLE_READ+ and +READ_COMMITTED+ isolation levels,
+{brandname} ships with +REPEATABLE_READ+ and +READ_COMMITTED+ isolation levels,
 the latter being the default.
 
 == JTA synchronization
@@ -198,13 +198,13 @@ they both repeatedly move the same way at the same time.
 Memcached is an in-memory caching system, often used to speed-up
 database-driven websites. Memcached also defines a text based,
 client/server, caching protocol, known as the Memcached protocol
-Infinispan offers a server which speaks the Memcached protocol, allowing
-Memcached itself to be replaced by Infinispan. Thanks to Infinispan's
+{brandname} offers a server which speaks the Memcached protocol, allowing
+Memcached itself to be replaced by {brandname}. Thanks to {brandname}'s
 clustering capabilities, it can offer data failover capabilities not present
 in original Memcached systems.
 
 .More resources
-* link:../user_guide/user_guide.html#using_infinispan_memcached_server[Infinispan's Memcached Server]
+* link:../user_guide/user_guide.html#using_infinispan_memcached_server[{brandname}'s Memcached Server]
 * link:http://memcached.org[The memcached website]
 
 == Multiversion Concurrency Control (MVCC)
@@ -265,18 +265,18 @@ perspective, as locking is expensive and serializing writes may not be desired.
 _Optimistic locking_ is often seen as a preferred alternative in many cases.
 
 == READ COMMITTED
-+READ_COMMITTED+ is one of two isolation levels the Infinispan's locking
++READ_COMMITTED+ is one of two isolation levels the {brandname}'s locking
 infrastructure provides (the other is +REPEATABLE_READ+). Isolation levels
 link:http://en.wikipedia.org/wiki/Isolation_level#READ_COMMITTED[have their origins]
 in relational databases.
 
-In Infinispan, +READ_COMMITTED+ works slightly differently to databases.
+In {brandname}, +READ_COMMITTED+ works slightly differently to databases.
 +READ_COMMITTED+ says that "data can be read as long as there is no write",
-however in Infinispan, reads can happen anytime thanks to _MVCC_. MVCC allows
+however in {brandname}, reads can happen anytime thanks to _MVCC_. MVCC allows
 writes to happen on copies of data, rather than on the data itself. Thus, even
 in the presence of a write, reads can still occur, and all read operations in
-Infinispan are non-blocking (resulting in increased performance for the end
-user). On the other hand, write operations are exclusive in Infinispan, (and so
+{brandname} are non-blocking (resulting in increased performance for the end
+user). On the other hand, write operations are exclusive in {brandname}, (and so
 work the same way as +READ_COMMITTED+ does in a database).
 
 With +READ_COMMITTED+, multiple reads of the same key within a transaction can
@@ -284,7 +284,7 @@ return different results, and this phenomenon is known as
 link:http://en.wikipedia.org/wiki/Isolation_level#Non-repeatable_reads[non-repeatable reads].
 This issue is avoided with +REPETEABLE_READ+ isolation level.
 
-By default, Infinispan uses +READ_COMMITTED+ as isolation level.
+By default, {brandname} uses +READ_COMMITTED+ as isolation level.
 
 == Relational Database Management System (RDBMS)
 A relational database management system (RDBMS) is a database management system
@@ -292,12 +292,12 @@ A relational database management system (RDBMS) is a database management system
 are based on the relational database model.
 
 == REPEATABLE READ
-+REPEATABLE_READ+ is one of two isolation levels the Infinispan's locking
++REPEATABLE_READ+ is one of two isolation levels the {brandname}'s locking
 infrastructure provides (the other is +READ_COMMITTED+). Isolation levels
 link:http://en.wikipedia.org/wiki/Isolation_level#REPEATABLE_READ[have their origins]
 in relational databases.
 
-In Infinispan, +REPEATABLE_READ+ works slightly differently to databases.
+In {brandname}, +REPEATABLE_READ+ works slightly differently to databases.
 +REPEATABLE_READ+ says that "data can be read as long as there are no writes,
 and vice versa". This avoids the
 link:http://en.wikipedia.org/wiki/Isolation_level#Non-repeatable_reads[non-repeatable reads]
@@ -306,9 +306,9 @@ it, so there's no chance of re-reading the data and finding different data.
 
 Some definitions of +REPEATABLE_READ+ say that this isolation level places shared
 locks on read data; such lock could not be acquired when the entry is being written.
-However, Infinispan has an +MVCC+ concurrency model that allows it to have
-non-blocking reads. Infinispan provides +REPEATABLE_READ+ semantics by keeping
-the previous value whenever an entry is modified. This allows Infinispan to
+However, {brandname} has an +MVCC+ concurrency model that allows it to have
+non-blocking reads. {brandname} provides +REPEATABLE_READ+ semantics by keeping
+the previous value whenever an entry is modified. This allows {brandname} to
 retrieve the previous value if a second read happens within the same transaction,
 but it allows following phenomena:
 
@@ -334,11 +334,11 @@ generally when ReST is mentioned, it refers to ReST over HTTP protocol. When
 HTTP is used, the uniform generic interface for accessing resources is formed
 of GET, PUT, POST, DELETE and HEAD operations.
 
-Infinispan's ReST server offers a ReSTful API based on these HTTP methods, and
+{brandname}'s ReST server offers a ReSTful API based on these HTTP methods, and
  allow data to be stored, retrieved and deleted.
 
 .More resources
-* link:../user_guide/user_guide.html#infinispan_rest_server[The Infinispan REST Server]
+* link:../user_guide/user_guide.html#infinispan_rest_server[The {brandname} REST Server]
 
 == Split brain
 A colloquial term for a _network partition_.  See _network partition_ for more details.
@@ -359,7 +359,7 @@ that updates to the cache store are not performed in the client thread.
 An alternative cache store update mode is _write-through_.
 
 .More resources
-* link:../user_guide/user_guide.html#write_through_and_write_behind_caching[Infinispan User guide]
+* link:../user_guide/user_guide.html#write_through_and_write_behind_caching[{brandname} User guide]
 
 == Write skew
 In a write skew anomaly, two transactions (T1 and T2) concurrently read an
@@ -371,25 +371,25 @@ have to occur "first", and be visible to the other. In contrast, snapshot
 isolation such as +REPEATABLE_READ+ and +READ_COMMITTED+ permits write skew
 anomalies.
 
-Infinispan can detect write skews and can be configured to roll back
+{brandname} can detect write skews and can be configured to roll back
 transactions when write skews are detected.
 
 == Write-through
 _Write-through_ is a cache store update mode. When this mode is used, clients
 update a cache entry, e.g. via a +Cache.put()+ invocation, the call will not
-return until Infinispan has updated the underlying cache store. Normally this
+return until {brandname} has updated the underlying cache store. Normally this
 means that updates to the cache store are done in the client thread.
 
 An alternative mode in which cache stores can be updated is _write-behind_.
 
 .More resources
-* link:../user_guide/user_guide.html#write_through_and_write_behind_caching[Infinispan User guide]
+* link:../user_guide/user_guide.html#write_through_and_write_behind_caching[{brandname} User guide]
 
 == XA resource
 An XA resource is a participant in an XA transaction (also known as a
 link:http://en.wikipedia.org/wiki/X/Open_XA[distributed transaction]). For
 example, given a distributed transaction that operates over a database and
-Infinispan, XA defines both Infinispan and the database as XA resources.
+{brandname}, XA defines both {brandname} and the database as XA resources.
 
 Java's API for XA transactions is
 link:http://en.wikipedia.org/wiki/Java_Transaction_API[JTA] and link:{jdkdocroot}/javax/transaction/xa/XAResource.html[XAResource]
