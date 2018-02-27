@@ -125,7 +125,7 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
       }
       if (attributes.attribute(TYPE).get() == EvictionType.MEMORY) {
          String javaVM = SecurityActions.getSystemProperty("java.vm.name");
-         if (!javaVM.contains("HotSpot")) {
+         if (!javaVM.contains("HotSpot") && !javaVM.contains("OpenJDK")) {
             log.memoryApproximationUnsupportedVM(javaVM);
          }
       }
