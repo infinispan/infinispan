@@ -1,7 +1,7 @@
 == Clustered Lock
 
-Clustered lock is a new building block introduced in Infinispan 9.2
-It is a lock which is distributed and shared among all nodes in the Infinispan cluster and currently provides a way to execute
+Clustered lock is a new building block introduced in {brandname} 9.2
+It is a lock which is distributed and shared among all nodes in the {brandname} cluster and currently provides a way to execute
 code that will be synchronized between the nodes in a given cluster.
 
 === Installation

@@ -1,10 +1,10 @@
 ==  Persistence
-Persistence allows configuring external (persistent) storage engines complementary to the default in memory storage offered by Infinispan.
+Persistence allows configuring external (persistent) storage engines complementary to the default in memory storage offered by {brandname}.
 An external persistent storage might be useful for several reasons:
 
 * Increased Durability. Memory is volatile, so a cache store could increase the life-span of the information store in the cache.
 
-* Write-through. Interpose Infinispan as a caching layer between an application and a (custom) external storage engine.
+* Write-through. Interpose {brandname} as a caching layer between an application and a (custom) external storage engine.
 
 * Overflow Data. By using eviction and passivation, one can store only the "hot" data in memory and overflow the data that is less frequently used to disk.
 
@@ -14,7 +14,7 @@ These SPIs allow for the following features:
 
 * Alignment with link:http://jcp.org/en/jsr/detail?id=107[JSR-107]. The link:{javadocroot}/org/infinispan/persistence/spi/CacheWriter.html[CacheWriter] and link:{javadocroot}/org/infinispan/persistence/spi/CacheLoader.html[CacheLoader] interface are similar to the the loader and writer in JSR 107. This should considerably help writing portable stores across JCache compliant vendors.
 
-* Simplified Transaction Integration. All necessary locking is handled by Infinispan automatically and implementations don’t have to be concerned with coordinating concurrent access to the store. Even though concurrent writes on the same key are not going to happen (depending locking mode in use), implementors should expect operations on the store to happen from multiple/different threads and code the implementation accordingly.
+* Simplified Transaction Integration. All necessary locking is handled by {brandname} automatically and implementations don’t have to be concerned with coordinating concurrent access to the store. Even though concurrent writes on the same key are not going to happen (depending locking mode in use), implementors should expect operations on the store to happen from multiple/different threads and code the implementation accordingly.
 
 * Parallel Iteration. It is now possible to iterate over entries in the store with multiple threads in parallel.
 
@@ -48,13 +48,13 @@ This is the configuration of a custom(not shipped with infinispan) store:
 
 Explanation of the configuration options:
 
-* `passivation` (false by default) has a significant impact on how Infinispan interacts with the loaders, and is discussed in the <<cache-passivation,Cache Passivation>> section.
+* `passivation` (false by default) has a significant impact on how {brandname} interacts with the loaders, and is discussed in the <<cache-passivation,Cache Passivation>> section.
 
 * `class` defines the class of the store and must implement CacheLoader, CacheWriter or both
 
 * `fetch-state` (false by default) determines whether or not to fetch the persistent state of a cache when joining a cluster. The aim here is to take the persistent state of a cache and apply it to the local cache store of the joining node. Fetch persistent state is ignored if a cache store is configured to be shared, since they access the same data. Only one configured cache loader may set this property to true; if more than one cache loader does so, a configuration exception will be thrown when starting your cache service.
 
-* `preload` (false by default) if true, when the cache starts, data stored in the cache loader will be pre-loaded into memory. This is particularly useful when data in the cache loader is needed immediately after startup and you want to avoid cache operations being delayed as a result of loading this data lazily. Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is affected by this process. Note that preloading is done in a local fashion, so any data loaded is only stored locally in the node. No replication or distribution of the preloaded data happens. Also, Infinispan only preloads up to the maximum configured number of entries in <<eviction_anchor,eviction>>.
+* `preload` (false by default) if true, when the cache starts, data stored in the cache loader will be pre-loaded into memory. This is particularly useful when data in the cache loader is needed immediately after startup and you want to avoid cache operations being delayed as a result of loading this data lazily. Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is affected by this process. Note that preloading is done in a local fashion, so any data loaded is only stored locally in the node. No replication or distribution of the preloaded data happens. Also, {brandname} only preloads up to the maximum configured number of entries in <<eviction_anchor,eviction>>.
 
 * `shared` (false by default) indicates that the cache loader is shared among different cache instances, for example where all instances in a cluster use the same JDBC settings to talk to the same remote, shared database. Setting this to true prevents repeated and unnecessary writes of the same data to the cache loader by different cache instances.
 
@@ -71,7 +71,7 @@ Explanation of the configuration options:
 * additional attributes can be configures within the `properties` section. These attributes configure aspects specific to each cache loader, e.g. the `myProp` attribute in the previous example. Other loaders, with more complex configuration, also introduce additional sub-elements to the basic configuration. See for example the JDBC cache store configuration examples below
 
 
-The configuration above is used for a generic store implementation. However the store implementation provided by default with Infinispan have a more rich configuration schema, in which the `properties` section is replaced with XML attributes:
+The configuration above is used for a generic store implementation. However the store implementation provided by default with {brandname} have a more rich configuration schema, in which the `properties` section is replaced with XML attributes:
 
 [source,xml]
 ----
@@ -181,14 +181,14 @@ That means that it is possible to have inconsistencies at cache loader level: th
 Manual recovery would not work with caches stores.
 
 ===  Write-Through And Write-Behind Caching
-Infinispan can optionally be configured with one or several cache stores allowing it to store data in a persistent location such as shared JDBC database, a local filesystem, etc. Infinispan can handle updates to the cache store in two different ways:
+{brandname} can optionally be configured with one or several cache stores allowing it to store data in a persistent location such as shared JDBC database, a local filesystem, etc. {brandname} can handle updates to the cache store in two different ways:
 
 
 * Write-Through (Synchronous)
 * Write-Behind (Asynchronous)
 
 ==== Write-Through (Synchronous)
-In this mode, which is supported in version 4.0, when clients update a cache entry, i.e. via a Cache.put() invocation, the call will not return until Infinispan has gone to the underlying cache store and has updated it. Normally, this means that updates to the cache store are done within the boundaries of the client thread.
+In this mode, which is supported in version 4.0, when clients update a cache entry, i.e. via a Cache.put() invocation, the call will not return until {brandname} has gone to the underlying cache store and has updated it. Normally, this means that updates to the cache store are done within the boundaries of the client thread.
 
 The main advantage of this mode is that the cache store is updated at the same time as the cache, hence the cache store is consistent with the cache contents. On the other hand, using this mode reduces performance because the latency of having to access and update the cache store directly impacts the duration of the cache operation.
 
@@ -210,7 +210,7 @@ In this mode, updates to the cache are asynchronously written to the cache store
 One of the major advantages of this mode is that the performance of a cache operation does not get affected by the update of the underlying store. On the other hand, since the update happens asynchronously, there's a time window during the which the cache store can contain stale data compared to the cache. Even within write-behind, there are different strategies that can be used to store data:
 
 ===== Unscheduled Write-Behind Strategy
-In this mode, which is supported in version 4.0, Infinispan tries to store changes as quickly as possible by taking the pending changes and applying them in parallel. Normally, this means that there are several threads waiting for modifications to occur and once they're available, they apply them to underlying cache store.
+In this mode, which is supported in version 4.0, {brandname} tries to store changes as quickly as possible by taking the pending changes and applying them in parallel. Normally, this means that there are several threads waiting for modifications to occur and once they're available, they apply them to underlying cache store.
 
 This strategy is suited for cache stores with low latency and cheap operation cost. One such example would a local unshared file based cache store, where the cache store is local to the cache itself. With this strategy, the window of inconsistency between the contents of the cache and the cache store are reduced to the lowest possible time. Please find below a sample configuration file of this strategy:
 
@@ -230,7 +230,7 @@ This strategy is suited for cache stores with low latency and cheap operation co
 ===== Scheduled Write-Behind Strategy
 First of all, please note that this strategy is not included in version 4.0 but it will be implemented at a later stage. link:https://jira.jboss.org/jira/browse/ISPN-328[ISPN-328] has been created to track this feature request. If you want it implemented, please vote for it on that page, and watch it to be notified of any changes. The following explanation refers to how we envision it to work.
 
-In this mode, Infinispan would periodically store changes to the underlying cache store. The periodicity could be defined in seconds, minutes, days, etc.
+In this mode, {brandname} would periodically store changes to the underlying cache store. The periodicity could be defined in seconds, minutes, days, etc.
 
 Since this strategy is oriented at cache stores with high latency or expensive operation cost, it makes sense to coalesce changes, so that if there are multiple operations queued on the same key, only the latest value is applied to cache store. With this strategy, the window of inconsistency between the contents of the cache and the cache store depends on the delay or periodicity configured. The higher the periodicity, the higher the chance of inconsistency.
 
@@ -268,17 +268,17 @@ include::persistence_custom.adoc[]
 [[_Data_migration_section]]
 === Data Migration
 
-The format in which data is persisted has changed in Infinispan 6.0, so this
-means that if you stored data using Infinispan 4.x or Infinispan 5.x,
-Infinispan 6.0 won't be able to read it. The best way to upgrade persisted
-data from Infinispan 4.x/5.x to Infinispan 6.0 is to use the mechanisms
+The format in which data is persisted has changed in {brandname} 6.0, so this
+means that if you stored data using {brandname} 4.x or {brandname} 5.x,
+{brandname} 6.0 won't be able to read it. The best way to upgrade persisted
+data from {brandname} 4.x/5.x to {brandname} 6.0 is to use the mechanisms
 explained in the <<_Rolling_chapter,Rolling Upgrades section>>.
-In other words, by starting a rolling upgrade, data stored in Infinispan
-4.x/5.x can be migrated to a Infinispan 6.0 installation where persitence
+In other words, by starting a rolling upgrade, data stored in {brandname}
+4.x/5.x can be migrated to a {brandname} 6.0 installation where persitence
 is configured with a different location for the data. The location
 configuration varies according to the specific details of each cache store.
 
-Following sections describe the SPI and also discuss the SPI implementations that Infinispan ships out of the box.
+Following sections describe the SPI and also discuss the SPI implementations that {brandname} ships out of the box.
 
 === API
 

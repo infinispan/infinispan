@@ -52,7 +52,7 @@
     </dependencies>
 
     <build>
-        <finalName>${server.output.dir.prefix}-${project.version}</finalName>
+        <finalName>${server.output.dir.prefix}-${infinispan.brand.version}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.wildfly.build</groupId>
@@ -105,7 +105,7 @@
                                 <descriptor>assembly.xml</descriptor>
                             </descriptors>
                             <recompressZippedFiles>true</recompressZippedFiles>
-                            <finalName>${server.output.dir.prefix}-${project.version}</finalName>
+                            <finalName>${server.output.dir.prefix}-${infinispan.brand.version}</finalName>
                             <appendAssemblyId>false</appendAssemblyId>
                             <outputDirectory>${project.build.directory}</outputDirectory>
                             <workDirectory>${project.build.directory}/assembly/work</workDirectory>

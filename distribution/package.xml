@@ -1,7 +1,12 @@
 <project name="infinispan-packaging" basedir="." default="package" xmlns:if="ant:if" xmlns:unless="ant:unless">
    <property name="root.dir" value=".." />
    <property name="dist.dir" value="${project.build.directory}/distribution" />
-   <property name="base.output.dir" value="${dist.dir}/infinispan-${project.version}" />
+   <property name="base.output.dir" value="${dist.dir}/${infinispan.brand.prefix}-${project.version}" />
+   <property name="dollar" value="$"/>
+   <filterset id="brandfilter" begintoken="${dollar}{" endtoken="}">
+      <filter token="infinispan.brand.name" value="${infinispan.brand.name}" />
+      <filter token="current.year" value="${current.year}" />
+   </filterset>
 
    <target name="package" depends="clean, minimal, all, remote" />
 
@@ -134,8 +139,9 @@
       <attribute name="type" />
       <sequential>
          <copy todir="@{dir}">
-            <fileset dir="src/main/release/common" />
+            <fileset dir="src/main/release/common"/>
             <fileset dir="src/main/release/@{type}" />
+            <filterset refid="brandfilter"/>
          </copy>
       </sequential>
    </macrodef>
@@ -149,6 +155,7 @@
             <fileset dir="src/main/release/common/docs-@{type}">
                <include name="**" />
             </fileset>
+            <filterset refid="brandfilter"/>
          </copy>
          <unjar src="${org.infinispan:infinispan-javadoc-@{type}:jar:javadoc}" dest="@{dir}/docs/api" />
       </sequential>
@@ -269,6 +276,7 @@
                <include name="**" />
                <exclude name="bin/**"/>
             </fileset>
+            <filterset refid="brandfilter"/>
          </copy>
          <fix-permissions dir="@{dir}/@{target}" />
       </sequential>

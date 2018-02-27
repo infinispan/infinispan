@@ -1,5 +1,5 @@
 ==  Example with Scala
-This article shows how to use Infinispan with link:http://www.scala-lang.org/[Scala language] . It uses the same commands and configurations used in the <<_example_with_groovy, Example with Groovy>>. For more details about the scenarios and steps please visit about page since here will will only focus on Scala compatibility.
+This article shows how to use {brandname} with link:http://www.scala-lang.org/[Scala language] . It uses the same commands and configurations used in the <<_example_with_groovy, Example with Groovy>>. For more details about the scenarios and steps please visit about page since here will will only focus on Scala compatibility.
 
 === Environment
 Running the shell
@@ -56,7 +56,7 @@ where infinispan-embedded-{infinispanversion}.0.Final.jar, jboss-transaction-api
 
 
 === Testing Setup
-The following code shows how to start an Scala console that will allow commands to be entered interactively. To verify that the Infinispan classes have been imported correctly, an import for all Infinispan classes will be attempted and then a request will be made to print the version of Infinispan:
+The following code shows how to start an Scala console that will allow commands to be entered interactively. To verify that the {brandname} classes have been imported correctly, an import for all {brandname} classes will be attempted and then a request will be made to print the version of {brandname}:
 
 [subs="attributes"]
 ----
@@ -188,7 +188,7 @@ res16: Int = 0
 
 === Transactional cache operations
 
-Infinispan caches can be operated within a transaction, in such way that operations can be grouped in order to be executed atomically. The key thing to understand about transactions is that within the transactions changes are visible, but to other non-transactional operations, or other transactions, these are not visible until the transaction is committed. The following example shows how within a transaction an entry can be stored but outside the transaction, this modification is not yet visible, and that once the transaction is committed, the modification is visible to all:
+{brandname} caches can be operated within a transaction, in such way that operations can be grouped in order to be executed atomically. The key thing to understand about transactions is that within the transactions changes are visible, but to other non-transactional operations, or other transactions, these are not visible until the transaction is committed. The following example shows how within a transaction an entry can be stored but outside the transaction, this modification is not yet visible, and that once the transaction is committed, the modification is visible to all:
 
 
 ----
@@ -274,7 +274,7 @@ res29: String = storedValue
 
 === Operating against a size bounded cache
 
-Infinispan caches can be configured with a max number of entries, so if this is exceeded certain cache entries are evicted from in-memory cache. Which cache entries get evicted is dependant on the eviction algorithm chosen. In this particular example, FIFO algorithm has been configured, so when a cache entry needs to be evicted, those stored first will go first:
+{brandname} caches can be configured with a max number of entries, so if this is exceeded certain cache entries are evicted from in-memory cache. Which cache entries get evicted is dependant on the eviction algorithm chosen. In this particular example, FIFO algorithm has been configured, so when a cache entry needs to be evicted, those stored first will go first:
 
 
 ----

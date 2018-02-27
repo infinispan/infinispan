@@ -165,6 +165,7 @@
                                 <docinfo>true</docinfo>
                                 <experimental>true</experimental>
                                 <infinispanversion>${infinispan.base.version}</infinispanversion>
+                                <brandname>${infinispan.brand.name}</brandname>
                                 <infinispanslot>ispn-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</infinispanslot>
                                 <defaults>${defaults.file}</defaults>
                                 <javadocroot>${javadoc.root}</javadocroot>

@@ -15,18 +15,16 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 public class Version {
-   private static final String MODULE_PREFIX = "ispn";
    private static final int MAJOR_SHIFT = 11;
    private static final int MINOR_SHIFT = 6;
    private static final int MAJOR_MASK = 0x00f800;
    private static final int MINOR_MASK = 0x0007c0;
    private static final int PATCH_MASK = 0x00003f;
 
-   public static final String PROJECT_NAME = "Infinispan";
-
    private static final Version INSTANCE = new Version();
 
    private final String version;
+   private final String brandname;
    private final String codename;
    private final byte[] versionId;
    private final String moduleSlot;
@@ -43,11 +41,13 @@ public class Version {
       } catch (Exception e) {
       }
       version = properties.getProperty("infinispan.version", "0.0.0-SNAPSHOT");
+      brandname = properties.getProperty("infinispan.brand.name", "Infinispan");
       codename = properties.getProperty("infinispan.codename", "N/A");
       String parts[] = getParts(version);
       versionId = readVersionBytes(parts[0], parts[1], parts[2], parts[3]);
       versionShort = getVersionShort(version);
-      moduleSlot = String.format("%s-%s.%s", MODULE_PREFIX, parts[0], parts[1]);
+      String modulePrefix = properties.getProperty("infinispan.module.slot.prefix", "ispn");
+      moduleSlot = String.format("%s-%s.%s", modulePrefix, parts[0], parts[1]);
       marshallVersion = Short.valueOf(parts[0] + parts[1]);
       majorMinor = String.format("%s.%s", parts[0], parts[1]);
       major = parts[0];
@@ -55,6 +55,10 @@ public class Version {
 
    public static String getVersion() {
       return INSTANCE.version;
+   }
+
+   public static String getBrandName() {
+      return INSTANCE.brandname;
    }
 
    public static String getCodename() {
@@ -133,11 +137,10 @@ public class Version {
     * Prints full version information to the standard output.
     */
    public static void printFullVersionInformation() {
-      System.out.println(PROJECT_NAME);
+      System.out.println(INSTANCE.brandname);
       System.out.println();
       System.out.printf("Version: \t%s%n", INSTANCE.version);
       System.out.printf("Codename: \t%s%n", INSTANCE.codename);
-      System.out.println("History: \t(see https://jira.jboss.org/jira/browse/ISPN for details)");
       System.out.println();
    }
 
@@ -145,7 +148,7 @@ public class Version {
     * Returns version information as a string.
     */
    public static String printVersion() {
-      return PROJECT_NAME + " '" + INSTANCE.codename + "' " + INSTANCE.version;
+      return INSTANCE.brandname + " '" + INSTANCE.codename + "' " + INSTANCE.version;
    }
 
    private static byte[] readVersionBytes(String major, String minor, String micro, String modifier) {

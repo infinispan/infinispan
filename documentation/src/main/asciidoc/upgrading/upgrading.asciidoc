@@ -1,11 +1,11 @@
-= Upgrading to Infinispan {infinispanversion}
-The Infinispan community
+= Upgrading to {brandname} {infinispanversion}
+The {brandname} community
 :toc2:
 :icons: font
 :toclevels: 1
 :numbered:
 
-This guide walks you through the process of upgrading Infinispan.
+This guide walks you through the process of upgrading {brandname}.
 
 == Upgrading from 9.0 to 9.1
 
@@ -20,7 +20,7 @@ Average values for read, write and removals are now returned in Nanoseconds, opp
 
 === (FineGrained)AtomicMap reimplemented
 
-Infinispan now contains a new implementation of both `AtomicMap` and `FineGrainedAtomicMap`, but the semantics has been preserved. The new implementation does not use `DeltaAware` interface but the link:../user_guide/user_guide.html#functional_map_api[Functional API] instead.
+{brandname} now contains a new implementation of both `AtomicMap` and `FineGrainedAtomicMap`, but the semantics has been preserved. The new implementation does not use `DeltaAware` interface but the link:../user_guide/user_guide.html#functional_map_api[Functional API] instead.
 
 There are no changes needed for `AtomicMap`, but it now supports non-transactional use case as well.
 
@@ -48,13 +48,13 @@ Interfaces `DeltaAware`, `Delta` and `CopyableDeltaAware` have been deprecated. 
 
 Any partial updates to an entry should be replaced using the link:../user_guide/user_guide.html#functional_map_api[Functional API].
 
-=== Infinispan Query Configuration
+=== {brandname} Query Configuration
 
 The configuration property `directory_provider` now accepts a new value `local-heap`.
 This value replaces the now deprecated `ram`, and as its predecessor will cause the index to be stored in a `org.apache.lucene.store.RAMDirectory`.
 
 The configuration value `ram` is still accepted and will have the same effect, but failing to replace `ram` with `local-heap` will cause a warning to be logged.
-We suggest to perform this replacement, as the `ram` value will no longer be recognised by Infinispan in a future version.
+We suggest to perform this replacement, as the `ram` value will no longer be recognised by {brandname} in a future version.
 
 This change was made as the team believes the `local-heap` name better expresses the storage model, especially as this storage method will not allow real-time replication of the index across multiple nodes.
 This index storage option is mostly useful for single node integration testing of the query functionality.
@@ -63,7 +63,7 @@ This index storage option is mostly useful for single node integration testing o
 TableManipulation::batchSize and JpaStoreConfiguration::batchSize have been deprecated and replaced by the higher level AbstractStoreConfiguration::maxBatchSize.
 
 === Partition Handling changes
-In Infinispan 9.1 partition handling has been improved to allow for automatic
+In {brandname} 9.1 partition handling has been improved to allow for automatic
 link:../user_guide/user_guide.html#conflict-manager[conflict resolution on partition merges]. Consequently,
 PartitionHandlingConfiguration::enabled has been deprecated in favour of PartitionHandlingConfiguration::whenSplit.
 Configuring whenSplit to the DENY_READ_WRITES strategy is equivalent to setting enabled to true, whilst specifying
@@ -115,19 +115,19 @@ The following classes have been deprecated and they will be removed in the futur
 The `mode` attribute in the XML declaration of clustered caches is no longer mandatory. It defaults to SYNC.
 
 === Default Cache changes
-Up to Infinispan 8.x, the default cache always implicitly existed, even if not declared in the XML configuration.
+Up to {brandname} 8.x, the default cache always implicitly existed, even if not declared in the XML configuration.
 Additionally, the default cache configuration affected all other cache configurations, acting as some kind of base template.
 Since 9.0, the default cache only exists if it has been explicitly configured. Additionally, even if it has been specified,
 it will never act as base template for other caches.
 
 === Marshalling Enhancements and Store Compatibility
-Internally Infinispan 9.x has introduced many improvements to its marshalling codebase in order to improve performance
-and allow for greater flexibility. Consequently, data marshalled and persisted by Infinispan 8.x is no longer compatible with Infinispan 9.0.
+Internally {brandname} 9.x has introduced many improvements to its marshalling codebase in order to improve performance
+and allow for greater flexibility. Consequently, data marshalled and persisted by {brandname} 8.x is no longer compatible with {brandname} 9.0.
 To aid you in migrating your existing stores to 9.0, we have provided a link:../user_guide/user_guide.html#jdbc_migrator[Store Migrator],
 however at present this only allows the migration of JDBC stores.
 
 === New Cloud module for library mode
-In Infinispan 8.x, cloud related configuration were added to `infinispan-core` module. Since 9.0 they were moved to `infinispan-cloud` module.
+In {brandname} 8.x, cloud related configuration were added to `infinispan-core` module. Since 9.0 they were moved to `infinispan-cloud` module.
 
 === Entry Retriever is now removed
 The entry retriever feature has been removed.  Please update to use the new Streams feature detailed in the User Guide.
@@ -157,7 +157,7 @@ The interface `SegmentCompletionListener` has moved from the interface
 `org.infinispan.CacheStream` to the new `org.infinispan.BaseCacheStream`.
 
 === Spring module dependency changes
-All Infinispan, Spring and Logger dependencies are now in the `provided` scope. One can decide whether to use small jars or uber jars but they need to be added to the classpath of the application.
+All {brandname}, Spring and Logger dependencies are now in the `provided` scope. One can decide whether to use small jars or uber jars but they need to be added to the classpath of the application.
 It also gives one freedom in choosing Spring (or Spring Boot) version.
 
 Here is an example:
@@ -242,10 +242,10 @@ iteratorIncludingExpired methods intead.
 
 == Upgrading from 8.1 to 8.2
 === Entry Retriever is deprecated
-Entry Retriever is now deprecated and will be removed in Infinispan 9.  This is replaced by the new Streams feature.
+Entry Retriever is now deprecated and will be removed in {brandname} 9.  This is replaced by the new Streams feature.
 
 === Map / Reduce is deprecated
-Map reduce is now deprecated and will be removed in Infinispan 9.  This is replaced by the new Streams feature.
+Map reduce is now deprecated and will be removed in {brandname} 9.  This is replaced by the new Streams feature.
 
 == Upgrading from 8.x to 8.1
 === Packaging changes
@@ -286,9 +286,9 @@ To be more inline with JCache and java.util.collections interfaces we have chang
 
 ==== Filters
 
-Over time Infinispan added 2 interfaces with identical names and almost identical methods.  The org.infinispan.notifications.KeyFilter and org.infinispan.persistence.spi.AdvancedCacheLoader$KeyFilter interfaces.
+Over time {brandname} added 2 interfaces with identical names and almost identical methods.  The org.infinispan.notifications.KeyFilter and org.infinispan.persistence.spi.AdvancedCacheLoader$KeyFilter interfaces.
 
-Both of these interfaces are used for the sole purpose of filtering an entry by it's given key.  Infinispan 7.0 has also introduced the KeyValueFilter which is similar to both but also can filter on the entries value and/or metadata.
+Both of these interfaces are used for the sole purpose of filtering an entry by it's given key.  {brandname} 7.0 has also introduced the KeyValueFilter which is similar to both but also can filter on the entries value and/or metadata.
 
 As such all of these classes have been moved into a new package org.infinispan.filter and all of their related helper classes.
 
@@ -296,7 +296,7 @@ The new org.infinispan.filter.KeyFilter interface has replaced both of the previ
 
 === Declarative configuration
 
-The XML schema for the embedded configuration has changed to more closely follow the server configuration. Use the `config-converter.sh` or `config-converter.bat` scripts to convert an Infinispan 6.0 to the current format.
+The XML schema for the embedded configuration has changed to more closely follow the server configuration. Use the `config-converter.sh` or `config-converter.bat` scripts to convert an {brandname} 6.0 to the current format.
 
 == Upgrading from 5.3 to 6.0
 === Declarative configuration
@@ -391,11 +391,11 @@ builder.transaction().useSynchronization(false).recovery().enabled(false)
 
 === Cache Loader and Store configuration
 
-Cache Loader and Store configuration has changed greatly in Infinispan 5.2. Please refer to the link:../user_guide/user_guide.html#cache_loaders_and_stores[Cache Loaders and Stores] documentation.
+Cache Loader and Store configuration has changed greatly in {brandname} 5.2. Please refer to the link:../user_guide/user_guide.html#cache_loaders_and_stores[Cache Loaders and Stores] documentation.
 
 === Virtual Nodes and Segments
 
-The concept of Virtual Nodes doesn't exist anymore in Infinispan 5.2 and has been replaced by Segments. Please refer to the link:../user_guide/user_guide.html#clustering_modes[Clustering modes] documentation for details.
+The concept of Virtual Nodes doesn't exist anymore in {brandname} 5.2 and has been replaced by Segments. Please refer to the link:../user_guide/user_guide.html#clustering_modes[Clustering modes] documentation for details.
 
 ==  Upgrading from 5.0 to 5.1
 === API
@@ -471,7 +471,7 @@ One of the big changes we made in 5.1 was to use the same push-based state trans
 As a consequence we've unified the state transfer configuration as well, there is now a `stateTransfer` element containing a simplified state transfer configuration. The corresponding attributes in the `stateRetrieval` and `hash` elements have been deprecated, as have been some attributes that are no longer used.
 
 === Configuration
-If you use XML to configure Infinispan, you shouldn't notice any change, except a much faster startup, courtesy of the link:http://en.wikipedia.org/wiki/StAX[StAX] based parser. However, if you use programmatic configuration, read on for the important differences.
+If you use XML to configure {brandname}, you shouldn't notice any change, except a much faster startup, courtesy of the link:http://en.wikipedia.org/wiki/StAX[StAX] based parser. However, if you use programmatic configuration, read on for the important differences.
 
 Configuration is now packaged in `org.infinispan.configuration`, and you must use a fluent, builder style:
 
@@ -508,9 +508,9 @@ Configuration c2 = new ConfigurationBuilder()
 
 ----
 
-This completely replaces the old system of defining a set of overrides on bean properties. Note that this means the behaviour of Infinispan configuration is somewhat different when used programmatically. Whilst before, you could define a default configuration, and any overrides would be applied on top of _your_ defaults when defined, now you must explicitly read in your defaults to the builder. This allows for much greater flexibility in your code (you can have a as many "default" configurations as you want), and makes your code more explicit and type safe (finding references works).
+This completely replaces the old system of defining a set of overrides on bean properties. Note that this means the behaviour of {brandname} configuration is somewhat different when used programmatically. Whilst before, you could define a default configuration, and any overrides would be applied on top of _your_ defaults when defined, now you must explicitly read in your defaults to the builder. This allows for much greater flexibility in your code (you can have a as many "default" configurations as you want), and makes your code more explicit and type safe (finding references works).
 
-The schema is unchanged from before. Infinispan 4.0 configurations are currently not being parsed. To upgrade, just change the schema definition from:
+The schema is unchanged from before. {brandname} 4.0 configurations are currently not being parsed. To upgrade, just change the schema definition from:
 
 [source,xml]
 ----

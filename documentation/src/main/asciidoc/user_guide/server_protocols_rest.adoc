@@ -1,10 +1,10 @@
 ===  REST Server
 
-The Infinispan Server distribution contains a module that implements link:http://en.wikipedia.org/wiki/Representational_State_Transfer[RESTful] HTTP access to the Infinispan data grid, built on https://github.com/netty/netty[Netty].
+The {brandname} Server distribution contains a module that implements link:http://en.wikipedia.org/wiki/Representational_State_Transfer[RESTful] HTTP access to the {brandname} data grid, built on https://github.com/netty/netty[Netty].
 
 ==== Running the REST server
 
-The REST server endpoint is part of the Infinispan Server and by default listens on port 8080. To run the server locally,
+The REST server endpoint is part of the {brandname} Server and by default listens on port 8080. To run the server locally,
 link:http://infinispan.org/download/[download] the zip distribution and execute in the extracted directory:
 
 [source]
@@ -61,14 +61,14 @@ An example of storage configuration is as follows:
 </cache>
 ----
 
-When no MediaType is configured, Infinispan assumes "application/octet-stream" for both keys and values, with the following exceptions:
+When no MediaType is configured, {brandname} assumes "application/octet-stream" for both keys and values, with the following exceptions:
 
 * If the cache is indexed, it assumes "application/x-protostream"
 * If the cache is configured with compatibility mode, it assumes "application/x-java-object"
 
 ====== Supported formats
 
-Data can be written and read in different formats than the storage format; Infinispan can convert between those formats when required.
+Data can be written and read in different formats than the storage format; {brandname} can convert between those formats when required.
 
 The following "standard" formats can be converted interchangeably:
 
@@ -90,7 +90,7 @@ Finally, the following conversion is also supported:
 * Between _application/x-protostream_ and _application/json_
 
 All the REST API calls can provide headers describing the content written or the required format of the content
-when reading. Infinispan supports the standard HTTP/1.1 headers "Content-Type" and "Accept" that are applied for values,
+when reading. {brandname} supports the standard HTTP/1.1 headers "Content-Type" and "Accept" that are applied for values,
 plus the "Key-Content-Type" with similar effect for keys.
 
 
@@ -101,13 +101,13 @@ and will negotiate the correct MediaType based on the conversions supported. Exa
 
    Accept: text/plain;q=0.7, application/json;q=0.8, */*;q=0.6
 
-will cause Infinispan to try first to return content in JSON format (higher priority 0.8). If it's not possible to convert the storage format
+will cause {brandname} to try first to return content in JSON format (higher priority 0.8). If it's not possible to convert the storage format
 to JSON, next format tried will be _text/plain_ (second highest priority 0.7), and finally it falls back to _*/*_, that will pick a format
 suitable for displaying automatically based on the cache configuration.
 
 ====== Key-Content-Type header [[rest.key_content_type]]
 
-Most REST API calls have the Key included in the URL. Infinispan will assume the Key is a _java.lang.String_ when handling those calls, but
+Most REST API calls have the Key included in the URL. {brandname} will assume the Key is a _java.lang.String_ when handling those calls, but
 it's possible to use a specific header _Key-Content-Type_ for keys in different formats.
 
 Examples:
@@ -167,9 +167,9 @@ Exactly the same as PUT, only if a value in a cache/key already exists, it will 
 
 *  performAsync : OPTIONAL true/false (if true, this will return immediately, and then replicate data to the cluster on its own. Can help with bulk data inserts/large clusters.)
 
-*  timeToLiveSeconds : OPTIONAL number (the number of seconds before this entry will automatically be deleted). If no parameter is sent, Infinispan assumes configuration default value. Passing any negative value will create an entry which will live forever.
+*  timeToLiveSeconds : OPTIONAL number (the number of seconds before this entry will automatically be deleted). If no parameter is sent, {brandname} assumes configuration default value. Passing any negative value will create an entry which will live forever.
 
-*  maxIdleTimeSeconds : OPTIONAL number (the number of seconds after last usage of this entry when it will automatically be deleted). If no  parameter is sent, Infinispan configuration default value. Passing any negative value will create an entry which will live forever.
+*  maxIdleTimeSeconds : OPTIONAL number (the number of seconds after last usage of this entry when it will automatically be deleted). If no  parameter is sent, {brandname} configuration default value. Passing any negative value will create an entry which will live forever.
 
 .Passing 0 as parameter for timeToLiveSeconds and/or maxIdleTimeSeconds
 *  If both `timeToLiveSeconds` and `maxIdleTimeSeconds` are 0, the cache will use the default `lifespan` and `maxIdle` values configured in XML/programmatically
@@ -218,14 +218,14 @@ A conformant JSON document would be:
 HTTP GET and HEAD are used to retrieve data from entries.
 
 ====== `GET /{cacheName}/{cacheKey}`
-This will return the data found in the given cacheName, under the given key - as the body of the response. A Content-Type header will be present in the response according to the Media Type negotiation. Browsers can use the cache directly of course (eg as a CDN). An link:http://en.wikipedia.org/wiki/HTTP_ETag[ETag] will be returned unique for each entry, as will the Last-Modified and Expires headers field indicating the state of the data at the given URL. ETags allow browsers (and other clients) to ask for data only in the case where it has changed (to save on bandwidth) - this is standard HTTP and is honoured by Infinispan.
+This will return the data found in the given cacheName, under the given key - as the body of the response. A Content-Type header will be present in the response according to the Media Type negotiation. Browsers can use the cache directly of course (eg as a CDN). An link:http://en.wikipedia.org/wiki/HTTP_ETag[ETag] will be returned unique for each entry, as will the Last-Modified and Expires headers field indicating the state of the data at the given URL. ETags allow browsers (and other clients) to ask for data only in the case where it has changed (to save on bandwidth) - this is standard HTTP and is honoured by {brandname}.
 
 .Headers
 
 *  <<rest.key_content_type,Key-Content-Type>> : OPTIONAL The content type for the Key present in the URL. When omitted, _application/x-java-object; type=java.lang.String_ is assumed
 *  <<rest.accept,Accept>>: OPTIONAL The required format to return the content
 
-Since Infinispan 5.3 it is possible to obtain additional information by appending the "extended" parameter on the query string, as follows:
+Since {brandname} 5.3 it is possible to obtain additional information by appending the "extended" parameter on the query string, as follows:
 
  GET /cacheName/cacheKey?extended
 
@@ -347,7 +347,7 @@ Part of the point of a RESTful service is that you don't need to have tightly co
 
 [source,ruby]
 ----
-# Shows how to interact with Infinispan REST api from ruby.
+# Shows how to interact with {brandname} REST api from ruby.
 # No special libraries, just standard net/http
 #
 # Author: Michael Neale
@@ -475,7 +475,7 @@ import java.net.URL;
 import java.util.Base64;
 
 /**
- * Rest example accessing Infinispan Cache.
+ * Rest example accessing {brandname} Cache.
  *
  * @author Samuel Tauil (samuel@redhat.com)
  */
@@ -570,7 +570,7 @@ public class RestExample {
         RestExample restExample = new RestExample();
         String user = "user";
         String pass = "pass";
-        restExample.putMethod("http://localhost:8080/rest/default/1", "Infinispan REST Test", user, pass);
+        restExample.putMethod("http://localhost:8080/rest/default/1", "{brandname} REST Test", user, pass);
         restExample.getMethod("http://localhost:8080/rest/default/1", user, pass);
     }
 }

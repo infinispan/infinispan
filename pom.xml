@@ -51,8 +51,8 @@
       <url>https://issues.jboss.org/browse/ISPN</url>
    </issueManagement>
    <ciManagement>
-      <system>TeamCity</system>
-      <url>http://ci.infinispan.org</url>
+      <system>Jenkins</system>
+      <url>https://ci.infinispan.org</url>
       <notifiers>
          <notifier>
             <type>mail</type>
@@ -155,6 +155,14 @@
       <module>documentation</module>
    </modules>
    <properties>
+      <!-- Versions and codenames -->
+      <infinispan.brand.name>Infinispan</infinispan.brand.name>
+      <infinispan.brand.prefix>infinispan</infinispan.brand.prefix>
+      <infinispan.brand.version>${project.version}</infinispan.brand.version>
+      <infinispan.codename>Gaina</infinispan.codename>
+      <infinispan.module.slot.prefix>ispn</infinispan.module.slot.prefix>
+      <infinispan.base.version>9.2</infinispan.base.version>
+      <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
 
       <!-- Semantic versioning defaults. -->
       <bnd.consumer.policy>$&lt;range;[==,+)&gt;</bnd.consumer.policy>
@@ -171,9 +179,6 @@
       <testjvm.commonArgs>-XX:+UseG1GC -XX:-TieredCompilation -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}</testjvm.commonArgs>
       <testjvm.jigsawArgs />
       <forkJvmArgs>-Xmx1G ${testjvm.commonArgs}</forkJvmArgs>
-      <infinispan.codename>Gaina</infinispan.codename>
-      <infinispan.base.version>9.2</infinispan.base.version>
-      <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
       <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
       <infinispan.test.parallel.threads>15</infinispan.test.parallel.threads>
@@ -1493,6 +1498,42 @@
             </executions>
          </plugin>
          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>timestamp-property</id>
+                  <goals>
+                     <goal>timestamp-property</goal>
+                  </goals>
+                  <phase>validate</phase>
+                  <configuration>
+                     <name>current.year</name>
+                     <pattern>yyyy</pattern>
+                     <locale>en_US</locale>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>buildnumber-maven-plugin</artifactId>
+            <version>1.4</version>
+            <executions>
+               <execution>
+                  <phase>validate</phase>
+                  <goals>
+                     <goal>create</goal>
+                  </goals>
+                  <configuration>
+                     <doCheck>false</doCheck>
+                     <doUpdate>false</doUpdate>
+                     <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-invoker-plugin</artifactId>
             <version>${version.maven.invoker}</version>
@@ -1527,6 +1568,8 @@
                   <_consumer-policy>${bnd.consumer.policy}</_consumer-policy>
                   <_provider-policy>${bnd.provider.policy}</_provider-policy>
                   <Include-Resource>{maven-resources}</Include-Resource>
+                  <Implementation-Build-Commit-Id>${buildNumber}</Implementation-Build-Commit-Id>
+                  <Implementation-Build-Branch>${scmBranch}</Implementation-Build-Branch>
                </instructions>
             </configuration>
          </plugin>
@@ -1627,7 +1670,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
-            <version>2.4</version>
+            <version>3.0.2</version>
             <executions>
                <execution>
                   <id>build-test-jar</id>

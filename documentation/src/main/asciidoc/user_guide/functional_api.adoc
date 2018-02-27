@@ -1,10 +1,10 @@
 === Functional Map API
 
-Infinispan 8 introduces a new experimental API for interacting with your
+{brandname} 8 introduces a new experimental API for interacting with your
 data which takes advantage of the functional programming additions and
 improved asynchronous programming capabilities available in Java 8.
 
-Infinispan's link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.html[Functional Map API]
+{brandname}'s link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.html[Functional Map API]
 is a distilled map-like asynchronous API which uses functions to interact with data.
 
 ==== Asynchronous and Lazy
@@ -31,20 +31,20 @@ those results.
 
 ==== Function transparency
 
-Since the content of the functions is transparent to Infinispan, the API
+Since the content of the functions is transparent to {brandname}, the API
 has been split into 3 interfaces for read­-only (
 link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.ReadOnlyMap.html[`R​eadOnlyMap`]
 )​, read­-write (
 link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.ReadWriteMap.html[`R​eadWriteMap`]
 )​ and write­-only (
 link:{javadocroot}/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html[`W​riteOnlyMap`]
-)​ operations respectively, in order to provide hints to the Infinispan
+)​ operations respectively, in order to provide hints to the {brandname}
 internals on the type of work needed to support functions.
 
 ==== Constructing Functional Maps
 
 To construct any of the read-only, write-only or read-write map
-instances, an Infinispan
+instances, an {brandname}
 link:{javadocroot}/org/infinispan/AdvancedCache.html[`AdvancedCache`]
 is required, which is retrieved from the Cache Manager, and using the
 link:{javadocroot}/org/infinispan/AdvancedCache.html[`AdvancedCache`]
@@ -142,7 +142,7 @@ Write-only operations include operations that insert or update data in the
 cache and also removals. Crucially, a write-only operation does not attempt
 to read any previous value associated with the key. This is an important
 optimization since that means neither the cluster nor any persistence stores
-will be looked up to retrieve previous values. In the main Infinispan Cache,
+will be looked up to retrieve previous values. In the main {brandname} Cache,
 this kind of optimization was achieved using a local-only per-invocation
 flag, but the use case is so common that in this new functional API, this
 optimization is provided as a first-class citizen.
@@ -681,7 +681,7 @@ Consumer<WriteEntryView<String>> function =
 CompletableFuture<Void> writeFuture = writeOnlyMap.eval("key1", function);
 ----
 
-Since version 9.1 Infinispan provides overloads for all functional methods that make lambdas
+Since version 9.1 {brandname} provides overloads for all functional methods that make lambdas
 passed directly to the API serializable by default; the compiler automatically selects
 this overload if that's possible. Therefore you can call
 
@@ -693,7 +693,7 @@ CompletableFuture<Void> writeFuture = writeOnlyMap.eval("key1", wv -> wv.set("on
 
 without doing the cast described above.
 
-A more economical way to marshall a function is to provide an Infinispan
+A more economical way to marshall a function is to provide an {brandname}
 link:{javadocroot}/org/infinispan/commons/marshall/Externalizer.html[`Externalizer`]
 for it:
 
@@ -760,7 +760,7 @@ future.thenAccept(stored -> System.out.printf("Value was put? %s%n", stored));
 
 ==== Use cases for Functional API
 
-This new API is meant to complement existing Key/Value Infinispan API
+This new API is meant to complement existing Key/Value {brandname} API
 offerings, so you'll still be able to use
 link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`]
 or

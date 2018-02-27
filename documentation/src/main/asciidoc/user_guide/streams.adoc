@@ -1,7 +1,7 @@
 ===  Streams
 
 You may want to process a subset or all data in the cache to produce a result.
-This may bring thoughts of Map Reduce. Infinispan allows the user to do something
+This may bring thoughts of Map Reduce. {brandname} allows the user to do something
 very similar but utilizes the standard JRE APIs to do so.
 Java 8 introduced the concept of a link:{jdkdocroot}/java/util/stream/Stream.html[Stream]
 which allows functional-style operations on collections rather than having to procedurally
@@ -45,7 +45,7 @@ distributed and threaded parallelism for free.
 
 ==== Segment based filtering
 
-NOTE: This is an advanced feature and should only be used with deep knowledge of Infinispan segment and hashing techniques.
+NOTE: This is an advanced feature and should only be used with deep knowledge of {brandname} segment and hashing techniques.
 These segments based filtering can be useful if you need to segment data into separate invocations.
 This can be useful when integrating with other tools such as
 link:http://spark.apache.org/[Apache Spark].
@@ -60,7 +60,7 @@ method on the `CacheStream`.  This is applied after the key filter but before an
 ==== Local/Invalidation
 
 A stream used with a local or invalidation cache can be used just the same way you would use a stream on a
-regular collection. Infinispan handles all of the translations if necessary behind the scenes and works with all
+regular collection. {brandname} handles all of the translations if necessary behind the scenes and works with all
 of the more interesting options (ie. storeAsBinary, compatibility mode, and a cache loader).  Only data local to
 the node where the stream operation is performed will be used, for example invalidation only uses local entries.
 
@@ -106,11 +106,11 @@ WARNING: Please rethink disabling rehash awareness unless you really know what y
 
 ==== Serialization
 
-Since the operations are sent across to other nodes they must be serializable by Infinispan marshalling.  This allows the
+Since the operations are sent across to other nodes they must be serializable by {brandname} marshalling.  This allows the
 operations to be sent to the other nodes.
 
 The simplest way is to use a CacheStream instance and use a lambda just as you would normally.
-Infinispan overrides all of the various Stream intermediate and terminal methods to take
+{brandname} overrides all of the various Stream intermediate and terminal methods to take
 Serializable versions of the arguments (ie. SerializableFunction, SerializablePredicate...)
 You can find these methods at
 link:{javadocroot}/org/infinispan/stream/CacheStream.html[CacheStream].
@@ -451,7 +451,7 @@ The rest of the intermediate operations are fully distributed as one would expec
 
 Word count is a classic, if overused, example
 of map/reduce paradigm. Assume we have a mapping of key -> sentence stored on
-Infinispan nodes. Key is a String, each sentence is also a String, and we have
+{brandname} nodes. Key is a String, each sentence is also a String, and we have
 to count occurrence of all words in all sentences available. The implementation
 of such a distributed task could be defined as follows:
 
@@ -470,15 +470,15 @@ public class WordCountExample {
       Cache<String, String> c2 = ...;
 
       c1.put("1", "Hello world here I am");
-      c2.put("2", "Infinispan rules the world");
+      c2.put("2", "{brandname} rules the world");
       c1.put("3", "JUDCon is in Boston");
       c2.put("4", "JBoss World is in Boston as well");
       c1.put("12","JBoss Application Server");
       c2.put("15", "Hello world");
-      c1.put("14", "Infinispan community");
+      c1.put("14", "{brandname} community");
       c2.put("15", "Hello world");
 
-      c1.put("111", "Infinispan open source");
+      c1.put("111", "{brandname} open source");
       c2.put("112", "Boston is close to Toronto");
       c1.put("113", "Toronto is a capital of Ontario");
       c2.put("114", "JUDCon is cool");

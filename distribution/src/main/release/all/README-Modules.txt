@@ -1,6 +1,6 @@
-Infinispan is distributed as a set of core components and a number of optional 
+${infinispan.brand.name} is distributed as a set of core components and a number of optional 
 modules which include additional functionality.
-To use the core functionality of Infinispan, just add 'infinispan-embedded.jar' 
+To use the core functionality of ${infinispan.brand.name}, just add 'infinispan-embedded.jar' 
 to your application. If you additionally require querying functionality also add
 'infinispan-embedded-query.jar'.
 The optional modules are located under the 'modules' directory. If you wish to 

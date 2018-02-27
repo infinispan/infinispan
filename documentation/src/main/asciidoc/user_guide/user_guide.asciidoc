@@ -1,5 +1,5 @@
-= Infinispan {infinispanversion} User Guide
-The Infinispan community
+= {brandname} {infinispanversion} User Guide
+The {brandname} community
 :toc2:
 :icons: font
 :toclevels: 3
