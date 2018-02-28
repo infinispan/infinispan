@@ -12,6 +12,9 @@ pipeline {
     stages {
         stage('Prepare') {
             steps {
+                // 
+                properties([[$class: 'ScannerJobProperty', doNotScan: false], [$class: 'JobRestrictionProperty'], parameters([choice(choices: ['Oracle JDK 8', 'Oracle JDK 9', 'Oracle JDK 10', 'IBM JDK 8', 'Oracle JDK 7'], description: '', name: 'JDK')])])
+
                 // Show the agent name in the build list
                 script {
                     // The manager variable requires the Groovy Postbuild plugin
@@ -22,7 +25,7 @@ pipeline {
                 script {
                     env.MAVEN_HOME = tool('Maven')
                     env.MAVEN_OPTS = "-Xmx800m -XX:+HeapDumpOnOutOfMemoryError"
-                    env.JAVA_HOME = tool('Oracle JDK 8')
+                    env.JAVA_HOME = tool('${params.JDK}')
                 }
 
                 sh returnStdout: true, script: 'cleanup.sh'
@@ -43,13 +46,5 @@ pipeline {
     }
 
     post {
-        always {
-            // Archive logs and dump files
-            sh 'find . \\( -name "*.log" -o -name "*.dump*" -o -name "hs_err_*" \\) -exec xz {} \\;'
-            archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.xz,documentation/target/generated-html/**'
-
-            // Clean
-            sh 'git clean -fdx -e "*.hprof" || echo "git clean failed, exit code $?"'
-        }
     }
 }
