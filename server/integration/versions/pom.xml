@@ -27,7 +27,7 @@
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
 
       <version.org.jboss.marshalling.jboss-marshalling>2.0.2.Final</version.org.jboss.marshalling.jboss-marshalling>
-      <version.org.infinispan.infinispan-management-console>9.2.0.CR1</version.org.infinispan.infinispan-management-console>
+      <version.org.infinispan.infinispan-management-console>9.2.0.Final</version.org.infinispan.infinispan-management-console>
       <version.org.infinispan.arquillian.container>1.2.0.Beta3</version.org.infinispan.arquillian.container>
       <version.org.infinispan.server-build.old>8.2.7.Final</version.org.infinispan.server-build.old>
       <version.org.slf4j>1.7.2</version.org.slf4j>
