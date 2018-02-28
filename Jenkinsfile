@@ -4,6 +4,10 @@ pipeline {
     agent {
         label 'slave-group-normal'
     }
+    
+    parameters {
+        string(name : 'JDK', defaultValue: 'Oracle JDK 8', description: 'JDK for build')
+    }
 
     options {
         timeout(time: 3, unit: 'HOURS')
@@ -12,9 +16,6 @@ pipeline {
     stages {
         stage('Prepare') {
             steps {
-                // 
-                properties([[$class: 'ScannerJobProperty', doNotScan: false], [$class: 'JobRestrictionProperty'], parameters([choice(choices: ['Oracle JDK 8', 'Oracle JDK 9', 'Oracle JDK 10', 'IBM JDK 8', 'Oracle JDK 7'], description: '', name: 'JDK')])])
-
                 // Show the agent name in the build list
                 script {
                     // The manager variable requires the Groovy Postbuild plugin
