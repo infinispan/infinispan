@@ -46,5 +46,8 @@ pipeline {
     }
 
     post {
+        always {
+            sh 'env'
+        } 
     }
 }
