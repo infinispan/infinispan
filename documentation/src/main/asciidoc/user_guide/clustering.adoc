@@ -907,7 +907,11 @@ existed cache or not, their availability is the same.
 
 If at a further point in time the network heals and `N1` and `N2` partitions
 merge back together into the initial cluster `M`, then `M` exits the degraded
-mode and becomes fully available again.
+mode and becomes fully available again. During this merge operation, because
+`M` has once again become fully available, the <<conflict-manager, ConflictManager>>
+and the configured <<merge-policies, EntryMergePolicy>> are used to check for
+any conflicts that may have occurred in the interim period between the split
+brain occurring and being detected.
 
 As another example, the cluster could split in two partitions `O1 = {A, B, C}`
 and `O2 = {D}`, partition `O1` will stay fully
@@ -916,10 +920,8 @@ Partition `O2`, however, will detect a split and enter the degraded mode.
 Since it doesn't have any fully owned keys, it will reject any read or write
 operation with an `AvailabilityException`.
 
-If afterwards partitions `O1` and `O2` merge back into `M`, then the cache
-entries on `D` will be wiped (since they could be stale).
-`D` will be fully available, but it will not hold any data until the cache
-is rebalanced.
+If afterwards partitions `O1` and `O2` merge back into `M`, then the <<conflict-manager, ConflictManager>>
+attempts to resolve any conflicts and `D` once again becomes fully available.
 
 ====== ALLOW_READS
 Partitions are handled in the same manner as DENY_READ_WRITES, except that when a partition is in DEGRADED mode read
