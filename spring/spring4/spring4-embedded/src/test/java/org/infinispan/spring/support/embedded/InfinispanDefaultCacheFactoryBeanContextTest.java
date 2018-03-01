@@ -4,13 +4,12 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertSame;
 
 import org.infinispan.Cache;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.spring.test.InfinispanTestExecutionListener;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -24,19 +23,10 @@ import org.testng.annotations.Test;
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @ContextConfiguration("classpath:/org/infinispan/spring/support/embedded/InfinispanDefaultCacheFactoryBeanContextTest.xml")
 @Test(testName = "spring.support.InfinispanDefaultCacheFactoryBeanContextTest", groups = "unit")
+@TestExecutionListeners(InfinispanTestExecutionListener.class)
 public class InfinispanDefaultCacheFactoryBeanContextTest extends AbstractTestNGSpringContextTests {
 
    private static final String DEFAULT_CACHE_NAME = "testDefaultCache";
-
-   @BeforeClass(alwaysRun = true)
-   public void beforeTest() {
-       TestResourceTracker.testStarted(getClass().getName());
-   }
-
-   @AfterClass(alwaysRun = true)
-   public void afterTest() {
-       TestResourceTracker.testFinished(getClass().getName());
-   }
 
    @Test
    public final void shouldProduceANonNullCache() {
