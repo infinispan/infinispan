@@ -91,6 +91,7 @@ public class TcpTransport extends AbstractTransport {
       } catch (Exception e) {
          String message = String.format("Could not connect to server: %s", serverAddress);
          log.tracef(e, "Could not connect to server: %s", serverAddress);
+         destroy(); // Destroy just to avoid leaking open sockets
          throw new TransportException(message, e, serverAddress);
       }
    }
