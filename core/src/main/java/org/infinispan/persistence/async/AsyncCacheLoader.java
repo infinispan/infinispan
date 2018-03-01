@@ -14,7 +14,7 @@ import net.jcip.annotations.GuardedBy;
  * @author Mircea Markus
  * @since 6.0
  */
-public class AsyncCacheLoader extends DelegatingCacheLoader {
+public class AsyncCacheLoader<K, V> extends DelegatingCacheLoader<K, V> {
 
    @GuardedBy("stateLock")
    protected final AtomicReference<State> state;
@@ -31,7 +31,7 @@ public class AsyncCacheLoader extends DelegatingCacheLoader {
    public void stop() {}
 
    @Override
-   public MarshalledEntry load(Object key) {
+   public MarshalledEntry<K, V> load(Object key) {
       Modification mod = state.get().get(key);
       if (mod != null) {
          switch (mod.getType()) {
