@@ -28,9 +28,10 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import io.reactivex.Flowable;
 
 /**
  * Outbound state transfer task. Pushes data segments to another cluster member on request. Instances of
@@ -176,7 +177,7 @@ public class OutboundTransferTask implements Runnable {
             }
          }
 
-         AdvancedCacheLoader stProvider = persistenceManager.getStateTransferProvider();
+         AdvancedCacheLoader<Object, Object> stProvider = persistenceManager.getStateTransferProvider();
          if (stProvider != null) {
             try {
                AdvancedCacheLoader.CacheLoaderTask task = (me, taskContext) -> {
@@ -192,7 +193,8 @@ public class OutboundTransferTask implements Runnable {
                      }
                   }
                };
-               stProvider.process(k -> !dataContainer.containsKey(k), task, new WithinThreadExecutor(), true, true);
+               Flowable.fromPublisher(stProvider.publishEntries(k -> !dataContainer.containsKey(k), true, true))
+                     .blockingForEach(me -> task.processEntry(me, null));
             } catch (CacheException e) {
                log.failedLoadingKeysFromCacheStore(e);
             }

@@ -33,8 +33,8 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.filter.KeyFilter;
-import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.manager.OrderedUpdatesManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.responses.Response;
@@ -46,9 +46,11 @@ import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -128,19 +130,17 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
       // in ScatteredConsistentHash, but that works only for the orderly shutdown.
       // TODO: implement start after shutdown
       AtomicInteger maxTopologyId = new AtomicInteger(preloadedTopologyId);
-      persistenceManager.processOnAllStores(new WithinThreadExecutor(), KeyFilter.ACCEPT_ALL_FILTER,
-         (marshalledEntry, taskContext) -> {
-            InternalMetadata metadata = marshalledEntry.getMetadata();
-            if (metadata != null) {
-               EntryVersion entryVersion = metadata.version();
-               if (entryVersion instanceof SimpleClusteredVersion) {
-                  int entryTopologyId = ((SimpleClusteredVersion) entryVersion).topologyId;
-                  if (maxTopologyId.get() < entryTopologyId) {
-                     maxTopologyId.updateAndGet(current -> Math.max(current, entryTopologyId));
-                  }
-               }
+      Publisher<MarshalledEntry<Object, Object>> publisher = persistenceManager.publishEntries(false, true);
+      Flowable.fromPublisher(publisher).blockingForEach(me -> {
+         Metadata metadata = me.getMetadata();
+         EntryVersion entryVersion = metadata.version();
+         if (entryVersion instanceof SimpleClusteredVersion) {
+            int entryTopologyId = ((SimpleClusteredVersion) entryVersion).topologyId;
+            if (maxTopologyId.get() < entryTopologyId) {
+               maxTopologyId.updateAndGet(current -> Math.max(current, entryTopologyId));
             }
-         }, false, true);
+         }
+      });
       if (maxTopologyId.get() > 0) {
          clusterTopologyManager.setInitialCacheTopologyId(componentRegistry.getCacheName(), maxTopologyId.get() + 1);
       }

@@ -58,8 +58,8 @@ import io.reactivex.Flowable;
 import io.reactivex.schedulers.Schedulers;
 
 /**
- * NOTE: This store can return expired entries on any given operation if {@link JpaStoreConfiguration#storeMetadata()}
- * was not set to true.
+ * NOTE: This store can return expired keys or entries on any given operation if
+ * {@link JpaStoreConfiguration#storeMetadata()} was set to false.
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */

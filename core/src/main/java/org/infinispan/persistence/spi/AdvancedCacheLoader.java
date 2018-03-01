@@ -44,8 +44,9 @@ public interface AdvancedCacheLoader<K, V> extends CacheLoader<K, V> {
     *                      intended only ove the key set, then no pint fetching the metadata from the persistent store
     *                      as well
     * @throws PersistenceException in case of an error, e.g. communicating with the external storage
-    * @deprecated This is to be removed and replaced by {@link #publishEntries(Predicate, boolean, boolean)}
+    * @deprecated since 9.3 This is to be removed and replaced by {@link #publishEntries(Predicate, boolean, boolean)}
     */
+   @Deprecated
    default void process(KeyFilter<? super K> filter, CacheLoaderTask<K, V> task, Executor executor, boolean fetchValue, boolean fetchMetadata) {
       throw new UnsupportedOperationException("Should call processEntries!");
    }
@@ -65,7 +66,7 @@ public interface AdvancedCacheLoader<K, V> extends CacheLoader<K, V> {
     * Stores will return only non expired keys
     * @implSpec
     * The default implementation just invokes {@link #publishEntries(Predicate, boolean, boolean)} passing along the
-    * provided filter and <b>false</b> for fetchValue and <b>true</b> for fetchMetadata and retrieves
+    * provided filter and {@code false} for fetchValue and {@code true} for fetchMetadata and retrieves
     * the key from the {@link MarshalledEntry}.
     * @param filter a filter
     * @return a publisher that will provide the keys from the store
@@ -101,7 +102,7 @@ public interface AdvancedCacheLoader<K, V> extends CacheLoader<K, V> {
    /**
     * Offers a callback to be invoked for parallel iteration over the entries in an external store. Implementors should
     * be thread safe.
-    * @deprecated The process method is no longer suggested and thus this class shouldn't be in use any more
+    * @deprecated since 9.3 The process method is deprecated and thus this class shouldn't be in use any more
     */
    @ThreadSafe
    @Deprecated
@@ -121,7 +122,7 @@ public interface AdvancedCacheLoader<K, V> extends CacheLoader<K, V> {
    /**
     * Used during the parallel iteration in order to offer the {@link CacheLoaderTask} a way of canceling the entry
     * iteration. Should be thread safe.
-    * @deprecated The process method is no longer suggested and thus this class shouldn't be in use any more
+    * @deprecated since 9.3 The process method is no longer suggested and thus this class shouldn't be in use any more
     */
    @ThreadSafe
    @Deprecated

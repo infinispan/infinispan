@@ -4,7 +4,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -34,7 +33,6 @@ import org.testng.annotations.Test;
 
 import io.reactivex.Flowable;
 import io.reactivex.observers.BaseTestConsumer;
-import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subscribers.TestSubscriber;
 
 
@@ -111,33 +109,6 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       runIterationTest(new WithinThreadExecutor(), false, false);
    }
 
-   public void testCancelingTaskMultipleProcessors() {
-      insertData();
-      final ConcurrentMap<Object, Object> entries = new ConcurrentHashMap<>();
-      final AtomicBoolean stopped = new AtomicBoolean(false);
-
-      Flowable.fromPublisher(loader.publishEntries(null, true, true))
-            .observeOn(Schedulers.from(executor))
-            .takeUntil((MarshalledEntry<Object, Object> me) -> stopped.get())
-            .doOnNext(me -> {
-               synchronized (entries) {
-                  boolean shouldStop = entries.size() == 100 && !stopped.get();
-                  log.trace("shouldStop = " + shouldStop + ",entries size = " + entries.size());
-                  if (shouldStop) {
-                     stopped.set(true);
-                     return;
-                  }
-                  entries.put(unwrapKey(me.getKey()), unwrapValue(me.getValue()));
-               }
-            }).blockingSubscribe();
-
-      assertTrue(stopped.get());
-
-      assertTrue(entries.size() <= 100 + NUM_THREADS,
-            "got " + entries.size() + " elements, expected less than " + (100 + NUM_THREADS));
-      assertTrue(entries.size() >= 100);
-   }
-
    private void runIterationTest(Executor executor, final boolean fetchValues,
          boolean fetchMetadata) {
       final ConcurrentMap<Integer, Integer> entries = new ConcurrentHashMap<>();
@@ -181,7 +152,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
          executor.execute(() -> subscriber.request(batchsize));
       }
 
-      // We should receive all of those slements now
+      // We should receive all of those elements now
       subscriber.awaitCount(NUM_ENTRIES - batchsize, BaseTestConsumer.TestWaitStrategy.SLEEP_10MS, TimeUnit.SECONDS.toMillis(10));
 
       // Now request on the main thread - which should guarantee requests from different threads

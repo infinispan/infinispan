@@ -49,10 +49,10 @@ import org.infinispan.statetransfer.StateConsumerImpl;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import io.reactivex.Flowable;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -281,7 +281,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
 
          // With passivation, some key could be activated here and we could miss it,
          // but then it should be broadcast-loaded in PrefetchInvalidationInterceptor
-         AdvancedCacheLoader stProvider = persistenceManager.getStateTransferProvider();
+         AdvancedCacheLoader<Object, Object> stProvider = persistenceManager.getStateTransferProvider();
          if (stProvider != null) {
             try {
                CollectionKeyFilter filter = new CollectionKeyFilter(new ReadOnlyDataContainerBackedKeySet(dataContainer));
@@ -309,7 +309,8 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
                      }
                   }
                };
-               stProvider.process(filter, task, new WithinThreadExecutor(), true, true);
+               Flowable.fromPublisher(stProvider.publishEntries(filter::accept, true, true))
+                     .blockingForEach(me -> task.processEntry(me, null));
             } catch (CacheException e) {
                log.failedLoadingKeysFromCacheStore(e);
             }

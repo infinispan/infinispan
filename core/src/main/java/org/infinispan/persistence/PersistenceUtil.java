@@ -55,7 +55,7 @@ public class PersistenceUtil {
    public static <K, V> int count(AdvancedCacheLoader<K, V> acl, Predicate<? super K> filter) {
 
       // This can't be null
-      Long result = Flowable.fromPublisher(acl.publishEntries(filter, false, false)).count().blockingGet();
+      Long result = Flowable.fromPublisher(acl.publishKeys(filter)).count().blockingGet();
       if (result > Integer.MAX_VALUE) {
          return Integer.MAX_VALUE;
       }
@@ -79,8 +79,7 @@ public class PersistenceUtil {
    public static <K, V> Set<K> toKeySet(AdvancedCacheLoader<K, V> acl, Predicate<? super K> filter) {
       if (acl == null)
          return Collections.emptySet();
-      return Flowable.fromPublisher(acl.publishEntries(filter, false, false))
-            .map(MarshalledEntry::getKey)
+      return Flowable.fromPublisher(acl.publishKeys(filter))
             .collectInto(new HashSet<K>(), Set::add).blockingGet();
    }
 
@@ -92,7 +91,7 @@ public class PersistenceUtil {
     * @param <K>
     * @param <V>
     * @return
-    * @deprecated Please use {@link #toKeySet(AdvancedCacheLoader, Predicate)} instead
+    * @deprecated Please use {@link #toEntrySet(AdvancedCacheLoader, Predicate, InternalEntryFactory)} instead
     */
    @Deprecated
    public static <K, V> Set<InternalCacheEntry> toEntrySet(AdvancedCacheLoader<K, V> acl, KeyFilter<? super K> filter, final InternalEntryFactory ief) {
