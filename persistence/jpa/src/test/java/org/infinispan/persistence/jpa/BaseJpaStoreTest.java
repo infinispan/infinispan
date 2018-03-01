@@ -5,10 +5,9 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -18,9 +17,10 @@ import javax.persistence.Persistence;
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.testng.annotations.Test;
+
+import io.reactivex.functions.Consumer;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -78,15 +78,12 @@ public abstract class BaseJpaStoreTest extends AbstractJpaStoreTest {
       assertEquals(cs.load(obj3.getKey()).getValue(), obj3.getValue());
 
       final ConcurrentHashMap map = new ConcurrentHashMap();
-      AdvancedCacheLoader.CacheLoaderTask taskWithValues = new AdvancedCacheLoader.CacheLoaderTask() {
-         @Override
-         public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-            if (marshalledEntry.getKey() != null && marshalledEntry.getValue() != null) {
-               map.put(marshalledEntry.getKey(), marshalledEntry.getValue());
-            }
+      Consumer<MarshalledEntry<Object, Object>> taskWithValues = me -> {
+         if (me.getKey() != null && me.getValue() != null) {
+            map.put(me.getKey(), me.getValue());
          }
       };
-      cs.process(null, taskWithValues, new ThreadPoolExecutor(1, 2, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(10)), true, false);
+      cs.publishEntries(null, true, false).blockingSubscribe(taskWithValues);
 
       assertEquals(map.size(), 3);
       assertEquals(map.remove(obj1.getKey()), obj1.getValue());
@@ -95,20 +92,25 @@ public abstract class BaseJpaStoreTest extends AbstractJpaStoreTest {
       assertTrue(map.isEmpty());
 
       final ConcurrentHashSet set = new ConcurrentHashSet();
-      AdvancedCacheLoader.CacheLoaderTask taskWithoutValues = new AdvancedCacheLoader.CacheLoaderTask() {
-         @Override
-         public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-            if (marshalledEntry.getKey() != null) {
-               set.add(marshalledEntry.getKey());
-            }
+      Consumer<MarshalledEntry<Object, Object>> taskWithoutValues = me -> {
+         if (me.getKey() != null) {
+            set.add(me.getKey());
          }
       };
-      cs.process(null, taskWithoutValues, new ThreadPoolExecutor(1, 2, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(10)), false, false);
+
+      cs.publishEntries(null, false, false).blockingSubscribe(taskWithoutValues);
       assertEquals(set.size(), 3);
       assertTrue(set.remove(obj1.getKey()));
       assertTrue(set.remove(obj2.getKey()));
       assertTrue(set.remove(obj3.getKey()));
-      assertTrue(map.isEmpty());
+      assertTrue(set.isEmpty());
+
+      Set collectSet = cs.publishKeys(null).collectInto(new HashSet<>(), Set::add).blockingGet();
+      assertEquals(collectSet.size(), 3);
+      assertTrue(collectSet.remove(obj1.getKey()));
+      assertTrue(collectSet.remove(obj2.getKey()));
+      assertTrue(collectSet.remove(obj3.getKey()));
+      assertTrue(collectSet.isEmpty());
    }
 
    public void testStoreAndRemoveAll() {

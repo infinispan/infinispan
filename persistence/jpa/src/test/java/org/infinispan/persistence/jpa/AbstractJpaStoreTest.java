@@ -12,7 +12,6 @@ import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
@@ -35,7 +34,7 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
 
    protected EmbeddedCacheManager cm;
 
-   protected AdvancedLoadWriteStore cs;
+   protected JpaStore<Object, Object> cs;
 
    //protected TransactionFactory gtf = new TransactionFactory();
 
@@ -49,7 +48,7 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
       return TestCacheManagerFactory.createCacheManager(true);
    }
 
-   protected AdvancedLoadWriteStore createCacheStore() {
+   protected JpaStore createCacheStore() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addStore(JpaStoreConfigurationBuilder.class)
             .persistenceUnitName(PERSISTENCE_UNIT_NAME)
