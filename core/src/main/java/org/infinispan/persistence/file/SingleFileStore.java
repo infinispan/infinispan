@@ -18,16 +18,14 @@ import java.util.TreeSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Predicate;
 
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
-import org.infinispan.executors.ExecutorAllCompletionService;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.persistence.PersistenceUtil;
-import org.infinispan.persistence.TaskContextImpl;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -35,6 +33,8 @@ import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import io.reactivex.Flowable;
 
 /**
  * A filesystem-based implementation of a {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore}. This file store
@@ -488,62 +488,54 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    @Override
-   public void process(KeyFilter<? super K> filter, final CacheLoaderTask<K, V> task, Executor executor, final boolean fetchValue, final boolean fetchMetadata) {
-      filter = PersistenceUtil.notNull(filter);
-      ArrayList<KeyValuePair<K, FileEntry>> keysToLoad = new ArrayList<>(entries.size());
-      long now = timeService.wallClockTime();
-      synchronized (entries) {
-         for (Map.Entry<K, FileEntry> e : entries.entrySet()) {
-            if (filter.accept(e.getKey()) && !e.getValue().isExpired(now))
-               keysToLoad.add(new KeyValuePair<>(e.getKey(), e.getValue()));
-         }
-      }
-      final TaskContextImpl taskContext = new TaskContextImpl();
-
-      if (!fetchValue && !fetchMetadata) {
-         try {
-            for (KeyValuePair<K, FileEntry> key : keysToLoad) {
-               task.processEntry(ctx.getMarshalledEntryFactory().newMarshalledEntry(key.getKey(), (Object) null, null),
-                     taskContext);
-            }
-         } catch (InterruptedException e) {
-            log.errorExecutingParallelStoreTask(e);
-            throw new PersistenceException("Execution exception!", e);
-         }
-         return;
-      }
-
-      keysToLoad.sort((o1, o2) -> {
-         long offset1 = o1.getValue().offset;
-         long offset2 = o2.getValue().offset;
-         return offset1 < offset2 ? -1 : offset1 == offset2 ? 0 : 1;
-      });
-      // keysToLoad values (i.e. FileEntries) must not be used past this point
-
-
-      ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(executor);
-
-      for (KeyValuePair<K, FileEntry> entry : keysToLoad) {
-         if (taskContext.isStopped())
-            break;
-
-         final K key = entry.getKey();
-         eacs.submit(() -> {
-            try {
-               final MarshalledEntry marshalledEntry = _load(key, fetchValue, fetchMetadata);
-               if (marshalledEntry != null) {
-                  task.processEntry(marshalledEntry, taskContext);
+   public Flowable<K> publishKeys(Predicate<? super K> filter) {
+      return Flowable.fromIterable(() -> {
+         List<K> keys = new ArrayList<>(entries.size());
+         long now = ctx.getTimeService().wallClockTime();
+         synchronized (entries) {
+            for (Map.Entry<K, FileEntry> e : entries.entrySet()) {
+               K key = e.getKey();
+               if (!e.getValue().isExpired(now)  && (filter == null || filter.test(key))) {
+                  keys.add(key);
                }
-               return null;
-            } catch (Exception e) {
-               log.errorExecutingParallelStoreTask(e);
-               throw e;
             }
-         });
-      }
-      eacs.waitUntilAllCompleted();
-      if (eacs.isExceptionThrown()) {
-         throw new PersistenceException("Execution exception!", eacs.getFirstException());
+         }
+         // This way each invocation is a new copy
+         return keys.iterator();
+      });
+   }
+
+   @Override
+   public Flowable<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+      if (fetchMetadata || fetchValue) {
+         return Flowable.fromIterable(() -> {
+            // This way the sorting of entries is lazily done on each invocation of the publisher
+            List<KeyValuePair<K, FileEntry>> keysToLoad = new ArrayList<>(entries.size());
+            long now = ctx.getTimeService().wallClockTime();
+            synchronized (entries) {
+               for (Map.Entry<K, FileEntry> e : entries.entrySet()) {
+                  if ((filter == null || filter.test(e.getKey())) && !e.getValue().isExpired(now)) {
+                     keysToLoad.add(new KeyValuePair<>(e.getKey(), e.getValue()));
+                  }
+               }
+            }
+
+            keysToLoad.sort((o1, o2) -> {
+               long offset1 = o1.getValue().offset;
+               long offset2 = o2.getValue().offset;
+               return offset1 < offset2 ? -1 : offset1 == offset2 ? 0 : 1;
+            });
+            return keysToLoad.iterator();
+         }).map(kvp -> {
+            MarshalledEntry<K, V> entry = _load(kvp.getKey(), fetchValue, fetchMetadata);
+            if (entry == null) {
+               // Rxjava2 doesn't allow nulls
+               entry = MarshalledEntryImpl.empty();
+            }
+            return entry;
+         }).filter(me -> me != MarshalledEntryImpl.empty());
+      } else {
+         return publishKeys(filter).map(k -> ctx.getMarshalledEntryFactory().newMarshalledEntry(k, (Object) null, null));
       }
    }
 

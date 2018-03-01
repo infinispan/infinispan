@@ -18,6 +18,19 @@ import org.infinispan.persistence.spi.PersistenceException;
  */
 public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
 
+   private static MarshalledEntry EMPTY = new MarshalledEntryImpl(null, null, (ByteBuffer) null, null);
+
+   /**
+    * Returns the value that should be used as an empty MarshalledEntry. This can be useful when a non null value
+    * is required.
+    * @param <K> key type
+    * @param <V> value type
+    * @return cached empty marshalled entry
+    */
+   public static <K, V> MarshalledEntry<K, V> empty() {
+      return EMPTY;
+   }
+
    private ByteBuffer keyBytes;
    private ByteBuffer valueBytes;
    private ByteBuffer metadataBytes;
