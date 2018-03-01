@@ -6,14 +6,13 @@ import java.util.Random;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.spring.provider.sample.entity.Book;
 import org.infinispan.spring.provider.sample.service.CachedBookService;
-import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.spring.test.InfinispanTestExecutionListener;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.springframework.cache.CacheManager;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.testng.AbstractTransactionalTestNGSpringContextTests;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -27,19 +26,10 @@ import org.testng.annotations.Test;
  * @author Matej Cimbora (mcimbora@redhat.com)
  */
 @Test(groups = "functional")
+@TestExecutionListeners(InfinispanTestExecutionListener.class)
 public abstract class AbstractTestTemplate extends AbstractTransactionalTestNGSpringContextTests {
 
    protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-
-   @BeforeClass(alwaysRun = true)
-   public void beforeTest() {
-      TestResourceTracker.testStarted(getClass().getName());
-   }
-
-   @AfterClass(alwaysRun = true)
-   public void afterTest() {
-      TestResourceTracker.testFinished(getClass().getName());
-   }
 
    @AfterMethod
    public void clearBookCache() {
