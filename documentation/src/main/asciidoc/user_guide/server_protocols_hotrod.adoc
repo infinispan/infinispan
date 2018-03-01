@@ -105,7 +105,7 @@ clientBuilder
         .host("127.0.0.1")
         .port(11222)
     .security()
-        .authentication()
+        .ssl()
             .username("myuser")
             .password("qwer1234!");
 remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
