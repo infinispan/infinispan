@@ -41,6 +41,7 @@ import org.infinispan.query.dsl.embedded.QueryDslConditionsTest;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.query.remote.impl.ProgrammaticSearchMappingProviderImpl;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.AfterClass;
@@ -156,7 +157,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       SearchIntegrator searchIntegrator = org.infinispan.query.Search.getSearchManager(cache).unwrap(SearchIntegrator.class);
 
       assertTrue(searchIntegrator.getIndexBindings().containsKey(ProtobufValueWrapper.INDEXING_TYPE));
-      assertNotNull(searchIntegrator.getIndexManager(ProtobufValueWrapper.class.getName()));
+      assertNotNull(searchIntegrator.getIndexManager(cache.getName() + ProgrammaticSearchMappingProviderImpl.INDEX_NAME_SUFFIX));
    }
 
    @Override

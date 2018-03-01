@@ -7,6 +7,7 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.Search;
+import org.infinispan.query.remote.impl.ProgrammaticSearchMappingProviderImpl;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.testng.annotations.Test;
 
@@ -20,6 +21,8 @@ import org.testng.annotations.Test;
 @Test(testName = "client.hotrod.query.RemoteQueryDslConditionsTunedTest", groups = "functional")
 public class RemoteQueryDslConditionsTunedTest extends RemoteQueryDslConditionsFilesystemTest {
 
+   private static final int NUM_SHARDS = 6;
+
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -31,7 +34,7 @@ public class RemoteQueryDslConditionsTunedTest extends RemoteQueryDslConditionsF
             .addProperty("default.indexwriter.merge_max_size", "4096")
             .addProperty("default.indexwriter.ram_buffer_size", "220")
             .addProperty("default.locking_strategy", "native")
-            .addProperty("default.sharding_strategy.nbr_of_shards", "6");
+            .addProperty("default.sharding_strategy.nbr_of_shards", String.valueOf(NUM_SHARDS));
 
       return builder;
    }
@@ -40,7 +43,8 @@ public class RemoteQueryDslConditionsTunedTest extends RemoteQueryDslConditionsF
    public void testIndexPresence() {
       SearchIntegrator searchIntegrator = Search.getSearchManager(getEmbeddedCache()).unwrap(SearchIntegrator.class);
       assertTrue(searchIntegrator.getIndexBindings().containsKey(ProtobufValueWrapper.INDEXING_TYPE));
-      for (int shard = 0; shard < 6 ; shard++)
-          assertNotNull(searchIntegrator.getIndexManager(ProtobufValueWrapper.class.getName() + "." + shard));
+      for (int shard = 0; shard < NUM_SHARDS; shard++) {
+         assertNotNull(searchIntegrator.getIndexManager(cache.getName() + ProgrammaticSearchMappingProviderImpl.INDEX_NAME_SUFFIX + '.' + shard));
+      }
    }
 }

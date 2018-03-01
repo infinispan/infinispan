@@ -18,10 +18,13 @@ import org.kohsuke.MetaInfServices;
 @SuppressWarnings("unused")
 public final class ProgrammaticSearchMappingProviderImpl implements ProgrammaticSearchMappingProvider {
 
+   public static final String INDEX_NAME_SUFFIX = "_protobuf";
+
    @Override
    public void defineMappings(Cache cache, SearchMapping searchMapping) {
       searchMapping.entity(ProtobufValueWrapper.class)
             .indexed()
+            .indexName(cache.getName() + INDEX_NAME_SUFFIX)
             .analyzerDiscriminator(ProtobufValueWrapperAnalyzerDiscriminator.class)
             .classBridgeInstance(new ProtobufValueWrapperFieldBridge(cache))
             .norms(Norms.NO)
