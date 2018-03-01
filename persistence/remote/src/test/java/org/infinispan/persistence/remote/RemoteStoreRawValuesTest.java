@@ -14,7 +14,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -84,10 +83,6 @@ public class RemoteStoreRawValuesTest extends BaseStoreTest {
    @Override
    protected boolean storePurgesAllExpired() {
       return false;
-   }
-
-   @Override
-   public void testLoadAll() throws PersistenceException {
    }
 
    @Override

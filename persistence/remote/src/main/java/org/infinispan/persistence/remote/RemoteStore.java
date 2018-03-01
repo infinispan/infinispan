@@ -2,8 +2,10 @@ package org.infinispan.persistence.remote;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
@@ -23,13 +25,11 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
-import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.remote.configuration.AuthenticationConfiguration;
 import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration;
@@ -42,7 +42,9 @@ import org.infinispan.persistence.spi.FlagAffectedStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
 
+import io.reactivex.Flowable;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -114,7 +116,7 @@ public class RemoteStore<K, V> implements AdvancedLoadWriteStore<K, V>, FlagAffe
    }
 
    @Override
-   public MarshalledEntry load(Object key) throws PersistenceException {
+   public MarshalledEntry<K, V> load(Object key) throws PersistenceException {
       if (configuration.rawValues()) {
          Object unwrappedKey;
          if (key instanceof WrappedByteArray) {
@@ -143,7 +145,7 @@ public class RemoteStore<K, V> implements AdvancedLoadWriteStore<K, V>, FlagAffe
          if (key instanceof WrappedByteArray) {
             key = ((WrappedByteArray) key).getBytes();
          }
-         return (MarshalledEntry) remoteCache.get(key);
+         return (MarshalledEntry<K, V>) remoteCache.get(key);
       }
    }
 
@@ -156,26 +158,63 @@ public class RemoteStore<K, V> implements AdvancedLoadWriteStore<K, V>, FlagAffe
    }
 
    @Override
-   public void process(KeyFilter filter, CacheLoaderTask task, Executor executor, boolean fetchValue, boolean fetchMetadata) {
-      TaskContextImpl taskContext = new TaskContextImpl();
-      for (Object key : remoteCache.keySet()) {
-         if (key instanceof byte[]) {
-            key = new WrappedByteArray((byte[]) key);
-         }
-         if (taskContext.isStopped())
-            break;
-         if (filter == null || filter.accept(key)) {
-            try {
-               MarshalledEntry marshalledEntry = load(key);
-               if (marshalledEntry != null) {
-                  task.processEntry(marshalledEntry, taskContext);
-               }
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
-               return;
-            }
-         }
+   public Flowable<K> publishKeys(Predicate<? super K> filter) {
+      Flowable<K> keyFlowable = Flowable.fromIterable((Set<K>) remoteCache.keySet()).map(RemoteStore::wrap);
+      if (filter != null) {
+         keyFlowable = keyFlowable.filter(filter::test);
       }
+      return keyFlowable;
+   }
+
+   @Override
+   public Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+      if (!fetchValue && !fetchMetadata) {
+         Flowable<K> keyFlowable = publishKeys(filter);
+         return keyFlowable.map(key -> ctx.getMarshalledEntryFactory().newMarshalledEntry(key, (Object) null, null));
+      }
+
+      if (configuration.rawValues()) {
+         if (!fetchMetadata) {
+            Flowable<Map.Entry<Object, Object>> entryFlowable = Flowable.fromIterable(remoteCache.entrySet());
+            if (filter != null) {
+               entryFlowable = entryFlowable.filter(e -> filter.test(wrap(e.getKey())));
+            }
+            return entryFlowable.map(e -> ctx.getMarshalledEntryFactory().newMarshalledEntry(wrap(e.getKey()),
+                  (V) wrap(e.getValue()), null));
+         } else {
+            Flowable<Map.Entry<Object, MetadataValue<Object>>> entryMetatdataFlowable = Flowable.fromIterable(
+                  () -> remoteCache.retrieveEntriesWithMetadata(null, 512));
+            if (filter != null) {
+               entryMetatdataFlowable = entryMetatdataFlowable.filter(e -> filter.test(wrap(e.getKey())));
+            }
+            return entryMetatdataFlowable.map(e -> {
+               MetadataValue<Object> value = e.getValue();
+               Metadata metadata = new EmbeddedMetadata.Builder()
+                     .version(new NumericVersion(value.getVersion()))
+                     .lifespan(value.getLifespan(), TimeUnit.SECONDS)
+                     .maxIdle(value.getMaxIdle(), TimeUnit.SECONDS).build();
+               long created = value.getCreated();
+               long lastUsed = value.getLastUsed();
+               Object realValue = value.getValue();
+               return ctx.getMarshalledEntryFactory().newMarshalledEntry(wrap(e.getKey()), wrap(realValue),
+                     new InternalMetadataImpl(metadata, created, lastUsed));
+            });
+         }
+      } else {
+         Flowable<Map.Entry<Object, Object>> entryFlowable = Flowable.fromIterable(remoteCache.entrySet());
+         if (filter != null) {
+            entryFlowable = entryFlowable.filter(e -> filter.test(wrap(e.getKey())));
+         }
+         // Technically we will send the metadata and value to the user, no matter what.
+         return entryFlowable.map(e -> (MarshalledEntry<K, V>) e.getValue());
+      }
+   }
+
+   static <T> T wrap(Object obj) {
+      if (obj instanceof byte[]) {
+         obj = new WrappedByteArray((byte[]) obj);
+      }
+      return (T) obj;
    }
 
    @Override
