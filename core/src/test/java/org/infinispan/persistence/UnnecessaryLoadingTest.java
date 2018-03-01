@@ -18,7 +18,6 @@ import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -181,10 +180,6 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
 
    public static class CountingStore implements AdvancedLoadWriteStore {
       public int numLoads, numContains;
-
-      @Override
-      public void process(KeyFilter filter, CacheLoaderTask task, Executor executor, boolean fetchValue, boolean fetchMetadata) {
-      }
 
       @Override
       public int size() {

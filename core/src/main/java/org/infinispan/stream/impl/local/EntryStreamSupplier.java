@@ -38,7 +38,7 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
    @Override
    public Stream<CacheEntry<K, V>> buildStream(Set<Integer> segmentsToFilter, Set<?> keysToFilter) {
       Stream<CacheEntry<K, V>> stream;
-      // Make sure we aren't going remote to retrieve these
+      // Make sure we aren't going to a remote node to retrieve these
       AdvancedCache<K, V> advancedCache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
             .withFlags(Flag.CACHE_MODE_LOCAL);
       if (keysToFilter != null) {

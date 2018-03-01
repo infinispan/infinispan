@@ -1,8 +1,5 @@
 package org.infinispan.interceptors.impl;
 
-import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
-import static org.infinispan.persistence.PersistenceUtil.convert;
-
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Collections;
@@ -10,11 +7,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -48,6 +43,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
@@ -60,12 +56,8 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupFilter;
 import org.infinispan.distribution.group.impl.GroupManager;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.filter.CollectionKeyFilter;
-import org.infinispan.filter.CompositeKeyFilter;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -76,20 +68,20 @@ import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
-import org.infinispan.persistence.util.PersistenceManagerCloseableSupplier;
 import org.infinispan.stream.impl.local.AbstractLocalCacheStream;
 import org.infinispan.stream.impl.local.EntryStreamSupplier;
 import org.infinispan.stream.impl.local.KeyStreamSupplier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
-import org.infinispan.util.CloseableSuppliedIterator;
-import org.infinispan.util.DistinctKeyDoubleEntryCloseableIterator;
+import org.infinispan.util.LazyConcatIterator;
 import org.infinispan.util.EntryWrapper;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.function.CloseableSupplier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
 
 /**
  * @since 9.0
@@ -109,8 +101,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    @Inject private InternalEntryFactory iceFactory;
    @Inject private DataContainer<K, V> dataContainer;
    @Inject private GroupManager groupManager;
-   @Inject @ComponentName(PERSISTENCE_EXECUTOR)
-   private ExecutorService executorService;
    @Inject private Cache<K, V> cache;
    @Inject private KeyPartitioner partitioner;
 
@@ -207,17 +197,14 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          return invokeNext(ctx, command);
       }
 
-      final KeyFilter<Object> keyFilter = new CompositeKeyFilter<>(new GroupFilter<>(command.getGroupName(), groupManager),
-            new CollectionKeyFilter<>(ctx.getLookedUpEntries().keySet()));
-      persistenceManager.processOnAllStores(keyFilter, new AdvancedCacheLoader.CacheLoaderTask() {
-         @Override
-         public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-            synchronized (ctx) {
-               //the process can be made in multiple threads, so we need to synchronize in the context.
-               entryFactory.wrapExternalEntry(ctx, marshalledEntry.getKey(), convert(marshalledEntry, iceFactory), true, false);
-            }
-         }
-      }, true, true);
+      final Predicate<? super K> keyFilter = new GroupFilter<>(command.getGroupName(), groupManager).and(k ->
+            !ctx.getLookedUpEntries().keySet().contains(k));
+
+      Publisher<MarshalledEntry<K, V>> publisher = persistenceManager.publishEntries(keyFilter, true, false,
+            PersistenceManager.AccessMode.BOTH);
+      Flowable.fromPublisher(publisher)
+            .map(me -> PersistenceUtil.convert(me, iceFactory))
+            .blockingForEach(ice -> entryFactory.wrapExternalEntry(ctx, ice.getKey(), ice, true, false));
       return invokeNext(ctx, command);
    }
 
@@ -576,13 +563,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          this.isRemoteIteration = isRemoteIteration;
       }
 
-      long calculateTimeoutSeconds() {
-         int minimum = 10;
-         int size = dataContainer.sizeIncludingExpired();
-         if (size < 10_000) return minimum;
-         return Math.round(Math.log1p(size) * 10);
-      }
-
       private Map.Entry<K, V> toEntry(Object obj) {
          if (obj instanceof Map.Entry) {
             return (Map.Entry) obj;
@@ -608,14 +588,19 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       }
 
       protected CloseableIterator<CacheEntry<K, V>> innerIterator() {
-         CloseableIterator<CacheEntry<K, V>> iterator = cacheSet.iterator();
+         // This can be a HashSet since it is only written to from the local iterator which is only invoked
+         // from user thread
          Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
-         // TODO: how to handle concurrent activation....
-         return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
-               // TODO: how to pass in key filter...
-               new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager, iceFactory,
-                     new CollectionKeyFilter<>(seenKeys), calculateTimeoutSeconds(), TimeUnit.SECONDS, 2048, true)),
-               CacheEntry::getKey, seenKeys);
+         CloseableIterator<CacheEntry<K, V>> localIterator = new CloseableIteratorMapper<>(Closeables.iterator(cacheSet.stream()), e -> {
+            seenKeys.add(e.getKey());
+            return e;
+         });
+         Flowable<MarshalledEntry<K, V>> flowable = Flowable.fromPublisher(persistenceManager.publishEntries(
+               k -> !seenKeys.contains(k), true, true, PersistenceManager.AccessMode.BOTH));
+         Publisher<CacheEntry<K, V>> publisher = flowable
+               .map(me -> (CacheEntry<K, V>) PersistenceUtil.convert(me, iceFactory));
+         // This way we don't subscribe to the flowable until after the first iterator is fully exhausted
+         return new LazyConcatIterator<>(localIterator, () -> org.infinispan.util.Closeables.iterator(publisher, 64));
       }
 
       @Override
@@ -671,14 +656,17 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
       @Override
       protected CloseableIterator<K> innerIterator() {
-         CloseableIterator<K> iterator = cacheSet.iterator();
+         // This can be a HashSet since it is only written to from the local iterator which is only invoked
+         // from user thread
          Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
-         // TODO: how to handle concurrent activation....
-         return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
-               new SupplierFunction<>(// TODO: how to pass in key filter...
-                     new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager, iceFactory,
-                           new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048, false))),
-               Function.identity(), seenKeys);
+         CloseableIterator<K> localIterator = new CloseableIteratorMapper<>(Closeables.iterator(cacheSet.stream()), k -> {
+            seenKeys.add(k);
+            return k;
+         });
+         Flowable<K> flowable = Flowable.fromPublisher(persistenceManager.publishKeys(
+               k -> !seenKeys.contains(k), PersistenceManager.AccessMode.BOTH));
+         // This way we don't subscribe to the flowable until after the first iterator is fully exhausted
+         return new LazyConcatIterator<>(localIterator, () -> org.infinispan.util.Closeables.iterator(flowable, 64));
       }
 
       @Override

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.function.Predicate;
 
 import javax.transaction.Transaction;
 
@@ -13,6 +14,7 @@ import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.BatchModification;
+import org.reactivestreams.Publisher;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -70,18 +72,33 @@ public class PersistenceManagerStub implements PersistenceManager {
 
    @Override
    public void processOnAllStores(KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata) {
+
    }
 
    @Override
    public void processOnAllStores(Executor executor, KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata) {
+
    }
 
    @Override
    public void processOnAllStores(KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata, AccessMode mode) {
+
    }
 
    @Override
    public void processOnAllStores(Executor executor, KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata, AccessMode mode) {
+
+   }
+
+   @Override
+   public <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue,
+         boolean fetchMetadata, AccessMode mode) {
+      return null;
+   }
+
+   @Override
+   public <K> Publisher<K> publishKeys(Predicate<? super K> filter, AccessMode mode) {
+      return null;
    }
 
    @Override

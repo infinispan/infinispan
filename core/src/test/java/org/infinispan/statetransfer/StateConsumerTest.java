@@ -72,6 +72,8 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
+import io.reactivex.Flowable;
+
 /**
  * Tests StateConsumerImpl.
  *
@@ -148,6 +150,8 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       TotalOrderManager totalOrderManager = mock(TotalOrderManager.class);
       BlockingTaskAwareExecutorService remoteCommandsExecutor = mock(BlockingTaskAwareExecutorService.class);
       InternalConflictManager conflictManager = mock(InternalConflictManager.class);
+
+      when(persistenceManager.publishKeys(any(), any())).thenReturn(Flowable.empty());
 
       when(commandsFactory.buildStateRequestCommand(any(StateRequestCommand.Type.class), any(Address.class), anyInt(), any(SmallIntSet.class)))
          .thenAnswer(invocation-> new StateRequestCommand(ByteString.fromString("cache1"),

@@ -1,6 +1,6 @@
 package org.infinispan.stream;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -27,14 +26,12 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.CollectionKeyFilter;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.mockito.AdditionalAnswers;
@@ -268,8 +265,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
          checkPoint.awaitStrict("pre_process_on_all_stores_released", 10, TimeUnit.SECONDS);
 
          return forwardedAnswer.answer(invocation);
-      }).when(mockManager).processOnAllStores(any(Executor.class),      any(KeyFilter.class), any(AdvancedCacheLoader.CacheLoaderTask.class),
-                                                  anyBoolean(), anyBoolean());
+      }).when(mockManager).publishEntries(any(), anyBoolean(), anyBoolean(), any());
       TestingUtil.replaceComponent(cache, PersistenceManager.class, mockManager, true);
       return pm;
    }

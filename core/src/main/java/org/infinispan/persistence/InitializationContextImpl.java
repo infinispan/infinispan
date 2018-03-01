@@ -1,5 +1,7 @@
 package org.infinispan.persistence;
 
+import java.util.concurrent.ExecutorService;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -20,16 +22,19 @@ public class InitializationContextImpl implements InitializationContext {
    private final TimeService timeService;
    private final ByteBufferFactory byteBufferFactory;
    private final MarshalledEntryFactory marshalledEntryFactory;
+   private final ExecutorService executorService;
 
 
    public InitializationContextImpl(StoreConfiguration configuration, Cache cache, StreamingMarshaller marshaller,
-                                    TimeService timeService, ByteBufferFactory byteBufferFactory, MarshalledEntryFactory mef) {
+                                    TimeService timeService, ByteBufferFactory byteBufferFactory, MarshalledEntryFactory mef,
+                                    ExecutorService executorService) {
       this.configuration = configuration;
       this.cache = cache;
       this.marshaller = marshaller;
       this.timeService = timeService;
       this.byteBufferFactory = byteBufferFactory;
       this.marshalledEntryFactory = mef;
+      this.executorService = executorService;
    }
 
    @Override
@@ -62,4 +67,8 @@ public class InitializationContextImpl implements InitializationContext {
       return marshalledEntryFactory;
    }
 
+   @Override
+   public ExecutorService getExecutor() {
+      return executorService;
+   }
 }

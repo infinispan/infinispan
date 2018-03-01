@@ -47,6 +47,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -87,7 +88,6 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -121,7 +121,6 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.DependencyGraph;
 import org.infinispan.util.concurrent.TimeoutException;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -135,6 +134,8 @@ import org.jgroups.protocols.TP;
 import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.stack.ProtocolStack;
 import org.testng.AssertJUnit;
+
+import io.reactivex.Flowable;
 
 public class TestingUtil {
    private static final Log log = LogFactory.getLog(TestingUtil.class);
@@ -1626,13 +1627,13 @@ public class TestingUtil {
       return (T) persistenceManager.getAllTxWriters().get(0);
    }
 
-   public static <K> Set<MarshalledEntry> allEntries(AdvancedLoadWriteStore<K, ?> cl, KeyFilter<K> filter) {
-      final Set<MarshalledEntry> result = new HashSet<>();
-      cl.process(filter, (marshalledEntry, taskContext) -> result.add(marshalledEntry), new WithinThreadExecutor(), true, true);
-      return result;
+   public static <K, V> Set<MarshalledEntry<K, V>> allEntries(AdvancedLoadWriteStore<K, V> cl, Predicate<K> filter) {
+      return Flowable.fromPublisher(cl.publishEntries(filter, true, true))
+            .collectInto(new HashSet<MarshalledEntry<K, V>>(), Set::add)
+            .blockingGet();
    }
 
-   public static <K> Set<MarshalledEntry> allEntries(AdvancedLoadWriteStore<K, ?> cl) {
+   public static <K, V> Set<MarshalledEntry<K, V>> allEntries(AdvancedLoadWriteStore<K, V> cl) {
       return allEntries(cl, null);
    }
 

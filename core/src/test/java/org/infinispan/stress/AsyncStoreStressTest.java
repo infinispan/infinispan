@@ -40,6 +40,7 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.DelegatingCacheLoader;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.concurrent.locks.impl.LockContainer;
 import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
 import org.infinispan.util.logging.Log;
@@ -128,7 +129,7 @@ public class AsyncStoreStressTest {
                   .storeName(storeName)
                   .create();
       store.init(new DummyInitializationContext(dummyConfiguration, null, marshaller, new ByteBufferFactoryImpl(),
-                                                new MarshalledEntryFactoryImpl(marshaller)));
+                                                new MarshalledEntryFactoryImpl(marshaller), new WithinThreadExecutor()));
       store.start();
       return store;
    }

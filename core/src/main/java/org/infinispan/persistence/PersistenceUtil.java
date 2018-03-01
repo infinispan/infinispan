@@ -3,8 +3,8 @@ package org.infinispan.persistence;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.container.DataContainer;
@@ -20,9 +20,10 @@ import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import io.reactivex.Flowable;
 
 /**
  * @author Mircea Markus
@@ -37,26 +38,74 @@ public class PersistenceUtil {
       return filter == null ? KeyFilter.ACCEPT_ALL_FILTER : filter;
    }
 
+   /**
+    *
+    * @param acl
+    * @param filter
+    * @param <K>
+    * @param <V>
+    * @return
+    * @deprecated Please use {@link #count(AdvancedCacheLoader, Predicate)} instead
+    */
+   @Deprecated
    public static <K, V> int count(AdvancedCacheLoader<K, V> acl, KeyFilter<? super K> filter) {
-      final AtomicInteger result = new AtomicInteger(0);
-      acl.process(filter, (marshalledEntry, taskContext) -> result.incrementAndGet(), new WithinThreadExecutor(), false, false);
-      return result.get();
+      return count(acl, (Predicate<? super K>) filter);
    }
 
+   public static <K, V> int count(AdvancedCacheLoader<K, V> acl, Predicate<? super K> filter) {
+
+      // This can't be null
+      Long result = Flowable.fromPublisher(acl.publishEntries(filter, false, false)).count().blockingGet();
+      if (result > Integer.MAX_VALUE) {
+         return Integer.MAX_VALUE;
+      }
+      return result.intValue();
+   }
+
+   /**
+    *
+    * @param acl
+    * @param filter
+    * @param <K>
+    * @param <V>
+    * @return
+    * @deprecated Please use {@link #toKeySet(AdvancedCacheLoader, Predicate)} instead
+    */
+   @Deprecated
    public static <K, V> Set<K> toKeySet(AdvancedCacheLoader<K, V> acl, KeyFilter<? super K> filter) {
-      if (acl == null)
-         return Collections.emptySet();
-      final Set<K> set = new HashSet<K>();
-      acl.process(filter, (marshalledEntry, taskContext) -> set.add(marshalledEntry.getKey()), new WithinThreadExecutor(), false, false);
-      return set;
+      return toKeySet(acl, (Predicate<? super K>) filter);
    }
 
-   public static <K, V> Set<InternalCacheEntry> toEntrySet(AdvancedCacheLoader<K, V> acl, KeyFilter<? super K> filter, final InternalEntryFactory ief) {
+   public static <K, V> Set<K> toKeySet(AdvancedCacheLoader<K, V> acl, Predicate<? super K> filter) {
       if (acl == null)
          return Collections.emptySet();
-      final Set<InternalCacheEntry> set = new HashSet<InternalCacheEntry>();
-      acl.process(filter, (ce, taskContext) -> set.add(ief.create(ce.getKey(), ce.getValue(), ce.getMetadata())), new WithinThreadExecutor(), true, true);
-      return set;
+      return Flowable.fromPublisher(acl.publishEntries(filter, false, false))
+            .map(MarshalledEntry::getKey)
+            .collectInto(new HashSet<K>(), Set::add).blockingGet();
+   }
+
+   /**
+    *
+    * @param acl
+    * @param filter
+    * @param ief
+    * @param <K>
+    * @param <V>
+    * @return
+    * @deprecated Please use {@link #toKeySet(AdvancedCacheLoader, Predicate)} instead
+    */
+   @Deprecated
+   public static <K, V> Set<InternalCacheEntry> toEntrySet(AdvancedCacheLoader<K, V> acl, KeyFilter<? super K> filter, final InternalEntryFactory ief) {
+      Set entrySet = toEntrySet(acl, (Predicate<? super K>) filter, ief);
+      return (Set<InternalCacheEntry>) entrySet;
+   }
+
+   public static <K, V> Set<InternalCacheEntry<K, V>> toEntrySet(AdvancedCacheLoader<K, V> acl, Predicate<? super K> filter, final InternalEntryFactory ief) {
+      if (acl == null)
+         return Collections.emptySet();
+      return Flowable.fromPublisher(acl.publishEntries(filter, true, true))
+            .map(me -> ief.create(me.getKey(), me.getValue(), me.getMetadata()))
+            .collectInto(new HashSet<InternalCacheEntry<K, V>>(), Set::add).blockingGet();
    }
 
    public static long getExpiryTime(InternalMetadata internalMetadata) {

@@ -1,5 +1,7 @@
 package org.infinispan.persistence.spi;
 
+import java.util.concurrent.ExecutorService;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -35,4 +37,11 @@ public interface InitializationContext {
     * To be used for building {@link org.infinispan.marshall.core.MarshalledEntry} objects.
     */
    MarshalledEntryFactory getMarshalledEntryFactory();
+
+   /**
+    * Returns the preferred executor to be used by stores if needed. Stores normally shouldn't need this unless they
+    * *must* perform some blocking code asynchronously.
+    * @return the executor to be used with stores
+    */
+   ExecutorService getExecutor();
 }
