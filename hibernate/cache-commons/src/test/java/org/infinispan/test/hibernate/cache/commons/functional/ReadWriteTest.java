@@ -6,6 +6,13 @@
  */
 package org.infinispan.test.hibernate.cache.commons.functional;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,8 +26,8 @@ import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.stat.SecondLevelCacheStatistics;
 import org.hibernate.stat.Statistics;
-
 import org.hibernate.testing.TestForIssue;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Citizen;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.NaturalIdOnManyToOne;
@@ -29,15 +36,6 @@ import org.infinispan.test.hibernate.cache.commons.functional.entities.State;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.VersionedItem;
 import org.junit.After;
 import org.junit.Test;
-
-import org.infinispan.commons.util.ByRef;
-
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * Functional entity transactional tests.

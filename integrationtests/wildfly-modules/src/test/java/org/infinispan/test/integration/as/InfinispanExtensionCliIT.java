@@ -1,8 +1,8 @@
 package org.infinispan.test.integration.as;
 
-import static junit.framework.TestCase.assertEquals;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OUTCOME;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUCCESS;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 
