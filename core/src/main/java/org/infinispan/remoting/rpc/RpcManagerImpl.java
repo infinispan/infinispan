@@ -190,6 +190,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
          throw new CacheException("Thread interrupted while invoking RPC", e);
       } catch (ExecutionException e) {
          Throwable cause = e.getCause();
+         cause.addSuppressed(e);
          if (cause instanceof CacheException) {
             throw ((CacheException) cause);
          } else {

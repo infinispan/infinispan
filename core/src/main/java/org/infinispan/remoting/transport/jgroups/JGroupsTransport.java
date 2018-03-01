@@ -535,7 +535,9 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          //no need to set a timeout for the future. The rpc invocation is guaranteed to complete within the timeout milliseconds
          return CompletableFutures.await(future);
       } catch (ExecutionException e) {
-         throw Util.rewrapAsCacheException(e.getCause());
+         Throwable cause = e.getCause();
+         cause.addSuppressed(e);
+         throw Util.rewrapAsCacheException(cause);
       }
    }
 
