@@ -1,27 +1,30 @@
 package org.infinispan.persistence.sifs;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.IntConsumer;
+import java.util.function.Predicate;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.persistence.Store;
+import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.InternalMetadata;
-import org.infinispan.persistence.PersistenceUtil;
-import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
 
 /**
  * Local file-based cache store, optimized for write-through use with strong consistency guarantees
@@ -157,28 +160,31 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
          log.debug("Not building the index - purge will be executed");
       } else {
          log.debug("Building the index");
-         forEachOnDisk(false, false, (file, offset, size, serializedKey, serializedMetadata, serializedValue, seqId, expiration) -> {
-            long prevSeqId;
-            while (seqId > (prevSeqId = maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId, seqId)) {
-            }
-            Object key = marshaller.objectFromByteBuffer(serializedKey);
-            if (trace) {
-               log.tracef("Loaded %d:%d (seqId %d, expiration %d)", file, offset, seqId, expiration);
-            }
-            try {
-               // We may check the seqId safely as we are the only thread writing to index
-               if (isSeqIdOld(seqId, key, serializedKey)) {
-                  indexQueue.put(IndexRequest.foundOld(key, serializedKey, file, offset));
-                  return true;
-               }
-               temporaryTable.set(key, file, offset);
-               indexQueue.put(IndexRequest.update(key, serializedKey, file, offset, size));
-            } catch (InterruptedException e) {
-               log.error("Interrupted building of index, the index won't be built properly!", e);
-               return false;
-            }
-            return true;
-         }, file -> compactor.completeFile(file));
+
+         Flowable<Integer> filePublisher = filePublisher();
+         handleFilePublisher(filePublisher.doAfterNext(compactor::completeFile), false, false,
+               (file, offset, size, serializedKey, serializedMetadata, serializedValue, seqId, expiration) -> {
+                  long prevSeqId;
+                  while (seqId > (prevSeqId = maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId, seqId)) {
+                  }
+                  Object key = marshaller.objectFromByteBuffer(serializedKey);
+                  if (trace) {
+                     log.tracef("Loaded %d:%d (seqId %d, expiration %d)", file, offset, seqId, expiration);
+                  }
+                  try {
+                     // We may check the seqId safely as we are the only thread writing to index
+                     if (isSeqIdOld(seqId, key, serializedKey)) {
+                        indexQueue.put(IndexRequest.foundOld(key, serializedKey, file, offset));
+                        return null;
+                     }
+                     temporaryTable.set(key, file, offset);
+                     indexQueue.put(IndexRequest.update(key, serializedKey, file, offset, size));
+                  } catch (InterruptedException e) {
+                     log.error("Interrupted building of index, the index won't be built properly!", e);
+                     return null;
+                  }
+                  return null;
+               }).blockingSubscribe();
       }
       logAppender.setSeqId(maxSeqId.get() + 1);
    }
@@ -434,120 +440,116 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
       return array == null ? null : byteBufferFactory.newByteBuffer(array, 0, array.length);
    }
 
-   private interface EntryFunctor {
-      boolean apply(int file, int offset, int size, byte[] serializedKey, byte[] serializedMetadata, byte[] serializedValue, long seqId, long expiration) throws Exception;
+   private interface EntryFunctor<R> {
+      R apply(int file, int offset, int size, byte[] serializedKey, byte[] serializedMetadata, byte[] serializedValue, long seqId, long expiration) throws Exception;
    }
 
-   private void forEachOnDisk(boolean readMetadata, boolean readValues, EntryFunctor functor, IntConsumer fileFunctor) throws PersistenceException {
-      try (CloseableIterator<Integer> iterator = fileProvider.getFileIterator()) {
-         while (iterator.hasNext()) {
-            int file = iterator.next();
-            log.debugf("Loading entries from file %d", file);
-            FileProvider.Handle handle = fileProvider.getFile(file);
-            if (handle == null) {
-               log.debugf("File %d was deleted during iteration", file);
-               fileFunctor.accept(file);
-               continue;
-            }
-            try {
-               int offset = 0;
-               for (;;) {
-                  EntryHeader header = EntryRecord.readEntryHeader(handle, offset);
-                  if (header == null) {
-                     break; // end of file;
-                  }
-                  try {
-                     byte[] serializedKey = EntryRecord.readKey(handle, header, offset);
-                     if (serializedKey == null) {
-                        break; // we have read the file concurrently with writing there
+   private Flowable<Integer> filePublisher() {
+      return Flowable.using(fileProvider::getFileIterator, it -> Flowable.fromIterable(() -> it),
+            // This close happens after the lasst file iterator is returned, but before processing it.
+            // TODO: Is this okay or can compaction etc affect this?
+            CloseableIterator::close);
+   }
+
+   private <R> Flowable<R> handleFilePublisher(Flowable<Integer> filePublisher, boolean fetchValue, boolean fetchMetadata,
+         EntryFunctor<R> functor) {
+      return filePublisher.flatMap(file ->
+            Flowable.using(() -> {
+                     log.debugf("Loading entries from file %d", file);
+                     return Optional.ofNullable(fileProvider.getFile(file));
+                  },
+                  optHandle -> {
+                     if (!optHandle.isPresent()) {
+                        log.debugf("File %d was deleted during iteration", file);
+                        return Flowable.empty();
                      }
-                     byte[] serializedMetadata = null;
-                     if (readMetadata && header.metadataLength() > 0) {
-                        serializedMetadata = EntryRecord.readMetadata(handle, header, offset);
-                     }
-                     byte[] serializedValue = null;
-                     int offsetOrNegation = offset;
-                     if (header.valueLength() > 0) {
-                        if (header.expiryTime() >= 0 && header.expiryTime() <= timeService.wallClockTime()) {
-                           offsetOrNegation = ~offset;
-                        } else if (readValues) {
-                           serializedValue = EntryRecord.readValue(handle, header, offset);
-                        } else {
-                           // This way when readValues is null we still think the entry is present
-                           serializedValue = EMPTY_BYTES;
+
+                     FileProvider.Handle handle = optHandle.get();
+                     AtomicInteger offset = new AtomicInteger();
+                     return Flowable.fromIterable(() -> new AbstractIterator<R>() {
+                        @Override
+                        protected R getNext() {
+                           R next = null;
+                           int innerOffset = offset.get();
+                           try {
+                              while (next == null) {
+                                 EntryHeader header = EntryRecord.readEntryHeader(handle, innerOffset);
+                                 if (header == null) {
+                                    return null; // end of file;
+                                 }
+                                 try {
+                                    byte[] serializedKey = EntryRecord.readKey(handle, header, innerOffset);
+                                    if (serializedKey == null) {
+                                       continue; // we have read the file concurrently with writing there
+                                    }
+                                    byte[] serializedMetadata = null;
+                                    if (fetchMetadata && header.metadataLength() > 0) {
+                                       serializedMetadata = EntryRecord.readMetadata(handle, header, innerOffset);
+                                    }
+                                    byte[] serializedValue = null;
+                                    int offsetOrNegation = innerOffset;
+                                    if (header.valueLength() > 0) {
+                                       if (header.expiryTime() >= 0 && header.expiryTime() <= timeService.wallClockTime()) {
+                                          offsetOrNegation = ~innerOffset;
+                                       } else if (fetchValue) {
+                                          serializedValue = EntryRecord.readValue(handle, header, innerOffset);
+                                       } else {
+                                          serializedValue = EMPTY_BYTES;
+                                       }
+                                    } else {
+                                       offsetOrNegation = ~innerOffset;
+                                    }
+
+                                    next = functor.apply(file, offsetOrNegation, header.totalLength(), serializedKey,
+                                          serializedMetadata, serializedValue, header.seqId(), header.expiryTime());
+                                 } finally {
+                                    innerOffset = offset.addAndGet(header.totalLength());
+                                 }
+                              }
+                              return next;
+                           } catch (Exception e) {
+                              throw new PersistenceException(e);
+                           }
                         }
-                     } else {
-                        offsetOrNegation = ~offset;
+                     });
+                  },
+                  optHandle -> {
+                     if (optHandle.isPresent()) {
+                        optHandle.get().close();
                      }
-                     if (!functor.apply(file, offsetOrNegation, header.totalLength(), serializedKey, serializedMetadata, serializedValue, header.seqId(), header.expiryTime())) {
-                        return;
-                     }
-                  } finally {
-                     offset += header.totalLength();
                   }
-               }
-            } finally {
-               handle.close();
-               fileFunctor.accept(file);
-            }
-         }
-      } catch (PersistenceException e) {
-         throw e;
-      } catch (Exception e) {
-         throw new PersistenceException(e);
-      }
+            ));
    }
 
    @Override
-   public void process(KeyFilter filter, final CacheLoaderTask task, final Executor executor, final boolean fetchValue, final boolean fetchMetadata) {
-      final TaskContext context = new TaskContextImpl();
-      final KeyFilter notNullFilter = PersistenceUtil.notNull(filter);
-      final AtomicLong tasksSubmitted = new AtomicLong();
-      final AtomicLong tasksFinished = new AtomicLong();
-      forEachOnDisk(fetchMetadata, fetchValue, (file, offset, size, serializedKey, serializedMetadata, serializedValue, seqId, expiration) -> {
-         if (context.isStopped()) {
-            return false;
-         }
-         final Object key = marshaller.objectFromByteBuffer(serializedKey);
-         if (!notNullFilter.accept(key)) {
-            return true;
-         }
-         if (isSeqIdOld(seqId, key, serializedKey)) {
-            return true;
-         }
-         if (serializedValue != null && (expiration < 0 || expiration > timeService.wallClockTime())) {
-            executor.execute(() -> {
-               try {
-                  task.processEntry(marshalledEntryFactory.newMarshalledEntry(key,
-                        serializedValue != EMPTY_BYTES ? marshaller.objectFromByteBuffer(serializedValue) : null,
-                        serializedMetadata == null ? null : (InternalMetadata) marshaller.objectFromByteBuffer(serializedMetadata)),
-                        context);
-               } catch (Exception e) {
-                  log.failedProcessingTask(key, e);
-               } finally {
-                  long finished = tasksFinished.incrementAndGet();
-                  if (finished == tasksSubmitted.longValue()) {
-                     synchronized (context) {
-                        context.notifyAll();
-                     }
-                  }
+   public Publisher publishKeys(Predicate filter) {
+      return handleFilePublisher(filePublisher(), false, true,
+            (file, offset, size, serializedKey, serializedMetadata, serializedValue, seqId, expiration) -> {
+
+               final Object key = marshaller.objectFromByteBuffer(serializedKey);
+
+               if (serializedValue != null && (filter == null || filter.test(key)) && !isSeqIdOld(seqId, key, serializedKey)) {
+                  return key;
                }
+               return null;
             });
-            tasksSubmitted.incrementAndGet();
-            return !context.isStopped();
-         }
-         return true;
-      }, file -> { /* noop */ });
-      while (tasksSubmitted.longValue() > tasksFinished.longValue()) {
-         synchronized (context) {
-            try {
-               context.wait(100);
-            } catch (InterruptedException e) {
-               log.iterationInterrupted(e);
-               Thread.currentThread().interrupt();
-               return;
-            }
-         }
-      }
+   }
+
+   @Override
+   public Publisher<MarshalledEntry> publishEntries(Predicate filter, boolean fetchValue, boolean fetchMetadata) {
+      return handleFilePublisher(filePublisher(), fetchValue, fetchMetadata,
+            (file, offset, size, serializedKey, serializedMetadata, serializedValue, seqId, expiration) -> {
+
+               final Object key = marshaller.objectFromByteBuffer(serializedKey);
+
+               // SerializedValue is tested to handle when a remove is found
+               if (serializedValue != null && (filter == null || filter.test(key)) && !isSeqIdOld(seqId, key, serializedKey)) {
+                  return marshalledEntryFactory.newMarshalledEntry(key,
+                        // EMPTY_BYTES is used to symbolize when fetchValue is false but there was an entry
+                        serializedValue != EMPTY_BYTES ? marshaller.objectFromByteBuffer(serializedValue) : null,
+                        serializedMetadata == null ? null : (InternalMetadata) marshaller.objectFromByteBuffer(serializedMetadata));
+               }
+               return null;
+            });
    }
 }
