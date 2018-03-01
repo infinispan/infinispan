@@ -23,8 +23,9 @@ import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.Test;
+
+import io.reactivex.Flowable;
 
 /**
  * A {@link PersistenceManager} unit test.
@@ -43,9 +44,7 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
       //simulates the scenario where, concurrently, the cache is stopping and handling a topology update.
       persistenceManager.stop();
       //the org.infinispan.persistence.dummy.DummyInMemoryStore throws an exception if the process() method is invoked after stopped.
-      persistenceManager.processOnAllStores(new WithinThreadExecutor(), null,
-            (marshalledEntry, taskContext) -> fail("shouldn't run"),
-            true, true);
+      Flowable.fromPublisher(persistenceManager.publishEntries(true, true)).subscribe(ignore -> fail("shouldn't run"));
    }
 
    public void testStopDuringProcess() throws ExecutionException, InterruptedException, TimeoutException {
@@ -58,13 +57,12 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
       final CountDownLatch before = new CountDownLatch(1);
       final CountDownLatch after = new CountDownLatch(1);
       final AtomicInteger count = new AtomicInteger(0);
-      Future<Void> c = fork(() -> persistenceManager.processOnAllStores(new WithinThreadExecutor(), null,
-            (marshalledEntry, taskContext) -> {
+      Future<Object> c = fork(() -> Flowable.fromPublisher(persistenceManager.publishEntries(true, true))
+            .subscribe(ignore -> {
                before.countDown();
                after.await();
                count.incrementAndGet();
-            },
-            true, true));
+            }));
       before.await(30, TimeUnit.SECONDS);
       Future<Void> stopFuture = fork(persistenceManager::stop);
       //stop is unable to proceed while the process isn't finish.

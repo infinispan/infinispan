@@ -3,13 +3,11 @@ package org.infinispan.persistence.manager;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 
 import javax.transaction.Transaction;
 
 import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -68,26 +66,6 @@ public class PersistenceManagerStub implements PersistenceManager {
    @Override
    public boolean deleteFromAllStores(Object key, AccessMode mode) {
       return false;
-   }
-
-   @Override
-   public void processOnAllStores(KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata) {
-
-   }
-
-   @Override
-   public void processOnAllStores(Executor executor, KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata) {
-
-   }
-
-   @Override
-   public void processOnAllStores(KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata, AccessMode mode) {
-
-   }
-
-   @Override
-   public void processOnAllStores(Executor executor, KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata, AccessMode mode) {
-
    }
 
    @Override

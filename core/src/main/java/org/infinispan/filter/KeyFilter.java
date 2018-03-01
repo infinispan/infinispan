@@ -12,7 +12,7 @@ import net.jcip.annotations.ThreadSafe;
  *
  * @author Manik Surtani
  * @since 6.0
- * @deprecated This will be replaced by {@link java.util.function.Predicate} in the future
+ * @deprecated since 9.3 This will be replaced by {@link java.util.function.Predicate} in the future
  */
 @ThreadSafe
 @Deprecated
