@@ -6,27 +6,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletionService;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.persistence.Store;
+import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.Util;
-import org.infinispan.executors.ExecutorAllCompletionService;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.PersistenceUtil;
-import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration;
 import org.infinispan.persistence.rocksdb.logging.Log;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
 import org.rocksdb.CompressionType;
 import org.rocksdb.Options;
 import org.rocksdb.ReadOptions;
@@ -35,6 +36,8 @@ import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
+
+import io.reactivex.Flowable;
 
 @Store
 @ConfiguredBy(RocksDBStoreConfiguration.class)
@@ -219,82 +222,89 @@ public class RocksDBStore<K,V> implements AdvancedLoadWriteStore<K,V> {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void process(KeyFilter keyFilter, CacheLoaderTask cacheLoaderTask, Executor executor, boolean loadValues, boolean loadMetadata) {
-        int batchSize = 100;
-        ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(executor);
-        final TaskContext taskContext = new TaskContextImpl();
-
-        List<Entry> entries = new ArrayList<>(batchSize);
-        try {
+    private <P> Flowable<P> publish(Function<RocksIterator, Flowable<P>> function) {
+        return Flowable.using(() -> {
             semaphore.acquire();
-        } catch (InterruptedException e) {
-            throw new PersistenceException("Cannot acquire semaphore: CacheStore is likely stopped.", e);
-        }
-        try {
             if (stopped) {
                 throw new PersistenceException("RocksDB is stopped");
             }
-            Optional<RocksIterator> optionalIterator = wrapIterator(this.db);
-            if (optionalIterator.isPresent()) {
-                try (RocksIterator it = optionalIterator.get()) {
-                    for (it.seekToFirst(); it.isValid(); it.next()) {
-                        Entry entry = new Entry(it.key(), it.value());
-                        entries.add(entry);
-                        if (entries.size() == batchSize) {
-                            final List<Entry> batch = entries;
-                            entries = new ArrayList<>(batchSize);
-                            submitProcessTask(cacheLoaderTask, keyFilter, eacs, taskContext, batch, loadValues, loadMetadata);
-                        }
-                    }
-                    if (!entries.isEmpty()) {
-                        submitProcessTask(cacheLoaderTask, keyFilter, eacs, taskContext, entries, loadValues, loadMetadata);
-                    }
-
-                    eacs.waitUntilAllCompleted();
-                    if (eacs.isExceptionThrown()) {
-                        throw new PersistenceException("Execution exception!", eacs.getFirstException());
-                    }
-                } catch (Exception e) {
-                    throw new PersistenceException(e);
-                }
+            return wrapIterator(this.db);
+        }, opIterator -> {
+            if (!opIterator.isPresent()) {
+                return Flowable.empty();
             }
-        } finally {
+            RocksIterator it = opIterator.get();
+            it.seekToFirst();
+            return function.apply(it);
+        }, opIterator -> {
+            opIterator.ifPresent(RocksIterator::close);
             semaphore.release();
-        }
+        });
     }
 
-    @SuppressWarnings("unchecked")
-    private void submitProcessTask(final CacheLoaderTask cacheLoaderTask, final KeyFilter filter, CompletionService ecs,
-                                   final TaskContext taskContext, final List<Entry> batch,
-                                   final boolean loadValues, final boolean loadMetadata) {
-        ecs.submit(() -> {
-            try {
-                long now = ctx.getTimeService().wallClockTime();
-                for (Entry pair : batch) {
-                    if (taskContext.isStopped()) {
-                        break;
-                    }
-                    Object key = unmarshall(pair.key);
-                    if (filter == null || filter.accept(key)) {
-                        MarshalledEntry entry = loadValues || loadMetadata ? (MarshalledEntry) unmarshall(pair.value) : null;
-                        boolean isExpired = entry != null && entry.getMetadata() != null && entry.getMetadata().isExpired(now);
-                        if (!isExpired) {
-                            if (!loadValues || !loadMetadata) {
-                                entry = ctx.getMarshalledEntryFactory().newMarshalledEntry(
-                                      key, loadValues ? entry.getValue() : null, loadMetadata ? entry.getMetadata() : null);
+    @Override
+    public Publisher<K> publishKeys(Predicate<? super K> filter) {
+        return publish(it -> Flowable.fromIterable(() ->
+            new AbstractIterator<K>() {
+                @Override
+                protected K getNext() {
+                    K key = null;
+                    try {
+                        while (key == null && it.isValid()) {
+                            K testKey = (K) unmarshall(it.key());
+                            if (filter == null || filter.test(testKey)) {
+                                key = testKey;
                             }
-                            cacheLoaderTask.processEntry(entry, taskContext);
+                            it.next();
                         }
+                    } catch (IOException | ClassNotFoundException e) {
+                        throw new CacheException(e);
                     }
+                    return key;
                 }
-                return null;
-            } catch (Exception e) {
-                log.errorExecutingParallelStoreTask(e);
-                throw e;
-            }
-        });
+            }));
+    }
+
+    @Override
+    public Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+        return publish(it -> Flowable.fromIterable(() -> {
+            // Make sure this is taken when the iterator is created
+            long now = ctx.getTimeService().wallClockTime();
+            return new AbstractIterator<MarshalledEntry<K, V>>() {
+                @Override
+                protected MarshalledEntry<K, V> getNext() {
+                    MarshalledEntry<K, V> entry = null;
+                    try {
+                        while (entry == null && it.isValid()) {
+                            K key = (K) unmarshall(it.key());
+                            if (filter == null || filter.test(key)) {
+                                if (fetchValue || fetchMetadata) {
+                                    MarshalledEntry<K, V> unmarshalledEntry = (MarshalledEntry<K, V>) unmarshall(
+                                          it.value());
+                                    InternalMetadata metadata = unmarshalledEntry.getMetadata();
+                                    if (metadata == null || !metadata.isExpired(now)) {
+                                        if (fetchMetadata && fetchValue) {
+                                            entry = unmarshalledEntry;
+                                        } else {
+                                            // Sad that this has to make another entry!
+                                            entry = ctx.getMarshalledEntryFactory().newMarshalledEntry(key,
+                                                  fetchValue ? unmarshalledEntry.getValue() : null,
+                                                  fetchMetadata ? unmarshalledEntry.getMetadata() : null);
+                                        }
+                                    }
+                                } else {
+                                    entry = ctx.getMarshalledEntryFactory().newMarshalledEntry(key, (Object) null, null);
+                                }
+                            }
+                            it.next();
+                        }
+                    } catch (IOException | ClassNotFoundException e) {
+                        throw new CacheException(e);
+                    }
+                    return entry;
+                }
+            };
+        }));
     }
 
     @Override
