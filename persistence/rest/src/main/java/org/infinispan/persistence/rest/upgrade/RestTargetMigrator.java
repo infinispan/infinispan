@@ -20,7 +20,11 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
+/**
+ * This migrator should no longer be used and the HotRodTargetMigrator should be used instead
+ */
 @MetaInfServices
+@Deprecated
 public class RestTargetMigrator implements TargetMigrator {
    private static final Log log = LogFactory.getLog(RestTargetMigrator.class, Log.class);
 
