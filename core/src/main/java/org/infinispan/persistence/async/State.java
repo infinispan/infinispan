@@ -1,10 +1,13 @@
 package org.infinispan.persistence.async;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.persistence.modifications.Clear;
 import org.infinispan.persistence.modifications.Modification;
 import org.infinispan.persistence.modifications.ModificationsList;
@@ -64,6 +67,18 @@ public class State {
             return CLEAR;
       }
       return null;
+   }
+
+   Map<Object, Modification> flattenModifications(ByRef<Boolean> containsClear) {
+      Map<Object, Modification> map = new HashMap<>();
+      for (State state = this; state != null; state = state.next) {
+         if (state.clear) {
+            containsClear.set(Boolean.TRUE);
+            break;
+         }
+         state.modifications.forEach(map::putIfAbsent);
+      }
+      return map;
    }
 
    /**
