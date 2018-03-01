@@ -1,18 +1,10 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import java.util.concurrent.Executor;
-
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
 
 public class CustomCacheLoader implements AdvancedCacheLoader {
-
-   @Override
-   public void process(KeyFilter filter, CacheLoaderTask cacheLoaderTask, Executor executor, boolean b, boolean b2) {
-   }
-
    @Override
    public int size() {
       return 0;

@@ -1,18 +1,10 @@
 package org.jboss.as.clustering.infinispan.cs.factory;
 
-import java.util.concurrent.Executor;
-
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
 
 public class CustomStoreWithoutConfiguration implements AdvancedCacheLoader<Object,Object> {
-
-   @Override
-   public void process(KeyFilter<? super Object> filter, CacheLoaderTask<Object, Object> task, Executor executor, boolean fetchValue, boolean fetchMetadata) {
-   }
-
    @Override
    public int size() {
       return 0;
