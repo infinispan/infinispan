@@ -1,6 +1,5 @@
 package org.infinispan.persistence;
 
-import static java.util.Collections.emptySet;
 import static org.infinispan.test.TestingUtil.allEntries;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -28,7 +27,6 @@ import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -47,6 +45,8 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import io.reactivex.Flowable;
 
 /**
  * This is a base class containing various unit tests for each and every different CacheStore implementations. If you
@@ -366,7 +366,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       cl.write(marshalledEntry("k2", "v2", null));
       cl.write(marshalledEntry("k3", "v3", null));
 
-      Set<MarshalledEntry> set = TestingUtil.allEntries(cl);
+      Set<MarshalledEntry<Object, Object>> set = TestingUtil.allEntries(cl);
 
       assertSize(set, 3);
       Set<String> expected = new HashSet<>(Arrays.asList("k1", "k2", "k3"));
@@ -386,7 +386,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       cl.write(marshalledEntry("k4", "v4", null));
 
 
-      Set<MarshalledEntry> set = TestingUtil.allEntries(cl);
+      Set<MarshalledEntry<Object, Object>> set = TestingUtil.allEntries(cl);
 
       assertSize(set, 4);
 
@@ -405,6 +405,9 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       set = TestingUtil.allEntries(cl);
       assertSize(set, 1);
       assertEquals("k4", set.iterator().next().getKey());
+
+      assertEquals(1, PersistenceUtil.toKeySet(cl, null).size());
+      assertEquals(1, Flowable.fromPublisher(cl.publishKeys(null)).count().blockingGet().intValue());
    }
 
    public void testPurgeExpired() throws Exception {
@@ -465,13 +468,13 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       cl.write(marshalledEntry("k4", "v4", null));
       cl.write(marshalledEntry("k5", "v5", null));
 
-      Set<MarshalledEntry> s = TestingUtil.allEntries(cl);
+      Set<MarshalledEntry<Object, Object>> s = TestingUtil.allEntries(cl);
       assertSize(s, 5);
 
-      s = allEntries(cl, new CollectionKeyFilter<>(emptySet()));
+      s = allEntries(cl, k -> true);
       assertSize(s, 5);
 
-      s = allEntries(cl, new CollectionKeyFilter<>(Collections.<Object>singleton("k3")));
+      s = allEntries(cl, k -> !"k3".equals(k));
       assertSize(s, 4);
 
       for (MarshalledEntry me : s) {
@@ -534,7 +537,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
             .collect(Collectors.toList());
 
       cl.writeBatch(entries);
-      Set<MarshalledEntry> set = TestingUtil.allEntries(cl);
+      Set<MarshalledEntry<Object, Object>> set = TestingUtil.allEntries(cl);
       assertSize(set, numberOfEntries);
       assertNotNull(cl.load("56"));
 

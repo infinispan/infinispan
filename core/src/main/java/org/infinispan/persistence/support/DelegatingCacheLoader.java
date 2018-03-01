@@ -8,7 +8,7 @@ import org.infinispan.persistence.spi.InitializationContext;
  * @author Mircea Markus
  * @since 6.0
  */
-public abstract class DelegatingCacheLoader implements CacheLoader {
+public abstract class DelegatingCacheLoader<K, V> implements CacheLoader<K, V> {
 
    protected CacheLoader actual;
    protected InitializationContext ctx;
@@ -44,7 +44,7 @@ public abstract class DelegatingCacheLoader implements CacheLoader {
    }
 
    @Override
-   public MarshalledEntry load(Object key) {
+   public MarshalledEntry<K, V> load(Object key) {
       return actual != null ? actual.load(key) : null;
    }
 

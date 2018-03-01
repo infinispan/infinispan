@@ -9,14 +9,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 
-import org.infinispan.container.InternalEntryFactory;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.persistence.PersistenceUtil;
-import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -31,19 +27,21 @@ import org.infinispan.util.logging.LogFactory;
  * for the given timeout it will throw a {@link TimeoutException}.
  * @author William Burns
  * @since 8.0
+ * @deprecated This class is to be removed when {@link AdvancedCacheLoader#process(KeyFilter, AdvancedCacheLoader.CacheLoaderTask, Executor, boolean, boolean)} is removed
  */
-public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSupplier<CacheEntry<K, V>> {
+@Deprecated
+public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSupplier<MarshalledEntry<K, V>> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final boolean trace = log.isTraceEnabled();
 
    private final Executor executor;
-   private final PersistenceManager manager;
-   private final KeyFilter<K> filter;
-   private final InternalEntryFactory factory;
-   private final BlockingQueue<CacheEntry<K, V>> queue;
+   private final AdvancedCacheLoader<K, V> loader;
+   private final Predicate<? super K> filter;
+   private final boolean fetchValue;
+   private final boolean fetchMetadata;
+   private final BlockingQueue<MarshalledEntry<K, V>> queue;
    private final long timeout;
    private final TimeUnit unit;
-   private final boolean entryStream;
 
    private final Lock closeLock = new ReentrantLock();
    private final Condition closeCondition = closeLock.newCondition();
@@ -51,17 +49,18 @@ public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSuppl
    private boolean closed = false;
    private final AtomicReference<AdvancedCacheLoader.CacheLoaderTask<K, V>> taskRef = new AtomicReference<>();
 
-   public PersistenceManagerCloseableSupplier(Executor executor, PersistenceManager manager,
-                                              InternalEntryFactory factory, KeyFilter<K> filter, long timeout,
-                                              TimeUnit unit, int maxQueue, boolean entryStream) {
+   public PersistenceManagerCloseableSupplier(Executor executor, AdvancedCacheLoader<K, V> loader,
+                                              Predicate<? super K> filter, boolean fetchValue,
+                                              boolean fetchMetadata, long timeout,
+                                              TimeUnit unit, int maxQueue) {
       this.executor = executor;
-      this.manager = manager;
-      this.factory = factory;
+      this.loader = loader;
       this.filter = filter;
+      this.fetchValue = fetchValue;
+      this.fetchMetadata = fetchMetadata;
       this.timeout = timeout;
       this.unit = unit;
       this.queue = new ArrayBlockingQueue<>(maxQueue);
-      this.entryStream = entryStream;
    }
 
    class SupplierCacheLoaderTask implements AdvancedCacheLoader.CacheLoaderTask<K, V> {
@@ -79,14 +78,13 @@ public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSuppl
             } finally {
                closeLock.unlock();
             }
-            InternalCacheEntry<K, V> ice = PersistenceUtil.convert(marshalledEntry, factory);
             // We do a read without acquiring lock
             boolean stop = closed;
             while (!stop) {
                // If we were able to offer a value this means someone took from the queue so let us come back around main
                // loop to offer all values we can
                // TODO: do some sort of batching here - to reduce wakeup contention ?
-               if (queue.offer(ice, 100, TimeUnit.MILLISECONDS)) {
+               if (queue.offer(marshalledEntry, 100, TimeUnit.MILLISECONDS)) {
                   closeLock.lock();
                   try {
                      // Wake up anyone waiting for a value
@@ -110,7 +108,7 @@ public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSuppl
    }
 
    @Override
-   public CacheEntry<K, V> get() throws TimeoutException {
+   public MarshalledEntry<K, V> get() throws TimeoutException {
       // We do a regular get first just so subsequent get calls don't allocate the task.  If not we update the
       // ref to the new task atomically - the one who sets it starts the task
       if (taskRef.get() == null && taskRef.getAndUpdate((t) -> t == null ? new SupplierCacheLoaderTask() : t) == null) {
@@ -119,13 +117,13 @@ public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSuppl
          // can't really use the persistence executor since we will block while waiting for additional work
          executor.execute(() -> {
             try {
-               manager.processOnAllStores(new WithinThreadExecutor(), filter, task, entryStream, entryStream);
+               loader.process(filter != null ? filter::test : k -> true, task, new WithinThreadExecutor(), fetchValue, fetchMetadata);
             } finally {
                close();
             }
          });
       }
-      CacheEntry<K, V> entry;
+      MarshalledEntry<K, V> entry;
       boolean interrupted = false;
       // TODO: replace this with ForkJoinPool.ManagedBlocker
       while ((entry = queue.poll()) == null) {

@@ -3,6 +3,7 @@ package org.infinispan.persistence.manager;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.function.Predicate;
 
 import javax.transaction.Transaction;
 
@@ -13,6 +14,8 @@ import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.BatchModification;
+import org.infinispan.stream.StreamMarshalling;
+import org.reactivestreams.Publisher;
 
 /**
  * Defines the logic for interacting with the chain of external storage.
@@ -63,6 +66,47 @@ public interface PersistenceManager extends Lifecycle {
    void processOnAllStores(KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata, AccessMode mode);
 
    void processOnAllStores(Executor executor, KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata, AccessMode mode);
+
+   /**
+    * See {@link #publishEntries(Predicate, boolean, boolean, AccessMode)}
+    */
+   default <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(boolean fetchValue, boolean fetchMetadata) {
+      return publishEntries(StreamMarshalling.alwaysTruePredicate(), fetchValue, fetchMetadata, AccessMode.BOTH);
+   }
+
+   /**
+    * Returns a publisher that will publish all entries stored by the underlying cache store. Only the first
+    * cache store that implements {@link AdvancedCacheLoader} will be used. Predicate is applied by the underlying
+    * loader in a best attempt to improve performance.
+    * <p>
+    * Caller can tell the store to also fetch the value or metadata. In some cases this can improve performance. If
+    * metadata is not fetched it is not guaranteed if the publisher will return expired entries or not.
+    * @param filter filter so that only entries whose key matches are returned
+    * @param fetchValue whether to fetch value or not
+    * @param fetchMetadata whether to fetch metadata or not
+    * @param mode access mode to choose what type of loader to use
+    * @param <K> key type
+    * @param <V> value type
+    * @return publisher that will publish entries
+    */
+   <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue,
+         boolean fetchMetadata, AccessMode mode);
+
+   /**
+    * Returns a publisher that will publish all keys stored by the underlying cache store. Only the first cache store
+    * that implements {@link AdvancedCacheLoader} will be used. Predicate is applied by the underlying
+    * loader in a best attempt to improve performance.
+    * <p>
+    * This method should be preferred over {@link #publishEntries(Predicate, boolean, boolean, AccessMode)} when only
+    * keys are desired as many stores can do this in a significantly more performant way.
+    * <p>
+    * This publisher will never return a key which belongs to an expired entry
+    * @param filter filter so that only keys which match are returned
+    * @param mode access mode to choose what type of loader to use
+    * @param <K> key type
+    * @return publisher that will publish keys
+    */
+   <K> Publisher<K> publishKeys(Predicate<? super K> filter, AccessMode mode);
 
    MarshalledEntry loadFromAllStores(Object key, boolean localInvocation);
 

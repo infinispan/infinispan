@@ -14,12 +14,12 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -32,6 +32,11 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.Test;
 
+import io.reactivex.Flowable;
+import io.reactivex.observers.BaseTestConsumer;
+import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subscribers.TestSubscriber;
+
 
 /**
  * @author Mircea Markus
@@ -43,8 +48,8 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
    private static final int NUM_THREADS = 10;
    private static final int NUM_ENTRIES = 200;
 
-   protected AdvancedCacheLoader loader;
-   protected AdvancedCacheWriter writer;
+   protected AdvancedCacheLoader<Object, Object> loader;
+   protected AdvancedCacheWriter<Object, Object> writer;
    protected ExecutorService executor;
    protected StreamingMarshaller sm;
 
@@ -111,18 +116,20 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       final ConcurrentMap<Object, Object> entries = new ConcurrentHashMap<>();
       final AtomicBoolean stopped = new AtomicBoolean(false);
 
-      loader.process(null, (marshalledEntry, taskContext) -> {
-         synchronized (entries) {
-            boolean shouldStop = entries.size() == 100 && !stopped.get();
-            log.trace("shouldStop = " + shouldStop + ",entries size = " + entries.size());
-            if (shouldStop) {
-               stopped.set(true);
-               taskContext.stop();
-               return;
-            }
-            entries.put(unwrapKey(marshalledEntry.getKey()), unwrapValue(marshalledEntry.getValue()));
-         }
-      }, executor, true, true);
+      Flowable.fromPublisher(loader.publishEntries(null, true, true))
+            .observeOn(Schedulers.from(executor))
+            .takeUntil((MarshalledEntry<Object, Object> me) -> stopped.get())
+            .doOnNext(me -> {
+               synchronized (entries) {
+                  boolean shouldStop = entries.size() == 100 && !stopped.get();
+                  log.trace("shouldStop = " + shouldStop + ",entries size = " + entries.size());
+                  if (shouldStop) {
+                     stopped.set(true);
+                     return;
+                  }
+                  entries.put(unwrapKey(me.getKey()), unwrapValue(me.getValue()));
+               }
+            }).blockingSubscribe();
 
       assertTrue(stopped.get());
 
@@ -136,26 +143,25 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       final ConcurrentMap<Integer, Integer> entries = new ConcurrentHashMap<>();
       final ConcurrentMap<Integer, InternalMetadata> metadata = new ConcurrentHashMap<>();
       final AtomicBoolean sameKeyMultipleTimes = new AtomicBoolean();
-      final AtomicInteger processed = new AtomicInteger();
-      final AtomicBoolean brokenBarrier = new AtomicBoolean(false);
 
       assertEquals(loader.size(), 0);
       insertData();
 
-      loader.process(null, (marshalledEntry, taskContext) -> {
-         int key = unwrapKey(marshalledEntry.getKey());
+      Flowable<MarshalledEntry<Object, Object>> flowable = Flowable.fromPublisher(loader.publishEntries(null, fetchValues, fetchMetadata));
+      flowable = flowable.doOnNext(me -> {
+         Integer key = unwrapKey(me.getKey());
          if (fetchValues) {
             // Note: MarshalledEntryImpl.getValue() fails with NPE when it's got null valueBytes,
             // that's why we must not call this when values are not retrieved
-            Integer existing = entries.put(key, unwrapValue(marshalledEntry.getValue()));
+            Integer existing = entries.put(key, unwrapValue(me.getValue()));
             if (existing != null) {
                log.warnf("Already a value present for key %s: %s", key, existing);
                sameKeyMultipleTimes.set(true);
             }
          }
-         if (marshalledEntry.getMetadata() != null) {
-            log.tracef("For key %d found metadata %s", key, marshalledEntry.getMetadata());
-            InternalMetadata prevMetadata = metadata.put(key, marshalledEntry.getMetadata());
+         if (me.getMetadata() != null) {
+            log.tracef("For key %d found metadata %s", key, me.getMetadata());
+            InternalMetadata prevMetadata = metadata.put(key, me.getMetadata());
             if (prevMetadata != null) {
                log.warnf("Already a metadata present for key %s: %s", key, prevMetadata);
                sameKeyMultipleTimes.set(true);
@@ -163,12 +169,31 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
          } else {
             log.tracef("No metadata found for key %d", key);
          }
-         processed.incrementAndGet();
-      }, executor, fetchValues, fetchMetadata);
+      });
+
+      TestSubscriber<MarshalledEntry<Object, Object>> subscriber = TestSubscriber.create(0);
+      flowable.subscribe(subscriber);
+
+      int batchsize = 10;
+      // Request all elements except the last 10 - do this across different threads
+      for (int i = 0; i < NUM_ENTRIES / batchsize - 1; i++) {
+         // Now request all the entries on different threads - just to see if the publisher can handle it
+         executor.execute(() -> subscriber.request(batchsize));
+      }
+
+      // We should receive all of those slements now
+      subscriber.awaitCount(NUM_ENTRIES - batchsize, BaseTestConsumer.TestWaitStrategy.SLEEP_10MS, TimeUnit.SECONDS.toMillis(10));
+
+      // Now request on the main thread - which should guarantee requests from different threads
+      // We only have 10 elements left, but request 1 more just because and we can verify we only got 10
+      subscriber.request(batchsize + 1);
+
+      subscriber.awaitDone(10, TimeUnit.SECONDS);
+
+      subscriber.assertNoErrors();
+      assertEquals(NUM_ENTRIES, subscriber.valueCount());
 
       assertFalse(sameKeyMultipleTimes.get());
-      assertFalse(brokenBarrier.get());
-      assertEquals(processed.get(), NUM_ENTRIES);
       for (int i = 0; i < NUM_ENTRIES; i++) {
          if (fetchValues) {
             assertEquals(entries.get(i), (Integer) i, "For key " + i);

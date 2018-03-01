@@ -1,5 +1,7 @@
 package org.infinispan.filter;
 
+import java.util.function.Predicate;
+
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -10,9 +12,11 @@ import net.jcip.annotations.ThreadSafe;
  *
  * @author Manik Surtani
  * @since 6.0
+ * @deprecated This will be replaced by {@link java.util.function.Predicate} in the future
  */
 @ThreadSafe
-public interface KeyFilter<K> {
+@Deprecated
+public interface KeyFilter<K> extends Predicate<K> {
 
    KeyFilter ACCEPT_ALL_FILTER = new KeyFilter() {
       @Override
@@ -26,4 +30,9 @@ public interface KeyFilter<K> {
     * @return true if the given key is accepted by this filter.
     */
    boolean accept(K key);
+
+   @Override
+   default boolean test(K k) {
+      return accept(k);
+   }
 }

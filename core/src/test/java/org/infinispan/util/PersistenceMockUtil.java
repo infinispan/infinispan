@@ -22,6 +22,7 @@ import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 /**
  * Util class that mocks {@link org.infinispan.AdvancedCache} and {@link org.infinispan.persistence.spi.InitializationContext}
@@ -39,7 +40,8 @@ public class PersistenceMockUtil {
    public static InitializationContext createContext(String cacheName, Configuration configuration, StreamingMarshaller marshaller, TimeService timeService) {
       Cache mockCache = mockCache(cacheName, configuration, timeService);
       return new InitializationContextImpl(configuration.persistence().stores().get(0), mockCache, marshaller,
-                                           timeService, new ByteBufferFactoryImpl(), new MarshalledEntryFactoryImpl(marshaller));
+                                           timeService, new ByteBufferFactoryImpl(), new MarshalledEntryFactoryImpl(marshaller),
+                                           new WithinThreadExecutor());
    }
 
    public static Cache mockCache(String name, Configuration configuration) {

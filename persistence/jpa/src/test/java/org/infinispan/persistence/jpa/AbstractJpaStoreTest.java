@@ -17,6 +17,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.util.DefaultTimeService;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
@@ -56,7 +57,8 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
 
       JpaStore store = new JpaStore();
       store.init(new InitializationContextImpl(builder.persistence().stores().get(0).create(), cm.getCache(),
-            getMarshaller(), new DefaultTimeService(), null, new MarshalledEntryFactoryImpl(getMarshaller())));
+            getMarshaller(), new DefaultTimeService(), null, new MarshalledEntryFactoryImpl(getMarshaller()),
+            new WithinThreadExecutor()));
       store.start();
 
       assertNotNull(store.getEntityManagerFactory());
