@@ -16,13 +16,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -34,6 +32,8 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
+
+import io.reactivex.Flowable;
 
 /**
  * Test concurrent reads, writes, and clear operations on the SingleFileStore.
@@ -425,66 +425,46 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
    }
 
    private class ProcessTask implements Callable<Object> {
-      final SingleFileStore store;
+      final SingleFileStore<String, String> store;
 
-      ProcessTask(SingleFileStore store) {
+      ProcessTask(SingleFileStore<String, String> store) {
          this.store = store;
       }
 
       @Override
       public Object call() throws Exception {
-         final int NUM_PROCESS_THREADS = ProcessorInfo.availableProcessors();
-
          File file = new File(location, CACHE_NAME + ".dat");
          assertTrue(file.exists());
 
-         final ExecutorService executor = Executors.newFixedThreadPool(NUM_PROCESS_THREADS, getTestThreadFactory("process"));
-         try {
-            final AtomicInteger count = new AtomicInteger(0);
-            store.process(key -> true,
-                          (marshalledEntry, taskContext) -> {
-                             count.incrementAndGet();
-                             Object key = marshalledEntry.getKey();
-                             Object value = marshalledEntry.getValue();
-                             assertEquals(key, ((String) value).substring(0, ((String) key).length()));
-                          }, executor, true, true);
-            log.tracef("Processed %d entries from the store", count.get());
-         } finally {
-            executor.shutdownNow();
-         }
+         Long sum = Flowable.fromPublisher(store.publishEntries(null, true, true))
+               .doOnNext(me -> {
+                  String key = me.getKey();
+                  String value = me.getValue();
+                  assertEquals(key, (value.substring(0, key.length())));
+               }).count().blockingGet();
+         log.tracef("Processed %d entries from the store", sum);
          return null;
       }
    }
 
    private class ProcessTaskNoDiskRead implements Callable<Object> {
-      final SingleFileStore store;
+      final SingleFileStore<?, ?> store;
 
-      ProcessTaskNoDiskRead(SingleFileStore store) {
+      ProcessTaskNoDiskRead(SingleFileStore<?, ?> store) {
          this.store = store;
       }
 
       @Override
       public Object call() throws Exception {
-         final int NUM_PROCESS_THREADS = ProcessorInfo.availableProcessors();
-
          File file = new File(location, CACHE_NAME + ".dat");
          assertTrue(file.exists());
 
-         ExecutorService executor = Executors.newFixedThreadPool(NUM_PROCESS_THREADS, getTestThreadFactory("process"));
-         try {
-            final AtomicInteger count = new AtomicInteger(0);
-            store.process(
-                  (key) -> true,
-                  (marshalledEntry, taskContext) -> {
-                     count.incrementAndGet();
-                     Object key = marshalledEntry.getKey();
-                     assertNotNull(key);
-                  },
-                  executor, false, false);  // Set (value and metadata) == false so that no disk reads are performed
-            log.tracef("Processed %d in-memory keys from the store", count.get());
-         } finally {
-            executor.shutdownNow();
-         }
+         Long sum = Flowable.fromPublisher(store.publishEntries(null, false, false))
+               .doOnNext(me -> {
+                  Object key = me.getKey();
+                  assertNotNull(key);
+               }).count().blockingGet();
+         log.tracef("Processed %d in-memory keys from the store", sum);
          return null;
       }
    }
