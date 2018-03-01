@@ -63,7 +63,7 @@ final class DirectoryLoaderAdaptor {
     * @param entriesCollector loaded entries are collected in this set
     * @param maxEntries to limit amount of entries loaded
     */
-   protected void loadAllEntries(final HashSet<MarshalledEntry> entriesCollector, final int maxEntries, StreamingMarshaller marshaller) {
+   protected <K, V> void loadAllEntries(final Set<MarshalledEntry<K, V>> entriesCollector, final int maxEntries, StreamingMarshaller marshaller) {
       int existingElements = entriesCollector.size();
       int toLoadElements = maxEntries - existingElements;
       if (toLoadElements <= 0) {
