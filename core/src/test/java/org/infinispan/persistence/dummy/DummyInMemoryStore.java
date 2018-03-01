@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
@@ -20,10 +21,8 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
-import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
@@ -34,6 +33,8 @@ import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import io.reactivex.Flowable;
 
 /**
  * A Dummy cache store which stores objects in memory. Instance of the store can be shared
@@ -168,30 +169,17 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    }
 
    @Override
-   public void process(KeyFilter filter, CacheLoaderTask task, Executor executor, boolean fetchValue, boolean fetchMetadata) {
+   public Flowable<MarshalledEntry> publishEntries(Predicate filter, boolean fetchValue, boolean fetchMetadata) {
       assertRunning();
-      record("process");
-      log.tracef("Processing entries in store %s with filter %s and callback %s", storeName, filter, task);
+      record("publishEntries");
+      log.tracef("Publishing entries in store %s with filter %s", storeName, filter);
+      Flowable<Map.Entry<Object, byte[]>> flowable = Flowable.fromIterable(store.entrySet());
       final long currentTimeMillis = timeService.wallClockTime();
-      TaskContext tx = new TaskContextImpl();
-      for (Iterator<Map.Entry<Object, byte[]>> i = store.entrySet().iterator(); i.hasNext();) {
-         Map.Entry<Object, byte[]> entry = i.next();
-         if (tx.isStopped()) break;
-         if (filter == null || filter.accept(entry.getKey())) {
-            MarshalledEntry se = deserialize(entry.getKey(), entry.getValue(), fetchValue, fetchMetadata);
-            if (isExpired(se, currentTimeMillis)) {
-               log.tracef("Key %s exists, but has expired.  Entry is %s", entry.getKey(), se);
-               i.remove();
-            } else {
-               try {
-                  task.processEntry(se,tx);
-               } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                  break;
-               }
-            }
-         }
+      if (filter != null) {
+         flowable = flowable.filter(e -> filter.test(e.getKey()));
       }
+      return flowable.map(entry -> deserialize(entry.getKey(), entry.getValue(), fetchValue, fetchMetadata))
+            .filter(me -> !isExpired(me, currentTimeMillis));
    }
 
    @Override
