@@ -12,7 +12,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileListCacheKey;
@@ -97,7 +96,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
          exclusionSet.add(key);
       }
 
-      keyList = PersistenceUtil.toKeySet(cacheLoader, new CollectionKeyFilter(exclusionSet));
+      keyList = PersistenceUtil.toKeySet(cacheLoader, k -> !exclusionSet.contains(k));
 
       AssertJUnit.assertEquals((initialCount - fileNamesFromIndexDir.length), keyList.size());
 
@@ -252,7 +251,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       HashSet exclusionSet = new HashSet();
       exclusionSet.add(new FileListCacheKey(indexName, segmentId));
 
-      keySet = PersistenceUtil.toKeySet(cacheLoader, new CollectionKeyFilter(exclusionSet));
+      keySet = PersistenceUtil.toKeySet(cacheLoader, k -> !exclusionSet.contains(k));
       String[] fileNamesArr = TestHelper.getFileNamesFromDir(rootDir, indexName);
       AssertJUnit.assertEquals((initialCount - 1), keySet.size());
 
@@ -275,7 +274,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       Set keyList = PersistenceUtil.toKeySet(cacheLoader, null);
       checkIfExists(keyList, exclusionSet, true, false);
 
-      keyList = PersistenceUtil.toKeySet(cacheLoader, new CollectionKeyFilter(exclusionSet));
+      keyList = PersistenceUtil.toKeySet(cacheLoader, k -> !exclusionSet.contains(k));
       checkIfExists(keyList, exclusionSet, false, true);
    }
 

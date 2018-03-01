@@ -4,24 +4,25 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
+import java.util.function.Predicate;
 
 import org.apache.lucene.store.FSDirectory;
 import org.infinispan.commons.configuration.ConfiguredBy;
-import org.infinispan.executors.ExecutorAllCompletionService;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.lucene.IndexScopedKey;
 import org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfiguration;
 import org.infinispan.lucene.logging.Log;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.PersistenceUtil;
-import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * A CacheLoader meant to load Lucene index(es) from filesystem based Lucene index(es).
@@ -36,7 +37,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 5.2
  */
 @ConfiguredBy(LuceneLoaderConfiguration.class)
-public class LuceneCacheLoader implements AdvancedCacheLoader {
+public class LuceneCacheLoader<K, V> implements AdvancedCacheLoader<K, V> {
 
    private static final Log log = LogFactory.getLog(LuceneCacheLoader.class, Log.class);
 
@@ -91,38 +92,22 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
    }
 
    @Override
-   public void process(final KeyFilter filter, final CacheLoaderTask task, Executor executor, boolean fetchValue, boolean fetchMetadata) {
-      scanForUnknownDirectories();
-      ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(executor);
-
-      final TaskContextImpl taskContext = new TaskContextImpl();
-      for (final DirectoryLoaderAdaptor dir : openDirectories.values()) {
-         eacs.submit(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-               try {
-                  final HashSet<MarshalledEntry> allInternalEntries = new HashSet<>();
-                  dir.loadAllEntries(allInternalEntries, Integer.MAX_VALUE, ctx.getMarshaller());
-                  for (MarshalledEntry me : allInternalEntries) {
-                     if (taskContext.isStopped())
-                        break;
-                     if (filter == null || filter.accept(me.getKey())) {
-                        task.processEntry(me, taskContext);
-                     }
-                  }
-                  return null;
-               }
-               catch (Exception e) {
-                  log.errorExecutingParallelStoreTask(e);
-                  throw e;
-               }
-            }
-         });
-      }
-      eacs.waitUntilAllCompleted();
-      if (eacs.isExceptionThrown()) {
-         throw new PersistenceException("Execution exception!", eacs.getFirstException());
-      }
+   public Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+      return Flowable.defer(() -> {
+         // Make sure that we update directories before we start iterating upon directories
+         scanForUnknownDirectories();
+         return Flowable.fromIterable(openDirectories.values());
+      })
+            // We parallelize this since the loading below is blocking
+            .parallel()
+            .runOn(Schedulers.from(ctx.getExecutor()))
+            .flatMap(dir -> {
+               final Set<MarshalledEntry<K, V>> allInternalEntries = new HashSet<>();
+               dir.loadAllEntries(allInternalEntries, Integer.MAX_VALUE, ctx.getMarshaller());
+               return Flowable.fromIterable(allInternalEntries);
+            })
+            .filter(me -> filter == null || filter.test(me.getKey()))
+            .sequential();
    }
 
    @Override
@@ -132,7 +117,7 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
 
    /**
     * There might be Directories we didn't store yet in the openDirectories Map.
-    * Make sure they are all initialized before serving methods such as {@link #process(KeyFilter, org.infinispan.persistence.spi.AdvancedCacheLoader.CacheLoaderTask, java.util.concurrent.Executor, boolean, boolean)}
+    * Make sure they are all initialized before serving methods such as {@link #publishEntries(Predicate, boolean, boolean)}
     */
    private void scanForUnknownDirectories() {
       File[] filesInRoot = rootDirectory.listFiles();
