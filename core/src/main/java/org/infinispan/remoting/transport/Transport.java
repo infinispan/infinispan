@@ -70,7 +70,9 @@ public interface Transport extends Lifecycle {
          // milliseconds
          return CompletableFutures.await(future);
       } catch (ExecutionException e) {
-         throw Util.rewrapAsCacheException(e.getCause());
+         Throwable cause = e.getCause();
+         cause.addSuppressed(e);
+         throw Util.rewrapAsCacheException(cause);
       }
    }
 
@@ -167,7 +169,9 @@ public interface Transport extends Lifecycle {
          CompletableFutures.await(CompletableFuture.allOf(futures.toArray(new CompletableFuture[rpcCommands.size()])));
          return result;
       } catch (ExecutionException e) {
-         throw Util.rewrapAsCacheException(e.getCause());
+         Throwable cause = e.getCause();
+         cause.addSuppressed(e);
+         throw Util.rewrapAsCacheException(cause);
       }
    }
 

@@ -288,7 +288,9 @@ public class JGroupsTransport implements Transport {
          try {
             return CompletableFutures.await(request);
          } catch (ExecutionException e) {
-            throw Util.rewrapAsCacheException(e.getCause());
+            Throwable cause = e.getCause();
+            cause.addSuppressed(e);
+            throw Util.rewrapAsCacheException(cause);
          }
       } else {
          commands.forEach(

@@ -36,7 +36,9 @@ public class SimpleAsyncInvocationStage extends InvocationStage {
       try {
          return CompletableFutures.await(future);
       } catch (ExecutionException e) {
-         throw e.getCause();
+         Throwable cause = e.getCause();
+         cause.addSuppressed(e);
+         throw cause;
       }
    }
 
