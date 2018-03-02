@@ -4,6 +4,7 @@ import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
@@ -16,7 +17,7 @@ import org.infinispan.persistence.sifs.SoftIndexFileStore;
 @BuiltBy(SoftIndexFileStoreConfigurationBuilder.class)
 @ConfigurationFor(SoftIndexFileStore.class)
 @SerializedWith(SoftIndexFileStoreSerializer.class)
-public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration {
+public class SoftIndexFileStoreConfiguration extends AbstractSegmentedStoreConfiguration<SoftIndexFileStoreConfiguration> {
    static final AttributeDefinition<String> DATA_LOCATION = AttributeDefinition.builder("dataLocation", "Infinispan-SoftIndexFileStore-Data").immutable().autoPersist(false).xmlName("path").build();
    static final AttributeDefinition<String> INDEX_LOCATION = AttributeDefinition.builder("indexLocation", "Infinispan-SoftIndexFileStore-Index").immutable().autoPersist(false).xmlName("path").build();
    static final AttributeDefinition<Integer> INDEX_SEGMENTS = AttributeDefinition.builder("indexSegments", 3).immutable().autoPersist(false).xmlName("segments").build();
@@ -35,6 +36,17 @@ public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration 
 
    public SoftIndexFileStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
       super(attributes, async, singletonStore);
+   }
+
+   @Override
+   public SoftIndexFileStoreConfiguration newConfigurationFrom(int segment) {
+      AttributeSet set = SoftIndexFileStoreConfiguration.attributeDefinitionSet();
+      set.read(attributes);
+      String dataLocation = set.attribute(DATA_LOCATION).get();
+      set.attribute(DATA_LOCATION).set(fileLocationTransform(dataLocation, segment));
+      String indexLocation = set.attribute(INDEX_LOCATION).get();
+      set.attribute(INDEX_LOCATION).set(fileLocationTransform(indexLocation, segment));
+      return new SoftIndexFileStoreConfiguration(set.protect(), async(), singletonStore());
    }
 
    public String dataLocation() {

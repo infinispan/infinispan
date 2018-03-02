@@ -119,6 +119,7 @@ public enum Attribute {
     @Deprecated
     REPLICATION_QUEUE_EXECUTOR("replication-queue-executor"),
     ROLES("roles"),
+    SEGMENTED("segmented"),
     SEGMENTS("segments"),
     SHARED("shared"),
     SHUTDOWN_HOOK("shutdown-hook"),

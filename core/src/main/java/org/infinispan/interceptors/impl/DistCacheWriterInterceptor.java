@@ -113,7 +113,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
             return rv;
 
          boolean resp = persistenceManager
-               .deleteFromAllStores(key, skipSharedStores(rCtx, key, removeCommand) ? PRIVATE : BOTH);
+               .deleteFromAllStores(key, command.getSegment(), skipSharedStores(rCtx, key, removeCommand) ? PRIVATE : BOTH);
          if (trace)
             log.tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
 
@@ -152,7 +152,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
 
          if (command.isSuccessful() && rv == null) {
             boolean resp = persistenceManager
-                  .deleteFromAllStores(key, skipSharedStores(rCtx, key, command) ? PRIVATE : BOTH);
+                  .deleteFromAllStores(key, command.getSegment(), skipSharedStores(rCtx, key, command) ? PRIVATE : BOTH);
             if (trace)
                log.tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
          } else if (command.isSuccessful()) {

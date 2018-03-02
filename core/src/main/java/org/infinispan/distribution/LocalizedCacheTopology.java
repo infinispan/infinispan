@@ -50,6 +50,19 @@ public class LocalizedCacheTopology extends CacheTopology {
              localAddress, false);
    }
 
+   /**
+    * Creates a new local topology that has a single address but multiple segments. This is useful when the data
+    * storage is segmented in some way (ie. segmented store)
+    * @param keyPartitioner partitioner to decide which segment a given key maps to
+    * @param numSegments how many segments there are
+    * @param localAddress the address of this node
+    * @return segmented topology
+    */
+   public static LocalizedCacheTopology makeSegmentedSingletonTopology(KeyPartitioner keyPartitioner, int numSegments,
+         Address localAddress) {
+      return new LocalizedCacheTopology(keyPartitioner, numSegments, localAddress);
+   }
+
    public LocalizedCacheTopology(CacheMode cacheMode, CacheTopology cacheTopology, KeyPartitioner keyPartitioner,
                                  Address localAddress, boolean connected) {
       super(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(), cacheTopology.getCurrentCH(),
@@ -121,6 +134,25 @@ public class LocalizedCacheTopology extends CacheTopology {
          this.allLocal = true;
          this.localReadSegments = IntSets.immutableRangeSet(numSegments);
       }
+   }
+
+   private LocalizedCacheTopology(KeyPartitioner keyPartitioner, int numSegments, Address localAddress) {
+      super(-1, -1, null, null, null, Collections.singletonList(localAddress), null);
+      this.localAddress = localAddress;
+      this.numSegments = numSegments;
+      this.keyPartitioner = keyPartitioner;
+      this.membersSet = Collections.unmodifiableSet(Collections.singleton(localAddress));
+      this.isDistributed = false;
+      this.isScattered = false;
+      // Reads and writes are local, only the invalidation is replicated
+      List<Address> owners = Collections.singletonList(localAddress);
+      this.distributionInfos = new DistributionInfo[numSegments];
+      for (int i = 0; i < distributionInfos.length; ++i) {
+         distributionInfos[i] = new DistributionInfo(i, localAddress, owners, owners, Collections.emptyList(), localAddress);
+      }
+      this.maxOwners = 1;
+      this.allLocal = true;
+      this.localReadSegments = IntSets.immutableRangeSet(numSegments);
    }
 
    /**

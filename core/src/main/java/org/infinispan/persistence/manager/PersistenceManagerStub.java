@@ -7,6 +7,7 @@ import java.util.function.Predicate;
 
 import javax.transaction.Transaction;
 
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
@@ -64,7 +65,7 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public boolean deleteFromAllStores(Object key, AccessMode mode) {
+   public boolean deleteFromAllStores(Object key, int segment, AccessMode mode) {
       return false;
    }
 
@@ -75,21 +76,36 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
+   public <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata, AccessMode mode) {
+      return null;
+   }
+
+   @Override
    public <K> Publisher<K> publishKeys(Predicate<? super K> filter, AccessMode mode) {
       return null;
    }
 
    @Override
-   public MarshalledEntry loadFromAllStores(Object key, boolean localContext, boolean includeStores) {
+   public <K> Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter, AccessMode mode) {
       return null;
    }
 
    @Override
-   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, AccessMode modes) {
+   public MarshalledEntry loadFromAllStores(Object key, boolean localInvocation, boolean includeStores) {
+      return null;
    }
 
    @Override
-   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, AccessMode modes, long flags) {
+   public MarshalledEntry loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
+      return null;
+   }
+
+   @Override
+   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment, AccessMode modes) {
+   }
+
+   @Override
+   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment, AccessMode modes, long flags) {
    }
 
    @Override
@@ -99,6 +115,11 @@ public class PersistenceManagerStub implements PersistenceManager {
 
    @Override
    public int size() {
+      return 0;
+   }
+
+   @Override
+   public int size(IntSet segments) {
       return 0;
    }
 

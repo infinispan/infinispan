@@ -10,6 +10,8 @@ However, if you'd like to use only {brandname} API and you want {brandname} to p
 * Auto-generated ID is not supported.
 * Lastly, all entries will be stored as immortal entries.
 
+NOTE: This store doesn't support being segmented
+
 ==== Sample Usage
 For example, given a persistence unit "myPersistenceUnit", and a JPA entity User:
 

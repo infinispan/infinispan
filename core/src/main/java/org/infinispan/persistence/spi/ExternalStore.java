@@ -14,4 +14,13 @@ public interface ExternalStore<K, V> extends CacheLoader<K, V>, CacheWriter<K, V
    default boolean isAvailable() {
       return CacheWriter.super.isAvailable();
    }
+
+   /**
+    * Method to be used to destroy and clean up any resources associated with this store. This is normally only
+    * useful for non shared stores.
+    * <p>
+    * This method will ensure the store is stopped and properly cleans up all resources for it.
+    * @implSpec Default implementation just invokes {@link #stop()}
+    */
+   default void destroy() { stop(); }
 }

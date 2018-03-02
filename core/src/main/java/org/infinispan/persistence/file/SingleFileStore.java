@@ -156,6 +156,16 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    }
 
    @Override
+   public void destroy() {
+      stop();
+      if (file.delete()) {
+         log.tracef("Deleted file: " + file);
+      } else {
+         log.tracef("Could not delete file: " + file);
+      }
+   }
+
+   @Override
    public boolean isAvailable() {
       return file.exists();
    }

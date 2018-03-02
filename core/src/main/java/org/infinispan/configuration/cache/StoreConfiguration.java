@@ -60,5 +60,15 @@ public interface StoreConfiguration {
 
    int maxBatchSize();
 
+   /**
+    * Whether or not this store is configured to be segmented. For a non shared store this means there will be a separate
+    * instance of each store for each segment. For shared stores normally this means the store is able to do some
+    * optimizations based on the segment (ie. select * from table where segment = $1)
+    * @return whether this store is configured to be segmented
+    */
+   default boolean segmented() {
+      return false;
+   }
+
    Properties properties();
 }

@@ -1685,13 +1685,15 @@ public class TestingUtil {
       AdvancedCache<K, V> advCache = cache.getAdvancedCache();
       PersistenceManager pm = advCache.getComponentRegistry().getComponent(PersistenceManager.class);
       StreamingMarshaller marshaller = extractGlobalMarshaller(advCache.getCacheManager());
-      pm.writeToAllNonTxStores(new MarshalledEntryImpl<>(key, value, null, marshaller), BOTH);
+      KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
+      pm.writeToAllNonTxStores(new MarshalledEntryImpl<>(key, value, null, marshaller), keyPartitioner.getSegment(key), BOTH);
    }
 
    public static <K, V> boolean deleteFromAllStores(K key, Cache<K, V> cache) {
       AdvancedCache<K, V> advCache = cache.getAdvancedCache();
       PersistenceManager pm = advCache.getComponentRegistry().getComponent(PersistenceManager.class);
-      return pm.deleteFromAllStores(key, BOTH);
+      KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
+      return pm.deleteFromAllStores(key, keyPartitioner.getSegment(key), BOTH);
    }
 
    public static Subject makeSubject(String... principals) {

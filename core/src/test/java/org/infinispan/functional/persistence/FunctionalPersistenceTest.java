@@ -11,10 +11,19 @@ import org.infinispan.functional.decorators.FunctionalAdvancedCache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.CacheLoaderFunctionalTest;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "functional.persistence.FunctionalPersistenceTest")
 public class FunctionalPersistenceTest extends CacheLoaderFunctionalTest {
+
+   @Factory
+   public Object[] factory() {
+      return new Object[]{
+            new FunctionalPersistenceTest().segmented(true),
+            new FunctionalPersistenceTest().segmented(false),
+      };
+   }
 
    @Override
    protected ConfigurationBuilder getConfiguration() {

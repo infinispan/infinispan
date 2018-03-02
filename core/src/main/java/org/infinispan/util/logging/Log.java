@@ -1811,4 +1811,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unsupported async cache mode '%s' for transactional caches, forcing %s", id = 530)
    void unsupportedAsyncCacheMode(CacheMode unsupportedCacheMode, CacheMode forcedCacheMode);
+
+   @Message(value = "Store or loader %s must implement SegmentedLoadWriteStore or its config must extend AbstractSegmentedStoreConfiguration if configured as segmented", id = 531)
+   CacheConfigurationException storeNotSegmented(Class<?> implementedClass);
 }

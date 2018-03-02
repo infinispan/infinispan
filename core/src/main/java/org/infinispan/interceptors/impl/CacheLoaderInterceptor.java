@@ -42,9 +42,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.container.entries.CacheEntry;
@@ -68,12 +66,14 @@ import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.stream.impl.local.AbstractLocalCacheStream;
 import org.infinispan.stream.impl.local.EntryStreamSupplier;
 import org.infinispan.stream.impl.local.KeyStreamSupplier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
+import org.infinispan.stream.impl.local.PersistenceEntryStreamSupplier;
+import org.infinispan.stream.impl.local.PersistenceKeyStreamSupplier;
 import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
 import org.infinispan.util.EntryWrapper;
 import org.infinispan.util.LazyConcatIterator;
@@ -522,14 +522,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          return getStream(true);
       }
 
-      protected CacheStream<R> getStream(boolean parallel) {
-         CloseableSpliterator<R> closeableSpliterator = spliterator();
-         CacheStream<R> stream = new LocalCacheStream<>(supplier(), parallel,
-               cache.getAdvancedCache().getComponentRegistry());
-         // We rely on the fact that on close returns the same instance
-         stream.onClose(closeableSpliterator::close);
-         return stream;
-      }
+      abstract protected CacheStream<R> getStream(boolean parallel);
 
       protected abstract AbstractLocalCacheStream.StreamSupplier<R, Stream<R>> supplier();
    }
@@ -572,7 +565,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          // This can be a HashSet since it is only written to from the local iterator which is only invoked
          // from user thread
          Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
-         CloseableIterator<CacheEntry<K, V>> localIterator = new CloseableIteratorMapper<>(Closeables.iterator(cacheSet.stream()), e -> {
+         CloseableIterator<CacheEntry<K, V>> localIterator = new IteratorMapper<>(cacheSet.iterator(), e -> {
             seenKeys.add(e.getKey());
             return e;
          });
@@ -581,7 +574,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          Publisher<CacheEntry<K, V>> publisher = flowable
                .map(me -> (CacheEntry<K, V>) PersistenceUtil.convert(me, iceFactory));
          // This way we don't subscribe to the flowable until after the first iterator is fully exhausted
-         return new LazyConcatIterator<>(localIterator, () -> org.infinispan.util.Closeables.iterator(publisher, 64));
+         return new LazyConcatIterator<>(localIterator, () -> org.infinispan.util.Closeables.iterator(publisher, 128));
       }
 
       @Override
@@ -606,6 +599,12 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
             }
          }
          return contains;
+      }
+
+      @Override
+      protected CacheStream<CacheEntry<K, V>> getStream(boolean parallel) {
+         return new LocalCacheStream<>(new PersistenceEntryStreamSupplier<>(cache, iceFactory, partitioner::getSegment,
+               cacheSet.stream(), persistenceManager), parallel, cache.getAdvancedCache().getComponentRegistry());
       }
    }
 
@@ -640,14 +639,14 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          // This can be a HashSet since it is only written to from the local iterator which is only invoked
          // from user thread
          Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
-         CloseableIterator<K> localIterator = new CloseableIteratorMapper<>(Closeables.iterator(cacheSet.stream()), k -> {
+         CloseableIterator<K> localIterator = new IteratorMapper<>(cacheSet.iterator(), k -> {
             seenKeys.add(k);
             return k;
          });
          Flowable<K> flowable = Flowable.fromPublisher(persistenceManager.publishKeys(
                k -> !seenKeys.contains(k), PersistenceManager.AccessMode.BOTH));
          // This way we don't subscribe to the flowable until after the first iterator is fully exhausted
-         return new LazyConcatIterator<>(localIterator, () -> org.infinispan.util.Closeables.iterator(flowable, 64));
+         return new LazyConcatIterator<>(localIterator, () -> org.infinispan.util.Closeables.iterator(flowable, 128));
       }
 
       @Override
@@ -666,6 +665,12 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
             }
          }
          return contains;
+      }
+
+      @Override
+      protected CacheStream<K> getStream(boolean parallel) {
+         return new LocalCacheStream<>(new PersistenceKeyStreamSupplier<>(cache, partitioner::getSegment,
+               cacheSet.stream(), persistenceManager), parallel, cache.getAdvancedCache().getComponentRegistry());
       }
    }
 }

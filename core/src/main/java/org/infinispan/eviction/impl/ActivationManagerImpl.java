@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -37,6 +38,7 @@ public class ActivationManagerImpl implements ActivationManager {
    @Inject private PersistenceManager persistenceManager;
    @Inject private Configuration cfg;
    @Inject private ClusteringDependentLogic clusteringDependentLogic;
+   @Inject private KeyPartitioner keyPartitioner;
 
    private boolean passivation;
 
@@ -56,7 +58,7 @@ public class ActivationManagerImpl implements ActivationManager {
          return;
       }
       try {
-         if (persistenceManager.deleteFromAllStores(key, PRIVATE) && statisticsEnabled) {
+         if (persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), PRIVATE) && statisticsEnabled) {
             activations.incrementAndGet();
          }
       } catch (CacheException e) {
@@ -76,13 +78,14 @@ public class ActivationManagerImpl implements ActivationManager {
             //the entry does not exists in data container. We need to remove from private and shared stores.
             //if we are the primary owner
             AccessMode mode = primaryOwner ? BOTH : PRIVATE;
-            if (persistenceManager.deleteFromAllStores(key, mode) && statisticsEnabled) {
+            if (persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), mode) && statisticsEnabled) {
                activations.incrementAndGet();
             }
          } else {
             //the entry already exists in data container. It may be put during the load by the CacheLoaderInterceptor
             //so it was already activate in the private stores.
-            if (primaryOwner && persistenceManager.deleteFromAllStores(key, BOTH) && statisticsEnabled) {
+            if (primaryOwner && persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), BOTH) &&
+                  statisticsEnabled) {
                activations.incrementAndGet();
             }
          }

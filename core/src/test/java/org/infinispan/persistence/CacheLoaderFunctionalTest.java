@@ -48,6 +48,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -59,6 +60,8 @@ import org.testng.annotations.Test;
 public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    private static final Log log = LogFactory.getLog(CacheLoaderFunctionalTest.class);
+
+   private boolean segmented;
 
    Cache<String, String> cache;
    AdvancedLoadWriteStore<String, String> store;
@@ -82,10 +85,29 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       sm = cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
    }
 
+   public CacheLoaderFunctionalTest segmented(boolean segmented) {
+      this.segmented = segmented;
+      return this;
+   }
+
+   @Override
+   protected String parameters() {
+      return "[" + segmented + "]";
+   }
+
+   @Factory
+   public Object[] factory() {
+      return new Object[]{
+            new CacheLoaderFunctionalTest().segmented(true),
+            new CacheLoaderFunctionalTest().segmented(false),
+      };
+   }
+
    protected ConfigurationBuilder getConfiguration() {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.persistence()
          .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .segmented(segmented)
          .storeName(this.getClass().getName()) // in order to use the same store
          .transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       return cfg;
@@ -306,34 +328,38 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    }
 
    public void testPreloading() throws Exception {
-      ConfigurationBuilder preloadingCfg = new ConfigurationBuilder();
-      preloadingCfg.read(cfg.build());
-      preloadingCfg.persistence().clearStores().addStore(DummyInMemoryStoreConfigurationBuilder.class).preload(true).storeName(this.getClass().getName() + "preloadingCache");
+      ConfigurationBuilder preloadingCfg = newPreloadConfiguration(cfg.build(), this.getClass().getName() + "preloadingCache");
       doPreloadingTest(preloadingCfg.build(), "preloadingCache");
    }
 
    public void testPreloadingWithoutAutoCommit() throws Exception {
-      ConfigurationBuilder preloadingCfg = new ConfigurationBuilder();
-      preloadingCfg.read(cfg.build());
-      preloadingCfg.persistence().clearStores().addStore(DummyInMemoryStoreConfigurationBuilder.class).preload(true).storeName(this.getClass().getName() + "preloadingCache_2");
+      ConfigurationBuilder preloadingCfg = newPreloadConfiguration(cfg.build(), this.getClass().getName() + "preloadingCache_2");
       preloadingCfg.transaction().autoCommit(false);
       doPreloadingTest(preloadingCfg.build(), "preloadingCache_2");
    }
 
    public void testPreloadingWithEvictionAndOneMaxEntry() throws Exception {
-      ConfigurationBuilder preloadingCfg = new ConfigurationBuilder();
-      preloadingCfg.read(cfg.build());
-      preloadingCfg.persistence().clearStores().addStore(DummyInMemoryStoreConfigurationBuilder.class).preload(true).storeName(this.getClass().getName() + "preloadingCache_3");
+      ConfigurationBuilder preloadingCfg = newPreloadConfiguration(cfg.build(), this.getClass().getName() + "preloadingCache_3");
       preloadingCfg.memory().size(1);
       doPreloadingTestWithEviction(preloadingCfg.build(), "preloadingCache_3");
    }
 
    public void testPreloadingWithEviction() throws Exception {
-      ConfigurationBuilder preloadingCfg = new ConfigurationBuilder();
-      preloadingCfg.read(cfg.build());
-      preloadingCfg.persistence().clearStores().addStore(DummyInMemoryStoreConfigurationBuilder.class).preload(true).storeName(this.getClass().getName() + "preloadingCache_4");
+      ConfigurationBuilder preloadingCfg = newPreloadConfiguration(cfg.build(), this.getClass().getName() + "preloadingCache_4");
       preloadingCfg.memory().size(3);
       doPreloadingTestWithEviction(preloadingCfg.build(), "preloadingCache_4");
+   }
+
+   ConfigurationBuilder newPreloadConfiguration(Configuration configuration, String storeName) {
+      ConfigurationBuilder preloadingCfg = new ConfigurationBuilder();
+      preloadingCfg.read(configuration);
+      preloadingCfg.persistence()
+            .clearStores()
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+               .segmented(segmented)
+               .preload(true)
+               .storeName(storeName);
+      return preloadingCfg;
    }
 
    @Test(groups = "unstable")

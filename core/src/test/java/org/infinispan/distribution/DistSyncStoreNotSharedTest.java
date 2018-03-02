@@ -18,9 +18,9 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
@@ -34,7 +34,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "distribution.DistSyncStoreNotSharedTest")
 @CleanupAfterMethod
-public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String> {
+public class DistSyncStoreNotSharedTest<D extends DistSyncStoreNotSharedTest> extends BaseDistStoreTest<Object, String, D> {
 
    private static final String k1 = "1", v1 = "one", k2 = "2", v2 = "two", k3 = "3", v3 = "three", k4 = "4", v4 = "four";
    private static final String[] keys = new String[]{k1, k2, k3, k4};
@@ -43,6 +43,14 @@ public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String
    public DistSyncStoreNotSharedTest() {
       testRetVals = true;
       shared = false;
+   }
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new DistSyncStoreNotSharedTest().segmented(true),
+            new DistSyncStoreNotSharedTest().segmented(false),
+      };
    }
 
    public void testPutFromNonOwner(Method m) throws Exception {

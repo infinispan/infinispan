@@ -1,26 +1,25 @@
-package org.infinispan.container;
+package org.infinispan.container.impl;
+
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Set;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.impl.DefaultSegmentedDataContainer;
-import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-
 /**
  * @author wburns
  * @since 9.3
  */
-@Test(groups = "functional", testName = "container.DefaultSegmentedDataContainerTest")
+@Test(groups = "functional", testName = "container.impl.DefaultSegmentedDataContainerTest")
 public class DefaultSegmentedDataContainerTest extends MultipleCacheManagersTest {
    private static final String CACHE_NAME = "dist";
 

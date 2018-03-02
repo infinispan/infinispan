@@ -2,6 +2,8 @@ package org.infinispan.configuration.cache;
 
 import java.util.Properties;
 
+import org.infinispan.marshall.core.MarshalledEntry;
+
 public interface StoreConfigurationChildBuilder<S> extends ConfigurationChildBuilder {
 
    /**
@@ -85,6 +87,19 @@ public interface StoreConfigurationChildBuilder<S> extends ConfigurationChildBui
     * The maximum size of a batch to be inserted/deleted from the store. If the value is less than one, then no upper limit is placed on the number of operations in a batch.
     */
    S maxBatchSize(int maxBatchSize);
+
+   /**
+    * If true this store should either be non shared (segmenting can be done automatically for non shared stores) or
+    * the shared store must implement the {@link org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore} interface.
+    * Segmented stores help performance for things that require viewing the entire contents of the store (eg. iteration,
+    * stream processing, state transfer, mass indexer). If the store doesn't provide constant time operations for methods
+    * such as {@link org.infinispan.persistence.spi.CacheLoader#load(Object)} or
+    * {@link org.infinispan.persistence.spi.CacheWriter#write(MarshalledEntry)} than segmenting this store could also
+    * improve performance of those operations.
+    * @param b whether this store should be segmented
+    * @return this
+    */
+   S segmented(boolean b);
 
    /**
     * <p>

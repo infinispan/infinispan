@@ -15,11 +15,13 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
    public static final AttributeDefinition<Boolean> SHARED = AttributeDefinition.builder("shared", false).immutable().build();
    public static final AttributeDefinition<Boolean> TRANSACTIONAL = AttributeDefinition.builder("transactional", false).immutable().build();
    public static final AttributeDefinition<Integer> MAX_BATCH_SIZE = AttributeDefinition.builder("maxBatchSize", 100).immutable().build();
+   public static final AttributeDefinition<Boolean> SEGMENTED = AttributeDefinition.builder("segmented", false).immutable().build();
    public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class)
          .initializer(() -> new TypedProperties()).autoPersist(false).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(AbstractStoreConfiguration.class, FETCH_PERSISTENT_STATE, PURGE_ON_STARTUP, IGNORE_MODIFICATIONS, PRELOAD, SHARED, TRANSACTIONAL, MAX_BATCH_SIZE, PROPERTIES);
+      return new AttributeSet(AbstractStoreConfiguration.class, FETCH_PERSISTENT_STATE, PURGE_ON_STARTUP,
+            IGNORE_MODIFICATIONS, PRELOAD, SHARED, TRANSACTIONAL, MAX_BATCH_SIZE, SEGMENTED, PROPERTIES);
    }
 
    private final Attribute<Boolean> fetchPersistentState;
@@ -29,6 +31,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
    private final Attribute<Boolean> shared;
    private final Attribute<Boolean> transactional;
    private final Attribute<Integer> maxBatchSize;
+   private final Attribute<Boolean> segmented;
    private final Attribute<TypedProperties> properties;
 
    protected final AttributeSet attributes;
@@ -48,6 +51,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
       attributes.attribute(PRELOAD).set(preload);
       attributes.attribute(SHARED).set(shared);
       attributes.attribute(TRANSACTIONAL).set(false);
+      attributes.attribute(SEGMENTED).set(false);
       attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(properties));
 
       this.async = async;
@@ -59,6 +63,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
       this.shared = attributes.attribute(SHARED);
       this.transactional = attributes.attribute(TRANSACTIONAL);
       this.maxBatchSize = attributes.attribute(MAX_BATCH_SIZE);
+      this.segmented = attributes.attribute(SEGMENTED);
       this.properties = attributes.attribute(PROPERTIES);
    }
 
@@ -74,6 +79,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
       this.shared = attributes.attribute(SHARED);
       this.transactional = attributes.attribute(TRANSACTIONAL);
       this.maxBatchSize = attributes.attribute(MAX_BATCH_SIZE);
+      this.segmented = attributes.attribute(SEGMENTED);
       this.properties = attributes.attribute(PROPERTIES);
    }
 
@@ -118,6 +124,11 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
    @Override
    public int maxBatchSize() {
       return maxBatchSize.get();
+   }
+
+   @Override
+   public boolean segmented() {
+      return segmented.get();
    }
 
    /**

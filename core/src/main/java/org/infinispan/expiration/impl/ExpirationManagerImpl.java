@@ -12,6 +12,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -40,6 +41,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    @Inject protected InternalDataContainer<K, V> dataContainer;
    @Inject protected CacheNotifier<K, V> cacheNotifier;
    @Inject protected TimeService timeService;
+   @Inject protected KeyPartitioner keyPartitioner;
 
    protected boolean enabled;
    protected String cacheName;
@@ -205,7 +207,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
 
    private void deleteFromStores(K key) {
       // We have to delete from shared stores as well to make sure there are not multiple expiration events
-      persistenceManager.deleteFromAllStores(key, PersistenceManager.AccessMode.BOTH);
+      persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), PersistenceManager.AccessMode.BOTH);
    }
 
    protected Long localLastAccess(Object key, Object value, int segment) {

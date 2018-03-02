@@ -14,6 +14,7 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.FunctionalCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
@@ -35,6 +36,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.functional.Param;
 import org.infinispan.functional.Param.PersistenceMode;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -81,6 +83,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    @Inject private InternalEntryFactory entryFactory;
    @Inject private TransactionManager transactionManager;
    @Inject private StreamingMarshaller marshaller;
+   @Inject private KeyPartitioner keyPartitioner;
 
    PersistenceConfiguration loaderConfig = null;
    final AtomicLong cacheStores = new AtomicLong(0);
@@ -154,7 +157,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
          if (!isProperWriter(rCtx, removeCommand, removeCommand.getKey())) return;
 
          Object key = removeCommand.getKey();
-         boolean resp = persistenceManager.deleteFromAllStores(key, BOTH);
+         boolean resp = persistenceManager.deleteFromAllStores(key, command.getSegment(), BOTH);
          if (trace)
             getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
       });
@@ -211,7 +214,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
          Object key = computeCommand.getKey();
          if(rv == null) {
-            boolean resp = persistenceManager.deleteFromAllStores(key, BOTH);
+            boolean resp = persistenceManager.deleteFromAllStores(key, command.getSegment(), BOTH);
             if (trace)
                getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
          } else {
@@ -306,7 +309,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                CacheEntry entry = rCtx.lookupEntry(key);
                if (entry != null) {
                   if (entry.isRemoved()) {
-                     boolean resp = persistenceManager.deleteFromAllStores(key, BOTH);
+                     boolean resp = persistenceManager.deleteFromAllStores(key, dataWriteCommand.getSegment(), BOTH);
                      if (trace)
                         getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key,
                               resp);
@@ -363,7 +366,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                   CacheEntry entry = rCtx.lookupEntry(key);
                   if (entry != null) {
                      if (entry.isRemoved()) {
-                        boolean resp = persistenceManager.deleteFromAllStores(key, BOTH);
+                        boolean resp = persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), BOTH);
                         if (trace) getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
                      } else {
                         if (entry.isChanged() && isProperWriter(rCtx, manyEntriesCommand, key)) {
@@ -458,7 +461,8 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
    void storeEntry(InvocationContext ctx, Object key, FlagAffectedCommand command) {
       MarshalledEntry entry = createMarshalledEntry(ctx, key);
-      persistenceManager.writeToAllNonTxStores(entry, skipSharedStores(ctx, key, command) ? PRIVATE : BOTH, command.getFlagsBitSet());
+      persistenceManager.writeToAllNonTxStores(entry, SegmentSpecificCommand.extractSegment(command, key, keyPartitioner),
+            skipSharedStores(ctx, key, command) ? PRIVATE : BOTH, command.getFlagsBitSet());
       if (trace) getLog().tracef("Stored entry %s under key %s", entry.getValue(), key);
    }
 

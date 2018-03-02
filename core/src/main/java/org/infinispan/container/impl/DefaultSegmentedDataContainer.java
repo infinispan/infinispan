@@ -30,8 +30,6 @@ import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.notifications.Listener;
-import org.infinispan.remoting.transport.Address;
 
 /**
  * DataContainer implementation that internally stores entries in an array of maps. This array is indexed by
@@ -42,14 +40,14 @@ import org.infinispan.remoting.transport.Address;
  * @author wburns
  * @since 9.3
  */
-@Listener
 public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataContainer<K, V> {
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final boolean trace = log.isTraceEnabled();
 
-   public final AtomicReferenceArray<ConcurrentMap<K, InternalCacheEntry<K, V>>> maps;
-   protected Address localNode;
+   protected final AtomicReferenceArray<ConcurrentMap<K, InternalCacheEntry<K, V>>> maps;
+   protected boolean shouldStopSegments;
+
 
    public DefaultSegmentedDataContainer(int numSegments) {
       maps = new AtomicReferenceArray<>(numSegments);
@@ -57,8 +55,6 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
 
    @Start
    public void start() {
-      localNode = cache.getCacheManager().getAddress();
-
       // Local (invalidation), replicated and scattered cache we just instantiate all the maps immediately
       // Scattered needs this for backups as they can be for any segment
       // Distributed needs them all only at beginning for preload of data - rehash event will remove others
@@ -67,12 +63,11 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
       }
       // Distributed is the only mode that allows for dynamic addition/removal of maps as others own all segments
       // in some fashion
+      shouldStopSegments = cache.getCacheConfiguration().clustering().cacheMode().isDistributed();
    }
 
    @Stop(priority = 999)
    public void stop() {
-      cache.removeListener(this);
-
       for (int i = 0; i < maps.length(); ++i) {
          maps.set(0, null);
       }
@@ -227,24 +222,28 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
 
    @Override
    public void addSegments(IntSet segments) {
-      if (trace) {
-         log.tracef("Ensuring segments %s are started", segments);
+      if (shouldStopSegments) {
+         if (trace) {
+            log.tracef("Ensuring segments %s are started", segments);
+         }
+         // Without this we will get a boxing and unboxing from int to Integer and back to int
+         segments.forEach((IntConsumer) this::startNewMap);
       }
-      // Without this we will get a boxing and unboxing from int to Integer and back to int
-      segments.forEach((IntConsumer) this::startNewMap);
    }
 
    @Override
    public void removeSegments(IntSet segments) {
-      if (trace) {
-         log.tracef("Removing segments: %s from container", segments);
-      }
-      segments.forEach((int s) -> {
-         ConcurrentMap<K, InternalCacheEntry<K, V>> map = maps.getAndSet(s, null);
-         if (map != null && !map.isEmpty()) {
-            listeners.forEach(c -> c.accept(map.values()));
+      if (shouldStopSegments) {
+         if (trace) {
+            log.tracef("Removing segments: %s from container", segments);
          }
-      });
+         segments.forEach((int s) -> {
+            ConcurrentMap<K, InternalCacheEntry<K, V>> map = maps.getAndSet(s, null);
+            if (map != null && !map.isEmpty()) {
+               listeners.forEach(c -> c.accept(map.values()));
+            }
+         });
+      }
    }
 
    @Override

@@ -13,10 +13,18 @@ import java.lang.reflect.Method;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 @Test(groups = "functional", testName = "scattered.store.ScatteredSyncStoreNotSharedTest")
-public class ScatteredSyncStoreNotSharedTest extends DistSyncStoreNotSharedTest {
+public class ScatteredSyncStoreNotSharedTest extends DistSyncStoreNotSharedTest<ScatteredSyncStoreNotSharedTest> {
    public ScatteredSyncStoreNotSharedTest() {
       numOwners = 1;
       l1CacheEnabled = false;
+   }
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new ScatteredSyncStoreNotSharedTest().segmented(true),
+            new ScatteredSyncStoreNotSharedTest().segmented(false),
+      };
    }
 
    @Override

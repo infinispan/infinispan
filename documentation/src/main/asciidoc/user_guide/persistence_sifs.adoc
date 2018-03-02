@@ -20,6 +20,11 @@ Most of the structures in Soft Index File Store are bounded, therefore you don't
 have to be afraid of OOMEs. For example, you can configure the limits for
 concurrently open files as well.
 
+===== Segmentation support
+This store supports being segmented, as it will create a separate instance per
+segment. This will create multiple directories under the configured directory
+where each one is a number representing the given segment the data maps to.
+
 ===== Configuration
 
 Here is an example of Soft-Index File Store configuration via XML:

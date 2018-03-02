@@ -265,7 +265,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
          checkPoint.awaitStrict("pre_process_on_all_stores_released", 10, TimeUnit.SECONDS);
 
          return forwardedAnswer.answer(invocation);
-      }).when(mockManager).publishEntries(any(), anyBoolean(), anyBoolean(), any());
+      }).when(mockManager).publishEntries(any(), any(), anyBoolean(), anyBoolean(), any());
       TestingUtil.replaceComponent(cache, PersistenceManager.class, mockManager, true);
       return pm;
    }

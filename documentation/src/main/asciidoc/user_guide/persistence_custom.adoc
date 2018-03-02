@@ -10,6 +10,7 @@ The steps required to create your own store are as follows:
 * `org.infinispan.persistence.spi.ExternalStore`
 * `org.infinispan.persistence.spi.AdvancedLoadWriteStore`
 * `org.infinispan.persistence.spi.TransactionalCacheWriter`
+* `org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore`
 
 
 2. Annotate your store class with the `@Store` annotation and specify the properties relevant to your store, e.g. is it
@@ -23,6 +24,10 @@ configuration builder is used to parse your store configuration from xml. If the
 `CustomStoreConfigurationBuilder` will be used to parse the common store attributes defined in `AbstractStoreConfiguration`
 and any additional elements will be ignored. If a store and its configuration do not declare the `@Store` and `@ConfigurationFor`
 annotations respectively, a warning message will be logged upon cache initialisation.
+
+If you wish for your store to be segmented, where it will craete a different
+store instance per segment, instead of extending `AbstractStoreConfiguration`
+you should extend `AbstractSegmentedStoreConfiguration`.
 
 
 4. Add your custom store to your cache's configuration:

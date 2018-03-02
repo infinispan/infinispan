@@ -7,12 +7,12 @@ import java.util.function.Predicate;
 import javax.transaction.Transaction;
 
 import org.infinispan.commons.api.Lifecycle;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.BatchModification;
-import org.infinispan.stream.StreamMarshalling;
 import org.reactivestreams.Publisher;
 
 /**
@@ -55,13 +55,13 @@ public interface PersistenceManager extends Lifecycle {
     */
    void clearAllStores(AccessMode mode);
 
-   boolean deleteFromAllStores(Object key, AccessMode mode);
+   boolean deleteFromAllStores(Object key, int segment, AccessMode mode);
 
    /**
     * See {@link #publishEntries(Predicate, boolean, boolean, AccessMode)}
     */
    default <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(boolean fetchValue, boolean fetchMetadata) {
-      return publishEntries(StreamMarshalling.alwaysTruePredicate(), fetchValue, fetchMetadata, AccessMode.BOTH);
+      return publishEntries(null, fetchValue, fetchMetadata, AccessMode.BOTH);
    }
 
    /**
@@ -83,6 +83,22 @@ public interface PersistenceManager extends Lifecycle {
          boolean fetchMetadata, AccessMode mode);
 
    /**
+    * Returns a publisher that will publish entries that map to the provided segments. It will attempt to find the
+    * first segmented store if one is available. If not it will fall back to the first non segmented store and
+    * filter out entries that don't map to the provided segment.
+    * @param segments only entries that map to these segments are processed
+    * @param filter filter so that only entries whose key matches are returned
+    * @param fetchValue whether to fetch value or not
+    * @param fetchMetadata whether to fetch metadata or not
+    * @param mode access mode to choose what type of loader to use
+    * @param <K> key type
+    * @param <V> value type
+    * @return publisher that will publish entries belonging to the given segments
+    */
+   <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue,
+         boolean fetchMetadata, AccessMode mode);
+
+   /**
     * Returns a publisher that will publish all keys stored by the underlying cache store. Only the first cache store
     * that implements {@link AdvancedCacheLoader} will be used. Predicate is applied by the underlying
     * loader in a best attempt to improve performance.
@@ -99,6 +115,23 @@ public interface PersistenceManager extends Lifecycle {
    <K> Publisher<K> publishKeys(Predicate<? super K> filter, AccessMode mode);
 
    /**
+    * Returns a publisher that will publish keys that map to the provided segments. It will attempt to find the
+    * first segmented store if one is available. If not it will fall back to the first non segmented store and
+    * filter out entries that don't map to the provided segment.
+    * <p>
+    * This method should be preferred over {@link #publishEntries(IntSet, Predicate, boolean, boolean, AccessMode)}
+    * when only keys are desired as many stores can do this in a significantly more performant way.
+    * <p>
+    * This publisher will never return a key which belongs to an expired entry
+    * @param segments only keys that map to these segments are processed
+    * @param filter filter so that only keys which match are returned
+    * @param mode access mode to choose what type of loader to use
+    * @param <K> key type
+    * @return publisher that will publish keys belonging to the given segments
+    */
+   <K> Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter, AccessMode mode);
+
+   /**
     * Loads an entry from the persistence store for the given key. The returned value may be null. This value
     * is guaranteed to not be expired when it was returned.
     * @param key key to read the entry from
@@ -109,11 +142,31 @@ public interface PersistenceManager extends Lifecycle {
    MarshalledEntry loadFromAllStores(Object key, boolean localInvocation, boolean includeStores);
 
    /**
+    * Same as {@link #loadFromAllStores(Object, boolean, boolean)} except that the segment of the key is also
+    * provided to avoid having to calculate the segment.
+    * @param key key to read the entry from
+    * @param segment segment the key maps to
+    * @param localInvocation whether this invocation is a local invocation. Some loaders may be ignored if it is not local
+    * @param includeStores if a loader that is also a store can be loaded from
+    * @return entry that maps to the key
+    * @implSpec default implementation invokes {@link #loadFromAllStores(Object, boolean, boolean)} ignoring the segment
+    */
+   default MarshalledEntry loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
+      return loadFromAllStores(key, localInvocation, includeStores);
+   }
+
+   /**
     * Returns the store one configured with fetch persistent state, or null if none exist.
     */
    AdvancedCacheLoader getStateTransferProvider();
 
    int size();
+
+   /**
+    * @param segments which segments to count entries from
+    * @return how many entries are in the store which map to the given segments
+    */
+   int size(IntSet segments);
 
    enum AccessMode {
       /**
@@ -169,16 +222,17 @@ public interface PersistenceManager extends Lifecycle {
     * </ul></p>
     *
     * @param marshalledEntry the entry to be written to all non-tx stores.
+    * @param segment         the segment the entry maps to
     * @param modes           the type of access to the underlying store.
     */
-   void writeToAllNonTxStores(MarshalledEntry marshalledEntry, AccessMode modes);
+   void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment, AccessMode modes);
 
    /**
-    * @see #writeToAllNonTxStores(MarshalledEntry, AccessMode)
+    * @see #writeToAllNonTxStores(MarshalledEntry, int, AccessMode)
     *
     * @param flags Flags used during command invocation
     */
-   void writeToAllNonTxStores(MarshalledEntry marshalledEntry, AccessMode modes, long flags);
+   void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment, AccessMode modes, long flags);
 
    /**
     * Perform the prepare phase of 2PC on all Tx stores.
@@ -219,7 +273,7 @@ public interface PersistenceManager extends Lifecycle {
    /**
     * Remove all entries from the underlying non-transactional stores as a single batch.
     *
-    * @param entries a List of Keys to be removed from the store.
+    * @param keys a List of Keys to be removed from the store.
     * @param accessMode the type of access to the underlying store.
     * @param flags Flags used during command invocation
     */
@@ -230,4 +284,36 @@ public interface PersistenceManager extends Lifecycle {
     * @return true if all configured stores are available and ready for read/write operations.
     */
    boolean isAvailable();
+
+   /**
+    * Notifies any underlying segmented stores that the segments provided are owned by this cache and to start/configure
+    * any underlying resources required to handle requests for entries on the given segments.
+    * <p>
+    * This only affects stores that are not shared as shared stores have to keep all segments running at all times
+    * <p>
+    * This method returns true if all stores were able to handle the added segments. That is that either there are no
+    * stores or that all the configured stores are segmented. Note that configured loaders do not affect the return
+    * value.
+    * @param segments segments this cache owns
+    * @return false if a configured store couldn't configure newly added segments
+    */
+   default boolean addSegments(IntSet segments) {
+      return true;
+   }
+
+   /**
+    * Notifies any underlying segmented stores that a given segment is no longer owned by this cache and allowing
+    * it to remove the given segments and release resources related to it.
+    * <p>
+    * This only affects stores that are not shared as shared stores have to keep all segments running at all times
+    * <p>
+    * This method returns true if all stores were able to handle the added segments. That is that either there are no
+    * stores or that all the configured stores are segmented. Note that configured loaders do not affect the return
+    * value.
+    * @param segments segments this cache no longer owns
+    * @return false if a configured store couldn't remove configured segments
+    */
+   default boolean removeSegments(IntSet segments) {
+      return true;
+   }
 }

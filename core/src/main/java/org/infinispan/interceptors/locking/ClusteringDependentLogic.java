@@ -15,12 +15,13 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ClearCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
@@ -305,9 +306,15 @@ public interface ClusteringDependentLogic {
       private LocalizedCacheTopology localTopology;
 
       @Inject
-      public void init(Transport transport) {
+      public void init(Transport transport, Configuration configuration, KeyPartitioner keyPartitioner) {
          Address address = transport != null ? transport.getAddress() : LocalModeAddress.INSTANCE;
-         this.localTopology = LocalizedCacheTopology.makeSingletonTopology(CacheMode.LOCAL, address);
+         boolean segmented = configuration.persistence().stores().stream().filter(StoreConfiguration::segmented).findAny().isPresent();
+         if (segmented) {
+            this.localTopology = LocalizedCacheTopology.makeSegmentedSingletonTopology(keyPartitioner,
+                  configuration.clustering().hash().numSegments(), address);
+         } else {
+            this.localTopology = LocalizedCacheTopology.makeSingletonTopology(CacheMode.LOCAL, address);
+         }
       }
 
       @Override

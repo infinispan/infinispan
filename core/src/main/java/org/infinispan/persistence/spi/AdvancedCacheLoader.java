@@ -68,7 +68,7 @@ public interface AdvancedCacheLoader<K, V> extends CacheLoader<K, V> {
     * The default implementation just invokes {@link #publishEntries(Predicate, boolean, boolean)} passing along the
     * provided filter and {@code false} for fetchValue and {@code true} for fetchMetadata and retrieves
     * the key from the {@link MarshalledEntry}.
-    * @param filter a filter
+    * @param filter a filter - null is treated as allowing all entries
     * @return a publisher that will provide the keys from the store
     */
    default Publisher<K> publishKeys(Predicate<? super K> filter) {
@@ -85,10 +85,14 @@ public interface AdvancedCacheLoader<K, V> extends CacheLoader<K, V> {
     * The default implementation falls back to invoking the
     * {@link #process(KeyFilter, CacheLoaderTask, Executor, boolean, boolean)} method using a
     * {@link WithinThreadExecutor}.
-    * @param filter
-    * @param fetchValue
-    * @param fetchMetadata
-    * @return
+    * @param filter a filter - null is treated as allowing all entries
+    * @param fetchValue    whether or not to fetch the value from the persistent store. E.g. if the iteration is
+    *                      intended only over the key set, no point fetching the values from the persistent store as
+    *                      well
+    * @param fetchMetadata whether or not to fetch the metadata from the persistent store. E.g. if the iteration is
+    *                      intended only ove the key set, then no point fetching the metadata from the persistent store
+    *                      as well
+    * @return a publisher that will provide the entries from the store
     */
    default Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue,
          boolean fetchMetadata) {

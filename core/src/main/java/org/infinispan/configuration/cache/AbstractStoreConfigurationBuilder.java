@@ -1,11 +1,12 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.AbstractStoreConfiguration.MAX_BATCH_SIZE;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.FETCH_PERSISTENT_STATE;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.IGNORE_MODIFICATIONS;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.MAX_BATCH_SIZE;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PRELOAD;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PROPERTIES;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PURGE_ON_STARTUP;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SEGMENTED;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SHARED;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.TRANSACTIONAL;
 
@@ -21,6 +22,7 @@ import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
+import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -188,6 +190,12 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    }
 
    @Override
+   public S segmented(boolean b) {
+      attributes.attribute(SEGMENTED).set(b);
+      return self();
+   }
+
+   @Override
    public void validate() {
       validate(false);
    }
@@ -234,6 +242,11 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
          Class storeKlass = ((ConfigurationFor) configKlass.getAnnotation(ConfigurationFor.class)).value();
          if (storeKlass.isAnnotationPresent(Store.class)) {
             Store storeProps = (Store) storeKlass.getAnnotation(Store.class);
+            boolean segmented = attributes.attribute(SEGMENTED).get();
+            if (segmented && !SegmentedAdvancedLoadWriteStore.class.isAssignableFrom(storeKlass) &&
+                  !AbstractSegmentedStoreConfiguration.class.isAssignableFrom(configKlass)) {
+               throw log.storeNotSegmented(storeKlass);
+            }
             if (!storeProps.shared() && shared) {
                throw log.nonSharedStoreConfiguredAsShared(storeKlass.getSimpleName());
             }

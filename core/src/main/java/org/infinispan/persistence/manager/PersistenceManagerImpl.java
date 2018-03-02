@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
@@ -38,11 +39,14 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.context.Flag;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.annotations.ComponentName;
@@ -74,10 +78,12 @@ import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.FlagAffectedStore;
 import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.StoreUnavailableException;
 import org.infinispan.persistence.spi.TransactionalCacheWriter;
 import org.infinispan.persistence.support.AdvancedSingletonCacheWriter;
 import org.infinispan.persistence.support.BatchModification;
+import org.infinispan.persistence.support.ComposedSegmentedLoadWriteStore;
 import org.infinispan.persistence.support.DelegatingCacheLoader;
 import org.infinispan.persistence.support.DelegatingCacheWriter;
 import org.infinispan.persistence.support.SingletonCacheWriter;
@@ -106,6 +112,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Inject private CacheStoreFactoryRegistry cacheStoreFactoryRegistry;
    @Inject private InternalExpirationManager<Object, Object> expirationManager;
    @Inject private CacheNotifier cacheNotifier;
+   @Inject private KeyPartitioner keyPartitioner;
 
    @GuardedBy("storesMutex")
    private final List<CacheLoader> loaders = new ArrayList<>();
@@ -118,6 +125,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @GuardedBy("storesMutex")
    private final Map<Object, StoreStatus> storeStatuses = new HashMap<>();
    private AdvancedPurgeListener<Object, Object> advancedListener;
+   private final Callable<Semaphore> publisherSemaphoreCallable = () -> publisherSemaphore;
 
    /**
     * making it volatile as it might change after @Start, so it needs the visibility.
@@ -478,14 +486,18 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public boolean deleteFromAllStores(Object key, AccessMode mode) {
+   public boolean deleteFromAllStores(Object key, int segment, AccessMode mode) {
       storesMutex.readLock().lock();
       try {
          checkStoreAvailability();
          boolean removed = false;
          for (CacheWriter w : nonTxWriters) {
             if (mode.canPerform(getStoreConfig(w))) {
-               removed |= w.delete(key);
+               if (w instanceof SegmentedAdvancedLoadWriteStore) {
+                  removed |= ((SegmentedAdvancedLoadWriteStore) w).delete(segment, key);
+               } else {
+                  removed |= w.delete(key);
+               }
             }
          }
          return removed;
@@ -508,6 +520,20 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return null;
    }
 
+   <K, V> SegmentedAdvancedLoadWriteStore<K, V> getFirstSegmentedStore(AccessMode mode) {
+      storesMutex.readLock().lock();
+      try {
+         for (CacheLoader loader : loaders) {
+            if (mode.canPerform(getStoreConfig(loader)) && loader instanceof SegmentedAdvancedLoadWriteStore) {
+               return ((SegmentedAdvancedLoadWriteStore<K, V>) loader);
+            }
+         }
+      } finally {
+         storesMutex.readLock().unlock();
+      }
+      return null;
+   }
+
    @Override
    public <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue,
          boolean fetchMetadata, AccessMode mode) {
@@ -516,12 +542,26 @@ public class PersistenceManagerImpl implements PersistenceManager {
       if (advancedCacheLoader != null) {
          // We have to acquire the read lock on the stores mutex to be sure that no concurrent stop or store removal
          // is done while processing data
-         return Flowable.using(() -> publisherSemaphore, semaphore -> {
+         return Flowable.using(publisherSemaphoreCallable, semaphore -> {
             semaphore.acquire();
             return advancedCacheLoader.publishEntries(filter, fetchValue, fetchMetadata);
          }, Semaphore::release);
       }
       return Flowable.empty();
+   }
+
+   @Override
+   public <K, V> Publisher<MarshalledEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter,
+         boolean fetchValue, boolean fetchMetadata, AccessMode mode) {
+      SegmentedAdvancedLoadWriteStore<K, V> segmentedStore = getFirstSegmentedStore(mode);
+      if (segmentedStore != null) {
+         return Flowable.using(publisherSemaphoreCallable, semaphore -> {
+            semaphore.acquire();
+            return segmentedStore.publishEntries(segments, filter, fetchValue, fetchMetadata);
+         }, Semaphore::release);
+      }
+      Predicate<Object> segmentFilter = k -> segments.contains(keyPartitioner.getSegment(k));
+      return publishEntries(filter == null ? segmentFilter : filter.and(segmentFilter), fetchValue, fetchMetadata, mode);
    }
 
    @Override
@@ -531,7 +571,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       if (advancedCacheLoader != null) {
          // We have to acquire the read lock on the stores mutex to be sure that no concurrent stop or store removal
          // is done while processing data
-         return Flowable.using(() -> publisherSemaphore, semaphore -> {
+         return Flowable.using(publisherSemaphoreCallable, semaphore -> {
             semaphore.acquire();
             return advancedCacheLoader.publishKeys(filter);
          }, Semaphore::release);
@@ -540,24 +580,67 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
+   public <K> Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter, AccessMode mode) {
+      SegmentedAdvancedLoadWriteStore<K, ?> segmentedStore = getFirstSegmentedStore(mode);
+
+      if (segmentedStore != null) {
+         // We have to acquire the read lock on the stores mutex to be sure that no concurrent stop or store removal
+         // is done while processing data
+         return Flowable.using(publisherSemaphoreCallable, semaphore -> {
+            semaphore.acquire();
+            return segmentedStore.publishKeys(segments, filter);
+         }, Semaphore::release);
+      }
+
+      Predicate<Object> segmentFilter = k -> segments.contains(keyPartitioner.getSegment(k));
+      return publishKeys(filter == null ? segmentFilter : filter.and(segmentFilter), mode);
+   }
+
+   @Override
    public MarshalledEntry loadFromAllStores(Object key, boolean localInvocation, boolean includeStores) {
       storesMutex.readLock().lock();
       try {
          checkStoreAvailability();
          for (CacheLoader l : loaders) {
-            if (!localInvocation && isLocalOnlyLoader(l)
-                  || !includeStores && l instanceof CacheWriter) {
-               continue;
+            if (allowLoad(l, localInvocation, includeStores)) {
+               MarshalledEntry load = l.load(key);
+               if (load != null)
+                  return load;
             }
-
-            MarshalledEntry load = l.load(key);
-            if (load != null)
-               return load;
          }
          return null;
       } finally {
          storesMutex.readLock().unlock();
       }
+   }
+
+   @Override
+   public MarshalledEntry loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
+      storesMutex.readLock().lock();
+      try {
+         checkStoreAvailability();
+         for (CacheLoader l : loaders) {
+            if (allowLoad(l, localInvocation, includeStores) && l instanceof SegmentedAdvancedLoadWriteStore) {
+               MarshalledEntry load = ((SegmentedAdvancedLoadWriteStore) l).load(segment, key);
+               if (load != null)
+                  return load;
+            }
+         }
+         for (CacheLoader l : loaders) {
+            if (allowLoad(l, localInvocation, includeStores)) {
+               MarshalledEntry load = l.load(key);
+               if (load != null)
+                  return load;
+            }
+         }
+         return null;
+      } finally {
+         storesMutex.readLock().unlock();
+      }
+   }
+
+   private boolean allowLoad(CacheLoader loader, boolean localInvocation, boolean includeStores) {
+      return (localInvocation || !isLocalOnlyLoader(loader)) && (includeStores || !(loader instanceof CacheWriter));
    }
 
    private boolean isLocalOnlyLoader(CacheLoader loader) {
@@ -570,12 +653,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, AccessMode accessMode) {
-      writeToAllNonTxStores(marshalledEntry, accessMode, 0L);
+   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment, AccessMode accessMode) {
+      writeToAllNonTxStores(marshalledEntry, segment, accessMode, 0L);
    }
 
    @Override
-   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, AccessMode accessMode, long flags) {
+   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, int segment, AccessMode accessMode, long flags) {
       storesMutex.readLock().lock();
       try {
          checkStoreAvailability();
@@ -583,7 +666,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
          nonTxWriters.stream()
                .filter(writer -> !(writer instanceof FlagAffectedStore) || FlagAffectedStore.class.cast(writer).shouldWrite(flags))
                .filter(writer -> accessMode.canPerform(getStoreConfig(writer)))
-               .forEach(writer -> writer.write(marshalledEntry));
+               .forEach(writer -> {
+                  if (writer instanceof SegmentedAdvancedLoadWriteStore) {
+                     ((SegmentedAdvancedLoadWriteStore) writer).write(segment, marshalledEntry);
+                  } else {
+                     writer.write(marshalledEntry);
+                  }
+               });
       } finally {
          storesMutex.readLock().unlock();
       }
@@ -682,8 +771,68 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
+   public int size(IntSet segments) {
+      storesMutex.readLock().lock();
+      try {
+         checkStoreAvailability();
+         for (CacheLoader l : loaders) {
+            if (l instanceof SegmentedAdvancedLoadWriteStore)
+               return ((SegmentedAdvancedLoadWriteStore) l).size(segments);
+         }
+         long count = Flowable.fromPublisher(publishKeys(segments, null, AccessMode.BOTH))
+               .count().blockingGet();
+         if (count > Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
+         }
+         return (int) count;
+      } finally {
+         storesMutex.readLock().unlock();
+      }
+   }
+
+   @Override
    public void setClearOnStop(boolean clearOnStop) {
       this.clearOnStop = clearOnStop;
+   }
+
+   @Override
+   public boolean addSegments(IntSet segments) {
+      boolean allSegmented = true;
+      storesMutex.readLock().lock();
+      try {
+         for (CacheLoader loader : loaders) {
+            if (AccessMode.PRIVATE.canPerform(getStoreConfig(loader))) {
+               if (loader instanceof SegmentedAdvancedLoadWriteStore) {
+                  ((SegmentedAdvancedLoadWriteStore) loader).addSegments(segments);
+               } else if (loader instanceof CacheWriter) {
+                  allSegmented = false;
+               }
+            }
+         }
+      } finally {
+         storesMutex.readLock().unlock();
+      }
+      return allSegmented;
+   }
+
+   @Override
+   public boolean removeSegments(IntSet segments) {
+      boolean allSegmented = true;
+      storesMutex.readLock().lock();
+      try {
+         for (CacheLoader loader : loaders) {
+            if (AccessMode.PRIVATE.canPerform(getStoreConfig(loader))) {
+               if (loader instanceof SegmentedAdvancedLoadWriteStore) {
+                  ((SegmentedAdvancedLoadWriteStore) loader).removeSegments(segments);
+               } else if (loader instanceof CacheWriter) {
+                  allSegmented = false;
+               }
+            }
+         }
+      } finally {
+         storesMutex.readLock().unlock();
+      }
+      return allSegmented;
    }
 
    public List<CacheLoader> getAllLoaders() {
@@ -715,7 +864,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    private void createLoadersAndWriters() {
       for (StoreConfiguration cfg : configuration.persistence().stores()) {
-         Object bareInstance = cacheStoreFactoryRegistry.createInstance(cfg);
+
+         Object bareInstance;
+         if (cfg.segmented() && cfg instanceof AbstractSegmentedStoreConfiguration) {
+            bareInstance = new ComposedSegmentedLoadWriteStore<>((AbstractSegmentedStoreConfiguration) cfg);
+         } else {
+            bareInstance = cacheStoreFactoryRegistry.createInstance(cfg);
+         }
+
 
          StoreConfiguration processedConfiguration = cacheStoreFactoryRegistry.processStoreConfiguration(cfg);
 
