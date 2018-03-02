@@ -65,8 +65,12 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() {
       ConfigurationBuilder builder = getConfigBuilder();
-      createClusteredCaches(getNumNodes(), builder, true, CACHE_NAME, "default");
+      createClusteredCaches(getNumNodes(), builder, isServerMode(), CACHE_NAME, "default");
       waitForClusterToForm(CACHE_NAME);
+   }
+
+   protected boolean isServerMode() {
+      return true;
    }
 
    @DataProvider(name = "HttpMethodProvider")
