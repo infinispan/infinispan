@@ -19,6 +19,7 @@ import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.remote.impl.ProgrammaticSearchMappingProviderImpl;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -54,7 +55,7 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
       SearchManager sm = Search.getSearchManager(cache);
 
       SearchIntegrator searchFactory = sm.unwrap(SearchIntegrator.class);
-      assertNotNull(searchFactory.getIndexManager(ProtobufValueWrapper.class.getName()));
+      assertNotNull(searchFactory.getIndexManager(cache.getName() + ProgrammaticSearchMappingProviderImpl.INDEX_NAME_SUFFIX));
 
       Query luceneQuery = sm.buildQueryBuilderForClass(ProtobufValueWrapper.class)
             .get()
