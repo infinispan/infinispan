@@ -59,4 +59,9 @@ public interface ScopedPersistentState {
     * Returns the checksum of the properties excluding those prefixed with @
     */
    int getChecksum();
+
+   /**
+    * Returns whether the state contains a property
+    */
+   boolean containsProperty(String key);
 }

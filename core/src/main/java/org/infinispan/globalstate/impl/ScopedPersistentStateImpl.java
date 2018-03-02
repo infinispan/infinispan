@@ -86,4 +86,9 @@ public class ScopedPersistentStateImpl implements ScopedPersistentState {
       result += state.entrySet().stream().filter(e -> !e.getKey().startsWith("@")).mapToInt(Map.Entry::hashCode).sum();
       return result;
    }
+
+   @Override
+   public boolean containsProperty(String key) {
+      return state.containsKey(key);
+   }
 }

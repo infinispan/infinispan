@@ -792,6 +792,9 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
    @Override
    public void prepareForRestore(ScopedPersistentState state) {
+      if (!state.containsProperty("uuid")) {
+         throw log.invalidPersistentState(ScopedPersistentState.GLOBAL_SCOPE);
+      }
       persistentUUID = PersistentUUID.fromString(state.getProperty("uuid"));
    }
 

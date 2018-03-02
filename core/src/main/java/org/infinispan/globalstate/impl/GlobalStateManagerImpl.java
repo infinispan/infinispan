@@ -103,6 +103,9 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
             throw log.nonWritableStateFile(stateFile);
          }
          // Validate the state before proceeding
+         if (!state.containsProperty(VERSION) || !state.containsProperty(VERSION_MAJOR) || !state.containsProperty(TIMESTAMP)) {
+            throw log.invalidPersistentState(GLOBAL_SCOPE);
+         }
          log.globalStateLoad(state.getProperty(VERSION), state.getProperty(TIMESTAMP));
 
          stateProviders.forEach(provider -> provider.prepareForRestore(state));
