@@ -49,11 +49,11 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
       MarshallerRegistration.registerMarshallers(serCtx);
 
       // Store some test data:
-      ProtobufValueWrapper wrapper1 = new ProtobufValueWrapper(createMarshalledUser(serCtx, "Adrian", "Nistor"));
-      ProtobufValueWrapper wrapper2 = new ProtobufValueWrapper(createMarshalledUser(serCtx, "John", "Batman"));
+      byte[] value1 = createMarshalledUser(serCtx, "Adrian", "Nistor");
+      byte[] value2 = createMarshalledUser(serCtx, "John", "Batman");
 
-      cache.put(1, wrapper1);   //todo how do we index if the key is a byte array?
-      cache.put(2, wrapper2);
+      cache.put(new byte[]{1, 2, 3}, value1);
+      cache.put(new byte[]{4, 5, 6}, value2);
 
       SearchManager sm = Search.getSearchManager(cache);
 
@@ -69,10 +69,10 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
             .matching("Adrian")
             .createQuery();
 
-      List<ProtobufValueWrapper> list = sm.<ProtobufValueWrapper>getQuery(luceneQuery).list();
+      List<byte[]> list = sm.<byte[]>getQuery(luceneQuery).list();
       assertEquals(1, list.size());
-      ProtobufValueWrapper pvw = list.get(0);
-      User unwrapped = ProtobufUtil.fromWrappedByteArray(serCtx, pvw.getBinary());
+      byte[] pvw = list.get(0);
+      User unwrapped = ProtobufUtil.fromWrappedByteArray(serCtx, pvw);
       assertEquals("Adrian", unwrapped.getName());
 
       // an alternative approach ...
