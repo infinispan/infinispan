@@ -1758,4 +1758,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The configuration is immutable", id = 515)
    UnsupportedOperationException immutableConfiguration();
+
+   @Message(value = "The state file for '%s' is invalid. Startup halted to prevent further corruption of persistent state", id = 516)
+   CacheConfigurationException invalidPersistentState(String globalScope);
 }
