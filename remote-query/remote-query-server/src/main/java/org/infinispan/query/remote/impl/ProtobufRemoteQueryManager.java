@@ -1,5 +1,8 @@
 package org.infinispan.query.remote.impl;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -7,7 +10,6 @@ import java.util.stream.Collectors;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.Configuration;
@@ -38,13 +40,13 @@ class ProtobufRemoteQueryManager implements RemoteQueryManager {
    private final Encoder valueEncoder;
    private final Transcoder transcoder;
 
-   ProtobufRemoteQueryManager(SerializationContext serCtx, ComponentRegistry cr, boolean embeddedMode) {
+   ProtobufRemoteQueryManager(SerializationContext serCtx, ComponentRegistry cr) {
       this.serCtx = serCtx;
       this.matcher = new ProtobufMatcher(serCtx, ProtobufFieldIndexingMetadata::new);
       cr.registerComponent(matcher, ProtobufMatcher.class);
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
       boolean isIndexed = cr.getComponent(Configuration.class).indexing().index().isEnabled();
-      if (!embeddedMode && isIndexed) {
+      if (isIndexed) {
          DataConversion valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
          valueDataConversion.overrideWrapper(ProtostreamWrapper.class, cr);
       }
@@ -52,7 +54,7 @@ class ProtobufRemoteQueryManager implements RemoteQueryManager {
       this.keyEncoder = cache.getKeyDataConversion().getEncoder();
       this.valueEncoder = cache.getValueDataConversion().getEncoder();
       this.transcoder = cr.getGlobalComponentRegistry().getComponent(EncoderRegistry.class)
-            .getTranscoder(MediaType.APPLICATION_PROTOSTREAM, MediaType.APPLICATION_JSON);
+            .getTranscoder(APPLICATION_PROTOSTREAM, APPLICATION_JSON);
    }
 
    @Override
@@ -104,6 +106,6 @@ class ProtobufRemoteQueryManager implements RemoteQueryManager {
 
    @Override
    public List<Object> encodeQueryResults(List<Object> results) {
-      return results.stream().map(o -> transcoder.transcode(o, MediaType.APPLICATION_PROTOSTREAM, MediaType.APPLICATION_JSON)).collect(Collectors.toList());
+      return results.stream().map(o -> transcoder.transcode(o, APPLICATION_PROTOSTREAM, APPLICATION_JSON)).collect(Collectors.toList());
    }
 }

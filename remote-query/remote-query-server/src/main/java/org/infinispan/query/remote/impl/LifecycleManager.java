@@ -11,7 +11,6 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.ContentTypeConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
@@ -137,11 +136,10 @@ public final class LifecycleManager implements ModuleLifecycle {
    private RemoteQueryManager buildQueryManager(Configuration cfg, SerializationContext ctx, ComponentRegistry cr) {
       ContentTypeConfiguration valueEncoding = cfg.encoding().valueDataType();
       boolean compatEnabled = cfg.compatibility().enabled();
-      boolean embeddedMode = Configurations.isEmbeddedMode(cr.getGlobalComponentRegistry().getGlobalConfiguration());
       if (!compatEnabled) {
          if (valueEncoding != null) {
             if (!valueEncoding.isEncodingChanged() || valueEncoding.mediaType() != null && valueEncoding.mediaType().equals(MediaType.APPLICATION_PROTOSTREAM)) {
-               return new ProtobufRemoteQueryManager(ctx, cr, embeddedMode);
+               return new ProtobufRemoteQueryManager(ctx, cr);
             }
          }
          return new GenericCompatRemoteQueryManager(cr);
