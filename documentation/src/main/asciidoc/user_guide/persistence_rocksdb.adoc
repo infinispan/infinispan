@@ -5,6 +5,16 @@ The {brandname} Community
 link:http://rocksdb.org/[RocksDB] is a fast key-value filesystem-based storage from Facebook. It started as a fork of
 Google's LevelDB, but provides superior performance and reliability, especially in highly concurrent scenarios.
 
+==== Segmentation support
+This store supports being segmented, as it will create a separate instance per
+segment. This will create multiple directories under the configured directory
+where each one is a number representing the given segment the data maps to.
+
+It should be noted that rocks db currently uses a handful of files per database.
+Thus if the number of configured segments is high, this can cause a large
+amount of file pointers to be opened. Please be cognizant of this fact when
+using a segmented rocksdb store.
+
 ===== Sample Usage
 The RocksDB cache store requires 2 filesystem directories to be configured - each directory contains a RocksDB database:
 one location is used to store non-expired data, while the second location is used to store expired keys pending purge.

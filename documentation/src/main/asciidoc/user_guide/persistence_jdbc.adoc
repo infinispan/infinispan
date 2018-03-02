@@ -8,6 +8,8 @@ on a (pluggable) bijection that maps the each key to a String object. The biject
 NOTE: By default {brandname} shares are not stored, meaning that all nodes in the cluster will write to the underlying store upon each update.
 If you wish for an operation to only be written to the underlying database once, you must configure the JDBC store to be shared.
 
+NOTE: This store doesn't currently support being segmented, but should be added soon!
+
 ==== Connection management (pooling)
 In order to obtain a connection to the database the JDBC cache store relies on a link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/ConnectionFactory.html[ConnectionFactory]
 implementation. The connection factory is specified programmatically using one of the connectionPool(), dataSource()

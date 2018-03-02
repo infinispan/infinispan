@@ -265,7 +265,7 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    }
 
    final boolean isLockOwner(int keySegment) {
-      return cdl.getCacheTopology().getDistributionForSegment(keySegment).isPrimary();
+      return cdl.getCacheTopology().getSegmentDistribution(keySegment).isPrimary();
    }
 
    protected final KeyAwareLockPromise lockAndRecord(InvocationContext context, Object key, long timeout) {

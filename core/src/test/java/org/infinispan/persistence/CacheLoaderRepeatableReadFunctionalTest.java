@@ -2,6 +2,7 @@ package org.infinispan.persistence;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -15,5 +16,14 @@ public class CacheLoaderRepeatableReadFunctionalTest extends CacheLoaderFunction
    @Override
    protected void configure(ConfigurationBuilder cb) {
       cb.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
+   }
+
+   @Factory
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new CacheLoaderRepeatableReadFunctionalTest().segmented(true),
+            new CacheLoaderRepeatableReadFunctionalTest().segmented(false),
+      };
    }
 }

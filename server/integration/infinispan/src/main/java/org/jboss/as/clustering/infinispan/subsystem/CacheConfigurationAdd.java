@@ -965,6 +965,10 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
       if (shared != null && shared.isDefined()) {
          storeConfigurationBuilder.shared(shared.asBoolean());
       }
+       ModelNode segmented = store.get(ModelKeys.SEGMENTED);
+       if (segmented != null && segmented.isDefined()) {
+           storeConfigurationBuilder.segmented(segmented.asBoolean());
+       }
       ModelNode preload = store.get(ModelKeys.PRELOAD);
       if (preload != null && preload.isDefined()) {
          storeConfigurationBuilder.preload(preload.asBoolean());

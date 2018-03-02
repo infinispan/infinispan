@@ -13,7 +13,6 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -28,7 +27,7 @@ import org.testng.annotations.Test;
  * @since 4.0
  */
 @Test(groups = "functional", testName = "distribution.DistSyncStoreSharedTest")
-public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
+public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends BaseDistStoreTest<Object, String, D> {
 
    public DistSyncStoreSharedTest() {
       testRetVals = true;
@@ -39,9 +38,16 @@ public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
    public void clearStats() {
       for (Cache<?, ?> c: caches) {
          log.trace("Clearing stats for cache store on cache "+ c);
-         DummyInMemoryStore cs = (DummyInMemoryStore) TestingUtil.getFirstLoader(c);
-         cs.clearStats();
+         clearStats(c);
       }
+   }
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new DistSyncStoreSharedTest().segmented(true),
+            new DistSyncStoreSharedTest().segmented(false),
+      };
    }
 
    public void testPutFromNonOwner() throws Exception {
@@ -197,11 +203,18 @@ public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
        * the cache store is shared, each cache has each own cache store, that allows for checking
        * who execute puts, removes...etc. */
       CacheLoader store = TestingUtil.getFirstLoader(c1);
+      assertNumberOfInvocations(store, "clear", calculateTotalSegmentsForAllNodes());
       for (int i = 0; i < 5; i++) {
          String key = "k" + i;
          assert !store.contains(key);
-         assertNumberOfInvocations(store, "clear", 1);
       }
+   }
+
+   /**
+    * @return how many segments there are across all nodes or 1 if the config is not segmented (all shared)
+    */
+   protected int calculateTotalSegmentsForAllNodes() {
+      return segmented ? c1.getCacheConfiguration().clustering().hash().numSegments() : 1;
    }
 
    public void testGetOnlyQueriesCacheOnOwners() throws PersistenceException {

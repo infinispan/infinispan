@@ -49,6 +49,13 @@ public class BaseLoaderConfigurationResource extends CacheConfigurationChildReso
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(false))
                     .build();
+    static final SimpleAttributeDefinition SEGMENTED =
+          new SimpleAttributeDefinitionBuilder(ModelKeys.SEGMENTED, ModelType.BOOLEAN, true)
+                .setXmlName(Attribute.SEGMENTED.getLocalName())
+                .setAllowExpression(false)
+                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                .setDefaultValue(new ModelNode().set(false))
+                .build();
     static final SimpleAttributeDefinition SHARED =
             new SimpleAttributeDefinitionBuilder(ModelKeys.SHARED, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.SHARED.getLocalName())

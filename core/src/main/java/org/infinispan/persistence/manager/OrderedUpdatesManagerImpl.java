@@ -134,7 +134,7 @@ public class OrderedUpdatesManagerImpl implements OrderedUpdatesManager {
             DistributionInfo info = distributionManager.getCacheTopology().getDistribution(key);
             PersistenceManager.AccessMode mode = info.isPrimary() ?
                   PersistenceManager.AccessMode.BOTH : PersistenceManager.AccessMode.PRIVATE;
-            persistenceManager.deleteFromAllStores(key, mode);
+            persistenceManager.deleteFromAllStores(key, info.segmentId(), mode);
          } finally {
             if (!locks.remove(key, lf)) {
                throw new IllegalStateException("No one but me should be able to replace the future");

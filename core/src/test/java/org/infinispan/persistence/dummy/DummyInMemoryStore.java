@@ -177,12 +177,15 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       record("publishEntries");
       log.tracef("Publishing entries in store %s with filter %s", storeName, filter);
       Flowable<Map.Entry<Object, byte[]>> flowable = Flowable.fromIterable(store.entrySet());
-      final long currentTimeMillis = timeService.wallClockTime();
-      if (filter != null) {
-         flowable = flowable.filter(e -> filter.test(e.getKey()));
-      }
-      return flowable.map(entry -> deserialize(entry.getKey(), entry.getValue(), fetchValue, fetchMetadata))
-            .filter(me -> !isExpired(me, currentTimeMillis));
+      return flowable.compose(f -> {
+         // We compose so current time millis is retrieved for each subscriber
+         final long currentTimeMillis = timeService.wallClockTime();
+         if (filter != null) {
+            f = f.filter(e -> filter.test(e.getKey()));
+         }
+         return f.map(entry -> deserialize(entry.getKey(), entry.getValue(), fetchValue, fetchMetadata))
+               .filter(me -> !isExpired(me, currentTimeMillis));
+      });
    }
 
    @Override

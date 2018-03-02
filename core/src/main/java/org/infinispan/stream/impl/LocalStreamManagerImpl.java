@@ -201,7 +201,6 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
       Stream<Original> stream = (parallelStream ? cacheEntrySet.parallelStream() : cacheEntrySet.stream())
               .filterKeys(keysToInclude).filterKeySegments(segments);
       if (!keysToExclude.isEmpty()) {
-         log.warn("Added exclude filter");
          if (entryStream) {
             // If it is an entry stream we have to exclude by key
             return stream.filter(e -> !keysToExclude.contains(((CacheEntry) e).getKey()));

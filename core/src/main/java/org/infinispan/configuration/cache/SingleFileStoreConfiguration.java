@@ -16,7 +16,7 @@ import org.infinispan.persistence.file.SingleFileStore;
  */
 @BuiltBy(SingleFileStoreConfigurationBuilder.class)
 @ConfigurationFor(SingleFileStore.class)
-public class SingleFileStoreConfiguration extends AbstractStoreConfiguration implements Matchable<SingleFileStoreConfiguration> {
+public class SingleFileStoreConfiguration extends AbstractSegmentedStoreConfiguration<SingleFileStoreConfiguration> implements Matchable<SingleFileStoreConfiguration> {
    public static final AttributeDefinition<String> LOCATION = AttributeDefinition.builder("location", "Infinispan-SingleFileStore").immutable().xmlName("path").global(false).build();
    public static final AttributeDefinition<Integer> MAX_ENTRIES = AttributeDefinition.builder("maxEntries", -1).immutable().build();
    public static final AttributeDefinition<Float> FRAGMENTATION_FACTOR = AttributeDefinition.builder("fragmentationFactor", 0.75f).immutable().build();
@@ -34,6 +34,15 @@ public class SingleFileStoreConfiguration extends AbstractStoreConfiguration imp
       location = attributes.attribute(LOCATION);
       maxEntries = attributes.attribute(MAX_ENTRIES);
       fragmentationFactor = attributes.attribute(FRAGMENTATION_FACTOR);
+   }
+
+   @Override
+   public SingleFileStoreConfiguration newConfigurationFrom(int segment) {
+      AttributeSet set = SingleFileStoreConfiguration.attributeDefinitionSet();
+      set.read(attributes);
+      String location = set.attribute(LOCATION).get();
+      set.attribute(LOCATION).set(fileLocationTransform(location, segment));
+      return new SingleFileStoreConfiguration(set.protect(), async(), singletonStore());
    }
 
    public String location() {

@@ -35,7 +35,7 @@ This is the configuration of a custom(not shipped with infinispan) store:
          <store
             class="org.acme.CustomStore"
             fetch-state="false" preload="true" shared="false"
-            purge="true" read-only="false" singleton="false">
+            purge="true" read-only="false" singleton="false" segmented="true">
 
             <write-behind modification-queue-size="123" thread-pool-size="23" />
 
@@ -68,6 +68,8 @@ then an exception is thrown during cache operations.
 * `preload` (false by default) if true, when the cache starts, data stored in the cache loader will be pre-loaded into memory. This is particularly useful when data in the cache loader is needed immediately after startup and you want to avoid cache operations being delayed as a result of loading this data lazily. Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is affected by this process. Note that preloading is done in a local fashion, so any data loaded is only stored locally in the node. No replication or distribution of the preloaded data happens. Also, {brandname} only preloads up to the maximum configured number of entries in <<eviction_anchor,eviction>>.
 
 * `shared` (false by default) indicates that the cache loader is shared among different cache instances, for example where all instances in a cluster use the same JDBC settings to talk to the same remote, shared database. Setting this to true prevents repeated and unnecessary writes of the same data to the cache loader by different cache instances.
+
+* `segmented` (false by default) indicates that the cache store segments its data. That is that data is stored in buckets of which there are hash.numSegments of. Depending on the store implementation this can slow down writes but will improve the performance of streaming over data (Cache.size, Cache.entrySet.stream), preloading cache and state transfer.
 
 * `purge` (false by default) empties the specified cache loader (if `read-only` is false) when the cache loader starts up.
 
@@ -241,6 +243,34 @@ This strategy is suited for cache stores with low latency and cheap operation co
 </persistence>
 ----
 
+==== Segmented Stores
+
+A store can optionally be segmented. That is that data is stored by the segment
+that its key maps to. Information pertaining to segments and the ownership of
+them can be found at <<key_ownership,Key Ownership>>.
+
+Segmenting a store has the benefit of increasing the read performance for
+bulk operations. Some examples of said methods are any stream operation
+performed upon the cache, Cache.size as well as preloading and state
+transfer in a cache.
+
+Unfortunately depending on the store implementation, there may be some performance
+loss for write operations. This is especially true for batch writes which can
+occur with transactions or write behind stores, which is mentioned in the previous
+section. Therefore, before enabling segmented stores, this overhead should be
+possibly measured to ensure it is acceptable in turn to gain bulk read performance.
+
+If you reconfigure the `numSegments` setting, the cache store must be migrated
+between to the new one config. This is due to having a different amount of segments
+causes entries to be mapped to different segments. Failure to do so may cause a loss
+of data.
+
+Not all stores support being segmented, please see the appropriate section
+for the store you are interested in to see if it supports being segmented.
+If you are interested in converting or writing a new store to support being
+segmented, please see the SPI section below that talks about more details
+when a store is segmented.
+
 === Filesystem based cache stores
 
 A filesystem-based cache store is typically used when you want to have a
@@ -292,6 +322,22 @@ Some notes about the classes:
 * link:{javadocroot}/org/infinispan/persistence/spi/CacheWriter.html[CacheWriter] and link:{javadocroot}/org/infinispan/persistence/spi/CacheLoader.html[CacheLoader] provide basic methods for reading and writing to a store
 
 * link:{javadocroot}/org/infinispan/persistence/spi/AdvancedCacheLoader.html[AdvancedCacheLoader] and link:{javadocroot}/org/infinispan/persistence/spi/AdvancedCacheWriter.html[AdvancedCacheWriter] provide operations to manipulate the underlaying storage in bulk: parallel iteration and purging of expired entries, clear and size.
+
+* link:{javadocroot}/org/infinispan/persistence/spi/SegmentedAdvancedLoadWriteStore.html[SegmentedAdvancedLoadWriteStore] provide all the various operations that deal with segments.
+
+A cache store can be segmented if it does one of the following two things:
+
+. Store implements the interface
+link:{javadocroot}/org/infinispan/persistence/spi/SegmentedAdvancedLoadWriteStore.html[SegmentedAdvancedLoadWriteStore].
+In this case only a single store instance is used per cache.
+
+. Store confiiguration extends the abstract class
+link:{javadocroot}/org/infinispan/configuration/cache/AbstractSegmentedConfiguration.html[AbstractSegmentedConfiguration].
+This requires implementing the `newConfigurationFrom` method where it is expected
+that a new `StoreConfiguration` instance is created per invocation. This will then
+create a store instance per segment that a node can write to. Expect that stores
+may start and stop as data is moved between nodes.
+
 
 A provider might choose to only implement a subset of these interfaces:
 

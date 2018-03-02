@@ -256,6 +256,36 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    }
 
    @Override
+   public synchronized void destroy() {
+      try {
+         logAppender.stopOperations();
+         logAppender = null;
+         compactor.stopOperations();
+         compactor = null;
+         try {
+            index.clear();
+         } catch (IOException e) {
+            log.debug("Couldn't clear index", e);
+         }
+         index = null;
+         try {
+            fileProvider.clear();
+         } catch (IOException e) {
+            log.debug("Couldn't clear fileProvider", e);
+         }
+         fileProvider = null;
+         temporaryTable = null;
+         indexQueue = null;
+         storeQueue = null;
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw log.interruptedWhileStopping(e);
+      } finally {
+         started = false;
+      }
+   }
+
+   @Override
    public boolean isAvailable() {
       return new File(configuration.dataLocation()).exists() && new File(configuration.dataLocation()).exists();
    }

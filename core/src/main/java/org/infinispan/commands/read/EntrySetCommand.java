@@ -17,7 +17,6 @@ import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IteratorMapper;
-import org.infinispan.commons.util.RemovableIterator;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -106,8 +105,7 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
             return Closeables.iterator(dataContainer.iterator());
          }
          Iterator<CacheEntry<K, V>> iterator = new DataContainerRemoveIterator<>(cache, dataContainer);
-         RemovableIterator<CacheEntry<K, V>> removableIterator = new RemovableIterator<>(iterator, e -> cache.remove(e.getKey(), e.getValue()));
-         return new IteratorMapper<>(removableIterator, e -> new EntryWrapper<>(cache, e));
+         return new IteratorMapper<>(iterator, e -> new EntryWrapper<>(cache, e));
       }
 
       static <K, V> CloseableSpliterator<CacheEntry<K, V>> closeableCast(Spliterator spliterator) {

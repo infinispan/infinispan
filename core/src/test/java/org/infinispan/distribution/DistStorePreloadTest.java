@@ -6,7 +6,8 @@ import org.infinispan.Cache;
 import org.infinispan.container.DataContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.PersistenceUtil;
-import org.infinispan.persistence.dummy.DummyInMemoryStore;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.InTransactionMode;
@@ -22,24 +23,32 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "distribution.DistStorePreloadTest")
 @InTransactionMode({ TransactionMode.TRANSACTIONAL, TransactionMode.NON_TRANSACTIONAL })
-public class DistStorePreloadTest extends BaseDistStoreTest<Object, String> {
+public class DistStorePreloadTest<D extends DistStorePreloadTest> extends BaseDistStoreTest<Object, String, D> {
 
    public static final int NUM_KEYS = 10;
 
    public DistStorePreloadTest() {
       INIT_CLUSTER_SIZE = 1;
       testRetVals = true;
-      shared = true;
       preload = true;
+      // Has to be shared as well, otherwise preload can't load anything
+      shared = true;
+   }
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new DistStorePreloadTest().segmented(true),
+            new DistStorePreloadTest().segmented(false),
+      };
    }
 
    @AfterMethod
    public void clearStats() {
       for (Cache<?, ?> c: caches) {
          log.trace("Clearing stats for cache store on cache "+ c);
-         DummyInMemoryStore cs = (DummyInMemoryStore) TestingUtil.getFirstLoader(c);
+         AdvancedLoadWriteStore cs = TestingUtil.getFirstLoader(c);
          cs.clear();
-         cs.clearStats();
       }
    }
 
@@ -50,7 +59,7 @@ public class DistStorePreloadTest extends BaseDistStoreTest<Object, String> {
       DataContainer dc1 = c1.getAdvancedCache().getDataContainer();
       assert dc1.size() == NUM_KEYS;
 
-      DummyInMemoryStore cs = TestingUtil.getFirstLoader(c1);
+      AdvancedCacheLoader cs = TestingUtil.getFirstLoader(c1);
       assert PersistenceUtil.count(cs, null) == NUM_KEYS;
 
       addClusterEnabledCacheManager();

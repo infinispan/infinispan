@@ -8,28 +8,46 @@ import static org.infinispan.tools.store.migrator.TestUtil.propKey;
 
 import java.util.Properties;
 
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
 import org.infinispan.tools.store.migrator.AbstractReaderTest;
 import org.infinispan.tools.store.migrator.Element;
 import org.infinispan.tools.store.migrator.StoreType;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(testName = "tools.store.migrator.file.SoftIndexFileStoreReaderTest", groups = "functional")
 public class SoftIndexFileStoreReaderTest extends AbstractReaderTest {
 
    private static final String SOURCE_DIR = "target/test-classes/softindex/";
-   private static final String TARGET_DATA_DIR = SOURCE_DIR + "/target-softindex/data";
-   private static final String TARGET_INDEX_DIR = SOURCE_DIR + "/target-softindex/index";
+
+   public String getTargetDataDirectory() {
+      return SOURCE_DIR + "/target-softindex/data/" + segmentCount + "/";
+   }
+
+   public String getTargetIndexDirectory() {
+      return SOURCE_DIR + "/target-softindex/index/" + segmentCount + "/";
+   }
+
+   @Factory
+   public Object[] factory() {
+      return new Object[] {
+            new SoftIndexFileStoreReaderTest().segmented(37),
+            new SoftIndexFileStoreReaderTest(),
+      };
+   }
 
    @Override
-   public Configuration getTargetCacheConfig() {
-      return new ConfigurationBuilder().persistence()
+   public ConfigurationBuilder getTargetCacheConfig() {
+      ConfigurationBuilder builder = super.getTargetCacheConfig();
+      builder.persistence()
             .addStore(SoftIndexFileStoreConfigurationBuilder.class)
-            .dataLocation(TARGET_DATA_DIR).indexLocation(TARGET_INDEX_DIR)
-            .preload(true).ignoreModifications(true)
-            .build();
+            // Have to append additional name for segment, since SoftIndex creates files named by just numbers
+            // so if write to the same location with segmented vs not segmented, they will clash
+            .dataLocation(getTargetDataDirectory())
+            .indexLocation(getTargetIndexDirectory())
+            .preload(true).ignoreModifications(true).segmented(segmentCount > 0);
+      return builder;
    }
 
    @Override
@@ -39,8 +57,8 @@ public class SoftIndexFileStoreReaderTest extends AbstractReaderTest {
       if (type == SOURCE) {
          properties.put(propKey(type, LOCATION), SOURCE_DIR);
       } else {
-         properties.put(propKey(type, LOCATION), TARGET_DATA_DIR);
-         properties.put(propKey(type, INDEX_LOCATION), TARGET_INDEX_DIR);
+         properties.put(propKey(type, LOCATION), getTargetDataDirectory());
+         properties.put(propKey(type, INDEX_LOCATION), getTargetIndexDirectory());
       }
    }
 }

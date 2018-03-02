@@ -61,6 +61,11 @@ public abstract class AbstractStoreConfigurationChildBuilder<S> extends Abstract
    }
 
    @Override
+   public S segmented(boolean b) {
+      return (S)builder.segmented(b);
+   }
+
+   @Override
    public S addProperty(String key, String value) {
       return (S)builder.addProperty(key, value);
    }

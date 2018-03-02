@@ -15,6 +15,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -38,6 +39,7 @@ public class PassivationManagerImpl implements PassivationManager {
    @Inject private TimeService timeService;
    @Inject private MarshalledEntryFactory marshalledEntryFactory;
    @Inject private DistributionManager distributionManager;
+   @Inject private KeyPartitioner keyPartitioner;
 
    private volatile boolean skipOnStop = false;
 
@@ -72,9 +74,9 @@ public class PassivationManagerImpl implements PassivationManager {
                ImmutableContext.INSTANCE, null);
          if (trace) log.tracef("Passivating entry %s", toStr(key));
          try {
-            MarshalledEntry marshalledEntry = marshalledEntryFactory.newMarshalledEntry(entry.getKey(), entry.getValue(),
+            MarshalledEntry marshalledEntry = marshalledEntryFactory.newMarshalledEntry(key, entry.getValue(),
                                                                                         internalMetadata(entry));
-            persistenceManager.writeToAllNonTxStores(marshalledEntry, BOTH);
+            persistenceManager.writeToAllNonTxStores(marshalledEntry, keyPartitioner.getSegment(key), BOTH);
             if (statsEnabled) passivations.getAndIncrement();
          } catch (CacheException e) {
             log.unableToPassivateEntry(key, e);

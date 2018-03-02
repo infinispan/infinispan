@@ -173,6 +173,7 @@ public class InfinispanResourceDescriptionResolver extends SubsystemResourceDesc
         sharedAttributeResolver.put(ModelKeys.PURGE, "store");
         sharedAttributeResolver.put(ModelKeys.READ_ONLY, "store");
         sharedAttributeResolver.put(ModelKeys.SHARED, "store");
+        sharedAttributeResolver.put(ModelKeys.SEGMENTED, "store");
         sharedAttributeResolver.put(ModelKeys.SINGLETON, "store");
         sharedAttributeResolver.put(ModelKeys.MAX_BATCH_SIZE, "store");
         sharedAttributeResolver.put(ModelKeys.PROPERTY, "store");

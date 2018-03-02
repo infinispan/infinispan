@@ -32,6 +32,14 @@ from the authoritative data store. If this maximum limit is set when the
 loss, and hence it's not recommended for this use case. The default value is
 `-1` which means that the file store size is unlimited.
 
+===== Segmentation support
+
+This store supports being segmented, as it will create a separate instance per
+segment. This will create multiple directories under the configured directory
+where each one is a number representing the given segment the data maps to.
+
+===== Configuration
+
 [source,xml]
 ----
 

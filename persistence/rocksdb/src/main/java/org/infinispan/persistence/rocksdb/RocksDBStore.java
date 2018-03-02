@@ -158,6 +158,32 @@ public class RocksDBStore<K,V> implements AdvancedLoadWriteStore<K,V> {
     }
 
     @Override
+    public void destroy() {
+        try {
+            semaphore.acquire(Integer.MAX_VALUE);
+        } catch (InterruptedException e) {
+            throw new PersistenceException("Cannot acquire semaphore", e);
+        }
+        try {
+            String location = getQualifiedLocation();
+            try {
+                destroyDatabase(location);
+            } catch (IOException e) {
+                log.debug("Couldn't remove files at: " + location, e);
+            }
+            location = getQualifiedExpiredLocation();
+            try {
+                destroyDatabase(location);
+            } catch (IOException e) {
+                log.debug("Couldn't remove files at: " + location, e);
+            }
+        } finally {
+            stopped = true;
+            semaphore.release(Integer.MAX_VALUE);
+        }
+    }
+
+    @Override
     public boolean isAvailable() {
         return new File(getQualifiedLocation()).exists() && new File(getQualifiedExpiredLocation()).exists();
     }

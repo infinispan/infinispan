@@ -8,7 +8,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.BaseDistStoreTest;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
@@ -20,34 +19,30 @@ import org.testng.annotations.Test;
  * Should ensure that persistent state is not rehashed if the cache store is shared.  See ISPN-861
  */
 @Test (testName = "distribution.rehash.RehashWithSharedStoreTest", groups = "functional")
-public class RehashWithSharedStoreTest extends BaseDistStoreTest {
+public class RehashWithSharedStoreTest extends BaseDistStoreTest<Object, String, RehashWithSharedStoreTest> {
 
    private static final Log log = LogFactory.getLog(RehashWithSharedStoreTest.class);
 
    @Override
    public Object[] factory() {
       return new Object[] {
-         new RehashWithSharedStoreTest(),
-         new RehashWithSharedStoreTest().numOwners(1).l1(false).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false)
+         new RehashWithSharedStoreTest().segmented(false),
+         new RehashWithSharedStoreTest().segmented(true),
+         new RehashWithSharedStoreTest().segmented(false).numOwners(1).l1(false).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
+         new RehashWithSharedStoreTest().segmented(true).numOwners(1).l1(false).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
       };
    }
 
    public RehashWithSharedStoreTest() {
       INIT_CLUSTER_SIZE = 3;
       testRetVals = true;
-      shared = true;
       performRehashing = true;
+      shared = true;
    }
 
    @BeforeMethod
    public void afterMethod() {
-      DummyInMemoryStore cs = (DummyInMemoryStore) TestingUtil.getFirstWriter(c1);
-      cs.clearStats();
-   }
-
-   private int getCacheStoreStats(Cache<?, ?> cache, String cacheStoreMethod) {
-      DummyInMemoryStore cs = TestingUtil.getFirstWriter(cache);
-      return cs.stats().get(cacheStoreMethod);
+      clearStats(c1);
    }
 
    public void testRehashes() throws PersistenceException {

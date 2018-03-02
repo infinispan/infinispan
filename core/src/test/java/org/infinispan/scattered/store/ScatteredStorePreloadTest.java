@@ -9,12 +9,20 @@ import org.testng.annotations.Test;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 @Test(groups = "functional", testName = "scattered.store.ScatteredStorePreloadTest")
-public class ScatteredStorePreloadTest extends DistStorePreloadTest {
+public class ScatteredStorePreloadTest extends DistStorePreloadTest<ScatteredStorePreloadTest> {
 
    public ScatteredStorePreloadTest() {
       cacheMode = CacheMode.SCATTERED_SYNC;
       numOwners = 1;
       l1CacheEnabled = false;
+   }
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new ScatteredStorePreloadTest().segmented(true),
+            new ScatteredStorePreloadTest().segmented(false),
+      };
    }
 
    @Override

@@ -156,6 +156,7 @@ public enum Attribute {
     ROLES(ModelKeys.ROLES),
     SECURITY_REALM(ModelKeys.SECURITY_REALM),
     SEGMENTS(ModelKeys.SEGMENTS),
+    SEGMENTED(ModelKeys.SEGMENTED),
     SHARED(ModelKeys.SHARED),
     SHUTDOWN_TIMEOUT(ModelKeys.SHUTDOWN_TIMEOUT),
     SIMPLE_CACHE(ModelKeys.SIMPLE_CACHE),

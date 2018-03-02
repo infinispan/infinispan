@@ -49,7 +49,7 @@ public class KeyFilterTest extends AbstractInfinispanTest {
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
       ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
-      cdl.init(null);
+      cdl.init(null, mock(Configuration.class, RETURNS_DEEP_STUBS), mock(KeyPartitioner.class));
       TestingUtil.inject(n, mockCache, cdl, config,
             mock(DistributionManager.class), mock(InternalEntryFactory.class),
             mock(ClusterEventManager.class), mock(ComponentRegistry.class), mock(KeyPartitioner.class));

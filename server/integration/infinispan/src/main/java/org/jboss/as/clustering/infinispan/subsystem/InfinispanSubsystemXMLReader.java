@@ -2390,6 +2390,10 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 BaseLoaderConfigurationResource.NAME.parseAndSetParameter(value, loader, reader);
                 break;
             }
+            case SEGMENTED: {
+                BaseLoaderConfigurationResource.SEGMENTED.parseAndSetParameter(value, loader, reader);
+                break;
+            }
             case SHARED: {
                 BaseLoaderConfigurationResource.SHARED.parseAndSetParameter(value, loader, reader);
                 break;
@@ -2414,6 +2418,10 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             case NAME: {
                 name = value;
                 BaseStoreConfigurationResource.NAME.parseAndSetParameter(value, store, reader);
+                break;
+            }
+            case SEGMENTED: {
+                BaseStoreConfigurationResource.SEGMENTED.parseAndSetParameter(value, store, reader);
                 break;
             }
             case SHARED: {

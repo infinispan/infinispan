@@ -3,6 +3,7 @@ package org.infinispan.tools.store.migrator;
 import static org.infinispan.tools.store.migrator.Element.COMPRESSION;
 import static org.infinispan.tools.store.migrator.Element.INDEX_LOCATION;
 import static org.infinispan.tools.store.migrator.Element.LOCATION;
+import static org.infinispan.tools.store.migrator.Element.SEGMENT_COUNT;
 import static org.infinispan.tools.store.migrator.Element.TARGET;
 import static org.infinispan.tools.store.migrator.Element.TYPE;
 
@@ -45,7 +46,23 @@ class TargetStoreFactory {
       StoreProperties props = new StoreProperties(TARGET, properties);
 
       ConfigurationBuilder configBuilder = new ConfigurationBuilder();
-      configBuilder.persistence().addStore(getInitializedStoreBuilder(props)).purgeOnStartup(true);
+      String segmentCountString = props.get(SEGMENT_COUNT);
+      // 0 means not enabled
+      int segmentCount = 0;
+      if (segmentCountString != null) {
+         segmentCount = Integer.parseInt(segmentCountString);
+         if (segmentCount < 0) {
+            throw new IllegalArgumentException("Segment count must be > 0");
+         }
+      }
+
+      if (segmentCount > 0) {
+         configBuilder.clustering().hash().numSegments(segmentCount);
+      }
+
+      configBuilder.persistence().addStore(getInitializedStoreBuilder(props))
+            .purgeOnStartup(true)
+            .segmented(segmentCount > 0);
       configBuilder.invocationBatching().transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup());

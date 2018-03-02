@@ -23,6 +23,14 @@ public class DistSyncTxStoreSharedTest extends BaseDistStoreTest {
       shared = true;
    }
 
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new DistSyncTxStoreSharedTest().segmented(true),
+            new DistSyncTxStoreSharedTest().segmented(false),
+      };
+   }
+
    public void testPutFromNonOwner() throws Exception {
       Cache<Object, String> cacheX = getFirstNonOwner("key1");
       CacheLoader storeX = TestingUtil.getFirstLoader(cacheX);

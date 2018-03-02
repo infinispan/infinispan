@@ -115,7 +115,8 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
          }
       }
       IntSet addedSegments = getOwnedSegments(newWriteCh);
-      if (previousWriteCh != null) {
+      // We check if addedSegments is empty, because we may receive an immutable empty set back from getOwnedSegments
+      if (previousWriteCh != null && !addedSegments.isEmpty()) {
          addedSegments.removeAll(getOwnedSegments(previousWriteCh));
       }
       svm.setTopologyId(topologyId);
@@ -126,9 +127,9 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       }
       if (!addedSegments.isEmpty()) {
          svm.setValuesTransferTopology(topologyId);
-      }
-      for (int segment : addedSegments) {
-         svm.registerSegment(segment);
+         for (PrimitiveIterator.OfInt segmentIterator = addedSegments.iterator(); segmentIterator.hasNext(); ) {
+            svm.registerSegment(segmentIterator.nextInt());
+         }
       }
    }
 

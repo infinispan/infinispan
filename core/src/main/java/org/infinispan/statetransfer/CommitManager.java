@@ -14,7 +14,7 @@ import org.infinispan.container.impl.MergeOnStore;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;

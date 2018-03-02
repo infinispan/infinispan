@@ -77,7 +77,13 @@ marshaller should be utilised. Note, that the LEGACY marshaller can only be spec
 |Property|Description|Example value|Required
 |type | JDBC_STRING \| JDBC_BINARY \| JDBC_MIXED \| LEVELDB \| ROCKSDB \| SINGLE_FILE_STORE \| SOFT_INDEX_FILE_STORE | JDBC_MIXED | TRUE
 |cache_name | The name of the cache associated with the store | persistentMixedCache | TRUE
+|segment_count | How many segments this store will be created with. If not provided store will not be segmented. (supported as target only - JDBC not yet supported) | null
 |===============
+
+It should be noted that the *segment_count* property should match how many
+segments your cache will be using. That is that it should match the
+`clustering.hash.numSegments` config value. If these do not match, data
+will not be properly read when running the cache.
 
 ===== JDBC Properties
 [options="header"]

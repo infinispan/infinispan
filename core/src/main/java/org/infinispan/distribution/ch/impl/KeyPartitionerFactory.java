@@ -1,5 +1,7 @@
 package org.infinispan.distribution.ch.impl;
 
+import org.infinispan.configuration.cache.HashConfiguration;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.distribution.group.impl.GroupingPartitioner;
@@ -22,11 +24,18 @@ public class KeyPartitionerFactory extends AbstractNamedCacheComponentFactory
       implements AutoInstantiableFactory {
    @Inject private GroupManager groupManager;
 
+   private KeyPartitioner getConfiguredPartitioner() {
+      HashConfiguration hashConfiguration = configuration.clustering().hash();
+      KeyPartitioner partitioner = hashConfiguration.keyPartitioner();
+      partitioner.init(hashConfiguration);
+      return partitioner;
+   }
+
    @Override
    public <T> T construct(Class<T> componentType) {
+
       if (configuration.clustering().cacheMode().needsStateTransfer()) {
-         KeyPartitioner partitioner = configuration.clustering().hash().keyPartitioner();
-         partitioner.init(configuration.clustering().hash());
+         KeyPartitioner partitioner = getConfiguredPartitioner();
          if (groupManager == null)
             return componentType.cast(partitioner);
 
@@ -35,6 +44,9 @@ public class KeyPartitionerFactory extends AbstractNamedCacheComponentFactory
          componentRegistry.wireDependencies(partitioner);
          GroupingPartitioner groupingPartitioner = new GroupingPartitioner(partitioner, groupManager);
          return componentType.cast(groupingPartitioner);
+      } else if (configuration.persistence().stores().stream().filter(StoreConfiguration::segmented).findFirst().isPresent()) {
+         // If store is segmented we still have to find consistent hashes
+         return componentType.cast(getConfiguredPartitioner());
       } else {
          return componentType.cast(SingleSegmentKeyPartitioner.getInstance());
       }
