@@ -104,10 +104,11 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       blockingCacheRpcCommand = new StreamRequestCommand<>(cacheName, null, null, false,
                                                            StreamRequestCommand.Type.TERMINAL, null, null, null, false,
                                                            false, mock(TerminalOperation.class));
-      nonBlockingCacheRpcCommand = new ClusteredGetCommand("key", cacheName, EnumUtil.EMPTY_BIT_SET);
+      int segment = TestingUtil.getSegmentForKey("key", cache);
+      nonBlockingCacheRpcCommand = new ClusteredGetCommand("key", cacheName, segment, EnumUtil.EMPTY_BIT_SET);
       blockingNonCacheRpcCommand = new CacheTopologyControlCommand(null, CacheTopologyControlCommand.Type.POLICY_GET_STATUS, null, 0);
       //the GetKeyValueCommand is not replicated, but I only need a command that returns false in canBlock()
-      nonBlockingNonCacheRpcCommand = new ClusteredGetCommand("key", cacheName, EnumUtil.EMPTY_BIT_SET);
+      nonBlockingNonCacheRpcCommand = new ClusteredGetCommand("key", cacheName, segment, EnumUtil.EMPTY_BIT_SET);
       VisitableCommand blockingVisitableCommand = mockCommand(VisitableCommand.class, true);
       blockingSingleRpcCommand = new SingleRpcCommand(cacheName, blockingVisitableCommand);
       VisitableCommand nonBlockingVisitableCommand = mockCommand(VisitableCommand.class, false);

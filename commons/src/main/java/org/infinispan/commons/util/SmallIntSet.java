@@ -87,24 +87,17 @@ public class SmallIntSet implements IntSet {
       bitSet = new BitSet(initialRange);
    }
 
-   public SmallIntSet(SmallIntSet other) {
-      bitSet = new BitSet(other.bitSet.size());
-      bitSet.or(other.bitSet);
-   }
-
    public SmallIntSet(Set<Integer> set) {
-      bitSet = new BitSet();
-      set.forEach(bitSet::set);
-   }
-
-   public SmallIntSet(IntSet set) {
       if (set instanceof SmallIntSet) {
          BitSet bitSet = ((SmallIntSet) set).bitSet;
          this.bitSet = new BitSet(bitSet.size());
          this.bitSet.or(bitSet);
-      } else {
+      } else if (set instanceof IntSet) {
          this.bitSet = new BitSet();
-         set.forEach((IntConsumer) bitSet::set);
+         ((IntSet) set).forEach((IntConsumer) bitSet::set);
+      } else {
+         bitSet = new BitSet(set.size());
+         set.forEach(bitSet::set);
       }
    }
 
@@ -176,6 +169,22 @@ public class SmallIntSet implements IntSet {
          }
          bitSet.clear(prev);
          prev = -1;
+      }
+   }
+
+   @Override
+   public int[] toIntArray() {
+      int size = size();
+      int[] dest = new int[size];
+      copyToArray(size, dest);
+      return dest;
+   }
+
+   private void copyToArray(int size, int[] dest) {
+      int lastSetBit = -1;
+      for (int i = 0; i < size; i++) {
+         lastSetBit = bitSet.nextSetBit(lastSetBit + 1);
+         dest[i] = lastSetBit;
       }
    }
 

@@ -11,6 +11,7 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 import org.infinispan.commons.util.Experimental;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.LockingConfiguration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.util.function.SerializableBiConsumer;
@@ -150,9 +151,16 @@ public interface LockedStream<K, V> extends BaseCacheStream<CacheEntry<K, V>, Lo
 
    /**
     * {@inheritDoc}
+    * @deprecated This is to be replaced by {@link #filterKeySegments(IntSet)}
     */
    @Override
    LockedStream<K, V> filterKeySegments(Set<Integer> segments);
+
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   LockedStream<K, V> filterKeySegments(IntSet segments);
 
    /**
     * {@inheritDoc}

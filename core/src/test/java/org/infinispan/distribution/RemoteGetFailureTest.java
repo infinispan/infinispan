@@ -188,7 +188,8 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       Address address2 = address(2);
       List<Address> owners = Arrays.asList(address1, address2);
 
-      ClusteredGetCommand clusteredGet = new ClusteredGetCommand(key, ByteString.fromString(cache(0).getName()), 0);
+      ClusteredGetCommand clusteredGet = new ClusteredGetCommand(key, ByteString.fromString(cache(0).getName()),
+            TestingUtil.getSegmentForKey(key, cache(1)), 0);
       final int timeout = 15;
       RpcOptions rpcOptions = new RpcOptions(timeout, TimeUnit.SECONDS, null, ResponseMode.WAIT_FOR_VALID_RESPONSE, DeliverOrder.NONE);
 

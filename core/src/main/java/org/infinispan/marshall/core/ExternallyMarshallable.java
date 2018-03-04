@@ -59,6 +59,7 @@ public final class ExternallyMarshallable {
       whiteListClasses.add("org.infinispan.it"); // test
       whiteListClasses.add("org.infinispan.all"); // test
       whiteListClasses.add("org.infinispan.query.api"); // test
+      whiteListClasses.add("org.infinispan.stream.BaseStreamTest$TestClass"); // test
       whiteListClasses.add("org.jboss.as.quickstarts.datagrid"); // quickstarts testing
    }
 

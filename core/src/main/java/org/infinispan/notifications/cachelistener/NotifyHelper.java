@@ -38,7 +38,7 @@ public class NotifyHelper {
             if (!isWriteOnly)
                functionalNotifier.notifyOnRemove(EntryViews.readOnly(entry.getKey(), previousValue, previousMetadata));
 
-            functionalNotifier.notifyOnWrite(() -> EntryViews.noValue(entry.getKey()));
+            functionalNotifier.notifyOnWriteRemove(entry.getKey());
          }
       } else {
          // Notify entry event after container has been updated
@@ -50,9 +50,9 @@ public class NotifyHelper {
             // that an entry has been created, so only send create event
             // when the command is read-write.
             if (!isWriteOnly)
-               functionalNotifier.notifyOnCreate(EntryViews.readOnly(entry));
+               functionalNotifier.notifyOnCreate(entry);
 
-            functionalNotifier.notifyOnWrite(() -> EntryViews.readOnly(entry));
+            functionalNotifier.notifyOnWrite(entry);
          } else {
             notifier.notifyCacheEntryModified(entry.getKey(), entry.getValue(), entry.getMetadata(), previousValue,
                   previousMetadata, false, ctx, command);
@@ -61,11 +61,9 @@ public class NotifyHelper {
             // that an entry has been created, so only send modify when the
             // command is read-write.
             if (!isWriteOnly)
-               functionalNotifier.notifyOnModify(
-                     EntryViews.readOnly(entry.getKey(), previousValue, previousMetadata),
-                     EntryViews.readOnly(entry));
+               functionalNotifier.notifyOnModify(entry, previousValue, previousMetadata);
 
-            functionalNotifier.notifyOnWrite(() -> EntryViews.readOnly(entry));
+            functionalNotifier.notifyOnWrite(entry);
          }
       }
    }

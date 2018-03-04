@@ -25,11 +25,13 @@ import java.util.function.ToIntFunction;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import org.infinispan.BaseCacheStream;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.stream.impl.intops.primitive.l.AsDoubleLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.BoxedLongOperation;
@@ -496,9 +498,14 @@ public class DistributedLongCacheStream<Original> extends AbstractCacheStream<Or
    }
 
    @Override
-   public LongCacheStream
-   filterKeySegments(Set<Integer> segments) {
+   public LongCacheStream filterKeySegments(Set<Integer> segments) {
       segmentsToFilter = SmallIntSet.from(segments);
+      return this;
+   }
+
+   @Override
+   public BaseCacheStream filterKeySegments(IntSet segments) {
+      segmentsToFilter = segments;
       return this;
    }
 

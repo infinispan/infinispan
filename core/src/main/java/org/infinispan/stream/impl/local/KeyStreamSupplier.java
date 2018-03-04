@@ -9,7 +9,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.context.Flag;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -33,7 +32,7 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
    }
 
    @Override
-   public Stream<K> buildStream(Set<Integer> segmentsToFilter, Set<?> keysToFilter) {
+   public Stream<K> buildStream(IntSet segmentsToFilter, Set<?> keysToFilter, boolean parallel) {
       Stream<K> stream;
       // Make sure we aren't going remote to retrieve these
       AdvancedCache<K, V> advancedCache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
@@ -43,20 +42,23 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
             log.tracef("Applying key filtering %s", keysToFilter);
          }
          // ignore tombstones and non existent keys
-         stream = (Stream<K>) keysToFilter.stream().filter(k -> advancedCache.get(k) != null);
+         stream = (Stream<K>) (parallel ? keysToFilter.parallelStream() : keysToFilter.stream())
+               .filter(k -> advancedCache.get(k) != null);
       } else {
          stream = supplier.get();
          if (cache.getCacheConfiguration().clustering().cacheMode().isScattered()) {
             // Ignore tombstones
             stream = stream.filter(k -> advancedCache.get(k) != null);
          }
+         if (parallel) {
+            stream = stream.parallel();
+         }
       }
       if (segmentsToFilter != null && toIntFunction != null) {
          if (trace) {
             log.tracef("Applying segment filter %s", segmentsToFilter);
          }
-         IntSet intSet = SmallIntSet.from(segmentsToFilter);
-         stream = stream.filter(k -> intSet.contains(toIntFunction.applyAsInt(k)));
+         stream = stream.filter(k -> segmentsToFilter.contains(toIntFunction.applyAsInt(k)));
       }
       return stream;
    }

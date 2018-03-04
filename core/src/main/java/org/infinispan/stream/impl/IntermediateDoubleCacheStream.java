@@ -24,6 +24,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.stream.impl.local.LocalDoubleCacheStream;
 
 /**
@@ -65,6 +66,12 @@ public class IntermediateDoubleCacheStream implements DoubleCacheStream {
 
    @Override
    public DoubleCacheStream filterKeySegments(Set<Integer> segments) {
+      remoteStream = remoteStream.filterKeySegments(segments);
+      return this;
+   }
+
+   @Override
+   public DoubleCacheStream filterKeySegments(IntSet segments) {
       remoteStream = remoteStream.filterKeySegments(segments);
       return this;
    }

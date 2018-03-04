@@ -11,6 +11,7 @@ import java.util.function.Function;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -34,13 +35,13 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
 
    public ComputeIfAbsentCommand(Object key,
                                  Function mappingFunction,
-                                 long flagsBitSet,
+                                 int segment, long flagsBitSet,
                                  CommandInvocationId commandInvocationId,
                                  Metadata metadata,
                                  CacheNotifier notifier,
                                  ComponentRegistry componentRegistry) {
 
-      super(key, flagsBitSet, commandInvocationId);
+      super(key, segment, flagsBitSet, commandInvocationId);
       this.mappingFunction = mappingFunction;
       this.metadata = metadata;
       this.notifier = notifier;
@@ -136,6 +137,7 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
       output.writeObject(mappingFunction);
+      UnsignedNumeric.writeUnsignedInt(output, segment);
       output.writeObject(metadata);
       CommandInvocationId.writeTo(output, commandInvocationId);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
@@ -145,6 +147,7 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
       mappingFunction = (Function) input.readObject();
+      segment = UnsignedNumeric.readUnsignedInt(input);
       metadata = (Metadata) input.readObject();
       commandInvocationId = CommandInvocationId.readFrom(input);
       setFlagsBitSet(input.readLong());

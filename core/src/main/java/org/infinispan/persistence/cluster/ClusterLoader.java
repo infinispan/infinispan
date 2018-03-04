@@ -6,6 +6,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.util.EnumUtil;
@@ -42,6 +44,7 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
 
    private RpcManager rpcManager;
    private AdvancedCache<?, ?> cache;
+   private CommandsFactory commandsFactory;
 
    private ClusterLoaderConfiguration configuration;
    private InitializationContext ctx;
@@ -51,6 +54,7 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
    public void init(InitializationContext ctx) {
       this.ctx = ctx;
       cache = ctx.getCache().getAdvancedCache();
+      commandsFactory = cache.getComponentRegistry().getCommandsFactory();
       cacheName = ByteString.fromString(cache.getName());
       rpcManager = cache.getRpcManager();
       this.configuration = ctx.getConfiguration();
@@ -60,9 +64,8 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
    public MarshalledEntry load(Object key) throws PersistenceException {
       if (!isCacheReady()) return null;
 
-      ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(
-            key, cacheName, EnumUtil.bitSetOf(Flag.SKIP_OWNERSHIP_CHECK)
-      );
+      ClusteredGetCommand clusteredGetCommand = commandsFactory.buildClusteredGetCommand(key,
+            SegmentSpecificCommand.UNKNOWN_SEGMENT, EnumUtil.bitSetOf(Flag.SKIP_OWNERSHIP_CHECK));
 
       Collection<Response> responses = doRemoteCall(clusteredGetCommand);
       if (responses.isEmpty()) return null;

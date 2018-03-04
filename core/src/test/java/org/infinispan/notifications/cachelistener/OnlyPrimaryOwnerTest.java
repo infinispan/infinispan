@@ -99,7 +99,7 @@ public class OnlyPrimaryOwnerTest {
       }
 
       @Override
-      public Commit commitType(FlagAffectedCommand command, InvocationContext ctx, Object key, boolean removed) {
+      public Commit commitType(FlagAffectedCommand command, InvocationContext ctx, Object key, int segment, boolean removed) {
          return isOwner ? Commit.COMMIT_LOCAL : Commit.NO_COMMIT;
       }
 

@@ -10,6 +10,7 @@ import java.util.function.Function;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.read.AbstractDataCommand;
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -29,11 +30,11 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
    protected DataConversion keyDataConversion;
    protected DataConversion valueDataConversion;
 
-   public ReadOnlyKeyCommand(Object key, Function<ReadEntryView<K, V>, R> f, Params params,
+   public ReadOnlyKeyCommand(Object key, Function<ReadEntryView<K, V>, R> f, int segment, Params params,
                              DataConversion keyDataConversion,
                              DataConversion valueDataConversion,
                              ComponentRegistry componentRegistry) {
-      super(key, EnumUtil.EMPTY_BIT_SET);
+      super(key, segment, EnumUtil.EMPTY_BIT_SET);
       this.f = f;
       this.params = params;
       this.keyDataConversion = keyDataConversion;
@@ -61,6 +62,7 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
       output.writeObject(f);
+      UnsignedNumeric.writeUnsignedInt(output, segment);
       Params.writeObject(output, params);
       DataConversion.writeTo(output, keyDataConversion);
       DataConversion.writeTo(output, valueDataConversion);
@@ -70,6 +72,7 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
       f = (Function<ReadEntryView<K, V>, R>) input.readObject();
+      segment = UnsignedNumeric.readUnsignedInt(input);
       params = Params.readObject(input);
       this.setFlagsBitSet(params.toFlagsBitSet());
       keyDataConversion = DataConversion.readFrom(input);

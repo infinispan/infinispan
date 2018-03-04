@@ -6,10 +6,10 @@ import java.util.function.Function;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.CloseableSpliteratorMapper;
 import org.infinispan.commons.util.InjectiveFunction;
+import org.infinispan.commons.util.IteratorMapper;
+import org.infinispan.commons.util.SpliteratorMapper;
 
 /**
  * A {@link CacheCollection} that allows for a different set to be mapped as
@@ -57,12 +57,12 @@ public class CacheCollectionMapper<E, R> extends CollectionMapper<E, R> implemen
 
    @Override
    public CloseableSpliterator<R> spliterator() {
-      return new CloseableSpliteratorMapper<>(realCacheCollection.spliterator(), mapper);
+      return new SpliteratorMapper<>(realCacheCollection.spliterator(), mapper);
    }
 
    @Override
    public CloseableIterator<R> iterator() {
-      return new CloseableIteratorMapper<>(realCacheCollection.iterator(), mapper);
+      return new IteratorMapper<>(realCacheCollection.iterator(), mapper);
    }
 
    private CacheStream<R> getStream(CacheStream<E> parentStream) {

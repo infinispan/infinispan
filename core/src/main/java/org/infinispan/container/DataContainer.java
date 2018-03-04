@@ -90,10 +90,18 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
    InternalCacheEntry<K, V> remove(Object k);
 
    /**
-    *
     * @return count of the number of entries in the container excluding expired entries
+    * @implSpec
+    * Default method invokes the {@link #iterator()} method and just counts entries.
     */
-   int size();
+   default int size() {
+      int size = 0;
+      // We have to loop through to make sure to remove expired entries
+      for (InternalCacheEntry<K, V> ignore : this) {
+         if (++size == Integer.MAX_VALUE) return Integer.MAX_VALUE;
+      }
+      return size;
+   }
 
    /**
     *
@@ -113,21 +121,29 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * the underlying collection as a side of effect of iterating through it.
     * <p>
     * This set of keys will include expired entries. If you wish to only retrieve non expired keys please use the
-    * {@link DataContainer#entrySet()} method and retrieve keys from there.
+    * {@link DataContainer#iterator()} method and retrieve keys from there.
     * @return a set of keys
     * @deprecated Please use iterator method if bulk operations are required.
+    * @implSpec
+    * Default implementation just throws a {@link UnsupportedOperationException}.
     */
    @Deprecated
-   Set<K> keySet();
+   default Set<K> keySet() {
+      throw new UnsupportedOperationException();
+   }
 
    /**
     * This returns all values in the container including expired entries. If you wish to only receive values that
     * are not expired it is recommended to use {@link DataContainer#entrySet()} and pull values from there directly.
     * @return a set of values contained in the container
     * @deprecated Please use iterator method if bulk operations are required.
+    * @implSpec
+    * Default implementation just throws a {@link UnsupportedOperationException}.
     */
    @Deprecated
-   Collection<V> values();
+   default Collection<V> values() {
+      throw new UnsupportedOperationException();
+   }
 
    /**
     * Returns a mutable set of immutable cache entries exposed as immutable Map.Entry instances. Clients of this method
@@ -142,9 +158,13 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * to O(N) if it is to not count expired entries.
     * @return a set of immutable cache entries
     * @deprecated Please use iterator method if bulk operations are required.
+    * @implSpec
+    * Default implementation just throws a {@link UnsupportedOperationException}.
     */
    @Deprecated
-   Set<InternalCacheEntry<K, V>> entrySet();
+   default Set<InternalCacheEntry<K, V>> entrySet() {
+      throw new UnsupportedOperationException();
+   }
 
    /**
     * Atomically, it removes the key from {@code DataContainer} and passivates it to persistence.
@@ -175,21 +195,53 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
 
    /**
     * Executes task specified by the given action on the container key/values filtered using the specified key filter.
-    *
+    * @implSpec
+    * The default implementation is equivalent to
+    * <pre> {@code
+    * forEach(ice -> {
+    *    if (filter == null || filter.accept(ice.getKey())) {
+    *       action.accept(ice.getKey(), ice);
+    *    }
+    * }
+    * }</pre>
     * @param filter the filter for the container keys
     * @param action the specified action to execute on filtered key/values
     * @throws InterruptedException
+    * @deprecated since 9.3 Please use the {@link #iterator()} method and apply filtering manually
     */
-   void executeTask(final KeyFilter<? super K> filter, BiConsumer<? super K, InternalCacheEntry<K, V>> action) throws InterruptedException;
+   @Deprecated
+   default void executeTask(final KeyFilter<? super K> filter, BiConsumer<? super K, InternalCacheEntry<K, V>> action) throws InterruptedException {
+      forEach(ice -> {
+         if (filter == null || filter.accept(ice.getKey())) {
+            action.accept(ice.getKey(), ice);
+         }
+      });
+   }
 
    /**
     * Executes task specified by the given action on the container key/values filtered using the specified keyvalue filter.
-    *
+    * @implSpec
+    * The default implementation is equivalent to
+    * <pre> {@code
+    * iterator().forEachRemaining(ice -> {
+    *    if (filter == null || filter.accept(ice.getKey(), ice.getValue(), ice.getMetadata())) {
+    *       action.accept(ice.getKey(), ice);
+    *    }
+    * }
+    * }</pre>
     * @param filter the filter for the container key/values
     * @param action the specified action to execute on filtered key/values
     * @throws InterruptedException
+    * @deprecated since 9.3 Please use the {@link #iterator()} method and apply filtering manually
     */
-   void executeTask(KeyValueFilter<? super K, ? super V> filter, BiConsumer<? super K, InternalCacheEntry<K, V>> action) throws InterruptedException;
+   @Deprecated
+   default void executeTask(KeyValueFilter<? super K, ? super V> filter, BiConsumer<? super K, InternalCacheEntry<K, V>> action) throws InterruptedException {
+      forEach(ice -> {
+         if (filter == null || filter.accept(ice.getKey(), ice.getValue(), ice.getMetadata())) {
+            action.accept(ice.getKey(), ice);
+         }
+      });
+   }
 
    /**
     * {@inheritDoc}

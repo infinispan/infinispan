@@ -25,6 +25,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.stream.impl.local.LocalLongCacheStream;
 
 /**
@@ -66,6 +67,12 @@ public class IntermediateLongCacheStream implements LongCacheStream {
 
    @Override
    public LongCacheStream filterKeySegments(Set<Integer> segments) {
+      remoteStream = remoteStream.filterKeySegments(segments);
+      return this;
+   }
+
+   @Override
+   public LongCacheStream filterKeySegments(IntSet segments) {
       remoteStream = remoteStream.filterKeySegments(segments);
       return this;
    }

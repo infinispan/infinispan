@@ -37,8 +37,8 @@ public class ClusteringDependentLogicDelegator implements ClusteringDependentLog
    }
 
    @Override
-   public Commit commitType(FlagAffectedCommand command, InvocationContext ctx, Object key, boolean removed) {
-      return clusteringDependentLogic.commitType(command, ctx, key, removed);
+   public Commit commitType(FlagAffectedCommand command, InvocationContext ctx, Object key, int segment, boolean removed) {
+      return clusteringDependentLogic.commitType(command, ctx, key, segment, removed);
    }
 
    @Override

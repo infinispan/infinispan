@@ -19,6 +19,7 @@ import org.jboss.marshalling.util.IdentityIntMap;
  * @since 5.3
  */
 public class EmbeddedMetadata implements Metadata {
+   public static final EmbeddedMetadata EMPTY = new EmbeddedMetadata(null);
 
    final EntryVersion version;
 

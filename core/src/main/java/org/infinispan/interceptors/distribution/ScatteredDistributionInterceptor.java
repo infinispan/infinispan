@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.MetadataAwareCommand;
+import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
@@ -571,7 +572,10 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
             entryFactory.wrapExternalEntry(ctx, command.getKey(), NullCacheEntry.getInstance(), false, false);
             return invokeNext(ctx, command);
          }
-         ClusteredGetCommand clusteredGetCommand = cf.buildClusteredGetCommand(command.getKey(), command.getFlagsBitSet());
+
+         int segment = SegmentSpecificCommand.extractSegment(command);
+
+         ClusteredGetCommand clusteredGetCommand = cf.buildClusteredGetCommand(command.getKey(), segment, command.getFlagsBitSet());
          clusteredGetCommand.setTopologyId(command.getTopologyId());
          SingletonMapResponseCollector collector = SingletonMapResponseCollector.ignoreLeavers();
          CompletionStage<Map<Address, Response>> rpcFuture =

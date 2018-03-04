@@ -9,6 +9,7 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.write.ValueMatcher;
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -30,13 +31,13 @@ public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCom
 
    public WriteOnlyKeyValueCommand(Object key, Object argument,
                                    BiConsumer<T, WriteEntryView<K, V>> f,
-                                   CommandInvocationId id,
+                                   int segment, CommandInvocationId id,
                                    ValueMatcher valueMatcher,
                                    Params params,
                                    DataConversion keyDataConversion,
                                    DataConversion valueDataConversion,
                                    ComponentRegistry componentRegistry) {
-      super(key, valueMatcher, id, params, keyDataConversion, valueDataConversion);
+      super(key, valueMatcher, segment, id, params, keyDataConversion, valueDataConversion);
       this.f = f;
       this.argument = argument;
       init(componentRegistry);
@@ -57,6 +58,7 @@ public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCom
       output.writeObject(argument);
       output.writeObject(f);
       MarshallUtil.marshallEnum(valueMatcher, output);
+      UnsignedNumeric.writeUnsignedInt(output, segment);
       Params.writeObject(output, params);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
@@ -70,6 +72,7 @@ public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCom
       argument = input.readObject();
       f = (BiConsumer<T, WriteEntryView<K, V>>) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
+      segment = UnsignedNumeric.readUnsignedInt(input);
       params = Params.readObject(input);
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);

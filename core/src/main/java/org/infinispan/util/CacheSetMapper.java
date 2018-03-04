@@ -5,9 +5,9 @@ import java.util.function.Function;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.CloseableSpliteratorMapper;
+import org.infinispan.commons.util.IteratorMapper;
+import org.infinispan.commons.util.SpliteratorMapper;
 
 /**
  * A {@link CacheSet} that allows for a different set to be mapped as a different instance wtih values replaced on
@@ -36,11 +36,11 @@ public class CacheSetMapper<E, R> extends SetMapper<E, R> implements CacheSet<R>
 
    @Override
    public CloseableSpliterator<R> spliterator() {
-      return new CloseableSpliteratorMapper<>(realSet.spliterator(), mapper);
+      return new SpliteratorMapper<>(realSet.spliterator(), mapper);
    }
 
    @Override
    public CloseableIterator<R> iterator() {
-      return new CloseableIteratorMapper<>(realSet.iterator(), mapper);
+      return new IteratorMapper<>(realSet.iterator(), mapper);
    }
 }

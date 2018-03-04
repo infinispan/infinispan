@@ -23,6 +23,8 @@ import org.infinispan.Cache;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.CacheAware;
 import org.infinispan.stream.impl.intops.primitive.i.BoxedIntOperation;
@@ -262,6 +264,12 @@ public class LocalIntCacheStream extends AbstractLocalCacheStream<Integer, IntSt
 
    @Override
    public LocalIntCacheStream filterKeySegments(Set<Integer> segments) {
+      segmentsToFilter = SmallIntSet.from(segments);
+      return this;
+   }
+
+   @Override
+   public LocalIntCacheStream filterKeySegments(IntSet segments) {
       segmentsToFilter = segments;
       return this;
    }

@@ -24,6 +24,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
+import org.infinispan.commons.util.IntSet;
 
 /**
  * Abstract Delegating handler that passes LongStream operations off to the underlying LongCacheStream but delegates
@@ -91,6 +92,12 @@ class AbstractDelegatingLongCacheStream implements LongCacheStream {
 
    @Override
    public LongCacheStream filterKeySegments(Set<Integer> segments) {
+      delegateCacheStream = delegateCacheStream.filterKeySegments(segments);
+      return this;
+   }
+
+   @Override
+   public LongCacheStream filterKeySegments(IntSet segments) {
       delegateCacheStream = delegateCacheStream.filterKeySegments(segments);
       return this;
    }

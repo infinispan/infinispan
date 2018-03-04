@@ -29,6 +29,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.util.function.SerializableSupplier;
 
@@ -72,6 +73,12 @@ public class IntermediateCacheStream<Original, R> implements CacheStream<R> {
 
    @Override
    public CacheStream<R> filterKeySegments(Set<Integer> segments) {
+      remoteStream = remoteStream.filterKeySegments(segments);
+      return this;
+   }
+
+   @Override
+   public CacheStream<R> filterKeySegments(IntSet segments) {
       remoteStream = remoteStream.filterKeySegments(segments);
       return this;
    }

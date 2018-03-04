@@ -134,17 +134,17 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
       switch (operation) {
          case READ_WRITE:
             //noinspection unchecked
-            return new ReadWriteKeyCommand(key, (Function) function, getCommandInvocationId(), MATCH_ALWAYS,
+            return new ReadWriteKeyCommand(key, (Function) function, segmentId, getCommandInvocationId(), MATCH_ALWAYS,
                   params, keyDataConversion, valueDataConversion, componentRegistry);
          case READ_WRITE_KEY_VALUE:
             return createReadWriteKeyValueCommand();
          case WRITE_ONLY:
             //noinspection unchecked
-            return new WriteOnlyKeyCommand(key, (Consumer) function, getCommandInvocationId(), MATCH_ALWAYS,
+            return new WriteOnlyKeyCommand(key, (Consumer) function, segmentId, getCommandInvocationId(), MATCH_ALWAYS,
                   params, keyDataConversion, valueDataConversion, componentRegistry);
          case WRITE_ONLY_KEY_VALUE:
             //noinspection unchecked
-            return new WriteOnlyKeyValueCommand(key, value, (BiConsumer) function, getCommandInvocationId(),
+            return new WriteOnlyKeyValueCommand(key, value, (BiConsumer) function, segmentId, getCommandInvocationId(),
                   MATCH_ALWAYS, params, keyDataConversion, valueDataConversion, componentRegistry);
          default:
             throw new IllegalStateException("Unknown operation " + operation);
@@ -159,7 +159,7 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
 
    private ReadWriteKeyValueCommand createReadWriteKeyValueCommand() {
       //noinspection unchecked
-      ReadWriteKeyValueCommand cmd = new ReadWriteKeyValueCommand(key, value, (BiFunction) function,
+      ReadWriteKeyValueCommand cmd = new ReadWriteKeyValueCommand(key, value, (BiFunction) function, segmentId,
             getCommandInvocationId(), MATCH_ALWAYS, params, keyDataConversion, valueDataConversion, componentRegistry);
       cmd.setPrevValueAndMetadata(prevValue, prevMetadata);
       return cmd;

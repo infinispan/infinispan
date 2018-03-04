@@ -1,5 +1,7 @@
 package org.infinispan.distribution.ch;
 
+import java.util.function.ToIntFunction;
+
 import org.infinispan.commons.configuration.attributes.Matchable;
 import org.infinispan.configuration.cache.HashConfiguration;
 
@@ -9,7 +11,7 @@ import org.infinispan.configuration.cache.HashConfiguration;
  * @author Dan Berindei
  * @since 8.2
  */
-public interface KeyPartitioner extends Matchable<KeyPartitioner> {
+public interface KeyPartitioner extends Matchable<KeyPartitioner>, ToIntFunction<Object> {
    /**
     * Initialization.
     *
@@ -21,6 +23,11 @@ public interface KeyPartitioner extends Matchable<KeyPartitioner> {
     */
    default void init(HashConfiguration configuration) {
       // Do nothing
+   }
+
+   @Override
+   default int applyAsInt(Object value) {
+      return getSegment(value);
    }
 
    /**

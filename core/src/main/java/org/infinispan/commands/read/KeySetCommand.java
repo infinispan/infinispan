@@ -3,7 +3,6 @@ package org.infinispan.commands.read;
 import java.util.AbstractCollection;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.StreamSupport;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
@@ -12,17 +11,19 @@ import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.CloseableSpliteratorMapper;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.IteratorMapper;
+import org.infinispan.commons.util.SpliteratorMapper;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.SegmentedDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.stream.impl.local.KeyStreamSupplier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
+import org.infinispan.stream.impl.local.SegmentedKeyStreamSupplier;
 import org.infinispan.util.DataContainerRemoveIterator;
 
 /**
@@ -36,8 +37,9 @@ import org.infinispan.util.DataContainerRemoveIterator;
  */
 public class KeySetCommand<K, V> extends AbstractLocalCommand implements VisitableCommand {
    private final Cache<K, V> cache;
+   private final KeyPartitioner keyPartitioner;
 
-   public KeySetCommand(Cache<K, V> cache, long flagsBitSet) {
+   public KeySetCommand(Cache<K, V> cache, KeyPartitioner keyPartitioner, long flagsBitSet) {
       setFlagsBitSet(flagsBitSet);
       cache = AbstractDelegatingCache.unwrapCache(cache);
       if (flagsBitSet != EnumUtil.EMPTY_BIT_SET) {
@@ -45,6 +47,7 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
       } else {
          this.cache = cache;
       }
+      this.keyPartitioner = keyPartitioner;
    }
 
    @Override
@@ -62,7 +65,7 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
       // We have to check for the flags when we do perform - as interceptor could change this while going down
       // the stack
       boolean isRemoteIteration = EnumUtil.containsAny(getFlagsBitSet(), FlagBitSets.REMOTE_ITERATION);
-      return new BackingKeySet<>(cache, isRemoteIteration);
+      return new BackingKeySet<>(cache, keyPartitioner, isRemoteIteration);
    }
 
    @Override
@@ -74,11 +77,13 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
    }
 
    private static class BackingKeySet<K, V> extends AbstractCollection<K> implements CacheSet<K> {
-      private final Cache<K, V> cache;
       private final boolean isRemoteIteration;
+      private final Cache<K, V> cache;
+      private final KeyPartitioner keyPartitioner;
 
-      BackingKeySet(Cache<K, V> cache, boolean isRemoteIteration) {
+      BackingKeySet(Cache<K, V> cache, KeyPartitioner keyPartitioner, boolean isRemoteIteration) {
          this.cache = cache;
+         this.keyPartitioner = keyPartitioner;
          this.isRemoteIteration = isRemoteIteration;
       }
 
@@ -86,9 +91,9 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
       public CloseableIterator<K> iterator() {
          if (isRemoteIteration) {
             // Don't add the extra wrapping for removal
-            return new CloseableIteratorMapper<>(cache.getAdvancedCache().getDataContainer().iterator(), Map.Entry::getKey);
+            return new IteratorMapper<>(cache.getAdvancedCache().getDataContainer().iterator(), Map.Entry::getKey);
          }
-         return new CloseableIteratorMapper<>(new DataContainerRemoveIterator<>(cache), Map.Entry::getKey);
+         return new IteratorMapper<>(new DataContainerRemoveIterator<>(cache), Map.Entry::getKey);
       }
 
       @Override
@@ -96,7 +101,7 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
          DataContainer<K, V> dc = cache.getAdvancedCache().getDataContainer();
 
          // Spliterator doesn't support remove so just return it without wrapping
-         return new CloseableSpliteratorMapper<>(dc.spliterator(), Map.Entry::getKey);
+         return new SpliteratorMapper<>(dc.spliterator(), Map.Entry::getKey);
       }
 
       @Override
@@ -114,18 +119,26 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
          return cache.remove(o) != null;
       }
 
+      private CacheStream<K> doStream(boolean parallel) {
+         DataContainer<K, V> dc = cache.getAdvancedCache().getDataContainer();
+         if (dc instanceof SegmentedDataContainer) {
+            SegmentedDataContainer<K, V> segmentedDataContainer = (SegmentedDataContainer) dc;
+            return new LocalCacheStream<>(new SegmentedKeyStreamSupplier<>(cache, keyPartitioner,
+                  segmentedDataContainer), parallel, cache.getAdvancedCache().getComponentRegistry());
+         } else {
+            return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, keyPartitioner,
+                  super::stream), parallel, cache.getAdvancedCache().getComponentRegistry());
+         }
+      }
+
       @Override
       public CacheStream<K> stream() {
-         DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm != null ? dm.getCacheTopology()::getSegment : null,
-               () -> StreamSupport.stream(spliterator(), false)), false, cache.getAdvancedCache().getComponentRegistry());
+         return doStream(false);
       }
 
       @Override
       public CacheStream<K> parallelStream() {
-         DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm != null ? dm.getCacheTopology()::getSegment : null,
-               () -> StreamSupport.stream(spliterator(), false)), true, cache.getAdvancedCache().getComponentRegistry());
+         return doStream(true);
       }
    }
 }

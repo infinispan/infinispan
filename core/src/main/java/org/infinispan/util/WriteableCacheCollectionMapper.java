@@ -7,10 +7,10 @@ import java.util.function.Predicate;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.CloseableSpliteratorMapper;
 import org.infinispan.commons.util.InjectiveFunction;
+import org.infinispan.commons.util.IteratorMapper;
+import org.infinispan.commons.util.SpliteratorMapper;
 
 /**
  * A writeable cache collection mapper that also has constant time operations for things such as
@@ -57,7 +57,7 @@ public class WriteableCacheCollectionMapper<E, R> extends CollectionMapper<E, R>
 
    @Override
    public CloseableIterator<R> iterator() {
-      return new CloseableIteratorMapper<>(realCollection.iterator(), toNewTypeIteratorFunction);
+      return new IteratorMapper<>(realCollection.iterator(), toNewTypeIteratorFunction);
    }
 
    @Override
@@ -107,7 +107,7 @@ public class WriteableCacheCollectionMapper<E, R> extends CollectionMapper<E, R>
 
    @Override
    public CloseableSpliterator<R> spliterator() {
-      return new CloseableSpliteratorMapper<>(realCacheCollection.spliterator(), mapper);
+      return new SpliteratorMapper<>(realCacheCollection.spliterator(), mapper);
    }
 
    private CacheStream<R> getStream(CacheStream<E> parentStream) {

@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.infinispan.CacheStream;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.HashConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
@@ -48,9 +49,12 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
    @Override
    protected void createCacheManagers() throws Throwable {
       builderUsed = new ConfigurationBuilder();
-      BaseControlledConsistentHashFactory<? extends ConsistentHash> chf =
-            cacheMode.isScattered() ? new TestScatteredConsistentHashFactory() : new TestDefaultConsistentHashFactory();
-      builderUsed.clustering().cacheMode(cacheMode).hash().numSegments(3).consistentHashFactory(chf);
+      HashConfigurationBuilder hashConfiguration = builderUsed.clustering().cacheMode(cacheMode).hash().numSegments(3);
+      if (!cacheMode.isReplicated()) {
+         BaseControlledConsistentHashFactory<? extends ConsistentHash> chf =
+               cacheMode.isScattered() ? new TestScatteredConsistentHashFactory() : new TestDefaultConsistentHashFactory();
+         hashConfiguration.consistentHashFactory(chf);
+      }
       if (transactional) {
          builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       }

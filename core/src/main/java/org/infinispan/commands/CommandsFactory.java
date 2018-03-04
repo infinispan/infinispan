@@ -237,10 +237,11 @@ public interface CommandsFactory {
    /**
     * Builds a GetCacheEntryCommand
     * @param key key to get
+    * @param segment the segment for the key or {@link SegmentSpecificCommand#UNKNOWN_SEGMENT} if not known
     * @param flagsBitSet Command flags provided by cache
     * @return a GetCacheEntryCommand
     */
-   GetCacheEntryCommand buildGetCacheEntryCommand(Object key, long flagsBitSet);
+   GetCacheEntryCommand buildGetCacheEntryCommand(Object key, int segment, long flagsBitSet);
 
    /**
     * Builds a GetAllCommand
@@ -353,15 +354,16 @@ public interface CommandsFactory {
    /**
     * Builds a ClusteredGetCommand, which is a remote lookup command
     * @param key key to look up
+    * @param segment the segment for the key or {@link SegmentSpecificCommand#UNKNOWN_SEGMENT} if not known
     * @param flagsBitSet Command flags provided by cache
     * @return a ClusteredGetCommand
     */
-   ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet);
+   ClusteredGetCommand buildClusteredGetCommand(Object key, int segment, long flagsBitSet);
 
    @Deprecated
    default ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet, boolean acquireRemoteLock, GlobalTransaction gtx) {
       if (acquireRemoteLock) throw new UnsupportedOperationException("acquireRemoteLock is not supported, use Flag.FORCE_WRITE_LOCK");
-      return buildClusteredGetCommand(key, flagsBitSet);
+      return buildClusteredGetCommand(key, SegmentSpecificCommand.UNKNOWN_SEGMENT, flagsBitSet);
    }
 
    /**

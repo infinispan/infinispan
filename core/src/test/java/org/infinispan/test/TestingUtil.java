@@ -52,6 +52,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.management.MBeanInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
@@ -82,6 +83,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.PartitionerConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -335,6 +337,11 @@ public class TestingUtil {
          Class<T> interceptorToFind) {
       return cache.getAdvancedCache().getAsyncInterceptorChain()
             .findInterceptorExtending(interceptorToFind);
+   }
+
+   public static int getSegmentForKey(Object key, Cache cache) {
+      KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
+      return keyPartitioner.getSegment(key);
    }
 
    /**

@@ -21,6 +21,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.stream.StreamMarshalling;
@@ -123,6 +124,11 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
 
    @Override
    public LockedStream<K, V> filterKeySegments(Set<Integer> segments) {
+      return newOrReuse(realStream.filterKeySegments(segments));
+   }
+
+   @Override
+   public LockedStream<K, V> filterKeySegments(IntSet segments) {
       return newOrReuse(realStream.filterKeySegments(segments));
    }
 

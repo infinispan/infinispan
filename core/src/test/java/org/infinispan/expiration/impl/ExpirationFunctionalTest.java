@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -130,9 +131,16 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
       }
       timeService.advance(2);
 
-      for (int i = 0; i < SIZE; i++) {
+      if (cache.getCacheConfiguration().clustering().cacheMode().isClustered()) {
+         AtomicInteger invocationCount = new AtomicInteger();
          cache.getAdvancedCache().getDataContainer().executeTask(KeyFilter.ACCEPT_ALL_FILTER,
-               (k, ice) -> { throw new RuntimeException("No task should be executed on expired entry"); });
+               (k, ice) -> invocationCount.incrementAndGet());
+         assertEquals(SIZE, invocationCount.get());
+      } else {
+         cache.getAdvancedCache().getDataContainer().executeTask(KeyFilter.ACCEPT_ALL_FILTER,
+               (k, ice) -> {
+                  throw new RuntimeException("No task should be executed on expired entry");
+               });
       }
    }
 

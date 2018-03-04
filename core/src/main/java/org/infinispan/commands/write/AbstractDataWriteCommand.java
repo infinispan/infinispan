@@ -21,8 +21,8 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
    protected AbstractDataWriteCommand() {
    }
 
-   protected AbstractDataWriteCommand(Object key, long flagsBitSet, CommandInvocationId commandInvocationId) {
-      super(key, flagsBitSet);
+   protected AbstractDataWriteCommand(Object key, int segment, long flagsBitSet, CommandInvocationId commandInvocationId) {
+      super(key, segment, flagsBitSet);
       this.commandInvocationId = commandInvocationId;
    }
 

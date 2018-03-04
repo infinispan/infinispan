@@ -53,7 +53,7 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
 
    public void testInvokeCommand1() throws Exception {
       ClusteredGetCommand command =
-            TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", 0L);
+            TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", -1, 0L);
       RpcManager rpcManager0 = cache(0).getAdvancedCache().getRpcManager();
 
       Exceptions.expectException(IllegalArgumentException.class, () ->
@@ -79,7 +79,7 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
 
    public void testInvokeCommandCollection() throws Exception {
       ClusteredGetCommand command =
-         TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", 0L);
+         TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", -1, 0L);
       RpcManager rpcManager0 = cache(0).getAdvancedCache().getRpcManager();
 
       Exceptions.expectException(IllegalArgumentException.class, () ->
@@ -105,7 +105,7 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
 
    public void testInvokeCommandCollectionSuspect() throws Exception {
       ClusteredGetCommand command =
-         TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", 0L);
+         TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", -1, 0L);
       RpcManager rpcManager0 = cache(0).getAdvancedCache().getRpcManager();
 
       command.setTopologyId(rpcManager0.getTopologyId());
@@ -127,7 +127,7 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
 
    public void testInvokeCommandOnAll() throws Exception {
       ClusteredGetCommand command =
-         TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", 0L);
+         TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", -1, 0L);
       RpcManager rpcManager0 = cache(0).getAdvancedCache().getRpcManager();
 
       Exceptions.expectException(IllegalArgumentException.class, () ->
@@ -148,7 +148,7 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
 
       try {
          ClusteredGetCommand command =
-            TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", 0L);
+            TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", -1, 0L);
          RpcManager rpcManager0 = cache(0).getAdvancedCache().getRpcManager();
 
          // Add a node to the cache topology, but not to the JGroups cluster view
@@ -172,7 +172,7 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
 
    public void testInvokeCommandStaggered() throws Exception {
       ClusteredGetCommand command =
-         TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", 0L);
+         TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", -1, 0L);
       RpcManager rpcManager0 = cache(0).getAdvancedCache().getRpcManager();
 
       Exceptions.expectException(IllegalArgumentException.class, () ->
@@ -203,7 +203,7 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
 
    public void testInvokeCommands() throws Exception {
       ClusteredGetCommand command =
-         TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", 0L);
+         TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", -1, 0L);
       RpcManager rpcManager0 = cache(0).getAdvancedCache().getRpcManager();
 
       Exceptions.expectException(IllegalArgumentException.class, () -> {

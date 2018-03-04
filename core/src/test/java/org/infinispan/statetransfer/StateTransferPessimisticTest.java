@@ -1,5 +1,9 @@
 package org.infinispan.statetransfer;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.HashSet;
@@ -8,18 +12,20 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.SegmentedDataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.BlockingInterceptor;
-import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
+import org.mockito.AdditionalAnswers;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 /**
@@ -51,9 +57,7 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
 
    public void testStateTransfer() throws Exception {
       CyclicBarrier barrier = new CyclicBarrier(2);
-      BlockingInterceptor<InvalidateCommand> blockerBefore =
-            new BlockingInterceptor<>(barrier, InvalidateCommand.class, false, true);
-      cache(0).getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(blockerBefore, CallInterceptor.class);
+      blockDataContainerIteration(cache(0), barrier);
 
       Set<Object> keys = new HashSet<>();
       for (int i = 0; i < NUM_KEYS; i++) {
@@ -105,5 +109,21 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
          assertEquals(key, cache.get(key));
       }
       return c;
+   }
+
+   protected void blockDataContainerIteration(final Cache<?, ?> cache, final CyclicBarrier barrier) {
+      DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
+      SegmentedDataContainer segmentedDataContainer = (SegmentedDataContainer) dataContainer;
+      final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(dataContainer);
+      SegmentedDataContainer mocaContainer = mock(SegmentedDataContainer.class, withSettings().defaultAnswer(forwardedAnswer));
+      doAnswer(invocation -> {
+         // Wait for main thread to sync up
+         barrier.await(10, TimeUnit.SECONDS);
+         // Now wait until main thread lets us through
+         barrier.await(10, TimeUnit.SECONDS);
+
+         return forwardedAnswer.answer(invocation);
+      }).when(mocaContainer).removeSegments(any());
+      TestingUtil.replaceComponent(cache, DataContainer.class, mocaContainer, true);
    }
 }

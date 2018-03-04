@@ -1,5 +1,6 @@
 package org.infinispan.interceptors.impl;
 
+import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -23,8 +24,13 @@ public class BiasedEntryWrappingInterceptor extends RetryingEntryWrappingInterce
    }
 
    @Override
-   protected boolean canRead(Object key) {
-      return biasManager.hasLocalBias(key) || super.canRead(key);
+   protected boolean canRead(DataCommand command) {
+      return biasManager.hasLocalBias(command.getKey()) || super.canRead(command);
+   }
+
+   @Override
+   protected boolean canReadKey(Object key) {
+      return biasManager.hasLocalBias(key) || super.canReadKey(key);
    }
 
    @Override

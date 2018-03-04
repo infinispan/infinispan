@@ -7,6 +7,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.BaseStream;
 
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.intops.UnorderedOperation;
@@ -22,12 +23,12 @@ public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>, S2
    protected final Collection<Runnable> onCloseRunnables;
    protected final Queue<IntermediateOperation> intermediateOperations;
 
-   protected Set<Integer> segmentsToFilter;
+   protected IntSet segmentsToFilter;
    protected Set<?> keysToFilter;
    protected boolean parallel;
 
    public interface StreamSupplier<T, S extends BaseStream<T, S>> {
-      S buildStream(Set<Integer> segmentsToFilter, Set<?> keysToFilter);
+      S buildStream(IntSet segmentsToFilter, Set<?> keysToFilter, boolean parallel);
    }
 
    /**
@@ -59,10 +60,7 @@ public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>, S2
    }
 
    protected final S createStream() {
-      BaseStream<?, ?> stream = streamSupplier.buildStream(segmentsToFilter, keysToFilter);
-      if (parallel) {
-         stream = stream.parallel();
-      }
+      BaseStream<?, ?> stream = streamSupplier.buildStream(segmentsToFilter, keysToFilter, parallel);
       for (IntermediateOperation intOp : intermediateOperations) {
          intOp.handleInjection(registry);
          stream = intOp.perform(stream);

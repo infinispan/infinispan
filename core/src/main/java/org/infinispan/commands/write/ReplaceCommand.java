@@ -9,6 +9,7 @@ import java.io.ObjectOutput;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
@@ -37,9 +38,9 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    public ReplaceCommand(Object key, Object oldValue, Object newValue,
-                         CacheNotifier notifier, Metadata metadata, long flagsBitSet,
+                         CacheNotifier notifier, Metadata metadata, int segment, long flagsBitSet,
                          CommandInvocationId commandInvocationId) {
-      super(key, flagsBitSet, commandInvocationId);
+      super(key, segment, flagsBitSet, commandInvocationId);
       this.oldValue = oldValue;
       this.newValue = newValue;
       //noinspection unchecked
@@ -116,6 +117,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       output.writeObject(key);
       output.writeObject(oldValue);
       output.writeObject(newValue);
+      UnsignedNumeric.writeUnsignedInt(output, segment);
       output.writeObject(metadata);
       MarshallUtil.marshallEnum(valueMatcher, output);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
@@ -127,6 +129,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       key = input.readObject();
       oldValue = input.readObject();
       newValue = input.readObject();
+      segment = UnsignedNumeric.readUnsignedInt(input);
       metadata = (Metadata) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       setFlagsBitSet(input.readLong());

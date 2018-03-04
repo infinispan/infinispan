@@ -118,12 +118,11 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
 
    // We need this method in here because of putForExternalRead
    final Object visitNonTxDataWriteCommand(InvocationContext ctx, DataWriteCommand command) {
-      Object key;
-      if (hasSkipLocking(command) || !shouldLockKey((key = command.getKey()))) {
+      if (hasSkipLocking(command) || !shouldLockKey(command)) {
          return invokeNext(ctx, command);
       }
 
-      LockPromise lockPromise = lockAndRecord(ctx, key, getLockTimeoutMillis(command));
+      LockPromise lockPromise = lockAndRecord(ctx, command.getKey(), getLockTimeoutMillis(command));
       return nonTxLockAndInvokeNext(ctx, command, lockPromise, unlockAllReturnHandler);
    }
 
@@ -243,6 +242,10 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
             cacheConfiguration.locking().lockAcquisitionTimeout();
    }
 
+   final boolean shouldLockKey(DataWriteCommand command) {
+      return shouldLockKey(command.getSegment());
+   }
+
    final boolean shouldLockKey(Object key) {
       //only the primary owner acquires the lock.
       boolean shouldLock = isLockOwner(key);
@@ -250,8 +253,19 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
       return shouldLock;
    }
 
+   final boolean shouldLockKey(int keySegment) {
+      //only the primary owner acquires the lock.
+      boolean shouldLock = isLockOwner(keySegment);
+      if (trace) getLog().tracef("Are (%s) we the lock owners for segment '%s'? %s", cdl.getAddress(), keySegment, shouldLock);
+      return shouldLock;
+   }
+
    final boolean isLockOwner(Object key) {
       return cdl.getCacheTopology().getDistribution(key).isPrimary();
+   }
+
+   final boolean isLockOwner(int keySegment) {
+      return cdl.getCacheTopology().getDistributionForSegment(keySegment).isPrimary();
    }
 
    protected final KeyAwareLockPromise lockAndRecord(InvocationContext context, Object key, long timeout) {

@@ -14,6 +14,8 @@ import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
@@ -157,12 +159,20 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return invokeNext(ctx, command);
    }
 
+   protected DistributionInfo retrieveDistributionInfo(LocalizedCacheTopology topology, ReplicableCommand command, Object key) {
+      if (command instanceof SegmentSpecificCommand) {
+         return topology.getDistributionForSegment(((SegmentSpecificCommand) command).getSegment());
+      } else {
+         return topology.getDistribution(key);
+      }
+   }
+
    protected <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletionStage<Void> remoteGet(
          InvocationContext ctx, C command, Object key, boolean isWrite) {
       LocalizedCacheTopology cacheTopology = checkTopologyId(command);
       int topologyId = cacheTopology.getTopologyId();
 
-      DistributionInfo info = cacheTopology.getDistribution(key);
+      DistributionInfo info = retrieveDistributionInfo(cacheTopology, command, key);
       if (info.isReadOwner()) {
          if (trace) {
             log.tracef("Key %s became local after wrapping, retrying command. Command topology is %d, current topology is %d",
@@ -179,7 +189,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             key, topologyId, info.readOwners());
       }
 
-      ClusteredGetCommand getCommand = cf.buildClusteredGetCommand(key, command.getFlagsBitSet());
+      ClusteredGetCommand getCommand = cf.buildClusteredGetCommand(key, SegmentSpecificCommand.extractSegment(command),
+            command.getFlagsBitSet());
       getCommand.setTopologyId(topologyId);
       getCommand.setWrite(isWrite);
 

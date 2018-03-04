@@ -309,11 +309,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       return invokeNextAndHandle(ctx, command, handleNonTxWriteReturn);
    }
 
-   private Object handleNonTxWriteReturn(InvocationContext rCtx,
-                                         VisitableCommand rCommand, Object rv, Throwable t) throws Throwable {
-      if (t == null)
-         return rv;
-
+   private Object handleExceptionOnNonTxWriteReturn(InvocationContext rCtx, VisitableCommand rCommand, Throwable t) throws Throwable {
       Throwable ce = t;
       while (ce instanceof RemoteException) {
          ce = ce.getCause();
@@ -336,6 +332,15 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       // In non-tx context, waiting for transaction data is equal to waiting for topology
       CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(newTopologyId);
       return retryWhenDone(transactionDataFuture, newTopologyId, rCtx, writeCommand, handleNonTxWriteReturn);
+   }
+
+   private Object handleNonTxWriteReturn(InvocationContext rCtx,
+                                         VisitableCommand rCommand, Object rv, Throwable t) throws Throwable {
+      if (t == null)
+         return rv;
+
+      // Separate method to allow for inlining of this method since exception should rarely occur
+      return handleExceptionOnNonTxWriteReturn(rCtx, rCommand, t);
    }
 
    @Override

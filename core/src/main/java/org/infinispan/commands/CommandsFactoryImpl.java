@@ -91,6 +91,7 @@ import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.container.DataContainer;
@@ -205,6 +206,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Inject private TimeService timeService;
 
    private ByteString cacheName;
+   private CacheMode cacheMode;
    private boolean transactional;
    private boolean totalOrderProtocol;
 
@@ -212,20 +214,25 @@ public class CommandsFactoryImpl implements CommandsFactory {
    // needs to happen early on
    public void start() {
       cacheName = ByteString.fromString(cache.getName());
+      cacheMode = configuration.clustering().cacheMode();
       this.transactional = configuration.transaction().transactionMode().isTransactional();
       this.totalOrderProtocol = configuration.transaction().transactionProtocol().isTotalOrder();
+   }
+
+   private int getSegment(Object key) {
+      return keyPartitioner.getSegment(key);
    }
 
    @Override
    public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, long flagsBitSet) {
       boolean reallyTransactional = transactional && !EnumUtil.containsAny(flagsBitSet, FlagBitSets.PUT_FOR_EXTERNAL_READ);
-      return new PutKeyValueCommand(key, value, false, notifier, metadata, flagsBitSet,
+      return new PutKeyValueCommand(key, value, false, notifier, metadata, getSegment(key), flagsBitSet,
                                     generateUUID(reallyTransactional));
    }
 
    @Override
    public RemoveCommand buildRemoveCommand(Object key, Object value, long flagsBitSet) {
-      return new RemoveCommand(key, value, notifier, flagsBitSet,
+      return new RemoveCommand(key, value, notifier, getSegment(key), flagsBitSet,
                                generateUUID(transactional));
    }
 
@@ -251,13 +258,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, Long lifespan) {
-      return new RemoveExpiredCommand(key, value, lifespan, false, notifier, generateUUID(transactional),
+      return new RemoveExpiredCommand(key, value, lifespan, false, notifier, getSegment(key), generateUUID(transactional),
             versionGenerator.nonExistingVersion());
    }
 
    @Override
    public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value) {
-      return new RemoveExpiredCommand(key, value, null, true, notifier, generateUUID(transactional),
+      return new RemoveExpiredCommand(key, value, null, true, notifier, getSegment(key), generateUUID(transactional),
             versionGenerator.nonExistingVersion());
    }
 
@@ -273,18 +280,18 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, long flagsBitSet) {
-      return new ReplaceCommand(key, oldValue, newValue, notifier, metadata, flagsBitSet,
+      return new ReplaceCommand(key, oldValue, newValue, notifier, metadata, getSegment(key), flagsBitSet,
                                 generateUUID(transactional));
    }
 
    @Override
    public ComputeCommand buildComputeCommand(Object key, BiFunction mappingFunction, boolean computeIfPresent, Metadata metadata, long flagsBitSet) {
-      return new ComputeCommand(key, mappingFunction, computeIfPresent, flagsBitSet, generateUUID(transactional), metadata, notifier, componentRegistry);
+      return new ComputeCommand(key, mappingFunction, computeIfPresent, getSegment(key), flagsBitSet, generateUUID(transactional), metadata, notifier, componentRegistry);
    }
 
    @Override
    public ComputeIfAbsentCommand buildComputeIfAbsentCommand(Object key, Function mappingFunction, Metadata metadata, long flagsBitSet) {
-      return new ComputeIfAbsentCommand(key, mappingFunction, flagsBitSet, generateUUID(transactional), metadata, notifier, componentRegistry);
+      return new ComputeIfAbsentCommand(key, mappingFunction, getSegment(key), flagsBitSet, generateUUID(transactional), metadata, notifier, componentRegistry);
    }
 
    @Override
@@ -294,17 +301,17 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public KeySetCommand buildKeySetCommand(long flagsBitSet) {
-      return new KeySetCommand(cache, flagsBitSet);
+      return new KeySetCommand(cache, keyPartitioner, flagsBitSet);
    }
 
    @Override
    public EntrySetCommand buildEntrySetCommand(long flagsBitSet) {
-      return new EntrySetCommand(cache, flagsBitSet);
+      return new EntrySetCommand(cache, keyPartitioner, flagsBitSet);
    }
 
    @Override
    public GetKeyValueCommand buildGetKeyValueCommand(Object key, long flagsBitSet) {
-      return new GetKeyValueCommand(key, flagsBitSet);
+      return new GetKeyValueCommand(key, getSegment(key), flagsBitSet);
    }
 
    @Override
@@ -324,7 +331,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public EvictCommand buildEvictCommand(Object key, long flagsBitSet) {
-      return new EvictCommand(key, notifier, flagsBitSet, generateUUID(transactional), entryFactory);
+      return new EvictCommand(key, notifier, getSegment(key), flagsBitSet, generateUUID(transactional), entryFactory);
    }
 
    @Override
@@ -362,8 +369,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet) {
-      return new ClusteredGetCommand(key, cacheName, flagsBitSet);
+   public ClusteredGetCommand buildClusteredGetCommand(Object key, int segment, long flagsBitSet) {
+      if (segment == -1) {
+         segment = getSegment(key);
+      }
+      return new ClusteredGetCommand(key, cacheName, segment, flagsBitSet);
    }
 
    /**
@@ -752,8 +762,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, long flagsBitSet) {
-      return new GetCacheEntryCommand(key, flagsBitSet, entryFactory);
+   public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, int segment, long flagsBitSet) {
+      if (segment == SegmentSpecificCommand.UNKNOWN_SEGMENT) {
+         segment = getSegment(key);
+      }
+      return new GetCacheEntryCommand(key, segment, flagsBitSet, entryFactory);
    }
 
    @Override
@@ -771,7 +784,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(Object key, Function<ReadEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return new ReadOnlyKeyCommand<>(key, f, params, keyDataConversion, valueDataConversion, componentRegistry);
+      return new ReadOnlyKeyCommand<>(key, f, getSegment(key), params, keyDataConversion, valueDataConversion, componentRegistry);
    }
 
    @Override
@@ -782,14 +795,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public <K, V, T, R> ReadWriteKeyValueCommand<K, V, T, R> buildReadWriteKeyValueCommand(Object key, Object argument, BiFunction<T, ReadWriteEntryView<K, V>, R> f,
                                                                                           Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return new ReadWriteKeyValueCommand(key, argument, f, generateUUID(transactional), getValueMatcher(f),
+      return new ReadWriteKeyValueCommand(key, argument, f, getSegment(key), generateUUID(transactional), getValueMatcher(f),
             params, keyDataConversion, valueDataConversion, componentRegistry);
    }
 
    @Override
    public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(
          Object key, Function<ReadWriteEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return new ReadWriteKeyCommand<>(key, f, generateUUID(transactional), getValueMatcher(f), params, keyDataConversion, valueDataConversion, componentRegistry);
+      return new ReadWriteKeyCommand<>(key, f, getSegment(key), generateUUID(transactional), getValueMatcher(f), params, keyDataConversion, valueDataConversion, componentRegistry);
    }
 
    @Override
@@ -810,12 +823,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(
          Object key, Consumer<WriteEntryView<K, V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return new WriteOnlyKeyCommand<>(key, f, generateUUID(transactional), getValueMatcher(f), params, keyDataConversion, valueDataConversion, componentRegistry);
+      return new WriteOnlyKeyCommand<>(key, f, getSegment(key), generateUUID(transactional), getValueMatcher(f), params, keyDataConversion, valueDataConversion, componentRegistry);
    }
 
    @Override
    public <K, V, T> WriteOnlyKeyValueCommand<K, V, T> buildWriteOnlyKeyValueCommand(Object key, Object argument, BiConsumer<T, WriteEntryView<K, V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return new WriteOnlyKeyValueCommand<>(key, argument, f, generateUUID(transactional), getValueMatcher(f), params, keyDataConversion, valueDataConversion, componentRegistry);
+      return new WriteOnlyKeyValueCommand<>(key, argument, f, getSegment(key), generateUUID(transactional), getValueMatcher(f), params, keyDataConversion, valueDataConversion, componentRegistry);
    }
 
    @Override

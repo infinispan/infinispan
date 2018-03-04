@@ -28,6 +28,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
+import org.infinispan.commons.util.IntSet;
 
 /**
  * Delegate that forwards all the of the method calls to the underlying cache stream. This can be useful to intercept
@@ -91,6 +92,12 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public AbstractDelegatingCacheStream<R> filterKeySegments(Set<Integer> segments) {
+      underlyingStream = underlyingStream.filterKeySegments(segments);
+      return this;
+   }
+
+   @Override
+   public AbstractDelegatingCacheStream<R> filterKeySegments(IntSet segments) {
       underlyingStream = underlyingStream.filterKeySegments(segments);
       return this;
    }

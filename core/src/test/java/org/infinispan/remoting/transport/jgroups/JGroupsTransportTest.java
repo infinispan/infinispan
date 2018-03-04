@@ -50,7 +50,7 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
 
       JGroupsTransport transport = (JGroupsTransport) manager(0).getTransport();
       long initialMessages = transport.getChannel().getSentMessages();
-      ReplicableCommand command = new ClusteredGetCommand("key", CACHE_NAME, 0);
+      ReplicableCommand command = new ClusteredGetCommand("key", CACHE_NAME, 0, 0);
       CompletableFuture<Map<Address, Response>> future = transport
             .invokeRemotelyAsync(Collections.singletonList(randomAddress), command,
                                  ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, 1, null, DeliverOrder.NONE, true);
@@ -64,7 +64,7 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
 
       // Send message only to non-member
       JGroupsTransport transport = (JGroupsTransport) manager(0).getTransport();
-      ReplicableCommand command = new ClusteredGetCommand("key", ByteString.fromString("cache"), 0);
+      ReplicableCommand command = new ClusteredGetCommand("key", CACHE_NAME, 0, 0);
       CompletionStage<Map<Address, Response>> future =
          transport.invokeCommandStaggered(Collections.singletonList(randomAddress), command,
                                           MapResponseCollector.ignoreLeavers(), DeliverOrder.NONE, 5,

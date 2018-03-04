@@ -28,7 +28,7 @@ public class HotRodMarshallingTest extends AbstractMarshallingTest {
    public void testMarshallingCommandWithBigByteArrayKey() throws Exception {
       byte[] cacheKey = getBigByteArray();
       ClusteredGetCommand command =
-            new ClusteredGetCommand(new WrappedByteArray(cacheKey), ByteString.fromString("c"), EnumUtil.EMPTY_BIT_SET);
+            new ClusteredGetCommand(new WrappedByteArray(cacheKey), ByteString.fromString("c"), 0, EnumUtil.EMPTY_BIT_SET);
       byte[] bytes = marshaller.objectToByteBuffer(command);
       ClusteredGetCommand readCommand = (ClusteredGetCommand) marshaller.objectFromByteBuffer(bytes);
       assertEquals(readCommand, command);
