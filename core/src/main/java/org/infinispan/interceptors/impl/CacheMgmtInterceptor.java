@@ -97,6 +97,17 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       return visitDataReadCommand(ctx, command);
    }
 
+   public void addDataRead(boolean foundValue, long timeNanoSeconds) {
+      StripeB stripe = counters.stripeForCurrentThread();
+      if (foundValue) {
+         counters.add(StripeB.hitTimesFieldUpdater, stripe, timeNanoSeconds);
+         counters.increment(StripeB.hitsFieldUpdater, stripe);
+      } else {
+         counters.add(StripeB.missTimesFieldUpdater, stripe, timeNanoSeconds);
+         counters.increment(StripeB.missesFieldUpdater, stripe);
+      }
+   }
+
    private Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
       boolean statisticsEnabled = getStatisticsEnabled(command);
       if (!statisticsEnabled || !ctx.isOriginLocal())
@@ -104,15 +115,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
-         StripeB stripe = counters.stripeForCurrentThread();
-         long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
-         if (rv == null) {
-            counters.add(StripeB.missTimesFieldUpdater, stripe, intervalNanoseconds);
-            counters.increment(StripeB.missesFieldUpdater, stripe);
-         } else {
-            counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalNanoseconds);
-            counters.increment(StripeB.hitsFieldUpdater, stripe);
-         }
+         addDataRead(rv != null, timeService.timeDuration(start, TimeUnit.NANOSECONDS));
       });
    }
 

@@ -103,13 +103,9 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
     * Clears the memory lookups and cache data.
     */
    @Stop(priority = Integer.MAX_VALUE)
-   public void deallocate() {
+   public void stop() {
       locks.lockAll();
       try {
-         if (size.get() != 0) {
-            getLog().warn("Container was not cleared before deallocating memory lookup tables!  Memory leak " +
-                  "will have occurred!");
-         }
          clear();
          memoryLookup.deallocate();
          dellocated = true;

@@ -11,9 +11,9 @@ import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.commands.read.AbstractCloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.CloseableSpliteratorMapper;
+import org.infinispan.commons.util.IteratorMapper;
+import org.infinispan.commons.util.SpliteratorMapper;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.stream.StreamMarshalling;
 
@@ -34,12 +34,12 @@ public class ValueCacheCollection<K, V> extends AbstractCloseableIteratorCollect
 
    @Override
    public CloseableIterator<V> iterator() {
-      return new CloseableIteratorMapper<>(cacheSet.iterator(), CacheEntry::getValue);
+      return new IteratorMapper<>(cacheSet.iterator(), CacheEntry::getValue);
    }
 
    @Override
    public CloseableSpliterator<V> spliterator() {
-      return new CloseableSpliteratorMapper<>(cacheSet.spliterator(), CacheEntry::getValue);
+      return new SpliteratorMapper<>(cacheSet.spliterator(), CacheEntry::getValue);
    }
 
    @Override

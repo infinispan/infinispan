@@ -41,10 +41,10 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollectionAdapter;
 import org.infinispan.commons.util.CloseableIteratorSetAdapter;
 import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.CloseableSpliteratorMapper;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.IteratorMapper;
+import org.infinispan.commons.util.SpliteratorMapper;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.format.PropertyFormatter;
@@ -1838,7 +1838,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CloseableSpliterator<K> spliterator() {
-         return new CloseableSpliteratorMapper<>(dataContainer.spliterator(), Map.Entry::getKey);
+         return new SpliteratorMapper<>(dataContainer.spliterator(), Map.Entry::getKey);
       }
 
       @Override

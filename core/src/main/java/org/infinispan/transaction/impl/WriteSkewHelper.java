@@ -1,5 +1,6 @@
 package org.infinispan.transaction.impl;
 
+import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
@@ -46,14 +47,21 @@ public class WriteSkewHelper {
 
       for (WriteCommand c : prepareCommand.getModifications()) {
          for (Object k : c.getAffectedKeys()) {
-            if (ksl.performCheckOnKey(k)) {
+            boolean shouldPerformCheck;
+            int segment = SegmentSpecificCommand.extractSegment(c);
+            if (segment != -1) {
+               shouldPerformCheck = ksl.performCheckOnSegment(segment);
+            } else {
+               shouldPerformCheck = ksl.performCheckOnKey(k);
+            }
+            if (shouldPerformCheck) {
                CacheEntry cacheEntry = context.lookupEntry(k);
                if (!(cacheEntry instanceof VersionedRepeatableReadEntry)) {
                   continue;
                }
                VersionedRepeatableReadEntry entry = (VersionedRepeatableReadEntry) cacheEntry;
 
-               if (entry.performWriteSkewCheck(dataContainer, persistenceManager, context,
+               if (entry.performWriteSkewCheck(dataContainer, segment, persistenceManager, context,
                                                prepareCommand.getVersionsSeen().get(k), versionGenerator, timeService)) {
                   IncrementableEntryVersion oldVersion = (IncrementableEntryVersion) entry.getMetadata().version();
                   IncrementableEntryVersion newVersion = entry.isCreated() || oldVersion == null
@@ -84,8 +92,8 @@ public class WriteSkewHelper {
             if (ksl.performCheckOnKey(k)) {
                VersionedRepeatableReadEntry entry = (VersionedRepeatableReadEntry) context.lookupEntry(k);
 
-               if (entry.performWriteSkewCheck(dataContainer, persistenceManager, context,
-                                               prepareCommand.getVersionsSeen().get(k), versionGenerator, timeService)) {
+               if (entry.performWriteSkewCheck(dataContainer, SegmentSpecificCommand.UNKNOWN_SEGMENT, persistenceManager,
+                     context, prepareCommand.getVersionsSeen().get(k), versionGenerator, timeService)) {
                   //in total order, it does not care about the version returned. It just need the keys validated
                   uv.put(k, null);
                } else {
@@ -99,7 +107,21 @@ public class WriteSkewHelper {
       return uv;
    }
 
-   public static interface KeySpecificLogic {
+   public interface KeySpecificLogic {
       boolean performCheckOnKey(Object key);
+
+      boolean performCheckOnSegment(int segment);
    }
+
+   public static final KeySpecificLogic ALWAYS_TRUE_LOGIC = new KeySpecificLogic() {
+      @Override
+      public boolean performCheckOnKey(Object key) {
+         return true;
+      }
+
+      @Override
+      public boolean performCheckOnSegment(int segment) {
+         return true;
+      }
+   };
 }

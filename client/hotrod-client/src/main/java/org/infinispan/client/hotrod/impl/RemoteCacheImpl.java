@@ -57,10 +57,10 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
-import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.query.dsl.Query;
 
@@ -648,7 +648,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       public CloseableIterator<V> iterator() {
          CloseableIterator<Map.Entry<K, V>> entryIterator = operationsFactory.getCodec().entryIterator(
                RemoteCacheImpl.this, batchSize);
-         return new CloseableIteratorMapper<>(new RemovableCloseableIterator<>(entryIterator, e -> RemoteCacheImpl.this.remove(e.getKey(), e.getValue())),
+         return new IteratorMapper<>(new RemovableCloseableIterator<>(entryIterator, e -> RemoteCacheImpl.this.remove(e.getKey(), e.getValue())),
                // Convert to V for user
                Entry::getValue);
       }

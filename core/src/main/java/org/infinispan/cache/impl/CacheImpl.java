@@ -41,6 +41,7 @@ import org.infinispan.atomic.DeltaAware;
 import org.infinispan.atomic.impl.ApplyDelta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
@@ -475,7 +476,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final CacheEntry getCacheEntry(Object key, long explicitFlags, InvocationContext ctx) {
       assertKeyNotNull(key);
-      GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, explicitFlags);
+      GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, SegmentSpecificCommand.UNKNOWN_SEGMENT,
+            explicitFlags);
       Object ret = invoker.invoke(ctx, command);
       return (CacheEntry) ret;
    }
@@ -492,7 +494,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final CompletableFuture<CacheEntry<K,V>> getCacheEntryAsync(Object key, long explicitFlags, InvocationContext ctx) {
       assertKeyNotNull(key);
-      GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, explicitFlags);
+      GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, SegmentSpecificCommand.UNKNOWN_SEGMENT,
+            explicitFlags);
       return invoker.invokeAsync(ctx, command).thenApply(CacheEntry.class::cast);
    }
 

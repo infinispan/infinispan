@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
+import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
@@ -411,7 +412,8 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             if (retrievals == null) {
                retrievals = new ArrayList<>();
             }
-            GetCacheEntryCommand fakeGetCommand = cf.buildGetCacheEntryCommand(key, command.getFlagsBitSet());
+            GetCacheEntryCommand fakeGetCommand = cf.buildGetCacheEntryCommand(key,
+                  SegmentSpecificCommand.extractSegment(command), command.getFlagsBitSet());
             CompletableFuture<?> getFuture =
                   remoteGet(ctx, fakeGetCommand, fakeGetCommand.getKey(), true).toCompletableFuture();
             retrievals.add(getFuture);

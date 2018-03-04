@@ -35,7 +35,7 @@ public abstract class BackupWriteCommand extends BaseRpcCommand {
 
    //backup commands are ordered by segment. this is the sequence number of the segment.
    private long sequence;
-   private int segmentId;
+   protected int segmentId;
 
    private InvocationContextFactory invocationContextFactory;
    private AsyncInterceptorChain interceptorChain;

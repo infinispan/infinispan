@@ -4,10 +4,11 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
-import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.util.Experimental;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.functional.EntryView.ReadEntryView;
+import org.infinispan.metadata.Metadata;
 
 /**
  * @since 8.0
@@ -60,15 +61,22 @@ public final class FunctionalNotifierImpl<K, V> implements FunctionalNotifier<K,
    }
 
    @Override
-   public void notifyOnCreate(ReadEntryView<K, V> created) {
-      onCreates.forEach(c -> c.accept(created));
-      rwListeners.forEach(rwl -> rwl.onCreate(created));
+   public void notifyOnCreate(CacheEntry entry) {
+      if (!onCreates.isEmpty() || !rwListeners.isEmpty()) {
+         ReadEntryView<K, V> created = EntryViews.readOnly(entry);
+         onCreates.forEach(c -> c.accept(created));
+         rwListeners.forEach(rwl -> rwl.onCreate(created));
+      }
    }
 
    @Override
-   public void notifyOnModify(ReadEntryView<K, V> before, ReadEntryView<K, V> after) {
-      onModifies.forEach(c -> c.accept(before, after));
-      rwListeners.forEach(rwl -> rwl.onModify(before, after));
+   public void notifyOnModify(CacheEntry<K, V> entry, V previousValue, Metadata previousMetadata) {
+      if (!onModifies.isEmpty() || !rwListeners.isEmpty()) {
+         ReadEntryView<K, V> before = EntryViews.readOnly(entry.getKey(), previousValue, previousMetadata);
+         ReadEntryView<K, V> after = EntryViews.readOnly(entry);
+         onModifies.forEach(c -> c.accept(before, after));
+         rwListeners.forEach(rwl -> rwl.onModify(before, after));
+      }
    }
 
    @Override
@@ -78,9 +86,21 @@ public final class FunctionalNotifierImpl<K, V> implements FunctionalNotifier<K,
    }
 
    @Override
-   public void notifyOnWrite(Supplier<ReadEntryView<K, V>> write) {
-      if (!onWrites.isEmpty()) onWrites.forEach(c -> c.accept(write.get()));
-      if (!writeListeners.isEmpty()) writeListeners.forEach(wl -> wl.onWrite(write.get()));
+   public void notifyOnWrite(CacheEntry<K, V> entry) {
+      if (!onWrites.isEmpty() || !writeListeners.isEmpty()) {
+         ReadEntryView<K, V> wrote = EntryViews.readOnly(entry);
+         onWrites.forEach(c -> c.accept(wrote));
+         writeListeners.forEach(wl -> wl.onWrite(wrote));
+      }
+   }
+
+   @Override
+   public void notifyOnWriteRemove(K key) {
+      if (!onWrites.isEmpty() || !writeListeners.isEmpty()) {
+         ReadEntryView<K, V> wrote = EntryViews.noValue(key);
+         onWrites.forEach(c -> c.accept(wrote));
+         writeListeners.forEach(wl -> wl.onWrite(wrote));
+      }
    }
 
    private static final class ListenerCloseable<T> implements AutoCloseable {

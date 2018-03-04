@@ -12,6 +12,8 @@ import org.infinispan.context.InvocationContext;
 
 
 /**
+ * This class can no longer be used. Any attempts to use it internally will lead to a {@link UnsupportedOperationException}
+ * being thrown.
  * @author Vladimir Blagojevic
  * @since 5.1
  * @deprecated since 9.1
@@ -25,7 +27,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    }
 
    public ApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection<Object> keys, CommandInvocationId commandInvocationId) {
-      super(deltaAwareValueKey, 0, commandInvocationId);
+      throw new UnsupportedOperationException();
    }
 
    public Delta getDelta(){

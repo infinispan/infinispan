@@ -8,7 +8,9 @@ import java.util.function.Function;
  * originally supported remove.
  * @author William Burns
  * @since 8.0
+ * @deprecated since 9.3 users can just use {@link IteratorMapper} as it handles CloseableIterators now
  */
+@Deprecated
 public class CloseableIteratorMapper<E, S> extends IteratorMapper<E, S> implements CloseableIterator<S> {
    private final Iterator<? extends E> iterator;
 

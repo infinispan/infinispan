@@ -10,7 +10,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.util.logging.Log;
@@ -36,16 +35,17 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
    }
 
    @Override
-   public Stream<CacheEntry<K, V>> buildStream(Set<Integer> segmentsToFilter, Set<?> keysToFilter) {
+   public Stream<CacheEntry<K, V>> buildStream(IntSet segmentsToFilter, Set<?> keysToFilter, boolean parallel) {
       Stream<CacheEntry<K, V>> stream;
-      // Make sure we aren't going to a remote node to retrieve these
-      AdvancedCache<K, V> advancedCache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
-            .withFlags(Flag.CACHE_MODE_LOCAL);
       if (keysToFilter != null) {
          if (trace) {
             log.tracef("Applying key filtering %s", keysToFilter);
          }
-         stream = keysToFilter.stream()
+         // Make sure we aren't going remote to retrieve these
+         AdvancedCache<K, V> advancedCache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
+               .withFlags(Flag.CACHE_MODE_LOCAL);
+         Stream<?> keyStream = parallel ? keysToFilter.parallelStream() : keysToFilter.stream();
+         stream = keyStream
                .map(advancedCache::getCacheEntry)
                .filter(Objects::nonNull);
       } else {
@@ -54,16 +54,18 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
             // Ignore tombstones
             stream = stream.filter(e -> e.getValue() != null);
          }
+         if (parallel) {
+            stream = stream.parallel();
+         }
       }
       if (segmentsToFilter != null && toIntFunction != null) {
          if (trace) {
             log.tracef("Applying segment filter %s", segmentsToFilter);
          }
-         IntSet intSet = SmallIntSet.from(segmentsToFilter);
          stream = stream.filter(k -> {
             K key = k.getKey();
             int segment = toIntFunction.applyAsInt(key);
-            boolean isPresent = intSet.contains(segment);
+            boolean isPresent = segmentsToFilter.contains(segment);
             if (trace)
                log.tracef("Is key %s present in segment %d? %b", key, segment, isPresent);
             return isPresent;

@@ -105,7 +105,7 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public Metadata getMetadata() {
-      return new EmbeddedMetadata.Builder().build();
+      return EmbeddedMetadata.EMPTY;
    }
 
    @Override

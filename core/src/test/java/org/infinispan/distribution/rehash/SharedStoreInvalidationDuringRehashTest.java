@@ -4,7 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -12,16 +11,12 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -48,10 +43,6 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
    private static final int NUM_KEYS = 20;
    private static final String TEST_CACHE_NAME = "testCache";
 
-   private final ConcurrentMap<Integer, ConcurrentMap<Object, AtomicInteger>> invalidationCounts = CollectionFactory.makeConcurrentMap();
-   private final ConcurrentMap<Integer, ConcurrentMap<Object, AtomicInteger>> l1InvalidationCounts = CollectionFactory.makeConcurrentMap();
-   private Map<Object, Integer> previousOwners = Collections.emptyMap();
-
    @Override
    protected void createCacheManagers() {
       // cacheManagers started one after another in test()
@@ -69,19 +60,6 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
    private Configuration buildCfg(final int index, boolean clustered, boolean preload) {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.persistence().passivation(false);
-      cb.customInterceptors().addInterceptor().index(0).interceptor(new BaseCustomInterceptor() {
-         @Override
-         public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand) throws Throwable {
-            incrementCounter(invalidationCounts, index, invalidateCommand.getKeys());
-            return invokeNextInterceptor(ctx, invalidateCommand);
-         }
-
-         @Override
-         public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command invalidateL1Command) throws Throwable {
-            incrementCounter(l1InvalidationCounts, index, invalidateL1Command.getKeys());
-            return invokeNextInterceptor(ctx, invalidateL1Command);
-         }
-      });
 
       DummyInMemoryStoreConfigurationBuilder dummyCB = cb.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
       dummyCB.preload(preload).shared(true).purgeOnStartup(false);
@@ -169,7 +147,6 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
 
    private void checkContentAndInvalidations(boolean preload) {
       int clusterSize = getCacheManagers().size();
-      int joiner = clusterSize - 1;
 
       HashMap<Object, Integer> currentOwners = new HashMap<>();
       for (int i = 0; i < clusterSize; i++) {
@@ -204,39 +181,8 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
          return;
       }
 
-      log.debugf("Invalidations: %s, L1 invalidations: %s", invalidationCounts, l1InvalidationCounts);
-      int joinerSize = advancedCache(joiner, TEST_CACHE_NAME).getDataContainer().size();
-      if (preload) {
-         // L1 is disabled, so no InvalidateL1Commands
-         assertEquals(String.valueOf(l1InvalidationCounts), 0, getSum(l1InvalidationCounts));
-
-         // The joiner has preloaded the entire store, and the entries not owned have been invalidated
-         assertEquals(String.valueOf(invalidationCounts.get(joiner)), NUM_KEYS - joinerSize, getCounter(invalidationCounts, joiner));
-
-         // The other nodes have invalidated the entries moved to the joiner
-         if (clusterSize > 1) {
-            int expectedInvalidations = computeDiff(previousOwners, currentOwners) + (NUM_KEYS - joinerSize);
-            assertEquals(String.valueOf(invalidationCounts), expectedInvalidations, getSum(invalidationCounts));
-         }
-      } else {
-         // L1 is disabled, so no InvalidateL1Commands
-         assertEquals(String.valueOf(l1InvalidationCounts), 0, getSum(l1InvalidationCounts));
-
-         // No entries to invalidate on the joiner
-         assertEquals(String.valueOf(invalidationCounts), 0, getCounter(invalidationCounts, joiner));
-
-         // The other nodes have invalidated the entries moved to the joiner
-         if (clusterSize > 1) {
-            // Nodes did not have any entries in memory and therefore none were moved to the joiner or invalidated
-            assertEquals(String.valueOf(invalidationCounts), 0, getSum(invalidationCounts));
-         }
-      }
-
-      previousOwners = currentOwners;
       // Reset stats for the next check
       store.clearStats();
-      invalidationCounts.clear();
-      l1InvalidationCounts.clear();
    }
 
    private int computeDiff(Map<Object, Integer> previous, Map<Object, Integer> current) {

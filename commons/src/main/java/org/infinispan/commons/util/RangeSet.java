@@ -52,6 +52,15 @@ public class RangeSet implements IntSet {
    }
 
    @Override
+   public int[] toIntArray() {
+      int[] array = new int[size];
+      for (int i = 0; i < size; i++) {
+         array[i] = i;
+      }
+      return array;
+   }
+
+   @Override
    public Object[] toArray() {
       Object[] array = new Object[size];
       for (int i = 0; i < size; i++) {

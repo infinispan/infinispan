@@ -9,6 +9,7 @@ import java.io.ObjectOutput;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
@@ -38,9 +39,9 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    }
 
    public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent,
-                             CacheNotifier notifier, Metadata metadata, long flagsBitSet,
+                             CacheNotifier notifier, Metadata metadata, int segment,long flagsBitSet,
                              CommandInvocationId commandInvocationId) {
-      super(key, flagsBitSet, commandInvocationId);
+      super(key, segment, flagsBitSet, commandInvocationId);
       this.value = value;
       this.putIfAbsent = putIfAbsent;
       this.valueMatcher = putIfAbsent ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
@@ -108,6 +109,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
       output.writeObject(value);
+      UnsignedNumeric.writeUnsignedInt(output, segment);
       output.writeObject(metadata);
       MarshallUtil.marshallEnum(valueMatcher, output);
       CommandInvocationId.writeTo(output, commandInvocationId);
@@ -119,6 +121,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
       value = input.readObject();
+      segment = UnsignedNumeric.readUnsignedInt(input);
       metadata = (Metadata) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       commandInvocationId = CommandInvocationId.readFrom(input);

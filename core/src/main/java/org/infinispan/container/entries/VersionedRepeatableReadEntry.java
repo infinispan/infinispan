@@ -30,7 +30,18 @@ public class VersionedRepeatableReadEntry extends RepeatableReadEntry implements
       super(key, value, metadata);
    }
 
-   public boolean performWriteSkewCheck(DataContainer container, PersistenceManager persistenceManager,
+   /**
+    *
+    * @param container the data container to check the write skew against
+    * @param segment the segment matching this entry or {@link org.infinispan.commands.SegmentSpecificCommand#UNKNOWN_SEGMENT} if unknown
+    * @param persistenceManager the persistence manager to possibly check write skew against
+    * @param ctx the invocation context
+    * @param versionSeen what version has been seen for this entry
+    * @param versionGenerator generator to generate a new version if needed
+    * @param timeService time service to check if entries are expired
+    * @return whether a write skew occurred for this entry
+    */
+   public boolean performWriteSkewCheck(DataContainer container, int segment, PersistenceManager persistenceManager,
                                         TxInvocationContext ctx, EntryVersion versionSeen,
                                         VersionGenerator versionGenerator, TimeService timeService) {
       if (versionSeen == null) {
@@ -42,7 +53,7 @@ public class VersionedRepeatableReadEntry extends RepeatableReadEntry implements
       }
       EntryVersion prevVersion;
       if (ctx.isOriginLocal()) {
-         prevVersion = getCurrentEntryVersion(container, persistenceManager, ctx, versionGenerator, timeService);
+         prevVersion = getCurrentEntryVersion(container, segment, persistenceManager, ctx, versionGenerator, timeService);
       } else {
          // If this node is an owner and not originator, the entry has been loaded and wrapped under lock,
          // so the version in context should be up-to-date
@@ -50,7 +61,7 @@ public class VersionedRepeatableReadEntry extends RepeatableReadEntry implements
          if (prevVersion == null) {
             // If the command has IGNORE_RETURN_VALUE flags it's possible that the entry was not loaded
             // from cache loader - we have to force load
-            prevVersion = getCurrentEntryVersion(container, persistenceManager, ctx, versionGenerator, timeService);
+            prevVersion = getCurrentEntryVersion(container, segment, persistenceManager, ctx, versionGenerator, timeService);
          }
       }
       // If it is expired then it is possible the previous version doesn't exist - because entry didn't exist)
@@ -79,10 +90,11 @@ public class VersionedRepeatableReadEntry extends RepeatableReadEntry implements
       return InequalVersionComparisonResult.EQUAL == result;
    }
 
-   private EntryVersion getCurrentEntryVersion(DataContainer container, PersistenceManager persistenceManager, TxInvocationContext ctx, VersionGenerator versionGenerator, TimeService timeService) {
+   private EntryVersion getCurrentEntryVersion(DataContainer container, int segment, PersistenceManager persistenceManager,
+         TxInvocationContext ctx, VersionGenerator versionGenerator, TimeService timeService) {
       EntryVersion prevVersion;// on origin, the version seen is acquired without the lock, so we have to retrieve it again
       // TODO: persistence should be more orthogonal to any entry type - this should be handled in interceptor
-      InternalCacheEntry ice = PersistenceUtil.loadAndStoreInDataContainer(container, persistenceManager, getKey(),
+      InternalCacheEntry ice = PersistenceUtil.loadAndStoreInDataContainer(container, segment, persistenceManager, getKey(),
             ctx, timeService, null);
       if (ice == null) {
          if (trace) {

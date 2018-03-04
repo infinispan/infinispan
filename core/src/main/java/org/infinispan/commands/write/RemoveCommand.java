@@ -10,6 +10,7 @@ import java.util.Objects;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
@@ -41,9 +42,9 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
     */
    protected Object value;
 
-   public RemoveCommand(Object key, Object value, CacheNotifier notifier, long flagsBitSet,
+   public RemoveCommand(Object key, Object value, CacheNotifier notifier, int segment, long flagsBitSet,
                         CommandInvocationId commandInvocationId) {
-      super(key, flagsBitSet, commandInvocationId);
+      super(key, segment, flagsBitSet, commandInvocationId);
       this.value = value;
       //noinspection unchecked
       this.notifier = notifier;
@@ -174,6 +175,7 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
       output.writeObject(value);
+      UnsignedNumeric.writeUnsignedInt(output, segment);
       output.writeObject(metadata);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       MarshallUtil.marshallEnum(valueMatcher, output);
@@ -184,6 +186,7 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
       value = input.readObject();
+      segment = UnsignedNumeric.readUnsignedInt(input);
       metadata = (Metadata) input.readObject();
       setFlagsBitSet(input.readLong());
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);

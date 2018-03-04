@@ -18,9 +18,9 @@ import org.infinispan.commands.read.AbstractCloseableIteratorCollection;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -82,7 +82,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
 
       @Override
       public CloseableIterator<CacheEntry<K, V>> iterator() {
-         return new CloseableIteratorMapper<>(new RemovableCloseableIterator<>(Closeables.iterator(stream()),
+         return new IteratorMapper<>(new RemovableCloseableIterator<>(Closeables.iterator(stream()),
                e -> cache.remove(e.getKey(), e.getValue())), e -> new EntryWrapper<>(cache, e));
       }
 

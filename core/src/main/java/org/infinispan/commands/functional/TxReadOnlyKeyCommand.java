@@ -27,19 +27,19 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    public TxReadOnlyKeyCommand() {
    }
 
-   public TxReadOnlyKeyCommand(Object key, List<Mutation<K, V, ?>> mutations,
+   public TxReadOnlyKeyCommand(Object key, List<Mutation<K, V, ?>> mutations, int segment,
                                Params params, DataConversion keyDataConversion,
                                DataConversion valueDataConversion,
                                ComponentRegistry componentRegistry) {
-      super(key, null, params, keyDataConversion, valueDataConversion, componentRegistry);
+      super(key, null, segment, params, keyDataConversion, valueDataConversion, componentRegistry);
       this.mutations = mutations;
       init(componentRegistry);
    }
 
-   public TxReadOnlyKeyCommand(ReadOnlyKeyCommand other, List<Mutation<K, V, ?>> mutations, Params params,
+   public TxReadOnlyKeyCommand(ReadOnlyKeyCommand other, List<Mutation<K, V, ?>> mutations, int segment, Params params,
                                DataConversion keyDataConversion, DataConversion valueDataConversion,
                                ComponentRegistry componentRegistry) {
-      super(other.getKey(), other.f, params, keyDataConversion, valueDataConversion, componentRegistry);
+      super(other.getKey(), other.f, segment, params, keyDataConversion, valueDataConversion, componentRegistry);
       this.mutations = mutations;
       init(componentRegistry);
    }

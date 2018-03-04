@@ -12,6 +12,7 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.write.ValueMatcher;
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
@@ -33,12 +34,12 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
 
    private Function<ReadWriteEntryView<K, V>, R> f;
 
-   public ReadWriteKeyCommand(Object key, Function<ReadWriteEntryView<K, V>, R> f,
+   public ReadWriteKeyCommand(Object key, Function<ReadWriteEntryView<K, V>, R> f, int segment,
                               CommandInvocationId id, ValueMatcher valueMatcher, Params params,
                               DataConversion keyDataConversion,
                               DataConversion valueDataConversion,
                               ComponentRegistry componentRegistry) {
-      super(key, valueMatcher, id, params, keyDataConversion, valueDataConversion);
+      super(key, valueMatcher, segment, id, params, keyDataConversion, valueDataConversion);
       this.f = f;
       init(componentRegistry);
    }
@@ -57,6 +58,7 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       output.writeObject(key);
       output.writeObject(f);
       MarshallUtil.marshallEnum(valueMatcher, output);
+      UnsignedNumeric.writeUnsignedInt(output, segment);
       Params.writeObject(output, params);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
@@ -69,6 +71,7 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       key = input.readObject();
       f = (Function<ReadWriteEntryView<K, V>, R>) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
+      segment = UnsignedNumeric.readUnsignedInt(input);
       params = Params.readObject(input);
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);

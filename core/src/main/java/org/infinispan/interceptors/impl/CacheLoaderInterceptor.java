@@ -19,6 +19,7 @@ import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.cache.impl.Caches;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
@@ -44,6 +45,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
@@ -305,8 +307,9 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
    private Boolean loadInContext(InvocationContext ctx, Object key, FlagAffectedCommand cmd) {
       final AtomicReference<Boolean> isLoaded = new AtomicReference<>();
-      InternalCacheEntry<K, V> entry = PersistenceUtil.loadAndStoreInDataContainer(dataContainer, persistenceManager, (K) key,
-                                                                             ctx, timeService, isLoaded);
+      int segment = SegmentSpecificCommand.extractSegment(cmd);
+      InternalCacheEntry<K, V> entry = PersistenceUtil.loadAndStoreInDataContainer(dataContainer, segment,
+            persistenceManager, (K) key, ctx, timeService, isLoaded);
       Boolean isLoadedValue = isLoaded.get();
       if (trace) {
          log.tracef("Entry was loaded? %s", isLoadedValue);
@@ -561,7 +564,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          if (isRemoteIteration) {
             return innerIterator();
          }
-         return new CloseableIteratorMapper<>(new RemovableCloseableIterator<>(innerIterator(),
+         return new IteratorMapper<>(new RemovableCloseableIterator<>(innerIterator(),
                e -> cache.remove(e.getKey(), e.getValue())), e -> new EntryWrapper<>(cache, e));
       }
 

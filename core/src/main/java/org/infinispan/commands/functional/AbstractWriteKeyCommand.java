@@ -18,11 +18,11 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
    DataConversion keyDataConversion;
    DataConversion valueDataConversion;
 
-   public AbstractWriteKeyCommand(Object key, ValueMatcher valueMatcher,
+   public AbstractWriteKeyCommand(Object key, ValueMatcher valueMatcher, int segment,
                                   CommandInvocationId id, Params params,
                                   DataConversion keyDataConversion,
                                   DataConversion valueDataConversion) {
-      super(key, EnumUtil.EMPTY_BIT_SET, id);
+      super(key, segment, EnumUtil.EMPTY_BIT_SET, id);
       this.valueMatcher = valueMatcher;
       this.params = params;
       this.keyDataConversion = keyDataConversion;

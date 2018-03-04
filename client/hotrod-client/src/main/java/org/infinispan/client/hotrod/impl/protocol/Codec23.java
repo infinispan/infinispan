@@ -8,7 +8,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableIteratorMapper;
+import org.infinispan.commons.util.IteratorMapper;
 
 import io.netty.buffer.ByteBuf;
 
@@ -26,7 +26,7 @@ public class Codec23 extends Codec22 {
    @Override
    public <K> CloseableIterator<K> keyIterator(RemoteCache<K, ?> remoteCache, OperationsFactory operationsFactory, int batchSize) {
       // Retrieve key and entry but map to key
-      return new CloseableIteratorMapper<>(remoteCache.retrieveEntries(null, batchSize), e -> (K) e.getKey());
+      return new IteratorMapper<>(remoteCache.retrieveEntries(null, batchSize), e -> (K) e.getKey());
    }
 
    @Override

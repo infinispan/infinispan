@@ -301,8 +301,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet) {
-      return actual.buildClusteredGetCommand(key, flagsBitSet);
+   public ClusteredGetCommand buildClusteredGetCommand(Object key, int segment, long flagsBitSet) {
+      return actual.buildClusteredGetCommand(key, segment, flagsBitSet);
    }
 
    @Override
@@ -445,8 +445,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, long flagsBitSet) {
-      return actual.buildGetCacheEntryCommand(key, flagsBitSet);
+   public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, int segment, long flagsBitSet) {
+      return actual.buildGetCacheEntryCommand(key, segment, flagsBitSet);
    }
 
    @Override

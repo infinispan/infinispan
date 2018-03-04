@@ -41,6 +41,7 @@ import javax.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.Encoder;
@@ -342,7 +343,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    public void notifyCacheEntryCreated(K key, V value, Metadata metadata, boolean pre,
                                        InvocationContext ctx, FlagAffectedCommand command) {
-      if (!cacheEntryCreatedListeners.isEmpty() && clusteringDependentLogic.commitType(command, ctx, key, false).isLocal()) {
+      if (!cacheEntryCreatedListeners.isEmpty() && clusteringDependentLogic.commitType(command, ctx, key,
+            SegmentSpecificCommand.UNKNOWN_SEGMENT, false).isLocal()) {
          if (command != null && command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) return;
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_CREATED);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.getCacheTopology().getDistribution(key).isPrimary();
@@ -368,7 +370,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    public void notifyCacheEntryModified(K key, V value, Metadata metadata, V previousValue, Metadata previousMetadata, boolean pre, InvocationContext ctx,
                                         FlagAffectedCommand command) {
-      if (!cacheEntryModifiedListeners.isEmpty() && clusteringDependentLogic.commitType(command, ctx, key, false).isLocal()) {
+      if (!cacheEntryModifiedListeners.isEmpty() && clusteringDependentLogic.commitType(command, ctx, key,
+            SegmentSpecificCommand.UNKNOWN_SEGMENT, false).isLocal()) {
          if (command != null && command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) return;
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_MODIFIED);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.getCacheTopology().getDistribution(key).isPrimary();
@@ -394,7 +397,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    public void notifyCacheEntryRemoved(K key, V previousValue, Metadata previousMetadata, boolean pre,
                                        InvocationContext ctx, FlagAffectedCommand command) {
-      if (isNotificationAllowed(command, cacheEntryRemovedListeners) && clusteringDependentLogic.commitType(command, ctx, key, true).isLocal()) {
+      if (isNotificationAllowed(command, cacheEntryRemovedListeners) && clusteringDependentLogic.commitType(command,
+            ctx, key, SegmentSpecificCommand.UNKNOWN_SEGMENT, true).isLocal()) {
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_REMOVED);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.getCacheTopology().getDistribution(key).isPrimary();
          boolean sendEvents = !ctx.isInTxScope();
@@ -470,16 +474,21 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       e.setPre(false);
    }
 
+   private void doVisitNotify(K key, V value, boolean pre, InvocationContext ctx) {
+      EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_VISITED);
+      boolean isLocalNodePrimaryOwner = clusteringDependentLogic.getCacheTopology().getDistribution(key).isPrimary();
+      for (CacheEntryListenerInvocation<K, V> listener : cacheEntryVisitedListeners) {
+         // Need a wrapper per invocation since converter could modify the entry in it
+         configureEvent(listener.getKeyDataConversion(), listener.getValueDataConversion(), e, key, value, pre, ctx);
+         listener.invoke(new EventWrapper<>(key, e), isLocalNodePrimaryOwner);
+      }
+   }
+
    @Override
    public void notifyCacheEntryVisited(K key, V value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryVisitedListeners)) {
-         EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_VISITED);
-         boolean isLocalNodePrimaryOwner = clusteringDependentLogic.getCacheTopology().getDistribution(key).isPrimary();
-         for (CacheEntryListenerInvocation<K, V> listener : cacheEntryVisitedListeners) {
-            // Need a wrapper per invocation since converter could modify the entry in it
-            configureEvent(listener.getKeyDataConversion(), listener.getValueDataConversion(), e, key, value, pre, ctx);
-            listener.invoke(new EventWrapper<>(key, e), isLocalNodePrimaryOwner);
-         }
+         // This is so this method can be inlined easier as we very rarely do listener visit notifications
+         doVisitNotify(key, value, pre, ctx);
       }
    }
 

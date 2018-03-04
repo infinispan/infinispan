@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.ImmutableHopscotchHashSet;
 import org.infinispan.commons.util.ImmutableIntSet;
 import org.infinispan.commons.util.Immutables;
@@ -18,7 +17,7 @@ import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
+import org.infinispan.distribution.ch.impl.SingleSegmentKeyPartitioner;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 
@@ -49,9 +48,9 @@ public class LocalizedCacheTopology extends CacheTopology {
     */
    public static LocalizedCacheTopology makeSingletonTopology(CacheMode cacheMode, Address localAddress) {
       List<Address> members = Collections.singletonList(localAddress);
-      ConsistentHash ch = new ReplicatedConsistentHash(MurmurHash3.getInstance(), members, new int[]{0});
-          CacheTopology cacheTopology = new CacheTopology(-1, -1, null, null, Phase.NO_REBALANCE, members, null);
-          return new LocalizedCacheTopology(CacheMode.LOCAL, cacheTopology, key -> 0, localAddress, false);
+       CacheTopology cacheTopology = new CacheTopology(-1, -1, null, null, Phase.NO_REBALANCE, members, null);
+       return new LocalizedCacheTopology(CacheMode.LOCAL, cacheTopology, SingleSegmentKeyPartitioner.getInstance(),
+             localAddress, false);
    }
 
    public LocalizedCacheTopology(CacheMode cacheMode, CacheTopology cacheTopology, KeyPartitioner keyPartitioner,
@@ -136,6 +135,10 @@ public class LocalizedCacheTopology extends CacheTopology {
       return distributionInfos[segmentId].isReadOwner();
    }
 
+   public boolean isSegmentReadOwner(int segment) {
+      return allLocal || distributionInfos[segment].isReadOwner();
+   }
+
 
    /**
     * @return {@code true} iff writing a value for key {@code key} will update it on the local node.
@@ -148,6 +151,10 @@ public class LocalizedCacheTopology extends CacheTopology {
       return distributionInfos[segmentId].isWriteOwner();
    }
 
+   public boolean isSegmentWriteOwner(int segment) {
+      return allLocal || distributionInfos[segment].isWriteOwner();
+   }
+
    /**
     * @return The consistent hash segment of key {@code key}
     */
@@ -157,8 +164,14 @@ public class LocalizedCacheTopology extends CacheTopology {
 
    /**
     * @return Information about the ownership of segment {@code segment}, including the primary owner.
+    * @deprecated since 9.3 please use {@link #getSegmentDistribution(int)} instead.
     */
+   @Deprecated
    public DistributionInfo getDistributionForSegment(int segmentId) {
+      return getSegmentDistribution(segmentId);
+   }
+
+   public DistributionInfo getSegmentDistribution(int segmentId) {
       return distributionInfos[segmentId];
    }
 

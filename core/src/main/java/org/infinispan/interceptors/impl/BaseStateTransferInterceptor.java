@@ -185,11 +185,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       return invokeNextAndHandle(ctx, command, handleReadCommandReturn);
    }
 
-   private Object handleReadCommandReturn(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t)
-         throws Throwable {
-      if (t == null)
-         return rv;
-
+   private Object handleExceptionOnCommandReturn(InvocationContext rCtx, VisitableCommand rCommand, Throwable t) throws Throwable {
       Throwable ce = t;
       while (ce instanceof RemoteException) {
          ce = ce.getCause();
@@ -254,6 +250,15 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          return makeStage(asyncInvokeNext(rCtx, rCommand, stateTransferLock.transactionDataFuture(requestedTopologyId)))
                .andHandle(rCtx, rCommand, handleReadCommandReturn);
       }
+   }
+
+   private Object handleReadCommandReturn(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t)
+         throws Throwable {
+      if (t == null)
+         return rv;
+
+      // Separate method to allow for inlining of this method since exception should rarely occur
+      return handleExceptionOnCommandReturn(rCtx, rCommand, t);
    }
 
    protected int getNewTopologyId(Throwable ce, int currentTopologyId, TopologyAffectedCommand command) {

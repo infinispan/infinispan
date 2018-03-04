@@ -9,6 +9,7 @@ import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
@@ -39,10 +40,10 @@ public class RemoveExpiredCommand extends RemoveCommand {
       this.valueMatcher = ValueMatcher.MATCH_EXPECTED_OR_NULL;
    }
 
-   public RemoveExpiredCommand(Object key, Object value, Long lifespan, boolean maxIdle, CacheNotifier notifier,
+   public RemoveExpiredCommand(Object key, Object value, Long lifespan, boolean maxIdle, CacheNotifier notifier, int segment,
                                CommandInvocationId commandInvocationId, IncrementableEntryVersion nonExistentVersion) {
       //valueEquivalence can be null because this command never compares values.
-      super(key, value, notifier, EnumUtil.EMPTY_BIT_SET, commandInvocationId);
+      super(key, value, notifier, segment, EnumUtil.EMPTY_BIT_SET, commandInvocationId);
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;
       this.valueMatcher = ValueMatcher.MATCH_EXPECTED_OR_NULL;
@@ -131,6 +132,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
       CommandInvocationId.writeTo(output, commandInvocationId);
       output.writeObject(key);
       output.writeObject(value);
+      UnsignedNumeric.writeUnsignedInt(output, segment);
       if (lifespan != null) {
          output.writeBoolean(true);
          output.writeLong(lifespan);
@@ -145,6 +147,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
       commandInvocationId = CommandInvocationId.readFrom(input);
       key = input.readObject();
       value = input.readObject();
+      segment = UnsignedNumeric.readUnsignedInt(input);
       boolean lifespanProvided = input.readBoolean();
       if (lifespanProvided) {
          lifespan = input.readLong();

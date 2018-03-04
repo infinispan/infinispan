@@ -8,7 +8,9 @@ import java.util.function.Function;
  * spliterator is closeable, it will also close it
  * @author wburns
  * @since 9.0
+ * @deprecated since 9.3 users can just use {@link SpliteratorMapper} as it handles CloseableSpliterators now
  */
+@Deprecated
 public class CloseableSpliteratorMapper<E, S> extends SpliteratorMapper<E, S> implements CloseableSpliterator<S> {
    public CloseableSpliteratorMapper(Spliterator<E> spliterator, Function<? super E, ? extends S> mapper) {
       super(spliterator, mapper);

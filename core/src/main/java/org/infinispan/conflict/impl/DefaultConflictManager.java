@@ -45,6 +45,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.executors.LimitedExecutor;
@@ -372,13 +373,14 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
       void start() {
          LocalizedCacheTopology topology = distributionManager.getCacheTopology();
-         keyOwners = topology.getWriteOwners(key);
+         DistributionInfo info = topology.getDistribution(key);
+         keyOwners = info.writeOwners();
 
          if (trace) log.tracef("Attempting %s from owners %s", this, keyOwners);
 
          final Map<Address, InternalCacheValue<V>> versionsMap = new HashMap<>();
          if (keyOwners.contains(localAddress)) {
-            GetCacheEntryCommand cmd = commandsFactory.buildGetCacheEntryCommand(key, localFlags);
+            GetCacheEntryCommand cmd = commandsFactory.buildGetCacheEntryCommand(key, info.segmentId(), localFlags);
             InvocationContext ctx = invocationContextFactory.createNonTxInvocationContext();
             InternalCacheEntry<K, V> internalCacheEntry = (InternalCacheEntry<K, V>) interceptorChain.invoke(ctx, cmd);
             InternalCacheValue<V> icv = internalCacheEntry == null ? null : internalCacheEntry.toInternalCacheValue();
@@ -387,7 +389,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
             }
          }
 
-         ClusteredGetCommand cmd = commandsFactory.buildClusteredGetCommand(key, FlagBitSets.SKIP_OWNERSHIP_CHECK);
+         ClusteredGetCommand cmd = commandsFactory.buildClusteredGetCommand(key, info.segmentId(), FlagBitSets.SKIP_OWNERSHIP_CHECK);
          cmd.setTopologyId(topology.getTopologyId());
          MapResponseCollector collector = MapResponseCollector.ignoreLeavers(keyOwners.size());
          rpcFuture = rpcManager.invokeCommand(keyOwners, cmd, collector, rpcManager.getSyncRpcOptions()).toCompletableFuture();

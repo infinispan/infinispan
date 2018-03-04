@@ -50,8 +50,8 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.CacheEntry;
@@ -841,7 +841,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
          if (isRemoteIteration) {
             return innerIterator();
          }
-         return new CloseableIteratorMapper<>(new RemovableCloseableIterator<>(innerIterator(),
+         return new IteratorMapper<>(new RemovableCloseableIterator<>(innerIterator(),
                e -> cache.remove(e.getKey(), e.getValue())), e -> new EntryWrapper<>(cache, e));
       }
 

@@ -9,8 +9,10 @@ import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EXPIRED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.LOADED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.REMOVED;
 
+import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.SegmentedDataContainer;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -116,6 +118,17 @@ public class ReadCommittedEntry implements MVCCEntry {
 
    @Override
    public final void commit(DataContainer container) {
+      realCommit(SegmentSpecificCommand.UNKNOWN_SEGMENT, container);
+   }
+
+   public final void commit(int segment, DataContainer container) {
+      if (segment < 0) {
+         throw new IllegalArgumentException("Segment must be 0 or greater");
+      }
+      realCommit(segment, container);
+   }
+
+   private final void realCommit(int segment, DataContainer container) {
       // TODO: No tombstones for now!!  I'll only need them for an eventually consistent cache
 
       // only do stuff if there are changes.
@@ -125,14 +138,26 @@ public class ReadCommittedEntry implements MVCCEntry {
                   toStr(getKey()), isRemoved(), isChanged(), isCreated(), toStr(value), getMetadata());
 
          if (isEvicted()) {
-            container.evict(key);
+            if (segment != SegmentSpecificCommand.UNKNOWN_SEGMENT && container instanceof SegmentedDataContainer) {
+               ((SegmentedDataContainer) container).evict(segment, key);
+            } else {
+               container.evict(key);
+            }
          } else if (isRemoved()) {
-            container.remove(key);
+            if (segment != SegmentSpecificCommand.UNKNOWN_SEGMENT && container instanceof SegmentedDataContainer) {
+               ((SegmentedDataContainer) container).remove(segment, key);
+            } else {
+               container.remove(key);
+            }
          } else if (value != null) {
             // Can't just rely on the entry's metadata because it could have
             // been modified by the interceptor chain (i.e. new version
             // generated if none provided by the user)
-            container.put(key, value, metadata);
+            if (segment != SegmentSpecificCommand.UNKNOWN_SEGMENT && container instanceof SegmentedDataContainer) {
+               ((SegmentedDataContainer) container).put(segment, key, value, metadata);
+            } else {
+               container.put(key, value, metadata);
+            }
          }
       }
    }

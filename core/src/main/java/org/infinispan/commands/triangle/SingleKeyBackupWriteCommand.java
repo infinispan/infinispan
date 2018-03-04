@@ -159,25 +159,25 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
    WriteCommand createWriteCommand() {
       switch (operation) {
          case REMOVE:
-            return new RemoveCommand(key, null, cacheNotifier, getFlags(), getCommandInvocationId());
+            return new RemoveCommand(key, null, cacheNotifier, segmentId, getFlags(), getCommandInvocationId());
          case WRITE:
-            return new PutKeyValueCommand(key, valueOrFunction, false, cacheNotifier, metadata, getTopologyId(),
+            return new PutKeyValueCommand(key, valueOrFunction, false, cacheNotifier, metadata, segmentId, getTopologyId(),
                   getCommandInvocationId());
          case COMPUTE:
-            return new ComputeCommand(key, (BiFunction) valueOrFunction, false, getFlags(), getCommandInvocationId(),
+            return new ComputeCommand(key, (BiFunction) valueOrFunction, false, segmentId, getFlags(), getCommandInvocationId(),
                   metadata, cacheNotifier, componentRegistry);
          case REPLACE:
-            return new ReplaceCommand(key, null, valueOrFunction, cacheNotifier, metadata, getFlags(),
+            return new ReplaceCommand(key, null, valueOrFunction, cacheNotifier, metadata, segmentId, getFlags(),
                   getCommandInvocationId());
          case REMOVE_EXPIRED:
             // Doesn't matter if it is max idle or not - important thing is that it raises expired event
-            return new RemoveExpiredCommand(key, valueOrFunction, null, false, cacheNotifier, getCommandInvocationId(),
+            return new RemoveExpiredCommand(key, valueOrFunction, null, false, cacheNotifier, segmentId, getCommandInvocationId(),
                   versionGenerator.nonExistingVersion());
          case COMPUTE_IF_PRESENT:
-            return new ComputeCommand(key, (BiFunction) valueOrFunction, true, getFlags(), getCommandInvocationId(),
+            return new ComputeCommand(key, (BiFunction) valueOrFunction, true, segmentId, getFlags(), getCommandInvocationId(),
                   metadata, cacheNotifier, componentRegistry);
          case COMPUTE_IF_ABSENT:
-            return new ComputeIfAbsentCommand(key, (Function) valueOrFunction, getFlags(), getCommandInvocationId(),
+            return new ComputeIfAbsentCommand(key, (Function) valueOrFunction, segmentId, getFlags(), getCommandInvocationId(),
                   metadata, cacheNotifier, componentRegistry);
          default:
             throw new IllegalStateException("Unknown operation " + operation);

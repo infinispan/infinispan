@@ -82,6 +82,11 @@ public class ImmutableIntSet implements IntSet {
    }
 
    @Override
+   public int[] toIntArray() {
+      return set.toIntArray();
+   }
+
+   @Override
    public Object[] toArray() {
       return set.toArray();
    }

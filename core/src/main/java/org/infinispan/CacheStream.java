@@ -24,6 +24,7 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.stream.CacheCollectors;
 import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableBiFunction;
@@ -100,8 +101,15 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
    /**
     * {@inheritDoc}
     * @return a stream with the segments filtered.
+    * @deprecated This is to be replaced by {@link #filterKeySegments(IntSet)}
     */
    CacheStream<R> filterKeySegments(Set<Integer> segments);
+
+   /**
+    * {@inheritDoc}
+    * @return a stream with the segments filtered.
+    */
+   CacheStream<R> filterKeySegments(IntSet segments);
 
    /**
     * {@inheritDoc}

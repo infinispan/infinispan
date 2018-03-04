@@ -11,6 +11,7 @@ import java.util.function.BiFunction;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -36,13 +37,13 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
    public ComputeCommand(Object key,
                          BiFunction remappingBiFunction,
                          boolean computeIfPresent,
-                         long flagsBitSet,
+                         int segment, long flagsBitSet,
                          CommandInvocationId commandInvocationId,
                          Metadata metadata,
                          CacheNotifier notifier,
                          ComponentRegistry componentRegistry) {
 
-      super(key, flagsBitSet, commandInvocationId);
+      super(key, segment, flagsBitSet, commandInvocationId);
       this.remappingBiFunction = remappingBiFunction;
       this.computeIfPresent = computeIfPresent;
       this.metadata = metadata;
@@ -170,6 +171,7 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
       output.writeObject(key);
       output.writeBoolean(computeIfPresent);
       output.writeObject(remappingBiFunction);
+      UnsignedNumeric.writeUnsignedInt(output, segment);
       output.writeObject(metadata);
       CommandInvocationId.writeTo(output, commandInvocationId);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
@@ -180,6 +182,7 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
       key = input.readObject();
       computeIfPresent = input.readBoolean();
       remappingBiFunction = (BiFunction) input.readObject();
+      segment = UnsignedNumeric.readUnsignedInt(input);
       metadata = (Metadata) input.readObject();
       commandInvocationId = CommandInvocationId.readFrom(input);
       setFlagsBitSet(input.readLong());

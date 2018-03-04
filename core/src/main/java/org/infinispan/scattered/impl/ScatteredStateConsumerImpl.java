@@ -24,6 +24,7 @@ import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -524,7 +525,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    }
 
    @Override
-   protected void removeStaleData(Set<Integer> removedSegments) throws InterruptedException {
+   protected void removeStaleData(IntSet removedSegments) throws InterruptedException {
       // Noop - scattered cache cannot remove data even if it is not an owner
    }
 

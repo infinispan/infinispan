@@ -14,7 +14,7 @@ import java.util.function.Function;
  * @author wburns
  * @since 9.0
  */
-public class SpliteratorMapper<E, S> implements Spliterator<S> {
+public class SpliteratorMapper<E, S> implements CloseableSpliterator<S> {
    protected final Spliterator<E> spliterator;
    protected final Function<? super E, ? extends S> mapper;
 
@@ -66,5 +66,12 @@ public class SpliteratorMapper<E, S> implements Spliterator<S> {
    @Override
    public boolean hasCharacteristics(int characteristics) {
       return spliterator.hasCharacteristics(characteristics);
+   }
+
+   @Override
+   public void close() {
+      if (spliterator instanceof CloseableSpliterator) {
+         ((CloseableSpliterator) spliterator).close();
+      }
    }
 }

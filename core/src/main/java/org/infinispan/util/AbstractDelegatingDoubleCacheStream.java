@@ -18,11 +18,13 @@ import java.util.function.ObjDoubleConsumer;
 import java.util.function.Supplier;
 import java.util.stream.DoubleStream;
 
+import org.infinispan.BaseCacheStream;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
+import org.infinispan.commons.util.IntSet;
 
 /**
  * Abstract Delegating handler that passes DoubleStream operations off to the underlying DoubleCacheStream but delegates
@@ -85,6 +87,12 @@ class AbstractDelegatingDoubleCacheStream implements DoubleCacheStream {
 
    @Override
    public DoubleCacheStream filterKeySegments(Set<Integer> segments) {
+      delegateCacheStream = delegateCacheStream.filterKeySegments(segments);
+      return this;
+   }
+
+   @Override
+   public BaseCacheStream filterKeySegments(IntSet segments) {
       delegateCacheStream = delegateCacheStream.filterKeySegments(segments);
       return this;
    }

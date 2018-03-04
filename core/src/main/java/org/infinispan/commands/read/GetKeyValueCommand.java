@@ -7,6 +7,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -26,8 +27,8 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    private static final Log log = LogFactory.getLog(GetKeyValueCommand.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   public GetKeyValueCommand(Object key, long flagsBitSet) {
-      super(key, flagsBitSet);
+   public GetKeyValueCommand(Object key, int segment, long flagsBitSet) {
+      super(key, segment, flagsBitSet);
    }
 
    public GetKeyValueCommand() {
@@ -64,12 +65,14 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
+      UnsignedNumeric.writeUnsignedInt(output, segment);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
+      segment = UnsignedNumeric.readUnsignedInt(input);
       setFlagsBitSet(input.readLong());
    }
 

@@ -7,6 +7,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -25,8 +26,8 @@ public final class GetCacheEntryCommand extends AbstractDataCommand {
 
    private InternalEntryFactory entryFactory;
 
-   public GetCacheEntryCommand(Object key, long flagsBitSet, InternalEntryFactory entryFactory) {
-      super(key, flagsBitSet);
+   public GetCacheEntryCommand(Object key, int segment, long flagsBitSet, InternalEntryFactory entryFactory) {
+      super(key, segment, flagsBitSet);
       this.entryFactory = entryFactory;
    }
 
@@ -61,12 +62,14 @@ public final class GetCacheEntryCommand extends AbstractDataCommand {
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
+      UnsignedNumeric.writeUnsignedInt(output, segment);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
+      segment = UnsignedNumeric.readUnsignedInt(input);
       setFlagsBitSet(input.readLong());
    }
 
