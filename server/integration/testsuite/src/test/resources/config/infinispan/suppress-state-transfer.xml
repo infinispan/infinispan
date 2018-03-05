@@ -34,5 +34,42 @@
                             timeout="60000"
                             await-initial-transfer="false" />
                 </distributed-cache>
+
+                <distributed-cache
+                        name="dist-state-transfer-async"
+                        segments="60"
+                        owners="2"
+                        remote-timeout="30000" >
+                    <state-transfer
+                            enabled="true"
+                            await-initial-transfer="false"/>
+                </distributed-cache>
+                <distributed-cache
+                        name="dist-state-transfer-off"
+                        segments="60"
+                        owners="2"
+                        remote-timeout="30000" >
+                    <state-transfer
+                            enabled="false"
+                            await-initial-transfer="false"/>
+                </distributed-cache>
+                <replicated-cache
+                        name="repl-state-transfer-async"
+                        mode="SYNC"
+                        remote-timeout="30000"
+                        start="EAGER">
+                    <state-transfer
+                            enabled="true"
+                            await-initial-transfer="false"/>
+                </replicated-cache>
+                <replicated-cache
+                        name="repl-state-transfer-off"
+                        mode="SYNC"
+                        remote-timeout="30000"
+                        start="EAGER">
+                    <state-transfer
+                            enabled="false"
+                            await-initial-transfer="false"/>
+                </replicated-cache>
             </cache-container>
         </subsystem>

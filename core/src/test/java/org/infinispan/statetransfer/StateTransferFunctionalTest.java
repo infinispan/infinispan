@@ -169,6 +169,24 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
       logTestEnd(m);
    }
+   
+   @Test(enabled = false) //https://issues.jboss.org/browse/ISPN-8908
+   public void testInitialStateTransferOff(Method m) throws Exception {
+      testCount++;
+      logTestStart(m);
+      Cache<Object, Object> cache1, cache2;
+      configurationBuilder.clustering().stateTransfer().fetchInMemoryState(false);
+      EmbeddedCacheManager cm1 = createCacheManager(cacheName);
+      cache1 = cm1.getCache(cacheName);
+      writeInitialData(cache1);
+
+      EmbeddedCacheManager cm2 = createCacheManager(cacheName);
+      cache2 = cm2.getCache(cacheName);
+      TestingUtil.waitForNoRebalance(cache1, cache2);
+      verifyInitialData(cache2);
+
+      logTestEnd(m);
+   }
 
    public void testInitialStateTransferCacheNotPresent(Method m) throws Exception {
       testCount++;
