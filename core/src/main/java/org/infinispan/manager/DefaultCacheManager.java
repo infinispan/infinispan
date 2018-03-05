@@ -403,6 +403,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             }
          }
          configurationManager.removeConfiguration(configurationName);
+         this.getGlobalComponentRegistry().removeCache(configurationName);
       }
    }
 
