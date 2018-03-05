@@ -148,7 +148,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       }
 
       @Override
-      public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) {
          final String key = (String) command.getKey();
          if (shouldIntercept(key)) {
             if (serializationContext.getFileDescriptors().containsKey(key)) {
@@ -159,7 +159,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       }
 
       @Override
-      public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      public Object visitClearCommand(InvocationContext ctx, ClearCommand command) {
          for (String fileName : serializationContext.getFileDescriptors().keySet()) {
             serializationContext.unregisterProtoFile(fileName);
          }
@@ -175,7 +175,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          if (!rCtx.isOriginLocal()) {
             // apply updates to the serialization context
@@ -187,7 +187,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    }
 
    @Override
-   public Object visitPutKeyValueCommand(final InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
       final Object key = command.getKey();
       final Object value = command.getValue();
 
@@ -250,7 +250,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    }
 
    @Override
-   public Object visitPutMapCommand(final InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
       final Map<Object, Object> map = command.getMap();
 
       FileDescriptorSource source = new FileDescriptorSource();
@@ -297,7 +297,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) {
       if (ctx.isOriginLocal()) {
          if (!(command.getKey() instanceof String)) {
             throw log.keyMustBeString(command.getKey().getClass());
@@ -347,7 +347,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    }
 
    @Override
-   public Object visitReplaceCommand(final InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) {
       final Object key = command.getKey();
       final Object value = command.getNewValue();
 
@@ -374,7 +374,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          if (rCommand.isSuccessful()) {
             FileDescriptorSource source = new FileDescriptorSource()
-                        .addProtoFile((String) key, (String) value);
+                  .addProtoFile((String) key, (String) value);
 
             long flagsBitSet = copyFlags(((WriteCommand) rCommand));
             ProgressCallback progressCallback = null;
@@ -399,7 +399,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    }
 
    @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) {
       for (String fileName : serializationContext.getFileDescriptors().keySet()) {
          serializationContext.unregisterProtoFile(fileName);
       }
