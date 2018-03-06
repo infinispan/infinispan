@@ -14,7 +14,7 @@ import javax.security.cert.X509Certificate;
  *
  * @author Sebastian Łaskawiec
  */
-public class AlpnHackedSslSession implements SSLSession, ApplicationProtocolAccessor {
+public class AlpnHackedSslSession implements SSLSession {
 
    private final ALPNHackSSLEngine engine;
 
@@ -131,8 +131,4 @@ public class AlpnHackedSslSession implements SSLSession, ApplicationProtocolAcce
       return unwrap().getApplicationBufferSize();
    }
 
-   @Override
-   public String getNegotiatedApplicationProtocol() {
-      return engine.getSelectedApplicationProtocol();
-   }
 }

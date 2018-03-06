@@ -321,7 +321,7 @@
       <version.netty-tcnative-boringssl-static>2.0.7.Final</version.netty-tcnative-boringssl-static>
       <version.netty-conscrypt-optional>1.0.0</version.netty-conscrypt-optional>
       <!-- The Hot Rod Client's Karaf feature requires this. -->
-      <version.netty>4.1.21.Final</version.netty>
+      <version.netty>4.1.22.Final</version.netty>
    </properties>
    <dependencyManagement>
       <dependencies>

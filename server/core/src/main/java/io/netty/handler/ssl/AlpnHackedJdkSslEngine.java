@@ -8,7 +8,7 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSession;
 
-public class AlpnHackedJdkSslEngine extends SSLEngine {
+public class AlpnHackedJdkSslEngine extends SSLEngine implements ApplicationProtocolAccessor {
 
    private final ALPNHackSSLEngine engine;
    private final AlpnHackedSslSession session;
@@ -181,5 +181,10 @@ public class AlpnHackedJdkSslEngine extends SSLEngine {
    @Override
    public void setSSLParameters(SSLParameters sslParameters) {
       engine.setSSLParameters(sslParameters);
+   }
+
+   @Override
+   public String getNegotiatedApplicationProtocol() {
+      return engine.getSelectedApplicationProtocol();
    }
 }
