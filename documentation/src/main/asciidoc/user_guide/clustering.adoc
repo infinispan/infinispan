@@ -823,10 +823,11 @@ consistency is sacrificed in the presence of partition(s). Below is a list of th
 
 | ALLOW_READS
 | Allows reads for a given key if it exists in this partition, but only allows writes if this partition contains all owners of a segment.
-| Availability
+This is still a consistent approach because some entries are readable if available in this partition, but from a client application perspective it is not deterministic.
+| Consistency
 
 | ALLOW_READ_WRITES
-| Allow entries on each partition to diverge, with conflicts resolved during merge.
+| Allow entries on each partition to diverge, with conflict resolution attempted upon the partitions merging.
 | Availability
 |===
 
@@ -1013,6 +1014,13 @@ Currently Infinispan provides the following implementations of EntryMergePolicy:
 
 | MergePolicies.REMOVE_ALL
 | Always remove a key from the cache when a conflict is detected.
+
+| MergePolicies.NONE
+| No attempt is made to resolve conflicts. Instead, entries hosted on the minority partition are removed and the nodes in this partition do not hold any data until the rebalance starts. Note, this behaviour is equivalent to prior Infinispan versions which did not support conflict resolution.
+Note, in this case all changes made to entries hosted on the minority partition are lost, but once the rebalance has finished all entries will be consistent.
+
+| Fully qualified class name
+| The custom implementation for merge will be used <<partition-handling-custom-merge-policy, Custom merge policy>>
 |===
 
 ==== Usage
@@ -1070,8 +1078,9 @@ dcc.clustering().partitionHandling()
                     .mergePolicy(MergePolicies.PREFERRED_ALWAYS);
 ----
 
-It's also possible to provide custom implementations of the EntryMergePolicy:
-
+[[partition-handling-custom-merge-policy]]
+===== Implement a custom merge policy
+It's also possible to provide custom implementations of the EntryMergePolicy
 [source,xml]
 ----
 <distributed-cache name="the-default-cache">
@@ -1086,6 +1095,29 @@ dcc.clustering().partitionHandling()
                     .whenSplit(PartitionHandling.ALLOW_READ_WRITES)
                     .mergePolicy(new CustomMergePolicy());
 ----
+[source,java]
+----
+public class CustomMergePolicy implements EntryMergePolicy<String, String> {
+
+   @Override
+   public CacheEntry<String, String> merge(CacheEntry<String, String> preferredEntry, List<CacheEntry<String, String>> otherEntries) {
+      // decide which entry should be used
+      
+      return the_solved_CacheEntry;
+   }
+----
+
+===== Deploy custom merge policies to a Infinispan server instance
+To utilise a custom EntryMergePolicy implementation on the server, it's necessary for the implementation class(es) to be deployed to the server. This is accomplished by utilising the java service-provider convention and packaging the class files in a jar which has a META-INF/services/org.infinispan.conflict.EntryMergePolicy file containing the fully qualified class name of the EntryMergePolicy implementation.
+[source]
+----
+# list all necessary implementations of EntryMergePolicy with the full qualified name
+org.example.CustomMergePolicy
+----
+
+In order for a Custom merge policy to be utilised on the server, compatibility mode must be enabled if your policies semantics require access to the stored Key/Value objects. This is because without compatibility mode, cache entries in the server are stored in a marshalled format and the Key/Value objects returned to your policy would be instances of WrappedByteArray.
+However, if the custom policy only depends on the metadata associated with a cache entry, then compatibility mode is not required and should be avoided (unless needed for other reasons) due to the additional performance cost of marshalling data per request.
+Finally, compatibility mode is never required if one of the provided merge policies is used.
 
 [[partition-handling-monitoring]]
 ==== Monitoring and administration
