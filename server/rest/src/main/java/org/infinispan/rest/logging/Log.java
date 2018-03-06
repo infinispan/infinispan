@@ -1,7 +1,7 @@
 package org.infinispan.rest.logging;
 
+import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.TRACE;
-import static org.jboss.logging.Logger.Level.WARN;
 
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.rest.cachemanager.exceptions.CacheUnavailableException;
@@ -33,7 +33,7 @@ public interface Log extends BasicLogger {
    @Message(value = "An error occurred while responding to the client", id = 12005)
    void errorWhileResponding(@Cause Exception e);
 
-   @LogMessage(level = WARN)
+   @LogMessage(level = ERROR)
    @Message(value = "Uncaught exception in the pipeline", id = 12006)
    void uncaughtExceptionInThePipeline(@Cause Throwable e);
 

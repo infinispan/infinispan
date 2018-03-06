@@ -41,6 +41,7 @@ import io.netty.util.CharsetUtil;
  *
  * @author Sebastian Łaskawiec
  */
+@Test(groups = "functional", testName = "rest.Http2Test")
 public final class Http2Test extends AbstractInfinispanTest {
 
     public static final String KEY_STORE_PATH = Http2Test.class.getClassLoader().getResource("./default_client_truststore.jks").getPath();

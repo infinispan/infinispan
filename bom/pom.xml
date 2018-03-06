@@ -107,7 +107,7 @@
       <version.jgroups.azure>1.2.0.Final</version.jgroups.azure>
       <version.jgroups.kubernetes>1.0.5.Final</version.jgroups.kubernetes>
       <version.kryo>4.0.1</version.kryo>
-      <version.netty>4.1.21.Final</version.netty>
+      <version.netty>4.1.22.Final</version.netty>
       <version.protostuff>1.6.0</version.protostuff>
       <version.xstream>1.4.9</version.xstream>
       <version.xpp3>1.1.4c</version.xpp3>
