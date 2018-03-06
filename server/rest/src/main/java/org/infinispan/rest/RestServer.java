@@ -1,6 +1,6 @@
 package org.infinispan.rest;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.authentication.Authenticator;
@@ -44,7 +44,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
 
    @Override
    public ChannelInitializer<Channel> getInitializer() {
-      return new NettyInitializers(Arrays.asList(getRestChannelInitializer()));
+      return new NettyInitializers(Collections.singletonList(getRestChannelInitializer()));
    }
 
    /**

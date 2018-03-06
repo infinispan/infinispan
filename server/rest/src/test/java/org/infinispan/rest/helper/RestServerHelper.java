@@ -26,7 +26,7 @@ public class RestServerHelper {
 
    public RestServerHelper(EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
-      restServerConfigurationBuilder.host("localhost").port(0).maxContentLength(1_000_000);
+      restServerConfigurationBuilder.host("localhost").corsAllowForLocalhost("http", 80).port(0).maxContentLength(1_000_000);
    }
 
    public static RestServerHelper defaultRestServer(String... cachesDefined) {

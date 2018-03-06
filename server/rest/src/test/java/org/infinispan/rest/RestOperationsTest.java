@@ -257,4 +257,36 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       ResponseAssertion.assertThat(response).isOk();
       Assertions.assertThat(restServer.getCacheManager().getCache("default")).isEmpty();
    }
+
+   @Test
+   public void testCORSPrefligh() throws Exception {
+      putValueInCache("default", "key", "value");
+
+      ContentResponse preFlight = client
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "key"))
+            .method(HttpMethod.OPTIONS)
+            .header(HttpHeader.HOST, "localhost")
+            .header(HttpHeader.ORIGIN, "http://localhost:80")
+            .header("access-control-request-method", "GET")
+            .send();
+
+
+      ResponseAssertion.assertThat(preFlight).isOk();
+      ResponseAssertion.assertThat(preFlight).hasNoContent();
+      ResponseAssertion.assertThat(preFlight).containsAllHeaders("access-control-allow-origin", "access-control-allow-methods");
+   }
+
+   @Test
+   public void testCorsGET() throws Exception {
+      putStringValueInCache("default", "test", "test");
+
+      //when
+      ContentResponse response = client
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .header(HttpHeader.ORIGIN, "http://127.0.0.1:80")
+            .send();
+
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).containsAllHeaders("access-control-allow-origin");
+   }
 }

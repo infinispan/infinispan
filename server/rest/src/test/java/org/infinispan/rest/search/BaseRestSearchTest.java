@@ -54,7 +54,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    private static final String PROTO_FILE_NAME = "person.proto";
    protected static final ObjectMapper MAPPER = new ObjectMapper();
 
-   private HttpClient client;
+   protected HttpClient client;
    private List<RestServerHelper> restServers = new ArrayList<>();
    private final Random random = new Random(1000);
 
@@ -78,15 +78,15 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       return new Object[][]{{GET}, {POST}};
    }
 
-   private RestServerHelper pickServer() {
+   protected RestServerHelper pickServer() {
       return restServers.get(random.nextInt(getNumNodes()));
    }
 
-   private String getUrl(RestServerHelper restServerHelper) {
+   protected String getUrl(RestServerHelper restServerHelper) {
       return getUrl(restServerHelper, CACHE_NAME);
    }
 
-   private String getUrl(RestServerHelper restServerHelper, String cacheName) {
+   protected String getUrl(RestServerHelper restServerHelper, String cacheName) {
       return String.format("http://localhost:%d/rest/%s?action=search", restServerHelper.getPort(), cacheName);
    }
 
