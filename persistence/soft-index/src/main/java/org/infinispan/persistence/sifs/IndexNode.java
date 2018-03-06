@@ -7,16 +7,13 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -27,7 +24,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 class IndexNode {
-   private static final Log log = LogFactory.getLog(IndexNode.class);
+   private static final Log log = LogFactory.getLog(IndexNode.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
    private static final byte HAS_LEAVES = 1;
@@ -42,13 +39,13 @@ class IndexNode {
    private Index.Segment segment;
    private byte[] prefix;
    private byte[][] keyParts;
-   InnerNode[] innerNodes;
+   private InnerNode[] innerNodes;
    private LeafNode[] leafNodes;
    private ReadWriteLock lock = new ReentrantReadWriteLock();
    private long offset = -1;
-   private int contentLength = -1;
-   private int totalLength = -1;
-   private int occupiedSpace;
+   private short contentLength = -1;
+   private short totalLength = -1;
+   private short occupiedSpace;
 
    public enum RecordChange {
       INCREASE,
@@ -57,7 +54,7 @@ class IndexNode {
       DECREASE,
    }
 
-   public IndexNode(Index.Segment segment, long offset, int occupiedSpace) throws IOException {
+   IndexNode(Index.Segment segment, long offset, short occupiedSpace) throws IOException {
       this.segment = segment;
       this.offset = offset;
       this.occupiedSpace = occupiedSpace;
@@ -111,14 +108,14 @@ class IndexNode {
       return buffer;
    }
 
-   IndexNode(Index.Segment segment, byte[] newPrefix, byte[][] newKeyParts, LeafNode[] newLeafNodes) {
+   private IndexNode(Index.Segment segment, byte[] newPrefix, byte[][] newKeyParts, LeafNode[] newLeafNodes) {
       this.segment = segment;
       this.prefix = newPrefix;
       this.keyParts = newKeyParts;
       this.leafNodes = newLeafNodes;
    }
 
-   IndexNode(Index.Segment segment, byte[] newPrefix, byte[][] newKeyParts, InnerNode[] newInnerNodes) {
+   private IndexNode(Index.Segment segment, byte[] newPrefix, byte[][] newKeyParts, InnerNode[] newInnerNodes) {
       this.segment = segment;
       this.prefix = newPrefix;
       this.keyParts = newKeyParts;
@@ -142,9 +139,8 @@ class IndexNode {
 
    /**
     * Can be called only from single writer thread (therefore the write lock guards only other readers)
-    * @param other
     */
-   public void replaceContent(IndexNode other) throws IOException {
+   private void replaceContent(IndexNode other) throws IOException {
       try {
          lock.writeLock().lock();
          this.prefix = other.prefix;
@@ -179,20 +175,20 @@ class IndexNode {
       }
       buffer.put(flags);
       buffer.putShort((short) keyParts.length);
-      for (int i = 0; i < keyParts.length; ++i) {
-         buffer.putShort((short) keyParts[i].length);
-         buffer.put(keyParts[i]);
+      for (byte[] keyPart : keyParts) {
+         buffer.putShort((short) keyPart.length);
+         buffer.put(keyPart);
       }
       if (innerNodes != null) {
-         for (int i = 0; i < innerNodes.length; ++i) {
-            buffer.putLong(innerNodes[i].offset);
-            buffer.putShort((short) innerNodes[i].length);
+         for (InnerNode innerNode : innerNodes) {
+            buffer.putLong(innerNode.offset);
+            buffer.putShort(innerNode.length);
          }
       } else {
-         for (int i = 0; i < leafNodes.length; ++i) {
-            buffer.putInt(leafNodes[i].file);
-            buffer.putInt(leafNodes[i].offset);
-            buffer.putShort(leafNodes[i].numRecords);
+         for (LeafNode leafNode : leafNodes) {
+            buffer.putInt(leafNode.file);
+            buffer.putInt(leafNode.offset);
+            buffer.putShort(leafNode.numRecords);
          }
       }
       buffer.flip();
@@ -206,7 +202,7 @@ class IndexNode {
    }
 
    private static class Path {
-      public IndexNode node;
+      IndexNode node;
       public int index;
 
       private Path(IndexNode node, int index) {
@@ -262,19 +258,15 @@ class IndexNode {
 
    public static <T> T applyOnLeaf(Index.Segment segment, byte[] key, Lock rootLock, ReadOperation operation) throws IOException {
       int attempts = 0;
-      ArrayList<IndexNode> path = new ArrayList<IndexNode>();
       for (;;) {
          rootLock.lock();
          IndexNode node = segment.getRoot();
          Lock parentLock = rootLock, currentLock = null;
          try {
             while (node.innerNodes != null) {
-               path.add(node);
                currentLock = node.lock.readLock();
                currentLock.lock();
-               if (parentLock != null) {
-                  parentLock.unlock();
-               }
+               parentLock.unlock();
                parentLock = currentLock;
                int insertionPoint = node.getInsertionPoint(key);
                node = node.innerNodes[insertionPoint].getIndexNode(segment);
@@ -292,16 +284,16 @@ class IndexNode {
          } catch (IndexNodeOutdatedException e) {
             try {
                if (attempts > 10) {
-                  throw new PersistenceException("Index looks corrupt", e);
+                  throw log.indexLooksCorrupt(e);
                }
                Thread.sleep(1000);
                attempts++;
-               path.clear();
             } catch (InterruptedException e1) {
+               Thread.currentThread().interrupt();
             }
             // noop, we'll simply retry
          } finally {
-            if (parentLock != currentLock && parentLock != null) parentLock.unlock();
+            if (parentLock != currentLock) parentLock.unlock();
             if (currentLock != null) currentLock.unlock();
          }
       }
@@ -309,7 +301,7 @@ class IndexNode {
 
    public static void setPosition(IndexNode root, byte[] key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
       IndexNode node = root;
-      Stack<Path> stack = new Stack<Path>();
+      Stack<Path> stack = new Stack<>();
       while (node.innerNodes != null) {
          int insertionPoint = node.getInsertionPoint(key);
          stack.push(new Path(node, insertionPoint));
@@ -328,7 +320,7 @@ class IndexNode {
                System.identityHashCode(copy), copy.length(), System.identityHashCode(node), node.length(), stack.size());
       }
 
-      Stack<IndexNode> garbage = new Stack<IndexNode>();
+      Stack<IndexNode> garbage = new Stack<>();
       try {
          JoinSplitResult result = manageLength(root.segment, stack, node, copy, garbage);
          if (result == null) {
@@ -388,7 +380,7 @@ class IndexNode {
    private static class JoinSplitResult {
       public final int from;
       public final int to;
-      public final List<IndexNode> newNodes;
+      final List<IndexNode> newNodes;
 
       private JoinSplitResult(int from, int to, List<IndexNode> newNodes) {
          this.from = from;
@@ -496,7 +488,7 @@ class IndexNode {
       }
    }
 
-   public IndexNode copyWith(int oldNodesFrom, int oldNodesTo, List<IndexNode> newNodes) throws IOException {
+   private IndexNode copyWith(int oldNodesFrom, int oldNodesTo, List<IndexNode> newNodes) throws IOException {
       InnerNode[] newInnerNodes = new InnerNode[innerNodes.length + newNodes.size() - 1 - oldNodesTo + oldNodesFrom];
       System.arraycopy(innerNodes, 0, newInnerNodes, 0, oldNodesFrom);
       System.arraycopy(innerNodes, oldNodesTo + 1, newInnerNodes, oldNodesFrom + newNodes.size(), innerNodes.length - oldNodesTo - 1);
@@ -532,13 +524,13 @@ class IndexNode {
 
    private byte[] leftmostKey() throws IOException, IndexNodeOutdatedException {
       if (innerNodes != null) {
-         for (int i = 0; i < innerNodes.length; ++i) {
-            byte[] key = innerNodes[i].getIndexNode(segment).leftmostKey();
+         for (InnerNode innerNode : innerNodes) {
+            byte[] key = innerNode.getIndexNode(segment).leftmostKey();
             if (key != null) return key;
          }
       } else {
-         for (int i = 0; i < leafNodes.length; ++i) {
-            EntryRecord hak = leafNodes[i].loadHeaderAndKey(segment.getFileProvider());
+         for (LeafNode leafNode : leafNodes) {
+            EntryRecord hak = leafNode.loadHeaderAndKey(segment.getFileProvider());
             if (hak != null && hak.getKey() != null) return hak.getKey();
          }
       }
@@ -562,13 +554,8 @@ class IndexNode {
 
    /**
     * Called on the most bottom node
-    * @param key
-    * @param file
-    * @param offset
-    * @param recordChange
-    * @return
     */
-   public IndexNode copyWith(byte[] key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
+   private IndexNode copyWith(byte[] key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
       if (leafNodes == null) throw new IllegalArgumentException();
       byte[] newPrefix;
       byte[][] newKeyParts;
@@ -658,9 +645,7 @@ class IndexNode {
             } else {
                newLeafNodes = leafNodes;
             }
-            if (hak != null) {
-               segment.getCompactor().free(oldLeafNode.file, hak.getHeader().totalLength());
-            }
+            segment.getCompactor().free(oldLeafNode.file, hak.getHeader().totalLength());
          }
       } else {
          // IndexRequest cannot be MOVED or DROPPED when the key is not in the index
@@ -703,12 +688,7 @@ class IndexNode {
          insertionPoint = keyParts.length;
       } else {
          byte[] keyPostfix = substring(key, prefix.length, key.length);
-         insertionPoint = Arrays.binarySearch(keyParts, keyPostfix, new Comparator<byte[]>() {
-            @Override
-            public int compare(byte[] o1, byte[] o2) {
-               return IndexNode.this.compare(o2, o1);
-            }
-         });
+         insertionPoint = Arrays.binarySearch(keyParts, keyPostfix, (o1, o2) -> IndexNode.compare(o2, o1));
          if (insertionPoint < 0) {
             insertionPoint = -insertionPoint - 1;
          } else {
@@ -724,7 +704,7 @@ class IndexNode {
       int maxLength = segment.getMaxNodeSize();
       int targetParts = contentLength / Math.max(maxLength - headerLength, 1) + 1;
       int targetLength = contentLength / targetParts + headerLength;
-      List<IndexNode> list = new ArrayList<IndexNode>();
+      List<IndexNode> list = new ArrayList<>();
       int childLength = innerNodes != null ? INNER_NODE_REFERENCE_SIZE : LEAF_NODE_REFERENCE_SIZE;
       byte[] prefixExtension = keyParts[0]; // the prefix can be only extended
       int currentLength = INNER_NODE_HEADER_SIZE + prefix.length + prefixExtension.length + 2 * childLength + 2;
@@ -861,8 +841,10 @@ class IndexNode {
       return second.length > first.length ? first.length + 1 : (second.length < first.length ? -second.length - 1 : 0);
    }
 
-   private int headerLength() {
-      return INNER_NODE_HEADER_SIZE + prefix.length;
+   private short headerLength() {
+      int headerLength = INNER_NODE_HEADER_SIZE + prefix.length;
+      assert headerLength <= Short.MAX_VALUE;
+      return (short) headerLength;
    }
 
    private int contentLength() {
@@ -880,20 +862,23 @@ class IndexNode {
       } else {
          throw new IllegalStateException();
       }
-      return contentLength = sum;
+      assert sum <= Short.MAX_VALUE;
+      return contentLength = (short) sum;
    }
 
-   public int length() {
+   public short length() {
       if (totalLength >= 0) return totalLength;
-      return totalLength = headerLength() + contentLength();
+      int totalLength = headerLength() + contentLength();
+      assert totalLength >= 0 && totalLength <= Short.MAX_VALUE;
+      return this.totalLength = (short) totalLength;
    }
 
    public static IndexNode emptyWithLeaves(Index.Segment segment) {
       return new IndexNode(segment, new byte[0], new byte[0][], LeafNode.EMPTY_ARRAY);
    }
 
-   public static IndexNode emptyWithInnerNodes(Index.Segment segment) {
-      return new IndexNode(segment, new byte[0], new byte[0][], new InnerNode[]{ new InnerNode(-1l, (short) -1) });
+   private static IndexNode emptyWithInnerNodes(Index.Segment segment) {
+      return new IndexNode(segment, new byte[0], new byte[0][], new InnerNode[]{ new InnerNode(-1L, (short) -1) });
    }
 
    public static class OverwriteHook {
@@ -909,23 +894,23 @@ class IndexNode {
    static class InnerNode extends Index.IndexSpace {
       private volatile SoftReference<IndexNode> reference;
 
-      public InnerNode(long offset, short length) {
+      InnerNode(long offset, short length) {
          super(offset, length);
       }
 
-      public InnerNode(IndexNode node) {
+      InnerNode(IndexNode node) {
          super(node.offset, node.occupiedSpace);
-         reference = new SoftReference<IndexNode>(node);
+         reference = new SoftReference<>(node);
       }
 
-      public IndexNode getIndexNode(Index.Segment segment) throws IOException {
+      IndexNode getIndexNode(Index.Segment segment) throws IOException {
          IndexNode node;
          if (reference == null || (node = reference.get()) == null) {
             synchronized (this) {
                if (reference == null || (node = reference.get()) == null) {
                   if (offset < 0) return null;
                   node = new IndexNode(segment, offset, length);
-                  reference = new SoftReference<IndexNode>(node);
+                  reference = new SoftReference<>(node);
                   if (trace) {
                      log.trace("Loaded inner node from " + offset + " - " + length);
                   }
@@ -940,7 +925,7 @@ class IndexNode {
       private static LeafNode[] EMPTY_ARRAY = new LeafNode[0];
       private volatile SoftReference<EntryRecord> keyReference;
 
-      public LeafNode(int file, int offset, short numRecords) {
+      LeafNode(int file, int offset, short numRecords) {
          super(file, offset, numRecords);
       }
 
@@ -981,7 +966,6 @@ class IndexNode {
                }
             }
          }
-         assert headerAndKey != null;
          assert headerAndKey.getKey() != null;
          return headerAndKey;
       }

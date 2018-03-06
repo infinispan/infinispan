@@ -14,11 +14,14 @@ import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreCo
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.persistence.sifs.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class SoftIndexFileStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<SoftIndexFileStoreConfiguration, SoftIndexFileStoreConfigurationBuilder> {
+   private static final Log log = LogFactory.getLog(SoftIndexFileStoreConfigurationBuilder.class, Log.class);
 
    public SoftIndexFileStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, SoftIndexFileStoreConfiguration.attributeDefinitionSet());
@@ -88,6 +91,22 @@ public class SoftIndexFileStoreConfigurationBuilder extends AbstractStoreConfigu
    @Override
    public SoftIndexFileStoreConfigurationBuilder self() {
       return this;
+   }
+
+   @Override
+   protected void validate(boolean skipClassChecks) {
+      super.validate(skipClassChecks);
+      int minNodeSize = attributes.attribute(MIN_NODE_SIZE).get();
+      int maxNodeSize = attributes.attribute(MAX_NODE_SIZE).get();
+      if (maxNodeSize <= 0 || maxNodeSize > Short.MAX_VALUE) {
+         throw log.maxNodeSizeLimitedToShort(maxNodeSize);
+      } else if (minNodeSize < 0 || minNodeSize > maxNodeSize) {
+         throw log.minNodeSizeMustBeLessOrEqualToMax(minNodeSize, maxNodeSize);
+      }
+      double compactionThreshold = attributes.attribute(COMPACTION_THRESHOLD).get();
+      if (compactionThreshold <= 0 || compactionThreshold > 1) {
+         throw log.invalidCompactionThreshold(compactionThreshold);
+      }
    }
 
    @Override

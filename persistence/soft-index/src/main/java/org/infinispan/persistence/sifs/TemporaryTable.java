@@ -3,7 +3,6 @@ package org.infinispan.persistence.sifs;
 import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -12,8 +11,8 @@ import org.infinispan.util.logging.LogFactory;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class TemporaryTable {
-   private static Log log = LogFactory.getLog(TemporaryTable.class);
-   private static boolean trace = log.isTraceEnabled();
+   private static final Log log = LogFactory.getLog(TemporaryTable.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
    private ConcurrentMap<Object, Entry> table;
 
    public TemporaryTable(int capacity) {

@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -22,7 +21,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 class Compactor extends Thread {
-   private static final Log log = LogFactory.getLog(Compactor.class);
+   private static final Log log = LogFactory.getLog(Compactor.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
    private final ConcurrentMap<Integer, Stats> fileStats = new ConcurrentHashMap<Integer, Stats>();
@@ -118,6 +117,7 @@ class Compactor extends Thread {
             }
          }
       } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
          throw new RuntimeException(e);
       }
    }
@@ -310,7 +310,7 @@ class Compactor extends Thread {
             }
          }
       } catch (Exception e) {
-         log.error("Compactor failed.", e);
+         log.compactorFailed(e);
       }
    }
 

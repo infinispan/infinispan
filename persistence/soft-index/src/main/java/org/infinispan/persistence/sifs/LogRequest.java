@@ -1,7 +1,5 @@
 package org.infinispan.persistence.sifs;
 
-import java.io.IOException;
-
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.marshall.core.MarshalledEntry;
 
@@ -42,13 +40,13 @@ class LogRequest {
       this(type, null, 0, null, null, null);
    }
 
-   public static LogRequest storeRequest(MarshalledEntry entry) throws IOException, InterruptedException {
+   public static LogRequest storeRequest(MarshalledEntry entry) {
       return new LogRequest(Type.STORE, entry.getKey(),
             entry.getMetadata() == null ? -1 : entry.getMetadata().expiryTime(),
             entry.getKeyBytes(), entry.getMetadataBytes(), entry.getValueBytes());
    }
 
-   public static LogRequest deleteRequest(Object key, ByteBuffer serializedKey) throws IOException, InterruptedException {
+   public static LogRequest deleteRequest(Object key, ByteBuffer serializedKey) {
       return new LogRequest(Type.DELETE, key, -1, serializedKey, null, null);
    }
 

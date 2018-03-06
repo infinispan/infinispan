@@ -21,7 +21,6 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -101,7 +100,7 @@ import org.infinispan.util.logging.LogFactory;
 @Store
 public class SoftIndexFileStore implements AdvancedLoadWriteStore {
 
-   private static final Log log = LogFactory.getLog(SoftIndexFileStore.class);
+   private static final Log log = LogFactory.getLog(SoftIndexFileStore.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
    private SoftIndexFileStoreConfiguration configuration;
@@ -146,7 +145,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                configuration.minNodeSize(), configuration.maxNodeSize(),
                indexQueue, temporaryTable, compactor, timeService);
       } catch (IOException e) {
-         throw new PersistenceException("Cannot open index file in " + configuration.indexLocation(), e);
+         throw log.cannotOpenIndex(configuration.indexLocation(), e);
       }
       compactor.setIndex(index);
       startIndex();
@@ -241,7 +240,8 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
          indexQueue = null;
          storeQueue = null;
       } catch (InterruptedException e) {
-         throw new PersistenceException("Cannot stop cache store", e);
+         Thread.currentThread().interrupt();
+         throw log.interruptedWhileStopping(e);
       } finally {
          started = false;
       }
@@ -253,17 +253,18 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
          logAppender.clearAndPause();
          compactor.clearAndPause();
       } catch (InterruptedException e) {
-         throw new PersistenceException("Cannot pause cache store to clear it.", e);
+         Thread.currentThread().interrupt();
+         throw log.interruptedWhileClearing(e);
       }
       try {
          index.clear();
       } catch (IOException e) {
-         throw new PersistenceException("Cannot clear/reopen index!", e);
+         throw log.cannotClearIndex(e);
       }
       try {
          fileProvider.clear();
       } catch (IOException e) {
-         throw new PersistenceException("Cannot clear data directory!", e);
+         throw log.cannotClearData(e);
       }
       temporaryTable.clear();
       compactor.resumeAfterPause();
@@ -277,9 +278,8 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
          long size = index.size();
          return size > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) size;
       } catch (InterruptedException e) {
-         log.error("Interrupted", e);
          Thread.currentThread().interrupt();
-         return -1;
+         throw log.sizeCalculationInterrupted(e);
       } finally {
          logAppender.resumeAfterPause();
       }
@@ -295,12 +295,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    public void write(MarshalledEntry entry) {
       int keyLength = entry.getKeyBytes().getLength();
       if (keyLength > maxKeyLength) {
-         throw new PersistenceException("Configuration 'maxNodeSize' is too low - with maxNodeSize="
-               + configuration.maxNodeSize() + " bytes you can use only keys serialized to " + maxKeyLength
-               + " bytes (key " + entry.getKey() + " is serialized to " + keyLength + " bytes)");
-      } else if (keyLength > Short.MAX_VALUE) {
-         // TODO this limitation could be removed by different key length encoding
-         throw new PersistenceException("SoftIndexFileStore is limited to keys with serialized size <= 32767 bytes");
+         throw log.keyIsTooLong(entry.getKey(), keyLength, configuration.maxNodeSize(), maxKeyLength);
       }
       try {
          storeQueue.pushAndWait(LogRequest.storeRequest(entry));
@@ -348,7 +343,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
             }
          }
       } catch (Exception e) {
-         throw new PersistenceException("Cannot load key from index", e);
+         throw log.cannotLoadKeyFromIndex(key, e);
       }
    }
 
@@ -410,7 +405,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
             }
          }
       } catch (Exception e) {
-         throw new PersistenceException(e);
+         throw log.cannotLoadKeyFromIndex(key, e);
       }
    }
 
@@ -524,7 +519,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                         serializedMetadata == null ? null : (InternalMetadata) marshaller.objectFromByteBuffer(serializedMetadata)),
                         context);
                } catch (Exception e) {
-                  log.errorf(e, "Failed to process task for key %s", key);
+                  log.failedProcessingTask(key, e);
                } finally {
                   long finished = tasksFinished.incrementAndGet();
                   if (finished == tasksSubmitted.longValue()) {
@@ -544,7 +539,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
             try {
                context.wait(100);
             } catch (InterruptedException e) {
-               log.error("Iteration was interrupted", e);
+               log.iterationInterrupted(e);
                Thread.currentThread().interrupt();
                return;
             }

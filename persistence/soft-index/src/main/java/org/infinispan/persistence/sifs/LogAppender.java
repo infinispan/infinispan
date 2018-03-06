@@ -3,7 +3,6 @@ package org.infinispan.persistence.sifs;
 import java.util.concurrent.BlockingQueue;
 
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -14,7 +13,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class LogAppender extends Thread {
-   private static final Log log = LogFactory.getLog(LogAppender.class);
+   private static final Log log = LogFactory.getLog(LogAppender.class, Log.class);
 
    private final SyncProcessingQueue<LogRequest> queue;
    private final BlockingQueue<IndexRequest> indexQueue;
