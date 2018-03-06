@@ -31,7 +31,8 @@ import org.infinispan.util.logging.LogFactory;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 class FileProvider {
-   private static final org.infinispan.util.logging.Log log = LogFactory.getLog(FileProvider.class);
+   private static final org.infinispan.persistence.sifs.Log log =
+         LogFactory.getLog(FileProvider.class, org.infinispan.persistence.sifs.Log.class);
 
    private final File dataDir;
    private final int openFileLimit;
@@ -238,7 +239,7 @@ class FileProvider {
                   try {
                      record.deleteOnClose();
                   } catch (IOException e) {
-                     log.error("Cannot close/delete file " + fileId, e);
+                     log.cannotCloseDeleteFile(fileId, e);
                   }
                   break;
                }
@@ -260,12 +261,12 @@ class FileProvider {
                break;
             }
          } catch (IOException e) {
-            log.error("Failed to close file", e);
+            log.cannotCloseFile(e);
          }
       }
       if (currentOpenFiles.get() != 0) {
          for (Map.Entry<Integer, Record> entry : openFiles.entrySet()) {
-            log.warn("File " + entry.getKey() + " open: " + entry.getValue().handleCount + " handles");
+            log.debugf("File %d has %d open handles", entry.getKey().intValue(), entry.getValue().handleCount);
          }
       }
    }

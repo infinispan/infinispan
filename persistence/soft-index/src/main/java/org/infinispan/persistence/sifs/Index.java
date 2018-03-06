@@ -17,7 +17,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.infinispan.util.TimeService;
-import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -28,11 +27,11 @@ import org.infinispan.util.logging.LogFactory;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 class Index {
-   private static final Log log = LogFactory.getLog(Index.class);
+   private static final Log log = LogFactory.getLog(Index.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final int GRACEFULLY = 0x512ACEF0;
    private static final int DIRTY = 0xD112770C;
-   protected static final int INDEX_FILE_HEADER_SIZE = 30;
+   private static final int INDEX_FILE_HEADER_SIZE = 30;
 
    private final String indexDir;
    private final FileProvider fileProvider;
@@ -64,25 +63,20 @@ class Index {
     * @return True if the index was loaded from well persisted state
     */
    public boolean isLoaded() {
-      for (int i = 0; i < segments.length; ++i) {
-         if (!segments[i].loaded) return false;
+      for (Segment segment : segments) {
+         if (!segment.loaded) return false;
       }
       return true;
    }
 
    public void start() {
-      for (int i = 0; i < segments.length; ++i) {
-         segments[i].start();
+      for (Segment segment : segments) {
+         segment.start();
       }
    }
 
    /**
     * Get record or null if expired
-    *
-    * @param key
-    * @param serializedKey
-    * @return
-    * @throws IOException
     */
    public EntryRecord getRecord(Object key, byte[] serializedKey) throws IOException {
       int segment = (key.hashCode() & Integer.MAX_VALUE) % segments.length;
@@ -96,11 +90,6 @@ class Index {
 
    /**
     * Get position or null if expired
-    *
-    * @param key
-    * @param serializedKey
-    * @return
-    * @throws IOException
     */
    public EntryPosition getPosition(Object key, byte[] serializedKey) throws IOException {
       int segment = (key.hashCode() & Integer.MAX_VALUE) % segments.length;
@@ -114,11 +103,6 @@ class Index {
 
    /**
     * Get position + numRecords, without expiration
-    *
-    * @param key
-    * @param serializedKey
-    * @return
-    * @throws IOException
     */
    public EntryInfo getInfo(Object key, byte[] serializedKey) throws IOException {
       int segment = (key.hashCode() & Integer.MAX_VALUE) % segments.length;
@@ -133,7 +117,7 @@ class Index {
    public void clear() throws IOException {
       lock.writeLock().lock();
       try {
-         ArrayList<CountDownLatch> pauses = new ArrayList<CountDownLatch>();
+         ArrayList<CountDownLatch> pauses = new ArrayList<>();
          for (Segment seg : segments) {
             pauses.add(seg.pauseAndClear());
          }
@@ -141,6 +125,7 @@ class Index {
             pause.countDown();
          }
       } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
          throw new RuntimeException(e);
       } finally {
          lock.writeLock().unlock();
@@ -164,12 +149,12 @@ class Index {
    class Segment extends Thread {
       private final BlockingQueue<IndexRequest> indexQueue;
       private final TemporaryTable temporaryTable;
-      private final TreeMap<Integer, List<IndexSpace>> freeBlocks = new TreeMap<Integer, List<IndexSpace>>();
+      private final TreeMap<Short, List<IndexSpace>> freeBlocks = new TreeMap<>();
       private final ReadWriteLock rootLock = new ReentrantReadWriteLock();
       private final File indexFileFile;
       private final boolean loaded;
       private FileChannel indexFile;
-      private long indexFileSize = 0;
+      private long indexFileSize;
       private AtomicLong size = new AtomicLong();
 
       private volatile IndexNode root;
@@ -323,14 +308,15 @@ class Index {
          } catch (IOException e) {
             throw new RuntimeException(e);
          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
          } catch (Throwable e) {
-            log.error("Error in indexer thread", e);
+            log.errorInIndexUpdater(e);
          } finally {
             try {
                indexFile.close();
             } catch (IOException e) {
-               log.error("Failed to close/delete the index", e);
+               log.failedToCloseIndex(e);
             }
          }
       }
@@ -342,17 +328,18 @@ class Index {
          ByteBuffer buffer = ByteBuffer.allocate(4);
          buffer.putInt(0, freeBlocks.size());
          write(indexFile, buffer);
-         for (Map.Entry<Integer, List<IndexSpace>> entry : freeBlocks.entrySet()) {
+         for (Map.Entry<Short, List<IndexSpace>> entry : freeBlocks.entrySet()) {
             List<IndexSpace> list = entry.getValue();
             int requiredSize = 8 + list.size() * 10;
             buffer = buffer.capacity() < requiredSize ? ByteBuffer.allocate(requiredSize) : buffer;
             buffer.position(0);
             buffer.limit(requiredSize);
+            // TODO: change this to short
             buffer.putInt(entry.getKey());
             buffer.putInt(list.size());
             for (IndexSpace space : list) {
                buffer.putLong(space.offset);
-               buffer.putShort((short) space.length);
+               buffer.putShort(space.length);
             }
             buffer.flip();
             write(indexFile, buffer);
@@ -363,7 +350,7 @@ class Index {
          // we need to set limit ahead, otherwise the putLong could throw IndexOutOfBoundsException
          buffer.limit(headerWithoutMagic);
          buffer.putLong(0, rootSpace.offset);
-         buffer.putShort(8, (short) rootSpace.length);
+         buffer.putShort(8, rootSpace.length);
          buffer.putLong(10, indexFileSize);
          buffer.putLong(18, size.get());
          indexFile.position(4);
@@ -389,7 +376,9 @@ class Index {
             if (!read(indexFile, buffer)) {
                throw new IOException("Cannot read free blocks lists!");
             }
+            // TODO: change this to short
             int blockLength = buffer.getInt(0);
+            assert blockLength <= Short.MAX_VALUE;
             int listSize = buffer.getInt(4);
             int requiredSize = 10 * listSize;
             buffer = buffer.capacity() < requiredSize ? ByteBuffer.allocate(requiredSize) : buffer;
@@ -403,11 +392,11 @@ class Index {
             for (int j = 0; j < listSize; ++j) {
                list.add(new IndexSpace(buffer.getLong(), buffer.getShort()));
             }
-            freeBlocks.put(blockLength, list);
+            freeBlocks.put((short) blockLength, list);
          }
       }
 
-      public CountDownLatch pauseAndClear() throws InterruptedException, IOException {
+      CountDownLatch pauseAndClear() throws InterruptedException, IOException {
          IndexRequest clear = IndexRequest.clearRequest();
          indexQueue.put(clear);
          CountDownLatch pause = (CountDownLatch) clear.getResult();
@@ -457,8 +446,8 @@ class Index {
       }
 
       // this should be accessed only from the updater thread
-      IndexSpace allocateIndexSpace(int length) {
-         Map.Entry<Integer, List<IndexSpace>> entry = freeBlocks.ceilingEntry(length);
+      IndexSpace allocateIndexSpace(short length) {
+         Map.Entry<Short, List<IndexSpace>> entry = freeBlocks.ceilingEntry(length);
          if (entry == null || entry.getValue().isEmpty()) {
             long oldSize = indexFileSize;
             indexFileSize += length;
@@ -469,31 +458,27 @@ class Index {
       }
 
       // this should be accessed only from the updater thread
-      void freeIndexSpace(long offset, int length) {
+      void freeIndexSpace(long offset, short length) {
          if (length <= 0) throw new IllegalArgumentException("Offset=" + offset + ", length=" + length);
          // TODO: fragmentation!
          // TODO: memory bounds!
          if (offset + length < indexFileSize) {
-            List<IndexSpace> list = freeBlocks.get(length);
-            if (list == null) {
-               freeBlocks.put(length, list = new ArrayList<IndexSpace>());
-            }
-            list.add(new IndexSpace(offset, length));
+            freeBlocks.computeIfAbsent(length, k -> new ArrayList<>()).add(new IndexSpace(offset, length));
          } else {
             indexFileSize -= length;
             try {
                indexFile.truncate(indexFileSize);
             } catch (IOException e) {
-               log.warn("Cannot truncate index", e);
+               log.cannotTruncateIndex(e);
             }
          }
       }
 
-      public Lock rootReadLock() {
+      Lock rootReadLock() {
          return rootLock.readLock();
       }
 
-      public void stopOperations() throws InterruptedException {
+      void stopOperations() throws InterruptedException {
          indexQueue.put(IndexRequest.stopRequest());
          this.join();
       }
@@ -508,9 +493,9 @@ class Index {
     */
    static class IndexSpace {
       protected long offset;
-      protected int length;
+      protected short length;
 
-      public IndexSpace(long offset, int length) {
+      IndexSpace(long offset, short length) {
          this.offset = offset;
          this.length = length;
       }
@@ -522,10 +507,7 @@ class Index {
 
          IndexSpace innerNode = (IndexSpace) o;
 
-         if (length != innerNode.length) return false;
-         if (offset != innerNode.offset) return false;
-
-         return true;
+         return length == innerNode.length && offset == innerNode.offset;
       }
 
       @Override
