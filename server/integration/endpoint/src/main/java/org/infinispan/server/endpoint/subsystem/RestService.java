@@ -26,14 +26,14 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.rest.configuration.ExtendedHeaders;
-import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.authentication.Authenticator;
+import org.infinispan.rest.authentication.SecurityDomain;
 import org.infinispan.rest.authentication.impl.BasicAuthenticator;
 import org.infinispan.rest.authentication.impl.ClientCertAuthenticator;
-import org.infinispan.rest.authentication.SecurityDomain;
 import org.infinispan.rest.authentication.impl.VoidAuthenticator;
+import org.infinispan.rest.configuration.ExtendedHeaders;
+import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.endpoint.subsystem.security.BasicRestSecurityDomain;
 import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.as.domain.management.SecurityRealm;
@@ -52,9 +52,14 @@ import org.jboss.msc.value.InjectedValue;
  * @since 6.0
  */
 public class RestService implements Service<RestServer>, EncryptableService {
+
+   private static final int CROSS_ORIGIN_CONSOLE_PORT = 3000;
+
    private final InjectedValue<PathManager> pathManagerInjector = new InjectedValue<>();
    private final InjectedValue<EmbeddedCacheManager> cacheManagerInjector = new InjectedValue<>();
    private final InjectedValue<SocketBinding> socketBinding = new InjectedValue<>();
+   private final InjectedValue<SocketBinding> socketBindingManagementPlain = new InjectedValue<>();
+   private final InjectedValue<SocketBinding> socketBindingManagementSecured = new InjectedValue<>();
    private final InjectedValue<SecurityRealm> encryptionSecurityRealm = new InjectedValue<>();
    private final InjectedValue<SecurityRealm> authenticationSecurityRealm = new InjectedValue<>();
    private final Map<String, InjectedValue<SecurityRealm>> sniDomains = new HashMap<>();
@@ -100,6 +105,14 @@ public class RestService implements Service<RestServer>, EncryptableService {
             builder.host(socketAddress.getAddress().getHostAddress());
             builder.port(socketAddress.getPort());
          }
+
+         int mgmtHttpPort = getSocketBindingManagementPlain().getValue().getAbsolutePort();
+         int mgmtHttpsPort = getSocketBindingManagementSecured().getValue().getAbsolutePort();
+
+         builder.corsAllowForLocalhost("http", mgmtHttpPort);
+         builder.corsAllowForLocalhost("https", mgmtHttpsPort);
+         builder.corsAllowForLocalhost("http", CROSS_ORIGIN_CONSOLE_PORT);
+         builder.corsAllowForLocalhost("https", CROSS_ORIGIN_CONSOLE_PORT);
 
          Authenticator authenticator;
          switch (authMethod) {
@@ -172,6 +185,14 @@ public class RestService implements Service<RestServer>, EncryptableService {
 
    public InjectedValue<SocketBinding> getSocketBinding() {
       return socketBinding;
+   }
+
+   public InjectedValue<SocketBinding> getSocketBindingManagementPlain() {
+      return socketBindingManagementPlain;
+   }
+
+   public InjectedValue<SocketBinding> getSocketBindingManagementSecured() {
+      return socketBindingManagementSecured;
    }
 
    @Override

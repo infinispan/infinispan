@@ -12,7 +12,7 @@ import org.infinispan.rest.operations.StaticContent;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Representation of a HTTP request related to Cache API operations.
@@ -41,28 +41,38 @@ public class InfinispanCacheAPIRequest extends InfinispanRequest {
    protected InfinispanResponse execute() {
       InfinispanResponse response = InfinispanErrorResponse.asError(this, NOT_IMPLEMENTED, null);
 
-      if (request.method() == HttpMethod.GET) {
-         if (request.uri().endsWith("banner.png")) {
-            response = StaticContent.INSTANCE.serveBannerFile(this);
-         } else if (!getCacheName().isPresent()) {
-            //we are hitting root context here
-            response = StaticContent.INSTANCE.serveHtmlFile(this);
-         } else if (!key.isPresent()) {
-            response = cacheOperations.getCacheValues(this);
-         } else {
+      switch (request.method().name()) {
+         case "GET":
+            if (request.uri().endsWith("banner.png")) {
+               response = StaticContent.INSTANCE.serveBannerFile(this);
+            } else if (!getCacheName().isPresent()) {
+               //we are hitting root context here
+               response = StaticContent.INSTANCE.serveHtmlFile(this);
+            } else if (!key.isPresent()) {
+               response = cacheOperations.getCacheValues(this);
+            } else {
+               response = cacheOperations.getCacheValue(this);
+            }
+            break;
+         case "PUT":
+         case "POST":
+            response = cacheOperations.putValueToCache(this);
+            break;
+         case "HEAD":
+         case "OPTIONS":
             response = cacheOperations.getCacheValue(this);
-         }
-      } else if (request.method() == HttpMethod.POST || request.method() == HttpMethod.PUT) {
-         response = cacheOperations.putValueToCache(this);
-      } else if (request.method() == HttpMethod.HEAD) {
-         response = cacheOperations.getCacheValue(this);
-      } else if (request.method() == HttpMethod.DELETE) {
-         if (!key.isPresent()) {
-            response = cacheOperations.clearEntireCache(this);
-         } else {
-            response = cacheOperations.deleteCacheValue(this);
-         }
+            break;
+         case "DELETE":
+            if (!key.isPresent()) {
+               response = cacheOperations.clearEntireCache(this);
+            } else {
+               response = cacheOperations.deleteCacheValue(this);
+            }
+            break;
+         default:
+            return InfinispanErrorResponse.asError(this, HttpResponseStatus.NOT_IMPLEMENTED, null);
       }
+
       return response;
    }
 

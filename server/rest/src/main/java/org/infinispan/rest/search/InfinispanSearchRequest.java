@@ -1,5 +1,6 @@
 package org.infinispan.rest.search;
 
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_IMPLEMENTED;
 import static org.infinispan.rest.JSONConstants.MAX_RESULTS;
 import static org.infinispan.rest.JSONConstants.OFFSET;
 import static org.infinispan.rest.JSONConstants.QUERY_MODE;
@@ -12,14 +13,15 @@ import java.util.Optional;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.infinispan.query.dsl.IndexedQueryMode;
+import org.infinispan.rest.InfinispanErrorResponse;
 import org.infinispan.rest.InfinispanRequest;
+import org.infinispan.rest.InfinispanResponse;
 import org.infinispan.rest.operations.SearchOperations;
 import org.infinispan.rest.operations.exceptions.NoCacheFoundException;
 import org.infinispan.rest.operations.exceptions.NoDataFoundException;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpMethod;
 
 /**
  * @since 9.2
@@ -36,13 +38,26 @@ public class InfinispanSearchRequest extends InfinispanRequest {
    }
 
    @Override
-   protected InfinispanSearchResponse execute() {
+   protected InfinispanResponse execute() {
       Optional<String> cacheName = getCacheName();
       if (!cacheName.isPresent()) {
          throw new NoCacheFoundException("Cache name must be provided");
       }
       try {
-         QueryRequest queryRequest = getQueryRequest();
+         QueryRequest queryRequest;
+         switch (request.method().name()) {
+            case "GET":
+            case "HEAD":
+            case "OPTIONS":
+               queryRequest = getQueryFromString();
+               break;
+            case "POST":
+            case "PUT":
+               queryRequest = getQueryFromJSON();
+               break;
+            default:
+               return InfinispanErrorResponse.asError(this, NOT_IMPLEMENTED, null);
+         }
          String queryString = queryRequest.getQuery();
          if (queryString == null || queryString.isEmpty()) {
             return InfinispanSearchResponse.badRequest(this, "Invalid search request, missing 'query' parameter", null);
@@ -53,15 +68,6 @@ public class InfinispanSearchRequest extends InfinispanRequest {
       }
    }
 
-   private QueryRequest getQueryRequest() throws IOException {
-      QueryRequest queryRequest = null;
-      if (request.method() == HttpMethod.GET) {
-         queryRequest = getQueryFromString();
-      } else if (request.method() == HttpMethod.POST || request.method() == HttpMethod.PUT) {
-         queryRequest = getQueryFromJSON();
-      }
-      return queryRequest;
-   }
 
    private QueryRequest getQueryFromString() {
       String queryString = getParameterValue(QUERY_STRING);

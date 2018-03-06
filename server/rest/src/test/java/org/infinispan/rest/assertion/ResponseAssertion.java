@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 
 import org.assertj.core.api.Assertions;
 import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.http.HttpField;
 import org.eclipse.jetty.http.HttpHeader;
 
 public class ResponseAssertion {
@@ -67,6 +68,11 @@ public class ResponseAssertion {
 
    public ResponseAssertion hasHeaderMatching(String header, String regexp) {
       Assertions.assertThat(response.getHeaders().get(header)).matches(regexp);
+      return this;
+   }
+
+   public ResponseAssertion containsAllHeaders(String... headers) {
+      Assertions.assertThat(response.getHeaders().stream().map(HttpField::getName)).contains(headers);
       return this;
    }
 

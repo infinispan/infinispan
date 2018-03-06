@@ -103,4 +103,7 @@ public class ModelKeys {
    public static final String REST = "rest";
    public static final String MULTI_TENANCY = "multi-tenancy";
    public static final String MULTI_TENANCY_NAME = "MULTI_TENANCY";
+
+   public static final String MANAGEMENT_HTTP = "management-http";
+   public static final String MANAGEMENT_HTTPS = "management-https";
 }

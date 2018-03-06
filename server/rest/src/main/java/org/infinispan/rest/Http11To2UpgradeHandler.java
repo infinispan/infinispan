@@ -1,11 +1,24 @@
 package org.infinispan.rest;
 
+import static io.netty.handler.codec.http.HttpMethod.DELETE;
+import static io.netty.handler.codec.http.HttpMethod.GET;
+import static io.netty.handler.codec.http.HttpMethod.HEAD;
+import static io.netty.handler.codec.http.HttpMethod.OPTIONS;
+import static io.netty.handler.codec.http.HttpMethod.POST;
+import static io.netty.handler.codec.http.HttpMethod.PUT;
+
+import java.util.List;
+
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler;
+import io.netty.handler.codec.http.cors.CorsConfig;
+import io.netty.handler.codec.http.cors.CorsConfigBuilder;
+import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.codec.http2.DefaultHttp2Connection;
 import io.netty.handler.codec.http2.Http2CodecUtil;
 import io.netty.handler.codec.http2.Http2ServerUpgradeCodec;
@@ -28,14 +41,21 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
    private static final int MAX_HEADER_SIZE = 8192;
 
    private final RestServer restServer;
+   private final CorsConfig corsConfig;
 
    Http11To2UpgradeHandler(RestServer restServer) {
       super(ApplicationProtocolNames.HTTP_1_1);
       this.restServer = restServer;
+      List<String> corsAllowOrigins = restServer.getConfiguration().getCorsAllowOrigins();
+      String[] corsOrigins = new String[corsAllowOrigins.size()];
+      this.corsConfig = CorsConfigBuilder.forOrigins(corsAllowOrigins.toArray(corsOrigins))
+            .allowedRequestMethods(GET, POST, PUT, DELETE, HEAD, OPTIONS)
+            .allowedRequestHeaders(HttpHeaderNames.CONTENT_TYPE)
+            .build();
    }
 
    @Override
-   protected void configurePipeline(ChannelHandlerContext ctx, String protocol) throws Exception {
+   protected void configurePipeline(ChannelHandlerContext ctx, String protocol) {
       configurePipeline(ctx.pipeline(), protocol);
    }
 
@@ -61,6 +81,7 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
    private void configureHttp1(ChannelPipeline pipeline) {
       final HttpServerCodec httpCodec = new HttpServerCodec(MAX_INITIAL_LINE_SIZE, MAX_HEADER_SIZE, restServer.getConfiguration().maxContentLength());
       pipeline.addLast(httpCodec);
+      pipeline.addLast(new CorsHandler(corsConfig));
       pipeline.addLast(new HttpServerUpgradeHandler(httpCodec, protocol -> {
          if (AsciiString.contentEquals(Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME, protocol)) {
             return new Http2ServerUpgradeCodec(getHttp11To2ConnectionHandler());
