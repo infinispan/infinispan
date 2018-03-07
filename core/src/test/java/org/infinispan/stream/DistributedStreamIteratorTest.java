@@ -172,7 +172,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       checkPoint.triggerForever(Mocks.AFTER_RELEASE);
 
       Mocks.blockingMock(checkPoint, ClusterStreamManager.class, cache0,
-            (stub, m) -> stub.when(m).remoteIterationPublisher(anyBoolean(), any(), any(), any(), anyBoolean(), any()));
+            (stub, m) -> stub.when(m).remoteIterationPublisher(anyBoolean(), any(), any(), any(), anyBoolean(), anyBoolean(), any()));
 
       final BlockingQueue<Map.Entry<Object, String>> returnQueue = new LinkedBlockingQueue<>();
       Future<Void> future = fork(() -> {
@@ -429,7 +429,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
 
    protected <K> void waitUntilSendingResponse(final Cache<?, ?> cache, final CheckPoint checkPoint) {
       Mocks.blockingMock(checkPoint, LocalStreamManager.class, cache,
-            (stub, m) -> stub.when(m).startIterator(any(), any(), any(), any(), any(), anyBoolean(), any(), anyLong()));
+            (stub, m) -> stub.when(m).startIterator(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), anyLong()));
    }
 
    protected void waitUntilDataContainerWillBeIteratedOn(final Cache<?, ?> cache, final CheckPoint checkPoint) {

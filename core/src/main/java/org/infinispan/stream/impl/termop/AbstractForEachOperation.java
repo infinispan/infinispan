@@ -3,14 +3,12 @@ package org.infinispan.stream.impl.termop;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.BaseStream;
 import java.util.stream.Stream;
 
 import org.infinispan.commons.util.ByRef;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.stream.impl.KeyTrackingTerminalOperation;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
@@ -20,18 +18,21 @@ import org.infinispan.stream.impl.intops.IntermediateOperation;
  * for each operation.
  * This class assumes the stream is composed of {@link java.util.Map.Entry} instances where the key is typed the same
  * as defined K type.
+ * @param <Original> original stream type
  * @param <K> key type of underlying stream
  * @param <V> value type of transformed stream
  * @param <S> type of the transformed stream
  */
-public abstract class AbstractForEachOperation<K, V, S extends BaseStream<V, S>> extends BaseTerminalOperation
-        implements KeyTrackingTerminalOperation<K, V, K> {
+public abstract class AbstractForEachOperation<Original, K, V, S extends BaseStream<V, S>> extends BaseTerminalOperation<Original>
+        implements KeyTrackingTerminalOperation<Original, K, V> {
    private final int batchSize;
+   private final Function<? super Original, ? extends K> toKeyFunction;
 
    public AbstractForEachOperation(Iterable<IntermediateOperation> intermediateOperations,
-           Supplier<Stream<CacheEntry>> supplier, int batchSize) {
+           Supplier<Stream<Original>> supplier, Function<? super Original, ? extends K> toKeyFunction, int batchSize) {
       super(intermediateOperations, supplier);
       this.batchSize = batchSize;
+      this.toKeyFunction = toKeyFunction;
    }
 
    @Override
@@ -53,18 +54,16 @@ public abstract class AbstractForEachOperation<K, V, S extends BaseStream<V, S>>
    protected abstract void handleStreamForEach(S stream, List<V> list);
 
    @Override
-   public Collection<CacheEntry<K, K>> performOperationRehashAware(
-           IntermediateCollector<Collection<CacheEntry<K, K>>> response) {
+   public Collection<K> performForEachOperation(IntermediateCollector<Collection<K>> response) {
       // We only support sequential streams for forEach rehash aware
-      BaseStream<?, ?> stream = supplier.get().sequential();
-
-      List<CacheEntry<K, K>> collectedValues = new ArrayList<>(batchSize);
+      Stream<Original> originalStream = supplier.get().sequential();
+      List<K> collectedValues = new ArrayList<>(batchSize);
 
       List<V> currentList = new ArrayList<>();
       ByRef<K> currentKey = new ByRef<>(null);
-      stream = ((Stream<Map.Entry<K, ?>>) stream).peek(e -> {
+      originalStream = originalStream.peek(e -> {
          if (!currentList.isEmpty()) {
-            collectedValues.add(new ImmortalCacheEntry(currentKey.get(), null));
+            collectedValues.add(currentKey.get());
             if (collectedValues.size() >= batchSize) {
                handleList(currentList);
                response.sendDataResonse(collectedValues);
@@ -72,8 +71,9 @@ public abstract class AbstractForEachOperation<K, V, S extends BaseStream<V, S>>
                currentList.clear();
             }
          }
-         currentKey.set(e.getKey());
+         currentKey.set(toKeyFunction.apply(e));
       });
+      BaseStream<?, ?> stream = originalStream;
       for (IntermediateOperation intermediateOperation : intermediateOperations) {
          stream = intermediateOperation.perform(stream);
       }
@@ -83,9 +83,13 @@ public abstract class AbstractForEachOperation<K, V, S extends BaseStream<V, S>>
       handleStreamForEach(convertedStream, currentList);
       if (!currentList.isEmpty()) {
          handleList(currentList);
-         collectedValues.add(new ImmortalCacheEntry(currentKey.get(), null));
+         collectedValues.add(currentKey.get());
       }
       return collectedValues;
+   }
+
+   public Function<? super Original, ? extends K> getToKeyFunction() {
+      return toKeyFunction;
    }
 
    public int getBatchSize() {

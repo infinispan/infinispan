@@ -398,9 +398,9 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public <K> StreamRequestCommand<K> buildStreamRequestCommand(Object id, boolean parallelStream,
            StreamRequestCommand.Type type, Set<Integer> segments, Set<K> keys, Set<K> excludedKeys,
-           boolean includeLoader, Object terminalOperation) {
+           boolean includeLoader, boolean entryStream, Object terminalOperation) {
       return actual.buildStreamRequestCommand(id, parallelStream, type, segments, keys, excludedKeys, includeLoader,
-              terminalOperation);
+              entryStream, terminalOperation);
    }
 
    @Override
@@ -411,10 +411,10 @@ public class ControlledCommandFactory implements CommandsFactory {
 
    @Override
    public <K> StreamIteratorRequestCommand<K> buildStreamIteratorRequestCommand(Object id, boolean parallelStream,
-         IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
+         IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
          Iterable<IntermediateOperation> intOps, long batchSize) {
       return actual.buildStreamIteratorRequestCommand(id, parallelStream, segments, keys, excludedKeys, includeLoader,
-            intOps, batchSize);
+            entryStream, intOps, batchSize);
    }
 
    @Override

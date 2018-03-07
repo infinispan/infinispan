@@ -37,16 +37,21 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
    @Override
    public Stream<K> buildStream(Set<Integer> segmentsToFilter, Set<?> keysToFilter) {
       Stream<K> stream;
+      // Make sure we aren't going remote to retrieve these
+      AdvancedCache<K, V> advancedCache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
+            .withFlags(Flag.CACHE_MODE_LOCAL);
       if (keysToFilter != null) {
          if (trace) {
             log.tracef("Applying key filtering %s", keysToFilter);
          }
-         // Make sure we aren't going remote to retrieve these
-         AdvancedCache<K, V> advancedCache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
-               .withFlags(Flag.CACHE_MODE_LOCAL);
-         stream = (Stream<K>) keysToFilter.stream().filter(advancedCache::containsKey);
+         // ignore tombstones and non existent keys
+         stream = (Stream<K>) keysToFilter.stream().filter(k -> advancedCache.get(k) != null);
       } else {
          stream = supplier.get();
+         if (cache.getCacheConfiguration().clustering().cacheMode().isScattered()) {
+            // Ignore tombstones
+            stream = stream.filter(k -> advancedCache.get(k) != null);
+         }
       }
       if (segmentsToFilter != null && toIntFunction != null) {
          if (trace) {

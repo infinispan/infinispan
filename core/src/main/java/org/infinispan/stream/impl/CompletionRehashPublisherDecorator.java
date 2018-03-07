@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.PrimitiveIterator;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.util.IntSet;
@@ -35,8 +36,8 @@ public class CompletionRehashPublisherDecorator<S> extends RehashPublisherDecora
          Address localAddress, Consumer<? super Supplier<PrimitiveIterator.OfInt>> userListener,
          Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments,
          Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments, Executor executor,
-         Consumer<Object> keyConsumer) {
-      super(iteratorOperation, dm, localAddress, completedSegments, lostSegments, executor, keyConsumer);
+         Consumer<Object> keyConsumer, Function<S, ?> toKeyFunction) {
+      super(iteratorOperation, dm, localAddress, completedSegments, lostSegments, executor, keyConsumer, toKeyFunction);
       this.userListener = userListener;
       this.completionListeners = Collections.synchronizedList(new ArrayList<>(4));
    }
@@ -71,8 +72,10 @@ public class CompletionRehashPublisherDecorator<S> extends RehashPublisherDecora
          // we iterate upon the last key of the block of segments
          kwcl.accept(i);
       }, lostSegments);
+      Publisher<S> publisher = iteratorOperation.handlePublisher(applySubscribeExecutor(convertedPublisher),
+            keyConsumer, toKeyFunction);
       // We have to track each key received from this publisher as it would map to all segments when completed
-      return Flowable.fromPublisher(iteratorOperation.handlePublisher(applySubscribeExecutor(convertedPublisher), keyConsumer))
+      return Flowable.fromPublisher(publisher)
             .doOnNext(kwcl::valueAdded);
    }
 
@@ -91,7 +94,7 @@ public class CompletionRehashPublisherDecorator<S> extends RehashPublisherDecora
          kwcl.accept(i);
       }, beginningCh, onlyLocal, segmentsToFilter, localPublisher);
       // We have to track each key received from this publisher as it would map to all segments when completed
-      return Flowable.fromPublisher(iteratorOperation.handlePublisher(convertedLocalPublisher, keyConsumer))
+      return Flowable.fromPublisher(iteratorOperation.handlePublisher(convertedLocalPublisher, keyConsumer, toKeyFunction))
             .doOnNext(kwcl::valueAdded);
    }
 }

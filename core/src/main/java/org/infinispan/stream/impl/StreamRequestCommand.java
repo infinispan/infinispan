@@ -32,6 +32,7 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyA
    private Set<K> keys;
    private Set<K> excludedKeys;
    private boolean includeLoader;
+   private boolean entryStream;
    private Object terminalOperation;
    private int topologyId = -1;
 
@@ -67,7 +68,7 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyA
 
    public StreamRequestCommand(ByteString cacheName, Address origin, Object id, boolean parallelStream, Type type,
                                Set<Integer> segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
-                               Object terminalOperation) {
+                               boolean entryStream, Object terminalOperation) {
       super(cacheName);
       setOrigin(origin);
       this.id = id;
@@ -77,6 +78,7 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyA
       this.keys = keys;
       this.excludedKeys = excludedKeys;
       this.includeLoader = includeLoader;
+      this.entryStream = entryStream;
       this.terminalOperation = terminalOperation;
    }
 
@@ -89,19 +91,19 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyA
       switch (type) {
          case TERMINAL:
             lsm.streamOperation(id, getOrigin(), parallelStream, segments, keys, excludedKeys, includeLoader,
-                    (TerminalOperation) terminalOperation);
+                  entryStream, (TerminalOperation) terminalOperation);
             break;
          case TERMINAL_REHASH:
             lsm.streamOperationRehashAware(id, getOrigin(), parallelStream, segments, keys, excludedKeys, includeLoader,
-                    (TerminalOperation) terminalOperation);
+                  entryStream, (TerminalOperation) terminalOperation);
             break;
          case TERMINAL_KEY:
             lsm.streamOperation(id, getOrigin(), parallelStream, segments, keys, excludedKeys, includeLoader,
-                    (KeyTrackingTerminalOperation) terminalOperation);
+                  entryStream, (KeyTrackingTerminalOperation) terminalOperation);
             break;
          case TERMINAL_KEY_REHASH:
             lsm.streamOperationRehashAware(id, getOrigin(), parallelStream, segments, keys, excludedKeys, includeLoader,
-                    (KeyTrackingTerminalOperation) terminalOperation);
+                  entryStream, (KeyTrackingTerminalOperation) terminalOperation);
             break;
       }
       return CompletableFutures.completedNull();
@@ -122,6 +124,7 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyA
       MarshallUtil.marshallCollection(keys, output);
       MarshallUtil.marshallCollection(excludedKeys, output);
       output.writeBoolean(includeLoader);
+      output.writeBoolean(entryStream);
       output.writeObject(terminalOperation);
    }
 
@@ -135,6 +138,7 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyA
       keys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
       excludedKeys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
       includeLoader = input.readBoolean();
+      entryStream = input.readBoolean();
       terminalOperation = input.readObject();
    }
 

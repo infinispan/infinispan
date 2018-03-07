@@ -9,9 +9,10 @@ import org.infinispan.stream.impl.intops.IntermediateOperation;
 /**
  * Stream manager that is invoked on a local node.  This is normally called due to a {@link ClusterStreamManager} from
  * another node requiring some operation to be performed
+ * @param <Original> original stream type
  * @param <K> the key type for the operations
  */
-public interface LocalStreamManager<K> {
+public interface LocalStreamManager<Original, K> {
    /**
     * Stream operation for a non key aware operation without rehash enabled.
     * @param requestId the originating request id
@@ -25,7 +26,8 @@ public interface LocalStreamManager<K> {
     * @param <R> the type of value from the operation
     */
    <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
-           Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, TerminalOperation<R> operation);
+           Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
+         TerminalOperation<Original, R> operation);
 
    /**
     * Stream operation for a non key aware operation with rehash enabled.
@@ -40,7 +42,8 @@ public interface LocalStreamManager<K> {
     * @param <R> the type of value from the operation
     */
    <R> void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
-           Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, TerminalOperation<R> operation);
+           Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
+         TerminalOperation<Original, R> operation);
 
    /**
     * Stream operation for a key aware operation without rehash enabled
@@ -55,8 +58,8 @@ public interface LocalStreamManager<K> {
     * @param <R> the type of value from the operation
     */
    <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
-           Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader,
-           KeyTrackingTerminalOperation<K, R, ?> operation);
+           Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
+           KeyTrackingTerminalOperation<Original, K, R> operation);
 
    /**
     * Stream operation for a key aware operation with rehash enabled
@@ -68,11 +71,10 @@ public interface LocalStreamManager<K> {
     * @param keysToExclude which keys to exclude
     * @param includeLoader whether or not a cache loader should be utilized
     * @param operation the operation to perform
-    * @param <R2> the type of response
     */
-   <R2> void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
-           Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader,
-           KeyTrackingTerminalOperation<K, ?, R2> operation);
+   void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
+           Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
+           KeyTrackingTerminalOperation<Original, K, ?> operation);
 
    /**
     * Signals that a new iterator is created using the given arguments. Returns a response which only returns the given
@@ -88,7 +90,8 @@ public interface LocalStreamManager<K> {
     * @return the response containing iterator
     */
    IteratorResponse startIterator(Object requestId, Address origin, IntSet segments, Set<K> keysToInclude,
-         Set<K> keysToExclude, boolean includeLoader, Iterable<IntermediateOperation> intermediateOperations, long batchSize);
+         Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
+         Iterable<IntermediateOperation> intermediateOperations, long batchSize);
 
    /**
     * Continues an existing iterator by retrieving the next <b>batchSize</b> of elements

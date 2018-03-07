@@ -17,12 +17,13 @@ import org.infinispan.util.logging.LogFactory;
  * the evaluation of the function the function results will be ignored and subsequently retried with the new stable
  * segments.  This is repeated until either a full stable run is completed of the function or if the lost segment
  * states that there are no more segments left.
+ * @param <Original> original stream type
  * @param <E> output type of the function
  * @param <T> type of the stream entries
  * @param <S> type of the stream itself
  */
-public class SegmentRetryingOperation<E, T, S extends BaseStream<T, S>, S2 extends S> extends BaseTerminalOperation
-        implements TerminalOperation<E> {
+public class SegmentRetryingOperation<Original, E, T, S extends BaseStream<T, S>, S2 extends S> extends BaseTerminalOperation<Original>
+        implements TerminalOperation<Original, E> {
    private static final Log log = LogFactory.getLog(SegmentRetryingOperation.class);
 
    private static final BaseStream<?, ?> EMPTY = Stream.empty();
@@ -32,7 +33,7 @@ public class SegmentRetryingOperation<E, T, S extends BaseStream<T, S>, S2 exten
    private transient AtomicBoolean continueTrying = new AtomicBoolean(true);
 
    public SegmentRetryingOperation(Iterable<IntermediateOperation> intermediateOperations,
-           Supplier<? extends Stream<?>> supplier, Function<? super S2, ? extends E> function) {
+           Supplier<Stream<Original>> supplier, Function<? super S2, ? extends E> function) {
       super(intermediateOperations, supplier);
       this.function = function;
    }

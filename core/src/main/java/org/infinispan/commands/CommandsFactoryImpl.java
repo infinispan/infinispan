@@ -688,9 +688,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public <K> StreamRequestCommand<K> buildStreamRequestCommand(Object id, boolean parallelStream,
            StreamRequestCommand.Type type, Set<Integer> segments, Set<K> keys, Set<K> excludedKeys,
-           boolean includeLoader, Object terminalOperation) {
+           boolean includeLoader, boolean entryStream, Object terminalOperation) {
       return new StreamRequestCommand<>(cacheName, cache.getCacheManager().getAddress(), id, parallelStream, type,
-              segments, keys, excludedKeys, includeLoader, terminalOperation);
+              segments, keys, excludedKeys, includeLoader, entryStream, terminalOperation);
    }
 
    @Override
@@ -707,10 +707,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <K> StreamIteratorRequestCommand<K> buildStreamIteratorRequestCommand(Object id, boolean parallelStream,
-         IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
+         IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
          Iterable<IntermediateOperation> intOps, long batchSize) {
       return new StreamIteratorRequestCommand<>(cacheName, cache.getCacheManager().getAddress(), id, parallelStream,
-            segments, keys, excludedKeys, includeLoader, intOps, batchSize);
+            segments, keys, excludedKeys, includeLoader, entryStream, intOps, batchSize);
    }
 
    @Override

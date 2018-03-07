@@ -56,7 +56,7 @@ import io.reactivex.internal.subscriptions.EmptySubscription;
  *
  * @param <K> the cache key type
  */
-public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
+public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManager<Original, K> {
    protected final Map<String, RequestTracker> currentlyRunning = new ConcurrentHashMap<>();
    protected final Set<Subscriber> iteratorsRunning = new ConcurrentHashSet<>();
    protected final AtomicInteger requestId = new AtomicInteger();
@@ -78,26 +78,27 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
 
    @Override
    public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-           TerminalOperation<R> operation, ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate) {
+         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         boolean entryStream, TerminalOperation<Original, R> operation, ResultsCallback<R> callback,
+         Predicate<? super R> earlyTerminatePredicate) {
       return commonRemoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
-              keysToExclude, includeLoader, operation, callback, StreamRequestCommand.Type.TERMINAL,
+              keysToExclude, includeLoader, entryStream, operation, callback, StreamRequestCommand.Type.TERMINAL,
               earlyTerminatePredicate);
    }
 
    @Override
    public <R> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
-           ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
-           boolean includeLoader, TerminalOperation<R> operation, ResultsCallback<R> callback,
-           Predicate<? super R> earlyTerminatePredicate) {
+         ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
+         boolean includeLoader, boolean entryStream, TerminalOperation<Original, R> operation,
+         ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate) {
       return commonRemoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
-              keysToExclude, includeLoader, operation, callback, StreamRequestCommand.Type.TERMINAL_REHASH,
+              keysToExclude, includeLoader, entryStream, operation, callback, StreamRequestCommand.Type.TERMINAL_REHASH,
               earlyTerminatePredicate);
    }
 
    private <R> Object commonRemoteStreamOperation(boolean parallelDistribution, boolean parallelStream,
            ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
-           boolean includeLoader, SegmentAwareOperation operation, ResultsCallback<R> callback,
+           boolean includeLoader, boolean entryStream, SegmentAwareOperation operation, ResultsCallback<R> callback,
            StreamRequestCommand.Type type, Predicate<? super R> earlyTerminatePredicate) {
       Map<Address, Set<Integer>> targets = determineTargets(ch, segments, callback);
       String id;
@@ -107,7 +108,7 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
          RequestTracker<R> tracker = new RequestTracker<>(callback, targets, earlyTerminatePredicate);
          currentlyRunning.put(id, tracker);
          if (parallelDistribution) {
-            submitAsyncTasks(id, targets, keysToExclude, parallelStream, keysToInclude, includeLoader, type,
+            submitAsyncTasks(id, targets, keysToExclude, parallelStream, keysToInclude, includeLoader, entryStream, type,
                     operation);
          } else {
             for (Map.Entry<Address, Set<Integer>> targetInfo : targets.entrySet()) {
@@ -115,10 +116,7 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
                Set<Integer> targetSegments = targetInfo.getValue();
                Set<K> keysExcluded = determineExcludedKeys(keysToExclude, targetSegments);
                StreamRequestCommand<K> command = factory.buildStreamRequestCommand(id, parallelStream, type,
-                                                                                   targetSegments,
-                                                                                   keysToInclude,
-                                                                                   keysExcluded,
-                                                                                   includeLoader, operation);
+                     targetSegments, keysToInclude, keysExcluded, includeLoader, entryStream, operation);
                command.setTopologyId(rpc.getTopologyId());
                rpc.blocking(rpc.invokeCommand(targetInfo.getKey(), command, VoidResponseCollector.validOnly(),
                                               rpc.getSyncRpcOptions()));
@@ -133,26 +131,27 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
 
    @Override
    public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-           KeyTrackingTerminalOperation<K, R, ?> operation, ResultsCallback<Collection<R>> callback) {
+         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         boolean entryStream, KeyTrackingTerminalOperation<Original, K, R> operation,
+         ResultsCallback<Collection<R>> callback) {
       return commonRemoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
-              keysToExclude, includeLoader, operation, callback, StreamRequestCommand.Type.TERMINAL_KEY, null);
+              keysToExclude, includeLoader, entryStream, operation, callback, StreamRequestCommand.Type.TERMINAL_KEY, null);
    }
 
    @Override
-   public <R2> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
+   public Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
            ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
-           boolean includeLoader, KeyTrackingTerminalOperation<K, ?, R2> operation,
-           ResultsCallback<Map<K, R2>> callback) {
+           boolean includeLoader, boolean entryStream, KeyTrackingTerminalOperation<Original, K, ?> operation,
+           ResultsCallback<Collection<K>> callback) {
       Map<Address, Set<Integer>> targets = determineTargets(ch, segments, callback);
       String id;
       if (!targets.isEmpty()) {
          id = localAddress.toString() + "-" + requestId.getAndIncrement();
          log.tracef("Performing remote rehash key aware operations %s for id %s", targets, id);
-         RequestTracker<Map<K, R2>> tracker = new RequestTracker<>(callback, targets, null);
+         RequestTracker<Collection<K>> tracker = new RequestTracker<>(callback, targets, null);
          currentlyRunning.put(id, tracker);
          if (parallelDistribution) {
-            submitAsyncTasks(id, targets, keysToExclude, parallelStream, keysToInclude, includeLoader,
+            submitAsyncTasks(id, targets, keysToExclude, parallelStream, keysToInclude, includeLoader, entryStream,
                     StreamRequestCommand.Type.TERMINAL_KEY_REHASH, operation);
          } else {
             for (Map.Entry<Address, Set<Integer>> targetInfo : targets.entrySet()) {
@@ -164,10 +163,8 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
                   log.tracef("Submitting task to %s for %s excluding keys %s", dest, id, keysExcluded);
                   StreamRequestCommand<K> command =
                         factory.buildStreamRequestCommand(id, parallelStream,
-                                                          StreamRequestCommand.Type.TERMINAL_KEY_REHASH,
-                                                          targetSegments, keysToInclude,
-                                                          keysExcluded, includeLoader,
-                                                          operation);
+                              StreamRequestCommand.Type.TERMINAL_KEY_REHASH, targetSegments, keysToInclude,
+                              keysExcluded, includeLoader, entryStream, operation);
                   command.setTopologyId(rpc.getTopologyId());
                   Response response = rpc.blocking(
                      rpc.invokeCommand(dest, command, SingleResponseCollector.validOnly(), rpc.getSyncRpcOptions()));
@@ -198,7 +195,7 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
    }
 
    private void submitAsyncTasks(String id, Map<Address, Set<Integer>> targets, Map<Integer, Set<K>> keysToExclude,
-                                 boolean parallelStream, Set<K> keysToInclude, boolean includeLoader,
+                                 boolean parallelStream, Set<K> keysToInclude, boolean includeLoader, boolean entryStream,
                                  StreamRequestCommand.Type type, Object operation) {
       for (Map.Entry<Address, Set<Integer>> targetInfo : targets.entrySet()) {
          Set<Integer> segments = targetInfo.getValue();
@@ -206,8 +203,7 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
          Address dest = targetInfo.getKey();
          log.tracef("Submitting async task to %s for %s excluding keys %s", dest, id, keysExcluded);
          StreamRequestCommand<K> command = factory.buildStreamRequestCommand(id, parallelStream, type, segments,
-                                                                             keysToInclude, keysExcluded, includeLoader,
-                                                                             operation);
+               keysToInclude, keysExcluded, includeLoader, entryStream, operation);
          command.setTopologyId(rpc.getTopologyId());
          CompletionStage<ValidResponse> completableFuture =
             rpc.invokeCommand(dest, command, SingleResponseCollector.validOnly(), rpc.getSyncRpcOptions());
@@ -433,10 +429,10 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
    @Override
    public <E> RemoteIteratorPublisher<E> remoteIterationPublisher(boolean parallelStream,
          Supplier<Map.Entry<Address, IntSet>> targets, Set<K> keysToInclude, IntFunction<Set<K>> keysToExclude,
-         boolean includeLoader, Iterable<IntermediateOperation> intermediateOperations) {
+         boolean includeLoader, boolean entryStream, Iterable<IntermediateOperation> intermediateOperations) {
 
       return new RemoteIteratorPublisherImpl<>(parallelStream, targets, keysToInclude, keysToExclude, includeLoader,
-            intermediateOperations);
+            entryStream, intermediateOperations);
    }
 
    private class RemoteIteratorPublisherImpl<V> implements RemoteIteratorPublisher<V> {
@@ -445,16 +441,18 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
       private final Set<K> keysToInclude;
       private final IntFunction<Set<K>> keysToExclude;
       private final boolean includeLoader;
+      private final boolean entryStream;
       private final Iterable<IntermediateOperation> intermediateOperations;
 
       RemoteIteratorPublisherImpl(boolean parallelStream, Supplier<Map.Entry<Address, IntSet>> targets,
             Set<K> keysToInclude, IntFunction<Set<K>> keysToExclude, boolean includeLoader,
-            Iterable<IntermediateOperation> intermediateOperations) {
+            boolean entryStream, Iterable<IntermediateOperation> intermediateOperations) {
          this.parallelStream = parallelStream;
          this.targets = targets;
          this.keysToInclude = keysToInclude;
          this.keysToExclude = keysToExclude;
          this.includeLoader = includeLoader;
+         this.entryStream = entryStream;
          this.intermediateOperations = intermediateOperations;
       }
 
@@ -529,7 +527,7 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
             return factory.buildStreamIteratorRequestCommand(id,
                   publisher.parallelStream, segments, publisher.keysToInclude,
                   determineExcludedKeys(publisher.keysToExclude, segments), publisher.includeLoader,
-                  publisher.intermediateOperations, batchAmount);
+                  publisher.entryStream, publisher.intermediateOperations, batchAmount);
          }
       }
 

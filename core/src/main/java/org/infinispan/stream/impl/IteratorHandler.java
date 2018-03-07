@@ -15,7 +15,6 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -92,10 +91,11 @@ public class IteratorHandler {
     * intermediate operations and then creates a managed iterator for the caller to subsequently retrieve.
     * @param streamSupplier the supplied stream
     * @param intOps the intermediate operations to perform on the stream
-    * @param <E>
+    * @param <Original> original stream type
+    * @param <E> resulting type
     * @return the id of the managed iterator
     */
-   public <K, V, E> OnCloseIterator<E> start(Address origin, Supplier<Stream<CacheEntry<K, V>>> streamSupplier,
+   public <Original, E> OnCloseIterator<E> start(Address origin, Supplier<Stream<Original>> streamSupplier,
          Iterable<IntermediateOperation> intOps, Object requestId) {
       if (trace) {
          log.tracef("Iterator requested from %s using requestId %s", origin, requestId);

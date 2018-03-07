@@ -12,7 +12,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.CompletableFuture;
@@ -20,12 +19,10 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.StreamSupport;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
-import org.infinispan.CacheStream;
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
@@ -42,7 +39,6 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
-import org.infinispan.commands.read.AbstractCloseableIteratorCollection;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -91,15 +87,14 @@ import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferManager;
-import org.infinispan.stream.impl.local.EntryStreamSupplier;
-import org.infinispan.stream.impl.local.KeyStreamSupplier;
-import org.infinispan.stream.impl.local.LocalCacheStream;
+import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
+import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public class PrefetchInterceptor extends DDAsyncInterceptor {
+public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
    protected static final Log log = LogFactory.getLog(PrefetchInterceptor.class);
    protected static final boolean trace = log.isTraceEnabled();
 
@@ -112,7 +107,7 @@ public class PrefetchInterceptor extends DDAsyncInterceptor {
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject protected CommandsFactory commandsFactory;
    @Inject protected RpcManager rpcManager;
-   @Inject protected Cache cache;
+   @Inject protected Cache<K, V> cache;
 
    protected int numSegments;
 
@@ -487,7 +482,7 @@ public class PrefetchInterceptor extends DDAsyncInterceptor {
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          boolean ignoreOwnership = command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK);
-         return new BackingKeySet(getCacheWithFlags(command), ignoreOwnership, (Set<Object>) rv);
+         return new BackingKeySet(ignoreOwnership, (CacheSet<K>) rv);
       });
    }
 
@@ -495,7 +490,7 @@ public class PrefetchInterceptor extends DDAsyncInterceptor {
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          boolean ignoreOwnership = command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK);
-         return new BackingEntrySet(getCacheWithFlags(command), ignoreOwnership, (Set<CacheEntry>) rv);
+         return new BackingEntrySet(ignoreOwnership, (CacheSet<CacheEntry<K, V>>) rv);
       });
    }
 
@@ -525,12 +520,12 @@ public class PrefetchInterceptor extends DDAsyncInterceptor {
       return handleWriteCommand(ctx, command);
    }
 
-   private class BackingEntrySet<K, V> extends AbstractCloseableIteratorCollection<CacheEntry<K, V>, K, V> implements CacheSet<CacheEntry<K, V>> {
-      private final Set<CacheEntry<K, V>> entrySet;
+   private class BackingEntrySet extends AbstractDelegatingEntryCacheSet<K, V> implements CacheSet<CacheEntry<K, V>> {
+      private final CacheSet<CacheEntry<K, V>> entrySet;
       private final boolean ignoreOwnership;
 
-      public BackingEntrySet(Cache<K, V> cache, boolean ignoreOwnership, Set<CacheEntry<K, V>> entrySet) {
-         super(cache);
+      public BackingEntrySet(boolean ignoreOwnership, CacheSet<CacheEntry<K, V>> entrySet) {
+         super(cache, entrySet);
          this.ignoreOwnership = ignoreOwnership;
          this.entrySet = entrySet;
       }
@@ -538,44 +533,13 @@ public class PrefetchInterceptor extends DDAsyncInterceptor {
       @Override
       public CloseableIterator<CacheEntry<K, V>> iterator() {
          // Here we use stream because plain .iterator() would return non-serializable EntryWrapper entries
-         return new BackingIterator<>(cache, ignoreOwnership, () -> entrySet.stream().iterator(), entry -> entry.getKey());
+         return new BackingIterator<>(cache, ignoreOwnership, () -> entrySet.stream().iterator(), Map.Entry::getKey);
       }
 
       @Override
       public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
          return  Closeables.spliterator(iterator(), Long.MAX_VALUE,
             Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL);
-      }
-
-      @Override
-      public boolean contains(Object o) {
-         if (o instanceof Map.Entry) {
-            V v = cache.get(((Map.Entry) o).getKey());
-            return Objects.equals(v, ((Map.Entry) o).getValue());
-         } else {
-            return false;
-         }
-      }
-
-      @Override
-      public boolean remove(Object o) {
-         if (o instanceof Map.Entry) {
-            return cache.remove(((Map.Entry) o).getKey(), ((Map.Entry) o).getValue());
-         } else {
-            return false;
-         }
-      }
-
-      @Override
-      public CacheStream<CacheEntry<K, V>> stream() {
-         return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, false, dm.getCacheTopology()::getSegment,
-            () -> super.stream()), false, cache.getAdvancedCache().getComponentRegistry());
-      }
-
-      @Override
-      public CacheStream<CacheEntry<K, V>> parallelStream() {
-         return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, false, dm.getCacheTopology()::getSegment,
-            () -> super.stream()), true, cache.getAdvancedCache().getComponentRegistry());
       }
    }
 
@@ -712,66 +676,23 @@ public class PrefetchInterceptor extends DDAsyncInterceptor {
       }
    }
 
-   private class BackingKeySet<K, V> extends AbstractCloseableIteratorCollection<K, K, V> implements CacheSet<K> {
-      private final Set<K> keySet;
+   private class BackingKeySet extends AbstractDelegatingKeyCacheSet<K, V> implements CacheSet<K> {
       private final boolean ignoreOwnership;
 
-      public BackingKeySet(Cache<K, V> cache, boolean ignoreOwnership, Set<K> keySet) {
-         super(cache);
+      public BackingKeySet(boolean ignoreOwnership, CacheSet<K> keySet) {
+         super(cache, keySet);
          this.ignoreOwnership = ignoreOwnership;
-         this.keySet = keySet;
       }
 
       @Override
       public CloseableIterator<K> iterator() {
-         return new CloseableIterator<K>() {
-            BackingIterator<K, K, V> iterator = new BackingIterator<>(cache, ignoreOwnership, () -> keySet.iterator(), Function.identity());
-
-            @Override
-            public void close() {
-               iterator.close();
-            }
-
-            @Override
-            public boolean hasNext() {
-               return iterator.hasNext();
-            }
-
-            @Override
-            public K next() {
-               return iterator.next();
-            }
-         };
+         return new BackingIterator<>(cache, ignoreOwnership, delegate()::iterator, Function.identity());
       }
 
       @Override
       public CloseableSpliterator<K> spliterator() {
          return  Closeables.spliterator(iterator(), Long.MAX_VALUE,
             Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL);
-      }
-
-      @Override
-      public boolean contains(Object o) {
-         return cache.containsKey(o);
-      }
-
-      @Override
-      public boolean remove(Object o) {
-         return cache.remove(o) != null;
-      }
-
-      @Override
-      public CacheStream<K> stream() {
-         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm.getCacheTopology()::getSegment,
-            () -> StreamSupport.stream(spliterator(), false)), false,
-            cache.getAdvancedCache().getComponentRegistry());
-      }
-
-      @Override
-      public CacheStream<K> parallelStream() {
-         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm.getCacheTopology()::getSegment,
-            () -> StreamSupport.stream(spliterator(), false)), true,
-            cache.getAdvancedCache().getComponentRegistry());
       }
    }
 }

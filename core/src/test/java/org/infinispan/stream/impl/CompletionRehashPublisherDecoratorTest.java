@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.util.Map;
 import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -43,7 +44,7 @@ public class CompletionRehashPublisherDecoratorTest {
          Consumer<Object> entryConsumer) {
       return new CompletionRehashPublisherDecorator<>(AbstractCacheStream.IteratorOperation.NO_MAP, null, null, userListener,
             // Just ignore early completed segments and lost ones
-            i -> {}, i -> {}, new WithinThreadExecutor(), entryConsumer);
+            i -> {}, i -> {}, new WithinThreadExecutor(), entryConsumer, e -> ((Map.Entry) e).getKey());
    }
 
    <S> CompletionRehashPublisherDecorator<S> createDecorator(ConsistentHash ch, Set<Integer> segmentsForOwner,
@@ -62,7 +63,7 @@ public class CompletionRehashPublisherDecoratorTest {
 
       return new CompletionRehashPublisherDecorator<>(AbstractCacheStream.IteratorOperation.NO_MAP, dm, address,
             // Just ignore early completed segments and lost ones
-            internalListener, i -> {}, i -> {}, new WithinThreadExecutor(), entryConsumer);
+            internalListener, i -> {}, i -> {}, new WithinThreadExecutor(), entryConsumer, e -> ((Map.Entry) e).getKey());
    }
 
    void simpleAssert(Publisher<Object> resultingPublisher, PublishProcessor<Object> valuePublisher,

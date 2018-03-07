@@ -27,13 +27,13 @@ import org.infinispan.util.AbstractDelegatingMap;
  * keys to exclude so those values are not processed in the remote nodes.
  * @param <K> the key type
  */
-public class TxClusterStreamManager<K> implements ClusterStreamManager<K> {
-   private final ClusterStreamManager<K> manager;
+public class TxClusterStreamManager<Original, K> implements ClusterStreamManager<Original, K> {
+   private final ClusterStreamManager<Original, K> manager;
    private final LocalTxInvocationContext ctx;
    private final int maxSegments;
    private final ToIntFunction<Object> intFunction;
 
-   public TxClusterStreamManager(ClusterStreamManager<K> manager, LocalTxInvocationContext ctx, int maxSegments,
+   public TxClusterStreamManager(ClusterStreamManager<Original, K> manager, LocalTxInvocationContext ctx, int maxSegments,
          ToIntFunction<Object> intFunction) {
       this.manager = manager;
       this.ctx = ctx;
@@ -43,39 +43,42 @@ public class TxClusterStreamManager<K> implements ClusterStreamManager<K> {
 
    @Override
    public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-           TerminalOperation<R> operation, ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate) {
+         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         boolean entryStream, TerminalOperation<Original, R> operation, ResultsCallback<R> callback,
+         Predicate<? super R> earlyTerminatePredicate) {
       TxExcludedKeys<K> txExcludedKeys = new TxExcludedKeys<>(keysToExclude, ctx, intFunction);
       return manager.remoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
-              txExcludedKeys, includeLoader, operation, callback, earlyTerminatePredicate);
+              txExcludedKeys, includeLoader, entryStream, operation, callback, earlyTerminatePredicate);
    }
 
    @Override
    public <R> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
-           ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
-           boolean includeLoader, TerminalOperation<R> operation, ResultsCallback<R> callback,
-           Predicate<? super R> earlyTerminatePredicate) {
+         ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
+         boolean includeLoader, boolean entryStream, TerminalOperation<Original, R> operation,
+         ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate) {
       TxExcludedKeys<K> txExcludedKeys = new TxExcludedKeys<>(keysToExclude, ctx, intFunction);
       return manager.remoteStreamOperationRehashAware(parallelDistribution, parallelStream, ch, segments, keysToInclude,
-              txExcludedKeys, includeLoader, operation, callback, earlyTerminatePredicate);
+              txExcludedKeys, includeLoader, entryStream, operation, callback, earlyTerminatePredicate);
    }
 
    @Override
    public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-           KeyTrackingTerminalOperation<K, R, ?> operation, ResultsCallback<Collection<R>> callback) {
+         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         boolean entryStream, KeyTrackingTerminalOperation<Original, K, R> operation,
+         ResultsCallback<Collection<R>> callback) {
       TxExcludedKeys<K> txExcludedKeys = new TxExcludedKeys<>(keysToExclude, ctx, intFunction);
       return manager.remoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
-              txExcludedKeys, includeLoader, operation, callback);
+              txExcludedKeys, includeLoader, entryStream, operation, callback);
    }
 
    @Override
-   public <R2> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
+   public Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
            ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
-           boolean includeLoader, KeyTrackingTerminalOperation<K, ?, R2> operation, ResultsCallback<Map<K, R2>> callback) {
+           boolean includeLoader, boolean entryStream, KeyTrackingTerminalOperation<Original, K, ?> operation,
+         ResultsCallback<Collection<K>> callback) {
       TxExcludedKeys<K> txExcludedKeys = new TxExcludedKeys<>(keysToExclude, ctx, intFunction);
       return manager.remoteStreamOperationRehashAware(parallelDistribution, parallelStream, ch, segments, keysToInclude,
-              txExcludedKeys, includeLoader, operation, callback);
+              txExcludedKeys, includeLoader, entryStream, operation, callback);
    }
 
    @Override
@@ -101,16 +104,16 @@ public class TxClusterStreamManager<K> implements ClusterStreamManager<K> {
    @Override
    public <E> RemoteIteratorPublisher<E> remoteIterationPublisher(boolean parallelStream,
          Supplier<Map.Entry<Address, IntSet>> segments, Set<K> keysToInclude, IntFunction<Set<K>> keysToExclude,
-         boolean includeLoader, Iterable<IntermediateOperation> intermediateOperations) {
+         boolean includeLoader, boolean entryStream, Iterable<IntermediateOperation> intermediateOperations) {
 
       if (ctx.getLookedUpEntries().isEmpty()) {
          return manager.remoteIterationPublisher(parallelStream, segments, keysToInclude, keysToExclude, includeLoader,
-               intermediateOperations);
+               entryStream, intermediateOperations);
       } else {
          Set<K>[] contextSet = generateContextSet(ctx);
          if (keysToExclude == null) {
-            return manager.remoteIterationPublisher(parallelStream, segments, keysToInclude, i -> contextSet[i], includeLoader,
-                  intermediateOperations);
+            return manager.remoteIterationPublisher(parallelStream, segments, keysToInclude, i -> contextSet[i],
+                  includeLoader, entryStream, intermediateOperations);
          } else {
             return manager.remoteIterationPublisher(parallelStream, segments, keysToInclude, i -> {
                Set<K> set = contextSet[i];
@@ -120,7 +123,7 @@ public class TxClusterStreamManager<K> implements ClusterStreamManager<K> {
                } else {
                   return keysToExclude.apply(i);
                }
-            }, includeLoader, intermediateOperations);
+            }, includeLoader, entryStream, intermediateOperations);
          }
       }
    }
