@@ -42,18 +42,22 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
    @Override
    public Stream<CacheEntry<K, V>> buildStream(Set<Integer> segmentsToFilter, Set<?> keysToFilter) {
       Stream<CacheEntry<K, V>> stream;
+      // Make sure we aren't going remote to retrieve these
+      AdvancedCache<K, V> advancedCache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
+            .withFlags(Flag.CACHE_MODE_LOCAL);
       if (keysToFilter != null) {
          if (trace) {
             log.tracef("Applying key filtering %s", keysToFilter);
          }
-         // Make sure we aren't going remote to retrieve these
-         AdvancedCache<K, V> advancedCache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
-               .withFlags(Flag.CACHE_MODE_LOCAL);
          stream = keysToFilter.stream()
                .map(advancedCache::getCacheEntry)
                .filter(Objects::nonNull);
       } else {
          stream = supplier.get();
+         if (cache.getCacheConfiguration().clustering().cacheMode().isScattered()) {
+            // Ignore tombstones
+            stream = stream.filter(e -> e.getValue() != null);
+         }
       }
       if (segmentsToFilter != null && toIntFunction != null) {
          if (trace) {

@@ -130,14 +130,6 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
          return entry != null && cache.remove(entry.getKey(), entry.getValue());
       }
 
-      @Override
-      public boolean add(CacheEntry<K, V> internalCacheEntry) {
-         /**
-          * {@link Map#entrySet()} defines no support for add or addAll methods
-          */
-         throw new UnsupportedOperationException();
-      }
-
       private Map.Entry<K, V> toEntry(Object obj) {
          if (obj instanceof Map.Entry) {
             return (Map.Entry) obj;

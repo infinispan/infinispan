@@ -25,6 +25,7 @@ public class StreamIteratorRequestCommand<K> extends StreamIteratorNextCommand {
    private Set<K> keys;
    private Set<K> excludedKeys;
    private boolean includeLoader;
+   private boolean entryStream;
    private Iterable<IntermediateOperation> intOps;
 
    // Only here for CommandIdUniquenessTest
@@ -35,7 +36,7 @@ public class StreamIteratorRequestCommand<K> extends StreamIteratorNextCommand {
    }
 
    public StreamIteratorRequestCommand(ByteString cacheName, Address origin, Object id, boolean parallelStream,
-         IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
+         IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
                                Iterable<IntermediateOperation> intOps, long batchSize) {
       super(cacheName, id, batchSize);
       setOrigin(origin);
@@ -44,13 +45,14 @@ public class StreamIteratorRequestCommand<K> extends StreamIteratorNextCommand {
       this.keys = keys;
       this.excludedKeys = excludedKeys;
       this.includeLoader = includeLoader;
+      this.entryStream = entryStream;
       this.intOps = intOps;
    }
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
       return CompletableFuture.completedFuture(lsm.startIterator(id, getOrigin(), segments, keys, excludedKeys,
-            includeLoader, intOps, batchSize));
+            includeLoader, entryStream, intOps, batchSize));
    }
 
    @Override
@@ -67,6 +69,7 @@ public class StreamIteratorRequestCommand<K> extends StreamIteratorNextCommand {
       MarshallUtil.marshallCollection(keys, output);
       MarshallUtil.marshallCollection(excludedKeys, output);
       output.writeBoolean(includeLoader);
+      output.writeBoolean(entryStream);
       output.writeObject(intOps);
 
    }
@@ -80,6 +83,7 @@ public class StreamIteratorRequestCommand<K> extends StreamIteratorNextCommand {
       keys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
       excludedKeys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
       includeLoader = input.readBoolean();
+      entryStream = input.readBoolean();
       intOps = (Iterable<IntermediateOperation>) input.readObject();
    }
 

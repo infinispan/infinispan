@@ -37,6 +37,7 @@ public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSuppl
    private final BlockingQueue<CacheEntry<K, V>> queue;
    private final long timeout;
    private final TimeUnit unit;
+   private final boolean entryStream;
 
    private final Lock closeLock = new ReentrantLock();
    private final Condition closeCondition = closeLock.newCondition();
@@ -46,7 +47,7 @@ public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSuppl
 
    public PersistenceManagerCloseableSupplier(Executor executor, PersistenceManager manager,
                                               InternalEntryFactory factory, KeyFilter<K> filter, long timeout,
-                                              TimeUnit unit, int maxQueue) {
+                                              TimeUnit unit, int maxQueue, boolean entryStream) {
       this.executor = executor;
       this.manager = manager;
       this.factory = factory;
@@ -54,6 +55,7 @@ public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSuppl
       this.timeout = timeout;
       this.unit = unit;
       this.queue = new ArrayBlockingQueue<>(maxQueue);
+      this.entryStream = entryStream;
    }
 
    class SupplierCacheLoaderTask implements AdvancedCacheLoader.CacheLoaderTask<K, V> {
@@ -111,7 +113,7 @@ public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSuppl
          // can't really use the persistence executor since we will block while waiting for additional work
          executor.execute(() -> {
             try {
-               manager.processOnAllStores(new WithinThreadExecutor(), filter, task, true, true);
+               manager.processOnAllStores(new WithinThreadExecutor(), filter, task, entryStream, entryStream);
             } finally {
                close();
             }

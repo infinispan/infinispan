@@ -351,9 +351,9 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       try {
          if (b == null)
             return null;
-         if (!fetchValue && !fetchMetadata) {
-            return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, null, (InternalMetadata) null);
-         }
+         // We have to fetch metadata to tell if a key or entry is expired. Note this can be changed
+         // after API changes
+         fetchMetadata = true;
          KeyValuePair<Object, InternalMetadata> keyValuePair =
                (KeyValuePair<Object, InternalMetadata>) marshaller.objectFromByteBuffer(b);
          return ctx.getMarshalledEntryFactory().newMarshalledEntry(key,

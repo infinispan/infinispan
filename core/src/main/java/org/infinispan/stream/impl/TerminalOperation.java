@@ -9,7 +9,7 @@ import org.infinispan.factories.ComponentRegistry;
  * Interface describing an operation that is a terminal one that doesn't track keys.
  * @param <R> the returing result
  */
-public interface TerminalOperation<R> extends SegmentAwareOperation {
+public interface TerminalOperation<Original, R> extends SegmentAwareOperation {
    /**
     * Actually runs the terminal operation returning the result from the operation
     * @return the value retrieved for the operation
@@ -21,7 +21,7 @@ public interface TerminalOperation<R> extends SegmentAwareOperation {
     * to set the supplier to use
     * @param supplier the supplier that will return the stream that the operations are performed on
     */
-   void setSupplier(Supplier<? extends Stream<?>> supplier);
+   void setSupplier(Supplier<Stream<Original>> supplier);
 
    /**
     * Handles injection of components for various intermediate and this operation.

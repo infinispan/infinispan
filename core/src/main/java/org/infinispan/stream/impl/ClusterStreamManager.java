@@ -24,7 +24,7 @@ import org.reactivestreams.Subscriber;
  * so that the operation is fully released.  This is important especially for early terminating operations.
  * @param <K> The key type for the underlying cache
  */
-public interface ClusterStreamManager<K> {
+public interface ClusterStreamManager<Original, K> {
    /**
     * A callback that is used for result processing from the remote nodes.
     * @param <R> the type of results returned
@@ -72,14 +72,16 @@ public interface ClusterStreamManager<K> {
     * @param keysToInclude which keys to include in the request
     * @param keysToExclude which keys to exclude in the request
     * @param includeLoader whether or not to use a loader
+    * @param entryStream whether the remote stream should be an entry or key stream
     * @param operation the actual operation to perform
     * @param callback the callback to collect individual node results
     * @param earlyTerminatePredicate a predicate to determine if this operation should stop based on intermediate results
     * @return the operation id to be used for further calls
     */
    <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-           TerminalOperation<R> operation, ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate);
+         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         boolean entryStream, TerminalOperation<Original, R> operation, ResultsCallback<R> callback,
+         Predicate<? super R> earlyTerminatePredicate);
 
    /**
     * Performs the remote stream operation with rehash awareness.
@@ -91,14 +93,16 @@ public interface ClusterStreamManager<K> {
     * @param keysToInclude which keys to include in the request
     * @param keysToExclude which keys to exclude in the request
     * @param includeLoader whether or not to use a loader
+    * @param entryStream whether the remote stream should be an entry or key stream
     * @param operation the actual operation to perform
     * @param callback the callback to collect individual node results
     * @param earlyTerminatePredicate a predicate to determine if this operation should stop based on intermediate results
     * @return the operation id to be used for further calls
     */
    <R> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-           TerminalOperation<R> operation, ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate);
+         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         boolean entryStream, TerminalOperation<Original, R> operation, ResultsCallback<R> callback,
+         Predicate<? super R> earlyTerminatePredicate);
 
    /**
     * Key tracking remote operation that doesn't have rehash enabled.
@@ -110,17 +114,18 @@ public interface ClusterStreamManager<K> {
     * @param keysToInclude which keys to include in the request
     * @param keysToExclude which keys to exclude in the request
     * @param includeLoader whether or not to use a loader
+    * @param entryStream whether the remote stream should be an entry or key stream
     * @param operation the actual operation to perform
     * @param callback the callback to collect individual node results
     * @return the operation id to be used for further calls
     */
    <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-           KeyTrackingTerminalOperation<K, R, ?> operation, ResultsCallback<Collection<R>> callback);
+         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         boolean entryStream, KeyTrackingTerminalOperation<Original, K, R> operation,
+         ResultsCallback<Collection<R>> callback);
 
    /**
     * Key tracking remote operation that has rehash enabled
-    * @param <R2> the type of response
     * @param parallelDistribution whether or not parallel distribution is enabled
     * @param parallelStream whether or not the stream is paralllel
     * @param ch the consistent hash to use when determining segment ownership
@@ -128,15 +133,14 @@ public interface ClusterStreamManager<K> {
     * @param keysToInclude which keys to include in the request
     * @param keysToExclude which keys to exclude in the request
     * @param includeLoader whether or not to use a loader
+    * @param entryStream whether the remote stream should be an entry or key stream
     * @param operation the actual operation to perform
     * @param callback the callback to collect individual node results
     * @return the operation id to be used for further calls
     */
-   <R2> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-                                                 Set<Integer> segments, Set<K> keysToInclude,
-                                                 Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-                                                 KeyTrackingTerminalOperation<K, ?, R2> operation,
-                                                 ResultsCallback<Map<K, R2>> callback);
+   Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
+         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         boolean entryStream, KeyTrackingTerminalOperation<Original, K, ?> operation, ResultsCallback<Collection<K>> callback);
 
    /**
     * Tests whether this operation is still pending or not.
@@ -181,13 +185,14 @@ public interface ClusterStreamManager<K> {
     * @param keysToInclude
     * @param keysToExclude
     * @param includeLoader
+    * @param entryStream whether the remote stream should be an entry or key stream
     * @param intermediateOperations
     * @param <E>
     * @return
     */
    <E> RemoteIteratorPublisher<E> remoteIterationPublisher(boolean parallelStream,
          Supplier<Map.Entry<Address, IntSet>> segments, Set<K> keysToInclude, IntFunction<Set<K>> keysToExclude,
-         boolean includeLoader, Iterable<IntermediateOperation> intermediateOperations);
+         boolean includeLoader, boolean entryStream, Iterable<IntermediateOperation> intermediateOperations);
 
    /**
     * {@inheritDoc}

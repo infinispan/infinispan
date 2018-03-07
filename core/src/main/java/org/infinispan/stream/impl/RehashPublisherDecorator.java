@@ -4,6 +4,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.PrimitiveIterator;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.util.IntSet;
@@ -27,13 +28,16 @@ class RehashPublisherDecorator<S> extends AbstractRehashPublisherDecorator<S> {
 
    final Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments;
    final Executor executor;
+   final Function<S, ?> toKeyFunction;
 
    RehashPublisherDecorator(AbstractCacheStream.IteratorOperation iteratorOperation, DistributionManager dm,
          Address localAddress, Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments,
-         Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments, Executor executor, Consumer<Object> keyConsumer) {
-      super(iteratorOperation, dm, localAddress, lostSegments, keyConsumer);
+         Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments, Executor executor,
+         Consumer<Object> keyConsumer, Function<S, ?> toKeyFunction) {
+      super(iteratorOperation, dm, localAddress, lostSegments, keyConsumer, toKeyFunction);
       this.completedSegments = completedSegments;
       this.executor = executor;
+      this.toKeyFunction = toKeyFunction;
    }
 
    @Override
@@ -50,7 +54,7 @@ class RehashPublisherDecorator<S> extends AbstractRehashPublisherDecorator<S> {
       Publisher<S> convertedPublisher = s -> remotePublisher.subscribe(s, completedSegments, lostSegments);
       // When we subscribe on this do it in async thread - including requests so user thread doesn't take
       // the cost of serialization and rpc invocation
-      return iteratorOperation.handlePublisher(applySubscribeExecutor(convertedPublisher), keyConsumer);
+      return iteratorOperation.handlePublisher(applySubscribeExecutor(convertedPublisher), keyConsumer, toKeyFunction);
    }
 
    @Override

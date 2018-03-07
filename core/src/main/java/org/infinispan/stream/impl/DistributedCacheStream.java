@@ -54,7 +54,6 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.RangeSet;
 import org.infinispan.commons.util.SmallIntSet;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
@@ -83,15 +82,16 @@ import io.reactivex.Flowable;
 /**
  * Implementation of {@link CacheStream} that provides support for lazily distributing stream methods to appropriate
  * nodes
+ * @param <Original> the original type of the underlying stream - normally CacheEntry or Object
  * @param <R> The type of the stream
  */
-public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>, CacheStream<R>>
+public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Original, R, Stream<R>, CacheStream<R>>
         implements CacheStream<R> {
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    // This is a hack to allow for cast to work properly, since Java doesn't work as well with nested generics
-   protected static Supplier<CacheStream<CacheEntry>> supplierStreamCast(Supplier supplier) {
+   protected static <R> Supplier<CacheStream<R>> supplierStreamCast(Supplier supplier) {
       return supplier;
    }
 
@@ -105,36 +105,16 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
     * @param includeLoader whether or not a cache loader should be utilized for these operations
     * @param distributedBatchSize default size of distributed batches
     * @param executor executor to be used for certain operations that require async processing (ie. iterator)
+    * @param registry component registry to wire objects with
+    * @param toKeyFunction function that can be applied to an object in the stream to convert it to a key or null if it
+    *                      is a key already. This variable is used to tell also if the underlying stream contains
+    *                      entries or not by this value being non null
     */
-   public <K, V> DistributedCacheStream(Address localAddress, boolean parallel, DistributionManager dm,
-           Supplier<CacheStream<CacheEntry<K, V>>> supplier, ClusterStreamManager csm, boolean includeLoader,
-           int distributedBatchSize, Executor executor, ComponentRegistry registry) {
+   public DistributedCacheStream(Address localAddress, boolean parallel, DistributionManager dm,
+           Supplier<CacheStream<R>> supplier, ClusterStreamManager csm, boolean includeLoader,
+           int distributedBatchSize, Executor executor, ComponentRegistry registry, Function<? super Original, ?> toKeyFunction) {
       super(localAddress, parallel, dm, supplierStreamCast(supplier), csm, includeLoader, distributedBatchSize,
-              executor, registry);
-   }
-
-   /**
-    * Constructor that also allows a simple map method to be inserted first to change to another type.  This is
-    * important because the {@link CacheStream#map(Function)} currently doesn't return a {@link CacheStream}.  If this
-    * is changed we can remove this constructor and update references accordingly.
-    * @param localAddress the local address for this node
-    * @param parallel whether or not this stream is parallel
-    * @param dm the distribution manager to find out what keys map where
-    * @param supplier a supplier of local cache stream instances.
-    * @param csm manager that handles sending out messages to other nodes
-    * @param includeLoader whether or not a cache loader should be utilized for these operations
-    * @param distributedBatchSize default size of distributed batches
-    * @param executor executor to be used for certain operations that require async processing (ie. iterator)
-    * @param function initial function to apply to the stream to change the type
-    */
-   public <K, V> DistributedCacheStream(Address localAddress, boolean parallel, DistributionManager dm,
-           Supplier<CacheStream<CacheEntry<K, V>>> supplier, ClusterStreamManager csm, boolean includeLoader,
-           int distributedBatchSize, Executor executor, ComponentRegistry registry,
-           Function<? super CacheEntry<K, V>, R> function) {
-      super(localAddress, parallel, dm, supplierStreamCast(supplier), csm, includeLoader, distributedBatchSize, executor,
-              registry);
-      intermediateOperations.add(new MapOperation(function));
-      iteratorOperation = IteratorOperation.MAP;
+              executor, registry, toKeyFunction);
    }
 
    /**
@@ -455,7 +435,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
          onClose(closeableIterator::close);
          return closeableIterator;
       } else {
-         Iterable<IntermediateOperation> ops = iteratorOperation.prepareForIteration(intermediateOperations);
+         Iterable<IntermediateOperation> ops = iteratorOperation.prepareForIteration(intermediateOperations,
+               (Function) nonNullKeyFunction());
          CloseableIterator<R> closeableIterator;
          if (segmentCompletionListener != null && iteratorOperation != IteratorOperation.FLAT_MAP) {
             closeableIterator = new CompletionListenerRehashIterator<>(ops, segmentCompletionListener);
@@ -559,7 +540,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       PublisherDecorator<S> publisherDecorator(Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments,
             Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments, Consumer<Object> keyConsumer) {
          return new RehashPublisherDecorator<>(iteratorOperation, dm, localAddress, completedSegments, lostSegments,
-               executor, keyConsumer);
+               // This cast is fine as this function is only used when NO_MAP iterator operation is done
+               executor, keyConsumer, (Function<S, Object>) nonNullKeyFunction());
       }
 
       @Override
@@ -601,7 +583,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       PublisherDecorator<S> publisherDecorator(Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments,
             Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments, Consumer<Object> keyConsumer) {
          completionRehashPublisherDecorator = new CompletionRehashPublisherDecorator<>(iteratorOperation, dm,
-               localAddress, userListener, completedSegments, lostSegments, executor, keyConsumer);
+               localAddress, userListener, completedSegments, lostSegments, executor,
+               keyConsumer, (Function<S, ?>) nonNullKeyFunction());
 
          return completionRehashPublisherDecorator;
       }
@@ -609,7 +592,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
 
    <S> Publisher<S> localPublisher(IntSet segmentsToFilter, ConsistentHash ch, Set<Object> excludedKeys,
          Iterable<IntermediateOperation> intermediateOperations, boolean stayLocal) {
-      Supplier<Stream<CacheEntry>> supplier = supplierForSegments(ch, segmentsToFilter, excludedKeys, stayLocal);
+      Supplier<Stream<Original>> supplier = supplierForSegments(ch, segmentsToFilter, excludedKeys, stayLocal);
       BaseStream stream = supplier.get();
       for (IntermediateOperation intermediateOperation : intermediateOperations) {
          stream = intermediateOperation.perform(stream);
@@ -659,7 +642,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
          if (parallelDistribution == Boolean.FALSE || distributedBatchSize < publisherAmount) {
             Supplier<Map.Entry<Address, IntSet>> supplier = () -> targetIter.hasNext() ? targetIter.next() : null;
             ClusterStreamManager.RemoteIteratorPublisher<S> remotePublisher = csm.remoteIterationPublisher(false,
-                  supplier, keysToFilter, keysToExclude, includeLoader, intermediateOperations);
+                  supplier, keysToFilter, keysToExclude, includeLoader, toKeyFunction != null, intermediateOperations);
             Publisher<S> publisher = publisherFunction.decorateRemote(remotePublisher);
 
             // Local publisher is always last
@@ -675,7 +658,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
             // TODO: do we want to cap number of parallel distributions like this?
             for (int i = 0; i < publisherAmount; ++i) {
                ClusterStreamManager.RemoteIteratorPublisher<S> remotePublisher = csm.remoteIterationPublisher(false,
-                     supplier, keysToFilter, keysToExclude, includeLoader, intermediateOperations);
+                     supplier, keysToFilter, keysToExclude, includeLoader, toKeyFunction != null, intermediateOperations);
                Publisher<S> publisher = publisherFunction.decorateRemote(remotePublisher);
 
                builder.addPublisher(publisher, fixBatch(distributedBatchSize, i == 0, publisherAmount));
@@ -725,8 +708,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       if (!rehashAware) {
          performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
       } else {
-         performRehashKeyTrackingOperation(s -> new ForEachOperation<Object, R>(intermediateOperations, s, distributedBatchSize,
-                 action));
+         performRehashKeyTrackingOperation(s -> new ForEachOperation(intermediateOperations, s, nonNullKeyFunction(),
+               distributedBatchSize, action));
       }
    }
 
@@ -735,7 +718,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       if (!rehashAware) {
          performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
       } else {
-         performRehashKeyTrackingOperation(s -> new ForEachBiOperation(intermediateOperations, s,
+         performRehashKeyTrackingOperation(s -> new ForEachBiOperation(intermediateOperations, s, nonNullKeyFunction(),
                  distributedBatchSize, action));
       }
    }

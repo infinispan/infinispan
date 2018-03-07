@@ -35,14 +35,14 @@ import org.infinispan.util.function.SerializableSupplier;
 /**
  * An intermediate cache stream used when an intermediate operation that requires both a remote and local portion
  */
-public class IntermediateCacheStream<R> implements CacheStream<R> {
+public class IntermediateCacheStream<Original, R> implements CacheStream<R> {
    private BaseCacheStream remoteStream;
    private final IntermediateType type;
    private LocalCacheStream<R> localStream;
 
    private final IntermediateCacheStreamSupplier supplier;
 
-   public IntermediateCacheStream(DistributedCacheStream<R> remoteStream) {
+   public IntermediateCacheStream(DistributedCacheStream<Original, R> remoteStream) {
       this.remoteStream = remoteStream;
       this.type = IntermediateType.REF;
       this.supplier = new IntermediateCacheStreamSupplier(type, remoteStream);

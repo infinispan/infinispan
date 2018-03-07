@@ -2,6 +2,7 @@ package org.infinispan.stream.impl;
 
 import java.util.PrimitiveIterator;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.util.IntSet;
@@ -26,15 +27,17 @@ public abstract class AbstractRehashPublisherDecorator<S> implements PublisherDe
    final Address localAddress;
    final Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments;
    final Consumer<Object> keyConsumer;
+   final Function<S, ?> toKeyFunction;
 
    AbstractRehashPublisherDecorator(AbstractCacheStream.IteratorOperation iteratorOperation, DistributionManager dm,
          Address localAddress, Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments,
-         Consumer<Object> keyConsumer) {
+         Consumer<Object> keyConsumer, Function<S, ?> toKeyFunction) {
       this.iteratorOperation = iteratorOperation;
       this.dm = dm;
       this.localAddress = localAddress;
       this.lostSegments = lostSegments;
       this.keyConsumer = keyConsumer;
+      this.toKeyFunction = toKeyFunction;
    }
 
    abstract Log getLog();
@@ -60,6 +63,6 @@ public abstract class AbstractRehashPublisherDecorator<S> implements PublisherDe
             lostSegments.accept((Supplier<PrimitiveIterator.OfInt>) ourSegments::iterator);
          }
       });
-      return iteratorOperation.handlePublisher(convertedPublisher, keyConsumer);
+      return iteratorOperation.handlePublisher(convertedPublisher, keyConsumer, toKeyFunction);
    }
 }

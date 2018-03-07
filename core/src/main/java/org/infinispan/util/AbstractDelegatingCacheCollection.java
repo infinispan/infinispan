@@ -13,8 +13,12 @@ public abstract class AbstractDelegatingCacheCollection<E> extends AbstractDeleg
    protected abstract CacheCollection<E> delegate();
 
    @Override
-   public abstract CacheStream<E> stream();
+   public CacheStream<E> stream() {
+      return delegate().stream();
+   }
 
    @Override
-   public abstract CacheStream<E> parallelStream();
+   public CacheStream<E> parallelStream() {
+      return delegate().parallelStream();
+   }
 }

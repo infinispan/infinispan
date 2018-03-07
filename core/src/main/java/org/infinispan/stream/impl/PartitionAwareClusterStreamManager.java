@@ -27,7 +27,7 @@ import org.infinispan.stream.impl.intops.IntermediateOperation;
  * Cluster stream manager that also pays attention to partition status and properly closes iterators and throws
  * exceptions when the availability mode changes.
  */
-public class PartitionAwareClusterStreamManager<K> extends ClusterStreamManagerImpl<K> {
+public class PartitionAwareClusterStreamManager<Original, K> extends ClusterStreamManagerImpl<Original, K> {
    protected final PartitionListener listener = new PartitionListener();
    @Inject protected Cache<?, ?> cache;
    @Inject protected Configuration configuration;
@@ -65,48 +65,50 @@ public class PartitionAwareClusterStreamManager<K> extends ClusterStreamManagerI
 
    @Override
    public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-           TerminalOperation<R> operation, ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate) {
+         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         boolean entryStream, TerminalOperation<Original, R> operation, ResultsCallback<R> callback,
+         Predicate<? super R> earlyTerminatePredicate) {
       checkPartitionStatus();
       return super.remoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
-              keysToExclude, includeLoader, operation, callback, earlyTerminatePredicate);
+              keysToExclude, includeLoader, entryStream, operation, callback, earlyTerminatePredicate);
    }
 
    @Override
    public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-           KeyTrackingTerminalOperation<K, R, ?> operation, ResultsCallback<Collection<R>> callback) {
+         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         boolean entryStream, KeyTrackingTerminalOperation<Original, K, R> operation, ResultsCallback<Collection<R>> callback) {
       checkPartitionStatus();
       return super.remoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
-              keysToExclude, includeLoader, operation, callback);
+              keysToExclude, includeLoader, entryStream, operation, callback);
    }
 
    @Override
    public <R> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
-           ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
-           boolean includeLoader, TerminalOperation<R> operation, ResultsCallback<R> callback,
-           Predicate<? super R> earlyTerminatePredicate) {
+         ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
+         boolean includeLoader, boolean entryStream, TerminalOperation<Original, R> operation, ResultsCallback<R> callback,
+         Predicate<? super R> earlyTerminatePredicate) {
       checkPartitionStatus();
       return super.remoteStreamOperationRehashAware(parallelDistribution, parallelStream, ch, segments, keysToInclude,
-              keysToExclude, includeLoader, operation, callback, earlyTerminatePredicate);
+              keysToExclude, includeLoader, entryStream, operation, callback, earlyTerminatePredicate);
    }
 
    @Override
-   public <R2> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
+   public Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
            ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
-           boolean includeLoader, KeyTrackingTerminalOperation<K, ?, R2> operation,
-           ResultsCallback<Map<K, R2>> callback) {
+           boolean includeLoader, boolean entryStream, KeyTrackingTerminalOperation<Original, K, ?> operation,
+           ResultsCallback<Collection<K>> callback) {
       checkPartitionStatus();
       return super.remoteStreamOperationRehashAware(parallelDistribution, parallelStream, ch, segments, keysToInclude,
-              keysToExclude, includeLoader, operation, callback);
+              keysToExclude, includeLoader, entryStream, operation, callback);
    }
 
    @Override
    public <E> RemoteIteratorPublisher<E> remoteIterationPublisher(boolean parallelStream,
          Supplier<Map.Entry<Address, IntSet>> targets, Set<K> keysToInclude, IntFunction<Set<K>> keysToExclude,
-         boolean includeLoader, Iterable<IntermediateOperation> intermediateOperations) {
+         boolean includeLoader, boolean entryStream, Iterable<IntermediateOperation> intermediateOperations) {
       checkPartitionStatus();
-      return super.remoteIterationPublisher(parallelStream, targets, keysToInclude, keysToExclude, includeLoader, intermediateOperations);
+      return super.remoteIterationPublisher(parallelStream, targets, keysToInclude, keysToExclude, includeLoader,
+            entryStream, intermediateOperations);
    }
 
    private void checkPartitionStatus() {

@@ -31,7 +31,6 @@ import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
 import org.infinispan.commons.util.SmallIntSet;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.stream.impl.intops.primitive.i.AsDoubleIntOperation;
 import org.infinispan.stream.impl.intops.primitive.i.AsLongIntOperation;
 import org.infinispan.stream.impl.intops.primitive.i.BoxedIntOperation;
@@ -65,8 +64,9 @@ import org.infinispan.util.logging.LogFactory;
  * Implementation of {@link IntStream} that utilizes a lazily evaluated distributed back end execution.  Note this
  * class is only able to be created using {@link org.infinispan.CacheStream#mapToInt(ToIntFunction)} or similar
  * methods from the {@link org.infinispan.CacheStream} interface.
+ * @param <Original> original stream type
  */
-public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntStream, IntCacheStream>
+public class DistributedIntCacheStream<Original> extends AbstractCacheStream<Original, Integer, IntStream, IntCacheStream>
         implements IntCacheStream {
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
@@ -241,21 +241,25 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
       forEach((ObjIntConsumer<Cache<K, V>>) action);
    }
 
-   KeyTrackingTerminalOperation<Object, Integer, Object> getForEach(IntConsumer consumer,
-           Supplier<Stream<CacheEntry>> supplier) {
+   KeyTrackingTerminalOperation<Original, Object, Integer> getForEach(IntConsumer consumer,
+           Supplier<Stream<Original>> supplier) {
       if (iteratorOperation == IteratorOperation.FLAT_MAP) {
-         return new ForEachFlatMapIntOperation<>(intermediateOperations, supplier, distributedBatchSize, consumer);
+         return new ForEachFlatMapIntOperation<>(intermediateOperations, supplier, nonNullKeyFunction(),
+               distributedBatchSize, consumer);
       } else {
-         return new ForEachIntOperation<>(intermediateOperations, supplier, distributedBatchSize, consumer);
+         return new ForEachIntOperation<>(intermediateOperations, supplier, nonNullKeyFunction(), distributedBatchSize,
+               consumer);
       }
    }
 
-   <K, V> KeyTrackingTerminalOperation<Object, Integer, Object> getForEach(ObjIntConsumer<Cache<K, V>> consumer,
-           Supplier<Stream<CacheEntry>> supplier) {
+   <K, V> KeyTrackingTerminalOperation<Original, Object, Integer> getForEach(ObjIntConsumer<Cache<K, V>> consumer,
+           Supplier<Stream<Original>> supplier) {
       if (iteratorOperation == IteratorOperation.FLAT_MAP) {
-         return new ForEachFlatMapObjIntOperation(intermediateOperations, supplier, distributedBatchSize, consumer);
+         return new ForEachFlatMapObjIntOperation(intermediateOperations, supplier, nonNullKeyFunction(),
+               distributedBatchSize, consumer);
       } else {
-         return new ForEachObjIntOperation(intermediateOperations, supplier, distributedBatchSize, consumer);
+         return new ForEachObjIntOperation(intermediateOperations, supplier, nonNullKeyFunction(),
+               distributedBatchSize, consumer);
       }
    }
 
@@ -452,7 +456,7 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
       // TODO: need to add in way to not box these later
       // Since this is a remote iterator we have to add it to the remote intermediate operations queue
       intermediateOperations.add(BoxedIntOperation.getInstance());
-      DistributedCacheStream<Integer> stream = new DistributedCacheStream<>(this);
+      DistributedCacheStream<Original, Integer> stream = new DistributedCacheStream<>(this);
       Iterator<Integer> iterator = stream.iterator();
       return new IntegerIteratorToPrimitiveInteger(iterator);
    }
@@ -544,15 +548,15 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
       return this;
    }
 
-   protected <R> DistributedCacheStream<R> cacheStream() {
+   protected <R> DistributedCacheStream<Original, R> cacheStream() {
       return new DistributedCacheStream<>(this);
    }
 
-   protected DistributedDoubleCacheStream doubleCacheStream() {
-      return new DistributedDoubleCacheStream(this);
+   protected DistributedDoubleCacheStream<Original> doubleCacheStream() {
+      return new DistributedDoubleCacheStream<>(this);
    }
 
-   protected DistributedLongCacheStream longCacheStream() {
-      return new DistributedLongCacheStream(this);
+   protected DistributedLongCacheStream<Original> longCacheStream() {
+      return new DistributedLongCacheStream<>(this);
    }
 }

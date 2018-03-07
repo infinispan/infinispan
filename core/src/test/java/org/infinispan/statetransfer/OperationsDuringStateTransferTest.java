@@ -371,11 +371,14 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
          @Override
          protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
             if (cmd instanceof GetKeyValueCommand) {
-               // signal we encounter a GET
-               getKeyStartedLatch.countDown();
-               // wait until it is ok to continue with GET
-               if (!getKeyProceedLatch.await(10, TimeUnit.SECONDS)) {
-                  throw new TimeoutException();
+               // Only block the first get to come here - they are not concurrent so this check is fine
+               if (getKeyStartedLatch.getCount() != 0) {
+                  // signal we encounter a GET
+                  getKeyStartedLatch.countDown();
+                  // wait until it is ok to continue with GET
+                  if (!getKeyProceedLatch.await(10, TimeUnit.SECONDS)) {
+                     throw new TimeoutException();
+                  }
                }
             }
             return super.handleDefault(ctx, cmd);

@@ -495,7 +495,8 @@ public interface CommandsFactory {
    GetKeysInGroupCommand buildGetKeysInGroupCommand(long flagsBitSet, Object groupName);
 
    <K> StreamRequestCommand<K> buildStreamRequestCommand(Object id, boolean parallelStream, StreamRequestCommand.Type type,
-           Set<Integer> segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, Object terminalOperation);
+           Set<Integer> segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
+         Object terminalOperation);
 
    /**
     * Builds {@link StreamResponseCommand} used to send back a response either intermediate or complete to the
@@ -511,7 +512,7 @@ public interface CommandsFactory {
            R response);
 
    <K> StreamIteratorRequestCommand<K> buildStreamIteratorRequestCommand(Object id, boolean parallelStream,
-         IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
+         IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
          Iterable<IntermediateOperation> intOps, long batchSize);
 
    StreamIteratorNextCommand buildStreamIteratorNextCommand(Object id, long batchSize);

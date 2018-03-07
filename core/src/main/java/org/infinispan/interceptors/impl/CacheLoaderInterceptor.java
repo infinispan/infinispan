@@ -506,7 +506,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
                // TODO: how to pass in key filter...
                new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager, iceFactory,
-                     new CollectionKeyFilter<>(seenKeys), calculateTimeoutSeconds(), TimeUnit.SECONDS, 2048)),
+                     new CollectionKeyFilter<>(seenKeys), calculateTimeoutSeconds(), TimeUnit.SECONDS, 2048, true)),
                      CacheEntry::getKey, seenKeys);
       }
 
@@ -547,7 +547,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(new SupplierFunction<>(
                new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager,
                      // TODO: how to pass in key filter...
-                     iceFactory, new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048))),
+                     iceFactory, new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048, false))),
                Function.identity(), seenKeys);
       }
 

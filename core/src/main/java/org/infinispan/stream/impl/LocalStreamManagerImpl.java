@@ -20,7 +20,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
@@ -45,11 +44,12 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Local stream manager implementation that handles injection of the stream supplier, invoking the operation and
  * subsequently notifying the operation if a rehash has changed one of its segments.
+ * @param <Original> original stream type
  * @param <K> key type of underlying cache
  * @param <V> value type of underlying cache
  */
 @Listener(observation = Listener.Observation.POST)
-public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
+public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManager<Original, K> {
    private final static Log log = LogFactory.getLog(LocalStreamManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -67,7 +67,6 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    private IteratorHandler iteratorHandler;
 
    private Address localAddress;
-   private CacheMode cacheMode;
 
    private final ConcurrentMap<Object, SegmentListener> changeListener = CollectionFactory.makeConcurrentMap();
    private ByteString cacheName;
@@ -135,7 +134,6 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       hasLoader = cache.getCacheConfiguration().persistence().usingStores();
       localAddress = rpc.getAddress();
       cache.addListener(this);
-      cacheMode = cache.getCacheConfiguration().clustering().cacheMode();
    }
 
    /**
@@ -192,23 +190,33 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       return cache;
    }
 
-   private Stream<CacheEntry<K, V>> getStream(CacheSet<CacheEntry<K, V>> cacheEntrySet, boolean parallelStream,
-           Set<Integer> segments, Set<K> keysToInclude, Set<K> keysToExclude) {
-      Stream<CacheEntry<K, V>> stream = (parallelStream ? cacheEntrySet.parallelStream() : cacheEntrySet.stream())
-              .filterKeys(keysToInclude).filterKeySegments(segments);
-      if (cacheMode.isScattered()) {
-         stream = stream.filter(entry -> entry.getValue() != null);
+   private CacheSet<Original> toOriginalSet(boolean includeLoader, boolean entryStream) {
+      if (entryStream) {
+         return (CacheSet<Original>) getCacheRespectingLoader(includeLoader).cacheEntrySet();
+      } else {
+         return (CacheSet<Original>) getCacheRespectingLoader(includeLoader).keySet();
       }
+   }
+
+   private Stream<Original> getStream(CacheSet<Original> cacheEntrySet, boolean parallelStream,
+         boolean entryStream, Set<Integer> segments, Set<K> keysToInclude, Set<K> keysToExclude) {
+      Stream<Original> stream = (parallelStream ? cacheEntrySet.parallelStream() : cacheEntrySet.stream())
+              .filterKeys(keysToInclude).filterKeySegments(segments);
       if (!keysToExclude.isEmpty()) {
          log.warn("Added exclude filter");
-         return stream.filter(e -> !keysToExclude.contains(e.getKey()));
+         if (entryStream) {
+            // If it is an entry stream we have to exclude by key
+            return stream.filter(e -> !keysToExclude.contains(((CacheEntry) e).getKey()));
+         } else {
+            return stream.filter(k -> !keysToExclude.contains(k));
+         }
       }
       return stream;
    }
 
-   private Stream<CacheEntry<K, V>> getRehashStream(CacheSet<CacheEntry<K, V>> cacheEntrySet, Object requestId,
-           SegmentListener listener, boolean parallelStream, Set<Integer> segments, Set<K> keysToInclude,
-           Set<K> keysToExclude) {
+   private Stream<Original> getRehashStream(CacheSet<Original> cacheEntrySet, Object requestId,
+         SegmentListener listener, boolean parallelStream, boolean entryStream, Set<Integer> segments,
+         Set<K> keysToInclude, Set<K> keysToExclude) {
       LocalizedCacheTopology topology = dm.getCacheTopology();
       if (trace) {
          log.tracef("Topology for supplier is %s for id %s", topology, requestId);
@@ -249,7 +257,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
          }
       }
 
-      return getStream(cacheEntrySet, parallelStream, segments, keysToInclude, keysToExclude);
+      return getStream(cacheEntrySet, parallelStream, entryStream, segments, keysToInclude, keysToExclude);
    }
 
    private void handleResponseError(CompletionStage<ValidResponse> rpcFuture, Object requestId,
@@ -269,12 +277,14 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
 
    @Override
    public <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
-           Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, TerminalOperation<R> operation) {
+         Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
+         TerminalOperation<Original, R> operation) {
       if (trace) {
          log.tracef("Received operation request for id %s from %s for segments %s", requestId, origin, segments);
       }
-      CacheSet<CacheEntry<K, V>> cacheEntrySet = getCacheRespectingLoader(includeLoader).cacheEntrySet();
-      operation.setSupplier(() -> getStream(cacheEntrySet, parallelStream, segments, keysToInclude, keysToExclude));
+      CacheSet<Original> originalSet = toOriginalSet(includeLoader, entryStream);
+      operation.setSupplier(() -> getStream(originalSet, parallelStream, entryStream, segments, keysToInclude,
+            keysToExclude));
       operation.handleInjection(registry);
       R value = operation.performOperation();
       StreamResponseCommand<R> command =
@@ -286,13 +296,13 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
 
    @Override
    public <R> void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream,
-           Set<Integer> segments, Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader,
-           TerminalOperation<R> operation) {
+           Set<Integer> segments, Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
+           TerminalOperation<Original, R> operation) {
       if (trace) {
          log.tracef("Received rehash aware operation request for id %s from %s for segments %s", requestId, origin,
                  segments);
       }
-      CacheSet<CacheEntry<K, V>> cacheEntrySet = getCacheRespectingLoader(includeLoader).cacheEntrySet();
+      CacheSet<Original> originalSet = toOriginalSet(includeLoader, entryStream);
       SegmentListener listener = new SegmentListener(segments, operation);
       R value;
 
@@ -303,8 +313,8 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
          log.tracef("Registered change listener for %s", requestId);
       }
       try {
-         operation.setSupplier(() -> getRehashStream(cacheEntrySet, requestId, listener, parallelStream, segments,
-                 keysToInclude, keysToExclude));
+         operation.setSupplier(() -> getRehashStream(originalSet, requestId, listener, parallelStream, entryStream,
+               segments, keysToInclude, keysToExclude));
          value = operation.performOperation();
          if (trace) {
             log.tracef("Request %s completed for segments %s with %s suspected segments", requestId, segments,
@@ -335,14 +345,15 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
 
    @Override
    public <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
-           Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader,
-           KeyTrackingTerminalOperation<K, R, ?> operation) {
+           Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
+           KeyTrackingTerminalOperation<Original, K, R> operation) {
       if (trace) {
          log.tracef("Received key aware operation request for id %s from %s for segments %s", requestId, origin,
                  segments);
       }
-      CacheSet<CacheEntry<K, V>> cacheEntrySet = getCacheRespectingLoader(includeLoader).cacheEntrySet();
-      operation.setSupplier(() -> getStream(cacheEntrySet, parallelStream, segments, keysToInclude, keysToExclude));
+      CacheSet<Original> originalSet = toOriginalSet(includeLoader, entryStream);
+      operation.setSupplier(() -> getStream(originalSet, parallelStream, entryStream, segments, keysToInclude,
+            keysToExclude));
       operation.handleInjection(registry);
       Collection<R> value = operation.performOperation(new NonRehashIntermediateCollector<>(origin, requestId,
               parallelStream));
@@ -354,16 +365,16 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    }
 
    @Override
-   public <R2> void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream,
-           Set<Integer> segments, Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader,
-           KeyTrackingTerminalOperation<K, ?, R2> operation) {
+   public void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream,
+         Set<Integer> segments, Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
+         KeyTrackingTerminalOperation<Original, K, ?> operation) {
       if (trace) {
          log.tracef("Received key rehash aware operation request for id %s from %s for segments %s", requestId, origin,
                  segments);
       }
-      CacheSet<CacheEntry<K, V>> cacheEntrySet = getCacheRespectingLoader(includeLoader).cacheEntrySet();
+      CacheSet<Original> originalSet = toOriginalSet(includeLoader, entryStream);
       SegmentListener listener = new SegmentListener(segments, operation);
-      Collection<CacheEntry<K, R2>> results;
+      Collection<K> results;
 
       operation.handleInjection(registry);
       // We currently only allow 1 request per id (we may change this later)
@@ -372,9 +383,9 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
          log.tracef("Registered change listener for %s", requestId);
       }
       try {
-         operation.setSupplier(() -> getRehashStream(cacheEntrySet, requestId, listener, parallelStream, segments,
-                 keysToInclude, keysToExclude));
-         results = operation.performOperationRehashAware(new NonRehashIntermediateCollector<>(origin, requestId,
+         operation.setSupplier(() -> getRehashStream(originalSet, requestId, listener, parallelStream, entryStream,
+               segments, keysToInclude, keysToExclude));
+         results = operation.performForEachOperation(new NonRehashIntermediateCollector<>(origin, requestId,
                  parallelStream));
          if (trace) {
             log.tracef("Request %s completed segments %s with %s suspected segments", requestId, segments,
@@ -394,7 +405,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
          results = null;
       }
 
-      StreamResponseCommand<Collection<CacheEntry<K, R2>>> command =
+      StreamResponseCommand<Collection<K>> command =
          factory.buildStreamResponseCommand(requestId, true, listener.segmentsLost, results);
       CompletionStage<ValidResponse> completableFuture =
          rpc.invokeCommand(origin, command, SingleResponseCollector.validOnly(), rpc.getSyncRpcOptions());
@@ -403,12 +414,14 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
 
    @Override
    public IteratorResponse startIterator(Object requestId, Address origin, IntSet segments, Set<K> keysToInclude,
-         Set<K> keysToExclude, boolean includeLoader, Iterable<IntermediateOperation> intermediateOperations, long batchSize) {
+         Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
+         Iterable<IntermediateOperation> intermediateOperations, long batchSize) {
       if (trace) {
          log.tracef("Received rehash aware operation request to start iterator for id %s from %s for segments %s",
                requestId, origin, segments);
       }
-      CacheSet<CacheEntry<K, V>> cacheEntrySet = getCacheRespectingLoader(includeLoader).cacheEntrySet();
+      CacheSet<Original> originalSet = toOriginalSet(includeLoader, entryStream);
+
       SegmentListener listener = new SegmentListener(segments, i -> true);
 
       if (changeListener.putIfAbsent(requestId, listener) != null) {
@@ -418,9 +431,9 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       if (trace) {
          log.tracef("Registered change listener for %s", requestId);
       }
-      IteratorHandler.OnCloseIterator<Object> iterator = iteratorHandler.start(origin, () -> getRehashStream(cacheEntrySet,
-            requestId, listener, false, segments,
-            keysToInclude, keysToExclude), intermediateOperations, requestId);
+      IteratorHandler.OnCloseIterator<Object> iterator = iteratorHandler.start(origin, () -> getRehashStream(originalSet,
+            requestId, listener, false, entryStream, segments, keysToInclude, keysToExclude), intermediateOperations,
+            requestId);
       // Have to clear out our change listener when the iterator is closed
       iterator.onClose(() -> {
          changeListener.remove(requestId);

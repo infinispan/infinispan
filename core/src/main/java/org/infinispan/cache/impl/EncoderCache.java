@@ -1,6 +1,8 @@
 package org.infinispan.cache.impl;
 
 import java.lang.annotation.Annotation;
+import java.util.AbstractCollection;
+import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -21,7 +23,6 @@ import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
-import org.infinispan.commands.read.AbstractCloseableIteratorCollection;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.IdentityWrapper;
@@ -183,12 +184,14 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       }
    }
 
-   private class EncodedKeySet extends AbstractCloseableIteratorCollection<K, K, V> implements CacheSet<K> {
+   /**
+    * This only extends AbstractSet so it falls back to iterator in case if we didn't implement a method
+    */
+   private class EncodedKeySet extends AbstractSet<K> implements CacheSet<K> {
       private final CacheSet<K> actualCollection;
       private final EncoderKeyMapper keyMapper = new EncoderKeyMapper(keyDataConversion);
 
-      EncodedKeySet(Cache<K, V> cache, CacheSet<K> actualCollection) {
-         super(cache);
+      EncodedKeySet(CacheSet<K> actualCollection) {
          this.actualCollection = actualCollection;
       }
 
@@ -208,6 +211,11 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       }
 
       @Override
+      public int size() {
+         return actualCollection.size();
+      }
+
+      @Override
       public CloseableSpliterator<K> spliterator() {
          return new CloseableSpliteratorMapper<>(actualCollection.spliterator(), EncoderCache.this::keyFromStorage);
       }
@@ -220,6 +228,29 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       @Override
       public boolean remove(Object o) {
          return actualCollection.remove(keyToStorage(o));
+      }
+
+      // These methods should be delegated to actual collection as they can be faster
+
+      @Override
+      public boolean removeAll(Collection<?> c) {
+         return actualCollection.removeAll(buildKeyCollection(c));
+      }
+
+      @Override
+      public boolean retainAll(Collection<?> c) {
+         return actualCollection.retainAll(buildKeyCollection(c));
+      }
+
+      Collection<K> buildKeyCollection(Collection<?> c) {
+         Collection<K> toRemove = new ArrayList<>(c.size());
+         for (Object obj : c) {
+            K entry = keyToStorage(obj);
+            if (entry != null) {
+               toRemove.add(entry);
+            }
+         }
+         return toRemove;
       }
    }
 
@@ -525,7 +556,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
-      return new EncoderEntrySet(this, super.cacheEntrySet());
+      return new EncoderEntrySet(super.cacheEntrySet());
    }
 
    @Override
@@ -758,7 +789,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public CacheSet<K> keySet() {
-      return new EncodedKeySet(this, super.keySet());
+      return new EncodedKeySet(super.keySet());
    }
 
 
@@ -807,13 +838,15 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       }
    }
 
-   private class EncoderEntrySet extends AbstractCloseableIteratorCollection<CacheEntry<K, V>, K, V> implements CacheSet<CacheEntry<K, V>> {
+   /**
+    * This only extends AbstractSet so it falls back to iterator in case if we didn't implement a method
+    */
+   private class EncoderEntrySet extends AbstractSet<CacheEntry<K, V>> implements CacheSet<CacheEntry<K, V>> {
       private CacheSet<CacheEntry<K, V>> actualCollection;
       private EncoderEntryMapper entryMapper;
 
 
-      EncoderEntrySet(Cache<K, V> cache, CacheSet<CacheEntry<K, V>> actualCollection) {
-         super(cache);
+      EncoderEntrySet(CacheSet<CacheEntry<K, V>> actualCollection) {
          this.entryMapper = new EncoderEntryMapper(keyDataConversion, valueDataConversion);
          this.actualCollection = actualCollection;
       }
@@ -831,6 +864,11 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       @Override
       public CloseableIterator<CacheEntry<K, V>> iterator() {
          return new EncoderIterator<>(actualCollection.iterator(), entryFactory);
+      }
+
+      @Override
+      public int size() {
+         return actualCollection.size();
       }
 
       @Override
@@ -864,6 +902,29 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
             return actualCollection.remove(entry);
          }
          return false;
+      }
+
+      // These methods should be delegated to actual collection as they can be faster
+
+      @Override
+      public boolean removeAll(Collection<?> c) {
+         return actualCollection.removeAll(buildEntryCollection(c));
+      }
+
+      @Override
+      public boolean retainAll(Collection<?> c) {
+         return actualCollection.retainAll(buildEntryCollection(c));
+      }
+
+      Collection<Map.Entry> buildEntryCollection(Collection<?> c) {
+         Collection<Map.Entry> toRemove = new ArrayList<>(c.size());
+         for (Object obj : c) {
+            Map.Entry entry = toEntry(obj);
+            if (entry != null) {
+               toRemove.add(entry);
+            }
+         }
+         return toRemove;
       }
 
       Map.Entry toEntry(Object o) {
@@ -910,7 +971,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public CacheSet<Entry<K, V>> entrySet() {
-      return cast(new EncoderEntrySet(this, cast(super.cacheEntrySet())));
+      return cast(new EncoderEntrySet(cast(super.cacheEntrySet())));
 
    }
 
@@ -918,13 +979,14 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       return (CacheSet<E>) set;
    }
 
-
-   private class EncoderValuesCollection extends AbstractCloseableIteratorCollection<V, K, V> implements CacheCollection<V> {
+   /**
+    * Extends only AbstractCollection so that all methods will fall back to iterator, just in case we missed them
+    */
+   private class EncoderValuesCollection extends AbstractCollection<V> implements CacheCollection<V> {
       private final CacheCollection<V> actualCollection;
       final EncoderValueMapper valueMapper = new EncoderValueMapper(valueDataConversion);
 
-      EncoderValuesCollection(Cache<K, V> cache, CacheCollection<V> actualCollection) {
-         super(cache);
+      EncoderValuesCollection(CacheCollection<V> actualCollection) {
          this.actualCollection = actualCollection;
       }
 
@@ -944,6 +1006,11 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       }
 
       @Override
+      public int size() {
+         return actualCollection.size();
+      }
+
+      @Override
       public CloseableSpliterator<V> spliterator() {
          return new CloseableSpliteratorMapper<>(actualCollection.spliterator(), EncoderCache.this::valueFromStorage);
       }
@@ -957,11 +1024,34 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       public boolean remove(Object o) {
          return actualCollection.remove(valueToStorage(o));
       }
+
+      // These methods should be delegated to actual collection as they can be faster
+
+      @Override
+      public boolean removeAll(Collection<?> c) {
+         return actualCollection.removeAll(buildEntryCollection(c));
+      }
+
+      @Override
+      public boolean retainAll(Collection<?> c) {
+         return actualCollection.retainAll(buildEntryCollection(c));
+      }
+
+      Collection<V> buildEntryCollection(Collection<?> c) {
+         Collection<V> toRemove = new ArrayList<>(c.size());
+         for (Object obj : c) {
+            V entry = valueToStorage(obj);
+            if (entry != null) {
+               toRemove.add(entry);
+            }
+         }
+         return toRemove;
+      }
    }
 
    @Override
    public CacheCollection<V> values() {
-      return new EncoderValuesCollection(this, super.values());
+      return new EncoderValuesCollection(super.values());
    }
 
    @Override
