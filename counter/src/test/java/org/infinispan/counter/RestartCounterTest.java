@@ -33,6 +33,7 @@ public class RestartCounterTest extends BaseCounterTest {
 
    private static final String PERSISTENT_FOLDER = TestingUtil.tmpDirectory(RestartCounterTest.class.getSimpleName());
    private static final String TEMP_PERSISTENT_FOLDER = PERSISTENT_FOLDER + File.separator + "temp";
+   private static final String SHARED_PERSISTENT_FOLDER = PERSISTENT_FOLDER + File.separator + "shared";
    private static final int CLUSTER_SIZE = 4;
    private final Collection<CounterDefinition> defaultCounters = new ArrayList<>(6);
    private final Collection<CounterDefinition> otherCounters = new ArrayList<>(6);
@@ -60,11 +61,14 @@ public class RestartCounterTest extends BaseCounterTest {
    @AfterMethod(alwaysRun = true)
    public void removeFiles() {
       Util.recursiveFileRemove(PERSISTENT_FOLDER);
-      Util.recursiveFileRemove(TEMP_PERSISTENT_FOLDER);
    }
 
-   public void testCountersInConfiguration() throws Throwable {
+   public void testCountersInConfiguration() {
       assertDefined(defaultCounters);
+
+      //while the retries during state transfer aren't fixed, we need to wait for the cache to start everywhere
+      waitForClusterToForm(CounterModuleLifecycle.COUNTER_CACHE_NAME);
+
       incrementAll(defaultCounters, counterManager(0));
       assertCounterValue(defaultCounters, counterManager(0), 1, 1);
       shutdownAndRestart();
@@ -72,8 +76,12 @@ public class RestartCounterTest extends BaseCounterTest {
       assertCounterValue(defaultCounters, counterManager(0), 0, 1);
    }
 
-   public void testRuntimeCounters() throws Throwable {
+   public void testRuntimeCounters() {
       final CounterManager counterManager = counterManager(0);
+
+      //while the retries during state transfer aren't fixed, we need to wait for the cache to start everywhere
+      waitForClusterToForm(CounterModuleLifecycle.COUNTER_CACHE_NAME);
+
       incrementAll(defaultCounters, counterManager);
       incrementAll(defaultCounters, counterManager);
       otherCounters.forEach(counterDefinition -> counterDefinition.define(counterManager));
@@ -108,19 +116,17 @@ public class RestartCounterTest extends BaseCounterTest {
    protected GlobalConfigurationBuilder configure(int nodeId) {
       GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       builder.globalState().enable().persistentLocation(PERSISTENT_FOLDER + File.separator + nodeId)
-            .temporaryLocation(TEMP_PERSISTENT_FOLDER + File.separator + nodeId);
+            .temporaryLocation(TEMP_PERSISTENT_FOLDER + File.separator + nodeId)
+            .sharedPersistentLocation(SHARED_PERSISTENT_FOLDER + File.separator + nodeId);
       CounterManagerConfigurationBuilder counterBuilder = builder.addModule(CounterManagerConfigurationBuilder.class);
       defaultCounters.forEach(counterDefinition -> counterDefinition.define(counterBuilder));
       return builder;
    }
 
-   private void shutdownAndRestart() throws Throwable {
+   private void shutdownAndRestart() {
       cache(0, CounterModuleLifecycle.COUNTER_CACHE_NAME).shutdown();
-      cache(0, CounterModuleLifecycle.COUNTER_CONFIGURATION_CACHE_NAME).shutdown();
       log.debug("Shutdown caches");
-      for (EmbeddedCacheManager cacheManager : cacheManagers) {
-         cacheManager.stop();
-      }
+      cacheManagers.forEach(EmbeddedCacheManager::stop);
       cacheManagers.clear();
 
       log.debug("Restart caches");
@@ -129,7 +135,7 @@ public class RestartCounterTest extends BaseCounterTest {
 
    private void assertDefined(Collection<CounterDefinition> counters) {
       for (int i = 0; i < CLUSTER_SIZE; ++i) {
-         CounterManager counterManager = counterManager(0);
+         CounterManager counterManager = counterManager(i);
          for (CounterDefinition definition : counters) {
             assertTrue("Configuration of " + definition.name + " is missing on manager " + i,
                   counterManager.isDefined(definition.name));
@@ -139,7 +145,7 @@ public class RestartCounterTest extends BaseCounterTest {
 
    private void assertNotDefined(Collection<CounterDefinition> counters) {
       for (int i = 0; i < CLUSTER_SIZE; ++i) {
-         CounterManager counterManager = counterManager(0);
+         CounterManager counterManager = counterManager(i);
          for (CounterDefinition definition : counters) {
             assertFalse("Configuration of " + definition.name + " is defined on manager " + i,
                   counterManager.isDefined(definition.name));

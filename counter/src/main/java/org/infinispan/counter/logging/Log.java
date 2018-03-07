@@ -1,7 +1,6 @@
 package org.infinispan.counter.logging;
 
-import static org.jboss.logging.Logger.Level.ERROR;
-import static org.jboss.logging.Logger.Level.WARN;
+import java.io.File;
 
 import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.counter.exception.CounterConfigurationException;
@@ -9,7 +8,6 @@ import org.infinispan.counter.exception.CounterException;
 import org.infinispan.util.ByteString;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
-import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
@@ -56,13 +54,13 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Unable to reset non-existing counter '%s'.", id = 28011)
 //   void noSuchCounterReset(ByteString counterName);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Interrupted while waiting for the counter manager caches.", id = 28012)
-   void interruptedWhileWaitingForCaches();
+//   @LogMessage(level = WARN)
+//   @Message(value = "Interrupted while waiting for the counter manager caches.", id = 28012)
+//   void interruptedWhileWaitingForCaches();
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Exception while waiting for counter manager caches.", id = 28013)
-   void exceptionWhileWaitingForCached(@Cause Throwable cause);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Exception while waiting for counter manager caches.", id = 28013)
+//   void exceptionWhileWaitingForCached(@Cause Throwable cause);
 
    @Message(value = "Invalid counter type. Expected=%s but got %s", id = 28014)
    CounterException invalidCounterType(String expected, String actual);
@@ -95,4 +93,16 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Lower bound (%s) and upper bound (%s) can't be the same.", id = 28024)
    CounterConfigurationException invalidSameLowerAndUpperBound(long lower, long upper);
+
+   @Message(value = "Cannot rename file %s to %s", id = 28025)
+   CounterConfigurationException cannotRenamePersistentFile(String absolutePath, File persistentFile);
+
+   @Message(value = "Error while persisting counter's configurations", id = 28026)
+   CounterConfigurationException errorPersistingCountersConfiguration(@Cause Throwable cause);
+
+   @Message(value = "Error while reading counter's configurations", id = 28027)
+   CounterConfigurationException errorReadingCountersConfiguration(@Cause Throwable cause);
+
+   @Message(value = "CounterManager hasn't started yet or has been stopped.", id = 28028)
+   CounterException managerNotStarted();
 }

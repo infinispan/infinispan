@@ -5,6 +5,7 @@ import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterMana
 import java.io.File;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -21,7 +22,6 @@ import org.infinispan.counter.configuration.StrongCounterConfiguration;
 import org.infinispan.counter.configuration.WeakCounterConfiguration;
 import org.infinispan.counter.exception.CounterConfigurationException;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
-import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.PartitionHandling;
@@ -30,6 +30,7 @@ import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.AssertJUnit;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -41,8 +42,17 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "counter.ConfigurationTest")
 public class ConfigurationTest extends AbstractCacheTest {
 
-   private static final String PERSISTENT_FOLDER = TestingUtil.tmpDirectory(RestartCounterTest.class.getSimpleName());
+   private static final String PERSISTENT_FOLDER = TestingUtil.tmpDirectory(ConfigurationTest.class.getSimpleName());
    private static final String TEMP_PERSISTENT_FOLDER = PERSISTENT_FOLDER + File.separator + "temp";
+   private static final String SHARED_PERSISTENT_FOLDER = PERSISTENT_FOLDER + File.separator + "shared";
+
+   private static GlobalConfigurationBuilder defaultGlobalConfigurationBuilder(boolean globalStateEnabled) {
+      GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      builder.globalState().enabled(globalStateEnabled).persistentLocation(PERSISTENT_FOLDER)
+            .temporaryLocation(TEMP_PERSISTENT_FOLDER)
+            .sharedPersistentLocation(SHARED_PERSISTENT_FOLDER);
+      return builder;
+   }
 
    private static void assertCounterAndCacheConfiguration(CounterManagerConfiguration config,
          Configuration cacheConfig) {
@@ -54,11 +64,11 @@ public class ConfigurationTest extends AbstractCacheTest {
       AssertJUnit.assertEquals(TransactionMode.NON_TRANSACTIONAL, cacheConfig.transaction().transactionMode());
    }
 
-   private static GlobalConfigurationBuilder defaultGlobalConfigurationBuilder(boolean globalStateEnabled) {
-      GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      builder.globalState().enabled(globalStateEnabled).persistentLocation(PERSISTENT_FOLDER)
-            .temporaryLocation(TEMP_PERSISTENT_FOLDER);
-      return builder;
+   @AfterMethod(alwaysRun = true)
+   public void removeFiles() {
+      Util.recursiveFileRemove(PERSISTENT_FOLDER);
+      Util.recursiveFileRemove(TEMP_PERSISTENT_FOLDER);
+      Util.recursiveFileRemove(SHARED_PERSISTENT_FOLDER);
    }
 
    private static Configuration getCounterCacheConfiguration(EmbeddedCacheManager cacheManager) {
@@ -276,10 +286,12 @@ public class ConfigurationTest extends AbstractCacheTest {
    }
 
    public void testInvalidEqualsUpperAndLowerBoundInManager() {
-      EmbeddedCounterManager manager = new EmbeddedCounterManager(null, true);
-      CounterConfiguration cfg = CounterConfiguration.builder(CounterType.BOUNDED_STRONG).initialValue(10)
-            .lowerBound(10).upperBound(10).build();
-      Exceptions.expectException(CounterConfigurationException.class, () -> manager.defineCounter("invalid", cfg));
+      TestingUtil.withCacheManager(DefaultCacheManager::new, cacheManager -> {
+         CounterManager manager = asCounterManager(cacheManager);
+         CounterConfiguration cfg = CounterConfiguration.builder(CounterType.BOUNDED_STRONG).initialValue(10)
+               .lowerBound(10).upperBound(10).build();
+         Exceptions.expectException(CounterConfigurationException.class, () -> manager.defineCounter("invalid", cfg));
+      });
    }
 
    private void assertUnboundedStrongCounter(CounterManagerConfiguration config) {

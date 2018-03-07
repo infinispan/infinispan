@@ -19,6 +19,8 @@ import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.api.Handle;
 import org.infinispan.counter.impl.BaseCounterTest;
 import org.infinispan.counter.util.TestCounter;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -63,7 +65,7 @@ public abstract class AbstractCounterNotificationTest extends BaseCounterTest {
          counters[i] = createCounter(counterManager(i), counterName);
       }
 
-      Handle<ListenerQueue> l = counters[0].addListener(new ListenerQueue());
+      Handle<ListenerQueue> l = counters[0].addListener(new ListenerQueue(counterName));
 
       incrementInEachCounter(counters);
 
@@ -89,7 +91,7 @@ public abstract class AbstractCounterNotificationTest extends BaseCounterTest {
       final List<Handle<ListenerQueue>> listeners = new ArrayList<>(clusterSize());
       for (int i = 0; i < clusterSize(); ++i) {
          counters[i] = createCounter(counterManager(i), counterName);
-         listeners.add(counters[i].addListener(new ListenerQueue()));
+         listeners.add(counters[i].addListener(new ListenerQueue(counterName + "-listener-" + i)));
       }
 
       incrementInEachCounter(counters);
@@ -115,11 +117,11 @@ public abstract class AbstractCounterNotificationTest extends BaseCounterTest {
       counters[0].addListener(event -> {
          throw new RuntimeException("expected 1");
       });
-      final Handle<ListenerQueue> l1 = counters[0].addListener(new ListenerQueue());
+      final Handle<ListenerQueue> l1 = counters[0].addListener(new ListenerQueue(counterName + "-listener-1"));
       counters[0].addListener(event -> {
          throw new RuntimeException("expected 2");
       });
-      final Handle<ListenerQueue> l2 = counters[0].addListener(new ListenerQueue());
+      final Handle<ListenerQueue> l2 = counters[0].addListener(new ListenerQueue(counterName + "-listener-2"));
 
       incrementInEachCounter(counters);
 
@@ -169,32 +171,44 @@ public abstract class AbstractCounterNotificationTest extends BaseCounterTest {
 
    static class ListenerQueue implements CounterListener {
 
+      private static final Log log = LogFactory.getLog(ListenerQueue.class);
+      private static final boolean trace = log.isTraceEnabled();
       final BlockingQueue<CounterEvent> queue;
+      final String name;
 
-      ListenerQueue() {
+      ListenerQueue(String name) {
          queue = new LinkedBlockingQueue<>();
+         this.name = name;
       }
 
       @Override
       public void onUpdate(CounterEvent event) {
-         queue.offer(event);
+         try {
+            queue.put(event);
+            if (trace) {
+               log.tracef("[%s] add event %s", name, event);
+            }
+         } catch (InterruptedException e) {
+            log.errorf(e, "[%s] interrupted while adding event %s", name, event);
+         }
       }
 
       @Override
       public String toString() {
          return "ListenerQueue{" +
-               "queue=" + queue +
+               "name=" + name +
+               ", queue=" + queue +
                '}';
       }
 
       void assertEvent(long oldValue, CounterState oldState, long newValue, CounterState newState)
             throws InterruptedException {
          CounterEvent event = queue.poll(30, TimeUnit.SECONDS);
-         assertNotNull(event);
-         assertEquals(format("Wrong old value for event: %s.", event), oldValue, event.getOldValue());
-         assertEquals(format("Wrong old state for event: %s.", event), oldState, event.getOldState());
-         assertEquals(format("Wrong new value for event: %s.", event), newValue, event.getNewValue());
-         assertEquals(format("Wrong new state for event: %s.", event), newState, event.getNewState());
+         assertNotNull("[" + name + "] Event not found", event);
+         assertEquals(format("[%s] Wrong old value for event: %s.", name, event), oldValue, event.getOldValue());
+         assertEquals(format("[%s] Wrong old state for event: %s.", name, event), oldState, event.getOldState());
+         assertEquals(format("[%s] Wrong new value for event: %s.", name, event), newValue, event.getNewValue());
+         assertEquals(format("[%s] Wrong new state for event: %s.", name, event), newState, event.getNewState());
       }
    }
 }
