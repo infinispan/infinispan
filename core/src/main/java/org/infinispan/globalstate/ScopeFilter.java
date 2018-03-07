@@ -5,12 +5,13 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.filter.KeyFilter;
 
-public class ScopeFilter implements KeyFilter<ScopedState> {
+public class ScopeFilter implements KeyFilter<ScopedState>, Predicate<ScopedState> {
    private final String scope;
 
    public ScopeFilter(String scope) {
@@ -20,6 +21,11 @@ public class ScopeFilter implements KeyFilter<ScopedState> {
    @Override
    public boolean accept(ScopedState key) {
       return scope.equals(key.getScope());
+   }
+
+   @Override
+   public boolean test(ScopedState key) {
+      return accept(key);
    }
 
    public static class Externalizer implements AdvancedExternalizer<ScopeFilter> {

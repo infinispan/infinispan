@@ -6,7 +6,6 @@ import static org.infinispan.server.hotrod.counter.impl.BaseCounterImplTest.asse
 import static org.infinispan.test.TestingUtil.extractField;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -19,6 +18,7 @@ import org.infinispan.client.hotrod.counter.impl.RemoteCounterManager;
 import org.infinispan.counter.api.CounterEvent;
 import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.Handle;
+import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.server.hotrod.counter.impl.BaseCounterImplTest;
 import org.infinispan.test.ExceptionRunnable;
 import org.testng.annotations.Test;
@@ -74,7 +74,7 @@ public abstract class BaseCounterAPITest<T> extends AbstractCounterTest {
       handleEx.remove();
    }
 
-   public void testConcurrentListenerAddAndRemove(Method method) throws InterruptedException, ExecutionException {
+   public void testConcurrentListenerAddAndRemove(Method method) throws InterruptedException {
       String counterName = method.getName();
       defineAndCreateCounter(counterName, 1);
       List<T> counters = getCounters(counterName);
@@ -143,7 +143,7 @@ public abstract class BaseCounterAPITest<T> extends AbstractCounterTest {
          handle.remove();
       } finally {
          // Make sure that we don't disturb other tests by ongoing rebalance
-         waitForNoRebalance(caches("___counters"));
+         waitForNoRebalance(caches(CounterModuleLifecycle.COUNTER_CACHE_NAME));
       }
    }
 
@@ -157,7 +157,7 @@ public abstract class BaseCounterAPITest<T> extends AbstractCounterTest {
 
    abstract List<T> getCounters(String name);
 
-   private InetSocketAddress findEventServer() throws InvocationTargetException, IllegalAccessException {
+   private InetSocketAddress findEventServer() {
       Object notificationManager = extractField(RemoteCounterManager.class, counterManager(), "notificationManager");
       Object dispatcher = extractField(NotificationManager.class, notificationManager, "dispatcher");
       Channel channel = extractField(dispatcher, "channel");

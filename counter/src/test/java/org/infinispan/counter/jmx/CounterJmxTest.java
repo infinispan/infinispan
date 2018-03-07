@@ -33,6 +33,7 @@ import org.infinispan.counter.exception.CounterOutOfBoundsException;
 import org.infinispan.counter.impl.BaseCounterTest;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
+import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.test.TestingUtil;
 import org.testng.AssertJUnit;
@@ -60,7 +61,7 @@ public class CounterJmxTest extends BaseCounterTest {
       return PropertyFormatter.getInstance().from(properties).build();
    }
 
-   public void testDefinedCounters() throws Exception {
+   public void testDefinedCounters() {
       final Collection<String> list = new ArrayList<>(3);
       assertJmxResult(list, this::executeCountersOperation, CounterJmxTest::assertCollection);
       addCounterAndCheckList(list, "A", builder(CounterType.WEAK).build());
@@ -68,7 +69,7 @@ public class CounterJmxTest extends BaseCounterTest {
       addCounterAndCheckList(list, "C", builder(CounterType.UNBOUNDED_STRONG).build());
    }
 
-   public void testGetValueAndReset() throws Exception {
+   public void testGetValueAndReset() {
       checkValueAndReset("A", builder(CounterType.WEAK).initialValue(10).build(), 20,
             s -> addToWeakCounter(s, 10),
             this::resetWeakCounter);
@@ -107,7 +108,7 @@ public class CounterJmxTest extends BaseCounterTest {
    protected void clearContent() throws Throwable {
       super.clearContent();
       findCache(CounterModuleLifecycle.COUNTER_CACHE_NAME).ifPresent(Cache::clear);
-      findCache(CounterModuleLifecycle.COUNTER_CONFIGURATION_CACHE_NAME).ifPresent(Cache::clear);
+      findCache(GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME).ifPresent(Cache::clear);
    }
 
    @Override

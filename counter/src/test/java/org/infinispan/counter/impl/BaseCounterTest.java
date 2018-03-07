@@ -30,14 +30,6 @@ public abstract class BaseCounterTest extends MultipleCacheManagersTest {
             addClusterEnabledCacheManager(configure(i), getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
          }
       }
-      if (size != 1) {
-         waitForCounterCaches();
-      }
-   }
-
-   protected final void waitForCounterCaches() {
-      waitForClusterToForm(null, CounterModuleLifecycle.COUNTER_CONFIGURATION_CACHE_NAME,
-            CounterModuleLifecycle.COUNTER_CACHE_NAME);
    }
 
    protected final CounterManager counterManager(int index) {

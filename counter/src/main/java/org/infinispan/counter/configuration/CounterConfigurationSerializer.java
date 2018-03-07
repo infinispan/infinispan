@@ -1,9 +1,16 @@
 package org.infinispan.counter.configuration;
 
+import java.io.BufferedOutputStream;
+import java.io.OutputStream;
+import java.util.List;
+
+import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 
 import org.infinispan.configuration.serializing.ConfigurationSerializer;
 import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
+import org.infinispan.configuration.serializing.XMLExtendedStreamWriterImpl;
 
 /**
  * Counters configuration serializer.
@@ -18,14 +25,38 @@ public class CounterConfigurationSerializer implements ConfigurationSerializer<C
          throws XMLStreamException {
       writer.writeStartElement(Element.COUNTERS);
       configuration.attributes().write(writer);
-      for (AbstractCounterConfiguration c : configuration.counters()) {
+      writeConfigurations(writer, configuration.counters());
+      writer.writeEndElement();
+   }
+
+   /**
+    * It serializes a {@link List} of {@link AbstractCounterConfiguration} to an {@link OutputStream}.
+    * @param os the {@link OutputStream} to write to.
+    * @param configs the {@link List} if {@link AbstractCounterConfiguration}.
+    * @throws XMLStreamException if xml is malformed
+    */
+   public void serializeConfigurations(OutputStream os, List<AbstractCounterConfiguration> configs)
+         throws XMLStreamException {
+      BufferedOutputStream output = new BufferedOutputStream(os);
+      XMLStreamWriter subWriter = XMLOutputFactory.newInstance().createXMLStreamWriter(output);
+      XMLExtendedStreamWriter writer = new XMLExtendedStreamWriterImpl(subWriter);
+      writer.writeStartDocument();
+      writer.writeStartElement(Element.COUNTERS);
+      writeConfigurations(writer, configs);
+      writer.writeEndElement();
+      writer.writeEndDocument();
+      subWriter.close();
+   }
+
+   private void writeConfigurations(XMLExtendedStreamWriter writer, List<AbstractCounterConfiguration> configs)
+         throws XMLStreamException {
+      for (AbstractCounterConfiguration c : configs) {
          if (c instanceof StrongCounterConfiguration) {
             writeStrongConfiguration((StrongCounterConfiguration) c, writer);
          } else if (c instanceof WeakCounterConfiguration) {
             writeWeakConfiguration((WeakCounterConfiguration) c, writer);
          }
       }
-      writer.writeEndElement();
    }
 
    private void writeWeakConfiguration(WeakCounterConfiguration configuration, XMLExtendedStreamWriter writer)

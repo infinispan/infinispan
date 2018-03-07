@@ -5,7 +5,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.ByRef;
@@ -28,6 +30,8 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.LogFactory;
 
+import net.jcip.annotations.GuardedBy;
+
 /**
  * It manages all the caches events and handles them. Also, it handles the user-specific {@link CounterListener}.
  * <p>
@@ -48,11 +52,18 @@ public class CounterManagerNotificationManager {
 
    private static final Log log = LogFactory.getLog(CounterManagerNotificationManager.class, Log.class);
    private final Map<ByteString, Holder> counters;
+   private final CounterValueListener valueListener;
+   private final TopologyListener topologyListener;
    private volatile Executor userListenerExecutor = new WithinThreadExecutor();
+   @GuardedBy("this")
    private boolean listenersRegistered;
+   @GuardedBy("this")
+   private Cache<CounterKey, CounterValue> cache;
 
    public CounterManagerNotificationManager() {
       counters = new ConcurrentHashMap<>();
+      valueListener = new CounterValueListener();
+      topologyListener = new TopologyListener();
    }
 
    /**
@@ -100,12 +111,27 @@ public class CounterManagerNotificationManager {
     *
     * @param cache The {@link Cache} to register the listener.
     */
-   public synchronized void listenOn(Cache<? extends CounterKey, CounterValue> cache) {
+   public synchronized void listenOn(Cache<CounterKey, CounterValue> cache) throws InterruptedException {
+      if (!topologyListener.registered) {
+         this.cache = cache;
+         topologyListener.register(cache);
+      }
       if (!listenersRegistered) {
-         cache.addListener(new CounterValueListener(), CounterKeyFilter.getInstance());
-         cache.addListener(new TopologyListener());
+         this.cache.addListener(valueListener, CounterKeyFilter.getInstance());
          listenersRegistered = true;
       }
+   }
+
+   public synchronized void stop() {
+      if (topologyListener.registered) {
+         topologyListener.unregister(cache);
+      }
+      if (listenersRegistered) {
+         cache.removeListener(valueListener);
+         listenersRegistered = false;
+      }
+      counters.clear();
+      this.cache = null;
    }
 
    /**
@@ -235,8 +261,37 @@ public class CounterManagerNotificationManager {
     */
    @Listener(sync = false)
    private class TopologyListener {
+
+      private volatile boolean registered = false;
+      private volatile CountDownLatch topologyReceived;
+
+      private void register(Cache<?, ?> cache) throws InterruptedException {
+         topologyReceived = new CountDownLatch(1);
+         cache.addListener(this);
+         if (!cache.getCacheConfiguration().clustering().cacheMode().isClustered() ||
+               cache.getAdvancedCache().getComponentRegistry().getStateTransferManager().isJoinComplete()) {
+            topologyReceived.countDown();
+         }
+         if (!topologyReceived.await(cache.getCacheConfiguration().clustering().stateTransfer().timeout(), TimeUnit.MILLISECONDS)) {
+            throw log.unableToFetchCaches();
+         }
+         registered = true;
+      }
+
+      private void unregister(Cache<?, ?> cache) {
+         if (topologyReceived != null) {
+            topologyReceived.countDown();
+         }
+         cache.removeListener(this);
+         registered = false;
+         topologyReceived = null;
+      }
+
       @TopologyChanged
       public void topologyChanged(TopologyChangedEvent<?, ?> event) {
+         if (topologyReceived != null) {
+            topologyReceived.countDown();
+         }
          counters.values().parallelStream()
                .map(Holder::getTopologyChangeListener)
                .filter(Objects::nonNull)

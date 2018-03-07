@@ -47,7 +47,6 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
       ConfigurationBuilderHolder holder = new ParserRegistry().parseFile("config/counters.xml");
       withCacheManager(() -> createClusteredCacheManager(holder), cacheManager -> {
          cacheManager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME);
-         cacheManager.getCache(CounterModuleLifecycle.COUNTER_CONFIGURATION_CACHE_NAME);
          GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
          CounterManagerConfiguration counterManagerConfiguration = globalConfiguration
                .module(CounterManagerConfiguration.class);
@@ -63,7 +62,7 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
          assertStrongCounter("c2", counterConfig.get("c2"), 2, Storage.VOLATILE, true, 0, Long.MAX_VALUE);
          assertStrongCounter("c3", counterConfig.get("c3"), 3, Storage.PERSISTENT, true, Long.MIN_VALUE, 5);
          assertStrongCounter("c4", counterConfig.get("c4"), 4, Storage.VOLATILE, true, 0, 10);
-         assertWeakCounter(counterConfig.get("c5"), Storage.PERSISTENT);
+         assertWeakCounter(counterConfig.get("c5"));
       });
    }
 
@@ -122,11 +121,11 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
             ((WeakCounterConfiguration) c2).concurrencyLevel());
    }
 
-   private void assertWeakCounter(AbstractCounterConfiguration configuration, Storage storage) {
+   private void assertWeakCounter(AbstractCounterConfiguration configuration) {
       assertTrue(configuration instanceof WeakCounterConfiguration);
       assertEquals("c5", configuration.name());
       assertEquals((long) 5, configuration.initialValue());
-      assertEquals(storage, configuration.storage());
+      assertEquals(Storage.PERSISTENT, configuration.storage());
       assertEquals(1, ((WeakCounterConfiguration) configuration).concurrencyLevel());
    }
 

@@ -22,6 +22,9 @@ import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.Storage;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
+import org.infinispan.counter.impl.manager.CounterConfigurationManager;
+import org.infinispan.globalstate.GlobalConfigurationManager;
+import org.infinispan.globalstate.ScopedState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.counter.CounterManagerTestStrategy;
 import org.infinispan.util.logging.Log;
@@ -195,7 +198,7 @@ public class CounterManagerImplTestStrategy implements CounterManagerTestStrateg
       //we need to cleanup other tests counter from the caches.
       EmbeddedCacheManager cacheManager = cacheManagerSupplier.get();
       cacheManager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME).clear();
-      cacheManager.getCache(CounterModuleLifecycle.COUNTER_CONFIGURATION_CACHE_NAME).clear();
+      cacheManager.<ScopedState, Object>getCache(GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME).keySet().removeIf(o -> CounterConfigurationManager.COUNTER_SCOPE.equals(o.getScope()));
    }
 
 }

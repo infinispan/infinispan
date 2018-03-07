@@ -12,7 +12,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.counter.api.CounterManager;
-import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
 import org.infinispan.server.hotrod.HotRodVersion;
@@ -34,6 +33,7 @@ public class CounterManagerOperationTest extends HotRodMultiNodeTest implements 
 
    private static final String PERSISTENT_LOCATION = TestingUtil.tmpDirectory("CounterManagerOperationTest");
    private static final String TMP_LOCATION = PERSISTENT_LOCATION + File.separator + "tmp";
+   private static final String SHARED_LOCATION = PERSISTENT_LOCATION + File.separator + "shared";
    private final CounterManagerTestStrategy strategy;
 
    public CounterManagerOperationTest() {
@@ -96,11 +96,11 @@ public class CounterManagerOperationTest extends HotRodMultiNodeTest implements 
          GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder().clusteredDefault();
          builder.globalState().enable()
                .persistentLocation(PERSISTENT_LOCATION + File.separator + id)
-               .temporaryLocation(TMP_LOCATION);
+               .temporaryLocation(TMP_LOCATION)
+               .sharedPersistentLocation(SHARED_LOCATION);
          EmbeddedCacheManager cm = createClusteredCacheManager(builder, hotRodCacheConfiguration());
          cacheManagers.add(cm);
       }
-      waitForClusterToForm(CounterModuleLifecycle.COUNTER_CONFIGURATION_CACHE_NAME);
    }
 
    @Override

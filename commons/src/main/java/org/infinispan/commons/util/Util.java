@@ -2,6 +2,7 @@ package org.infinispan.commons.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -18,6 +19,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileLock;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -31,6 +33,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import javax.naming.Context;
@@ -1098,5 +1101,23 @@ public final class Util {
 
    public static String[] stringArray(int length) {
       return length == 0 ? EMPTY_STRING_ARRAY : new String[length];
+   }
+
+   public static void renameTempFile(File tempFile, File lockFile, File dstFile, BiConsumer<File, File> renameFailed)
+         throws IOException {
+      FileLock lock = null;
+      try (FileOutputStream lockFileOS = new FileOutputStream(lockFile)) {
+         lock = lockFileOS.getChannel().lock();
+         if (!tempFile.renameTo(dstFile)) {
+            renameFailed.accept(tempFile, dstFile);
+         }
+      } finally {
+         if (lock != null && lock.isValid()) {
+            lock.release();
+         }
+         if (!lockFile.delete()) {
+            log.debugf("Unable to delete lock file %s", lockFile);
+         }
+      }
    }
 }

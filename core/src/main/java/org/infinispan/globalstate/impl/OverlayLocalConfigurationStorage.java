@@ -1,11 +1,12 @@
 package org.infinispan.globalstate.impl;
 
+import static org.infinispan.commons.util.Util.renameTempFile;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.channels.FileLock;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -75,6 +76,10 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
       }
    }
 
+   private static void renameFailed(File tmpFile, File dstFile) {
+      throw log.cannotRenamePersistentFile(tmpFile.getAbsolutePath(), dstFile);
+   }
+
    private void storeAll() {
       try {
          File sharedDirectory = new File(globalConfiguration.globalState().sharedPersistentLocation());
@@ -87,18 +92,8 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
          try (FileOutputStream f = new FileOutputStream(temp)) {
             parserRegistry.serialize(f, null, configurationMap);
          }
-         FileLock lock = null;
-         try (FileOutputStream lockFile = new FileOutputStream(getPersistentFileLock())) {
-            lock = lockFile.getChannel().lock();
-            if (!temp.renameTo(getPersistentFile())) {
-               throw log.cannotRenamePersistentFile(temp.getAbsolutePath(), getPersistentFile());
-            }
-         } finally {
-            if (lock != null && lock.isValid())
-               lock.release();
-            getPersistentFileLock().delete();
-         }
-
+         renameTempFile(temp, getPersistentFileLock(), getPersistentFile(),
+               OverlayLocalConfigurationStorage::renameFailed);
       } catch (Exception e) {
          throw log.errorPersistingGlobalConfiguration(e);
       }

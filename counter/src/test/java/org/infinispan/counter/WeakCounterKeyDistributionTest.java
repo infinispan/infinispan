@@ -100,4 +100,8 @@ public class WeakCounterKeyDistributionTest extends BaseCounterTest {
          assertKeyDistribution(manager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME), counterName);
       }
    }
+
+   private void waitForCounterCaches() {
+      waitForClusterToForm(CounterModuleLifecycle.COUNTER_CACHE_NAME);
+   }
 }

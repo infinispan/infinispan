@@ -53,7 +53,7 @@ public class ScopedState {
 
    @Override
    public String toString() {
-      return "ClusterConfigurationScope{" +
+      return "ScopedState{" +
             "scope='" + scope + '\'' +
             ", name='" + name + '\'' +
             '}';

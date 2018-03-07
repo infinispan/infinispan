@@ -28,6 +28,7 @@ public class RemoteCounterManagerTest extends AbstractCounterTest implements Cou
 
    private static final String PERSISTENT_LOCATION = TestingUtil.tmpDirectory("RemoteCounterManagerTest");
    private static final String TMP_LOCATION = PERSISTENT_LOCATION + File.separator + "tmp";
+   private static final String SHARED_LOCATION = PERSISTENT_LOCATION + File.separator + "shared";
    private final CounterManagerTestStrategy strategy;
 
 
@@ -86,7 +87,8 @@ public class RemoteCounterManagerTest extends AbstractCounterTest implements Cou
       id += cacheManagers.size();
       builder.globalState().enable()
             .persistentLocation(PERSISTENT_LOCATION + File.separator + id)
-            .temporaryLocation(TMP_LOCATION);
+            .temporaryLocation(TMP_LOCATION)
+            .sharedPersistentLocation(SHARED_LOCATION);
    }
 
    private Log log() {

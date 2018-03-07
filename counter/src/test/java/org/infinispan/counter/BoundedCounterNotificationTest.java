@@ -1,6 +1,5 @@
 package org.infinispan.counter;
 
-import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
@@ -31,7 +30,7 @@ public class BoundedCounterNotificationTest extends AbstractCounterNotificationT
          counters[i] = createCounter(counterManager(i), counterName, -2, 2);
       }
 
-      Handle<ListenerQueue> l = counters[0].addListener(new ListenerQueue());
+      Handle<ListenerQueue> l = counters[0].addListener(new ListenerQueue(counterName));
 
       if (counters.length != CLUSTER_SIZE) {
          for (int i = 0; i < CLUSTER_SIZE; ++i) {
@@ -50,7 +49,7 @@ public class BoundedCounterNotificationTest extends AbstractCounterNotificationT
       //as soon as threshold is reached, no more events are triggered.
       assertTrue(l.getCounterListener().queue.isEmpty());
 
-      assertEquals(2L, (long) counters[0].getValue().get());
+      eventuallyEquals(2L, () -> counters[0].sync().getValue());
 
       if (counters.length != CLUSTER_SIZE) {
          for (int i = 0; i < CLUSTER_SIZE; ++i) {
@@ -66,7 +65,7 @@ public class BoundedCounterNotificationTest extends AbstractCounterNotificationT
       l.getCounterListener().assertEvent(1, CounterState.VALID, 0, CounterState.VALID);
       l.getCounterListener().assertEvent(0, CounterState.VALID, -1, CounterState.VALID);
       l.getCounterListener().assertEvent(-1, CounterState.VALID, -2, CounterState.VALID);
-      assertEquals(-2L, (long) counters[0].getValue().get());
+      eventuallyEquals(-2L, () -> counters[0].sync().getValue());
 
       counters[0].decrementAndGet();
       counters[0].decrementAndGet();
@@ -74,7 +73,7 @@ public class BoundedCounterNotificationTest extends AbstractCounterNotificationT
       l.getCounterListener().assertEvent(-2, CounterState.VALID, -2, CounterState.LOWER_BOUND_REACHED);
       //as soon as threshold is reached, no more events are triggered.
       assertTrue(l.getCounterListener().queue.isEmpty());
-      assertEquals(-2L, (long) counters[0].getValue().get());
+      eventuallyEquals(-2L, () -> counters[0].sync().getValue());
 
       //removes the listener
       l.remove();
