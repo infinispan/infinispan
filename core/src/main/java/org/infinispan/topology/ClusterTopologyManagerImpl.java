@@ -3,6 +3,7 @@ package org.infinispan.topology;
 
 import static java.lang.String.format;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
 import static org.infinispan.util.logging.LogFactory.CLUSTER;
 import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
@@ -111,6 +112,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    @Inject private EmbeddedCacheManager cacheManager;
    @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
    private ExecutorService asyncTransportExecutor;
+   @Inject @ComponentName(STATE_TRANSFER_EXECUTOR)
+   private ExecutorService stateTransferExecutor;
    @Inject private EventLogManager eventLogManager;
    @Inject private PersistentUUIDManager persistentUUIDManager;
 
@@ -510,7 +513,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       // Compute the new consistent hashes on separate threads
       int maxThreads = Runtime.getRuntime().availableProcessors() / 2 + 1;
       CountDownLatch latch = new CountDownLatch(responsesByCache.size());
-      LimitedExecutor cs = new LimitedExecutor("Merge-" + newViewId, asyncTransportExecutor, maxThreads);
+      LimitedExecutor cs = new LimitedExecutor("Merge-" + newViewId, stateTransferExecutor, maxThreads);
       for (final Map.Entry<String, Map<Address, CacheStatusResponse>> e : responsesByCache.entrySet()) {
          CacheJoinInfo joinInfo = e.getValue().values().stream().findAny().get().getCacheJoinInfo();
          ClusterCacheStatus cacheStatus = initCacheStatusIfAbsent(e.getKey(), joinInfo.getCacheMode());
