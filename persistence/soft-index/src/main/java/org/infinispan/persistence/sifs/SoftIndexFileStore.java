@@ -102,6 +102,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
 
    private static final Log log = LogFactory.getLog(SoftIndexFileStore.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
+   private static final byte[] EMPTY_BYTES = new byte[0];
 
    private SoftIndexFileStoreConfiguration configuration;
    private boolean started = false;
@@ -471,6 +472,9 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                            offsetOrNegation = ~offset;
                         } else if (readValues) {
                            serializedValue = EntryRecord.readValue(handle, header, offset);
+                        } else {
+                           // This way when readValues is null we still think the entry is present
+                           serializedValue = EMPTY_BYTES;
                         }
                      } else {
                         offsetOrNegation = ~offset;
@@ -515,7 +519,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
             executor.execute(() -> {
                try {
                   task.processEntry(marshalledEntryFactory.newMarshalledEntry(key,
-                        serializedValue == null ? null : marshaller.objectFromByteBuffer(serializedValue),
+                        serializedValue != EMPTY_BYTES ? marshaller.objectFromByteBuffer(serializedValue) : null,
                         serializedMetadata == null ? null : (InternalMetadata) marshaller.objectFromByteBuffer(serializedMetadata)),
                         context);
                } catch (Exception e) {
