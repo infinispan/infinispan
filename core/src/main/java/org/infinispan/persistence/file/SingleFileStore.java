@@ -491,11 +491,26 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    public void process(KeyFilter<? super K> filter, final CacheLoaderTask<K, V> task, Executor executor, final boolean fetchValue, final boolean fetchMetadata) {
       filter = PersistenceUtil.notNull(filter);
       ArrayList<KeyValuePair<K, FileEntry>> keysToLoad = new ArrayList<>(entries.size());
+      long now = timeService.wallClockTime();
       synchronized (entries) {
          for (Map.Entry<K, FileEntry> e : entries.entrySet()) {
-            if (filter.accept(e.getKey()))
+            if (filter.accept(e.getKey()) && !e.getValue().isExpired(now))
                keysToLoad.add(new KeyValuePair<>(e.getKey(), e.getValue()));
          }
+      }
+      final TaskContextImpl taskContext = new TaskContextImpl();
+
+      if (!fetchValue && !fetchMetadata) {
+         try {
+            for (KeyValuePair<K, FileEntry> key : keysToLoad) {
+               task.processEntry(ctx.getMarshalledEntryFactory().newMarshalledEntry(key.getKey(), (Object) null, null),
+                     taskContext);
+            }
+         } catch (InterruptedException e) {
+            log.errorExecutingParallelStoreTask(e);
+            throw new PersistenceException("Execution exception!", e);
+         }
+         return;
       }
 
       keysToLoad.sort((o1, o2) -> {
@@ -507,7 +522,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
 
       ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(executor);
-      final TaskContextImpl taskContext = new TaskContextImpl();
+
       for (KeyValuePair<K, FileEntry> entry : keysToLoad) {
          if (taskContext.isStopped())
             break;
