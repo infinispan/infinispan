@@ -194,16 +194,11 @@ public final class DataConversion {
    }
 
    private void lookupEncoder(CompatibilityModeConfiguration compatConfig, ClassLoader classLoader) {
-      if (!compatConfig.enabled()) {
-         this.encoder = encoderRegistry.getEncoder(encoderClass, encoderId);
-      } else {
-         if (encoderClass == null || encoderClass.equals(CompatModeEncoder.class)) {
-            this.encoderClass = CompatModeEncoder.class;
-            Marshaller compatMarshaller = compatConfig.marshaller();
-            this.encoder = new CompatModeEncoder(compatMarshaller, classLoader);
-         } else {
-            this.encoder = encoderRegistry.getEncoder(encoderClass, encoderId);
-         }
+      this.encoder = encoderRegistry.getEncoder(encoderClass, encoderId);
+      if (compatConfig.enabled() && CompatModeEncoder.class == encoder.getClass()) {
+         this.encoderClass = CompatModeEncoder.class;
+         Marshaller compatMarshaller = compatConfig.marshaller();
+         this.encoder = new CompatModeEncoder(compatMarshaller, classLoader);
       }
    }
 
@@ -256,7 +251,8 @@ public final class DataConversion {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       DataConversion that = (DataConversion) o;
-      return Objects.equals(encoder, that.encoder) &&
+      return isKey == that.isKey &&
+            Objects.equals(encoder, that.encoder) &&
             Objects.equals(wrapper, that.wrapper) &&
             Objects.equals(transcoder, that.transcoder);
    }
@@ -279,7 +275,7 @@ public final class DataConversion {
 
    @Override
    public int hashCode() {
-      return Objects.hash(encoderClass, wrapperClass);
+      return Objects.hash(encoderClass, wrapperClass, isKey);
    }
 
    public static DataConversion newKeyDataConversion(Class<? extends Encoder> encoderClass, Class<? extends Wrapper> wrapperClass, MediaType requestType) {
@@ -296,12 +292,12 @@ public final class DataConversion {
    }
 
    public static void writeTo(ObjectOutput output, DataConversion dataConversion) throws IOException {
-      if (isDefault(dataConversion)) {
-         output.writeByte(1);
-      } else {
-         byte flags = 0;
-         if (dataConversion.isKey) flags = (byte) (flags | 2);
-         output.writeByte(flags);
+      byte flags = 0;
+      boolean isDefault = isDefault(dataConversion);
+      if (isDefault) flags = 1;
+      if (dataConversion.isKey) flags = (byte) (flags | 2);
+      output.writeByte(flags);
+      if (!isDefault) {
          output.writeShort(dataConversion.encoder.id());
          output.writeByte(dataConversion.wrapper.id());
          output.writeObject(dataConversion.requestMediaType);
@@ -325,11 +321,6 @@ public final class DataConversion {
       @Override
       public Set<Class<? extends DataConversion>> getTypeClasses() {
          return Util.asSet(DataConversion.class);
-      }
-
-      private boolean isDefault(DataConversion dataConversion) {
-         return dataConversion.isKey && dataConversion.equals(DEFAULT_KEY) ||
-               !dataConversion.isKey && dataConversion.equals(DEFAULT_VALUE);
       }
 
       @Override
