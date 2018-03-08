@@ -10,7 +10,6 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.serverPort;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,7 +26,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-@Test(groups = {"functional", "unstable"}, testName = "server.hotrod.HotRodMergeTest", description = "Unstable: ISPN-8706")
+@Test(groups = "functional", testName = "server.hotrod.HotRodMergeTest")
 public class HotRodMergeTest extends BasePartitionHandlingTest {
 
    private List<HotRodServer> servers = new ArrayList<>();
@@ -50,7 +49,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
          nextServerPort += 50;
       }
 
-      client = new HotRodClient("127.0.0.1", servers.get(0).getPort(), "", 60, (byte) 21);
+      client = new HotRodClient("127.0.0.1", servers.get(0).getPort(), DEFAULT_CACHE_NAME, 60, (byte) 21);
       TestingUtil.waitForNoRebalance(cache(0), cache(1));
    }
 
@@ -73,7 +72,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
       waitForClusterToForm();
    }
 
-   public void testNewTopologySentAfterCleanMerge(Method m) {
+   public void testNewTopologySentAfterCleanMerge() {
       TestingUtil.waitForNoRebalance(caches());
       int initialTopology = advancedCache(0).getRpcManager().getTopologyId();
 
@@ -85,10 +84,10 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
       TestingUtil.waitForNoRebalance(cache(p0.node(0)));
       expectPartialTopology(client, initialTopology + 1);
       partition(0).merge(partition(1));
-      eventuallyExpectCompleteTopology(client, initialTopology + 8);
+      eventuallyExpectCompleteTopology(client, initialTopology + 7);
    }
 
-   public void testNewTopologySentAfterOverlappingMerge(Method m) {
+   public void testNewTopologySentAfterOverlappingMerge() {
       TestingUtil.waitForNoRebalance(caches());
       int initialTopology = advancedCache(0).getRpcManager().getTopologyId();
       expectCompleteTopology(client, initialTopology);
