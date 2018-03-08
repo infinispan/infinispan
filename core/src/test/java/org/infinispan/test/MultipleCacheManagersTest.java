@@ -431,6 +431,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return listeners.computeIfAbsent(cache, k -> new ReplListener(cache));
    }
 
+   protected EmbeddedCacheManager[] managers() {
+      return cacheManagers.toArray(new EmbeddedCacheManager[cacheManagers.size()]);
+   }
+
    protected EmbeddedCacheManager manager(int i) {
       return cacheManagers.get(i);
    }

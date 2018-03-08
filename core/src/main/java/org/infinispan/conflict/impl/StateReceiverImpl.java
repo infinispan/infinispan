@@ -61,7 +61,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    @Override
    @Stop
    public void stop() {
-      if (trace) log.tracef("Cache %s Stop called on StateReceiverImpl", cacheName);
+      if (trace) log.tracef("Cache %s stop() called on StateReceiverImpl", cacheName);
       for (SegmentRequest request : requestMap.values())
          request.cancel(null);
    }
@@ -86,14 +86,14 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    public void receiveState(Address sender, int topologyId, Collection<StateChunk> stateChunks) {
       if (stateChunks.isEmpty()) {
          if (trace)
-            log.tracef("Cache %s Ignoring received state from %s because stateChunks are empty", cacheName, sender);
+            log.tracef("Cache %s ignoring received state from %s because stateChunks are empty", cacheName, sender);
          return;
       }
 
       int segmentId = stateChunks.iterator().next().getSegmentId();
       SegmentRequest request = requestMap.get(segmentId);
       if (request == null) {
-         if (trace) log.tracef("Cache %s Ignoring received state because the associated request was completed or cancelled", cacheName);
+         if (trace) log.tracef("Cache %s ignoring received state because the associated request was completed or cancelled", cacheName);
          return;
       }
 
@@ -130,7 +130,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
 
       synchronized CompletableFuture<List<Map<Address, CacheEntry<K, V>>>> requestState() {
          assert future == null;
-         if (trace) log.tracef("Cache %s Attempting to receive replicas for segment %s from %s with topology %s",
+         if (trace) log.tracef("Cache %s attempting to receive replicas for segment %s from %s with topology %s",
                cacheName, segmentId, replicaHosts, topology);
 
          List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
@@ -154,7 +154,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
 
          // If an exception is thrown by any of the inboundTransferTasks, then remove all segment results and cancel all tasks
          allSegmentRequests.exceptionally(throwable -> {
-            if (trace) log.tracef(throwable, "Cache %s Exception when processing InboundTransferTask", cacheName);
+            if (trace) log.tracef(throwable, "Cache %s exception when processing InboundTransferTask", cacheName);
             cancel(throwable);
             return null;
          });
@@ -178,7 +178,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
       synchronized void receiveState(Address sender, int topologyId, Collection<StateChunk> stateChunks) {
          if (topologyId < topology.getTopologyId()) {
             if (trace)
-               log.tracef("Cache %s Discarding state response with old topology id %d, the smallest allowed topology id is %d",
+               log.tracef("Cache %s discarding state response with old topology id %d, the smallest allowed topology id is %d",
                      topologyId, topology.getTopologyId(), cacheName);
             return;
          }
@@ -186,11 +186,11 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
          InboundTransferTask transferTask = transferTaskMap.get(sender);
          if (transferTask == null) {
             if (trace)
-               log.tracef("Cache %s State received for an unknown request. No record of a state request exists for node %s", cacheName, sender);
+               log.tracef("Cache %s state received for an unknown request. No record of a state request exists for node %s", cacheName, sender);
             return;
          }
 
-         if (trace) log.tracef("Cache %s State chunks received from %s, with topologyId %s, statechunks %s", cacheName, sender, topologyId, stateChunks);
+         if (trace) log.tracef("Cache %s state chunks received from %s, with topologyId %s, statechunks %s", cacheName, sender, topologyId, stateChunks);
          for (StateChunk chunk : stateChunks) {
             boolean isLastChunk = chunk.isLastChunk();
             chunk.getCacheEntries().forEach(ice -> addKeyToReplicaMap(sender, ice));
@@ -202,7 +202,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
       }
 
       synchronized void cancel(Throwable throwable) {
-         log.debugf(throwable, "Cache %s Cancelling request for segment %s", cacheName, segmentId);
+         log.debugf(throwable, "Cache %s cancelling request for segment %s", cacheName, segmentId);
          transferTaskMap.forEach((address, inboundTransferTask) -> inboundTransferTask.cancel());
          if (throwable != null) {
             future.completeExceptionally(throwable);

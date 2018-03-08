@@ -399,13 +399,13 @@ public class TestingUtil {
                   for (int i = 0; i < caches.length; i++) {
                      addresses[i] = caches[i].getCacheManager().getAddress();
                   }
-                  message = String.format("Timed out waiting for rebalancing to complete on node %s, " +
-                        "expected member list is %s, current member list is %s!",
-                        cacheAddress, Arrays.toString(addresses), cacheTopology == null ? "N/A" : cacheTopology.getCurrentCH().getMembers());
+                  message = String.format("Cache %s timed out waiting for rebalancing to complete on node %s, " +
+                        "expected member list is %s, current member list is %s!", c.getName(), cacheAddress,
+                        Arrays.toString(addresses), cacheTopology == null ? "N/A" : cacheTopology.getCurrentCH().getMembers());
                } else {
-                  message = String.format("Timed out waiting for rebalancing to complete on node %s, " +
-                        "current topology is %s. rebalanceInProgress=%s, currentChIsBalanced=%s", c.getCacheManager().getAddress(),
-                                          cacheTopology, rebalanceInProgress, currentChIsBalanced);
+                  message = String.format("Cache %s timed out waiting for rebalancing to complete on node %s, " +
+                        "current topology is %s. rebalanceInProgress=%s, currentChIsBalanced=%s", c.getName(),
+                        c.getCacheManager().getAddress(), cacheTopology, rebalanceInProgress, currentChIsBalanced);
                }
                log.error(message);
                throw new RuntimeException(message);
@@ -415,6 +415,35 @@ public class TestingUtil {
          }
          log.trace("Node " + cacheAddress + " finished state transfer, has topology " + cacheTopology);
       }
+   }
+
+   public static void waitForNoRebalanceAcrossManagers(EmbeddedCacheManager... managers) {
+      int numberOfManagers = managers.length;
+      assert numberOfManagers > 0;
+      Set<String> testCaches = getInternalAndUserCacheNames(managers[0]);
+      System.err.printf("waitForNoRebalance with managers %s, for caches %s\n", Arrays.toString(managers), testCaches);
+
+      for (String cacheName : testCaches) {
+         Cache[] caches = new Cache[numberOfManagers];
+         for (int i = 0; i < numberOfManagers; i++)
+            caches[i] = managers[i].getCache(cacheName);
+
+         TestingUtil.waitForNoRebalance(caches);
+      }
+   }
+
+   public static Set<String> getInternalAndUserCacheNames(EmbeddedCacheManager cacheManager) {
+      Set<String> testCaches = new HashSet<>(cacheManager.getCacheNames());
+      if (cacheManager.isDefaultRunning()) {
+         String defaultCacheName = cacheManager.getCacheManagerConfiguration().defaultCacheName().orElse(CacheContainer.DEFAULT_CACHE_NAME);
+         testCaches.add(defaultCacheName);
+      }
+      testCaches.addAll(getInternalCacheNames(cacheManager));
+      return testCaches;
+   }
+
+   public static Set<String> getInternalCacheNames(CacheContainer container) {
+      return extractGlobalComponentRegistry(container).getComponent(InternalCacheRegistry.class).getInternalCacheNames();
    }
 
    public static void waitForTopologyPhase(List<Address> expectedMembers, CacheTopology.Phase phase, Cache... caches) {
