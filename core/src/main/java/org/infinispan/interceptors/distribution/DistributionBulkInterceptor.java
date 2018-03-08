@@ -25,7 +25,6 @@ import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.commons.util.RemovableIterator;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -223,20 +222,20 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
 
    @Override
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
-      CacheSet<K> keySet;
-      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
-         return invokeNext(ctx, command);
-      }
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         KeySetCommand entrySetCommand = (KeySetCommand) rCommand;
+         if (entrySetCommand.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL))
+            return rv;
 
-      if (ctx.isInTxScope()) {
-         keySet = new TxBackingKeySet<>(Caches.getCacheWithFlags(cache, command),
-               cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet(), command,
-               (LocalTxInvocationContext) ctx);
-      } else {
-         keySet = new BackingKeySet<>(Caches.getCacheWithFlags(cache, command), cache.getAdvancedCache().withFlags(
-                 Flag.CACHE_MODE_LOCAL).keySet(), command);
-      }
-      return keySet;
+         CacheSet<K> keySet = (CacheSet<K>) rv;
+         if (ctx.isInTxScope()) {
+            keySet = new TxBackingKeySet<>(Caches.getCacheWithFlags(cache, command), keySet, command,
+                  (LocalTxInvocationContext) ctx);
+         } else {
+            keySet = new BackingKeySet<>(Caches.getCacheWithFlags(cache, command), keySet, command);
+         }
+         return keySet;
+      });
    }
 
    protected static class BackingKeySet<K, V> extends AbstractCloseableIteratorCollection<K, K, V>
