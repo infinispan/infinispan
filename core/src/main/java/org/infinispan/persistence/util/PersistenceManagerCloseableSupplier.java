@@ -125,12 +125,8 @@ public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSuppl
       while ((entry = queue.poll()) == null) {
          closeLock.lock();
          try {
-            if (closed) {
-               // If is possible that this supplier was closed right after we polled the queue. In that case they may
-               // have also inserted a value. We need to double check that the queue is REALLY empty after being closed.
-               if ((entry = queue.poll()) != null) {
-                  break;
-               }
+            // If is possible that someone inserted a value and then acquired the close lock - thus we must recheck
+            if (closed || (entry = queue.poll()) != null) {
                break;
             }
             long targetTime = System.nanoTime() + unit.toNanos(timeout);
