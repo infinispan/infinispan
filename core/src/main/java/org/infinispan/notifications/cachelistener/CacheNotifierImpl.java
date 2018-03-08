@@ -964,7 +964,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    public <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter,
                                CacheEventConverter<? super K, ? super V, C> converter, ClassLoader classLoader) {
-      addListenerInternal(listener, null, null, filter, converter, classLoader);
+      addListenerInternal(listener, DataConversion.IDENTITY_KEY, DataConversion.IDENTITY_VALUE, filter, converter, classLoader);
    }
 
    private FilterIndexingServiceProvider findIndexingServiceProvider(IndexedFilter indexedFilter) {
