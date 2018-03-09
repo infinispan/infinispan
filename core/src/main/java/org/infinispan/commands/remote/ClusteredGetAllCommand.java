@@ -96,15 +96,16 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
          Map<K, CacheEntry<K, V>> map = (Map<K, CacheEntry<K, V>>) rv;
          InternalCacheValue<V>[] values = new InternalCacheValue[keys.size()];
          int i = 0;
+         boolean includeInvocationRecords = command.hasAnyFlag(FlagBitSets.WITH_INVOCATION_RECORDS);
          for (Object key : keys) {
             CacheEntry<K, V> entry = map.get(key);
             InternalCacheValue<V> value;
             if (entry == null) {
                value = null;
             } else if (entry instanceof InternalCacheEntry) {
-               value = ((InternalCacheEntry<K, V>) entry).toInternalCacheValue();
+               value = ((InternalCacheEntry<K, V>) entry).toInternalCacheValue(includeInvocationRecords);
             } else {
-               value = entryFactory.createValue(entry);
+               value = entryFactory.createValue(entry, includeInvocationRecords);
             }
             values[i++] = value;
          }

@@ -14,6 +14,8 @@ import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.conflict.ConflictManagerFactory;
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.filter.KeyFilter;
@@ -42,29 +44,7 @@ public class SecureCacheTestDriver {
       keyValueFilter = (key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> true;
       converter = (key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> null;
       listener = new NullListener();
-      metadata = new Metadata() {
-
-         @Override
-         public long lifespan() {
-            return -1;
-         }
-
-         @Override
-         public long maxIdle() {
-            return -1;
-         }
-
-         @Override
-         public EntryVersion version() {
-            return null;
-         }
-
-         @Override
-         public Builder builder() {
-            return null;
-         }
-
-      };
+      metadata = new SecureMetadata();
    }
 
    @TestCachePermission(AuthorizationPermission.READ)
@@ -839,4 +819,40 @@ public class SecureCacheTestDriver {
       cache.withMediaType(APPLICATION_OBJECT_TYPE, APPLICATION_OBJECT_TYPE);
    }
 
+   private static class SecureMetadata implements Metadata {
+      @Override
+      public long lifespan() {
+         return -1;
+      }
+
+      @Override
+      public long maxIdle() {
+         return -1;
+      }
+
+      @Override
+      public EntryVersion version() {
+         return null;
+      }
+
+      @Override
+      public InvocationRecord lastInvocation() {
+         return null;
+      }
+
+      @Override
+      public InvocationRecord invocation(CommandInvocationId id) {
+         return null;
+      }
+
+      @Override
+      public Builder builder() {
+         return new EmbeddedMetadata.Builder() {
+            @Override
+            public Metadata build() {
+               return new SecureMetadata();
+            }
+         };
+      }
+   }
 }

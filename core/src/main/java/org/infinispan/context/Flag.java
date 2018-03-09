@@ -280,6 +280,11 @@ public enum Flag {
     */
    REMOTE_ITERATION,
 
+   /**
+    * By default invocation records are not sent. If this is set, the last invocation record is included.
+    */
+   WITH_INVOCATION_RECORDS,
+
    ;
 
    /**

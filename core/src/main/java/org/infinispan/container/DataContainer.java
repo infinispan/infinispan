@@ -102,6 +102,11 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
    int sizeIncludingExpired();
 
    /**
+    * @return number of entries in the container including expired entries and tombstones
+    */
+   int sizeIncludingExpiredAndTombstones();
+
+   /**
     * Removes all entries in the container
     */
    @Stop(priority = 999)
@@ -222,6 +227,17 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     */
    default Spliterator<InternalCacheEntry<K, V>> spliteratorIncludingExpired() {
       return Spliterators.spliterator(iteratorIncludingExpired(), sizeIncludingExpired(),
+            Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
+   }
+
+   Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpiredAndTombstones();
+
+   /**
+    * Same as {@link DataContainer#spliterator()} except that is also returns expired entries.
+    * @return spliterator that returns all entries including expired ones
+    */
+   default Spliterator<InternalCacheEntry<K, V>> spliteratorIncludingExpiredAndTombstones() {
+      return Spliterators.spliterator(iteratorIncludingExpiredAndTombstones(), sizeIncludingExpiredAndTombstones(),
             Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
    }
 

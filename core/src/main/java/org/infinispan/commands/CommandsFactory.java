@@ -568,4 +568,6 @@ public interface CommandsFactory {
    MultiEntriesFunctionalBackupWriteCommand buildMultiEntriesFunctionalBackupWriteCommand();
 
    MultiKeyFunctionalBackupWriteCommand buildMultiKeyFunctionalBackupWriteCommand();
+
+   ForgetInvocationsCommand buildForgetInvocationsCommand(Object[] keys, long[] ids);
 }

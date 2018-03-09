@@ -5,6 +5,8 @@ import static org.testng.AssertJUnit.assertFalse;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.container.entries.AbstractInternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.versioning.EntryVersion;
@@ -89,6 +91,16 @@ public class InternalMetadataTest {
       }
 
       @Override
+      public InvocationRecord lastInvocation() {
+         return null;
+      }
+
+      @Override
+      public InvocationRecord invocation(CommandInvocationId id) {
+         return null;
+      }
+
+      @Override
       public Builder builder() {
          return this; // ignore
       }
@@ -116,6 +128,21 @@ public class InternalMetadataTest {
       @Override
       public Builder version(EntryVersion version) {
          return this;
+      }
+
+      @Override
+      public Builder invocation(CommandInvocationId id, Object previousValue, Metadata previousMetadata, long timestamp) {
+         return this;
+      }
+
+      @Override
+      public Builder invocations(InvocationRecord invocations) {
+         return this;
+      }
+
+      @Override
+      public InvocationRecord invocations() {
+         return null;
       }
 
       @Override
@@ -216,7 +243,7 @@ public class InternalMetadataTest {
       }
 
       @Override
-      public InternalCacheValue toInternalCacheValue() {
+      public InternalCacheValue toInternalCacheValue(boolean includeInvocationRecords) {
          return null;
       }
 

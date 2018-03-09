@@ -1,7 +1,5 @@
 package org.infinispan.container.entries.metadata;
 
-import static org.infinispan.commons.util.Util.toStr;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -41,14 +39,13 @@ public class MetadataImmortalCacheEntry extends ImmortalCacheEntry implements Me
    }
 
    @Override
-   public InternalCacheValue toInternalCacheValue() {
-      return new MetadataImmortalCacheValue(value, metadata);
+   protected boolean hasMetadata() {
+      return true;
    }
 
    @Override
-   public String toString() {
-      return String.format("MetadataImmortalCacheEntry{key=%s, value=%s, metadata=%s}",
-            toStr(key), toStr(value), metadata);
+   public InternalCacheValue toInternalCacheValue(boolean includeInvocationRecords) {
+      return new MetadataImmortalCacheValue(value, includeInvocationRecords ? metadata : metadata.builder().noInvocations().build());
    }
 
    public static class Externalizer extends AbstractExternalizer<MetadataImmortalCacheEntry> {

@@ -1,8 +1,8 @@
 package org.infinispan.statetransfer;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashMap;
@@ -11,6 +11,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -19,6 +20,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.functional.decorators.FunctionalAdvancedCache;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -74,54 +76,104 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
    }
 
    public void testRemoveOptimistic() throws Exception {
-      testOperationDuringJoin(Operation.REMOVE, true);
+      testOperationDuringJoin(Operation.REMOVE, true, false);
+   }
+
+   public void testRemoveFunctionalOptimistic() throws Exception {
+      testOperationDuringJoin(Operation.REMOVE, true, true);
    }
 
    public void testRemovePessimistic() throws Exception {
-      testOperationDuringJoin(Operation.REMOVE, false);
+      testOperationDuringJoin(Operation.REMOVE, false, false);
+   }
+
+   @Test(enabled = false, description = "ISPN-8212")
+   public void testRemoveFunctionalPessimistic() throws Exception {
+      testOperationDuringJoin(Operation.REMOVE, false, true);
    }
 
    public void testClearOptimistic() throws Exception {
-      testOperationDuringJoin(Operation.CLEAR, true);
+      testOperationDuringJoin(Operation.CLEAR, true, false);
+   }
+
+   public void testFunctionalOptimistic() throws Exception {
+      testOperationDuringJoin(Operation.CLEAR, true, true);
    }
 
    public void testClearPessimistic() throws Exception {
-      testOperationDuringJoin(Operation.CLEAR, false);
+      testOperationDuringJoin(Operation.CLEAR, false, false);
+   }
+
+   public void testClearFunctionalPessimistic() throws Exception {
+      testOperationDuringJoin(Operation.CLEAR, false, true);
    }
 
    public void testPutOptimistic() throws Exception {
-      testOperationDuringJoin(Operation.PUT, true);
+      testOperationDuringJoin(Operation.PUT, true, false);
+   }
+
+   public void testPutFunctionalOptimistic() throws Exception {
+      testOperationDuringJoin(Operation.PUT, true, true);
    }
 
    public void testPutPessimistic() throws Exception {
-      testOperationDuringJoin(Operation.PUT, false);
+      testOperationDuringJoin(Operation.PUT, false, false);
+   }
+
+   public void testPutFunctionalPessimistic() throws Exception {
+      testOperationDuringJoin(Operation.PUT, false, true);
    }
 
    public void testPutMapOptimistic() throws Exception {
-      testOperationDuringJoin(Operation.PUT_MAP, true);
+      testOperationDuringJoin(Operation.PUT_MAP, true, false);
+   }
+
+   public void testPutMapFunctionalOptimistic() throws Exception {
+      testOperationDuringJoin(Operation.PUT_MAP, true, true);
    }
 
    public void testPutMapPessimistic() throws Exception {
-      testOperationDuringJoin(Operation.PUT_MAP, false);
+      testOperationDuringJoin(Operation.PUT_MAP, false, false);
+   }
+
+   public void testPutMapFunctionalPessimistic() throws Exception {
+      testOperationDuringJoin(Operation.PUT_MAP, false, true);
    }
 
    public void testPutIfAbsentOptimistic() throws Exception {
-      testOperationDuringJoin(Operation.PUT_IF_ABSENT, true);
+      testOperationDuringJoin(Operation.PUT_IF_ABSENT, true, false);
+   }
+
+   public void testPutIfAbsentFunctionalOptimistic() throws Exception {
+      testOperationDuringJoin(Operation.PUT_IF_ABSENT, true, true);
    }
 
    public void testPutIfAbsentPessimistic() throws Exception {
-      testOperationDuringJoin(Operation.PUT_IF_ABSENT, false);
+      testOperationDuringJoin(Operation.PUT_IF_ABSENT, false, false);
+   }
+
+   public void testPutIfAbsentFunctionalPessimistic() throws Exception {
+      testOperationDuringJoin(Operation.PUT_IF_ABSENT, false, true);
    }
 
    public void testReplaceOptimistic() throws Exception {
-      testOperationDuringJoin(Operation.REPLACE, true);
+      testOperationDuringJoin(Operation.REPLACE, true, false);
+   }
+
+   public void testReplaceFunctionalOptimistic() throws Exception {
+      testOperationDuringJoin(Operation.REPLACE, true, true);
    }
 
    public void testReplacePessimistic() throws Exception {
-      testOperationDuringJoin(Operation.REPLACE, false);
+      testOperationDuringJoin(Operation.REPLACE, false, false);
    }
 
-   private void testOperationDuringJoin(Operation op, boolean isOptimistic) throws Exception {
+   @Test(enabled = false, description = "ISPN-8212")
+   public void testReplaceFunctionalPessimistic() throws Exception {
+      testOperationDuringJoin(Operation.REPLACE, false, true);
+   }
+
+   private void testOperationDuringJoin(Operation op, boolean isOptimistic, boolean functional) throws Exception {
       ConfigurationBuilder builder = createConfigurationBuilder(isOptimistic);
 
       createCluster(builder, 2);
@@ -172,9 +224,13 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
          throw new TimeoutException();
       }
 
+      Cache<Object, Object> cache0 = cache(0);
+      if (functional) {
+         cache0 = FunctionalAdvancedCache.create(cache0.getAdvancedCache());
+      }
       if (op == Operation.CLEAR) {
          log.info("Clearing cache ..");
-         cache(0).clear();
+         cache0.clear();
          log.info("Finished clearing cache");
 
          assertEquals(0, dc0.size());
@@ -182,7 +238,7 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
       } else if (op == Operation.REMOVE) {
          log.info("Removing all keys one by one ..");
          for (int i = 0; i < numKeys; i++) {
-            cache(0).remove(i);
+            cache0.remove(i);
          }
          log.info("Finished removing keys");
 
@@ -192,24 +248,24 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
          log.info("Updating all keys ..");
          if (op == Operation.PUT) {
             for (int i = 0; i < numKeys; i++) {
-               cache(0).put(i, "after_st_" + i);
+               cache0.put(i, "after_st_" + i);
             }
          } else if (op == Operation.PUT_MAP) {
             Map<Integer, String> toPut = new HashMap<>();
             for (int i = 0; i < numKeys; i++) {
                toPut.put(i, "after_st_" + i);
             }
-            cache(0).putAll(toPut);
+            cache0.putAll(toPut);
          } else if (op == Operation.REPLACE) {
             for (int i = 0; i < numKeys; i++) {
                String expectedOldValue = "before_st_" + i;
-               boolean replaced = cache(0).replace(i, expectedOldValue, "after_st_" + i);
+               boolean replaced = cache0.replace(i, expectedOldValue, "after_st_" + i);
                assertTrue(replaced);
             }
          } else { // PUT_IF_ABSENT
             for (int i = 0; i < numKeys; i++) {
                String expectedOldValue = "before_st_" + i;
-               Object prevValue = cache(0).putIfAbsent(i, "after_st_" + i);
+               Object prevValue = cache0.putIfAbsent(i, "after_st_" + i);
                assertEquals(expectedOldValue, prevValue);
             }
          }
@@ -230,9 +286,9 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
       if (op == Operation.CLEAR || op == Operation.REMOVE) {
          // caches should be empty. check that no keys were revived by an inconsistent state transfer
          for (int i = 0; i < numKeys; i++) {
-            assertNull(dc0.get(i));
-            assertNull(dc1.get(i));
-            assertNull(dc2.get(i));
+            assertFalse("Found value for key " + i, dc0.containsKey(i));
+            assertFalse("Found value for key " + i, dc1.containsKey(i));
+            assertFalse("Found value for key " + i, dc2.containsKey(i));
          }
       } else if (op == Operation.PUT || op == Operation.PUT_MAP || op == Operation.REPLACE) {
          // check that all values are the ones expected after state transfer and were not overwritten with old values carried by state transfer
@@ -255,8 +311,8 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
 
    private void assertValue(int cacheIndex, int key, String expectedValue) {
       InternalCacheEntry ice = cache(cacheIndex).getAdvancedCache().getDataContainer().get(key);
-      assertNotNull("Found null on cache " + cacheIndex, ice);
-      assertEquals("Did not find the expected value on cache " + cacheIndex, expectedValue, ice.getValue());
-      assertEquals("Did not find the expected value on cache " + cacheIndex, expectedValue, cache(cacheIndex).get(key));
+      assertNotNull("Found null for " + key + " in cache " + cacheIndex, ice);
+      assertEquals("Did not find the expected value for " + key + " in cache " + cacheIndex, expectedValue, ice.getValue());
+      assertEquals("Did not find the expected value for " + key + " in cache " + cacheIndex, expectedValue, cache(cacheIndex).get(key));
    }
 }

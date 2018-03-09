@@ -12,6 +12,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.functional.MetaParam;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
@@ -329,6 +331,16 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       }
 
       @Override
+      public InvocationRecord lastInvocation() {
+         return null;
+      }
+
+      @Override
+      public InvocationRecord invocation(CommandInvocationId id) {
+         return null;
+      }
+
+      @Override
       public Builder builder() {
          return this; // ignore
       }
@@ -356,6 +368,21 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       @Override
       public Builder version(EntryVersion version) {
          return this;
+      }
+
+      @Override
+      public Builder invocation(CommandInvocationId id, Object previousValue, Metadata previousMetadata, long timestamp) {
+         return this;
+      }
+
+      @Override
+      public Builder invocations(InvocationRecord invocations) {
+         return this;
+      }
+
+      @Override
+      public InvocationRecord invocations() {
+         return null;
       }
 
       @Override

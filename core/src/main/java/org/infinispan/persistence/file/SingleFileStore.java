@@ -212,7 +212,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    @Override
    public boolean contains(Object key) {
       FileEntry entry = entries.get(key);
-      return entry != null && !entry.isExpired(timeService.wallClockTime());
+      return entry != null && entry.dataLen != 0 && !entry.isExpired(timeService.wallClockTime());
    }
 
    /**
@@ -317,14 +317,15 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
          // allocate file entry and store in cache file
          int metadataLength = metadata == null ? 0 : metadata.getLength();
-         int len = KEY_POS + key.getLength() + data.getLength() + metadataLength;
+         int dataLength = data == null ? 0 : data.getLength();
+         int len = KEY_POS + key.getLength() + dataLength + metadataLength;
          FileEntry newEntry;
          FileEntry oldEntry = null;
          resizeLock.readLock().lock();
          try {
             newEntry = allocate(len);
             long expiryTime = metadata != null ? marshalledEntry.getMetadata().expiryTime() : -1;
-            newEntry = new FileEntry(newEntry, key.getLength(), data.getLength(), metadataLength, expiryTime);
+            newEntry = new FileEntry(newEntry, key.getLength(), dataLength, metadataLength, expiryTime);
 
             ByteBuffer buf = ByteBuffer.allocate(len);
             buf.putInt(newEntry.size);
@@ -333,7 +334,8 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             buf.putInt(newEntry.metadataLen);
             buf.putLong(newEntry.expiryTime);
             buf.put(key.getBuf(), key.getOffset(), key.getLength());
-            buf.put(data.getBuf(), data.getOffset(), data.getLength());
+            if (data != null)
+               buf.put(data.getBuf(), data.getOffset(), dataLength);
             if (metadata != null)
                buf.put(metadata.getBuf(), metadata.getOffset(), metadata.getLength());
             buf.flip();
@@ -478,7 +480,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       if (trace) log.tracef("Read entry %s at %d:%d", key, fe.offset, fe.actualSize());
       ByteBufferFactory factory = ctx.getByteBufferFactory();
       org.infinispan.commons.io.ByteBuffer keyBb = factory.newByteBuffer(data, 0, fe.keyLen);
-      if (loadValue) {
+      if (loadValue && fe.dataLen > 0) {
          valueBb = factory.newByteBuffer(data, fe.keyLen, fe.dataLen);
       }
       if (loadMetadata && fe.metadataLen > 0) {

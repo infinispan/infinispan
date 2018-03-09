@@ -162,7 +162,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
 
    @Override
    public void handleInMemoryExpiration(InternalCacheEntry<K, V> entry, long currentTime) {
-      // We need to synchronize on the entry since {@link InternalCacheEntry} locks the entry when doing an update
+      // We need to synchronize on the entry since {@link InternalEntryFactoryImpl} locks the entry when doing an update
       // so we can see both the new value and the metadata
       boolean expiredMortal;
       V value;

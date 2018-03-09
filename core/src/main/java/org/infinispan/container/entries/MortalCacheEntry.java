@@ -1,7 +1,5 @@
 package org.infinispan.container.entries;
 
-import static org.infinispan.commons.util.Util.toStr;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -108,7 +106,7 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
-   public InternalCacheValue toInternalCacheValue() {
+   public InternalCacheValue toInternalCacheValue(boolean includeInvocationRecords) {
       return new MortalCacheValue(value, created, lifespan);
    }
 
@@ -155,13 +153,5 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       public Set<Class<? extends MortalCacheEntry>> getTypeClasses() {
          return Util.asSet(MortalCacheEntry.class);
       }
-   }
-
-   @Override
-   public String toString() {
-      return "MortalCacheEntry{" +
-            "key=" + toStr(key) +
-            ", value=" + toStr(value) +
-            "}";
    }
 }

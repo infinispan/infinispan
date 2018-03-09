@@ -1,7 +1,7 @@
 package org.infinispan.statetransfer;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashMap;
@@ -10,6 +10,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -18,6 +19,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.functional.decorators.FunctionalAdvancedCache;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -76,54 +78,108 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
    }
 
    public void testRemoveOptimistic() throws Exception {
-      testOperationDuringLeave(Operation.REMOVE, true);
+      testOperationDuringLeave(Operation.REMOVE, true, false);
+   }
+
+   @Test(enabled = false, description = "ISPN-8213")
+   public void testRemoveOptimisticFunctional() throws Exception {
+      testOperationDuringLeave(Operation.REMOVE, true, true);
    }
 
    public void testRemovePessimistic() throws Exception {
-      testOperationDuringLeave(Operation.REMOVE, false);
+      testOperationDuringLeave(Operation.REMOVE, false, false);
+   }
+
+   @Test(enabled = false, description = "ISPN-8213")
+   public void testRemovePessimisticFunctional() throws Exception {
+      testOperationDuringLeave(Operation.REMOVE, false, true);
    }
 
    public void testClearOptimistic() throws Exception {
-      testOperationDuringLeave(Operation.CLEAR, true);
+      testOperationDuringLeave(Operation.CLEAR, true, false);
+   }
+
+   public void testClearOptimisticFunctional() throws Exception {
+      testOperationDuringLeave(Operation.CLEAR, true, true);
    }
 
    public void testClearPessimistic() throws Exception {
-      testOperationDuringLeave(Operation.CLEAR, false);
+      testOperationDuringLeave(Operation.CLEAR, false, false);
+   }
+
+   public void testClearPessimisticFunctional() throws Exception {
+      testOperationDuringLeave(Operation.CLEAR, false, true);
    }
 
    public void testPutOptimistic() throws Exception {
-      testOperationDuringLeave(Operation.PUT, true);
+      testOperationDuringLeave(Operation.PUT, true, false);
+   }
+
+   @Test(enabled = false, description = "ISPN-8213")
+   public void testPutOptimisticFunctional() throws Exception {
+      testOperationDuringLeave(Operation.PUT, true, true);
    }
 
    public void testPutPessimistic() throws Exception {
-      testOperationDuringLeave(Operation.PUT, false);
+      testOperationDuringLeave(Operation.PUT, false, false);
+   }
+
+   @Test(enabled = false, description = "ISPN-8213")
+   public void testPutPessimisticFunctional() throws Exception {
+      testOperationDuringLeave(Operation.PUT, false, true);
    }
 
    public void testPutMapOptimistic() throws Exception {
-      testOperationDuringLeave(Operation.PUT_MAP, true);
+      testOperationDuringLeave(Operation.PUT_MAP, true, false);
+   }
+
+   public void testPutMapOptimisticFunctional() throws Exception {
+      testOperationDuringLeave(Operation.PUT_MAP, true, true);
    }
 
    public void testPutMapPessimistic() throws Exception {
-      testOperationDuringLeave(Operation.PUT_MAP, false);
+      testOperationDuringLeave(Operation.PUT_MAP, false, false);
+   }
+
+   public void testPutMapPessimisticFunctional() throws Exception {
+      testOperationDuringLeave(Operation.PUT_MAP, false, true);
    }
 
    public void testPutIfAbsentOptimistic() throws Exception {
-      testOperationDuringLeave(Operation.PUT_IF_ABSENT, true);
+      testOperationDuringLeave(Operation.PUT_IF_ABSENT, true, false);
+   }
+
+   public void testPutIfAbsentOptimisticFunctional() throws Exception {
+      testOperationDuringLeave(Operation.PUT_IF_ABSENT, true, true);
    }
 
    public void testPutIfAbsentPessimistic() throws Exception {
-      testOperationDuringLeave(Operation.PUT_IF_ABSENT, false);
+      testOperationDuringLeave(Operation.PUT_IF_ABSENT, false, false);
+   }
+
+   public void testPutIfAbsentPessimisticFunctional() throws Exception {
+      testOperationDuringLeave(Operation.PUT_IF_ABSENT, false, true);
    }
 
    public void testReplaceOptimistic() throws Exception {
-      testOperationDuringLeave(Operation.REPLACE, true);
+      testOperationDuringLeave(Operation.REPLACE, true, false);
+   }
+
+   @Test(enabled = false, description = "ISPN-8213")
+   public void testReplaceOptimisticFunctional() throws Exception {
+      testOperationDuringLeave(Operation.REPLACE, true, true);
    }
 
    public void testReplacePessimistic() throws Exception {
-      testOperationDuringLeave(Operation.REPLACE, false);
+      testOperationDuringLeave(Operation.REPLACE, false, false);
    }
 
-   private void testOperationDuringLeave(Operation op, boolean isOptimistic) throws Exception {
+   @Test(enabled = false, description = "ISPN-8213")
+   public void testReplacePessimisticFunctional() throws Exception {
+      testOperationDuringLeave(Operation.REPLACE, false, true);
+   }
+
+   private void testOperationDuringLeave(Operation op, boolean isOptimistic, boolean functional) throws Exception {
       ConfigurationBuilder builder = createConfigurationBuilder(isOptimistic);
 
       createCluster(builder, 3);
@@ -198,9 +254,13 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
          throw new TimeoutException();
       }
 
+      Cache<Object, Object> cache0 = cache(0);
+      if (functional) {
+         cache0 = FunctionalAdvancedCache.create(cache0.getAdvancedCache());
+      }
       if (op == Operation.CLEAR) {
          log.info("Clearing cache ..");
-         cache(0).clear();
+         cache0.clear();
          log.info("Finished clearing cache");
 
          assertEquals(0, dc0.size());
@@ -208,7 +268,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
       } else if (op == Operation.REMOVE) {
          log.info("Removing all keys one by one ..");
          for (int i = 0; i < numKeys; i++) {
-            cache(0).remove(i);
+            cache0.remove(i);
          }
          log.info("Finished removing keys");
 
@@ -218,24 +278,24 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
          log.info("Updating all keys ..");
          if (op == Operation.PUT) {
             for (int i = 0; i < numKeys; i++) {
-               cache(0).put(i, "after_st_" + i);
+               cache0.put(i, "after_st_" + i);
             }
          } else if (op == Operation.PUT_MAP) {
             Map<Integer, String> toPut = new HashMap<>();
             for (int i = 0; i < numKeys; i++) {
                toPut.put(i, "after_st_" + i);
             }
-            cache(0).putAll(toPut);
+            cache0.putAll(toPut);
          } else if (op == Operation.REPLACE) {
             for (int i = 0; i < numKeys; i++) {
                String expectedOldValue = "before_st_" + i;
-               boolean replaced = cache(0).replace(i, expectedOldValue, "after_st_" + i);
+               boolean replaced = cache0.replace(i, expectedOldValue, "after_st_" + i);
                assertTrue(replaced);
             }
          } else { // PUT_IF_ABSENT
             for (int i = 0; i < numKeys; i++) {
                String expectedOldValue = "before_st_" + i;
-               Object prevValue = cache(0).putIfAbsent(i, "after_st_" + i);
+               Object prevValue = cache0.putIfAbsent(i, "after_st_" + i);
                assertEquals(expectedOldValue, prevValue);
             }
          }
@@ -255,8 +315,8 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
       if (op == Operation.CLEAR || op == Operation.REMOVE) {
          // caches should be empty. check that no keys were revived by an inconsistent state transfer
          for (int i = 0; i < numKeys; i++) {
-            assertNull(dc0.get(i));
-            assertNull(dc2.get(i));
+            assertFalse(dc0.containsKey(i));
+            assertFalse(dc2.containsKey(i));
          }
       } else if (op == Operation.PUT || op == Operation.PUT_MAP || op == Operation.REPLACE) {
          ConsistentHash ch = advancedCache(0).getComponentRegistry().getStateTransferManager().getCacheTopology().getReadConsistentHash();
@@ -264,10 +324,10 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
          for (int i = 0; i < numKeys; i++) {
             // check number of owners
             int owners = 0;
-            if (dc0.get(i) != null) {
+            if (dc0.containsKey(i)) {
                owners++;
             }
-            if (dc2.get(i) != null) {
+            if (dc2.containsKey(i)) {
                owners++;
             }
             assertEquals("Wrong number of owners", ch.locateOwners(i).size(), owners);
@@ -275,17 +335,17 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
             // check values were not overwritten with old values carried by state transfer
             String expected = "after_st_" + i;
             assertEquals(expected, cache(0).get(i));
-            assertEquals("after_st_" + i, cache(2).get(i));
+            assertEquals(expected, cache(2).get(i));
          }
       } else { // PUT_IF_ABSENT
          ConsistentHash ch = advancedCache(0).getComponentRegistry().getStateTransferManager().getCacheTopology().getReadConsistentHash();
          for (int i = 0; i < numKeys; i++) {
             // check number of owners
             int owners = 0;
-            if (dc0.get(i) != null) {
+            if (dc0.containsKey(i)) {
                owners++;
             }
-            if (dc2.get(i) != null) {
+            if (dc2.containsKey(i)) {
                owners++;
             }
             assertEquals("Wrong number of owners", ch.locateOwners(i).size(), owners);

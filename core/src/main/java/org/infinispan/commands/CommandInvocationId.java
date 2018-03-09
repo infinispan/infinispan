@@ -21,8 +21,6 @@ import org.infinispan.remoting.transport.Address;
  * @since 8.0
  */
 public final class CommandInvocationId {
-   public static final CommandInvocationId DUMMY_INVOCATION_ID = new CommandInvocationId(null, 0);
-
    private static final AtomicLong nextId = new AtomicLong(0);
 
    private final Address address;
@@ -42,12 +40,21 @@ public final class CommandInvocationId {
    }
 
    public static void writeTo(ObjectOutput output, CommandInvocationId commandInvocationId) throws IOException {
+      if (commandInvocationId == null) {
+         output.writeObject(null);
+         return;
+      }
       output.writeObject(commandInvocationId.address);
-      output.writeLong(commandInvocationId.id);
+      if (commandInvocationId.address != null) {
+         output.writeLong(commandInvocationId.id);
+      }
    }
 
    public static CommandInvocationId readFrom(ObjectInput input) throws ClassNotFoundException, IOException {
       Address address = (Address) input.readObject();
+      if (address == null) {
+         return null;
+      }
       long id = input.readLong();
       return new CommandInvocationId(address, id);
    }
@@ -88,7 +95,7 @@ public final class CommandInvocationId {
    }
 
    public static String show(CommandInvocationId id) {
-      return id == DUMMY_INVOCATION_ID ? "" : id.toString();
+      return id == null ? "" : id.toString();
    }
 
 }

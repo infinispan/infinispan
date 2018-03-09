@@ -9,10 +9,9 @@ import java.io.ObjectOutput;
 import java.util.function.Function;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
-import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -24,27 +23,33 @@ import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.EntryViews.AccessLoggingReadWriteView;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
+import org.infinispan.metadata.Metadata;
 
-// TODO: the command does not carry previous values to backup, so it can cause
-// the values on primary and backup owners to diverge in case of topology change
 public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<K, V> {
-
    public static final byte COMMAND_ID = 50;
 
    private Function<ReadWriteEntryView<K, V>, R> f;
 
    public ReadWriteKeyCommand(Object key, Function<ReadWriteEntryView<K, V>, R> f,
-                              CommandInvocationId id, ValueMatcher valueMatcher, Params params,
+                              CommandInvocationId id,
+                              Params params,
                               DataConversion keyDataConversion,
                               DataConversion valueDataConversion,
+                              InvocationManager invocationManager,
                               ComponentRegistry componentRegistry) {
-      super(key, valueMatcher, id, params, keyDataConversion, valueDataConversion);
+      super(key, id, params, keyDataConversion, valueDataConversion, invocationManager);
       this.f = f;
       init(componentRegistry);
    }
 
    public ReadWriteKeyCommand() {
       // No-op, for marshalling
+   }
+
+   public ReadWriteKeyCommand(ReadWriteKeyCommand<K, V, R> other) {
+      super((K) other.getKey(), other.commandInvocationId, other.getParams(),
+            other.keyDataConversion, other.valueDataConversion,  other.invocationManager);
+      this.f = other.f;
    }
 
    @Override
@@ -56,10 +61,10 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
       output.writeObject(f);
-      MarshallUtil.marshallEnum(valueMatcher, output);
       Params.writeObject(output, params);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
+      CommandInvocationId.writeTo(output, lastInvocationId);
       DataConversion.writeTo(output, keyDataConversion);
       DataConversion.writeTo(output, valueDataConversion);
    }
@@ -68,10 +73,10 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
       f = (Function<ReadWriteEntryView<K, V>, R>) input.readObject();
-      valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       params = Params.readObject(input);
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);
+      lastInvocationId = CommandInvocationId.readFrom(input);
       keyDataConversion = DataConversion.readFrom(input);
       valueDataConversion = DataConversion.readFrom(input);
    }
@@ -83,26 +88,17 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      // It's not worth looking up the entry if we're never going to apply the change.
-      if (valueMatcher == ValueMatcher.MATCH_NEVER) {
-         successful = false;
-         return null;
-      }
-
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
-
-      // Could be that the key is not local, 'null' is how this is signalled
-      if (e == null) return null;
-
-      R ret;
-      boolean exists = e.getValue() != null;
+      Object prevValue = e.getValue();
+      Metadata prevMetadata = e.getMetadata();
       AccessLoggingReadWriteView<K, V> view = EntryViews.readWrite(e, keyDataConversion, valueDataConversion);
-      ret = snapshot(f.apply(view));
-      // The effective result of retried command is not safe; we'll go to backup anyway
-      if (!e.isChanged() && !hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
+      R ret = snapshot(f.apply(view));
+      if (e.isChanged()) {
+         recordInvocation(ctx, e, prevValue, prevMetadata);
+      } else {
          successful = false;
       }
-      return StatisticsMode.isSkip(params) ? ret : StatsEnvelope.create(ret, e, exists, view.isRead());
+      return StatisticsMode.isSkip(params) ? ret : StatsEnvelope.create(ret, e, prevValue != null, view.isRead());
    }
 
    @Override
@@ -132,7 +128,6 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       sb.append(", flags=").append(printFlags());
       sb.append(", commandInvocationId=").append(commandInvocationId);
       sb.append(", params=").append(params);
-      sb.append(", valueMatcher=").append(valueMatcher);
       sb.append(", successful=").append(successful);
       sb.append(", keyDataConversion=").append(keyDataConversion);
       sb.append(", valueDataConversion=").append(valueDataConversion);
@@ -141,11 +136,14 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    }
 
    @Override
+   public final boolean isReturnValueExpected() {
+      return true;
+   }
+
+   @Override
    public void init(ComponentRegistry componentRegistry) {
       componentRegistry.wireDependencies(keyDataConversion);
       componentRegistry.wireDependencies(valueDataConversion);
-      if (f instanceof InjectableComponent)
-         ((InjectableComponent) f).inject(componentRegistry);
+      InjectableComponent.inject(componentRegistry, f);
    }
-
 }

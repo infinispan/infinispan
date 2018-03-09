@@ -54,7 +54,7 @@ public class GetAllCommand extends AbstractTopologyAffectedCommand {
 
    @Override
    public LoadType loadType() {
-      return LoadType.PRIMARY;
+      return LoadType.OWNER;
    }
 
    @Override

@@ -149,15 +149,15 @@ public class DBServer {
             return result;
         }
 
-        public List<String> getAllRows() throws Exception {
+        public List<byte[]> getAllRows() throws Exception {
             Connection connection = factory.getConnection();
             final Statement s = connection.createStatement();
             ResultSet rs;
-            List<String> rows = new ArrayList<String>();
+            List<byte[]> rows = new ArrayList<>();
             try {
                 rs = s.executeQuery(getAllRowsSql);
                 while (rs.next()) {
-                    rows.add(rs.toString());
+                    rows.add(rs.getBytes(dataColumnName));
                 }
             } finally {
                 factory.releaseConnection(connection);

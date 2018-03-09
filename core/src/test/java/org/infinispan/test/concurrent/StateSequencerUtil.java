@@ -67,8 +67,8 @@ public class StateSequencerUtil {
    /**
     * Start building a {@link CommandMatcher}.
     */
-   public static CommandMatcherBuilder matchCommand(Class<? extends ReplicableCommand> commandClass) {
-      return new CommandMatcherBuilder(commandClass);
+   public static CommandMatcherBuilder matchCommand(Class<? extends ReplicableCommand>... commandClasses) {
+      return new CommandMatcherBuilder(commandClasses);
    }
 
    /**

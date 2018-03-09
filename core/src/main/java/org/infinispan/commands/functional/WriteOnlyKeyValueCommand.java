@@ -6,10 +6,9 @@ import java.io.ObjectOutput;
 import java.util.function.BiConsumer;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
-import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -20,6 +19,7 @@ import org.infinispan.functional.Param.StatisticsMode;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
+import org.infinispan.metadata.Metadata;
 
 public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCommand<K, V> {
 
@@ -31,12 +31,12 @@ public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCom
    public WriteOnlyKeyValueCommand(Object key, Object argument,
                                    BiConsumer<T, WriteEntryView<K, V>> f,
                                    CommandInvocationId id,
-                                   ValueMatcher valueMatcher,
                                    Params params,
                                    DataConversion keyDataConversion,
                                    DataConversion valueDataConversion,
+                                   InvocationManager invocationManager,
                                    ComponentRegistry componentRegistry) {
-      super(key, valueMatcher, id, params, keyDataConversion, valueDataConversion);
+      super(key, id, params, keyDataConversion, valueDataConversion, invocationManager);
       this.f = f;
       this.argument = argument;
       init(componentRegistry);
@@ -56,10 +56,10 @@ public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCom
       output.writeObject(key);
       output.writeObject(argument);
       output.writeObject(f);
-      MarshallUtil.marshallEnum(valueMatcher, output);
       Params.writeObject(output, params);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
+      CommandInvocationId.writeTo(output, lastInvocationId);
       DataConversion.writeTo(output, keyDataConversion);
       DataConversion.writeTo(output, valueDataConversion);
    }
@@ -69,10 +69,10 @@ public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCom
       key = input.readObject();
       argument = input.readObject();
       f = (BiConsumer<T, WriteEntryView<K, V>>) input.readObject();
-      valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       params = Params.readObject(input);
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);
+      lastInvocationId = CommandInvocationId.readFrom(input);
       keyDataConversion = DataConversion.readFrom(input);
       valueDataConversion = DataConversion.readFrom(input);
    }
@@ -85,15 +85,14 @@ public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCom
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       CacheEntry e = ctx.lookupEntry(key);
-
-      // Could be that the key is not local
-      if (e == null) return null;
-
+      Object prevValue = e.getValue();
+      Metadata prevMetadata = e.getMetadata();
       T decodedArgument = (T) valueDataConversion.fromStorage(argument);
       boolean exists = e.getValue() != null;
       f.accept(decodedArgument, EntryViews.writeOnly(e, valueDataConversion));
-      // The effective result of retried command is not safe; we'll go to backup anyway
-      if (!e.isChanged() && !hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
+      if (e.isChanged()) {
+         recordInvocation(ctx, e, prevValue, prevMetadata);
+      } else {
          successful = false;
       }
       return StatisticsMode.isSkip(params) ? null : StatsEnvelope.create(null, e, exists, false);
@@ -120,11 +119,10 @@ public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCom
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry) {
+   protected void init(ComponentRegistry componentRegistry) {
       componentRegistry.wireDependencies(keyDataConversion);
       componentRegistry.wireDependencies(valueDataConversion);
-      if (f instanceof InjectableComponent)
-         ((InjectableComponent) f).inject(componentRegistry);
+      InjectableComponent.inject(componentRegistry, f, argument);
    }
 
    public BiConsumer<T, WriteEntryView<K, V>> getBiConsumer() {

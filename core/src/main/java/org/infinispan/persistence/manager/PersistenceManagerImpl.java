@@ -3,6 +3,7 @@ package org.infinispan.persistence.manager;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
+import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
 import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
 import static org.infinispan.context.Flag.SKIP_INDEXING;
 import static org.infinispan.context.Flag.SKIP_LOCKING;
@@ -730,8 +731,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    private AdvancedCache<Object, Object> getCacheForStateInsertion() {
       List<Flag> flags = new ArrayList<>(Arrays.asList(
-            CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, IGNORE_RETURN_VALUES, SKIP_CACHE_STORE, SKIP_LOCKING,
-            SKIP_XSITE_BACKUP));
+            CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, IGNORE_RETURN_VALUES, SKIP_CACHE_LOAD, SKIP_CACHE_STORE,
+            SKIP_LOCKING, SKIP_XSITE_BACKUP));
 
       boolean hasShared = false;
       for (CacheWriter w : nonTxWriters) {
@@ -768,7 +769,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
       try {
          try {
             beginIfNeeded();
-            cache.put(key, value, metadata);
+            if (value != null) {
+               // We don't need to preload tombstones
+               cache.put(key, value, metadata);
+            }
             success = true;
          } catch (Exception e) {
             throw new PersistenceException("Unable to preload!", e);

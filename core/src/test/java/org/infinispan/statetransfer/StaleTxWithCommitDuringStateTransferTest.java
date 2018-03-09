@@ -7,7 +7,7 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.concurrent.Future;
@@ -121,8 +121,8 @@ public class StaleTxWithCommitDuringStateTransferTest extends MultipleCacheManag
          assertEquals("v0", TestingUtil.extractComponent(cache0, DataContainer.class).get(key).getValue());
          assertEquals("v0", TestingUtil.extractComponent(cache1, DataContainer.class).get(key).getValue());
       } else {
-         assertNull(TestingUtil.extractComponent(cache0, DataContainer.class).get(key));
-         assertNull(TestingUtil.extractComponent(cache1, DataContainer.class).get(key));
+         assertFalse(TestingUtil.extractComponent(cache0, DataContainer.class).containsKey(key));
+         assertFalse(TestingUtil.extractComponent(cache1, DataContainer.class).containsKey(key));
       }
 
       // Check for stale locks

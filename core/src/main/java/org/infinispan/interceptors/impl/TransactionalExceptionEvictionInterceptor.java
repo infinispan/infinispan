@@ -17,7 +17,6 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.IdentityWrapper;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
@@ -51,13 +50,15 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
 
    private final AtomicLong currentSize = new AtomicLong();
    private final ConcurrentMap<GlobalTransaction, Long> pendingSize = new ConcurrentHashMap<>();
-   private MemoryConfiguration memoryConfiguration;
-   private Cache cache;
-   private DataContainer container;
-   DistributionManager dm;
+
+   @Inject private Cache cache;
+   @Inject private DataContainer container;
+   @Inject private DistributionManager dm;
+   @Inject private KeyValueMetadataSizeCalculator calculator;
+
    private long maxSize;
    private long minSize;
-   private KeyValueMetadataSizeCalculator calculator;
+
 
    public long getCurrentSize() {
       return currentSize.get();
@@ -75,19 +76,10 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
       return pendingSize.size();
    }
 
-   @Inject
-   public void inject(Configuration config, Cache cache,
-         DataContainer dataContainer, KeyValueMetadataSizeCalculator calculator, DistributionManager dm) {
-      this.memoryConfiguration = config.memory();
-      this.cache = cache;
-      this.container = dataContainer;
-      this.maxSize = config.memory().size();
-      this.calculator = calculator;
-      this.dm = dm;
-   }
-
    @Start
    public void start() {
+      MemoryConfiguration memoryConfiguration = cacheConfiguration.memory();
+      maxSize = memoryConfiguration.size();
       if (memoryConfiguration.storageType() == StorageType.OFF_HEAP) {
          minSize = UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(memoryConfiguration.addressCount() << 3);
          currentSize.set(minSize);
@@ -172,9 +164,8 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
             if (entry.isRemoved()) {
                // Need to subtract old value here
                InternalCacheEntry containerEntry = container.peek(key);
-               Object value = containerEntry != null ? containerEntry.getValue() : null;
-               if (value != null) {
-                  changeAmount -= calculator.calculateSize(key, value, entry.getMetadata());
+               if (containerEntry != null) {
+                  changeAmount -= calculator.calculateSize(key, containerEntry.getValue(), containerEntry.getMetadata());
                }
             } else {
                // Create and replace both add for the new value

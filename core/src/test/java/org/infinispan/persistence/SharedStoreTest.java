@@ -75,15 +75,9 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
 
       for (CacheLoader cs: cacheStores) {
          DummyInMemoryStore dimcs = (DummyInMemoryStore) cs;
-         if (cacheMode.isScattered()) {
-            // scattered cache leaves tombstones
-            MarshalledEntry entry = cs.load("key");
-            assert entry == null || entry.getValue() == null;
-            assertEquals("Entry should have been replaced by tombstone", Integer.valueOf(2), dimcs.stats().get("write"));
-         } else {
-            assert !cs.contains("key");
-            assertEquals("Entry should have been removed from the cache store just once", Integer.valueOf(1), dimcs.stats().get("delete"));
-         }
+         MarshalledEntry entry = cs.load("key");
+         assert entry == null || entry.getValue() == null;
+         assertEquals("Entry should have been removed/replaced by tombstone", Integer.valueOf(1), dimcs.stats().get("delete"));
       }
    }
 

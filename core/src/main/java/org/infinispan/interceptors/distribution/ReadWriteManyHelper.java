@@ -65,12 +65,22 @@ class ReadWriteManyHelper extends WriteManyCommandHelper<ReadWriteManyCommand, C
    }
 
    @Override
-   public boolean shouldRegisterRemoteCallback(ReadWriteManyCommand cmd) {
-      return !cmd.isForwarded();
+   public boolean isForwarded(ReadWriteManyCommand cmd) {
+      return cmd.isForwarded();
+   }
+
+   @Override
+   public void setForwarded(ReadWriteManyCommand backupCommand) {
+      backupCommand.setForwarded(true);
    }
 
    @Override
    public Object transformResult(Object[] results) {
       return results == null ? null : Arrays.asList(results);
+   }
+
+   @Override
+   public Collection<Object> asCollection(Collection<Object> objects) {
+      return objects;
    }
 }

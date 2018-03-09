@@ -28,7 +28,14 @@ public class JCacheWriterAdapter<K, V> implements org.infinispan.persistence.spi
    @Override
    public void write(MarshalledEntry entry) {
       try {
-         delegate.write(new JCacheEntry(entry.getKey(), entry.getValue()));
+         if (entry.getValue() != null) {
+            // TODO: store metadata
+            delegate.write(new JCacheEntry(entry.getKey(), entry.getValue()));
+         } else {
+            // If this is a tombstone, we don't store metadata anyway. We're forced to this by JCache TCK which
+            // expects that a remove will result in cache writer delete.
+            delegate.delete(entry.getKey());
+         }
       } catch (Exception e) {
          throw Exceptions.launderCacheWriterException(e);
       }

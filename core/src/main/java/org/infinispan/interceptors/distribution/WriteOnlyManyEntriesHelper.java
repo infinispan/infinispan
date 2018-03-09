@@ -68,12 +68,22 @@ class WriteOnlyManyEntriesHelper extends WriteManyCommandHelper<WriteOnlyManyEnt
    }
 
    @Override
-   public boolean shouldRegisterRemoteCallback(WriteOnlyManyEntriesCommand cmd) {
-      return !cmd.isForwarded();
+   public boolean isForwarded(WriteOnlyManyEntriesCommand cmd) {
+      return cmd.isForwarded();
+   }
+
+   @Override
+   public void setForwarded(WriteOnlyManyEntriesCommand backupCommand) {
+      backupCommand.setForwarded(true);
    }
 
    @Override
    public Object transformResult(Object[] results) {
       return results == null ? null : Arrays.asList(results);
+   }
+
+   @Override
+   public Collection<Map.Entry<Object, Object>> asCollection(Map<Object, Object> map) {
+      return map.entrySet();
    }
 }

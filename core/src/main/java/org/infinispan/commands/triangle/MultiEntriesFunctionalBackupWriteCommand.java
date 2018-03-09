@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.functional.AbstractWriteManyCommand;
 import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
@@ -32,6 +34,7 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
 
    private boolean writeOnly;
    private Map<?, ?> entries;
+   private Map<Object, CommandInvocationId> lastInvocationIds;
 
    //for testing
    @SuppressWarnings("unused")
@@ -44,8 +47,8 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
    }
 
    public void init(InvocationContextFactory factory, AsyncInterceptorChain chain,
-         ComponentRegistry componentRegistry) {
-      injectDependencies(factory, chain);
+                    ComponentRegistry componentRegistry, InvocationManager invocationManager) {
+      injectDependencies(factory, chain, invocationManager);
       this.componentRegistry = componentRegistry;
    }
 
@@ -55,6 +58,7 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
       writeOnly = true;
       this.entries = TriangleFunctionsUtil.filterEntries(command.getArguments(), keys);
       this.function = command.getBiConsumer();
+      this.lastInvocationIds = command.getLastInvocationIds();
    }
 
    public <K, V, T, R> void setReadWrite(ReadWriteManyEntriesCommand<K, V, T, R> command, Collection<Object> keys) {
@@ -63,6 +67,7 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
       writeOnly = false;
       this.entries = TriangleFunctionsUtil.filterEntries(command.getArguments(), keys);
       this.function = command.getBiFunction();
+      this.lastInvocationIds = command.getLastInvocationIds();
    }
 
    @Override
@@ -76,6 +81,7 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
       writeFunctionAndParams(output);
       output.writeBoolean(writeOnly);
       MarshallUtil.marshallMap(entries, output);
+      MarshallUtil.marshallMap(lastInvocationIds, ObjectOutput::writeObject, CommandInvocationId::writeTo, output);
    }
 
    @Override
@@ -84,6 +90,7 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
       readFunctionAndParams(input);
       writeOnly = input.readBoolean();
       entries = MarshallUtil.unmarshallMap(input, HashMap::new);
+      lastInvocationIds = MarshallUtil.unmarshallMap(input, ObjectInput::readObject, CommandInvocationId::readFrom, HashMap::new);
    }
 
    @Override
@@ -91,10 +98,11 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
       //noinspection unchecked
       AbstractWriteManyCommand cmd = writeOnly ?
             new WriteOnlyManyEntriesCommand(entries, (BiConsumer) function, params, getCommandInvocationId(),
-                  keyDataConversion, valueDataConversion, componentRegistry) :
+                  keyDataConversion, valueDataConversion, invocationManager, componentRegistry) :
             new ReadWriteManyEntriesCommand(entries, (BiFunction) function, params, getCommandInvocationId(),
-                  keyDataConversion, valueDataConversion, componentRegistry);
+                  keyDataConversion, valueDataConversion, invocationManager, componentRegistry);
       cmd.setForwarded(true);
+      cmd.setLastInvocationIds(lastInvocationIds);
       return cmd;
    }
 

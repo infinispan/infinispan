@@ -116,6 +116,10 @@ public class LocalizedCacheTopology extends CacheTopology {
       }
    }
 
+   public int numSegments() {
+      return numSegments;
+   }
+
    /**
     * @return {@code true} iff key {@code key} can be read without going remote.
     */

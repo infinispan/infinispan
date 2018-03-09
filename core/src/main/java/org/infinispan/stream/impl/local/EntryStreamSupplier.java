@@ -65,7 +65,7 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
             int segment = toIntFunction.applyAsInt(key);
             boolean isPresent = intSet.contains(segment);
             if (trace)
-               log.tracef("Is key %s present in segment %d? %b", key, segment, isPresent);
+               log.tracef("Is key %s (value %s) present in segment %d? %b", key, k.getValue(), segment, isPresent);
             return isPresent;
          });
       }

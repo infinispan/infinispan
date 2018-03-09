@@ -118,6 +118,10 @@ public final class MarshallableFunctions {
       return Identity.getInstance();
    }
 
+   public static <K> BiFunction<Object, ReadWriteEntryView<K, Object>, Void> mapKey() {
+      return MapKey.getInstance();
+   }
+
    private static abstract class AbstractSetValueReturnPrevOrNull<K, V>
          implements BiFunction<V, ReadWriteEntryView<K, V>, V> {
       final MetaParam.Writable[] metas;
@@ -598,6 +602,20 @@ public final class MarshallableFunctions {
 
       private static <T> Function<T, T> getInstance() {
          return INSTANCE;
+      }
+   }
+
+   private static final class MapKey<K> implements BiFunction<Object, ReadWriteEntryView<K, Object>, Void> {
+      private static final MapKey INSTANCE = new MapKey<>();
+
+      private static <K> MapKey<K> getInstance() {
+         return INSTANCE;
+      }
+
+      @Override
+      public Void apply(Object f, ReadWriteEntryView<K, Object> view) {
+         Function<Object, Object> mappingFunction = (Function<Object, Object>) f;
+         return view.set(mappingFunction.apply(view.key()));
       }
    }
 

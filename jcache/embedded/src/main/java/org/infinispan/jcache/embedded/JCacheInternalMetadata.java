@@ -1,5 +1,7 @@
 package org.infinispan.jcache.embedded;
 
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.metadata.InternalMetadata;
 
@@ -51,6 +53,16 @@ public class JCacheInternalMetadata implements InternalMetadata {
 
    @Override
    public EntryVersion version() {
+      return null;
+   }
+
+   @Override
+   public InvocationRecord lastInvocation() {
+      return null;
+   }
+
+   @Override
+   public InvocationRecord invocation(CommandInvocationId id) {
       return null;
    }
 

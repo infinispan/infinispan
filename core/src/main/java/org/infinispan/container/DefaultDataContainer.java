@@ -100,7 +100,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       switch (thresholdPolicy) {
          case MEMORY:
             CacheEntrySizeCalculator<K, V> calc = new CacheEntrySizeCalculator<>(new WrappedByteArraySizeCalculator<>(
-                  new PrimitiveEntrySizeCalculator()));
+                  new PrimitiveEntrySizeCalculator()), true);
             caffeine.weigher((k, v) -> (int) calc.calculateSize(k, v)).maximumWeight(thresholdSize);
             break;
          case COUNT:
@@ -149,7 +149,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
     */
    protected DefaultDataContainer(int concurrencyLevel, long thresholdSize,
                                   EntrySizeCalculator<? super K, ? super V> sizeCalculator) {
-      this(thresholdSize, new CacheEntrySizeCalculator<>(sizeCalculator));
+      this(thresholdSize, new CacheEntrySizeCalculator<>(sizeCalculator, true));
    }
 
    /**
@@ -194,6 +194,9 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    @Override
    public InternalCacheEntry<K, V> get(Object k) {
       InternalCacheEntry<K, V> e = entries.get(k);
+      if (trace) {
+         log.tracef("Retrieved %s -> %s", k, e);
+      }
       if (e != null && e.canExpire()) {
          long currentTimeMillis = timeService.wallClockTime();
          if (e.isExpired(currentTimeMillis)) {
@@ -222,7 +225,12 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       if (l1Entry) {
          copy = entryFactory.createL1(k, v, metadata);
       } else if (e != null) {
-         copy = entryFactory.update(e, v, metadata);
+         if (e.isL1Entry() && v == null) {
+            // Don't replace L1 entry with tombstone: remove it completely, tombstones are not required on non-owners
+            copy = null;
+         } else {
+            copy = entryFactory.update(e, v, metadata);
+         }
       } else {
          // this is a brand-new entry
          copy = entryFactory.create(k, v, metadata);
@@ -231,8 +239,14 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       if (trace)
          log.tracef("Store %s in container", copy);
 
-      entries.compute(copy.getKey(), (key, entry) -> {
-         activator.onUpdate(key, entry == null);
+      entries.compute(k, (key, entry) -> {
+         // With passivation, when we're storing a tombstone we need to call onRemove that will remove the entry
+         // from shared stores as well (onUpdate modifies only private stores).
+         if (copy != null && copy.getValue() != null) {
+            activator.onUpdate(key, entry == null);
+         } else {
+            activator.onRemove(key, entry == null);
+         }
          return copy;
       });
    }
@@ -247,7 +261,8 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
             ice = null;
          }
       }
-      return ice != null;
+      // TODO: handle tombstones here?
+      return ice != null && ice.getValue() != null;
    }
 
    @Override
@@ -300,6 +315,17 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
    @Override
    public int sizeIncludingExpired() {
+      int size = 0;
+      // We have to loop through to make sure to remove expired entries
+      for (Iterator<InternalCacheEntry<K, V>> iter = entries.values().iterator(); iter.hasNext(); ) {
+         if (iter.next().getValue() == null) continue;
+         if (++size == Integer.MAX_VALUE) return Integer.MAX_VALUE;
+      }
+      return size;
+   }
+
+   @Override
+   public int sizeIncludingExpiredAndTombstones() {
       return entries.size();
    }
 
@@ -351,24 +377,36 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
    @Override
    public Iterator<InternalCacheEntry<K, V>> iterator() {
-      return new EntryIterator(entries.values().iterator());
+      return new EntryIterator(entries.values().iterator(), false);
    }
 
    @Override
    public Spliterator<InternalCacheEntry<K, V>> spliterator() {
-      return new EntrySpliterator(entries.values().spliterator());
+      return new EntrySpliterator(entries.values().spliterator(), false);
    }
 
    @Override
    public Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpired() {
-      return entries.values().iterator();
+      // TODO: change usages to the one including tombstones where possible
+      return new EntryIterator(entries.values().iterator(), true);
    }
 
    @Override
    public Spliterator<InternalCacheEntry<K, V>> spliteratorIncludingExpired() {
       // Technically this spliterator is distinct, but it won't be set - we assume that is okay for now
+      return new EntrySpliterator(entries.values().spliterator(), true);
+   }
+
+   @Override
+   public Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpiredAndTombstones() {
+      return entries.values().iterator();
+   }
+
+   @Override
+   public Spliterator<InternalCacheEntry<K, V>> spliteratorIncludingExpiredAndTombstones() {
       return entries.values().spliterator();
    }
+
 
    @Override
    public long evictionSize() {
@@ -400,7 +438,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
    private class ImmutableEntryIterator extends EntryIterator {
       ImmutableEntryIterator(Iterator<InternalCacheEntry<K, V>> it){
-         super(it);
+         super(it, false);
       }
 
       @Override
@@ -412,11 +450,13 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    public class EntryIterator implements Iterator<InternalCacheEntry<K, V>> {
 
       private final Iterator<InternalCacheEntry<K, V>> it;
+      private final boolean includeExpired;
 
       private InternalCacheEntry<K, V> next;
 
-      EntryIterator(Iterator<InternalCacheEntry<K, V>> it) {
+      EntryIterator(Iterator<InternalCacheEntry<K, V>> it, boolean includeExpired){
          this.it=it;
+         this.includeExpired = includeExpired;
       }
 
       private InternalCacheEntry<K, V> getNext() {
@@ -424,10 +464,10 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
          long now = 0;
          while (it.hasNext()) {
             InternalCacheEntry<K, V> entry = it.next();
-            if (!entry.canExpire()) {
-               if (trace) {
-                  log.tracef("Return next entry %s", entry);
-               }
+            if (entry.getValue() == null) {
+               continue;
+            } else if (includeExpired || !entry.canExpire()) {
+               log.tracef("Return next entry %s", entry);
                return entry;
             } else {
                if (!initializedTime) {
@@ -483,13 +523,15 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
     */
    private class EntrySpliterator implements CloseableSpliterator<InternalCacheEntry<K, V>> {
       private final Spliterator<InternalCacheEntry<K, V>> spliterator;
+      private final boolean includeExpired;
       // We assume that spliterator is not used concurrently - normally it is split so we can use these variables safely
       private final Consumer<? super InternalCacheEntry<K, V>> consumer = ice -> current = ice;
 
       private InternalCacheEntry<K, V> current;
 
-      private EntrySpliterator(Spliterator<InternalCacheEntry<K, V>> spliterator) {
+      private EntrySpliterator(Spliterator<InternalCacheEntry<K, V>> spliterator, boolean includeExpired) {
          this.spliterator = spliterator;
+         this.includeExpired = includeExpired;
       }
 
       @Override
@@ -504,7 +546,9 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
          long now = 0;
          while (entryToUse == null && spliterator.tryAdvance(consumer)) {
             entryToUse = current;
-            if (entryToUse.canExpire()) {
+            if (entryToUse.getValue() == null) {
+               entryToUse = null;
+            } else if (!includeExpired && entryToUse.canExpire()) {
                if (!initializedTime) {
                   now = timeService.wallClockTime();
                   initializedTime = true;
@@ -531,7 +575,9 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
          while (spliterator.tryAdvance(consumer)) {
             InternalCacheEntry<K, V> currentEntry = current;
-            if (currentEntry.canExpire()) {
+            if (currentEntry.getValue() == null) {
+               continue;
+            } else if (!includeExpired && currentEntry.canExpire()) {
                if (!initializedTime) {
                   now = timeService.wallClockTime();
                   initializedTime = true;
@@ -548,7 +594,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       public Spliterator<InternalCacheEntry<K, V>> trySplit() {
          Spliterator<InternalCacheEntry<K, V>> split = spliterator.trySplit();
          if (split != null) {
-            return new EntrySpliterator(split);
+            return new EntrySpliterator(split, includeExpired);
          }
          return null;
       }

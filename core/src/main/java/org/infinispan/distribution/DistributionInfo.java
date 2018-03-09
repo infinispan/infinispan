@@ -22,6 +22,7 @@ public class DistributionInfo {
    private final boolean isReadOwner;
    private final boolean isWriteOwner;
    private final boolean isWriteBackup;
+   private final boolean anyWriteBackupNonReader;
 
    public DistributionInfo(int segmentId, Address primary, List<Address> readOwners, List<Address> writeOwners,
                            Collection<Address> writeBackups, Address localAddress) {
@@ -35,6 +36,7 @@ public class DistributionInfo {
       this.isReadOwner = readOwners.contains(localAddress);
       this.isWriteOwner = writeOwners.contains(localAddress);
       this.isWriteBackup = this.isWriteOwner && !this.isPrimary;
+      this.anyWriteBackupNonReader = !readOwners.containsAll(writeBackups);
    }
 
 
@@ -72,6 +74,10 @@ public class DistributionInfo {
 
    public boolean isWriteBackup() {
       return isWriteBackup;
+   }
+
+   public boolean isAnyWriteBackupNonReader() {
+      return anyWriteBackupNonReader;
    }
 
    public Ownership readOwnership() {

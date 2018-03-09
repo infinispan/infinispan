@@ -124,6 +124,7 @@ public class APIScatteredTest extends BaseScatteredTest {
       assertFalse(cache(1).replace(KEY, VALUE2, VALUE1));
       assertTrue(cache(2).replace(KEY, VALUE3, VALUE1));
       assertFalse(cache(2).replace(KEY, VALUE3, VALUE2));
+      flush(false);
    }
 
    public void testPutAll() {
@@ -148,6 +149,7 @@ public class APIScatteredTest extends BaseScatteredTest {
       assertFalse(dc(2).containsKey(KEY1));
       assertFalse(dc(2).containsKey(KEY2));
       assertTrue(dc(2).containsKey(KEY3));
+      flush(false);
    }
 
    public void testGetAll() {
@@ -166,5 +168,6 @@ public class APIScatteredTest extends BaseScatteredTest {
          assertEquals(map.get(KEY3), VALUE3);
          assertEquals(map.size(), 3);
       }
+      flush(false);
    }
 }

@@ -63,7 +63,7 @@ public class InvalidateL1Command extends InvalidateCommand {
       return COMMAND_ID;
    }
 
-   public void init( DistributionManager dm, CacheNotifier n, DataContainer dc) {
+   public void init(DistributionManager dm, CacheNotifier n, DataContainer dc) {
       super.init(n);
       this.dm = dm;
       this.dataContainer = dc;
@@ -81,10 +81,11 @@ public class InvalidateL1Command extends InvalidateCommand {
                if (trace) log.tracef("Invalidating key %s.", k);
                MVCCEntry e = (MVCCEntry) ctx.lookupEntry(k);
                notify(ctx, e, true);
+               e.setValue(null);
+               e.setMetadata(null);
                e.setRemoved(true);
                e.setChanged(true);
                e.setCreated(false);
-               e.setValid(false);
             } else {
                log.tracef("Not invalidating key %s as it is local now", k);
             }

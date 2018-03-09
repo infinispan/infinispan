@@ -3,6 +3,8 @@ package org.infinispan.server.memcached;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -16,10 +18,13 @@ import org.infinispan.metadata.Metadata;
 public class MemcachedMetadata implements Metadata {
    protected final long flags;
    protected final EntryVersion version;
+   protected final InvocationRecord records;
 
-   public MemcachedMetadata(long flags, EntryVersion version) {
+   public MemcachedMetadata(long flags, EntryVersion version, InvocationRecord records) {
       this.flags = flags;
-      this.version = Objects.requireNonNull(version);
+      // version may be null if this is a tombstone
+      this.version = version;
+      this.records = records;
    }
 
    @Override
@@ -38,8 +43,18 @@ public class MemcachedMetadata implements Metadata {
    }
 
    @Override
+   public InvocationRecord lastInvocation() {
+      return records;
+   }
+
+   @Override
+   public InvocationRecord invocation(CommandInvocationId id) {
+      return InvocationRecord.lookup(records, id);
+   }
+
+   @Override
    public Builder builder() {
-      return new MemcachedMetadataBuilder().flags(flags).version(version);
+      return new MemcachedMetadataBuilder().flags(flags).version(version).invocations(records);
    }
 
    @Override
@@ -75,8 +90,8 @@ class MemcachedExpirableMetadata extends MemcachedMetadata {
    protected final long lifespanTime;
    protected final TimeUnit lifespanUnit;
 
-   MemcachedExpirableMetadata(long flags, EntryVersion version, long lifespanTime, TimeUnit lifespanUnit) {
-      super(flags, version);
+   MemcachedExpirableMetadata(long flags, EntryVersion version, InvocationRecord records, long lifespanTime, TimeUnit lifespanUnit) {
+      super(flags, version, records);
       this.lifespanTime = lifespanTime;
       this.lifespanUnit = Objects.requireNonNull(lifespanUnit);
    }
@@ -88,7 +103,7 @@ class MemcachedExpirableMetadata extends MemcachedMetadata {
 
    @Override
    public Builder builder() {
-      return new MemcachedMetadataBuilder().flags(flags).version(version).lifespan(lifespanTime, lifespanUnit);
+      return super.builder().lifespan(lifespanTime, lifespanUnit);
    }
 
    @Override
@@ -136,8 +151,8 @@ class MemcachedMetadataBuilder extends EmbeddedMetadata.Builder {
    @Override
    public Metadata build() {
       if (hasLifespan())
-         return new MemcachedExpirableMetadata(flags, version, lifespan, lifespanUnit);
+         return new MemcachedExpirableMetadata(flags, version, records, lifespan, lifespanUnit);
       else
-         return new MemcachedMetadata(flags, version);
+         return new MemcachedMetadata(flags, version, records);
    }
 }

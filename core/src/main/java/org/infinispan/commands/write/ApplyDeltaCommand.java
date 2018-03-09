@@ -25,7 +25,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    }
 
    public ApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection<Object> keys, CommandInvocationId commandInvocationId) {
-      super(deltaAwareValueKey, 0, commandInvocationId);
+      super(deltaAwareValueKey, 0, commandInvocationId, null);
    }
 
    public Delta getDelta(){
@@ -92,16 +92,6 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    @Override
    public boolean isConditional() {
       return false;
-   }
-
-   @Override
-   public ValueMatcher getValueMatcher() {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      // Do nothing
    }
 
    @Override

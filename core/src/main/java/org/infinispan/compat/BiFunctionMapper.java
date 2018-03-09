@@ -7,24 +7,19 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.BiFunction;
 
+import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 
-public class BiFunctionMapper implements BiFunction {
+public class BiFunctionMapper implements BiFunction, InjectableComponent {
 
    private final DataConversion keyDataConversion;
    private final DataConversion valueDataConversion;
 
    private final BiFunction biFunction;
-
-   @Inject
-   public void injectDependencies(ComponentRegistry componentRegistry) {
-      componentRegistry.wireDependencies(keyDataConversion);
-      componentRegistry.wireDependencies(valueDataConversion);
-   }
 
    public BiFunctionMapper(BiFunction remappingFunction,
                            DataConversion keyDataConversion,
@@ -32,6 +27,17 @@ public class BiFunctionMapper implements BiFunction {
       this.biFunction = remappingFunction;
       this.keyDataConversion = keyDataConversion;
       this.valueDataConversion = valueDataConversion;
+   }
+
+   @Inject
+   public void injectDependencies(ComponentRegistry componentRegistry) {
+      componentRegistry.wireDependencies(keyDataConversion);
+      componentRegistry.wireDependencies(valueDataConversion);
+   }
+
+   @Override
+   public void inject(ComponentRegistry registry) {
+      injectDependencies(registry);
    }
 
    @Override

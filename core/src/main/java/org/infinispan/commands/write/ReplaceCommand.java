@@ -7,9 +7,9 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -31,26 +31,24 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    private CacheNotifier<Object, Object> notifier;
    private boolean successful = true;
 
-   private ValueMatcher valueMatcher;
-
    public ReplaceCommand() {
    }
 
    public ReplaceCommand(Object key, Object oldValue, Object newValue,
                          CacheNotifier notifier, Metadata metadata, long flagsBitSet,
-                         CommandInvocationId commandInvocationId) {
-      super(key, flagsBitSet, commandInvocationId);
+                         CommandInvocationId commandInvocationId, InvocationManager invocationManager) {
+      super(key, flagsBitSet, commandInvocationId, invocationManager);
       this.oldValue = oldValue;
       this.newValue = newValue;
       //noinspection unchecked
       this.notifier = notifier;
       this.metadata = metadata;
-      this.valueMatcher = oldValue != null ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_NON_NULL;
    }
 
-   public void init(CacheNotifier notifier) {
+   public void init(CacheNotifier notifier, InvocationManager invocationManager) {
       //noinspection unchecked
       this.notifier = notifier;
+      this.invocationManager = invocationManager;
    }
 
    @Override
@@ -60,49 +58,27 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
 
    @Override
    public LoadType loadType() {
-      return LoadType.PRIMARY;
+      return LoadType.OWNER;
    }
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      // It's not worth looking up the entry if we're never going to apply the change.
-      if (valueMatcher == ValueMatcher.MATCH_NEVER) {
-         successful = false;
-         return null;
-      }
       //noinspection unchecked
       MVCCEntry<Object, Object> e = (MVCCEntry) ctx.lookupEntry(key);
       // We need the null check as in non-tx caches we don't always wrap the entry on the origin
       Object prevValue = e.getValue();
-      if (valueMatcher.matches(prevValue, oldValue, newValue)) {
+      Metadata prevMetadata = e.getMetadata();
+      if ((oldValue == null && prevValue != null) || (oldValue != null && oldValue.equals(prevValue))) {
          e.setChanged(true);
-         Object old = e.setValue(newValue);
-         Metadatas.updateMetadata(e, metadata);
-         if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW) {
-            return returnValue(old, e.getMetadata(), true, ctx);
-         } else {
-            // Return the expected value when retrying
-            return returnValue(oldValue, e.getMetadata(), true, ctx);
-         }
-      }
+         e.setValue(newValue);
 
-      return returnValue(null, null, false, ctx);
-   }
-
-   private Object returnValue(Object beingReplaced, Metadata previousMetadata, boolean successful,
-         InvocationContext ctx) {
-      this.successful = successful;
-
-      Object previousValue = oldValue == null ? beingReplaced : oldValue;
-
-      if (successful) {
-         notifier.notifyCacheEntryModified(key, newValue, metadata, previousValue, previousMetadata, true, ctx, this);
-      }
-
-      if (oldValue == null) {
-         return beingReplaced;
+         Object result = oldValue != null ? Boolean.TRUE : prevValue;
+         recordInvocation(ctx, e, prevValue, prevMetadata, Metadatas.merged(prevMetadata, metadata));
+         notifier.notifyCacheEntryModified(key, newValue, e.getMetadata(), prevValue, prevMetadata, true, ctx, this);
+         return result;
       } else {
-         return successful;
+         successful = false;
+         return oldValue != null ? Boolean.FALSE : prevValue;
       }
    }
 
@@ -114,23 +90,23 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeObject(oldValue);
       output.writeObject(newValue);
       output.writeObject(metadata);
-      MarshallUtil.marshallEnum(valueMatcher, output);
-      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
+      CommandInvocationId.writeTo(output, lastInvocationId);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
+      setFlagsBitSet(input.readLong());
       oldValue = input.readObject();
       newValue = input.readObject();
       metadata = (Metadata) input.readObject();
-      valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
-      setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);
+      lastInvocationId = CommandInvocationId.readFrom(input);
    }
 
    @Override
@@ -193,16 +169,6 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    @Override
-   public ValueMatcher getValueMatcher() {
-      return valueMatcher;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      this.valueMatcher = valueMatcher;
-   }
-
-   @Override
    public void fail() {
       successful = false;
    }
@@ -214,17 +180,17 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
 
    @Override
    public String toString() {
-      return "ReplaceCommand{" +
-            "key=" + toStr(key) +
-            ", oldValue=" + toStr(oldValue) +
-            ", newValue=" + toStr(newValue) +
-            ", metadata=" + metadata +
-            ", flags=" + printFlags() +
-            ", commandInvocationId=" + CommandInvocationId.show(commandInvocationId) +
-            ", successful=" + successful +
-            ", valueMatcher=" + valueMatcher +
-            ", topologyId=" + getTopologyId() +
-            '}';
+      StringBuilder sb = new StringBuilder()
+            .append("ReplaceCommand{key=").append(toStr(key))
+            .append(", oldValue=").append(toStr(oldValue))
+            .append(", newValue=").append(toStr(newValue))
+            .append(", metadata=").append(metadata)
+            .append(", flags=")
+            .append(printFlags())
+            .append(", commandInvocationId=").append(CommandInvocationId.show(commandInvocationId))
+            .append(", lastInvocationId=").append(lastInvocationId)
+            .append(", successful=").append(successful)
+            .append(", topologyId=").append(getTopologyId());
+      return sb.append('}').toString();
    }
-
 }

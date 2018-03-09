@@ -1,7 +1,5 @@
 package org.infinispan.commands.triangle;
 
-import static org.infinispan.commands.write.ValueMatcher.MATCH_ALWAYS;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -10,6 +8,8 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.functional.AbstractWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
@@ -20,7 +20,6 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.util.ByteString;
 
 /**
@@ -37,8 +36,7 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
    private Operation operation;
    private Object key;
    private Object value;
-   private Object prevValue;
-   private Metadata prevMetadata;
+   private CommandInvocationId lastInvocationId;
 
    //for testing
    @SuppressWarnings("unused")
@@ -55,8 +53,8 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
    }
 
    public void init(InvocationContextFactory factory, AsyncInterceptorChain chain,
-         ComponentRegistry componentRegistry) {
-      injectDependencies(factory, chain);
+                    ComponentRegistry componentRegistry, InvocationManager invocationManager) {
+      injectDependencies(factory, chain, invocationManager);
       this.componentRegistry = componentRegistry;
    }
 
@@ -76,8 +74,6 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
       setCommonFields(command);
       this.function = command.getBiFunction();
       this.value = command.getArgument();
-      this.prevValue = command.getPrevValue();
-      this.prevMetadata = command.getPrevMetadata();
    }
 
    public void setWriteOnlyKeyValueCommand(WriteOnlyKeyValueCommand command) {
@@ -99,10 +95,9 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
       writeFunctionAndParams(output);
       MarshallUtil.marshallEnum(operation, output);
       output.writeObject(key);
+      CommandInvocationId.writeTo(output, lastInvocationId);
       switch (operation) {
          case READ_WRITE_KEY_VALUE:
-            output.writeObject(prevValue);
-            output.writeObject(prevMetadata);
          case WRITE_ONLY_KEY_VALUE:
             output.writeObject(value);
          case READ_WRITE:
@@ -117,10 +112,9 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
       readFunctionAndParams(input);
       operation = MarshallUtil.unmarshallEnum(input, SingleKeyFunctionalBackupWriteCommand::valueOf);
       key = input.readObject();
+      lastInvocationId = CommandInvocationId.readFrom(input);
       switch (operation) {
          case READ_WRITE_KEY_VALUE:
-            prevValue = input.readObject();
-            prevMetadata = (Metadata) input.readObject();
          case WRITE_ONLY_KEY_VALUE:
             value = input.readObject();
          case READ_WRITE:
@@ -131,38 +125,38 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
 
    @Override
    WriteCommand createWriteCommand() {
+      WriteCommand command;
       switch (operation) {
          case READ_WRITE:
             //noinspection unchecked
-            return new ReadWriteKeyCommand(key, (Function) function, getCommandInvocationId(), MATCH_ALWAYS,
-                  params, keyDataConversion, valueDataConversion, componentRegistry);
+            command = new ReadWriteKeyCommand(key, (Function) function, getCommandInvocationId(), params, keyDataConversion, valueDataConversion, invocationManager, componentRegistry);
+            break;
          case READ_WRITE_KEY_VALUE:
-            return createReadWriteKeyValueCommand();
+            //noinspection unchecked
+            command = new ReadWriteKeyValueCommand(key, value, (BiFunction) function,
+                  getCommandInvocationId(),  params, keyDataConversion, valueDataConversion, invocationManager, componentRegistry);
+            break;
          case WRITE_ONLY:
             //noinspection unchecked
-            return new WriteOnlyKeyCommand(key, (Consumer) function, getCommandInvocationId(), MATCH_ALWAYS,
-                  params, keyDataConversion, valueDataConversion, componentRegistry);
+            command = new WriteOnlyKeyCommand(key, (Consumer) function, getCommandInvocationId(), params, keyDataConversion, valueDataConversion, invocationManager, componentRegistry);
+            break;
          case WRITE_ONLY_KEY_VALUE:
             //noinspection unchecked
-            return new WriteOnlyKeyValueCommand(key, value, (BiConsumer) function, getCommandInvocationId(),
-                  MATCH_ALWAYS, params, keyDataConversion, valueDataConversion, componentRegistry);
+            command = new WriteOnlyKeyValueCommand(key, value, (BiConsumer) function, getCommandInvocationId(),
+                  params, keyDataConversion, valueDataConversion, invocationManager, componentRegistry);
+            break;
          default:
             throw new IllegalStateException("Unknown operation " + operation);
       }
+      command.setLastInvocationId(key, lastInvocationId);
+      return command;
    }
 
    private <C extends AbstractWriteKeyCommand> void setCommonFields(C command) {
       setCommonAttributesFromCommand(command);
       setFunctionalCommand(command);
       this.key = command.getKey();
-   }
-
-   private ReadWriteKeyValueCommand createReadWriteKeyValueCommand() {
-      //noinspection unchecked
-      ReadWriteKeyValueCommand cmd = new ReadWriteKeyValueCommand(key, value, (BiFunction) function,
-            getCommandInvocationId(), MATCH_ALWAYS, params, keyDataConversion, valueDataConversion, componentRegistry);
-      cmd.setPrevValueAndMetadata(prevValue, prevMetadata);
-      return cmd;
+      this.lastInvocationId = command.getLastInvocationId(command.getKey());
    }
 
    private enum Operation {

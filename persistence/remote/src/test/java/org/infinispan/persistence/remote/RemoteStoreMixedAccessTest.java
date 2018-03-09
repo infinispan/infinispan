@@ -2,6 +2,7 @@ package org.infinispan.persistence.remote;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.concurrent.TimeUnit;
 
@@ -79,6 +80,7 @@ public class RemoteStoreMixedAccessTest extends AbstractInfinispanTest {
       String cv1 = clientCache.get("k1");
       assertEquals("v1", cv1);
       InternalCacheEntry ice1 = clientCache.getAdvancedCache().getDataContainer().get("k1");
+      assertNotNull(ice1.getValue());
       assertEquals(120000, ice1.getLifespan());
    }
 
@@ -91,6 +93,7 @@ public class RemoteStoreMixedAccessTest extends AbstractInfinispanTest {
       String cv1 = clientCache.get("k1");
       assertEquals("v1", cv1);
       InternalCacheEntry ice1 = clientCache.getAdvancedCache().getDataContainer().get("k1");
+      assertNotNull(ice1.getValue());
       assertEquals(120000, ice1.getLifespan());
       assertEquals(30000, ice1.getMaxIdle());
    }

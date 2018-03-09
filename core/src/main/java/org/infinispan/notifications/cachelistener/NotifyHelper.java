@@ -24,7 +24,7 @@ public class NotifyHelper {
          if (command instanceof RemoveCommand) {
             ((RemoveCommand) command).notify(ctx, previousValue, previousMetadata, false);
          } else if (command instanceof InvalidateCommand) {
-            notifier.notifyCacheEntryInvalidated(entry.getKey(), entry.getValue(), entry.getMetadata(), false, ctx, command);
+            notifier.notifyCacheEntryInvalidated(entry.getKey(), previousValue, previousMetadata, false, ctx, command);
          } else {
             if (expired) {
                notifier.notifyCacheEntryExpired(entry.getKey(), previousValue, previousMetadata, ctx);

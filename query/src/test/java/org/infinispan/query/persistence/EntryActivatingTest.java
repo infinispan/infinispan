@@ -11,7 +11,6 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
@@ -67,8 +66,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       cache.evict("IT");
       assert store.contains("IT");
 
-      InternalCacheEntry internalCacheEntry = cache.getAdvancedCache().getDataContainer().get("IT");
-      assert internalCacheEntry==null;
+      assert !cache.getAdvancedCache().getDataContainer().containsKey("IT");
 
       verifyFullTextHasMatches(1);
 

@@ -4,6 +4,7 @@ import static org.infinispan.server.test.util.ITestUtils.createMBeans;
 import static org.infinispan.server.test.util.ITestUtils.createMemcachedClient;
 import static org.infinispan.server.test.util.ITestUtils.eventually;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -22,6 +23,7 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.server.test.category.CacheStore;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
@@ -173,7 +175,7 @@ public class SingleNodeJdbcStoreIT {
         for (int i = 0; i != numEntries; i++) {
             mc.delete("key" + i);
         }
-        eventually(() -> stringAsyncDB.stringTable.getAllRows().isEmpty(), 10000);
+        eventually(() -> stringAsyncDB.stringTable.getAllRows().stream().allMatch(SingleNodeJdbcStoreIT::isTombstone), 10000);
     }
 
     public void testRestartStringStoreBefore() throws Exception {
@@ -232,8 +234,8 @@ public class SingleNodeJdbcStoreIT {
         assertEquals("v1", stringWPCache.get("k1"));
         assertEquals("v2", stringWPCache.get("k2"));
         stringWPCache.remove("k1");
-        assertNull(stringWPDB.stringTable.getValueByKey(getStoredKey(stringWPCache, "k1")));
-        assertNotNull(stringWPDB.stringTable.getValueByKey(getStoredKey(stringWPCache, "k2")));
+        assertTrue(isTombstone(stringWPDB.stringTable.getValueByKey(getStoredKey(stringWPCache, "k1"))));
+        assertFalse(isTombstone(stringWPDB.stringTable.getValueByKey(getStoredKey(stringWPCache, "k2"))));
     }
 
     public void assertCleanCacheAndStoreHotrod(RemoteCache cache, final DBServer.TableManipulation table) throws Exception {
@@ -251,6 +253,14 @@ public class SingleNodeJdbcStoreIT {
         // 3. prefix it with 8 (again, done by DefaultTwoWayKey2StringMapper to mark the key as wrapped byte array type)
         // 4. prefix it with UTF-16 BOM (that is what DefaultTwoWayKey2StringMapper does for non string values)
         return '\uFEFF' + "8" + Base64.getEncoder().encodeToString(cache.getRemoteCacheManager().getMarshaller().objectToByteBuffer(key));
+    }
+
+    private static boolean isTombstone(Object object) {
+        if (!(object instanceof byte[])) return false;
+        byte[] bytes = (byte[]) object;
+        assert bytes[0] == 2;
+        assert bytes[1] == Ids.KEY_VALUE_PAIR_ID;
+        return bytes[2] == 0;
     }
 
     public String fromStoredKey(RemoteCache cache, String key) throws IOException, InterruptedException, ClassNotFoundException {

@@ -13,6 +13,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferInterceptor;
@@ -55,24 +56,48 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
       doTest(TestWriteOperation.PUT_CREATE);
    }
 
+   public void testBackupOwnerJoiningDuringPutFunctional() throws Exception {
+      doTest(TestWriteOperation.PUT_CREATE_FUNCTIONAL);
+   }
+
    public void testBackupOwnerJoiningDuringPutIfAbsent() throws Exception {
       doTest(TestWriteOperation.PUT_IF_ABSENT);
+   }
+
+   public void testBackupOwnerJoiningDuringPutIfAbsentFunctional() throws Exception {
+      doTest(TestWriteOperation.PUT_IF_ABSENT_FUNCTIONAL);
    }
 
    public void testBackupOwnerJoiningDuringReplace() throws Exception {
       doTest(TestWriteOperation.REPLACE);
    }
 
+   public void testBackupOwnerJoiningDuringReplaceFunctional() throws Exception {
+      doTest(TestWriteOperation.REPLACE_FUNCTIONAL);
+   }
+
    public void testBackupOwnerJoiningDuringReplaceWithPreviousValue() throws Exception {
       doTest(TestWriteOperation.REPLACE_EXACT);
+   }
+
+   public void testBackupOwnerJoiningDuringReplaceWithPreviousValueFunctional() throws Exception {
+      doTest(TestWriteOperation.REPLACE_EXACT_FUNCTIONAL);
    }
 
    public void testBackupOwnerJoiningDuringRemove() throws Exception {
       doTest(TestWriteOperation.REMOVE);
    }
 
+   public void testBackupOwnerJoiningDuringRemoveFunctional() throws Exception {
+      doTest(TestWriteOperation.REMOVE_FUNCTIONAL);
+   }
+
    public void testBackupOwnerJoiningDuringRemoveWithPreviousValue() throws Exception {
       doTest(TestWriteOperation.REMOVE_EXACT);
+   }
+
+   public void testBackupOwnerJoiningDuringRemoveWithPreviousValueFunctional() throws Exception {
+      doTest(TestWriteOperation.REMOVE_EXACT_FUNCTIONAL);
    }
 
    protected void doTest(final TestWriteOperation op) throws Exception {
@@ -113,7 +138,7 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
             cache1.getRpcManager().getMembers().size() == 3 &&
             cache2.getRpcManager().getMembers().size() == 3);
 
-      CommandMatcher writeCommandMatcher = matchCommand(op.getCommandClass()).build();
+      CommandMatcher writeCommandMatcher = matchCommand(op.getCommandClass()).withoutFlags(FlagBitSets.CACHE_MODE_LOCAL).build();
       // Allow the value to be written on cache1 before "write:cache1_before_return"
       advanceOnInterceptor(sequencer, cache1, StateTransferInterceptor.class, writeCommandMatcher).before("write:cache1_before_return");
       // The remote get (if any) will happen after "write:cache2_before_dist"

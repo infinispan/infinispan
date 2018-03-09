@@ -24,7 +24,8 @@ public class SizeCalculatorFactory extends AbstractNamedCacheComponentFactory im
          StorageType type = memory.storageType();
          switch (type) {
             case BINARY:
-               return componentType.cast(CacheEntrySingleton.INSTANCE);
+               return componentType.cast(configuration.transaction().transactionMode().isTransactional() ?
+                     CacheEntrySingleton.WITHOUT_INVOCATION_RECORDS : CacheEntrySingleton.WITH_INVOCATION_RECORDS);
             case OFF_HEAP:
                return componentType.cast(componentRegistry.getComponent(OffHeapEntryFactory.class));
             case OBJECT:
@@ -42,7 +43,9 @@ public class SizeCalculatorFactory extends AbstractNamedCacheComponentFactory im
    }
 
    static class CacheEntrySingleton {
-      static final CacheEntrySizeCalculator INSTANCE = new CacheEntrySizeCalculator<>(new WrappedByteArraySizeCalculator<>(
-            new PrimitiveEntrySizeCalculator()));
+      static final CacheEntrySizeCalculator WITH_INVOCATION_RECORDS = new CacheEntrySizeCalculator<>(new WrappedByteArraySizeCalculator<>(
+            new PrimitiveEntrySizeCalculator()), true);
+      static final CacheEntrySizeCalculator WITHOUT_INVOCATION_RECORDS = new CacheEntrySizeCalculator<>(new WrappedByteArraySizeCalculator<>(
+            new PrimitiveEntrySizeCalculator()), false);
    }
 }

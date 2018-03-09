@@ -20,6 +20,7 @@ import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -435,13 +436,13 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
 
    private Object replace(int cacheIndex, Object key, Object value) throws InterruptedException {
       Object val = cache(cacheIndex).replace(key, value);
-      awaitReplace(cacheIndex, key);
+      awaitPut(cacheIndex, key);
       return val;
    }
 
    private Object replace(int cacheIndex, Object key, Object oldValue, Object newValue) throws InterruptedException {
       Object val = cache(cacheIndex).replace(key, oldValue, newValue);
-      awaitReplace(cacheIndex, key);
+      awaitPut(cacheIndex, key);
       return val;
    }
 
@@ -506,7 +507,7 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
    }
 
    protected enum Operation {
-      PUT, REMOVE, REPLACE, CLEAR, PUT_MAP, COMPUTE, COMPUTE_IF_ABSENT
+      PUT, REMOVE, REPLACE, CLEAR, PUT_MAP, COMPUTE, COMPUTE_IF_ABSENT, READ_WRITE_KEY_VALUE
    }
 
    private static class ControlledPerCacheInboundInvocationHandler implements PerCacheInboundInvocationHandler {
@@ -563,6 +564,9 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
                   break;
                case PutMapCommand.COMMAND_ID:
                   operationQueue.add(Operation.PUT_MAP);
+                  break;
+               case ReadWriteKeyValueCommand.COMMAND_ID:
+                  operationQueue.add(Operation.READ_WRITE_KEY_VALUE);
                   break;
                case PrepareCommand.COMMAND_ID:
                case VersionedPrepareCommand.COMMAND_ID:

@@ -102,7 +102,12 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    @Override
    public void write(MarshalledEntry entry) {
       assertRunning();
-      record("write");
+      // is this too much of a hack?
+      if (entry.getValue() != null) {
+         record("write");
+      } else {
+         record("delete");
+      }
       if (configuration.slow()) {
          TestingUtil.sleepThread(SLOW_STORE_WAIT);
       }
@@ -318,7 +323,13 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
 
    @Override
    public int size() {
-      return store.size();
+      return (int) store.values().stream().filter(bytes -> {
+         try {
+            return ((KeyValuePair) marshaller.objectFromByteBuffer(bytes)).getKey() != null;
+         } catch (Exception e) {
+            return false;
+         }
+      }).count();
    }
 
    @Override
@@ -326,8 +337,8 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       assertRunning();
       record("load");
       if (key == null) return false;
-      MarshalledEntry me = deserialize(key, store.get(key), false, true);
-      if (me == null) return false;
+      MarshalledEntry me = deserialize(key, store.get(key), true, true);
+      if (me == null || me.getValue() == null) return false;
       long now = timeService.wallClockTime();
       if (isExpired(me, now)) {
          log.tracef("Key %s exists, but has expired.  Entry is %s", key, me);

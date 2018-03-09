@@ -15,6 +15,7 @@ import javax.transaction.Transaction;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.cache.impl.Caches;
+import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -46,6 +47,7 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.CloseableIterator;
@@ -58,6 +60,7 @@ import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.functional.impl.Params;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.jmx.JmxStatisticsExposer;
@@ -67,6 +70,7 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
+import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
@@ -453,7 +457,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
          }
          if (t == null && shouldEnlist(rCtx) && writeCommand.isSuccessful()) {
             TxInvocationContext<LocalTransaction> txContext = (TxInvocationContext<LocalTransaction>) rCtx;
-            txContext.getCacheTransaction().addModification(writeCommand);
+            txContext.getCacheTransaction().addModification((WriteCommand) writeCommand.acceptVisitor(rCtx, NonConditionalVisitor.INSTANCE));
          }
       });
    }
@@ -762,6 +766,117 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
             }
          }
          return returnedValue;
+      }
+   }
+
+   /**
+    * Conditional commands need to be converted to non-conditional variants as we expect that after succeeding
+    * on originator these commands will be applied on primary, too.
+    * Functional commands will be applied as-is on the 'updated' data. It's up to write skew checks/pessimistic locks
+    * to make sure that these are executed on the same data as on originator. If we don't use WSC/have loaded the entry
+    * without key prior to executing the command, we keep the user having bad luck.
+    * Compute commands are amidst: we'll always execute them but possibly with wrong value, relying on WSC as well.
+    * TODO:
+    * There's one problem with pessimistic transactions, though; if the new owner (which does not have previous value)
+    * tries to retrieve the value from another node, it might get either a value with or without the update, and we
+    * don't know which one it is. Functional command could be then executed on a value which already has the update
+    * in. Also if the ST arrives before the command, we'd be executing the command twice - we could disable ST when
+    * we fetch transactions from the nodes, for given values, though that would complicate rollback...
+    */
+   private static class NonConditionalVisitor extends AbstractVisitor {
+      public static NonConditionalVisitor INSTANCE = new NonConditionalVisitor();
+
+      @Override
+      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+         if (command.isConditional()) {
+            return new PutKeyValueCommand(command.getKey(), command.getValue(), false, null, command.getMetadata(),
+                  command.getFlagsBitSet(), command.getCommandInvocationId(), null);
+         } else {
+            return command;
+         }
+      }
+
+      @Override
+      public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+         if (command instanceof RemoveExpiredCommand) {
+            // TODO: ISPN-5745 Handle remove expired properly, we could hit ABA problem. In transactional cache
+            // we don't store InvocationRecords in DC, so we can't use last invocation id check. Versions are not
+            // required either, though.
+            return command;
+         } else if (command.isConditional()) {
+            return new RemoveCommand(command.getKey(), null, null, command.getFlagsBitSet(), command.getCommandInvocationId(), null);
+         } else {
+            return command;
+         }
+      }
+
+      @Override
+      public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+         return new PutKeyValueCommand(command.getKey(), command.getNewValue(), false, null, command.getMetadata(),
+               command.getFlagsBitSet(), command.getCommandInvocationId(), null);
+      }
+
+      @Override
+      public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
+         if (command.isConditional()) {
+            return new ComputeCommand(command.getKey(), command.getRemappingBiFunction(), false,
+                  command.getFlagsBitSet(), command.getCommandInvocationId(), command.getMetadata(),
+                  null, null, null);
+         } else {
+            return command;
+         }
+      }
+
+      @Override
+      public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
+         // TODO: ISPN-8180 make this WriteOnlyKeyValueCommand
+         return new ReadWriteKeyValueCommand(command.getKey(), command.getMappingFunction(), MarshallableFunctions.mapKey(),
+               command.getCommandInvocationId(), Params.fromFlagsBitSet(command.getFlagsBitSet()), null, null, null, null);
+      }
+
+      @Override
+      public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+         return command;
+      }
+
+      @Override
+      public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
+         return command;
+      }
+
+      @Override
+      public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
+         return command;
+      }
+
+      @Override
+      public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+         return command;
+      }
+
+      @Override
+      public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
+         return command;
+      }
+
+      @Override
+      public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
+         return command;
+      }
+
+      @Override
+      public Object visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
+         return command;
+      }
+
+      @Override
+      public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+         return command;
+      }
+
+      @Override
+      public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+         return command;
       }
    }
 }

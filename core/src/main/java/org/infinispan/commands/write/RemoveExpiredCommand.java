@@ -8,6 +8,7 @@ import java.io.ObjectOutput;
 import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
@@ -33,16 +34,14 @@ public class RemoveExpiredCommand extends RemoveCommand {
    private IncrementableEntryVersion nonExistentVersion;
 
    public RemoveExpiredCommand() {
-      // The value matcher will always be the same, so we don't need to serialize it like we do for the other commands
-      this.valueMatcher = ValueMatcher.MATCH_EXPECTED_OR_NULL;
    }
 
    public RemoveExpiredCommand(Object key, Object value, Long lifespan, CacheNotifier notifier,
-                               CommandInvocationId commandInvocationId, IncrementableEntryVersion nonExistentVersion) {
+                               CommandInvocationId commandInvocationId, IncrementableEntryVersion nonExistentVersion,
+                               InvocationManager invocationManager) {
       //valueEquivalence can be null because this command never compares values.
-      super(key, value, notifier, EnumUtil.EMPTY_BIT_SET, commandInvocationId);
+      super(key, value, notifier, EnumUtil.EMPTY_BIT_SET, commandInvocationId, invocationManager);
       this.lifespan = lifespan;
-      this.valueMatcher = ValueMatcher.MATCH_EXPECTED_OR_NULL;
       this.nonExistentVersion = nonExistentVersion;
    }
 
@@ -61,24 +60,27 @@ public class RemoveExpiredCommand extends RemoveCommand {
          Object prevValue = e.getValue();
          Metadata metadata = e.getMetadata();
          if (lifespan == null) {
-            if (valueMatcher.matches(prevValue, value, null)) {
+            if (value == null || value.equals(prevValue)) {
                e.setExpired(true);
+               notify(ctx, prevValue, e.getMetadata(), true);
                return performRemove(e, prevValue, ctx);
             }
          } else if (metadata == null || metadata.version() == nonExistentVersion) {
             // If there is no metadata and no value that means it is gone currently or not shown due to expired
             // Non existent version is used when versioning is enabled and the entry doesn't exist
             // If we have a value though we should verify it matches the value as well
-            if (value == null || valueMatcher.matches(prevValue, value, null)) {
+            if (value == null || value.equals(prevValue)) {
                e.setExpired(true);
+               notify(ctx, prevValue, e.getMetadata(), true);
                return performRemove(e, prevValue, ctx);
             }
          } else if (e.getLifespan() > 0 && e.getLifespan() == lifespan) {
             // If the entries lifespan is not positive that means it can't expire so don't even try to remove it
             // Lastly if there is metadata we have to verify it equals our lifespan and the value match.
             // TODO: add a threshold to verify this wasn't just created with the same value/lifespan just before expiring
-            if (valueMatcher.matches(prevValue, value, null)) {
+            if (value == null || value.equals(prevValue)) {
                e.setExpired(true);
+               notify(ctx, prevValue, e.getMetadata(), true);
                return performRemove(e, prevValue, ctx);
             }
          } else {
@@ -89,6 +91,16 @@ public class RemoveExpiredCommand extends RemoveCommand {
       }
       successful = false;
       return false;
+   }
+
+   @Override
+   protected Object performRemove(MVCCEntry e, Object prevValue, InvocationContext ctx) {
+      e.setChanged(true);
+      e.setRemoved(true);
+      e.setCreated(false);
+      e.setValue(null);
+      // We don't want to keep invocation records for expirations
+      return null;
    }
 
    @Override
@@ -121,6 +133,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
+      CommandInvocationId.writeTo(output, lastInvocationId);
       output.writeObject(key);
       output.writeObject(value);
       if (lifespan != null) {
@@ -134,6 +147,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
+      lastInvocationId = CommandInvocationId.readFrom(input);
       key = input.readObject();
       value = input.readObject();
       boolean lifespanProvided = input.readBoolean();
@@ -164,9 +178,8 @@ public class RemoveExpiredCommand extends RemoveCommand {
       return FlagBitSets.SKIP_CACHE_LOAD;
    }
 
-   public void init(CacheNotifier notifier, IncrementableEntryVersion nonExistentVersion) {
-      super.init(notifier);
+   public void init(CacheNotifier notifier, InvocationManager invocationManager, IncrementableEntryVersion nonExistentVersion) {
+      super.init(notifier, invocationManager);
       this.nonExistentVersion = nonExistentVersion;
-
    }
 }

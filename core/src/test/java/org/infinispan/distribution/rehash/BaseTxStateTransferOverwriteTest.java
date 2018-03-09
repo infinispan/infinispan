@@ -17,11 +17,16 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+
 import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.remote.ClusteredGetAllCommand;
+import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -77,127 +82,196 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
     * transaction based the default value is to return a {@link PrepareCommand}, however other tests
     * can change this behavior if desired.
     */
-   protected Class<? extends VisitableCommand> getVisitableCommand(TestWriteOperation op) {
-      return PrepareCommand.class;
+   protected Predicate<VisitableCommand> isExpectedCommand(TestWriteOperation op) {
+      return PrepareCommand.class::isInstance;
    }
 
    protected Callable<Object> runWithTx(final TransactionManager tm, final Callable<?> callable) {
       return () -> TestingUtil.withTx(tm, callable);
    }
 
-   @Test
    public void testStateTransferInBetweenPrepareCommitWithPut() throws Exception {
       doStateTransferInBetweenPrepareCommit(TestWriteOperation.PUT_OVERWRITE, true);
    }
 
-   @Test
+   public void testStateTransferInBetweenPrepareCommitWithPutFunctional() throws Exception {
+      doStateTransferInBetweenPrepareCommit(TestWriteOperation.PUT_OVERWRITE_FUNCTIONAL, true);
+   }
+
    public void testStateTransferInBetweenPrepareCommitMultipleEntryWithPut() throws Exception {
       doStateTransferInBetweenPrepareCommit(TestWriteOperation.PUT_OVERWRITE, false);
    }
 
-   @Test
+   public void testStateTransferInBetweenPrepareCommitMultipleEntryWithPutFunctional() throws Exception {
+      doStateTransferInBetweenPrepareCommit(TestWriteOperation.PUT_OVERWRITE_FUNCTIONAL, false);
+   }
+
    public void testStateTransferInBetweenPrepareCommitWithPutCreate() throws Exception {
       doStateTransferInBetweenPrepareCommit(TestWriteOperation.PUT_CREATE, true);
    }
 
-   @Test
+   public void testStateTransferInBetweenPrepareCommitWithPutCreateFunctional() throws Exception {
+      doStateTransferInBetweenPrepareCommit(TestWriteOperation.PUT_CREATE_FUNCTIONAL, true);
+   }
+
    public void testStateTransferInBetweenPrepareCommitMultipleEntryWithPutCreate() throws Exception {
       doStateTransferInBetweenPrepareCommit(TestWriteOperation.PUT_CREATE, false);
    }
 
-   @Test
+   public void testStateTransferInBetweenPrepareCommitMultipleEntryWithPutCreateFunctional() throws Exception {
+      doStateTransferInBetweenPrepareCommit(TestWriteOperation.PUT_CREATE_FUNCTIONAL, false);
+   }
+
    public void testStateTransferInBetweenPrepareCommitWithPutIfAbsent() throws Exception {
       doStateTransferInBetweenPrepareCommit(TestWriteOperation.PUT_IF_ABSENT, true);
    }
 
-   @Test
+   public void testStateTransferInBetweenPrepareCommitWithPutIfAbsentFunctional() throws Exception {
+      doStateTransferInBetweenPrepareCommit(TestWriteOperation.PUT_IF_ABSENT_FUNCTIONAL, true);
+   }
+
    public void testStateTransferInBetweenPrepareCommitMultipleEntryWithPutIfAbsent() throws Exception {
       doStateTransferInBetweenPrepareCommit(TestWriteOperation.PUT_IF_ABSENT, false);
    }
 
-   @Test
+   public void testStateTransferInBetweenPrepareCommitMultipleEntryWithPutIfAbsentFunctional() throws Exception {
+      doStateTransferInBetweenPrepareCommit(TestWriteOperation.PUT_IF_ABSENT_FUNCTIONAL, false);
+   }
+
    public void testStateTransferInBetweenPrepareCommitWithRemoveExact() throws Exception {
       doStateTransferInBetweenPrepareCommit(TestWriteOperation.REMOVE_EXACT, true);
    }
 
-   @Test
+   public void testStateTransferInBetweenPrepareCommitWithRemoveExactFunctional() throws Exception {
+      doStateTransferInBetweenPrepareCommit(TestWriteOperation.REMOVE_EXACT_FUNCTIONAL, true);
+   }
+
    public void testStateTransferInBetweenPrepareCommitMultipleEntryWithRemoveExact() throws Exception {
       doStateTransferInBetweenPrepareCommit(TestWriteOperation.REMOVE_EXACT, false);
    }
 
-   @Test
+   public void testStateTransferInBetweenPrepareCommitMultipleEntryWithRemoveExactFunctional() throws Exception {
+      doStateTransferInBetweenPrepareCommit(TestWriteOperation.REMOVE_EXACT_FUNCTIONAL, false);
+   }
+
    public void testStateTransferInBetweenPrepareCommitWithRemove() throws Exception {
       doStateTransferInBetweenPrepareCommit(TestWriteOperation.REMOVE, true);
    }
 
-   @Test
+   public void testStateTransferInBetweenPrepareCommitWithRemoveFunctional() throws Exception {
+      doStateTransferInBetweenPrepareCommit(TestWriteOperation.REMOVE_FUNCTIONAL, true);
+   }
+
    public void testStateTransferInBetweenPrepareCommitMultipleEntryWithRemove() throws Exception {
       doStateTransferInBetweenPrepareCommit(TestWriteOperation.REMOVE, false);
    }
 
-   @Test
+   public void testStateTransferInBetweenPrepareCommitMultipleEntryWithRemoveFunctional() throws Exception {
+      doStateTransferInBetweenPrepareCommit(TestWriteOperation.REMOVE_FUNCTIONAL, false);
+   }
+
    public void testStateTransferInBetweenPrepareCommitWithReplace() throws Exception {
       doStateTransferInBetweenPrepareCommit(TestWriteOperation.REPLACE, true);
    }
 
-   @Test
+   public void testStateTransferInBetweenPrepareCommitWithReplaceFunctional() throws Exception {
+      doStateTransferInBetweenPrepareCommit(TestWriteOperation.REPLACE_FUNCTIONAL, true);
+   }
+
    public void testStateTransferInBetweenPrepareCommitMultipleEntryWithReplace() throws Exception {
       doStateTransferInBetweenPrepareCommit(TestWriteOperation.REPLACE, false);
    }
 
-   @Test
+   public void testStateTransferInBetweenPrepareCommitMultipleEntryWithReplaceFunctional() throws Exception {
+      doStateTransferInBetweenPrepareCommit(TestWriteOperation.REPLACE_FUNCTIONAL, false);
+   }
+
    public void testStateTransferInBetweenPrepareCommitWithReplaceExact() throws Exception {
       doStateTransferInBetweenPrepareCommit(TestWriteOperation.REPLACE_EXACT, true);
    }
 
-   @Test
+   public void testStateTransferInBetweenPrepareCommitWithReplaceExactFunctional() throws Exception {
+      doStateTransferInBetweenPrepareCommit(TestWriteOperation.REPLACE_EXACT_FUNCTIONAL, true);
+   }
+
    public void testStateTransferInBetweenPrepareCommitMultipleEntryWithReplaceExact() throws Exception {
       doStateTransferInBetweenPrepareCommit(TestWriteOperation.REPLACE_EXACT, false);
    }
 
-   @Test
+   public void testStateTransferInBetweenPrepareCommitMultipleEntryWithReplaceExactFunctional() throws Exception {
+      doStateTransferInBetweenPrepareCommit(TestWriteOperation.REPLACE_EXACT_FUNCTIONAL, false);
+   }
+
    public void testNonCoordinatorOwnerLeavingDuringPut() throws Exception {
       doTestWhereCommitOccursAfterStateTransferBeginsBeforeCompletion(TestWriteOperation.PUT_CREATE);
    }
 
-   @Test
+   public void testNonCoordinatorOwnerLeavingDuringPutFunctional() throws Exception {
+      doTestWhereCommitOccursAfterStateTransferBeginsBeforeCompletion(TestWriteOperation.PUT_CREATE_FUNCTIONAL);
+   }
+
    public void testNonCoordinatorOwnerLeavingDuringPutIfAbsent() throws Exception {
       doTestWhereCommitOccursAfterStateTransferBeginsBeforeCompletion(TestWriteOperation.PUT_IF_ABSENT);
    }
 
-   @Test
+   public void testNonCoordinatorOwnerLeavingDuringPutIfAbsentFunctional() throws Exception {
+      doTestWhereCommitOccursAfterStateTransferBeginsBeforeCompletion(TestWriteOperation.PUT_IF_ABSENT_FUNCTIONAL);
+   }
+
    public void testNonCoordinatorOwnerLeavingDuringPut2() throws Exception {
       doL1InvalidationOldTopologyComesAfterRebalance(TestWriteOperation.PUT_CREATE);
    }
 
-   @Test
+   public void testNonCoordinatorOwnerLeavingDuringPutFunctional2() throws Exception {
+      doL1InvalidationOldTopologyComesAfterRebalance(TestWriteOperation.PUT_CREATE_FUNCTIONAL);
+   }
+
    public void testNonCoordinatorOwnerLeavingDuringPutOverwrite2() throws Exception {
       doL1InvalidationOldTopologyComesAfterRebalance(TestWriteOperation.PUT_OVERWRITE);
    }
 
-   @Test
+   public void testNonCoordinatorOwnerLeavingDuringPutOverwriteFunctional2() throws Exception {
+      doL1InvalidationOldTopologyComesAfterRebalance(TestWriteOperation.PUT_OVERWRITE_FUNCTIONAL);
+   }
+
    public void testNonCoordinatorOwnerLeavingDuringPutIfAbsent2() throws Exception {
       doL1InvalidationOldTopologyComesAfterRebalance(TestWriteOperation.PUT_IF_ABSENT);
    }
 
-   @Test
+   public void testNonCoordinatorOwnerLeavingDuringPutIfAbsentFunctional2() throws Exception {
+      doL1InvalidationOldTopologyComesAfterRebalance(TestWriteOperation.PUT_IF_ABSENT_FUNCTIONAL);
+   }
+
    public void testNonCoordinatorOwnerLeavingDuringReplace2() throws Exception {
       doL1InvalidationOldTopologyComesAfterRebalance(TestWriteOperation.REPLACE);
    }
 
-   @Test
+   public void testNonCoordinatorOwnerLeavingDuringReplaceFunctional2() throws Exception {
+      doL1InvalidationOldTopologyComesAfterRebalance(TestWriteOperation.REPLACE_FUNCTIONAL);
+   }
+
    public void testNonCoordinatorOwnerLeavingDuringReplaceWithPreviousValue2() throws Exception {
       doL1InvalidationOldTopologyComesAfterRebalance(TestWriteOperation.REPLACE_EXACT);
    }
 
-   @Test
+   public void testNonCoordinatorOwnerLeavingDuringReplaceWithPreviousValueFunctional2() throws Exception {
+      doL1InvalidationOldTopologyComesAfterRebalance(TestWriteOperation.REPLACE_EXACT_FUNCTIONAL);
+   }
+
    public void testNonCoordinatorOwnerLeavingDuringRemove2() throws Exception {
       doL1InvalidationOldTopologyComesAfterRebalance(TestWriteOperation.REMOVE);
    }
 
-   @Test
+   public void testNonCoordinatorOwnerLeavingDuringRemoveFunctional2() throws Exception {
+      doL1InvalidationOldTopologyComesAfterRebalance(TestWriteOperation.REMOVE_FUNCTIONAL);
+   }
+
    public void testNonCoordinatorOwnerLeavingDuringRemoveWithPreviousValue2() throws Exception {
       doL1InvalidationOldTopologyComesAfterRebalance(TestWriteOperation.REMOVE_EXACT);
+   }
+
+   public void testNonCoordinatorOwnerLeavingDuringRemoveWithPreviousValueFunctional2() throws Exception {
+      doL1InvalidationOldTopologyComesAfterRebalance(TestWriteOperation.REMOVE_EXACT_FUNCTIONAL);
    }
 
    protected void doStateTransferInBetweenPrepareCommit(final TestWriteOperation op,
@@ -239,7 +313,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
                log.tracef("Adding additional value on nonOwner value inserted: %s = %s", mk, value);
             }
             primaryOwnerCache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(
-                  new BlockingInterceptor<>(cyclicBarrier, getVisitableCommand(op), true, false),
+                  new BlockingInterceptor(cyclicBarrier, true, false, isExpectedCommand(op)),
                   StateTransferInterceptor.class);
             return op.perform(primaryOwnerCache, key);
          }));
@@ -271,7 +345,9 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
          switch (op) {
             case REMOVE:
+            case REMOVE_FUNCTIONAL:
             case REMOVE_EXACT:
+            case REMOVE_EXACT_FUNCTIONAL:
                break;
             default:
                assertIsInContainerImmortal(primaryOwnerCache, key);
@@ -327,9 +403,10 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       ControlledRpcManager blockingRpcManager2 = ControlledRpcManager.replaceRpcManager(nonOwnerCache);
       // The execution of the write/prepare/commit commands is controlled with the BlockingInterceptor
       blockingRpcManager0.excludeCommands(BackupWriteCommand.class, PrepareCommand.class, CommitCommand.class,
-                                          TxCompletionNotificationCommand.class
+                                          TxCompletionNotificationCommand.class,
+                                          SingleRpcCommand.class /* contains InvalidateL1Command */
       );
-      blockingRpcManager2.excludeCommands(BackupAckCommand.class);
+      blockingRpcManager2.excludeCommands(BackupAckCommand.class, ClusteredGetCommand.class, ClusteredGetAllCommand.class);
 
       // Block the rebalance confirmation on cache0
       int rebalanceTopologyId = preJoinTopologyId + 2;
@@ -366,12 +443,11 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
       // Every PutKeyValueCommand will be blocked before committing the entry on cache1
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor<>(beforeCommitCache1Barrier,
-                                                                         op.getCommandClass(), true, false);
+      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor(beforeCommitCache1Barrier, true, false, isExpectedCommand(op));
       nonOwnerCache.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, EntryWrappingInterceptor.class);
 
-      // Put/Replace/Remove from cache0 with cache0 as primary owner, cache1 will become a backup owner for the retry
-      // The put command will be blocked on cache1 just before committing the entry.
+      // Put/Replace/Remove from cache0 with cache0 as primary owner, cache2 will become a backup owner for the retry
+      // The put command will be blocked on cache2 just before committing the entry.
       Future<Object> future = fork(() -> op.perform(primaryOwnerCache, key));
 
       // Wait for the entry to be wrapped on node 2
@@ -406,7 +482,9 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
       switch (op) {
          case REMOVE:
+         case REMOVE_FUNCTIONAL:
          case REMOVE_EXACT:
+         case REMOVE_EXACT_FUNCTIONAL:
             break;
          default:
             assertIsInContainerImmortal(primaryOwnerCache, key);
@@ -446,8 +524,8 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
       // Block on the interceptor right after ST which should now have the soon to be old topology id
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor<>(beforeCommitCache1Barrier,
-                                                                         getVisitableCommand(op), false, false);
+      BlockingInterceptor<?> blockingInterceptor1 = new BlockingInterceptor<VisitableCommand>(
+            beforeCommitCache1Barrier, false, false, isExpectedCommand(op));
       primaryOwnerCache.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, StateTransferInterceptor.class);
 
       // Put/Replace/Remove from primary owner.  This will block before it is committing on remote nodes
@@ -483,7 +561,9 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
       switch (op) {
          case REMOVE:
+         case REMOVE_FUNCTIONAL:
          case REMOVE_EXACT:
+         case REMOVE_EXACT_FUNCTIONAL:
             break;
          default:
             assertIsInContainerImmortal(primaryOwnerCache, key);

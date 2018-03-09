@@ -174,7 +174,7 @@ public class AsyncStoreFunctionalTest extends AbstractInfinispanTest {
             try {
                // Wait for async store to have this modification queued up,
                // ready to apply it to the cache store...
-               lockedWaitLatch.await(60, TimeUnit.SECONDS);
+               assertTrue(lockedWaitLatch.await(60, TimeUnit.SECONDS));
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
             }
@@ -301,7 +301,7 @@ public class AsyncStoreFunctionalTest extends AbstractInfinispanTest {
       private boolean isSkip(Modification mod) {
          if (mod instanceof Store) {
             MarshalledEntry storedValue = ((Store) mod).getStoredValue();
-            return storedValue.getValue().equals("skip");
+            return "skip".equals(storedValue.getValue());
          }
          return false;
       }

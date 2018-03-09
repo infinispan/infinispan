@@ -33,7 +33,11 @@ abstract class WriteManyCommandHelper<C extends WriteCommand, Container, Item> {
 
    public abstract Iterable<Object> toKeys(Container container);
 
-   public abstract boolean shouldRegisterRemoteCallback(C cmd);
+   public abstract boolean isForwarded(C cmd);
+
+   public abstract void setForwarded(C backupCommand);
 
    public abstract Object transformResult(Object[] results);
+
+   public abstract Collection<Item> asCollection(Container container);
 }

@@ -44,7 +44,6 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ArrayCollector;
@@ -735,6 +734,9 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          allFuture.completeExceptionally(new CacheException("Request and response lengths differ: keys=" + keys + ", response=" + Arrays.toString(values)));
          return;
       }
+      if (allFuture.isDone()) {
+         return;
+      }
       synchronized (allFuture) {
          if (allFuture.isDone()) {
             return;
@@ -951,7 +953,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          checkTopology(command);
          // Functional commands cannot be forwarded, because we use PutMapCommand for backup
          // this node should be the primary
-         assert helper.shouldRegisterRemoteCallback(command);
+         assert !helper.isForwarded(command);
          return invokeNextThenApply(ctx, command, handleWriteManyOnPrimary);
       }
    }
@@ -1238,7 +1240,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          this.responseValue = responseValue;
       }
 
-      private Object handleDataWriteCommand(InvocationContext ctx, DataWriteCommand command) {
+      private void handleDataWriteCommand(InvocationContext ctx, DataWriteCommand command) {
          if (command.isReturnValueExpected()) {
             if (!(responseValue instanceof Object[])) {
                throw new CacheException("Expected Object[] { return-value, version } as response but it is " + responseValue);
@@ -1256,10 +1258,8 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
             version = (EntryVersion) responseValue;
             returnValue = null;
          }
+
          entryFactory.wrapExternalEntry(ctx, command.getKey(), NullCacheEntry.getInstance(), false, true);
-         // Primary succeeded, so apply the value locally
-         command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
-         return invokeNextThenApply(ctx, command, this);
       }
 
       private Object handleValueResponseCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
@@ -1310,17 +1310,34 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         return handleDataWriteCommand(ctx, command);
+         handleDataWriteCommand(ctx, command);
+         ctx.lookupEntry(command.getKey()).setValue(returnValue);
+         return invokeNextThenApply(ctx, command, this);
       }
 
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-         return handleDataWriteCommand(ctx, command);
+         handleDataWriteCommand(ctx, command);
+         RemoveCommand unconditionalRemove = command;
+         if (command.isConditional()) {
+            unconditionalRemove = cf.buildRemoveCommand(command.getKey(), null, command.getFlagsBitSet());
+         }
+         return invokeNextThenApply(ctx, unconditionalRemove, this);
       }
 
       @Override
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-         return handleDataWriteCommand(ctx, command);
+         handleDataWriteCommand(ctx, command);
+         ReplaceCommand unconditionalReplace = command;
+         if (command.isConditional()) {
+            // To make the non-conditional replace apply we have to set some (arbitrary) value in the entry
+            // This means that the event fired locally will have incorrect previous value.
+            ctx.lookupEntry(command.getKey()).setValue(command.getNewValue());
+            unconditionalReplace = cf.buildReplaceCommand(command.getKey(), null, command.getNewValue(), command.getMetadata(), command.getFlagsBitSet());
+         }
+         // the actual return value will be the one from primary, but notifications will be called properly
+         // TODO: prev value for events could be different on primary
+         return invokeNextThenApply(ctx, unconditionalReplace, this);
       }
 
       @Override

@@ -1,5 +1,7 @@
 package org.infinispan.container.entries;
 
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.util.Util;
@@ -76,6 +78,16 @@ public class RemoteMetadata implements InternalMetadata {
    @Override
    public EntryVersion version() {
       return new SimpleClusteredVersion(topologyId, version);
+   }
+
+   @Override
+   public InvocationRecord lastInvocation() {
+      return null;
+   }
+
+   @Override
+   public InvocationRecord invocation(CommandInvocationId id) {
+      throw new UnsupportedOperationException();
    }
 
    @Override

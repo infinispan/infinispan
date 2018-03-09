@@ -23,6 +23,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ClearCacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
@@ -30,9 +31,9 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateResponseCommand;
+import org.infinispan.test.MVCCEntryDelegator;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.CacheEntryDelegator;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.ClusteringDependentLogicDelegator;
 import org.infinispan.topology.ClusterTopologyManager;
@@ -79,6 +80,11 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       doTest(TestWriteOperation.PUT_OVERWRITE);
    }
 
+   public void testBackupOwnerJoiningDuringPutOverwriteFunctional() throws Exception {
+      // Need a previous value for this test, so we can't test PUT_CREATE
+      doTest(TestWriteOperation.PUT_OVERWRITE_FUNCTIONAL);
+   }
+
    public void testBackupOwnerJoiningDuringReplace() throws Exception {
       doTest(TestWriteOperation.REPLACE);
    }
@@ -87,12 +93,24 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       doTest(TestWriteOperation.REPLACE_EXACT);
    }
 
+   public void testBackupOwnerJoiningDuringReplaceWithPreviousValueFunctional() throws Exception {
+      doTest(TestWriteOperation.REPLACE_EXACT_FUNCTIONAL);
+   }
+
    public void testBackupOwnerJoiningDuringRemove() throws Exception {
       doTest(TestWriteOperation.REMOVE);
    }
 
+   public void testBackupOwnerJoiningDuringRemoveFunctional() throws Exception {
+      doTest(TestWriteOperation.REMOVE_FUNCTIONAL);
+   }
+
    public void testBackupOwnerJoiningDuringRemoveWithPreviousValue() throws Exception {
       doTest(TestWriteOperation.REMOVE_EXACT);
+   }
+
+   public void testBackupOwnerJoiningDuringRemoveWithPreviousValueFunctional() throws Exception {
+      doTest(TestWriteOperation.REMOVE_EXACT_FUNCTIONAL);
    }
 
    private void doTest(final TestWriteOperation op) throws Exception {
@@ -202,7 +220,7 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
                return;
             }
             final Address source = ctx.getOrigin();
-            CacheEntry newEntry = new CacheEntryDelegator(entry) {
+            CacheEntry newEntry = new MVCCEntryDelegator((MVCCEntry) entry) {
                @Override
                public void commit(DataContainer container) {
                   checkPoint.trigger("pre_commit_entry_" + getKey() + "_from_" + source);

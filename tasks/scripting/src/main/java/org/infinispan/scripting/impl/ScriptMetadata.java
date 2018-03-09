@@ -8,6 +8,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.metadata.Metadata;
@@ -25,6 +27,7 @@ public class ScriptMetadata implements Metadata {
    private final ExecutionMode mode;
    private final String extension;
    private final Set<String> parameters;
+   // TODO: using Optional as field type is an anti-pattern
    private final Optional<String> language;
    private final Optional<String> role;
    private final Optional<String> reducer;
@@ -103,15 +106,32 @@ public class ScriptMetadata implements Metadata {
    }
 
    @Override
+   public InvocationRecord lastInvocation() {
+      return null;
+   }
+
+   @Override
+   public InvocationRecord invocation(CommandInvocationId id) {
+      return null;
+   }
+
+   @Override
    public Builder builder() {
-      return new Builder().name(name).extension(extension).mode(mode).parameters(parameters);
+      Builder builder = new Builder().name(name).extension(extension).mode(mode).parameters(parameters)
+            .dataType(dataType);
+      language.ifPresent(builder::language);
+      role.ifPresent(builder::role);
+      reducer.ifPresent(builder::reducer);
+      collator.ifPresent(builder::collator);
+      combiner.ifPresent(builder::combiner);
+      return builder;
    }
 
    @Override
    public String toString() {
       return "ScriptMetadata [name=" + name + ", language=" + language + ", mode=" + mode + ", extension=" + extension
             + ", parameters=" + parameters + ", role=" + role + ", reducer=" + reducer + ", collator=" + collator
-            + ", combiner=" + combiner + "]";
+            + ", combiner=" + combiner + ", dataType=" + dataType + "]";
    }
 
    public static class Builder implements Metadata.Builder {
@@ -199,6 +219,21 @@ public class ScriptMetadata implements Metadata {
       @Override
       public ScriptMetadata.Builder version(EntryVersion version) {
          return this;
+      }
+
+      @Override
+      public Metadata.Builder invocation(CommandInvocationId id, Object previousValue, Metadata previousMetadata, long timestamp) {
+         return this;
+      }
+
+      @Override
+      public Metadata.Builder invocations(InvocationRecord invocations) {
+         return this;
+      }
+
+      @Override
+      public InvocationRecord invocations() {
+         return null;
       }
 
       @Override

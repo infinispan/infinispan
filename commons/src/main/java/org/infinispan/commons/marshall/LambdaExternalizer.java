@@ -5,7 +5,10 @@ package org.infinispan.commons.marshall;
  *
  * @param <T>
  * @since 8.0
+ *
+ * @deprecated since 9.2
  */
+@Deprecated
 public interface LambdaExternalizer<T> extends AdvancedExternalizer<T> {
 
    ValueMatcherMode valueMatcher(Object o);

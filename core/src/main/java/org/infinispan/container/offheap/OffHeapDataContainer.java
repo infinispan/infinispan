@@ -400,12 +400,18 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    @Override
    public int size() {
       long time = timeService.wallClockTime();
-      long count = entryStream().filter(e -> !e.isExpired(time)).count();
+      long count = entryStream().filter(e -> e.getValue() != null && !e.isExpired(time)).count();
       return (int) Math.min(count, Integer.MAX_VALUE);
    }
 
    @Override
    public int sizeIncludingExpired() {
+      long count = entryStream().filter(e -> e.getValue() != null).count();
+      return (int) Math.min(count, Integer.MAX_VALUE);
+   }
+
+   @Override
+   public int sizeIncludingExpiredAndTombstones() {
       return (int) Math.min(size.get(), Integer.MAX_VALUE);
    }
 
@@ -628,7 +634,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       });
    }
 
-   private Stream<InternalCacheEntry<WrappedBytes, WrappedBytes>> entryStreamIncludingExpired() {
+   private Stream<InternalCacheEntry<WrappedBytes, WrappedBytes>> entryStreamIncludingExpiredAndTombstones() {
       return IntStream.range(0, memoryAddressCount)
             .mapToObj(a -> {
                Lock lock = locks.getLockWithOffset(a % lockCount).readLock();
@@ -652,9 +658,13 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
             }).flatMap(Function.identity());
    }
 
+   private Stream<InternalCacheEntry<WrappedBytes, WrappedBytes>> entryStreamIncludingExpired() {
+      return entryStreamIncludingExpiredAndTombstones().filter(e -> e.getValue() != null);
+   }
+
    private Stream<InternalCacheEntry<WrappedBytes, WrappedBytes>> entryStream() {
       long now = timeService.wallClockTime();
-      return entryStreamIncludingExpired().filter(e -> !e.isExpired(now));
+      return entryStreamIncludingExpiredAndTombstones().filter(e -> e.getValue() != null && !e.isExpired(now));
    }
 
    @Override
@@ -665,6 +675,11 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    @Override
    public Iterator<InternalCacheEntry<WrappedBytes, WrappedBytes>> iteratorIncludingExpired() {
       return entryStreamIncludingExpired().iterator();
+   }
+
+   @Override
+   public Iterator<InternalCacheEntry<WrappedBytes, WrappedBytes>> iteratorIncludingExpiredAndTombstones() {
+      return entryStream().iterator();
    }
 
    @Override

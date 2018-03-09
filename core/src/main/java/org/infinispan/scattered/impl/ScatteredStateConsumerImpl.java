@@ -256,10 +256,11 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
          Set<Integer> finalCompletedSegments = completedSegments;
          log.tracef("Requesting values from segments %s, for in-memory keys", finalCompletedSegments);
          // for all keys from given segment request values
-         ConsistentHash readCh = cacheTopology.getReadConsistentHash();
-         for (InternalCacheEntry ice : dataContainer) {
+         Iterator<InternalCacheEntry<Object, Object>> iterator = dataContainer.iteratorIncludingExpiredAndTombstones();
+         while (iterator.hasNext()) {
+            InternalCacheEntry ice = iterator.next();
             Object key = ice.getKey();
-            int segmentId = readCh.getSegment(key);
+            int segmentId = keyPartitioner.getSegment(key);
             if (finalCompletedSegments.contains(segmentId)) {
                // TODO: could the version be null in here?
                if (ice.getMetadata() instanceof RemoteMetadata) {
@@ -286,7 +287,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
             try {
                CollectionKeyFilter filter = new CollectionKeyFilter(new ReadOnlyDataContainerBackedKeySet(dataContainer));
                AdvancedCacheLoader.CacheLoaderTask task = (me, taskContext) -> {
-                  int segmentId = readCh.getSegment(me.getKey());
+                  int segmentId = keyPartitioner.getSegment(me.getKey());
                   if (finalCompletedSegments.contains(segmentId)) {
                      try {
                         InternalMetadata metadata = me.getMetadata();

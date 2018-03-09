@@ -651,7 +651,8 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       assertNull(cache2.get(key));
 
       int expectCount = clusterListener.hasIncludeState() ? 2 : 1;
-      eventually(() -> clusterListener.events.size() >= expectCount);
+      eventually(() -> "Expected: " + expectCount + " Actual: " + clusterListener.events,
+            () -> clusterListener.events.size() >= expectCount);
       // We can't assert size here, thiis is because expiration is done asynchronously.  As such you could have more
       // than 1 expire command come at the same time, although from different nodes.  Currently we assume a null is
       // okay to say it was expired, so you can get multiple expirations

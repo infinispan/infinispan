@@ -76,35 +76,36 @@ public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
       c.put("k", "v");
       c.evict("k");
 
-      assert l.loaded.size() == 1;
+      assert l.loaded.get(1).equals("k");
+      assert l.loaded.size() == 2;
       assert l.activated.isEmpty();
       assert l.passivated.isEmpty();
 
       c.putAll(Collections.singletonMap("k2", "v2"));
-      assert l.loaded.size() == 1;
+      assert l.loaded.size() == 2;
       assert l.activated.isEmpty();
       assert l.passivated.isEmpty();
 
       c.putAll(Collections.singletonMap("k", "v-new"));
       assert l.passivated.isEmpty();
-      assert l.loaded.size() == 1;
+      assert l.loaded.size() == 2;
       assert l.activated.isEmpty();
 
       c.clear();
       assert l.passivated.isEmpty();
-      assert l.loaded.size() == 1;
+      assert l.loaded.size() == 2;
       assert l.activated.isEmpty();
 
       c.putAll(Collections.singletonMap("k2", "v-new"));
       c.evict("k2");
       assert l.passivated.isEmpty();
-      assert l.loaded.size() == 1;
+      assert l.loaded.size() == 2;
       assert l.activated.isEmpty();
 
       c.replace("k2", "something");
       assert l.passivated.isEmpty();
-      assert l.loaded.size() == 2;
-      assert l.loaded.contains("k2");
+      assert l.loaded.size() == 3;
+      assert l.loaded.get(2).equals("k2");
       assert l.activated.isEmpty();
    }
 

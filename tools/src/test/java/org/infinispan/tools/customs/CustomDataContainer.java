@@ -53,6 +53,11 @@ public class CustomDataContainer implements DataContainer {
     }
 
     @Override
+    public int sizeIncludingExpiredAndTombstones() {
+        return 0;
+    }
+
+    @Override
     public void clear() {
 
     }
@@ -93,6 +98,11 @@ public class CustomDataContainer implements DataContainer {
     }
 
     @Override
+    public Iterator<InternalCacheEntry> iteratorIncludingExpiredAndTombstones() {
+        return null;
+    }
+
+   @Override
     public void executeTask(KeyValueFilter filter, BiConsumer action) throws InterruptedException {
 
     }

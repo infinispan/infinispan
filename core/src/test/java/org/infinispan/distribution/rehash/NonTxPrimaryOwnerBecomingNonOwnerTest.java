@@ -70,24 +70,48 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
       doTest(TestWriteOperation.PUT_CREATE);
    }
 
+   public void testPrimaryOwnerChangingDuringPutFunctional() throws Exception {
+      doTest(TestWriteOperation.PUT_CREATE_FUNCTIONAL);
+   }
+
    public void testPrimaryOwnerChangingDuringPutIfAbsent() throws Exception {
       doTest(TestWriteOperation.PUT_IF_ABSENT);
+   }
+
+   public void testPrimaryOwnerChangingDuringPutIfAbsentFunctional() throws Exception {
+      doTest(TestWriteOperation.PUT_IF_ABSENT_FUNCTIONAL);
    }
 
    public void testPrimaryOwnerChangingDuringReplace() throws Exception {
       doTest(TestWriteOperation.REPLACE);
    }
 
+   public void testPrimaryOwnerChangingDuringReplaceFunctional() throws Exception {
+      doTest(TestWriteOperation.REPLACE_FUNCTIONAL);
+   }
+
    public void testPrimaryOwnerChangingDuringReplaceExact() throws Exception {
       doTest(TestWriteOperation.REPLACE_EXACT);
+   }
+
+   public void testPrimaryOwnerChangingDuringReplaceExactFunctional() throws Exception {
+      doTest(TestWriteOperation.REPLACE_EXACT_FUNCTIONAL);
    }
 
    public void testPrimaryOwnerChangingDuringRemove() throws Exception {
       doTest(TestWriteOperation.REMOVE);
    }
 
+   public void testPrimaryOwnerChangingDuringRemoveFunctional() throws Exception {
+      doTest(TestWriteOperation.REMOVE_FUNCTIONAL);
+   }
+
    public void testPrimaryOwnerChangingDuringRemoveExact() throws Exception {
       doTest(TestWriteOperation.REMOVE_EXACT);
+   }
+
+   public void testPrimaryOwnerChangingDuringRemoveExactFunctional() throws Exception {
+      doTest(TestWriteOperation.REMOVE_EXACT_FUNCTIONAL);
    }
 
    private void doTest(final TestWriteOperation op) throws Exception {
@@ -132,8 +156,8 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
 
       // Every operation command will be blocked before reaching the distribution interceptor on cache0 (the originator)
       CyclicBarrier beforeCache0Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor0 = new BlockingInterceptor<>(beforeCache0Barrier,
-            op.getCommandClass(), false, true);
+      BlockingInterceptor blockingInterceptor0 = new BlockingInterceptor(beforeCache0Barrier, false, true,
+            op.getCommandClass()::isInstance);
       cache0.getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor0, EntryWrappingInterceptor.class);
 
       // Write from cache0 with cache0 as primary owner, cache2 will become the primary owner for the retry

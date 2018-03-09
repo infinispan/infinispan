@@ -279,13 +279,12 @@ public class StateConsumerImpl implements StateConsumer {
       // No need for a try/finally block, since it's just an assignment
       stateTransferLock.acquireExclusiveTopologyLock();
       beforeTopologyInstalled(cacheTopology.getTopologyId(), startRebalance, previousWriteCh, newWriteCh);
-      this.cacheTopology = cacheTopology;
       triangleOrderManager.updateCacheTopology(cacheTopology);
       if (distributionManager != null) {
          distributionManager.setCacheTopology(cacheTopology);
          conflictManager.onTopologyUpdate(distributionManager.getCacheTopology());
       }
-
+      this.cacheTopology = cacheTopology;
       // We need to track changes so that user puts during conflict resolution are prioritised over MergePolicy updates
       // Tracking is stopped once the subsequent rebalance completes
       if (startRebalance || startConflictResolution) {
@@ -1068,7 +1067,7 @@ public class StateConsumerImpl implements StateConsumer {
       boolean found = false;
       synchronized (transferMapsLock) {
          if (trace) log.tracef("Removing inbound transfers from node %s for segments %s",
-               inboundTransfer.getSegments(), inboundTransfer.getSource(), cacheName);
+               inboundTransfer.getSource(), inboundTransfer.getSegments(), cacheName);
          List<InboundTransferTask> transfers = transfersBySource.get(inboundTransfer.getSource());
          if (transfers != null && (found = transfers.remove(inboundTransfer)) && transfers.isEmpty()) {
             transfersBySource.remove(inboundTransfer.getSource());

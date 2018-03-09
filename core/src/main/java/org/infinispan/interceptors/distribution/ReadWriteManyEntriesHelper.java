@@ -68,12 +68,22 @@ class ReadWriteManyEntriesHelper extends WriteManyCommandHelper<ReadWriteManyEnt
    }
 
    @Override
-   public boolean shouldRegisterRemoteCallback(ReadWriteManyEntriesCommand cmd) {
-      return !cmd.isForwarded();
+   public boolean isForwarded(ReadWriteManyEntriesCommand cmd) {
+      return cmd.isForwarded();
+   }
+
+   @Override
+   public void setForwarded(ReadWriteManyEntriesCommand backupCommand) {
+      backupCommand.setForwarded(true);
    }
 
    @Override
    public Object transformResult(Object[] results) {
       return results == null ? null : Arrays.asList(results);
+   }
+
+   @Override
+   public Collection<Map.Entry<Object, Object>> asCollection(Map<Object, Object> map) {
+      return map.entrySet();
    }
 }

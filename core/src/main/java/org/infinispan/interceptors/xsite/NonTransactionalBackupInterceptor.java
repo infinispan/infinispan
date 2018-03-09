@@ -177,7 +177,7 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
          if (entry instanceof InternalCacheEntry) {
             map.put(key, ((InternalCacheEntry) entry).toInternalCacheValue());
          } else {
-            map.put(key, internalEntryFactory.createValue(entry));
+            map.put(key, internalEntryFactory.createValue(entry, false));
          }
       }
       if (map.isEmpty()) {

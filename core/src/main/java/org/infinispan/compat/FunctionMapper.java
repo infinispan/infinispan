@@ -7,24 +7,19 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 
-public class FunctionMapper implements Function {
+public class FunctionMapper implements Function, InjectableComponent {
 
    private final DataConversion keyDataConversion;
    private final DataConversion valueDataConversion;
 
    private final Function function;
-
-   @Inject
-   public void injectDependencies(ComponentRegistry registry) {
-      registry.wireDependencies(keyDataConversion);
-      registry.wireDependencies(valueDataConversion);
-   }
 
    public FunctionMapper(Function mappingFunction,
                          DataConversion keyDataConversion,
@@ -32,6 +27,17 @@ public class FunctionMapper implements Function {
       this.function = mappingFunction;
       this.keyDataConversion = keyDataConversion;
       this.valueDataConversion = valueDataConversion;
+   }
+
+   @Inject
+   public void injectDependencies(ComponentRegistry registry) {
+      registry.wireDependencies(keyDataConversion);
+      registry.wireDependencies(valueDataConversion);
+   }
+
+   @Override
+   public void inject(ComponentRegistry registry) {
+      injectDependencies(registry);
    }
 
    @Override

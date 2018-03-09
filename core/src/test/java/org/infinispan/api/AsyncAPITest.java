@@ -375,7 +375,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
             } else {
                //this check DOES NOT read the key so it does not interfere with idle time
                InternalCacheEntry entry = c.getAdvancedCache().getDataContainer().peek(key);
-               return entry == null || entry.isExpired(timeService.wallClockTime());
+               return entry == null || entry.getValue() == null || entry.isExpired(timeService.wallClockTime());
             }
          };
          assertTrue(expectedValue.equals(c.get(key)) || timeService.wallClockTime() > expectedEndTime);

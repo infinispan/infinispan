@@ -300,11 +300,13 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       if (versionsSeenMap == null) {
          versionsSeenMap = new EntryVersionsMap();
       }
-      if (!versionsSeenMap.containsKey(key)) {
-         if (trace) {
+      Object prevVersion = versionsSeenMap.putIfAbsent(key, (IncrementableEntryVersion) version);
+      if (trace) {
+         if (prevVersion == null) {
             log.tracef("Transaction %s read %s with version %s", getGlobalTransaction().globalId(), key, version);
+         } else {
+            log.tracef("Ignoring version read %s as already contains %s", version, prevVersion);
          }
-         versionsSeenMap.put(key, (IncrementableEntryVersion) version);
       }
    }
 

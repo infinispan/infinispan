@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
@@ -40,14 +41,17 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
                          CommandInvocationId commandInvocationId,
                          Metadata metadata,
                          CacheNotifier notifier,
-                         ComponentRegistry componentRegistry) {
+                         ComponentRegistry componentRegistry,
+                         InvocationManager invocationManager) {
 
-      super(key, flagsBitSet, commandInvocationId);
+      super(key, flagsBitSet, commandInvocationId, invocationManager);
       this.remappingBiFunction = remappingBiFunction;
       this.computeIfPresent = computeIfPresent;
       this.metadata = metadata;
       this.notifier = notifier;
-      componentRegistry.wireDependencies(this.remappingBiFunction);
+      if (componentRegistry != null) {
+         componentRegistry.wireDependencies(this.remappingBiFunction);
+      }
    }
 
    public boolean isComputeIfPresent() {
@@ -58,9 +62,10 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
       this.computeIfPresent = computeIfPresent;
    }
 
-   public void init(CacheNotifier notifier, ComponentRegistry componentRegistry) {
+   public void init(CacheNotifier notifier, ComponentRegistry componentRegistry, InvocationManager invocationManager) {
       //noinspection unchecked
       this.notifier = notifier;
+      this.invocationManager = invocationManager;
       componentRegistry.wireDependencies(remappingBiFunction);
    }
 
@@ -82,16 +87,6 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
    @Override
    public boolean isConditional() {
       return isComputeIfPresent();
-   }
-
-   @Override
-   public ValueMatcher getValueMatcher() {
-      return ValueMatcher.MATCH_ALWAYS;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      //implementation not needed
    }
 
    @Override
@@ -126,6 +121,7 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
          return null;
       }
 
+      Metadata oldMetadata = e.getMetadata();
       if (oldValue != null) {
          // The key already has a value
          if (newValue != null) {
@@ -153,6 +149,7 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
             e.setRemoved(false);
          }
       }
+      recordInvocation(ctx, e, oldValue, oldMetadata);
       return newValue;
    }
 
@@ -172,6 +169,7 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
       output.writeObject(remappingBiFunction);
       output.writeObject(metadata);
       CommandInvocationId.writeTo(output, commandInvocationId);
+      CommandInvocationId.writeTo(output, lastInvocationId);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
@@ -182,6 +180,7 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
       remappingBiFunction = (BiFunction) input.readObject();
       metadata = (Metadata) input.readObject();
       commandInvocationId = CommandInvocationId.readFrom(input);
+      lastInvocationId = CommandInvocationId.readFrom(input);
       setFlagsBitSet(input.readLong());
    }
 
@@ -222,7 +221,6 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
             ", metadata=" + metadata +
             ", flags=" + printFlags() +
             ", successful=" + isSuccessful() +
-            ", valueMatcher=" + getValueMatcher() +
             ", topologyId=" + getTopologyId() +
             '}';
    }

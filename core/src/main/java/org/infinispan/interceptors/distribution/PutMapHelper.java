@@ -65,8 +65,13 @@ class PutMapHelper extends WriteManyCommandHelper<PutMapCommand, Map<Object, Obj
    }
 
    @Override
-   public boolean shouldRegisterRemoteCallback(PutMapCommand cmd) {
-      return !cmd.isForwarded();
+   public boolean isForwarded(PutMapCommand cmd) {
+      return cmd.isForwarded();
+   }
+
+   @Override
+   public void setForwarded(PutMapCommand backupCommand) {
+      backupCommand.setForwarded(true);
    }
 
    @Override
@@ -78,5 +83,10 @@ class PutMapHelper extends WriteManyCommandHelper<PutMapCommand, Map<Object, Obj
          result.put(entry.getKey(), entry.getValue());
       }
       return result;
+   }
+
+   @Override
+   public Collection<Map.Entry<Object, Object>> asCollection(Map<Object, Object> map) {
+      return map.entrySet();
    }
 }

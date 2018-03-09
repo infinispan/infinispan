@@ -71,6 +71,10 @@ public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSuppl
             } finally {
                closeLock.unlock();
             }
+            // Ignore tombstones
+            if (marshalledEntry.getValue() == null) {
+               return;
+            }
             InternalCacheEntry<K, V> ice = PersistenceUtil.convert(marshalledEntry, factory);
             // We do a read without acquiring lock
             boolean stop = closed;

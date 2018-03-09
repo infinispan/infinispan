@@ -5,12 +5,8 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.P
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.write.ComputeCommand;
-import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
@@ -59,18 +55,19 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          PutKeyValueCommand putKeyValueCommand = (PutKeyValueCommand) rCommand;
          Object key = putKeyValueCommand.getKey();
-         if (!putKeyValueCommand.hasAnyFlag(FlagBitSets.ROLLING_UPGRADE) && (!isStoreEnabled(putKeyValueCommand) || rCtx.isInTxScope() || !putKeyValueCommand.isSuccessful()))
-            return rv;
+         if (!putKeyValueCommand.hasAnyFlag(FlagBitSets.ROLLING_UPGRADE) &&
+               (!isStoreEnabled(putKeyValueCommand) || rCtx.isInTxScope() ||
+                     !putKeyValueCommand.isSuccessful() || putKeyValueCommand.isCompleted(putKeyValueCommand.getKey())))
+            return;
          if (!isProperWriter(rCtx, putKeyValueCommand, putKeyValueCommand.getKey()))
-            return rv;
+            return;
 
          storeEntry(rCtx, key, putKeyValueCommand);
          if (getStatisticsEnabled())
             cacheStores.incrementAndGet();
-         return rv;
       });
    }
 
@@ -88,98 +85,20 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
       processIterableBatch(rCtx, cmd, BOTH,
             key -> !skipNonPrimary(rCtx, key, cmd) &&
                   isProperWriter(rCtx, cmd, key) &&
-                  !skipSharedStores(rCtx, key, cmd));
+                  !skipSharedStores(rCtx, key, cmd) &&
+                  !cmd.isCompleted(key));
 
       processIterableBatch(rCtx, cmd, PRIVATE,
             key -> !skipNonPrimary(rCtx, key, cmd) &&
                   isProperWriter(rCtx, cmd, key) &&
-                  skipSharedStores(rCtx, key, cmd));
+                  skipSharedStores(rCtx, key, cmd) &&
+                  !cmd.isCompleted(key));
    }
 
    private boolean skipNonPrimary(InvocationContext rCtx, Object key, PutMapCommand command) {
       // In non-tx mode, a node may receive the same forwarded PutMapCommand many times - but each time
       // it must write only the keys locked on the primary owner that forwarded the rCommand
       return isUsingLockDelegation && command.isForwarded() && !dm.getCacheTopology().getDistribution(key).primary().equals(rCtx.getOrigin());
-   }
-
-   @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         RemoveCommand removeCommand = (RemoveCommand) rCommand;
-         Object key = removeCommand.getKey();
-         if (!isStoreEnabled(removeCommand) || rCtx.isInTxScope() || !removeCommand.isSuccessful())
-            return rv;
-         if (!isProperWriter(rCtx, removeCommand, key))
-            return rv;
-
-         boolean resp = persistenceManager
-               .deleteFromAllStores(key, skipSharedStores(rCtx, key, removeCommand) ? PRIVATE : BOTH);
-         if (trace)
-            log.tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
-
-         return rv;
-      });
-   }
-
-   @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
-         throws Throwable {
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         ReplaceCommand replaceCommand = (ReplaceCommand) rCommand;
-         Object key = replaceCommand.getKey();
-         if (!isStoreEnabled(replaceCommand) || rCtx.isInTxScope() || !replaceCommand.isSuccessful())
-            return rv;
-         if (!isProperWriter(rCtx, replaceCommand, replaceCommand.getKey()))
-            return rv;
-
-         storeEntry(rCtx, key, replaceCommand);
-         if (getStatisticsEnabled())
-            cacheStores.incrementAndGet();
-
-         return rv;
-      });
-   }
-
-   @Override
-   public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         ComputeCommand computeCommand = (ComputeCommand) rCommand;
-         Object key = computeCommand.getKey();
-         if (!isStoreEnabled(computeCommand) || rCtx.isInTxScope() || !computeCommand.isSuccessful())
-            return rv;
-         if (!isProperWriter(rCtx, computeCommand, computeCommand.getKey()))
-            return rv;
-
-         if (command.isSuccessful() && rv == null) {
-            boolean resp = persistenceManager
-                  .deleteFromAllStores(key, skipSharedStores(rCtx, key, command) ? PRIVATE : BOTH);
-            if (trace)
-               log.tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
-         } else if (command.isSuccessful()) {
-            storeEntry(rCtx, key, computeCommand);
-            if (getStatisticsEnabled())
-               cacheStores.incrementAndGet();
-         }
-         return rv;
-      });
-   }
-
-   @Override
-   public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         ComputeIfAbsentCommand computeIfAbsentCommand = (ComputeIfAbsentCommand) rCommand;
-         Object key = computeIfAbsentCommand.getKey();
-         if (!isStoreEnabled(computeIfAbsentCommand) || rCtx.isInTxScope() || !computeIfAbsentCommand.isSuccessful())
-            return rv;
-         if (!isProperWriter(rCtx, computeIfAbsentCommand, computeIfAbsentCommand.getKey()))
-            return rv;
-
-         storeEntry(rCtx, key, computeIfAbsentCommand);
-         if (getStatisticsEnabled())
-            cacheStores.incrementAndGet();
-
-         return rv;
-      });
    }
 
    @Override
