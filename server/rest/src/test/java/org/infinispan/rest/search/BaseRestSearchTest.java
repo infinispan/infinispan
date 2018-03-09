@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import org.apache.http.HttpStatus;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
@@ -28,6 +27,7 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.http.HttpStatus;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -128,7 +128,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
                .method(GET)
                .send();
       }
-      assertEquals(response.getStatus(), HttpStatus.SC_BAD_REQUEST);
+      assertEquals(response.getStatus(), HttpStatus.BAD_REQUEST_400);
       String contentAsString = response.getContentAsString();
       assertTrue(contentAsString.contains("Message descriptor not found") ||
             contentAsString.contains("Unknown entity"));
@@ -276,7 +276,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
             .content(new StringContentProvider(contents))
             .header(HttpHeader.CONTENT_TYPE, contentType.toString())
             .send();
-      assertEquals(response.getStatus(), HttpStatus.SC_OK);
+      assertEquals(response.getStatus(), HttpStatus.OK_200);
    }
 
    protected ContentResponse get(String id, String accept) throws Exception {
@@ -314,12 +314,12 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
             .content(new StringContentProvider(protoFileContents))
             .method(POST)
             .send();
-      assertEquals(response.getStatus(), HttpStatus.SC_OK);
+      assertEquals(response.getStatus(), HttpStatus.OK_200);
       String errorKey = protoFileName.concat(".error");
 
       ContentResponse errorCheck = client.newRequest(getProtobufMetadataUrl(errorKey)).method(GET).send();
 
-      assertEquals(errorCheck.getStatus(), HttpStatus.SC_NOT_FOUND);
+      assertEquals(errorCheck.getStatus(), HttpStatus.NOT_FOUND_404);
    }
 
    private String getProtobufMetadataUrl(String key) {
@@ -356,7 +356,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       }
       ContentResponse response = request.send();
       String contentAsString = response.getContentAsString();
-      assertEquals(response.getStatus(), HttpStatus.SC_OK);
+      assertEquals(response.getStatus(), HttpStatus.OK_200);
       return MAPPER.readTree(contentAsString);
    }
 
