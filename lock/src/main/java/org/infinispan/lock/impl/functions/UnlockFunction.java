@@ -35,6 +35,7 @@ import org.infinispan.lock.impl.log.Log;
 public class UnlockFunction implements Function<EntryView.ReadWriteEntryView<ClusteredLockKey, ClusteredLockValue>, Boolean> {
 
    private static final Log log = LogFactory.getLog(UnlockFunction.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    public static final AdvancedExternalizer<UnlockFunction> EXTERNALIZER = new Externalizer();
 
@@ -53,12 +54,17 @@ public class UnlockFunction implements Function<EntryView.ReadWriteEntryView<Clu
 
    @Override
    public Boolean apply(EntryView.ReadWriteEntryView<ClusteredLockKey, ClusteredLockValue> entryView) {
-      log.tracef("unlock request by reqId [%s] requestors %s", requestId, requestors);
+      if (trace) {
+         log.tracef("Lock[%s] unlock request by reqId [%s] requestors %s", entryView.key().getName(), requestId, requestors);
+      }
+
       ClusteredLockValue lockValue = entryView.find().orElseThrow(() -> log.lockDeleted());
 
       // If the lock is already released return true
       if (lockValue.getState() == ClusteredLockState.RELEASED) {
-         log.tracef("Lock[%s] Already free. State[RELEASED], reqId [%s], owner [%s]", entryView.key().getName(), lockValue.getRequestId(), lockValue.getOwner());
+         if (trace) {
+            log.tracef("Lock[%s] Already free. State[RELEASED], reqId [%s], owner [%s]", entryView.key().getName(), lockValue.getRequestId(), lockValue.getOwner());
+         }
          return Boolean.TRUE;
       }
 
@@ -67,18 +73,24 @@ public class UnlockFunction implements Function<EntryView.ReadWriteEntryView<Clu
 
       // If the requestId and the owner match, unlock and return true
       if (requestIdMatches && ownerMatches) {
-         log.tracef("Lock[%s] Unlocked by reqId [%s] requestors %s", entryView.key().getName(), requestId, requestors);
+         if (trace) {
+            log.tracef("Lock[%s] Unlocked by reqId [%s] requestors %s", entryView.key().getName(), requestId, requestors);
+         }
+
          entryView.set(ClusteredLockValue.INITIAL_STATE);
          return Boolean.TRUE;
       }
 
       // Trace and return false if unlock is not possible
-      log.tracef("Lock[%s] Unlock not possible by reqId [%s] requestors %s. Current State[ACQUIRED], reqId [%s], owner [%s]",
-            entryView.key().getName(),
-            requestId,
-            requestors,
-            lockValue.getRequestId(),
-            lockValue.getOwner());
+      if (trace) {
+         log.tracef("Lock[%s] Unlock not possible by reqId [%s] requestors %s. Current State[ACQUIRED], reqId [%s], owner [%s]",
+               entryView.key().getName(),
+               requestId,
+               requestors,
+               lockValue.getRequestId(),
+               lockValue.getOwner());
+      }
+
       return Boolean.FALSE;
    }
 
