@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod.query;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.Assert.assertEquals;
 
-import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -98,14 +97,10 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
    @BeforeClass(alwaysRun = true)
    protected void registerSerCtx() throws Exception {
       ProtobufMetadataManager protobufMetadataManager = manager(0).getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-      protobufMetadataManager.registerProtofile("bank.proto", readProtoFile());
+      protobufMetadataManager.registerProtofile("bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
       for (RemoteCacheManager rcm : clients) {
          MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(rcm));
       }
-   }
-
-   private String readProtoFile() throws IOException {
-      return Util.read(getClass().getResourceAsStream("/sample_bank_account/bank.proto"));
    }
 
    @Test
