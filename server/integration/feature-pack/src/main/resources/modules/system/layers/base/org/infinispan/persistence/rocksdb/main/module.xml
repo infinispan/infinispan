@@ -13,6 +13,8 @@
         <module name="javax.api"/>
         <module name="javax.transaction.api"/>
         <module name="org.infinispan"/>
+        <module name="io.reactivex.rxjava2.rxjava"/>
+        <module name="org.reactivestreams.reactive-streams"/>
         <module name="org.jboss.logging"/>
         <!-- RocksDB store specific dependencies -->
         <module name="org.rocksdb.rocksdbjni" optional="true"/>

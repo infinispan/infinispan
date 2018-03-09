@@ -15,6 +15,8 @@
         <module name="org.infinispan.core" slot="${slot}"/>
         <module name="org.infinispan.commons" slot="${slot}"/>
         <module name="org.infinispan.client.hotrod" export="true" slot="${slot}"/>
+        <module name="io.reactivex.rxjava2" slot="${slot}"/>
+        <module name="org.reactivestreams" slot="${slot}"/>
         <module name="org.jboss.logging"/>
     </dependencies>
 </module>
