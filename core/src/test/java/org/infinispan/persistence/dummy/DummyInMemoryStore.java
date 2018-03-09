@@ -134,21 +134,6 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    }
 
    @Override
-   public void purge(Executor threadPool, PurgeListener task) {
-      long currentTimeMillis = timeService.wallClockTime();
-      Set expired = new HashSet();
-      for (Iterator<Map.Entry<Object, byte[]>> i = store.entrySet().iterator(); i.hasNext();) {
-         Map.Entry<Object, byte[]> next = i.next();
-         MarshalledEntry se = deserialize(next.getKey(), next.getValue(), false, true);
-         if (isExpired(se, currentTimeMillis)) {
-            if (task != null) task.entryPurged(next.getKey());
-            i.remove();
-            expired.add(next.getKey());
-         }
-      }
-   }
-
-   @Override
    public void purge(Executor executor, ExpirationPurgeListener listener) {
       long currentTimeMillis = timeService.wallClockTime();
       Set expired = new HashSet();
