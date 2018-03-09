@@ -101,7 +101,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       client = new HttpClient();
       client.start();
 
-      String protoFile = Util.read(IndexedRestSearchTest.class.getClassLoader().getResourceAsStream(PROTO_FILE_NAME));
+      String protoFile = Util.getResourceAsString(PROTO_FILE_NAME, getClass().getClassLoader());
       registerProtobuf(PROTO_FILE_NAME, protoFile);
       populateData();
    }
