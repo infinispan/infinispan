@@ -65,9 +65,12 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       client.start();
    }
 
+   private static final long DEFAULT_LIFESPAN = 45190;
+   private static final long DEFAULT_MAX_IDLE = 1859446;
+
    protected void defineCaches() {
       ConfigurationBuilder expirationConfiguration = getDefaultCacheBuilder();
-      expirationConfiguration.expiration().lifespan(100).maxIdle(100);
+      expirationConfiguration.expiration().lifespan(DEFAULT_LIFESPAN).maxIdle(DEFAULT_MAX_IDLE);
 
       ConfigurationBuilder xmlCacheConfiguration = getDefaultCacheBuilder();
       xmlCacheConfiguration.encoding().value().mediaType("application/xml");
@@ -816,8 +819,8 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //then
       ResponseAssertion.assertThat(response).isOk();
-      Assertions.assertThat(metadata.lifespan()).isEqualTo(100);
-      Assertions.assertThat(metadata.maxIdle()).isEqualTo(100);
+      Assertions.assertThat(metadata.lifespan()).isEqualTo(DEFAULT_LIFESPAN);
+      Assertions.assertThat(metadata.maxIdle()).isEqualTo(DEFAULT_MAX_IDLE);
    }
 
    @Test
@@ -854,8 +857,8 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
       //then
       ResponseAssertion.assertThat(response).isOk();
-      Assertions.assertThat(metadata.lifespan()).isEqualTo(100);
-      Assertions.assertThat(metadata.maxIdle()).isEqualTo(100);
+      Assertions.assertThat(metadata.lifespan()).isEqualTo(DEFAULT_LIFESPAN);
+      Assertions.assertThat(metadata.maxIdle()).isEqualTo(DEFAULT_MAX_IDLE);
    }
 
    @Test

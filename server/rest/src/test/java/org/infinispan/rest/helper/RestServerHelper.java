@@ -66,7 +66,7 @@ public class RestServerHelper {
             .getComponent(InternalCacheRegistry.class);
       cacheManager.getCacheNames().stream()
             .filter(cacheName -> !registry.isInternalCache(cacheName))
-            .forEach(cacheName -> cacheManager.getCache(cacheName).clear());
+            .forEach(cacheName -> cacheManager.getCache(cacheName).getAdvancedCache().getDataContainer().clear());
    }
 
    public void stop() {
