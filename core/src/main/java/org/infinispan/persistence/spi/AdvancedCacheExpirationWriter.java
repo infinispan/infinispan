@@ -8,8 +8,6 @@ import org.infinispan.marshall.core.MarshalledEntry;
 /**
  * Defines functionality for advanced expiration techniques.  Note this interface allows for providing not just the key
  * when an entry is expired.  This is important so that proper cluster wide expiration can be performed.
- * @param <K>
- * @param <V>
  * @since 8.0
  */
 @Experimental
@@ -39,6 +37,15 @@ public interface AdvancedCacheExpirationWriter<K, V> extends AdvancedCacheWriter
        * do not receive {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired} for the
        * entries that are removed from the persistent store directly.
        */
-      void marshalledEntryPurged(MarshalledEntry<K,V> entry);
+      void marshalledEntryPurged(MarshalledEntry<K, V> entry);
+   }
+
+   /**
+    * This method is never called. Implementers of {@link AdvancedCacheExpirationWriter} must instead
+    * implement {@link #purge(Executor, ExpirationPurgeListener)}.
+    */
+   @Override
+   default void purge(Executor threadPool, PurgeListener<? super K> listener) {
+      throw new UnsupportedOperationException();
    }
 }
