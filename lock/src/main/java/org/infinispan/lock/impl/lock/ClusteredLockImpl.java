@@ -65,6 +65,7 @@ public class ClusteredLockImpl implements ClusteredLock {
    private final Queue<RequestHolder> pendingRequests;
    private final Object originator;
    private final AtomicInteger viewChangeUnlockHappening = new AtomicInteger(0);
+   private final RequestExpirationScheduler requestExpirationScheduler;
 
    public ClusteredLockImpl(String name,
                             ClusteredLockKey lockKey,
@@ -76,6 +77,7 @@ public class ClusteredLockImpl implements ClusteredLock {
       this.pendingRequests = new ConcurrentLinkedQueue<>();
       this.readWriteMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(clusteredLockCache));
       originator = clusteredLockCache.getCacheManager().getAddress();
+      requestExpirationScheduler = new RequestExpirationScheduler(clusteredLockManager.getScheduledExecutorService());
       clusteredLockCache.getCacheManager().addListener(new ClusterChangeListener());
       clusteredLockCache.addListener(new LockReleasedListener(), new ClusteredLockFilter(lockKey));
    }
@@ -152,7 +154,6 @@ public class ClusteredLockImpl implements ClusteredLock {
    public class TryLockRequestHolder extends RequestHolder<Boolean> {
 
       private final long time;
-
       private final TimeUnit unit;
       private boolean isScheduled;
 
@@ -182,6 +183,7 @@ public class ClusteredLockImpl implements ClusteredLock {
                log.tracef("LOCK[%s] LockResult[%b] for %s", getName(), result, this);
             }
             request.complete(true);
+            requestExpirationScheduler.abortScheduling(requestId);
             Boolean tryLockRealResult = request.join();
             if (!tryLockRealResult) {
                // Even if we complete true just before, the lock request can be completed false just before by the scheduler.
@@ -197,7 +199,7 @@ public class ClusteredLockImpl implements ClusteredLock {
             }
             // If the lock was not acquired, then schedule a complete false for the given timeout
             isScheduled = true;
-            clusteredLockManager.schedule(() -> request.complete(false), time, unit);
+            requestExpirationScheduler.scheduleForCompletion(requestId, request, time, unit);
          }
       }
 
@@ -242,7 +244,9 @@ public class ClusteredLockImpl implements ClusteredLock {
       @CacheEntryRemoved
       public void entryRemoved(CacheEntryRemovedEvent event) {
          while (!pendingRequests.isEmpty()) {
-            pendingRequests.poll().handleLockResult(null, log.lockDeleted());
+            RequestHolder requestHolder = pendingRequests.poll();
+            requestHolder.handleLockResult(null, log.lockDeleted());
+            requestExpirationScheduler.abortScheduling(requestHolder.requestId);
          }
       }
    }
