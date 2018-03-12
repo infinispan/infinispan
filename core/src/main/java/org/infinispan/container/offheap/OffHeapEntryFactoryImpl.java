@@ -105,8 +105,8 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          } else {
             type |= TRANSIENT_MORTAL;
             metadataBytes = new byte[32 + versionBytes.length];
-            Bits.putLong(metadataBytes, 0, maxIdle);
-            Bits.putLong(metadataBytes, 8, lifespan);
+            Bits.putLong(metadataBytes, 0, lifespan);
+            Bits.putLong(metadataBytes, 8, maxIdle);
             long time = timeService.wallClockTime();
             Bits.putLong(metadataBytes, 16, time);
             Bits.putLong(metadataBytes, 24, time);
