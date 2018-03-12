@@ -11,7 +11,7 @@
 
    <groupId>org.infinispan.server</groupId>
    <artifactId>infinispan-server-versions</artifactId>
-   <version>8.2.10-SNAPSHOT</version>
+   <version>8.2.11-SNAPSHOT</version>
    <packaging>pom</packaging>
 
    <name>Infinispan Server - BOM</name>
