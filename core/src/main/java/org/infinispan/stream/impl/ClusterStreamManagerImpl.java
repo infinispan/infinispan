@@ -704,7 +704,7 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
          }
          callback.onCompletion(origin, completedSegments, result);
          synchronized (this) {
-            if (earlyTerminatePredicate != null  && earlyTerminatePredicate.test(result)) {
+            if (earlyTerminatePredicate != null && result != null && earlyTerminatePredicate.test(result)) {
                awaitingResponse.clear();
             } else {
                awaitingResponse.remove(origin);
