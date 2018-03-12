@@ -133,8 +133,8 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
       }
    }
 
-   public void schedule(Runnable task, long time, TimeUnit unit) {
-      scheduledExecutorService.schedule(task, time, unit);
+   public ScheduledExecutorService getScheduledExecutorService() {
+      return scheduledExecutorService;
    }
 
    public void execute(Runnable runnable) {
