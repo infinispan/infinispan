@@ -14,16 +14,19 @@ public class RestServerConfiguration extends ProtocolServerConfiguration {
    private final String contextPath;
    private final int maxContentLength;
    private final List<String> corsAllowOrigins;
+   private final int compressionLevel;
 
    RestServerConfiguration(String defaultCacheName, String name, ExtendedHeaders extendedHeaders, String host, int port,
                            Set<String> ignoredCaches, SslConfiguration ssl, boolean startTransport, String contextPath,
-                           AdminOperationsHandler adminOperationsHandler, int maxContentLength, List<String> corsAllowOrigins) {
+                           AdminOperationsHandler adminOperationsHandler, int maxContentLength,
+                           List<String> corsAllowOrigins, int compressionLevel) {
       super(defaultCacheName, name, host, port, -1, -1, -1, ssl, false,
             -1, ignoredCaches, startTransport, adminOperationsHandler);
       this.extendedHeaders = extendedHeaders;
       this.contextPath = contextPath;
       this.maxContentLength = maxContentLength;
       this.corsAllowOrigins = corsAllowOrigins;
+      this.compressionLevel = compressionLevel;
    }
 
    public ExtendedHeaders extendedHeaders() {
@@ -48,5 +51,9 @@ public class RestServerConfiguration extends ProtocolServerConfiguration {
 
    public List<String> getCorsAllowOrigins() {
       return corsAllowOrigins;
+   }
+
+   public int getCompressionLevel() {
+      return compressionLevel;
    }
 }

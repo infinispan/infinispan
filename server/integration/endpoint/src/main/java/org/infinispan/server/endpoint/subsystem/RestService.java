@@ -72,15 +72,17 @@ public class RestService implements Service<RestServer>, EncryptableService {
    private RestServer restServer;
    private boolean clientAuth;
    private final int maxContentLength;
+   private int compressionLevel;
 
    public RestService(String serverName, RestAuthMethod authMethod, String contextPath, ExtendedHeaders extendedHeaders, Set<String> ignoredCaches,
-                      int maxContentLength) {
+                      int maxContentLength, int compressionLevel) {
       this.serverName = serverName;
       this.authMethod = authMethod;
       this.contextPath = contextPath;
       this.extendedHeaders = extendedHeaders;
       this.ignoredCaches = ignoredCaches;
       this.maxContentLength = maxContentLength;
+      this.compressionLevel = compressionLevel;
    }
 
    /** {@inheritDoc} */
@@ -88,7 +90,7 @@ public class RestService implements Service<RestServer>, EncryptableService {
    public synchronized void start(StartContext startContext) throws StartException {
       RestServerConfigurationBuilder builder = new RestServerConfigurationBuilder();
       builder.name(serverName).extendedHeaders(extendedHeaders).ignoredCaches(ignoredCaches).contextPath(contextPath)
-            .maxContentLength(maxContentLength);
+            .maxContentLength(maxContentLength).compressionLevel(compressionLevel);
 
       EncryptableServiceHelper.fillSecurityConfiguration(this, builder.ssl());
 
@@ -97,7 +99,7 @@ public class RestService implements Service<RestServer>, EncryptableService {
       ROOT_LOGGER.endpointStarting(serverName);
       try {
          SocketBinding socketBinding = getSocketBinding().getOptionalValue();
-         if(socketBinding == null) {
+         if (socketBinding == null) {
             builder.startTransport(false);
             ROOT_LOGGER.startingServerWithoutTransport("REST");
          } else {

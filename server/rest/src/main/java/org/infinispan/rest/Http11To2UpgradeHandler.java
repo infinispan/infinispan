@@ -9,9 +9,12 @@ import static io.netty.handler.codec.http.HttpMethod.PUT;
 
 import java.util.List;
 
+import org.infinispan.rest.configuration.RestServerConfiguration;
+
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
@@ -79,9 +82,11 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
    }
 
    private void configureHttp1(ChannelPipeline pipeline) {
-      final HttpServerCodec httpCodec = new HttpServerCodec(MAX_INITIAL_LINE_SIZE, MAX_HEADER_SIZE, restServer.getConfiguration().maxContentLength());
+      RestServerConfiguration configuration = restServer.getConfiguration();
+      final HttpServerCodec httpCodec = new HttpServerCodec(MAX_INITIAL_LINE_SIZE, MAX_HEADER_SIZE, configuration.maxContentLength());
       pipeline.addLast(httpCodec);
       pipeline.addLast(new CorsHandler(corsConfig));
+      pipeline.addLast(new HttpContentCompressor(configuration.getCompressionLevel()));
       pipeline.addLast(new HttpServerUpgradeHandler(httpCodec, protocol -> {
          if (AsciiString.contentEquals(Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME, protocol)) {
             return new Http2ServerUpgradeCodec(getHttp11To2ConnectionHandler());
