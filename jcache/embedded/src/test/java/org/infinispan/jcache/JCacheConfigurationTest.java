@@ -4,7 +4,20 @@ import static org.infinispan.jcache.util.JCacheTestingUtil.withCachingProvider;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Objects;
+import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jcache.embedded.JCacheManager;
@@ -40,18 +53,96 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
       });
    }
 
-   public void testJCacheManagerWherePathContainsJarFileSchema() throws Exception {
-      URI uri = JCacheConfigurationTest.class.getClassLoader().getResource("infinispan_uri.xml").toURI();
-      URI uriWithJarFileSchema = URI.create(uri.toString().replace("file", "jar:file"));
+   public class MyClassLoader extends URLClassLoader {
+      MyClassLoader(URL[] urls, ClassLoader parent) {
+         super(urls, parent);
+      }
 
-      withCachingProvider(provider -> {
-         JCacheManager jCacheManager = new JCacheManager(
-               uriWithJarFileSchema,
-               provider.getClass().getClassLoader(),
-               provider,
-               null);
-         assertTrue(null != jCacheManager.getCache("foo"));
-      });
+      public void addURL(URL url) {
+         super.addURL(url);
+      }
    }
 
+   public void testJCacheManagerWithRealJarFileSchema() throws Exception {
+      File sampleJarWithResourceFile = null;
+      ClassLoader originalClassLoader = null;
+
+      try {
+         // given - creating sample jar file
+         sampleJarWithResourceFile = new File("sampleJarWithResource.jar");
+         String existingResourceToAddInJar = "infinispan_uri.xml";
+         String targetPathInJar = "sample-dir-inside-jar/";
+         createJar(sampleJarWithResourceFile, existingResourceToAddInJar, targetPathInJar);
+
+         // given - adding jar file into classpath
+         String fullTargetPath = targetPathInJar + existingResourceToAddInJar;
+
+         originalClassLoader = Thread.currentThread().getContextClassLoader();
+         MyClassLoader myClassLoader = new MyClassLoader(((URLClassLoader)originalClassLoader).getURLs(), originalClassLoader);
+         myClassLoader.addURL(new URI("jar:" + sampleJarWithResourceFile.toURI().toString() + "!/").toURL());
+         Thread.currentThread().setContextClassLoader(myClassLoader);
+
+         // when
+         URI resourceInsideJarUri = new URI("jar:" + sampleJarWithResourceFile.toURI().toString() + "!/" + fullTargetPath);
+         withCachingProvider(provider -> {
+            JCacheManager jCacheManager = new JCacheManager(
+                resourceInsideJarUri,
+                provider.getClass().getClassLoader(),
+                provider,
+                null);
+
+            // then
+            assertTrue(null != jCacheManager.getCache("foo"));
+         });
+      }
+      finally {
+         // cleanup
+         if (sampleJarWithResourceFile != null && sampleJarWithResourceFile.exists()) {
+            sampleJarWithResourceFile.delete();
+         }
+
+         if (originalClassLoader != null) {
+            Thread.currentThread().setContextClassLoader(originalClassLoader);
+         }
+      }
+   }
+
+   private void createJar(File jarFile, String existingResourceToAddInJar, String targetPathInJar) throws IOException, URISyntaxException {
+      Manifest manifest = new Manifest();
+      manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+      JarOutputStream sampleJarOutputStream = new JarOutputStream(new FileOutputStream(jarFile), manifest);
+
+      URI contentFileUri = Objects.requireNonNull(JCacheConfigurationTest.class.getClassLoader().getResource(existingResourceToAddInJar)).toURI();
+      File contentFile = new File(contentFileUri);
+      String fullTargetPath = targetPathInJar + contentFile.getName();
+
+      addInJar(new File(contentFileUri), fullTargetPath, sampleJarOutputStream);
+
+      sampleJarOutputStream.close();
+   }
+
+   private void addInJar(File contentFile, String targetFilePath, JarOutputStream jarOutputStream) throws IOException {
+      if (contentFile.isDirectory()) {
+         return;
+      }
+
+      JarEntry jarEntry = new JarEntry(targetFilePath.replace("\\", "/"));
+      jarOutputStream.putNextEntry(jarEntry);
+      jarEntry.setTime(contentFile.lastModified());
+
+      try (BufferedInputStream contentFileBufferedInputStream = new BufferedInputStream(new FileInputStream(contentFile))) {
+         byte[] buffer = new byte[1024];
+
+         while (true) {
+            int count = contentFileBufferedInputStream.read(buffer);
+            if (count == -1) {
+               break;
+            }
+
+            jarOutputStream.write(buffer, 0, count);
+         }
+
+         jarOutputStream.closeEntry();
+      }
+   }
 }
