@@ -395,7 +395,7 @@ def maven_build_distribution(version):
 
 
 def get_version_pattern(): 
-  return re.compile("^([4-9]\.[0-9])\.[0-9]\.(Final|(Alpha|Beta|CR)[1-9][0-9]?)$")
+  return re.compile("^([1-9]?[0-9]+\.[1-9]?[0-9]+)\.[1-9]?[0-9]+\.(Final|(Alpha|Beta|CR)[1-9][0-9]?)$")
 
 def get_version_major_minor(full_version):
   pattern = get_version_pattern()
