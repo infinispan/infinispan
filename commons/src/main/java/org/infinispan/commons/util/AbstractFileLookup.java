@@ -64,10 +64,16 @@ public abstract class AbstractFileLookup implements FileLookup {
       switch (scheme) {
          case "file":
             return new FileInputStream(new File(uri.getPath()));
-         case "jar":
+         case "jar": {
             String uriAsString = uri.toString();
-            String fileName = uriAsString.substring(uriAsString.lastIndexOf(":") + 1);
-            return new FileInputStream(new File(fileName));
+            String insideJarFilePath = uriAsString.substring(uriAsString.lastIndexOf("!") + 1);
+
+            InputStream streamToBeReturned = getAsInputStreamFromClassLoader(insideJarFilePath, cl);
+            if (streamToBeReturned == null) {
+               throw log.unableToLoadFileUsingScheme(scheme);
+            }
+            return streamToBeReturned;
+         }
          default:
             InputStream streamToBeReturned = getAsInputStreamFromClassLoader(uri.toString(), cl);
             if(streamToBeReturned == null) {
