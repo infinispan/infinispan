@@ -116,7 +116,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
       final LocalizedCacheTopology topology;
       final List<Address> replicaHosts;
       final Map<K, Map<Address, CacheEntry<K, V>>> keyReplicaMap = new HashMap<>();
-      final Map<Address, InboundTransferTask> transferTaskMap = new HashMap<>();
+      final Map<Address, InboundTransferTask> transferTaskMap = new ConcurrentHashMap<>();
       CompletableFuture<List<Map<Address, CacheEntry<K, V>>>> future;
 
       SegmentRequest(int segmentId, LocalizedCacheTopology topology) {
