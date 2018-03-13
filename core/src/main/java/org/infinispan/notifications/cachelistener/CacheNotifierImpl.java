@@ -68,7 +68,6 @@ import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
@@ -835,10 +834,15 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             throw new UnsupportedOperationException("Cluster listeners cannot be used with Invalidation Caches!");
          } else if (cacheMode.isDistributed() || cacheMode.isScattered()) {
             clusterListenerIDs.put(listener, generatedId);
-            EmbeddedCacheManager manager = cache.getCacheManager();
-            Address ourAddress = manager.getAddress();
+            RpcManager rpcManager = cache.getAdvancedCache().getRpcManager();
+            Address ourAddress = null;
+            List<Address> members = null;
 
-            List<Address> members = manager.getMembers();
+            if (rpcManager != null) {
+               ourAddress = rpcManager.getAddress();
+               members = rpcManager.getMembers();
+            }
+
             // If we are the only member don't even worry about sending listeners
             if (members != null && members.size() > 1) {
                DistributedExecutionCompletionService decs = new DistributedExecutionCompletionService(distExecutorService);
@@ -874,7 +878,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                int extraCount = 0;
                // If anyone else joined since we sent these we have to send the listeners again, since they may have queried
                // before the other nodes got the new listener
-               List<Address> membersAfter = manager.getMembers();
+               List<Address> membersAfter = rpcManager.getMembers(); //at this point, the rpcManager is never null.
                for (Address member : membersAfter) {
                   if (!members.contains(member) && !member.equals(ourAddress)) {
                      if (trace) {
