@@ -62,8 +62,23 @@ public class ResponseAssertion {
       return this;
    }
 
+   public ResponseAssertion hasNoContentEncoding() {
+      Assertions.assertThat(response.getHeaders().get(HttpHeader.CONTENT_ENCODING)).isNull();
+      return this;
+   }
+
    public ResponseAssertion hasContentType(String contentType) {
       Assertions.assertThat(response.getHeaders().get(HttpHeader.CONTENT_TYPE).replace(" ", "")).contains(contentType.replace(" ", ""));
+      return this;
+   }
+
+   public ResponseAssertion hasContentLength(Integer value) {
+      Assertions.assertThat(response.getHeaders().get("Content-Length")).isEqualTo(value.toString());
+      return this;
+   }
+
+   public ResponseAssertion hasGzipContentEncoding() {
+      Assertions.assertThat(response.getHeaders().get("Content-Encoding")).isEqualTo("gzip");
       return this;
    }
 

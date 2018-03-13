@@ -23,11 +23,13 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
    public static final int DEFAULT_PORT = 8080;
    public static final String DEFAULT_NAME = "rest";
    public static final int DEFAULT_MAX_CONTENT_LENGTH = 10 * 1024 * 1024;
+   public static final int DEFAULT_COMPRESS_LEVEL = 6;
 
    private ExtendedHeaders extendedHeaders = ExtendedHeaders.ON_DEMAND;
    private List<String> corsAllowOrigins = new ArrayList<>(6);
    private String contextPath = DEFAULT_CONTEXT_PATH;
    private int maxContentLength = DEFAULT_MAX_CONTENT_LENGTH;
+   private int compressionLevel = DEFAULT_COMPRESS_LEVEL;
 
    public RestServerConfigurationBuilder() {
       super(DEFAULT_PORT);
@@ -49,6 +51,11 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       return this;
    }
 
+   public RestServerConfigurationBuilder compressionLevel(int compressLevel) {
+      this.compressionLevel = compressLevel;
+      return this;
+   }
+
    public RestServerConfigurationBuilder corsAllowForLocalhost(String scheme, int port) {
       this.corsAllowOrigins.add(scheme + "://" + "127.0.0.1" + ":" + port);
       this.corsAllowOrigins.add(scheme + "://" + "localhost" + ":" + port);
@@ -58,13 +65,15 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    @Override
    public void validate() {
-      // Nothing to do
+      if (compressionLevel < 0 || compressionLevel > 9) {
+         throw logger.illegalCompressionLevel(compressionLevel);
+      }
    }
 
    @Override
    public RestServerConfiguration create() {
       return new RestServerConfiguration(defaultCacheName, name, extendedHeaders, host, port, ignoredCaches, ssl.create(),
-            startTransport, contextPath, adminOperationsHandler, maxContentLength, corsAllowOrigins);
+            startTransport, contextPath, adminOperationsHandler, maxContentLength, corsAllowOrigins, compressionLevel);
    }
 
    @Override
@@ -74,6 +83,7 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       this.port = template.port();
       this.maxContentLength = template.maxContentLength();
       this.corsAllowOrigins = template.getCorsAllowOrigins();
+      this.compressionLevel = template.getCompressionLevel();
       return this;
    }
 

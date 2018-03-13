@@ -176,6 +176,12 @@
                 <xs:documentation>Sets the maximum allowed content length.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="compression-level" type="xs:int" use="optional">
+            <xs:annotation>
+                <xs:documentation>Sets the compression level when using compressed requests and responses.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="websocket-connector">

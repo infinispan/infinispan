@@ -24,8 +24,8 @@
             <sni host-name="sni3" />
         </encryption>
     </hotrod-connector>
-    <memcached-connector cache="memcachedCache" socket-binding="memcached" cache-container="default" idle-timeout="100" tcp-nodelay="true" worker-threads="5" receive-buffer-size="10000" send-buffer-size="10000" />
-    <rest-connector name="rest1" socket-binding="rest" cache-container="default" ignored-caches="cache1 cache2 cache3" context-path="/" extended-headers="ON_DEMAND" max-content-length="500000">
+    <memcached-connector cache="memcachedCache" socket-binding="memcached" cache-container="default" idle-timeout="100" tcp-nodelay="true" worker-threads="5" receive-buffer-size="10000" send-buffer-size="10000"/>
+    <rest-connector name="rest1" socket-binding="rest" cache-container="default" ignored-caches="cache1 cache2 cache3" context-path="/" extended-headers="ON_DEMAND" max-content-length="500000" compression-level="7">
         <authentication security-realm="other" auth-method="BASIC"/>
         <encryption security-realm="other">
             <sni host-name="sni" security-realm="other" />
