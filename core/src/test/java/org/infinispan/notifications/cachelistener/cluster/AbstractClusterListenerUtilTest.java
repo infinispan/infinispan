@@ -313,7 +313,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
          // Wait for main thread to sync up
          checkPoint.trigger("pre_add_listener_invoked_" + cache);
          // Now wait until main thread lets us through
-         checkPoint.awaitStrict("pre_add_listener_release_" + cache, 10, TimeUnit.SECONDS);
+         checkPoint.awaitStrict("pre_add_listener_release_" + cache, 30, TimeUnit.SECONDS);
 
          try {
             return forwardedAnswer.answer(invocation);
@@ -321,7 +321,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
             // Wait for main thread to sync up
             checkPoint.trigger("post_add_listener_invoked_" + cache);
             // Now wait until main thread lets us through
-            checkPoint.awaitStrict("post_add_listener_release_" + cache, 10, TimeUnit.SECONDS);
+            checkPoint.awaitStrict("post_add_listener_release_" + cache, 30, TimeUnit.SECONDS);
          }
       }).when(mockNotifier).addFilteredListener(notNull(), nullable(CacheEventFilter.class), nullable(CacheEventConverter.class), any(Set.class));
       TestingUtil.replaceComponent(cache, CacheNotifier.class, mockNotifier, true);
