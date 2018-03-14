@@ -106,8 +106,8 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
 
    public void cacheCreateWithXMLConfigurationTest(Method m) {
       String cacheName = m.getName();
-      client(0).administration().getOrCreateCache(cacheName,
-            new XMLStringConfiguration("<infinispan><cache-container><distributed-cache name=\"configuration\"><expiration interval=\"10000\" lifespan=\"10\" max-idle=\"10\"/></distributed-cache></cache-container></infinispan>"));
+      String xml = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"><expiration interval=\"10000\" lifespan=\"10\" max-idle=\"10\"/></distributed-cache></cache-container></infinispan>", cacheName);
+      client(0).administration().getOrCreateCache(cacheName, new XMLStringConfiguration(xml));
       Configuration configuration = manager(0).getCache(cacheName).getCacheConfiguration();
       assertEquals(10000, configuration.expiration().wakeUpInterval());
       assertEquals(10, configuration.expiration().lifespan());
@@ -116,8 +116,8 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
 
    public void cacheCreateWithXMLConfigurationAndGetCacheTest(Method m) {
       String cacheName = m.getName();
-      client(0).administration().createCache(cacheName,
-         new XMLStringConfiguration("<infinispan><cache-container><distributed-cache name=\"configuration\"/></cache-container></infinispan>"));
+      String xml = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"/></cache-container></infinispan>", cacheName);
+      client(0).administration().createCache(cacheName, new XMLStringConfiguration(xml));
       final RemoteCache<Object, Object> cache = client(0).getCache(cacheName);
       assertNotNull(cache);
    }

@@ -50,18 +50,22 @@ public class CacheCreateTask extends AdminServerTask<Void> {
       return PARAMETERS;
    }
 
+   protected Configuration getConfiguration(String name, String configuration) {
+      ParserRegistry parserRegistry = new ParserRegistry();
+      ConfigurationBuilderHolder builderHolder = parserRegistry.parse(configuration);
+      if (!builderHolder.getNamedConfigurationBuilders().containsKey(name)) {
+         throw log.missingCacheConfiguration(name, configuration);
+      }
+      return builderHolder.getNamedConfigurationBuilders().get(name).build();
+   }
+
    @Override
    protected Void execute(EmbeddedCacheManager cacheManager, Map<String, String> parameters, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       String name = requireParameter(parameters, "name");
       String template = getParameter(parameters, "template");
       String configuration = getParameter(parameters, "configuration");
       if (configuration != null) {
-         ParserRegistry parserRegistry = new ParserRegistry();
-         ConfigurationBuilderHolder builderHolder = parserRegistry.parse(configuration);
-         if (!builderHolder.getNamedConfigurationBuilders().containsKey("configuration")) {
-            throw log.missingCacheConfiguration(name, configuration);
-         }
-         Configuration config = builderHolder.getNamedConfigurationBuilders().get("configuration").build();
+         Configuration config = getConfiguration(name, configuration);
          cacheManager.administration().withFlags(flags).createCache(name, config);
       } else {
          cacheManager.administration().withFlags(flags).createCache(name, template);

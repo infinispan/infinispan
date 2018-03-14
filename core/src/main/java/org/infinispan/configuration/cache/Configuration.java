@@ -441,8 +441,8 @@ public class Configuration implements BasicConfiguration, Matchable<Configuratio
    }
 
    @Override
-   public String toXMLString() {
+   public String toXMLString(String name) {
       ParserRegistry reg = new ParserRegistry();
-      return reg.serialize("configuration", this);
+      return reg.serialize(name, this);
    }
 }
