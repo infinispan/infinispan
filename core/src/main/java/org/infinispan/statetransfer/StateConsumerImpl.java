@@ -297,7 +297,12 @@ public class StateConsumerImpl implements StateConsumer {
       stateTransferLock.notifyTopologyInstalled(cacheTopology.getTopologyId());
       remoteCommandsExecutor.checkForReadyTasks();
 
+      final boolean wasMember = previousWriteCh != null && previousWriteCh.getMembers().contains(rpcManager.getAddress());
       try {
+         if (!wasMember && isMember) {
+            fetchClusterListeners(cacheTopology);
+         }
+
          // fetch transactions and data segments from other owners if this is enabled
          if (!startConflictResolution && (isTransactional || isFetchEnabled)) {
             Set<Integer> addedSegments, removedSegments;
@@ -306,19 +311,6 @@ public class StateConsumerImpl implements StateConsumer {
                // If we are not the first member, we can only add segments via rebalance.
                removedSegments = Collections.emptySet();
                addedSegments = Collections.emptySet();
-
-               // TODO Perhaps we should only do this once we are a member, as listener installation should happen only on cache members?
-               if (configuration.clustering().cacheMode().isDistributed() || configuration.clustering().cacheMode().isScattered()) {
-                  Collection<DistributedCallable> callables = getClusterListeners(cacheTopology);
-                  for (DistributedCallable callable : callables) {
-                     callable.setEnvironment(cache, null);
-                     try {
-                        callable.call();
-                     } catch (Exception e) {
-                        log.clusterListenerInstallationFailure(e);
-                     }
-                  }
-               }
 
                if (trace) {
                   log.tracef("On cache %s we have: added segments: %s", cacheName, addedSegments);
@@ -430,7 +422,6 @@ public class StateConsumerImpl implements StateConsumer {
          // when we lose membership (e.g. because there was a merge, the local partition was in degraded mode
          // and the other partition was available) or when L1 is enabled.
          Set<Integer> removedSegments;
-         boolean wasMember = previousWriteCh != null && previousWriteCh.getMembers().contains(rpcManager.getAddress());
          if ((isMember || wasMember) && cacheTopology.getPhase() == CacheTopology.Phase.NO_REBALANCE) {
             removedSegments = IntStream.range(0, newWriteCh.getNumSegments()).boxed().collect(Collectors.toSet());
             Set<Integer> newSegments = getOwnedSegments(newWriteCh);
@@ -446,6 +437,20 @@ public class StateConsumerImpl implements StateConsumer {
          }
       }
       return stateTransferFuture;
+   }
+
+   private void fetchClusterListeners(CacheTopology cacheTopology) {
+      if (configuration.clustering().cacheMode().isDistributed() || configuration.clustering().cacheMode().isScattered()) {
+         Collection<DistributedCallable> callables = getClusterListeners(cacheTopology);
+         for (DistributedCallable callable : callables) {
+            callable.setEnvironment(cache, null);
+            try {
+               callable.call();
+            } catch (Exception e) {
+               log.clusterListenerInstallationFailure(e);
+            }
+         }
+      }
    }
 
    protected void beforeTopologyInstalled(int topologyId, boolean startRebalance, ConsistentHash previousWriteCh, ConsistentHash newWriteCh) {
