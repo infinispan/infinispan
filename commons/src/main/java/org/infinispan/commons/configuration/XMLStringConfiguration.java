@@ -15,7 +15,7 @@ public class XMLStringConfiguration implements BasicConfiguration {
    }
 
    @Override
-   public String toXMLString() {
+   public String toXMLString(String name) {
       return xml;
    }
 }

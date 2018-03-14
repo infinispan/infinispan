@@ -2715,6 +2715,7 @@ The following table lists all currently available flags
 | Parameter       | Description | Required
 | name  | The name of the cache to create. | Yes
 | template | The name of the cache configuration template to use for the new cache.|No
+| configuration | the XML declaration of a cache configuration to use.|No
 | flags | See the flags table above. |No
 |==============================================================================
 

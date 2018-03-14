@@ -83,6 +83,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Administration task '%s' invoked without required parameter '%s'", id = 5030)
    NullPointerException missingRequiredAdminTaskParameter(String name, String parameter);
 
-   @Message(value = "The supplied configuration for cache '%s' is missing a declaration named 'configuration': %s", id = 5031)
+   @Message(value = "The supplied configuration for cache '%s' is missing a named configuration for it: %s", id = 5031)
    CacheConfigurationException missingCacheConfiguration(String name, String configuration);
 }
