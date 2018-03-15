@@ -43,7 +43,7 @@ public abstract class AbstractDelegatingKeyCacheSet<K, V> extends AbstractDelega
    protected CacheStream<K> getStream(boolean parallel) {
       DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
       CloseableSpliterator<K> closeableSpliterator = spliterator();
-      CacheStream<K> stream = new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm != null ? dm.getCacheTopology()::getSegment : null,
+      CacheStream<K> stream = new LocalCacheStream<>(new KeyStreamSupplier<>(cache, false, dm != null ? dm.getCacheTopology()::getSegment : null,
               () -> StreamSupport.stream(closeableSpliterator, false)), parallel, cache.getAdvancedCache().getComponentRegistry());
       // We rely on the fact that on close returns the same instance
       stream.onClose(closeableSpliterator::close);

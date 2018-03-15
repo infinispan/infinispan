@@ -4,29 +4,43 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.util.function.RemovableFunction;
 
 /**
  * {@link java.util.function.Function} that uses an encoder to converter entries from the configured storage format to
  * the requested format.
  */
-public class EncoderEntryMapper<K, V> implements RemovableFunction<CacheEntry<K, V>, CacheEntry<K, V>> {
+public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements RemovableFunction<T, T>,
+      InjectiveFunction<T, T> {
    @Inject private transient InternalEntryFactory entryFactory;
 
    private final DataConversion keyDataConversion;
    private final DataConversion valueDataConversion;
 
-   public EncoderEntryMapper(DataConversion keyDataConversion, DataConversion valueDataConversion) {
+   public static <K, V> EncoderEntryMapper<K, V, Map.Entry<K, V>> newEntryMapper(DataConversion keyDataConversion,
+         DataConversion valueDataConversion) {
+      return new EncoderEntryMapper<>(keyDataConversion, valueDataConversion);
+   }
+
+   public static <K, V> EncoderEntryMapper<K, V, CacheEntry<K, V>> newCacheEntryMapper(
+         DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      return new EncoderEntryMapper<>(keyDataConversion, valueDataConversion);
+   }
+
+   private EncoderEntryMapper(DataConversion keyDataConversion, DataConversion valueDataConversion) {
       this.keyDataConversion = keyDataConversion;
       this.valueDataConversion = valueDataConversion;
    }
@@ -44,9 +58,13 @@ public class EncoderEntryMapper<K, V> implements RemovableFunction<CacheEntry<K,
 
    @Override
    @SuppressWarnings("unchecked")
-   public CacheEntry<K, V> apply(CacheEntry<K, V> e) {
-      boolean keyFilterable = keyDataConversion.isStorageFormatFilterable();
-      boolean valueFilterable = valueDataConversion.isStorageFormatFilterable();
+   public T apply(T e) {
+      return apply(e, false);
+   }
+
+   public T apply(T e, boolean ignoreStorageFormatFilterable) {
+      boolean keyFilterable = !ignoreStorageFormatFilterable && keyDataConversion.isStorageFormatFilterable();
+      boolean valueFilterable = !ignoreStorageFormatFilterable && valueDataConversion.isStorageFormatFilterable();
       K key = e.getKey();
       Object unwrapped = keyDataConversion.getWrapper().unwrap(key);
       Object newKey = keyFilterable ? unwrapped : decode(unwrapped, keyDataConversion.getEncoder());
@@ -55,8 +73,13 @@ public class EncoderEntryMapper<K, V> implements RemovableFunction<CacheEntry<K,
       Object unwrappedValue = valueDataConversion.getWrapper().unwrap(value);
       Object newValue = valueFilterable ? unwrappedValue : decode(unwrappedValue, valueDataConversion.getEncoder());
       if (key != newKey || value != newValue) {
-         return (CacheEntry<K, V>) entryFactory.create(newKey, newValue, e.getMetadata().version(), e.getCreated(),
-               e.getLifespan(), e.getLastUsed(), e.getMaxIdle());
+         if (e instanceof CacheEntry) {
+            CacheEntry<K, V> ce = (CacheEntry<K, V>) e;
+            return (T) entryFactory.create(newKey, newValue, ce.getMetadata().version(), ce.getCreated(),
+                  ce.getLifespan(), ce.getLastUsed(), ce.getMaxIdle());
+         } else {
+            return (T) entryFactory.create(newKey, newValue, (Metadata) null);
+         }
       }
       return e;
    }

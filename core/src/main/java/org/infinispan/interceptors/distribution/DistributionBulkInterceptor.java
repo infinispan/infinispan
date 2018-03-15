@@ -55,11 +55,14 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
 
    @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
+         return super.visitEntrySetCommand(ctx, command);
+      }
+      // We just set it, we always wrap our iterator and support removal
+      FlagBitSets.getAndSetFlags(command, FlagBitSets.REMOTE_ITERATION);
+
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          EntrySetCommand entrySetCommand = (EntrySetCommand) rCommand;
-         if (entrySetCommand.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL))
-            return rv;
-
          CacheSet<CacheEntry<K, V>> entrySet = (CacheSet<CacheEntry<K, V>>) rv;
          if (rCtx.isInTxScope()) {
             entrySet = new TxBackingEntrySet<>(Caches.getCacheWithFlags(cache, entrySetCommand), entrySet, entrySetCommand,
@@ -222,11 +225,13 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
 
    @Override
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         KeySetCommand entrySetCommand = (KeySetCommand) rCommand;
-         if (entrySetCommand.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL))
-            return rv;
+      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
+         return super.visitKeySetCommand(ctx, command);
+      }
+      // We just set it, we always wrap our iterator and support removal
+      FlagBitSets.getAndSetFlags(command, FlagBitSets.REMOTE_ITERATION);
 
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          CacheSet<K> keySet = (CacheSet<K>) rv;
          if (ctx.isInTxScope()) {
             keySet = new TxBackingKeySet<>(Caches.getCacheWithFlags(cache, command), keySet, command,

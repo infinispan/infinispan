@@ -123,7 +123,7 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
       //and verify that the put operation updated the store too:
       InvocationContextFactory icf = TestingUtil.extractComponent(cache, InvocationContextFactory.class);
       InvocationContext context = icf.createSingleKeyNonTxInvocationContext();
-      assert "v2-second".equals(persistenceManager.loadFromAllStores("k2", context).getValue());
+      assert "v2-second".equals(persistenceManager.loadFromAllStores("k2", context.isOriginLocal()).getValue());
       assertEquals(countingCS.numLoads,2, "Expected 2, was " + countingCS.numLoads);
 
       assert countingCS.numContains == 0 : "Expected 0, was " + countingCS.numContains;

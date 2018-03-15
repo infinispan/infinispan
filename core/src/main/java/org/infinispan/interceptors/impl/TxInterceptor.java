@@ -3,6 +3,7 @@ package org.infinispan.interceptors.impl;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Spliterator;
@@ -269,14 +270,44 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    @Override
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       enlistIfNeeded(ctx);
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         if (rCtx.isInTxScope()) {
+      if (ctx.isInTxScope()) {
+         // We just set it, unfortunately we always wrap even if this flag was set
+         FlagBitSets.getAndSetFlags(command, FlagBitSets.REMOTE_ITERATION);
+         return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
             CacheSet<K> set = (CacheSet<K>) rv;
-            return new AbstractDelegatingKeyCacheSet(Caches.getCacheWithFlags(cache, (FlagAffectedCommand) rCommand), set) {
+            return new AbstractDelegatingKeyCacheSet<K, V>(Caches.getCacheWithFlags(cache, (FlagAffectedCommand) rCommand), set) {
                @Override
                public CloseableIterator<K> iterator() {
                   return new TransactionAwareKeyCloseableIterator<>(super.iterator(),
                         (TxInvocationContext<LocalTransaction>) rCtx, cache);
+               }
+
+               @Override
+               public void clear() {
+                  cache.clear();
+               }
+
+               @Override
+               public boolean contains(Object o) {
+                  boolean contained = false;
+                  if (o != null) {
+                     CacheEntry contextEntry = rCtx.lookupEntry(o);
+                     if (contextEntry == null) {
+                        contained = super.contains(o);
+                     } else {
+                        contained = !contextEntry.isRemoved();
+                     }
+                  }
+                  return contained;
+               }
+
+               @Override
+               public boolean remove(Object o) {
+                  boolean removed = false;
+                  if (o != null) {
+                     removed = cache.remove(o) != null;
+                  }
+                  return removed;
                }
 
                @Override
@@ -301,19 +332,53 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
                   return (int) size;
                }
             };
-         }
-         return rv;
-      });
+         });
+      }
+      return super.visitKeySetCommand(ctx, command);
    }
 
    @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       enlistIfNeeded(ctx);
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         if (rCtx.isInTxScope()) {
+      if (ctx.isInTxScope()) {
+         // We just set it, unfortunately we always wrap even if this flag was set
+         FlagBitSets.getAndSetFlags(command, FlagBitSets.REMOTE_ITERATION);
+         return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
             CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) rv;
             return new AbstractDelegatingEntryCacheSet<K, V>(
                   Caches.getCacheWithFlags(cache, (FlagAffectedCommand) rCommand), set) {
+
+               @Override
+               public void clear() {
+                  cache.clear();
+               }
+
+               @Override
+               public boolean contains(Object o) {
+                  boolean contained = false;
+                  Map.Entry entry = toEntry(o);
+                  if (entry != null) {
+                     CacheEntry contextEntry = rCtx.lookupEntry(entry.getKey());
+                     if (contextEntry == null) {
+                        contained = super.contains(o);
+                     } else {
+                        contained = !contextEntry.isRemoved() && contextEntry.getValue().equals(entry.getValue());
+                     }
+                  }
+                  return contained;
+               }
+
+               @Override
+               public boolean remove(Object o) {
+                  boolean removed = false;
+                  Map.Entry entry = toEntry(o);
+                  if (entry != null) {
+                     V value = cache.remove(o);
+                     removed = value != null && value.equals(entry.getValue());
+                  }
+                  return removed;
+               }
+
                @Override
                public CloseableIterator<CacheEntry<K, V>> iterator() {
                   return new TransactionAwareEntryCloseableIterator<>(super.iterator(),
@@ -341,10 +406,18 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
                   }
                   return (int) size;
                }
+
+               private Map.Entry<K, V> toEntry(Object obj) {
+                  if (obj instanceof Map.Entry) {
+                     return (Map.Entry) obj;
+                  } else {
+                     return null;
+                  }
+               }
             };
-         }
-         return rv;
-      });
+         });
+      }
+      return super.visitEntrySetCommand(ctx, command);
    }
 
    @Override

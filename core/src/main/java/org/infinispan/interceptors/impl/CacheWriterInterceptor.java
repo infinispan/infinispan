@@ -230,10 +230,12 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
          if (!isProperWriter(rCtx, computeIfAbsentCommand, computeIfAbsentCommand.getKey()))
             return;
 
-         Object key = computeIfAbsentCommand.getKey();
-         storeEntry(rCtx, key, computeIfAbsentCommand);
-         if (getStatisticsEnabled())
-            cacheStores.incrementAndGet();
+         if (rv != null) {
+            Object key = computeIfAbsentCommand.getKey();
+            storeEntry(rCtx, key, computeIfAbsentCommand);
+            if (getStatisticsEnabled())
+               cacheStores.incrementAndGet();
+         }
       });
    }
 

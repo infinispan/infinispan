@@ -42,7 +42,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.annotations.ComponentName;
@@ -495,11 +494,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public MarshalledEntry loadFromAllStores(Object key, InvocationContext context) {
+   public MarshalledEntry loadFromAllStores(Object key, boolean localInvocation) {
       storesMutex.readLock().lock();
       try {
          for (CacheLoader l : loaders) {
-            if (!context.isOriginLocal() && isLocalOnlyLoader(l))
+            if (!localInvocation && isLocalOnlyLoader(l))
                continue;
 
             MarshalledEntry load = l.load(key);

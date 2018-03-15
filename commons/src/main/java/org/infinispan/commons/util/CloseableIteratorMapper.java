@@ -1,5 +1,6 @@
 package org.infinispan.commons.util;
 
+import java.util.Iterator;
 import java.util.function.Function;
 
 /**
@@ -9,15 +10,17 @@ import java.util.function.Function;
  * @since 8.0
  */
 public class CloseableIteratorMapper<E, S> extends IteratorMapper<E, S> implements CloseableIterator<S> {
-   private final CloseableIterator<? extends E> iterator;
+   private final Iterator<? extends E> iterator;
 
-   public CloseableIteratorMapper(CloseableIterator<? extends E> iterator, Function<? super E, ? extends S> function) {
+   public CloseableIteratorMapper(Iterator<? extends E> iterator, Function<? super E, ? extends S> function) {
       super(iterator, function);
       this.iterator = iterator;
    }
 
    @Override
    public void close() {
-      iterator.close();
+      if (iterator instanceof CloseableIterator) {
+         ((CloseableIterator) iterator).close();
+      }
    }
 }

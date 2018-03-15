@@ -8,6 +8,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.CloseableSpliteratorMapper;
+import org.infinispan.commons.util.InjectiveFunction;
 
 /**
  * A {@link CacheCollection} that allows for a different set to be mapped as
@@ -22,10 +23,13 @@ import org.infinispan.commons.util.CloseableSpliteratorMapper;
  */
 public class CacheCollectionMapper<E, R> extends CollectionMapper<E, R> implements CacheCollection<R> {
    protected final CacheCollection<E> realCacheCollection;
+   protected final InjectiveFunction<Object, ?> keyFilterMapper;
 
-   public CacheCollectionMapper(CacheCollection<E> realCollection, Function<? super E, ? extends R> mapper) {
+   public CacheCollectionMapper(CacheCollection<E> realCollection, Function<? super E, ? extends R> mapper,
+         InjectiveFunction<Object, ?> keyFilterMapper) {
       super(realCollection, mapper);
       this.realCacheCollection = realCollection;
+      this.keyFilterMapper = keyFilterMapper;
    }
 
    @Override
@@ -38,14 +42,18 @@ public class CacheCollectionMapper<E, R> extends CollectionMapper<E, R> implemen
       return new CloseableIteratorMapper<>(realCacheCollection.iterator(), mapper);
    }
 
+   private CacheStream<R> getStream(CacheStream<E> parentStream) {
+      return new CacheStreamMapper<>(parentStream.map(mapper), keyFilterMapper);
+   }
+
    @Override
    public CacheStream<R> stream() {
-      return realCacheCollection.stream().map(mapper);
+      return getStream(realCacheCollection.stream());
    }
 
    @Override
    public CacheStream<R> parallelStream() {
-      return realCacheCollection.parallelStream().map(mapper);
+      return getStream(realCacheCollection.parallelStream());
    }
 
 }
