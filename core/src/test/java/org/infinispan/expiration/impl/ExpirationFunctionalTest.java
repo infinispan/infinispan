@@ -135,4 +135,16 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
                (k, ice) -> { throw new RuntimeException("No task should be executed on expired entry"); });
       }
    }
+
+   public void testExpiredEntriesCleared() {
+      for (int i = 0; i < 2; i++) {
+         cache.put("key-" + i, "value-" + i,-1, null, i, TimeUnit.MILLISECONDS);
+      }
+
+      // This should expire approximately half of the entries
+      timeService.advance(1);
+
+      cache.clear();
+      assertEquals(0, cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
+   }
 }

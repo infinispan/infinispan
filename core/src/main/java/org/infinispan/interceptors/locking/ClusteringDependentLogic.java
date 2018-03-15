@@ -179,7 +179,7 @@ public interface ClusteringDependentLogic {
 
       private void commitClearCommand(DataContainer<Object, Object> dataContainer, ClearCacheEntry<Object, Object> cacheEntry,
                                       InvocationContext context, FlagAffectedCommand command) {
-         Iterator<InternalCacheEntry<Object, Object>> iterator = dataContainer.iterator();
+         Iterator<InternalCacheEntry<Object, Object>> iterator = dataContainer.iteratorIncludingExpired();
 
          while (iterator.hasNext()) {
             InternalCacheEntry entry = iterator.next();
