@@ -176,7 +176,7 @@
       <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
       <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
-      <infinispan.test.parallel.threads>15</infinispan.test.parallel.threads>
+      <infinispan.test.parallel.threads>8</infinispan.test.parallel.threads>
       <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
       <junitListener>org.infinispan.commons.test.JUnitTestListener</junitListener>
