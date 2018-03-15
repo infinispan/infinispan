@@ -61,6 +61,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.Version;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.CommandsFactory;
@@ -223,50 +224,33 @@ public class TestingUtil {
       }
    }
 
-   public enum InfinispanStartTag {
-      START_40(4, 0),
-      START_41(4, 1),
-      START_42(4, 2),
-      START_50(5, 0),
-      START_51(5, 1),
-      START_52(5, 2),
-      START_53(5, 3),
-      START_60(6, 0),
-      START_70(7, 0),
-      START_71(7, 1),
-      START_72(7, 2),
-      START_80(8, 0),
-      START_81(8, 1),
-      START_82(8, 2),
-      START_90(9, 0),
-      START_91(9, 1),
-      START_92(9, 2);
-
-      public static final InfinispanStartTag LATEST = START_92;
-      private final String tag;
-      private final String majorMinor;
-
-      InfinispanStartTag(int major, int minor) {
-         tag = String.format("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
-         "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-         "      xsi:schemaLocation=\"urn:infinispan:config:%d.%d http://www.infinispan.org/schemas/infinispan-config-%d.%d.xsd\"\n" +
-         "      xmlns=\"urn:infinispan:config:%d.%d\">", major, minor, major, minor, major, minor);
-         majorMinor = String.format("%d.%d", major, minor);
-      }
-
-      @Override
-      public String toString() {
-         return tag;
-      }
-
-      public String majorMinor() {
-         return majorMinor;
-      }
+   public static String wrapXMLWithSchema(String schema, String xml) {
+      StringBuilder sb = new StringBuilder();
+      sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+      sb.append("<infinispan xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
+      sb.append("xsi:schemaLocation=\"urn:infinispan:config:");
+      sb.append(schema);
+      sb.append(" http://www.infinispan.org/schemas/infinispan-config-");
+      sb.append(schema);
+      sb.append(".xsd\" xmlns=\"urn:infinispan:config:");
+      sb.append(schema);
+      sb.append("\">\n");
+      sb.append(xml);
+      sb.append("</infinispan>");
+      return sb.toString();
    }
 
-   public static final String INFINISPAN_END_TAG = "</infinispan>";
-   public static final String INFINISPAN_START_TAG_NO_SCHEMA = "<infinispan>";
+   public static String wrapXMLWithSchema(String xml) {
+      return wrapXMLWithSchema(Version.getSchemaVersion(), xml);
+   }
 
+   public static String wrapXMLWithoutSchema(String xml) {
+      StringBuilder sb = new StringBuilder();
+      sb.append("<infinispan>\n");
+      sb.append(xml);
+      sb.append("</infinispan>");
+      return sb.toString();
+   }
 
    /**
     * Extracts the value of a field in a given target instance using reflection, able to extract private fields as

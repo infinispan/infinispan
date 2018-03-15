@@ -74,6 +74,12 @@
    </dependencies>
 
    <build>
+      <testResources>
+         <testResource>
+            <directory>${project.basedir}/src/test/resources</directory>
+            <filtering>true</filtering>
+         </testResource>
+      </testResources>
       <plugins>
          <!-- Disable parallel execution of tests ARQ-127 -->
          <plugin>

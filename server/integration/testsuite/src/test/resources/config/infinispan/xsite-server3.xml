@@ -1,4 +1,4 @@
-        <subsystem xmlns="urn:infinispan:server:core:9.2" >
+        <subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}" >
             <cache-container name="clustered" default-cache="default">
                 <transport lock-timeout="60000" />
                 <distributed-cache name="default" remote-timeout="30000"/>

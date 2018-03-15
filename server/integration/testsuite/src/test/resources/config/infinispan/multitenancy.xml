@@ -1,4 +1,4 @@
-        <subsystem xmlns="urn:infinispan:server:core:9.2" >
+        <subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}" >
             <cache-container name="multi-tenancy-1" default-cache="cache-1">
                 <local-cache name="cache-1" >
                     <compatibility enabled="true" />

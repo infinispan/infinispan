@@ -8,8 +8,8 @@
         http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd
         http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
-                  http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
-         http://www.infinispan.org/schemas/spring http://www.infinispan.org/schemas/infinispan-spring.xsd">
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.infinispan.org/schemas/spring http://www.infinispan.org/schemas/infinispan-spring.xsd">
 
     <cache:annotation-driven/>
 

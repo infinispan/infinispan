@@ -1,7 +1,6 @@
 package org.infinispan.configuration;
 
 import java.io.File;
-import java.io.FilenameFilter;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -85,12 +84,9 @@ public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
       if (!file.isDirectory()) {
          log.tracef("file.getAbsolutePath() = %s");
       }
-      return file.list(new FilenameFilter() {
-         @Override
-         public boolean accept(File dir, String name) {
-            // Exclude JGroups config files as well as all EC2 configurations (as these won't have proper credentials set)
-            return name.endsWith(".xml") && !name.startsWith("jgroups") && !name.contains("ec2");
-         }
+      return file.list((dir, name) -> {
+         // Exclude JGroups config files as well as all EC2 configurations (as these won't have proper credentials set)
+         return name.endsWith(".xml") && !name.startsWith("jgroups") && !name.contains("ec2");
       });
    }
 

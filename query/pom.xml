@@ -164,6 +164,12 @@
             <directory>${project.basedir}/src/main/resources</directory>
          </resource>
       </resources>
+      <testResources>
+         <testResource>
+            <directory>${project.basedir}/src/test/resources</directory>
+            <filtering>true</filtering>
+         </testResource>
+      </testResources>
       <plugins>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>

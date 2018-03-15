@@ -303,7 +303,7 @@
         <server3.old.dist>${basedir}/target/server/node3_old</server3.old.dist>
 
         <old.server.schema.version>8.0</old.server.schema.version>
-        <new.server.schema.version>9.2</new.server.schema.version>
+        <new.server.schema.version>${infinispan.core.schema.version}</new.server.schema.version>
 
         <start.jboss.as.manually>false</start.jboss.as.manually>
 
@@ -314,7 +314,6 @@
         <jvm.x64.args />
         <default.transport.stack>udp</default.transport.stack>
         <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
-
 
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
         <node0.ip>127.0.0.1</node0.ip>

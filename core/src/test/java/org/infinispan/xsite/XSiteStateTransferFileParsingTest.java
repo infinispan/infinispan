@@ -2,7 +2,6 @@ package org.infinispan.xsite;
 
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.DEFAULT_TIMEOUT;
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.DEFAULT_WAIT_TIME;
-import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -18,7 +17,6 @@ import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil.InfinispanStartTag;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -31,8 +29,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "xsite.XSiteStateTransferFileParsingTest")
 public class XSiteStateTransferFileParsingTest extends SingleCacheManagerTest {
    private static final String FILE_NAME = "configs/xsite/xsite-state-transfer-test.xml";
-   private static final String XML_FORMAT = InfinispanStartTag.LATEST
-         + "<jgroups>\n"
+   private static final String XML_FORMAT = "<infinispan>\n<jgroups>\n"
          + "  <stack-file name=\"udp\" path=\"jgroups-udp.xml\"/>\n"
          + "</jgroups>\n"
          + "<cache-container default-cache=\"default\">\n"
@@ -43,7 +40,7 @@ public class XSiteStateTransferFileParsingTest extends SingleCacheManagerTest {
          + "           <state-transfer chunk-size=\"10\" timeout=\"%s\" max-retries=\"30\" wait-time=\"%s\" />\n"
          + "        </backup>\n" + "     </backups>\n"
          + "     <backup-for remote-cache=\"someCache\" remote-site=\"SFO\"/>\n" + "  </replicated-cache>\n"
-         + "</cache-container>\n" + INFINISPAN_END_TAG;
+         + "</cache-container>\n</infinispan>";
 
    public void testDefaultCache() {
       Configuration dcc = cacheManager.getDefaultCacheConfiguration();

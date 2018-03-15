@@ -1,4 +1,4 @@
-        <subsystem xmlns="urn:infinispan:server:core:9.2">
+        <subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}">
             <cache-container name="clustered" default-cache="numOwners1">
                 <transport lock-timeout="240000"/>
                 <replicated-cache name="memcachedCache"  mode="ASYNC"/>

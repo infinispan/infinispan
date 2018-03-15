@@ -9,14 +9,13 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.TestingUtil.InfinispanStartTag;
 import org.testng.annotations.Test;
 
 @Test(testName = "remoting.jgroups.NonExistingJGroupsConfigTest", groups = "functional")
 public class NonExistingJGroupsConfigTest extends AbstractInfinispanTest {
 
    public void channelLookupTest() throws Throwable {
-      String config = InfinispanStartTag.LATEST +
+      String config = "<infinispan>\n" +
          "<jgroups>\n" +
          "   <stack-file name=\"dummy\" path=\"nosuchfile.xml\"/>\n" +
          "</jgroups>\n" +
@@ -24,8 +23,8 @@ public class NonExistingJGroupsConfigTest extends AbstractInfinispanTest {
          "   <jmx domain=\"NonExistingJGroupsConfigTest_channelLookupTest\" />\n" +
          "   <transport stack=\"dummy\" cluster=\"demoCluster\" />\n" +
          "   <replicated-cache name=\"default\" />\n" +
-         "</cache-container>" +
-         TestingUtil.INFINISPAN_END_TAG;
+         "</cache-container>\n" +
+         "</infinispan>";
       EmbeddedCacheManager cm = null;
       try {
          cm = new DefaultCacheManager(new ByteArrayInputStream(config.getBytes()));
@@ -40,7 +39,7 @@ public class NonExistingJGroupsConfigTest extends AbstractInfinispanTest {
 
 
    public void brokenJGroupsConfigTest() throws Throwable {
-      String config = InfinispanStartTag.LATEST +
+      String config = "<infinispan>\n" +
          "<jgroups>\n" +
          "   <stack-file name=\"dummy\" path=\"stacks/broken-tcp.xml\"/>\n" +
          "</jgroups>\n" +
@@ -48,8 +47,8 @@ public class NonExistingJGroupsConfigTest extends AbstractInfinispanTest {
          "   <jmx domain=\"NonExistingJGroupsConfigTest_brokenJGroupsConfigTest\" />\n" +
          "   <transport stack=\"dummy\" cluster=\"demoCluster\" />\n" +
          "   <replicated-cache name=\"default\" />\n" +
-         "</cache-container>" +
-         TestingUtil.INFINISPAN_END_TAG;
+         "</cache-container>\n" +
+         "</infinispan>";
       EmbeddedCacheManager cm = null;
       try {
          cm = new DefaultCacheManager(new ByteArrayInputStream(config.getBytes()));

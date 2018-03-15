@@ -67,19 +67,19 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
 
     @Parameters
     public static Collection<Object[]> data() {
-      Object[][] data = new Object[][] {
-                                         { Namespace.INFINISPAN_SERVER_6_0, 106, "schema/jboss-infinispan-core_6_0.xsd", null },
-                                         { Namespace.INFINISPAN_SERVER_7_0, 129, "schema/jboss-infinispan-core_7_0.xsd", null },
-                                         { Namespace.INFINISPAN_SERVER_7_1, 129, "schema/jboss-infinispan-core_7_1.xsd", null },
-                                         { Namespace.INFINISPAN_SERVER_7_2, 129, "schema/jboss-infinispan-core_7_2.xsd", null },
-                                         { Namespace.INFINISPAN_SERVER_8_0, 141, "schema/jboss-infinispan-core_8_0.xsd", null },
-                                         { Namespace.INFINISPAN_SERVER_8_1, 142, "schema/jboss-infinispan-core_8_1.xsd", null },
-                                         { Namespace.INFINISPAN_SERVER_8_2, 142, "schema/jboss-infinispan-core_8_2.xsd", null },
-                                         { Namespace.INFINISPAN_SERVER_9_0, 142, "schema/jboss-infinispan-core_9_0.xsd", null },
-                                         { Namespace.INFINISPAN_SERVER_9_1, 144, "schema/jboss-infinispan-core_9_1.xsd", new String[] { "/subsystem-templates/infinispan-core.xml" }},
-                                         { Namespace.INFINISPAN_SERVER_9_2, 153, "schema/jboss-infinispan-core_9_2.xsd", new String[] { "/subsystem-templates/infinispan-core.xml" }},
-      };
-      return Arrays.asList(data);
+        Object[][] data = new Object[][]{
+              {Namespace.INFINISPAN_SERVER_6_0, 106, null, null},
+              {Namespace.INFINISPAN_SERVER_7_0, 129, null, null},
+              {Namespace.INFINISPAN_SERVER_7_1, 129, null, null},
+              {Namespace.INFINISPAN_SERVER_7_2, 129, null, null},
+              {Namespace.INFINISPAN_SERVER_8_0, 141, null, null},
+              {Namespace.INFINISPAN_SERVER_8_1, 142, null, null},
+              {Namespace.INFINISPAN_SERVER_8_2, 142, null, null},
+              {Namespace.INFINISPAN_SERVER_9_0, 142, null, null},
+              {Namespace.INFINISPAN_SERVER_9_1, 144, null, null},
+              {Namespace.INFINISPAN_SERVER_9_2, 153, "schema/jboss-infinispan-core_9_2.xsd", new String[]{"/subsystem-templates/infinispan-core.xml"}},
+        };
+        return Arrays.asList(data);
     }
 
     @Override

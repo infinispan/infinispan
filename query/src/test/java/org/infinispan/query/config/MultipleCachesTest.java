@@ -33,7 +33,7 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      String config = TestingUtil.InfinispanStartTag.LATEST + "\n" +
+      String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
             "      <indexing index=\"NONE\" />\n" +
@@ -45,7 +45,7 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
             "      </indexing>\n" +
             "   </local-cache>\n" +
             "</cache-container>"
-            + TestingUtil.INFINISPAN_END_TAG;
+      );
       log.tracef("Using test configuration:\n%s", config);
       InputStream is = new ByteArrayInputStream(config.getBytes());
       final EmbeddedCacheManager cm;
