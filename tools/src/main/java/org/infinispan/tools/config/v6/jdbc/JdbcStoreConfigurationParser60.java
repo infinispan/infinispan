@@ -13,7 +13,6 @@ import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
-import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
@@ -31,11 +30,9 @@ import org.kohsuke.MetaInfServices;
  * @since 6.0
  */
 @MetaInfServices
-@Namespaces({
-      @Namespace(uri = "urn:infinispan:config:jdbc:6.0", root = "stringKeyedJdbcStore"),
-      @Namespace(uri = "urn:infinispan:config:jdbc:6.0", root = "binaryKeyedJdbcStore"),
-      @Namespace(uri = "urn:infinispan:config:jdbc:6.0", root = "mixedKeyedJdbcStore"),
-})
+@Namespace(uri = "urn:infinispan:config:jdbc:6.0", root = "stringKeyedJdbcStore")
+@Namespace(uri = "urn:infinispan:config:jdbc:6.0", root = "binaryKeyedJdbcStore")
+@Namespace(uri = "urn:infinispan:config:jdbc:6.0", root = "mixedKeyedJdbcStore")
 public class JdbcStoreConfigurationParser60 implements ConfigurationParser {
 
    public JdbcStoreConfigurationParser60() {

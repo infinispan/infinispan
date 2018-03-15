@@ -1,5 +1,6 @@
 package org.infinispan.configuration.parsing;
 
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
@@ -12,6 +13,7 @@ import java.lang.annotation.RetentionPolicy;
  * @since 6.0
  */
 @Retention(RetentionPolicy.RUNTIME)
+@Repeatable(Namespaces.class)
 public @interface Namespace {
    /**
     * The URI of the namespace. Defaults to the empty string.
@@ -22,4 +24,16 @@ public @interface Namespace {
     * The root element of this namespace.
     */
    String root();
+
+   /**
+    * The first version of the schema where this is supported. Defaults to 7.0. Only considered if {@link #uri()} ends
+    * with a wildcard
+    */
+   String since() default "7.0";
+
+   /**
+    * The last version of the schema where this is supported. Defaults to the current release. Only considered if {@link #uri()} ends
+    * with a wildcard
+    */
+   String until() default "";
 }
