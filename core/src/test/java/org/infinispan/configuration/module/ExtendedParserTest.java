@@ -1,6 +1,5 @@
 package org.infinispan.configuration.module;
 
-import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 
 import java.io.ByteArrayInputStream;
@@ -12,7 +11,7 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.TestingUtil.InfinispanStartTag;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -27,26 +26,26 @@ import org.testng.annotations.Test;
 public class ExtendedParserTest extends AbstractInfinispanTest {
 
    public void testExtendedParserModulesElement() throws IOException {
-      String config = InfinispanStartTag.START_82 +
+      String config = TestingUtil.wrapXMLWithSchema("8.2",
             "<cache-container name=\"container-extra-modules\" default-cache=\"extra-module\">" +
             "   <local-cache name=\"extra-module\">\n" +
             "     <modules>\n" +
             "       <sample-element xmlns=\"urn:infinispan:config:mymodule\" sample-attribute=\"test-value\" />\n" +
             "     </modules>\n" +
             "   </local-cache>\n" +
-            "</cache-container>" +
-            INFINISPAN_END_TAG;
+            "</cache-container>"
+      );
       assertCacheConfiguration(config);
    }
 
    public void testExtendedParserBareExtension() throws IOException {
-      String config = InfinispanStartTag.LATEST +
+      String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container name=\"container-extra-modules\" default-cache=\"extra-module\">" +
             "   <local-cache name=\"extra-module\">\n" +
             "       <sample-element xmlns=\"urn:infinispan:config:mymodule\" sample-attribute=\"test-value\" />\n" +
             "   </local-cache>\n" +
-            "</cache-container>" +
-            INFINISPAN_END_TAG;
+            "</cache-container>"
+      );
       assertCacheConfiguration(config);
    }
 
@@ -72,13 +71,13 @@ public class ExtendedParserTest extends AbstractInfinispanTest {
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: WRONG SCOPE")
    public void testExtendedParserWrongScope() throws IOException {
-      String config = InfinispanStartTag.LATEST +
+      String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container name=\"container-extra-modules\" default-cache=\"extra-module\">" +
             "   <local-cache name=\"extra-module\">\n" +
             "   </local-cache>\n" +
             "   <sample-element xmlns=\"urn:infinispan:config:mymodule\" sample-attribute=\"test-value\" />\n" +
-            "</cache-container>" +
-            INFINISPAN_END_TAG;
+            "</cache-container>"
+      );
       parseToHolder(config);
    }
 }

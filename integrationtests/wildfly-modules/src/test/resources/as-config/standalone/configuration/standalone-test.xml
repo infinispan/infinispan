@@ -2,9 +2,9 @@
 
 <server xmlns="urn:jboss:domain:5.0">
     <extensions>
-        <extension module="org.infinispan.extension:ispn-9.2"/>
-        <extension module="org.infinispan.server.endpoint:ispn-9.2"/>
-        <extension module="org.jgroups.extension:ispn-9.2"/>
+        <extension module="org.infinispan.extension:ispn-${infinispan.core.schema.version}"/>
+        <extension module="org.infinispan.server.endpoint:ispn-${infinispan.core.schema.version}"/>
+        <extension module="org.jgroups.extension:ispn-${infinispan.core.schema.version}"/>
 
         <extension module="org.jboss.as.clustering.infinispan"/>
         <extension module="org.jboss.as.clustering.jgroups"/>
@@ -330,30 +330,30 @@
             <worker name="default"/>
             <buffer-pool name="default"/>
         </subsystem>
-        <subsystem xmlns="urn:infinispan:server:jgroups:9.2">
+        <subsystem xmlns="urn:infinispan:server:jgroups:${infinispan.core.schema.version}">
             <channels default="cluster">
                 <channel name="cluster"/>
             </channels>
             <stacks default="${jboss.default.jgroups.stack:udp}">
                 <stack name="udp">
-                    <transport type="UDP" socket-binding="jgroups-udp" module="org.jgroups:ispn-9.2"/>
-                    <protocol type="PING" module="org.jgroups:ispn-9.2"/>
-                    <protocol type="MERGE3" module="org.jgroups:ispn-9.2"/>
-                    <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" module="org.jgroups:ispn-9.2"/>
-                    <protocol type="FD_ALL" module="org.jgroups:ispn-9.2"/>
-                    <protocol type="VERIFY_SUSPECT" module="org.jgroups:ispn-9.2"/>
-                    <protocol type="pbcast.NAKACK2" module="org.jgroups:ispn-9.2"/>
-                    <protocol type="UNICAST3" module="org.jgroups:ispn-9.2"/>
-                    <protocol type="pbcast.STABLE" module="org.jgroups:ispn-9.2"/>
-                    <protocol type="pbcast.GMS" module="org.jgroups:ispn-9.2"/>
-                    <protocol type="UFC" module="org.jgroups:ispn-9.2"/>
-                    <protocol type="MFC" module="org.jgroups:ispn-9.2"/>
-                    <protocol type="FRAG2" module="org.jgroups:ispn-9.2"/>
+                    <transport type="UDP" socket-binding="jgroups-udp" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
+                    <protocol type="PING" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
+                    <protocol type="MERGE3" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
+                    <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
+                    <protocol type="FD_ALL" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
+                    <protocol type="VERIFY_SUSPECT" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
+                    <protocol type="pbcast.NAKACK2" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
+                    <protocol type="UNICAST3" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
+                    <protocol type="pbcast.STABLE" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
+                    <protocol type="pbcast.GMS" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
+                    <protocol type="UFC" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
+                    <protocol type="MFC" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
+                    <protocol type="FRAG2" module="org.jgroups:ispn-${infinispan.core.schema.version}"/>
                 </stack>
             </stacks>
         </subsystem>
-        <subsystem xmlns="urn:infinispan:server:core:9.2">
-            <cache-container module="org.infinispan.extension:ispn-9.2" name="infinispan_container" default-cache="default">
+        <subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}">
+            <cache-container module="org.infinispan.extension:ispn-${infinispan.core.schema.version}" name="infinispan_container" default-cache="default">
                 <transport initial-cluster-size="2"/>
                 <global-state/>
                 <distributed-cache name="default"/>
@@ -365,7 +365,7 @@
                 </counters>
             </cache-container>
         </subsystem>
-        <subsystem xmlns="urn:infinispan:server:endpoint:9.2">
+        <subsystem xmlns="urn:infinispan:server:endpoint:${infinispan.core.schema.version}">
             <hotrod-connector socket-binding="hotrod" cache-container="infinispan_container">
                     <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000"/>
             </hotrod-connector>

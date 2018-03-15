@@ -1,4 +1,4 @@
-        <subsystem xmlns="urn:infinispan:server:core:9.2">
+        <subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}">
             <cache-container name="local" default-cache="default">
                 <local-cache name="default" >
                     <store name="customStore" class="org.infinispan.persistence.cluster.MyCustomCacheStore">

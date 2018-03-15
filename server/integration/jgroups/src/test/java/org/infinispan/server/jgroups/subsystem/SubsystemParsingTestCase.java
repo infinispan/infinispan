@@ -71,11 +71,11 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
 
     @Parameters
     public static Collection<Object[]> data() {
-        Object[][] data = new Object[][] {
-                { JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0, 25, "schema/jboss-infinispan-jgroups_7_0.xsd", null },
-                { JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0, 27, "schema/jboss-infinispan-jgroups_8_0.xsd", null },
-                { JGroupsSchema.INFINISPAN_SERVER_JGROUPS_9_0, 27, "schema/jboss-infinispan-jgroups_9_0.xsd", new String[] { "/subsystem-templates/infinispan-jgroups.xml", "/subsystem-templates/cloud-jgroups.xml" } },
-                { JGroupsSchema.INFINISPAN_SERVER_JGROUPS_9_2, 27, "schema/jboss-infinispan-jgroups_9_2.xsd", new String[] { "/subsystem-templates/infinispan-jgroups.xml", "/subsystem-templates/cloud-jgroups.xml" } },
+        Object[][] data = new Object[][]{
+              {JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0, 25, null, null},
+              {JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0, 27, null, null},
+              {JGroupsSchema.INFINISPAN_SERVER_JGROUPS_9_0, 27, null, null},
+              {JGroupsSchema.INFINISPAN_SERVER_JGROUPS_9_2, 27, "schema/jboss-infinispan-jgroups_9_2.xsd", new String[]{"/subsystem-templates/infinispan-jgroups.xml", "/subsystem-templates/cloud-jgroups.xml"}},
         };
         return Arrays.asList(data);
     }

@@ -281,7 +281,7 @@
                <clusterName>elasticTestCluster</clusterName>
                <tcpPort>9300</tcpPort>
                <httpPort>9200</httpPort>
-               <pathConf>${project.basedir}/src/elasticsearch-config</pathConf>
+               <pathConf>${project.build.testOutputDirectory}/elasticsearch-config</pathConf>
             </configuration>
             <executions>
                <execution>
@@ -318,7 +318,7 @@
                      <overwrite>true</overwrite>
                      <resources>
                         <resource>
-                           <directory>${basedir}/src/as-config</directory>
+                           <directory>${project.build.testOutputDirectory}/as-config</directory>
                         </resource>
                      </resources>
                   </configuration>
@@ -335,7 +335,7 @@
                      <overwrite>true</overwrite>
                      <resources>
                         <resource>
-                           <directory>${basedir}/src/as-config</directory>
+                           <directory>${project.build.testOutputDirectory}/as-config</directory>
                         </resource>
                      </resources>
                   </configuration>

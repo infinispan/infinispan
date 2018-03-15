@@ -1,4 +1,4 @@
-<subsystem xmlns="urn:infinispan:server:core:9.2">
+<subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}">
     <cache-container name="indexing" default-cache="local">
         <transport channel="maximal-channel" lock-timeout="120000" strict-peer-to-peer="false" initial-cluster-size="4"
                    initial-cluster-timeout="20000"/>

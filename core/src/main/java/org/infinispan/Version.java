@@ -28,6 +28,7 @@ public class Version {
 
    private final String version;
    private final String codename;
+   private final String schemaVersion;
    private final byte[] versionId;
    private final String moduleSlot;
    private final short versionShort;
@@ -44,6 +45,7 @@ public class Version {
       }
       version = properties.getProperty("infinispan.version", "0.0.0-SNAPSHOT");
       codename = properties.getProperty("infinispan.codename", "N/A");
+      schemaVersion = properties.getProperty("infinispan.core.schema.version", "0.0");
       String parts[] = getParts(version);
       versionId = readVersionBytes(parts[0], parts[1], parts[2], parts[3]);
       versionShort = getVersionShort(version);
@@ -67,6 +69,10 @@ public class Version {
 
    public static short getMarshallVersion() {
       return INSTANCE.marshallVersion;
+   }
+
+   public static String getSchemaVersion() {
+      return INSTANCE.schemaVersion;
    }
 
    public static String getMajorMinor() {

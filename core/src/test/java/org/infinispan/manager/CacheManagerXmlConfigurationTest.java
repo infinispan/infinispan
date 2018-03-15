@@ -1,10 +1,9 @@
 package org.infinispan.manager;
 
-import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -15,7 +14,6 @@ import org.infinispan.Cache;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.TestingUtil.InfinispanStartTag;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterMethod;
@@ -74,7 +72,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
    }
 
    public void testNamedCacheXMLClashingNames() {
-      String xml = InfinispanStartTag.LATEST +
+      String xml = TestingUtil.wrapXMLWithSchema(
             "<cache-container default-cache=\"default\">" +
             "\n" +
             "   <local-cache name=\"default\">\n" +
@@ -87,8 +85,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
             "\n" +
             "   <replicated-cache name=\"c1\" mode=\"SYNC\" remote-timeout=\"15000\">\n" +
             "   </replicated-cache>\n" +
-            "</cache-container>" +
-            INFINISPAN_END_TAG;
+            "</cache-container>");
 
       ByteArrayInputStream bais = new ByteArrayInputStream(xml.getBytes());
       try {

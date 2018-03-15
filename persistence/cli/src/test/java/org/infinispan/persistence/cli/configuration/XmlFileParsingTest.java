@@ -6,11 +6,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.infinispan.Version;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.TestingUtil.InfinispanStartTag;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -26,16 +26,16 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public void testRemoteCacheStore() throws Exception {
-      String config = InfinispanStartTag.LATEST +
+      String config = TestingUtil.wrapXMLWithSchema(
             "   <cache-container default-cache=\"default\">\n" +
             "      <local-cache name=\"default\">\n" +
             "     <persistence>\n" +
-            "       <cli-loader xmlns=\"urn:infinispan:config:store:cli:"+ InfinispanStartTag.LATEST.majorMinor()+"\" " +
+            "       <cli-loader xmlns=\"urn:infinispan:config:store:cli:"+ Version.getSchemaVersion() + "\" " +
             "                  connection=\"jmx://1.2.3.4:4444/MyCacheManager/myCache\">\n" +
             "       </cli-loader>\n" +
             "     </persistence>\n" +
-            "   </local-cache></cache-container>\n" +
-            TestingUtil.INFINISPAN_END_TAG;
+            "   </local-cache></cache-container>"
+      );
 
       CLInterfaceLoaderConfiguration store = (CLInterfaceLoaderConfiguration) buildCacheManagerWithCacheStore(config);
       assertEquals("jmx://1.2.3.4:4444/MyCacheManager/myCache", store.connectionString());

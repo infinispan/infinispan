@@ -1,4 +1,4 @@
-<project name="infinispan-packaging" basedir="." default="package" xmlns:if="ant:if" xmlns:unless="ant:unless">
+<project name="infinispan-packaging" basedir="." default="package" xmlns:if="ant:if">
    <property name="root.dir" value=".." />
    <property name="dist.dir" value="${project.build.directory}/distribution" />
    <property name="base.output.dir" value="${dist.dir}/infinispan-${project.version}" />

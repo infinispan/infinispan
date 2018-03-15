@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:9.2 http://www.infinispan.org/schemas/infinispan-config-9.2.xsd
-                          urn:infinispan:config:store:rest:9.2 http://www.infinispan.org/schemas/infinispan-cachestore-rest-config-9.2.xsd"
-      xmlns="urn:infinispan:config:9.2">
+      xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} http://www.infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd
+                          urn:infinispan:config:store:rest:${infinispan.core.schema.version} http://www.infinispan.org/schemas/infinispan-cachestore-rest-config-${infinispan.core.schema.version}.xsd"
+      xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
    <cache-container default-cache="default">
       <local-cache name="default">
          <persistence passivation="false">
-            <rest-store xmlns="urn:infinispan:config:store:rest:9.2"
+            <rest-store xmlns="urn:infinispan:config:store:rest:${infinispan.core.schema.version}"
                         fetch-state="false" read-only="false" preload="false" purge="false" shared="true" raw-values="false"
                         path="/rest/___defaultcache" append-cache-name-to-path="false"
                         key-to-string-mapper="org.infinispan.persistence.keymappers.WrappedByteArrayOrPrimitiveMapper"

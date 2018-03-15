@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:9.2 http://www.infinispan.org/schemas/infinispan-config-9.2.xsd
-   urn:infinispan:config:counters:9.2 infinispan-counters-config-9.2.xsd"
-        xmlns="urn:infinispan:config:9.2">
+        xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} http://www.infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd"
+        xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
 
     <cache-container default-cache="default">
         <transport/>
@@ -13,7 +12,7 @@
         <local-cache name="default">
             <locking concurrency-level="100" acquire-timeout="1000"/>
         </local-cache>
-        <counters xmlns="urn:infinispan:config:counters:9.2" num-owners="3" reliability="CONSISTENT">
+        <counters xmlns="urn:infinispan:config:counters:${infinispan.core.schema.version}" num-owners="3" reliability="CONSISTENT">
             <strong-counter name="c1" initial-value="1" storage="PERSISTENT"/>
             <strong-counter name="c2" initial-value="2" storage="VOLATILE">
                 <lower-bound value="0"/>

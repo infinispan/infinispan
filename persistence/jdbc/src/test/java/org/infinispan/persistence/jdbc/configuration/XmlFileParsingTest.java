@@ -7,11 +7,11 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
+import org.infinispan.Version;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.TestingUtil.InfinispanStartTag;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -27,11 +27,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public void testStringKeyedJdbcStore() throws Exception {
-      String config = InfinispanStartTag.LATEST +
+      String config = TestingUtil.wrapXMLWithSchema(
             "   <cache-container default-cache=\"default\">\n" +
             "      <local-cache name=\"default\">\n" +
             "     <persistence>\n" +
-            "       <string-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:"+ InfinispanStartTag.LATEST.majorMinor()+"\" key-to-string-mapper=\"DummyKey2StringMapper\" shared=\"true\" " +
+            "       <string-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:"+ Version.getSchemaVersion() + "\" key-to-string-mapper=\"DummyKey2StringMapper\" shared=\"true\" " +
             "                                preload=\"true\" read-only=\"true\" fetch-state=\"true\" purge=\"true\" singleton=\"false\" dialect=\"H2\">\n" +
             "         <connection-pool connection-url=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driver=\"org.h2.Driver\"/>\n" +
             "         <string-keyed-table prefix=\"entry\" fetch-size=\"34\" batch-size=\"128\" >\n" +
@@ -42,8 +42,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "         <write-behind />\n" +
             "       </string-keyed-jdbc-store>\n" +
             "     </persistence>\n" +
-            "   </local-cache></cache-container>\n" +
-            TestingUtil.INFINISPAN_END_TAG;
+            "   </local-cache></cache-container>\n"
+      );
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
       cacheManager = TestCacheManagerFactory.fromStream(is);
