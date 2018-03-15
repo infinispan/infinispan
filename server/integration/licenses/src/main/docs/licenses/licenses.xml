@@ -617,7 +617,7 @@
     <dependency>
       <groupId>com.thoughtworks.xstream</groupId>
       <artifactId>xstream</artifactId>
-      <version>1.4.9</version>
+      <version>1.4.10</version>
       <licenses>
         <license>
           <name>BSD License (no advertising)</name>
