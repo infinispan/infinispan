@@ -20,6 +20,7 @@ import java.util.function.Consumer;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.EntrySizeCalculator;
@@ -409,7 +410,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       }
    }
 
-   public class EntryIterator implements Iterator<InternalCacheEntry<K, V>> {
+   public class EntryIterator implements CloseableIterator<InternalCacheEntry<K, V>> {
 
       private final Iterator<InternalCacheEntry<K, V>> it;
 
@@ -474,6 +475,11 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       @Override
       public void remove() {
          throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void close() {
+         // Do nothing - this is to avoid additional wrappings by callers
       }
    }
 

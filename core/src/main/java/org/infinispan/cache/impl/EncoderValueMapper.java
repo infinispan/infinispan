@@ -5,13 +5,13 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.util.function.RemovableFunction;
 
 /**
  * {@link java.util.function.Function} that uses a valueEncoder to converter values from the configured storage format
@@ -19,7 +19,7 @@ import org.infinispan.util.function.RemovableFunction;
  *
  * @since 9.1
  */
-public class EncoderValueMapper<V> implements RemovableFunction<V, V> {
+public class EncoderValueMapper<V> implements Function<V, V> {
 
    private final DataConversion dataConversion;
 

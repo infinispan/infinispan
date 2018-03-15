@@ -1,8 +1,7 @@
 package org.infinispan.cache.impl;
 
 import java.lang.annotation.Annotation;
-import java.util.AbstractCollection;
-import java.util.AbstractSet;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,16 +21,12 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
-import org.infinispan.CacheStream;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableIteratorMapper;
-import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.CloseableSpliteratorMapper;
+import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.compat.BiFunctionMapper;
 import org.infinispan.compat.FunctionMapper;
 import org.infinispan.container.InternalEntryFactory;
@@ -46,7 +41,8 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.ListenerHolder;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
-import org.infinispan.util.AbstractDelegatingCacheStream;
+import org.infinispan.util.WriteableCacheCollectionMapper;
+import org.infinispan.util.WriteableCacheSetMapper;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -170,88 +166,6 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
          entryMap.put(unwrappedKey, entryToPut);
       });
       return entryMap;
-   }
-
-   private class EncodedCacheStream<R> extends AbstractDelegatingCacheStream<R> {
-
-      public EncodedCacheStream(CacheStream<R> stream) {
-         super(stream);
-      }
-
-      @Override
-      public AbstractDelegatingCacheStream<R> filterKeys(Set<?> keys) {
-         return super.filterKeys(encodeKeysForWrite(keys));
-      }
-   }
-
-   /**
-    * This only extends AbstractSet so it falls back to iterator in case if we didn't implement a method
-    */
-   private class EncodedKeySet extends AbstractSet<K> implements CacheSet<K> {
-      private final CacheSet<K> actualCollection;
-      private final EncoderKeyMapper keyMapper = new EncoderKeyMapper(keyDataConversion);
-
-      EncodedKeySet(CacheSet<K> actualCollection) {
-         this.actualCollection = actualCollection;
-      }
-
-      @Override
-      public CacheStream<K> stream() {
-         return new EncodedCacheStream<>(actualCollection.stream().map(keyMapper));
-      }
-
-      @Override
-      public CacheStream<K> parallelStream() {
-         return new EncodedCacheStream<>(actualCollection.parallelStream().map(keyMapper));
-      }
-
-      @Override
-      public CloseableIterator<K> iterator() {
-         return new CloseableIteratorMapper<>(actualCollection.iterator(), EncoderCache.this::keyFromStorage);
-      }
-
-      @Override
-      public int size() {
-         return actualCollection.size();
-      }
-
-      @Override
-      public CloseableSpliterator<K> spliterator() {
-         return new CloseableSpliteratorMapper<>(actualCollection.spliterator(), EncoderCache.this::keyFromStorage);
-      }
-
-      @Override
-      public boolean contains(Object o) {
-         return actualCollection.contains(keyToStorage(o));
-      }
-
-      @Override
-      public boolean remove(Object o) {
-         return actualCollection.remove(keyToStorage(o));
-      }
-
-      // These methods should be delegated to actual collection as they can be faster
-
-      @Override
-      public boolean removeAll(Collection<?> c) {
-         return actualCollection.removeAll(buildKeyCollection(c));
-      }
-
-      @Override
-      public boolean retainAll(Collection<?> c) {
-         return actualCollection.retainAll(buildKeyCollection(c));
-      }
-
-      Collection<K> buildKeyCollection(Collection<?> c) {
-         Collection<K> toRemove = new ArrayList<>(c.size());
-         for (Object obj : c) {
-            K entry = keyToStorage(obj);
-            if (entry != null) {
-               toRemove.add(entry);
-            }
-         }
-         return toRemove;
-      }
    }
 
    @Override
@@ -556,7 +470,10 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
-      return new EncoderEntrySet(super.cacheEntrySet());
+      EncoderEntryMapper<K, V, CacheEntry<K, V>> cacheEntryMapper = EncoderEntryMapper.newCacheEntryMapper(
+            keyDataConversion, valueDataConversion, entryFactory);
+      return new WriteableCacheSetMapper<>(super.cacheEntrySet(), cacheEntryMapper,
+            e -> new CacheEntryWrapper<>(cacheEntryMapper.apply(e), e), this::toCacheEntry, this::keyToStorage);
    }
 
    @Override
@@ -789,170 +706,95 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public CacheSet<K> keySet() {
-      return new EncodedKeySet(super.keySet());
+      InjectiveFunction<Object, K> keyToStorage = this::keyToStorage;
+      return new WriteableCacheSetMapper<>(super.keySet(), new EncoderKeyMapper<>(keyDataConversion),
+            keyToStorage, keyToStorage);
    }
 
+   @Override
+   public CacheSet<Map.Entry<K, V>> entrySet() {
+      EncoderEntryMapper<K, V, Map.Entry<K, V>> entryMapper = EncoderEntryMapper.newEntryMapper(keyDataConversion,
+            valueDataConversion, entryFactory);
+      return new WriteableCacheSetMapper<>(super.entrySet(), entryMapper,
+            e -> new EntryWrapper<>(e, entryMapper.apply(e, true)), this::toEntry, this::keyToStorage);
+   }
 
-   private class EncoderIterator<A, B> implements CloseableIterator<CacheEntry<A, B>> {
-      private final CloseableIterator<CacheEntry<A, B>> iterator;
-      private final InternalEntryFactory entryFactory;
-
-      EncoderIterator(CloseableIterator<CacheEntry<A, B>> iterator, InternalEntryFactory entryFactory) {
-         this.iterator = iterator;
-         this.entryFactory = entryFactory;
-      }
-
-      @Override
-      public void close() {
-         iterator.close();
-      }
-
-      @Override
-      public boolean hasNext() {
-         return iterator.hasNext();
-      }
-
-      @Override
-      public CacheEntry<A, B> next() {
-         CacheEntry<A, B> entry = iterator.next();
-         return new EntryWrapper<>(entry, convert(entry));
-      }
-
-      private CacheEntry<A, B> convert(CacheEntry<A, B> entry) {
-         A newKey = (A) keyFromStorage(entry.getKey());
-         B newValue = (B) valueFromStorage(entry.getValue());
-
-         // If either value changed then make a copy
-         if (newKey != entry.getKey() || newValue != entry.getValue()) {
-            if (entry instanceof InternalCacheEntry) {
-               return entryFactory.create(newKey, newValue, (InternalCacheEntry) entry);
-            }
-            return entryFactory.create(newKey, newValue, entry.getMetadata());
+   Map.Entry<K, V> toEntry(Object o) {
+      if (o instanceof Map.Entry) {
+         Map.Entry<K, V> entry = (Map.Entry<K, V>) o;
+         K key = entry.getKey();
+         K newKey = keyToStorage(key);
+         V value = entry.getValue();
+         V newValue = valueToStorage(value);
+         if (key != newKey || value != newValue) {
+            return new AbstractMap.SimpleEntry<>(newKey, newValue);
          }
          return entry;
       }
+      return null;
+   }
+
+   CacheEntry<K, V> toCacheEntry(Object o) {
+      if (o instanceof Map.Entry) {
+         Map.Entry<K, V> entry = (Map.Entry<K, V>) o;
+         K key = entry.getKey();
+         K newKey = keyToStorage(key);
+         V value = entry.getValue();
+         V newValue = valueToStorage(value);
+         if (key != newKey || value != newValue) {
+            if (o instanceof CacheEntry) {
+               CacheEntry returned = (CacheEntry) o;
+               return convertEntry(newKey, newValue, returned);
+            } else {
+               return entryFactory.create(newKey, newValue, (Metadata) null);
+            }
+         }
+         if (entry instanceof CacheEntry) {
+            return (CacheEntry<K, V>) entry;
+         } else {
+            return entryFactory.create(key, value, (Metadata) null);
+         }
+      }
+      return null;
+   }
+
+   @Override
+   public CacheCollection<V> values() {
+      return new WriteableCacheCollectionMapper<>(super.values(), new EncoderValueMapper<>(valueDataConversion),
+            this::valueToStorage, this::keyToStorage);
+   }
+
+   private class EntryWrapper<A, B> implements Entry<A, B> {
+      private final Entry<A, B> storageEntry;
+      private final Entry<A, B> entry;
+
+      EntryWrapper(Entry<A, B> storageEntry, Entry<A, B> entry) {
+         this.storageEntry = storageEntry;
+         this.entry = entry;
+      }
 
       @Override
-      public void remove() {
-         iterator.remove();
+      public A getKey() {
+         return entry.getKey();
+      }
+
+      @Override
+      public B getValue() {
+         return entry.getValue();
+      }
+
+      @Override
+      public B setValue(B value) {
+         storageEntry.setValue((B) valueToStorage(value));
+         return entry.setValue(value);
       }
    }
 
-   /**
-    * This only extends AbstractSet so it falls back to iterator in case if we didn't implement a method
-    */
-   private class EncoderEntrySet extends AbstractSet<CacheEntry<K, V>> implements CacheSet<CacheEntry<K, V>> {
-      private CacheSet<CacheEntry<K, V>> actualCollection;
-      private EncoderEntryMapper entryMapper;
-
-
-      EncoderEntrySet(CacheSet<CacheEntry<K, V>> actualCollection) {
-         this.entryMapper = new EncoderEntryMapper(keyDataConversion, valueDataConversion);
-         this.actualCollection = actualCollection;
-      }
-
-      @Override
-      public CacheStream<CacheEntry<K, V>> stream() {
-         return new EncodedCacheStream<>(actualCollection.stream().map(entryMapper));
-      }
-
-      @Override
-      public CacheStream<CacheEntry<K, V>> parallelStream() {
-         return new EncodedCacheStream<>(actualCollection.parallelStream().map(entryMapper));
-      }
-
-      @Override
-      public CloseableIterator<CacheEntry<K, V>> iterator() {
-         return new EncoderIterator<>(actualCollection.iterator(), entryFactory);
-      }
-
-      @Override
-      public int size() {
-         return actualCollection.size();
-      }
-
-      @Override
-      public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
-         return new CloseableSpliteratorMapper<>(actualCollection.spliterator(),
-               entry -> {
-                  K key = entry.getKey();
-                  K keyFromStorage = keyFromStorage(key);
-                  V value = entry.getValue();
-                  V valueFromStorage = valueFromStorage(value);
-                  if (keyFromStorage != key || valueFromStorage != value) {
-                     return convertEntry(keyFromStorage, valueFromStorage, entry);
-                  }
-                  return entry;
-               });
-      }
-
-      @Override
-      public boolean contains(Object o) {
-         Map.Entry<K, V> entry = toEntry(o);
-         if (entry != null) {
-            return actualCollection.contains(entry);
-         }
-         return false;
-      }
-
-      @Override
-      public boolean remove(Object o) {
-         Map.Entry<K, V> entry = toEntry(o);
-         if (entry != null) {
-            return actualCollection.remove(entry);
-         }
-         return false;
-      }
-
-      // These methods should be delegated to actual collection as they can be faster
-
-      @Override
-      public boolean removeAll(Collection<?> c) {
-         return actualCollection.removeAll(buildEntryCollection(c));
-      }
-
-      @Override
-      public boolean retainAll(Collection<?> c) {
-         return actualCollection.retainAll(buildEntryCollection(c));
-      }
-
-      Collection<Map.Entry> buildEntryCollection(Collection<?> c) {
-         Collection<Map.Entry> toRemove = new ArrayList<>(c.size());
-         for (Object obj : c) {
-            Map.Entry entry = toEntry(obj);
-            if (entry != null) {
-               toRemove.add(entry);
-            }
-         }
-         return toRemove;
-      }
-
-      Map.Entry toEntry(Object o) {
-         if (o instanceof Map.Entry) {
-            Map.Entry<K, V> entry = (Map.Entry<K, V>) o;
-            K key = entry.getKey();
-            K newKey = keyToStorage(key);
-            V value = entry.getValue();
-            V newValue = valueToStorage(value);
-            if (key != newKey || value != newValue) {
-               if (o instanceof CacheEntry) {
-                  CacheEntry returned = (CacheEntry) o;
-                  return convertEntry(newKey, newValue, returned);
-               } else {
-                  return entryFactory.create(newKey, newValue, (Metadata) null);
-               }
-            }
-            return entry;
-         }
-         return null;
-      }
-   }
-
-   private class EntryWrapper<A, B> extends ForwardingCacheEntry<A, B> {
+   private class CacheEntryWrapper<A, B> extends ForwardingCacheEntry<A, B> {
       private final CacheEntry<A, B> previousEntry;
       private final CacheEntry<A, B> entry;
 
-      EntryWrapper(CacheEntry<A, B> previousEntry, CacheEntry<A, B> entry) {
+      CacheEntryWrapper(CacheEntry<A, B> previousEntry, CacheEntry<A, B> entry) {
          this.previousEntry = previousEntry;
          this.entry = entry;
       }
@@ -967,91 +809,6 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
          previousEntry.setValue((B) valueToStorage(value));
          return super.setValue(value);
       }
-   }
-
-   @Override
-   public CacheSet<Entry<K, V>> entrySet() {
-      return cast(new EncoderEntrySet(cast(super.cacheEntrySet())));
-
-   }
-
-   private <E extends Entry<K, V>> CacheSet<E> cast(CacheSet set) {
-      return (CacheSet<E>) set;
-   }
-
-   /**
-    * Extends only AbstractCollection so that all methods will fall back to iterator, just in case we missed them
-    */
-   private class EncoderValuesCollection extends AbstractCollection<V> implements CacheCollection<V> {
-      private final CacheCollection<V> actualCollection;
-      final EncoderValueMapper valueMapper = new EncoderValueMapper(valueDataConversion);
-
-      EncoderValuesCollection(CacheCollection<V> actualCollection) {
-         this.actualCollection = actualCollection;
-      }
-
-      @Override
-      public CacheStream<V> stream() {
-         return new EncodedCacheStream<>(actualCollection.stream().map(valueMapper));
-      }
-
-      @Override
-      public CacheStream<V> parallelStream() {
-         return new EncodedCacheStream<>(actualCollection.parallelStream().map(valueMapper));
-      }
-
-      @Override
-      public CloseableIterator<V> iterator() {
-         return new CloseableIteratorMapper<>(actualCollection.iterator(), EncoderCache.this::valueFromStorage);
-      }
-
-      @Override
-      public int size() {
-         return actualCollection.size();
-      }
-
-      @Override
-      public CloseableSpliterator<V> spliterator() {
-         return new CloseableSpliteratorMapper<>(actualCollection.spliterator(), EncoderCache.this::valueFromStorage);
-      }
-
-      @Override
-      public boolean contains(Object o) {
-         return actualCollection.contains(valueToStorage(o));
-      }
-
-      @Override
-      public boolean remove(Object o) {
-         return actualCollection.remove(valueToStorage(o));
-      }
-
-      // These methods should be delegated to actual collection as they can be faster
-
-      @Override
-      public boolean removeAll(Collection<?> c) {
-         return actualCollection.removeAll(buildEntryCollection(c));
-      }
-
-      @Override
-      public boolean retainAll(Collection<?> c) {
-         return actualCollection.retainAll(buildEntryCollection(c));
-      }
-
-      Collection<V> buildEntryCollection(Collection<?> c) {
-         Collection<V> toRemove = new ArrayList<>(c.size());
-         for (Object obj : c) {
-            V entry = valueToStorage(obj);
-            if (entry != null) {
-               toRemove.add(entry);
-            }
-         }
-         return toRemove;
-      }
-   }
-
-   @Override
-   public CacheCollection<V> values() {
-      return new EncoderValuesCollection(super.values());
    }
 
    @Override

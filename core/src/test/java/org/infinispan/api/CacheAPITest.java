@@ -395,7 +395,7 @@ public abstract class CacheAPITest extends APINonTxTest {
 
       TransactionManager tm = TestingUtil.getTransactionManager(cache);
       withTx(tm, () -> {
-         try (CloseableIterator<Object> entryIterator = cache.keySet().iterator()) {
+         for (CloseableIterator<Object> entryIterator = cache.keySet().iterator(); entryIterator.hasNext(); ) {
             entryIterator.next();
             entryIterator.remove();
             assertEquals(0, cache.size());
@@ -403,5 +403,47 @@ public abstract class CacheAPITest extends APINonTxTest {
          tm.setRollbackOnly();
          return null;
       });
+   }
+
+   public void testEntrySetIteratorRemoveContextEntryInExplicitTx() throws Exception {
+      assertEquals(0, cache.size());
+      cache.put("k1", "v1");
+
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+      withTx(tm, () -> {
+         // This should be removed by iterator as well as the k1 entry
+         cache.put("k2", "v2");
+         assertEquals(2, cache.size());
+         for (CloseableIterator<Entry<Object, Object>> entryIterator = cache.entrySet().iterator(); entryIterator.hasNext(); ) {
+            entryIterator.next();
+            entryIterator.remove();
+         }
+         assertEquals(0, cache.size());
+         tm.setRollbackOnly();
+         return null;
+      });
+
+      assertEquals(1, cache.size());
+   }
+
+   public void testKeySetIteratorRemoveContextEntryInExplicitTx() throws Exception {
+      assertEquals(0, cache.size());
+      cache.put("k1", "v1");
+
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+      withTx(tm, () -> {
+         // This should be removed by iterator as well as the k1 entry
+         cache.put("k2", "v2");
+         assertEquals(2, cache.size());
+         for (CloseableIterator<Object> keyIterator = cache.keySet().iterator(); keyIterator.hasNext(); ) {
+            keyIterator.next();
+            keyIterator.remove();
+         }
+         assertEquals(0, cache.size());
+         tm.setRollbackOnly();
+         return null;
+      });
+
+      assertEquals(1, cache.size());
    }
 }

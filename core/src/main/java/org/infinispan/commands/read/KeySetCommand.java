@@ -1,8 +1,8 @@
 package org.infinispan.commands.read;
 
-import java.util.Iterator;
+import java.util.AbstractCollection;
+import java.util.Map;
 import java.util.Set;
-import java.util.Spliterator;
 import java.util.stream.StreamSupport;
 
 import org.infinispan.Cache;
@@ -12,12 +12,14 @@ import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.CloseableSpliteratorMapper;
 import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.DataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.stream.impl.local.KeyStreamSupplier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
@@ -57,7 +59,10 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
 
    @Override
    public Set<K> perform(InvocationContext ctx) throws Throwable {
-      return new BackingKeySet<>(cache);
+      // We have to check for the flags when we do perform - as interceptor could change this while going down
+      // the stack
+      boolean isRemoteIteration = EnumUtil.containsAny(getFlagsBitSet(), FlagBitSets.REMOTE_ITERATION);
+      return new BackingKeySet<>(cache, isRemoteIteration);
    }
 
    @Override
@@ -68,21 +73,30 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
             '}';
    }
 
-   private static class BackingKeySet<K, V> extends AbstractCloseableIteratorCollection<K, K, V> implements CacheSet<K> {
+   private static class BackingKeySet<K, V> extends AbstractCollection<K> implements CacheSet<K> {
+      private final Cache<K, V> cache;
+      private final boolean isRemoteIteration;
 
-      public BackingKeySet(Cache<K, V> cache) {
-         super(cache);
+      BackingKeySet(Cache<K, V> cache, boolean isRemoteIteration) {
+         this.cache = cache;
+         this.isRemoteIteration = isRemoteIteration;
       }
 
       @Override
       public CloseableIterator<K> iterator() {
-         return new EntryToKeyIterator(new DataContainerRemoveIterator<>(cache));
+         if (isRemoteIteration) {
+            // Don't add the extra wrapping for removal
+            return new CloseableIteratorMapper<>(cache.getAdvancedCache().getDataContainer().iterator(), Map.Entry::getKey);
+         }
+         return new CloseableIteratorMapper<>(new DataContainerRemoveIterator<>(cache), Map.Entry::getKey);
       }
 
       @Override
       public CloseableSpliterator<K> spliterator() {
-         return Closeables.spliterator(iterator(), cache.getAdvancedCache().getDataContainer().sizeIncludingExpired(),
-                 Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL);
+         DataContainer<K, V> dc = cache.getAdvancedCache().getDataContainer();
+
+         // Spliterator doesn't support remove so just return it without wrapping
+         return new CloseableSpliteratorMapper<>(dc.spliterator(), Map.Entry::getKey);
       }
 
       @Override
@@ -92,7 +106,7 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
 
       @Override
       public boolean contains(Object o) {
-         return cache.containsKey(o);
+         return cache.getAdvancedCache().getDataContainer().containsKey(o);
       }
 
       @Override
@@ -103,46 +117,17 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
       @Override
       public CacheStream<K> stream() {
          DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm != null ? dm.getCacheTopology()::getSegment : null,
-                 () -> StreamSupport.stream(spliterator(), false)), false,
-                 cache.getAdvancedCache().getComponentRegistry());
+         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, isRemoteIteration,
+               dm != null ? dm.getCacheTopology()::getSegment : null, () -> StreamSupport.stream(spliterator(), false)),
+               false, cache.getAdvancedCache().getComponentRegistry());
       }
 
       @Override
       public CacheStream<K> parallelStream() {
          DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm != null ? dm.getCacheTopology()::getSegment : null,
-                 () -> StreamSupport.stream(spliterator(), false)), true,
-                 cache.getAdvancedCache().getComponentRegistry());
-      }
-   }
-
-   private static class EntryToKeyIterator<K, V> implements CloseableIterator<K> {
-
-      private final Iterator<CacheEntry<K, V>> iterator;
-
-      public EntryToKeyIterator(Iterator<CacheEntry<K, V>> iterator) {
-         this.iterator = iterator;
-      }
-
-      @Override
-      public boolean hasNext() {
-         return iterator.hasNext();
-      }
-
-      @Override
-      public K next() {
-         return iterator.next().getKey();
-      }
-
-      @Override
-      public void remove() {
-         iterator.remove();
-      }
-
-      @Override
-      public void close() {
-         // Do nothing as we can't close regular iterator
+         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, isRemoteIteration,
+               dm != null ? dm.getCacheTopology()::getSegment : null, () -> StreamSupport.stream(spliterator(), false)),
+               true, cache.getAdvancedCache().getComponentRegistry());
       }
    }
 }

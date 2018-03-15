@@ -25,11 +25,14 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
    private static final boolean trace = log.isTraceEnabled();
 
    private final Cache<K, V> cache;
+   private final boolean remoteIterator;
    private final ToIntFunction<Object> toIntFunction;
    private final Supplier<Stream<K>> supplier;
 
-   public KeyStreamSupplier(Cache<K, V> cache, ToIntFunction<Object> toIntFunction, Supplier<Stream<K>> supplier) {
+   public KeyStreamSupplier(Cache<K, V> cache, boolean remoteIterator, ToIntFunction<Object> toIntFunction,
+         Supplier<Stream<K>> supplier) {
       this.cache = cache;
+      this.remoteIterator = remoteIterator;
       this.toIntFunction = toIntFunction;
       this.supplier = supplier;
    }
@@ -65,6 +68,9 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
 
    @Override
    public CloseableIterator<K> removableIterator(CloseableIterator<K> realIterator) {
+      if (remoteIterator) {
+         return realIterator;
+      }
       return new RemovableCloseableIterator<>(realIterator, cache::remove);
    }
 }

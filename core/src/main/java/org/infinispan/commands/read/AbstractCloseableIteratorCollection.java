@@ -16,6 +16,9 @@ import org.infinispan.commons.util.CloseableSpliterator;
  * methods such as {@link Collection#contains(Object)}, {@link Collection#remove(Object)} and
  * {@link org.infinispan.commons.util.CloseableIteratorCollection#iterator()}.  The {@link Collection#add(Object)} by default will throw an
  * {@link java.lang.UnsupportedOperationException}.
+ * <p>
+ * @implNote Any implementor should always use the underlying {@link Cache} instance when performing writes on this
+ * collection. This is to ensure that the entry is updated using all levels of interceptor stack
  *
  * @author wburns
  * @since 7.0

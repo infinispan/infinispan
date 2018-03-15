@@ -202,7 +202,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       //noinspection unchecked
       Collection<Object>[] collections = new Collection[]{keys, values};
 
-      Object newObj = new Object();
+      Object newObj = "foo";
       List<Object> newObjCol = new ArrayList<>();
       newObjCol.add(newObj);
       for (Collection<Object> col : collections) {
