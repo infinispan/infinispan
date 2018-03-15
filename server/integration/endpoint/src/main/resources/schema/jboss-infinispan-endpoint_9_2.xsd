@@ -1,5 +1,5 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:infinispan:server:endpoint:9.2" xmlns:tns="urn:infinispan:server:endpoint:9.2" elementFormDefault="qualified"
-    attributeFormDefault="unqualified" version="9.2">
+    attributeFormDefault="unqualified">
 
     <xs:element name="subsystem" type="tns:subsystemType" />
 
