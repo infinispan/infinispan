@@ -16,7 +16,6 @@
     <description>The Infinispan Documentation</description>
 
     <properties>
-        <infinispan.version>9.2</infinispan.version>
         <javadoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/apidocs</javadoc.root>
         <configdoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/configdocs/</configdoc.root>
         <wildfly.docroot>https://docs.jboss.org/author/display/WFLY11</wildfly.docroot>
