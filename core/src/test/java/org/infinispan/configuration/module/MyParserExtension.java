@@ -8,7 +8,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
-import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
@@ -19,10 +18,8 @@ import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
  * @author Tristan Tarrant
  * @since 5.2
  */
-@Namespaces({
-   @Namespace(uri = "urn:infinispan:config:mymodule", root = "sample-element"),
-   @Namespace(root = "sample-element")
-})
+@Namespace(uri = "urn:infinispan:config:mymodule", root = "sample-element")
+@Namespace(root = "sample-element")
 public class MyParserExtension implements ConfigurationParser {
 
    @Override

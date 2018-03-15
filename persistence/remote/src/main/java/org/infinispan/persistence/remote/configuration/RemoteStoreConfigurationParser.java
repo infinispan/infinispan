@@ -12,7 +12,6 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
-import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
@@ -27,16 +26,8 @@ import org.kohsuke.MetaInfServices;
  * @since 9.0
  */
 @MetaInfServices
-@Namespaces({
-   @Namespace(root = "remote-store"),
-   @Namespace(uri = "urn:infinispan:config:store:remote:9.2", root = "remote-store"),
-   @Namespace(uri = "urn:infinispan:config:store:remote:9.1", root = "remote-store"),
-   @Namespace(uri = "urn:infinispan:config:store:remote:9.0", root = "remote-store"),
-   @Namespace(uri = "urn:infinispan:config:store:remote:8.0", root = "remote-store"),
-   @Namespace(uri = "urn:infinispan:config:store:remote:7.2", root = "remote-store"),
-   @Namespace(uri = "urn:infinispan:config:store:remote:7.1", root = "remote-store"),
-   @Namespace(uri = "urn:infinispan:config:store:remote:7.0", root = "remote-store"),
-})
+@Namespace(root = "remote-store")
+@Namespace(uri = "urn:infinispan:config:store:remote:*", root = "remote-store")
 public class RemoteStoreConfigurationParser implements ConfigurationParser {
 
    private static final Log log = LogFactory.getLog(RemoteStoreConfigurationParser.class, Log.class);

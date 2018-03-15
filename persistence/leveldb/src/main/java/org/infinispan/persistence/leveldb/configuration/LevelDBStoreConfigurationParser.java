@@ -8,7 +8,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
-import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
@@ -24,13 +23,8 @@ import org.kohsuke.MetaInfServices;
  */
 @Deprecated
 @MetaInfServices
-@Namespaces({
-   @Namespace(root = "leveldb-store"),
-   @Namespace(uri = "urn:infinispan:config:store:leveldb:8.0", root = "leveldb-store"),
-   @Namespace(uri = "urn:infinispan:config:store:leveldb:7.2", root = "leveldb-store"),
-   @Namespace(uri = "urn:infinispan:config:store:leveldb:7.1", root = "leveldb-store"),
-   @Namespace(uri = "urn:infinispan:config:store:leveldb:7.0", root = "leveldb-store"),
-})
+@Namespace(root = "leveldb-store")
+@Namespace(uri = "urn:infinispan:config:store:leveldb:*", root = "leveldb-store", until = "8.0")
 public class LevelDBStoreConfigurationParser implements ConfigurationParser {
 
    private static final Log log = LogFactory.getLog(LevelDBStoreConfigurationParser.class);

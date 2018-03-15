@@ -11,7 +11,6 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
-import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.persistence.remote.configuration.ConnectionPoolConfigurationBuilder;
@@ -30,7 +29,7 @@ import org.kohsuke.MetaInfServices;
  * @since 6.0
  */
 @MetaInfServices
-@Namespaces({ @Namespace(uri = "urn:infinispan:config:remote:6.0", root = "remoteStore") })
+@Namespace(uri = "urn:infinispan:config:remote:6.0", root = "remoteStore")
 public class RemoteStoreConfigurationParser60 implements ConfigurationParser {
 
    public RemoteStoreConfigurationParser60() {

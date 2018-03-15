@@ -1,7 +1,6 @@
 package org.infinispan.persistence.jdbc.configuration;
 
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
-import static org.infinispan.persistence.jdbc.configuration.Element.MIXED_KEYED_JDBC_STORE;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -12,7 +11,6 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
-import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
@@ -26,28 +24,12 @@ import org.kohsuke.MetaInfServices;
  * @since 9.0
  */
 @MetaInfServices
-@Namespaces({
-   @Namespace(root = "string-keyed-jdbc-store"),
-   @Namespace(root = "binary-keyed-jdbc-store"),
-   @Namespace(root = "mixed-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:9.2", root = "string-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:9.1", root = "string-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:9.0", root = "string-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:9.0", root = "binary-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:9.0", root = "mixed-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:8.0", root = "string-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:8.0", root = "binary-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:8.0", root = "mixed-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:7.0", root = "string-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:7.1", root = "string-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:7.2", root = "string-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:7.0", root = "binary-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:7.1", root = "binary-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:7.2", root = "binary-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:7.0", root = "mixed-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:7.1", root = "mixed-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:7.2", root = "mixed-keyed-jdbc-store"),
-})
+@Namespace(root = "string-keyed-jdbc-store")
+@Namespace(root = "binary-keyed-jdbc-store")
+@Namespace(root = "mixed-keyed-jdbc-store")
+@Namespace(uri = "urn:infinispan:config:store:jdbc:*", root = "string-keyed-jdbc-store")
+@Namespace(uri = "urn:infinispan:config:store:jdbc:*", root = "binary-keyed-jdbc-store", until = "9.0")
+@Namespace(uri = "urn:infinispan:config:store:jdbc:*", root = "mixed-keyed-jdbc-store", until = "9.0")
 public class JdbcStoreConfigurationParser implements ConfigurationParser {
 
    public JdbcStoreConfigurationParser() {

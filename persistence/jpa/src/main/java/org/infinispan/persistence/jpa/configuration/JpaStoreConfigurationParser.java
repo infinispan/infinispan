@@ -9,7 +9,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
-import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
@@ -20,16 +19,9 @@ import org.kohsuke.MetaInfServices;
  * @since 9.0
  */
 @MetaInfServices
-@Namespaces({
-   @Namespace(root = "jpa-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jpa:9.2", root = "jpa-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jpa:9.1", root = "jpa-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jpa:9.0", root = "jpa-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jpa:8.0", root = "jpa-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jpa:7.2", root = "jpa-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jpa:7.1", root = "jpa-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jpa:7.0", root = "jpa-store"),
-})
+
+@Namespace(root = "jpa-store")
+@Namespace(uri = "urn:infinispan:config:store:jpa:*", root = "jpa-store")
 public class JpaStoreConfigurationParser implements ConfigurationParser {
    @Override
    public void readElement(XMLExtendedStreamReader reader,

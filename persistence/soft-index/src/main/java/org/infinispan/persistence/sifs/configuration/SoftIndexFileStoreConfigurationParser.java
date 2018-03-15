@@ -9,7 +9,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
-import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
@@ -21,22 +20,9 @@ import org.kohsuke.MetaInfServices;
  *
  */
 @MetaInfServices
-@Namespaces({
-      @Namespace(root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT),
-      @Namespace(uri = "urn:infinispan:config:store:soft-index:9.2",
-            root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT),
-      @Namespace(uri = "urn:infinispan:config:store:soft-index:9.0",
-                 root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT),
-      @Namespace(uri = "urn:infinispan:config:store:soft-index:8.0",
-            root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT),
-      @Namespace(uri = "urn:infinispan:config:store:soft-index:7.2",
-            root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT),
-      @Namespace(uri = "urn:infinispan:config:store:soft-index:7.1",
-            root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT),
-      @Namespace(uri = "urn:infinispan:config:store:soft-index:7.0",
-            root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT)
-
-})
+@Namespace(root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT)
+@Namespace(uri = "urn:infinispan:config:store:soft-index:*",
+      root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT)
 public class SoftIndexFileStoreConfigurationParser implements ConfigurationParser {
    public static final String ROOT_ELEMENT = "soft-index-file-store";
 

@@ -93,20 +93,9 @@ import org.kohsuke.MetaInfServices;
  * @since 9.0
  */
 @MetaInfServices
-@Namespaces({
-      @Namespace(uri = "urn:infinispan:config:9.2", root = "infinispan"),
-      @Namespace(uri = "urn:infinispan:config:9.1", root = "infinispan"),
-      @Namespace(uri = "urn:infinispan:config:9.0", root = "infinispan"),
-      @Namespace(root = "infinispan"),
 
-      @Namespace(uri = "urn:infinispan:config:8.0", root = "infinispan"),
-      @Namespace(uri = "urn:infinispan:config:8.1", root = "infinispan"),
-      @Namespace(uri = "urn:infinispan:config:8.2", root = "infinispan"),
-
-      @Namespace(uri = "urn:infinispan:config:7.0", root = "infinispan"),
-      @Namespace(uri = "urn:infinispan:config:7.1", root = "infinispan"),
-      @Namespace(uri = "urn:infinispan:config:7.2", root = "infinispan"),
-})
+@Namespace(root = "infinispan")
+@Namespace(uri = "urn:infinispan:config:*", root = "infinispan")
 public class Parser implements ConfigurationParser {
 
    static final Log log = LogFactory.getLog(Parser.class);

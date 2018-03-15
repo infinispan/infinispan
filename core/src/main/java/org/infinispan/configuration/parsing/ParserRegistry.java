@@ -27,6 +27,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
+import org.infinispan.Version;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.FileLookup;
@@ -56,7 +57,7 @@ import org.infinispan.util.logging.LogFactory;
 public class ParserRegistry implements NamespaceMappingParser {
    private static final Log log = LogFactory.getLog(ParserRegistry.class);
    private final WeakReference<ClassLoader> cl;
-   private final ConcurrentMap<QName, ConfigurationParser> parserMappings;
+   private final ConcurrentMap<QName, NamespaceParserPair> parserMappings;
 
    public ParserRegistry() {
       this(Thread.currentThread().getContextClassLoader());
@@ -90,9 +91,9 @@ public class ParserRegistry implements NamespaceMappingParser {
          if (!skipParser) {
             for (Namespace ns : namespaces) {
                QName qName = new QName(ns.uri(), ns.root());
-               ConfigurationParser existingParser = parserMappings.putIfAbsent(qName, parser);
-               if (existingParser != null && !parser.getClass().equals(existingParser.getClass())) {
-                  log.parserRootElementAlreadyRegistered(qName, parser.getClass().getName(), existingParser.getClass().getName());
+               NamespaceParserPair existing = parserMappings.putIfAbsent(qName, new NamespaceParserPair(ns, parser));
+               if (existing != null && !parser.getClass().equals(existing.parser.getClass())) {
+                  log.parserRootElementAlreadyRegistered(qName, parser.getClass().getName(), existing.parser.getClass().getName());
                }
             }
          }
@@ -161,14 +162,30 @@ public class ParserRegistry implements NamespaceMappingParser {
    @Override
    public void parseElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
       QName name = reader.getName();
-      ConfigurationParser parser = parserMappings.get(name);
+      // First we attempt to get the direct name
+      NamespaceParserPair parser = parserMappings.get(name);
       if (parser == null) {
-         throw log.unsupportedConfiguration(name.getLocalPart(), name.getNamespaceURI());
+         // Next we strip off the version from the URI and look for a wildcard match
+         String uri = name.getNamespaceURI();
+         int lastColon = uri.lastIndexOf(':');
+         String baseUri = uri.substring(0,  lastColon + 1) + "*";
+         parser = parserMappings.get(new QName(baseUri, name.getLocalPart()));
+         if (parser == null || !isSupportedNamespaceVersion(parser.namespace, uri.substring(lastColon + 1)))
+            throw log.unsupportedConfiguration(name.getLocalPart(), name.getNamespaceURI());
       }
       Schema oldSchema = reader.getSchema();
       reader.setSchema(Schema.fromNamespaceURI(name.getNamespaceURI()));
-      parser.readElement(reader, holder);
+      parser.parser.readElement(reader, holder);
       reader.setSchema(oldSchema);
+   }
+
+   private boolean isSupportedNamespaceVersion(Namespace namespace, String version) {
+      short reqVersion = Version.getVersionShort(version);
+      if (reqVersion < Version.getVersionShort(namespace.since())) {
+         return false;
+      }
+      short untilVersion = namespace.until().length() > 0 ? Version.getVersionShort(namespace.until()) : Version.getVersionShort();
+      return reqVersion <= untilVersion;
    }
 
    /**
@@ -227,6 +244,16 @@ public class ParserRegistry implements NamespaceMappingParser {
          return os.toString("UTF-8");
       } catch (Exception e) {
          throw new CacheConfigurationException(e);
+      }
+   }
+
+   public static class NamespaceParserPair {
+      Namespace namespace;
+      ConfigurationParser parser;
+
+      NamespaceParserPair(Namespace namespace, ConfigurationParser parser) {
+         this.namespace = namespace;
+         this.parser = parser;
       }
    }
 }

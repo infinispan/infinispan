@@ -10,7 +10,6 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
-import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.persistence.rest.configuration.ConnectionPoolConfigurationBuilder;
@@ -26,9 +25,7 @@ import org.kohsuke.MetaInfServices;
  * @since 6.0
  */
 @MetaInfServices
-@Namespaces({
-   @Namespace(uri = "urn:infinispan:config:store:rest:6.0", root = "restStore"),
-})
+@Namespace(uri = "urn:infinispan:config:store:rest:6.0", root = "restStore")
 public class RestStoreConfigurationParser60 implements ConfigurationParser {
 
    public RestStoreConfigurationParser60() {

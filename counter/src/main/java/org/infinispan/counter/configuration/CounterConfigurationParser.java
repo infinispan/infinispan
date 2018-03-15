@@ -18,7 +18,6 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
-import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
@@ -33,12 +32,8 @@ import org.kohsuke.MetaInfServices;
  * @since 9.0
  */
 @MetaInfServices
-@Namespaces({
-      @Namespace(root = "counters"),
-      @Namespace(uri = "urn:infinispan:config:counters:9.2", root = "counters"),
-      @Namespace(uri = "urn:infinispan:config:counters:9.1", root = "counters"),
-      @Namespace(uri = "urn:infinispan:config:counters:9.0", root = "counters")
-})
+@Namespace(root = "counters")
+@Namespace(uri = "urn:infinispan:config:counters:*", root = "counters", since = "9.0")
 public class CounterConfigurationParser implements ConfigurationParser {
 
    private static final Log log = LogFactory.getLog(CounterConfigurationParser.class, Log.class);

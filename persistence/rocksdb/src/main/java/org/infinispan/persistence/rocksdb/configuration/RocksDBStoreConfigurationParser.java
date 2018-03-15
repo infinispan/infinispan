@@ -1,11 +1,13 @@
 package org.infinispan.persistence.rocksdb.configuration;
 
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
-import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
@@ -13,21 +15,14 @@ import org.infinispan.persistence.rocksdb.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
 /**
  * RocksDB XML Parser
  * @author Tristan Tarrant
  * @since 9.0
  */
 @MetaInfServices
-@Namespaces({
-   @Namespace(root = "rocksdb-store"),
-   @Namespace(uri = "urn:infinispan:config:store:rocksdb:9.2", root = "rocksdb-store"),
-   @Namespace(uri = "urn:infinispan:config:store:rocksdb:9.1", root = "rocksdb-store"),
-   @Namespace(uri = "urn:infinispan:config:store:rocksdb:9.0", root = "rocksdb-store")
-})
+@Namespace(root = "rocksdb-store")
+@Namespace(uri = "urn:infinispan:config:store:rocksdb:*", root = "rocksdb-store", since = "9.0")
 public class RocksDBStoreConfigurationParser implements ConfigurationParser {
 
    private static final Log log = LogFactory.getLog(RocksDBStoreConfigurationParser.class, Log.class);
