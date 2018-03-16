@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.BaseCacheStream;
+import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -30,7 +31,6 @@ import org.infinispan.encoding.DataConversion;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
-import org.infinispan.server.hotrod.CacheDecodeContext;
 import org.infinispan.server.hotrod.OperationStatus;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.KeyValuePair;
@@ -99,11 +99,10 @@ public class DefaultIterationManager implements IterationManager {
          CollectionFactory.makeConcurrentMap();
 
    @Override
-   public String start(CacheDecodeContext cdc, Optional<BitSet> segments, Optional<KeyValuePair<String, List<byte[]>>> namedFactory, int batch, boolean metadata) {
+   public String start(Cache cache, BitSet segments, String filterConverterFactory, List<byte[]> filterConverterParams, MediaType requestValueType, int batch, boolean metadata) {
       String iterationId = Util.threadLocalRandomUUID().toString();
+      AdvancedCache<Object, Object> advancedCache = cache.getAdvancedCache();
 
-      AdvancedCache advancedCache = cdc.cache().getAdvancedCache();
-      MediaType requestValueType = cdc.getHeader().getValueMediaType();
       DataConversion valueDataConversion = advancedCache.getValueDataConversion();
       Function<Object, Object> unmarshaller = p -> valueDataConversion.convert(p, requestValueType, APPLICATION_OBJECT);
 
@@ -114,16 +113,15 @@ public class DefaultIterationManager implements IterationManager {
       Stream<CacheEntry<Object, Object>> filteredStream;
       Function<Object, Object> resultTransformer = Function.identity();
       AdvancedCache iterationCache = advancedCache;
-      if (!namedFactory.isPresent()) {
+      if (filterConverterFactory == null) {
          stream = advancedCache.cacheEntrySet().stream();
-         segments.map(bitSet -> stream.filterKeySegments(bitSet.stream().boxed().collect(Collectors.toSet())));
+         if (segments != null) {
+            stream.filterKeySegments(segments.stream().boxed().collect(Collectors.toSet()));
+         }
          filteredStream = stream.segmentCompletionListener(segmentListener);
       } else {
-
-         KeyValueFilterConverterFactory factory = getFactory(namedFactory.get().getKey());
-         List<byte[]> params = namedFactory.get().getValue();
-
-         KeyValuePair<KeyValueFilterConverter, Boolean> filter = buildFilter(factory, params.toArray(new byte[params.size()][]), unmarshaller);
+         KeyValueFilterConverterFactory factory = getFactory(filterConverterFactory);
+         KeyValuePair<KeyValueFilterConverter, Boolean> filter = buildFilter(factory, filterConverterParams.toArray(new byte[0][]), unmarshaller);
          KeyValueFilterConverter customFilter = filter.getKey();
          MediaType filterMediaType = customFilter.format();
 
@@ -131,7 +129,9 @@ public class DefaultIterationManager implements IterationManager {
             iterationCache = advancedCache.withEncoding(IdentityEncoder.class).withMediaType(filterMediaType.toString(), filterMediaType.toString());
          }
          stream = iterationCache.cacheEntrySet().stream();
-         segments.map(bitSet -> stream.filterKeySegments(bitSet.stream().boxed().collect(Collectors.toSet())));
+         if (segments != null) {
+            stream.filterKeySegments(segments.stream().boxed().collect(Collectors.toSet()));
+         }
          IterationFilter iterationFilter = new IterationFilter(storageMediaType, requestValueType, Optional.of(filter.getKey()));
          filteredStream = filterAndConvert(stream.segmentCompletionListener(segmentListener), iterationFilter);
          if (filterMediaType != null && !storageMediaType.equals(requestValueType)) {

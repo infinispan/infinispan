@@ -4,7 +4,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -52,6 +51,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.KeyValuePair;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 /**
@@ -117,41 +117,41 @@ class ClientListenerRegistry {
       cacheEventFilterConverterFactories.remove(name);
    }
 
-   void addClientListener(VersionedDecoder decoder, Channel ch, HotRodHeader h, byte[] listenerId,
+   void addClientListener(CacheRequestProcessor cacheProcessor, Channel ch, HotRodHeader h, byte[] listenerId,
                           AdvancedCache<byte[], byte[]> cache, boolean includeState,
-                          KeyValuePair<String, List<byte[]>> filterFactory,
-                          KeyValuePair<String, List<byte[]>> converterFactory,
+                          String filterFactory, List<byte[]> binaryFilterParams,
+                          String converterFactory, List<byte[]> binaryConverterParams,
                           boolean useRawData, int listenerInterests) {
-      ClientEventType eventType = ClientEventType.createType(converterFactory != null, useRawData, h.version);
-      List<byte[]> binaryFilterParams = filterFactory != null ? filterFactory.getValue() : Collections.emptyList();
-      List<byte[]> binaryConverterParams = converterFactory != null ? converterFactory.getValue() : Collections.emptyList();
+      boolean hasFilter = filterFactory != null && !filterFactory.isEmpty();
+      boolean hasConverter = converterFactory != null && !converterFactory.isEmpty();
+      ClientEventType eventType = ClientEventType.createType(hasConverter, useRawData, h.version);
 
       CacheEventFilter<byte[], byte[]> filter;
       CacheEventConverter<byte[], byte[], byte[]> converter;
-      if (filterFactory != null) {
-         if (converterFactory != null) {
-            if (filterFactory.getKey().equals(converterFactory.getKey())) {
+      if (hasFilter) {
+         if (hasConverter) {
+            if (filterFactory.equals(converterFactory)) {
                List<byte[]> binaryParams = binaryFilterParams.isEmpty() ? binaryConverterParams : binaryFilterParams;
                CacheEventFilterConverter<byte[], byte[], byte[]> filterConverter = getFilterConverter(cache.getValueDataConversion(), h.getValueMediaType(),
-                     filterFactory.getKey(), useRawData, binaryParams);
+                     filterFactory, useRawData, binaryParams);
                filter = filterConverter;
                converter = filterConverter;
             } else {
-               filter = getFilter(cache.getValueDataConversion(), h.getValueMediaType(), filterFactory.getKey(), useRawData, binaryFilterParams);
-               converter = getConverter(cache.getValueDataConversion(), h.getValueMediaType(), converterFactory.getKey(), useRawData, binaryConverterParams);
+               filter = getFilter(cache.getValueDataConversion(), h.getValueMediaType(), filterFactory, useRawData, binaryFilterParams);
+               converter = getConverter(cache.getValueDataConversion(), h.getValueMediaType(), converterFactory, useRawData, binaryConverterParams);
             }
          } else {
-            filter = getFilter(cache.getValueDataConversion(), h.getValueMediaType(), filterFactory.getKey(), useRawData, binaryFilterParams);
+            filter = getFilter(cache.getValueDataConversion(), h.getValueMediaType(), filterFactory, useRawData, binaryFilterParams);
             converter = null;
          }
-      } else if (converterFactory != null) {
+      } else if (hasConverter) {
          filter = null;
-         converter = getConverter(cache.getValueDataConversion(), h.getValueMediaType(), converterFactory.getKey(), useRawData, binaryConverterParams);
+         converter = getConverter(cache.getValueDataConversion(), h.getValueMediaType(), converterFactory, useRawData, binaryConverterParams);
       } else {
          filter = null;
          converter = null;
       }
-      Object clientEventSender = getClientEventSender(includeState, ch, h.version, cache, listenerId, eventType, h.messageId);
+      Object clientEventSender = getClientEventSender(includeState, ch, h.encoder(), h.version, cache, listenerId, eventType, h.messageId);
 
       eventSenders.put(new WrappedByteArray(listenerId), clientEventSender);
 
@@ -161,21 +161,19 @@ class ClientListenerRegistry {
                addCacheListener(cache, clientEventSender, filter, converter, listenerInterests, useRawData), addListenerExecutor);
 
          cf.whenComplete((t, cause) -> {
-            Response resp;
             if (cause != null) {
                if (cause instanceof CompletionException) {
-                  resp = decoder.createErrorResponse(h, cause.getCause());
+                  cacheProcessor.writeException(h, cause.getCause());
                } else {
-                  resp = decoder.createErrorResponse(h, cause);
+                  cacheProcessor.writeException(h, cause);
                }
             } else {
-               resp = decoder.createSuccessResponse(h, null);
+               cacheProcessor.writeSuccess(h);
             }
-            ch.writeAndFlush(resp);
          });
       } else {
          addCacheListener(cache, clientEventSender, filter, converter, listenerInterests, useRawData);
-         ch.writeAndFlush(decoder.createSuccessResponse(h, null));
+         cacheProcessor.writeSuccess(h);
       }
    }
 
@@ -275,8 +273,8 @@ class ClientListenerRegistry {
    private class StatefulClientEventSender extends BaseClientEventSender {
       private final long messageId;
 
-      StatefulClientEventSender(Cache cache, Channel ch, byte[] listenerId, byte version, ClientEventType targetEventType, long messageId) {
-         super(cache, ch, listenerId, version, targetEventType);
+      StatefulClientEventSender(Cache cache, Channel ch, VersionedEncoder encoder, byte[] listenerId, byte version, ClientEventType targetEventType, long messageId) {
+         super(cache, ch, encoder, listenerId, version, targetEventType);
          this.messageId = messageId;
       }
 
@@ -289,25 +287,27 @@ class ClientListenerRegistry {
    @Listener(clustered = true)
    private class StatelessClientEventSender extends BaseClientEventSender {
 
-      StatelessClientEventSender(Cache cache, Channel ch, byte[] listenerId, byte version, ClientEventType targetEventType) {
-         super(cache, ch, listenerId, version, targetEventType);
+      StatelessClientEventSender(Cache cache, Channel ch, VersionedEncoder encoder, byte[] listenerId, byte version, ClientEventType targetEventType) {
+         super(cache, ch, encoder, listenerId, version, targetEventType);
       }
    }
 
    private abstract class BaseClientEventSender {
       protected final Channel ch;
+      protected final VersionedEncoder encoder;
       protected final byte[] listenerId;
       protected final byte version;
       protected final ClientEventType targetEventType;
       protected final Cache cache;
 
-      BlockingQueue<Object> eventQueue = new LinkedBlockingQueue<>(100);
+      BlockingQueue<Events.Event> eventQueue = new LinkedBlockingQueue<>(100);
 
       private final Runnable writeEventsIfPossible = this::writeEventsIfPossible;
 
-      BaseClientEventSender(Cache cache, Channel ch, byte[] listenerId, byte version, ClientEventType targetEventType) {
+      BaseClientEventSender(Cache cache, Channel ch, VersionedEncoder encoder, byte[] listenerId, byte version, ClientEventType targetEventType) {
          this.cache = cache;
          this.ch = ch;
+         this.encoder = encoder;
          this.listenerId = listenerId;
          this.version = version;
          this.targetEventType = targetEventType;
@@ -320,9 +320,11 @@ class ClientListenerRegistry {
       void writeEventsIfPossible() {
          boolean written = false;
          while (!eventQueue.isEmpty() && ch.isWritable()) {
-            Object event = eventQueue.poll();
+            Events.Event event = eventQueue.poll();
             if (isTrace) log.tracef("Write event: %s to channel %s", event, ch);
-            ch.write(event);
+            ByteBuf buf = ch.alloc().ioBuffer();
+            encoder.writeEvent(event, buf);
+            ch.write(buf);
             written = true;
          }
          if (written) {
@@ -375,7 +377,7 @@ class ClientListenerRegistry {
       }
 
       void sendEvent(byte[] key, byte[] value, long dataVersion, CacheEntryEvent event) {
-         Object remoteEvent = createRemoteEvent(key, value, dataVersion, event);
+         Events.Event remoteEvent = createRemoteEvent(key, value, dataVersion, event);
          if (isTrace)
             log.tracef("Queue event %s, before queuing event queue size is %d", remoteEvent, eventQueue.size());
 
@@ -392,7 +394,7 @@ class ClientListenerRegistry {
          }
       }
 
-      private Object createRemoteEvent(byte[] key, byte[] value, long dataVersion, CacheEntryEvent event) {
+      private Events.Event createRemoteEvent(byte[] key, byte[] value, long dataVersion, CacheEntryEvent event) {
          // Embedded listener event implementation implements all interfaces,
          // so can't pattern match on the event instance itself. Instead, pattern
          // match on the type and the cast down to the expected event instance type
@@ -444,12 +446,12 @@ class ClientListenerRegistry {
       }
    }
 
-   private Object getClientEventSender(boolean includeState, Channel ch, byte version,
+   private Object getClientEventSender(boolean includeState, Channel ch, VersionedEncoder encoder, byte version,
                                        Cache cache, byte[] listenerId, ClientEventType eventType, long messageId) {
       if (includeState) {
-         return new StatefulClientEventSender(cache, ch, listenerId, version, eventType, messageId);
+         return new StatefulClientEventSender(cache, ch, encoder, listenerId, version, eventType, messageId);
       } else {
-         return new StatelessClientEventSender(cache, ch, listenerId, version, eventType);
+         return new StatelessClientEventSender(cache, ch, encoder, listenerId, version, eventType);
       }
    }
 

@@ -1,10 +1,9 @@
 package org.infinispan.server.hotrod;
 
-import java.io.IOException;
 import java.io.StreamCorruptedException;
 
-public class HotRodUtils {
-}
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.MediaType;
 
 class UnknownVersionException extends StreamCorruptedException {
    final byte version;
@@ -14,6 +13,10 @@ class UnknownVersionException extends StreamCorruptedException {
       super(cause);
       this.version = version;
       this.messageId = messageId;
+   }
+
+   public HotRodHeader toHeader() {
+      return new HotRodHeader(HotRodOperation.ERROR, version, messageId, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL);
    }
 }
 
@@ -26,6 +29,10 @@ class HotRodUnknownOperationException extends UnknownOperationException {
       this.version = version;
       this.messageId = messageId;
    }
+
+   public HotRodHeader toHeader() {
+      return new HotRodHeader(HotRodOperation.ERROR, version, messageId, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL);
+   }
 }
 
 class InvalidMagicIdException extends StreamCorruptedException {
@@ -34,11 +41,11 @@ class InvalidMagicIdException extends StreamCorruptedException {
    }
 }
 
-class CacheUnavailableException extends Exception {
+class CacheUnavailableException extends CacheException {
 
 }
 
-class RequestParsingException extends IOException {
+class RequestParsingException extends CacheException {
    final byte version;
    final long messageId;
 
@@ -53,22 +60,15 @@ class RequestParsingException extends IOException {
       this.version = version;
       this.messageId = messageId;
    }
+
+   public HotRodHeader toHeader() {
+      return new HotRodHeader(HotRodOperation.ERROR, version, messageId, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL);
+   }
 }
 
 class CacheNotFoundException extends RequestParsingException {
    public CacheNotFoundException(String reason, byte version, long messageId) {
       super(reason, version, messageId);
-   }
-}
-
-class HotRodException extends Exception {
-   final ErrorResponse response;
-   final Throwable cause;
-
-   public HotRodException(ErrorResponse response, String message, Throwable cause) {
-      super(message);
-      this.response = response;
-      this.cause = cause;
    }
 }
 

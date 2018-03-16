@@ -11,7 +11,7 @@ public class Constants {
    private Constants() {
    }
 
-   static final public short MAGIC_REQ = 0xA0;
+   static final public byte MAGIC_REQ = (byte) 0xA0;
    static final public short MAGIC_RES = 0xA1;
    static final public byte DEFAULT_CONSISTENT_HASH_VERSION_1x = 2;
    static final public byte DEFAULT_CONSISTENT_HASH_VERSION = 3;

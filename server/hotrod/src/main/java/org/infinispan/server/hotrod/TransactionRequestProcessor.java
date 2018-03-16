@@ -1,7 +1,9 @@
 package org.infinispan.server.hotrod;
 
+import java.util.List;
 import java.util.concurrent.Executor;
 
+import javax.security.auth.Subject;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.RollbackException;
@@ -25,6 +27,7 @@ import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.LogFactory;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 class TransactionRequestProcessor extends CacheRequestProcessor {
@@ -37,58 +40,62 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
 
    /**
     * Handles a rollback request from a client.
-    * @param cdc
+    * @param header
+    * @param subject
+    * @param xid
     */
-   void rollbackTransaction(CacheDecodeContext cdc) {
-      validateConfiguration(cdc, cdc.cache());
-      executor.execute(() -> rollbackTransactionInternal(cdc));
+   void rollbackTransaction(HotRodHeader header, Subject subject, XidImpl xid) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      validateConfiguration(cache);
+      executor.execute(() -> rollbackTransactionInternal(header, cache, xid));
    }
 
-   private void rollbackTransactionInternal(CacheDecodeContext cdc) {
+   private void rollbackTransactionInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, XidImpl xid) {
       try {
-         writeResponse(finishTransaction(cdc, new RollbackTransactionDecodeContext(cdc.cache(), (XidImpl) cdc.operationDecodeContext)));
+         writeResponse(header, finishTransaction(header, new RollbackTransactionDecodeContext(cache, xid)));
       } catch (Throwable t) {
-         writeException(cdc, t);
+         writeException(header, t);
       }
    }
 
    /**
     * Handles a prepare request from a client
-    * @param cdc
+    * @param header
+    * @param subject
+    * @param xid
+    * @param onePhaseCommit
+    * @param writes
     */
-   void prepareTransaction(CacheDecodeContext cdc) {
-      validateConfiguration(cdc, cdc.cache());
-      executor.execute(() -> prepareTransactionInternal(cdc));
+   void prepareTransaction(HotRodHeader header, Subject subject, XidImpl xid, boolean onePhaseCommit, List<TransactionWrite> writes) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      validateConfiguration(cache);
+      executor.execute(() -> prepareTransactionInternal(header, cache, xid, onePhaseCommit, writes));
    }
 
-   private void prepareTransactionInternal(CacheDecodeContext cdc) {
+   private void prepareTransactionInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, XidImpl xid, boolean onePhaseCommit, List<TransactionWrite> writes) {
       try {
-         AdvancedCache<byte[], byte[]> cache = cdc.cache();
-         PrepareTransactionContext context = (PrepareTransactionContext) cdc.operationDecodeContext;
-         if (context.isEmpty()) {
+         if (writes.isEmpty()) {
             //the client can optimize and avoid contacting the server when no data is written.
             if (isTrace) {
-               log.tracef("Transaction %s is read only.", context.getXid());
+               log.tracef("Transaction %s is read only.", xid);
             }
-            writeResponse(createTransactionResponse(cdc.header, XAResource.XA_RDONLY));
+            writeResponse(header, createTransactionResponse(header, XAResource.XA_RDONLY));
             return;
          }
-         PrepareTransactionDecodeContext txContext = new PrepareTransactionDecodeContext(cache, context.getXid());
+         PrepareTransactionDecodeContext txContext = new PrepareTransactionDecodeContext(cache, xid);
 
-         Response response = checkExistingTxForPrepare(cdc, txContext);
-         if (response != null) {
+         if (checkExistingTxForPrepare(header, txContext)) {
             if (isTrace) {
-               log.tracef("Transaction %s conflicts with another node. Response is %s", context.getXid(), response);
+               log.tracef("Transaction %s conflicts with another node.", xid);
             }
-            writeResponse(response);
             return;
          }
 
          if (!txContext.startTransaction()) {
             if (isTrace) {
-               log.tracef("Unable to start transaction %s", context.getXid());
+               log.tracef("Unable to start transaction %s", xid);
             }
-            writeResponse(cdc.decoder.createNotExecutedResponse(cdc.header, null));
+            writeNotExecuted(header);
             return;
          }
 
@@ -97,69 +104,71 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
          AdvancedCache<byte[], byte[]> txCache = txContext.decorateCache(cache);
 
          try {
-            for (TransactionWrite write : context.writes()) {
+            for (TransactionWrite write : writes) {
                if (isValid(write, txCache)) {
                   if (write.isRemove()) {
                      txCache.remove(write.key);
                   } else {
-                     txCache.put(write.key, write.value, cdc.buildMetadata(write.lifespan, write.maxIdle));
+                     txCache.put(write.key, write.value, write.metadata);
                   }
                } else {
                   txContext.setRollbackOnly();
                   break;
                }
             }
-            int xaCode = txContext.prepare(context.isOnePhaseCommit());
-            writeResponse(createTransactionResponse(cdc.header, xaCode));
+            int xaCode = txContext.prepare(onePhaseCommit);
+            writeResponse(header, createTransactionResponse(header, xaCode));
          } catch (Exception e) {
-            writeResponse(createTransactionResponse(cdc.header, txContext.rollback()));
+            writeResponse(header, createTransactionResponse(header, txContext.rollback()));
          } finally {
             EmbeddedTransactionManager.dissociateTransaction();
          }
       } catch (Throwable t) {
-         writeException(cdc, t);
+         writeException(header, t);
       }
    }
 
    /**
     * Handles a commit request from a client
-    * @param cdc
+    * @param header
+    * @param subject
+    * @param xid
     */
-   void commitTransaction(CacheDecodeContext cdc) {
-      validateConfiguration(cdc, cdc.cache());
-      executor.execute(() -> commitTransactionInternal(cdc));
+   void commitTransaction(HotRodHeader header, Subject subject, XidImpl xid) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      validateConfiguration(cache);
+      executor.execute(() -> commitTransactionInternal(header, cache, xid));
    }
 
-   private void commitTransactionInternal(CacheDecodeContext cdc) {
+   private void commitTransactionInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, XidImpl xid) {
       try {
-         writeResponse(finishTransaction(cdc, new CommitTransactionDecodeContext(cdc.cache(), (XidImpl) cdc.operationDecodeContext)));
+         writeResponse(header, finishTransaction(header, new CommitTransactionDecodeContext(cache, xid)));
       } catch (Throwable t) {
-         writeException(cdc, t);
+         writeException(header, t);
       }
    }
 
    /**
     * Commits or Rollbacks the transaction (second phase of two-phase-commit)
     */
-   private TransactionResponse finishTransaction(CacheDecodeContext cdc, SecondPhaseTransactionDecodeContext txContext) {
+   private ByteBuf finishTransaction(HotRodHeader header, SecondPhaseTransactionDecodeContext txContext) {
       try {
          txContext.perform();
       } catch (HeuristicMixedException e) {
-         return createTransactionResponse(cdc.header, XAException.XA_HEURMIX);
+         return createTransactionResponse(header, XAException.XA_HEURMIX);
       } catch (HeuristicRollbackException e) {
-         return createTransactionResponse(cdc.header, XAException.XA_HEURRB);
+         return createTransactionResponse(header, XAException.XA_HEURRB);
       } catch (RollbackException e) {
-         return createTransactionResponse(cdc.header, XAException.XA_RBROLLBACK);
+         return createTransactionResponse(header, XAException.XA_RBROLLBACK);
       }
-      return createTransactionResponse(cdc.header, XAResource.XA_OK);
+      return createTransactionResponse(header, XAResource.XA_OK);
    }
 
    /**
     * Checks if the configuration (and the transaction manager) is able to handle client transactions.
-    * @param cdc
     * @param cache
     */
-   private void validateConfiguration(CacheDecodeContext cdc, AdvancedCache<byte[], byte[]> cache) {
+   private void validateConfiguration(AdvancedCache<byte[], byte[]> cache) {
       Configuration configuration = cache.getCacheConfiguration();
       if (!configuration.transaction().transactionMode().isTransactional()) {
          throw log.expectedTransactionalCache(cache.getName());
@@ -186,21 +195,24 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
     * If the transaction isn't prepared and the originator left the cluster, the previous transaction is rolled-back and
     * a new one is started.
     */
-   private Response checkExistingTxForPrepare(CacheDecodeContext cdc, PrepareTransactionDecodeContext context) {
+   private boolean checkExistingTxForPrepare(HotRodHeader header, PrepareTransactionDecodeContext context) {
       TxState txState = context.getTxState();
       if (txState == null) {
-         return null;
+         return false;
       }
       switch (txState.status()) {
          case Status.STATUS_ACTIVE:
             break;
          case Status.STATUS_PREPARED:
-            return createTransactionResponse(cdc.header, XAResource.XA_OK);
+            writeResponse(header, createTransactionResponse(header, XAResource.XA_OK));
+            return true;
          case Status.STATUS_ROLLEDBACK:
-            return createTransactionResponse(cdc.header, XAException.XA_RBROLLBACK);
+            writeResponse(header, createTransactionResponse(header, XAException.XA_RBROLLBACK));
+            return true;
          case Status.STATUS_COMMITTED:
             //weird case. the tx is committed but we received a prepare request?
-            return createTransactionResponse(cdc.header, XAResource.XA_OK);
+            writeResponse(header, createTransactionResponse(header, XAResource.XA_OK));
+            return true;
          default:
             throw new IllegalStateException();
       }
@@ -209,12 +221,13 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
          // #1, the topology isn't updated
          // #2, the client timed-out waiting for the reply
          //in any case, we send a ignore reply and the client is free to retry (or rollback)
-         return cdc.decoder.createNotExecutedResponse(cdc.header, null);
+         writeNotExecuted(header);
+         return true;
       } else {
          //node left the cluster while transaction was running or preparing. we are going to abort the other transaction and start a new one.
          context.rollbackRemoteTransaction();
+         return false;
       }
-      return null;
    }
 
    /**
@@ -240,10 +253,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
       return entry != null && write.versionRead == MetadataUtils.extractVersion(entry);
    }
 
-   /**
-    * Creates a transaction response with the specific xa-code.
-    */
-   private TransactionResponse createTransactionResponse(HotRodHeader header, int xaReturnCode) {
-      return new TransactionResponse(header.version, header.messageId, header.cacheName, header.clientIntel, header.op, OperationStatus.Success, header.topologyId, xaReturnCode);
+   private ByteBuf createTransactionResponse(HotRodHeader header, int xaReturnCode) {
+      return header.encoder().transactionResponse(header, server, channel.alloc(), xaReturnCode);
    }
 }

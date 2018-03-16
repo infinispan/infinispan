@@ -19,7 +19,7 @@
    </properties>
 
    <dependencies>
-       <dependency>
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-core</artifactId>
       </dependency>
@@ -51,6 +51,10 @@
          <artifactId>testng</artifactId>
          <scope>test</scope>
       </dependency>
+       <dependency>
+           <groupId>org.infinispan</groupId>
+           <artifactId>infinispan-core</artifactId>
+       </dependency>
    </dependencies>
 
    <build>
@@ -199,6 +203,33 @@
                </instructions>
             </configuration>
          </plugin>
+
+         <plugin>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-protocol-parser-generator-maven-plugin</artifactId>
+            <version>${project.version}</version>
+            <configuration>
+               <files>
+                  <file>${basedir}/src/main/resources/hotrod.gr</file>
+               </files>
+            </configuration>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>generate</goal>
+                  </goals>
+                  <phase>generate-sources</phase>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
+      <resources>
+         <resource>
+            <directory>src/main/resources</directory>
+            <excludes>
+               <exclude>hotrod.gr</exclude>
+            </excludes>
+         </resource>
+      </resources>
    </build>
 </project>

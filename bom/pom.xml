@@ -296,6 +296,11 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-protocol-parser-generator-maven-plugin</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-hotrod</artifactId>
             <version>${project.version}</version>
          </dependency>

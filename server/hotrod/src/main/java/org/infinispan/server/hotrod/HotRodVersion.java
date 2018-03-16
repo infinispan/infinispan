@@ -79,14 +79,6 @@ public enum HotRodVersion {
       return versions[version];
    }
 
-   public static VersionedDecoder getDecoder(byte version) {
-      if (version < 20) {
-         return new Decoder10();
-      } else {
-         return new Decoder2x();
-      }
-   }
-
    public static VersionedEncoder getEncoder(byte version) {
       if (version >= 20) {
          return new Encoder2x();

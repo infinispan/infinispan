@@ -7,7 +7,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
@@ -38,6 +37,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.SaslUtils;
 import org.infinispan.commons.util.ServiceFinder;
@@ -45,6 +45,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.versioning.NumericVersionGenerator;
+import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedCallable;
@@ -57,7 +60,9 @@ import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.multimap.impl.EmbeddedMultimapCache;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
@@ -68,17 +73,20 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.QueryFacade;
+import org.infinispan.server.core.ServerConstants;
+import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.hotrod.counter.listener.ClientCounterManagerNotificationManager;
 import org.infinispan.server.hotrod.event.KeyValueWithPreviousEventConverterFactory;
 import org.infinispan.server.hotrod.iteration.DefaultIterationManager;
 import org.infinispan.server.hotrod.iteration.IterationManager;
+import org.infinispan.server.hotrod.logging.HotRodAccessLogging;
 import org.infinispan.server.hotrod.logging.Log;
-import org.infinispan.server.hotrod.transport.HotRodChannelInitializer;
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
 import org.infinispan.upgrade.RollingUpgradeManager;
 
@@ -90,16 +98,14 @@ import io.netty.util.concurrent.DefaultThreadFactory;
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information on
  * startup and shutdown.
- * <p>
- * TODO: It's too late for 5.1.1 series. In 5.2, split class into: local and cluster hot rod servers This should safe
- * some memory for the local case and the code should be cleaner
  *
  * @author Galder Zamarreño
  * @since 4.1
  */
 public class HotRodServer extends AbstractProtocolServer<HotRodServerConfiguration> {
-
    private static final Log log = LogFactory.getLog(HotRodServer.class, Log.class);
+
+   private static final long MILLISECONDS_IN_30_DAYS = TimeUnit.DAYS.toMillis(30);
 
    private static final String WORKER_THREADS_SYS_PROP = "infinispan.server.hotrod.workerThreads";
 
@@ -125,10 +131,11 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private DefaultExecutorService distributedExecutorService;
    private CrashedMemberDetectorListener viewChangeListener;
    private ReAddMyAddressListener topologyChangeListener;
-   protected ExecutorService executor;
+   private ExecutorService executor;
    private IterationManager iterationManager;
    private RemoveCacheListener removeCacheListener;
    private ClientCounterManagerNotificationManager clientCounterNotificationManager;
+   private HotRodAccessLogging accessLogging = new HotRodAccessLogging();
 
    public ServerAddress getAddress() {
       return address;
@@ -152,12 +159,12 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    @Override
    public ChannelOutboundHandler getEncoder() {
-      return new HotRodEncoder(cacheManager, this);
+      return null;
    }
 
    @Override
    public HotRodDecoder getDecoder() {
-      return new HotRodDecoder(transport, this, this::isCacheIgnored);
+      return new HotRodDecoder(cacheManager, getExecutor(getQualifiedName()), this);
    }
 
    /**
@@ -281,11 +288,9 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    @Override
    public ChannelInitializer<Channel> getInitializer() {
       if (configuration.idleTimeout() > 0)
-         return new NettyInitializers(Arrays.asList(new HotRodChannelInitializer(this, transport, getEncoder(), getDecoder(),
-               cacheManager, getExecutor(getQualifiedName())), new TimeoutEnabledChannelInitializer<>(this)));
+         return new NettyInitializers(new NettyChannelInitializer(this, transport, getEncoder(), getDecoder()), new TimeoutEnabledChannelInitializer<>(this));
       else // Idle timeout logic is disabled with -1 or 0 values
-         return new NettyInitializers(new HotRodChannelInitializer(this, transport, getEncoder(), getDecoder(),
-               cacheManager, getExecutor(getQualifiedName())));
+         return new NettyInitializers(new NettyChannelInitializer(this, transport, getEncoder(), getDecoder()));
    }
 
    private <T> void loadFilterConverterFactories(Class<T> c, BiConsumer<String, T> biConsumer) {
@@ -374,44 +379,49 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return builder;
    }
 
-   public AdvancedCache<byte[], byte[]> cache(CacheDecodeContext cdc) throws RequestParsingException {
-      String cacheName = cdc.header.cacheName;
+   public AdvancedCache<byte[], byte[]> cache(HotRodHeader header, Subject subject) throws RequestParsingException {
+      if (isCacheIgnored(header.cacheName)) {
+         throw new CacheUnavailableException();
+      }
+      String cacheName = header.cacheName;
       // Try to avoid calling cacheManager.getCacheNames() if possible, since this creates a lot of unnecessary garbage
-      AdvancedCache<byte[], byte[]> cache = knownCaches.get(scopedCacheKey(cacheName, cdc));
+      AdvancedCache<byte[], byte[]> cache = knownCaches.get(scopedCacheKey(cacheName, header));
       if (cache == null) {
          InternalCacheRegistry icr = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
          if (icr.isPrivateCache(cacheName)) {
             throw new RequestParsingException(
                   String.format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'", cacheName),
-                  cdc.header.version, cdc.header.messageId);
+                  header.version, header.messageId);
          } else if (icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.PROTECTED)) {
             // We want to make sure the cache access is checked everytime, so don't store it as a "known" cache. More
             // expensive, but these caches should not be accessed frequently
-            cache = getCacheInstance(cdc, cacheName, cacheManager, true, false);
+            cache = getCacheInstance(header, cacheName, cacheManager, true, false);
          } else if (!cacheName.isEmpty() && !cacheManager.getCacheNames().contains(cacheName)) {
             throw new CacheNotFoundException(
                   String.format("Cache with name '%s' not found amongst the configured caches", cacheName),
-                  cdc.header.version, cdc.header.messageId);
+                  header.version, header.messageId);
          } else {
-            cache = getCacheInstance(cdc, cacheName, cacheManager, true, true);
+            cache = getCacheInstance(header, cacheName, cacheManager, true, true);
          }
       }
-      cache = cdc.decoder.getOptimizedCache(cdc.header, cache, getCacheConfiguration(cacheName));
-      if (cdc.subject != null) {
-         cache = cache.withSubject(cdc.subject);
+      cache = header.getOptimizedCache(cache, getCacheConfiguration(cacheName));
+      if (subject != null) {
+         cache = cache.withSubject(subject);
       }
       return cache;
+   }
+
+   public EmbeddedMultimapCache<WrappedByteArray, WrappedByteArray> multimap(HotRodHeader header, Subject subject) {
+      return new EmbeddedMultimapCache(cache(header, subject));
    }
 
    public void cacheStopped(String cacheName) {
       cacheInfo.keySet().stream().filter(k -> k.startsWith(cacheName)).forEach(cacheInfo::remove);
    }
 
-   public CacheInfo getCacheInfo(CacheDecodeContext cdc) {
+   public CacheInfo getCacheInfo(AdvancedCache<byte[], byte[]> cache, HotRodHeader header) {
       // Fetching persistence manager would require security action, and would be too expensive
-      AdvancedCache<byte[], byte[]> cache = cdc.cache();
-      CacheInfo info = cacheInfo.get(cache.getName() + cdc.getHeader().getKeyMediaType().getTypeSubtype() + cdc.getHeader().getValueMediaType().getTypeSubtype());
-
+      CacheInfo info = cacheInfo.get(cache.getName() + header.getKeyMediaType().getTypeSubtype() + header.getValueMediaType().getTypeSubtype());
       if (info == null) {
          AdvancedCache<byte[], byte[]> localNonBlocking = SecurityActions.anonymizeSecureCache(cache)
                .noFlags().withFlags(LOCAL_NON_BLOCKING_GET);
@@ -423,14 +433,14 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          PersistenceManager pm = cr.getComponent(PersistenceManager.class);
          boolean hasIndexing = SecurityActions.getCacheConfiguration(cache).indexing().index().isEnabled();
          info = new CacheInfo(localNonBlocking, pm.isEnabled(), hasIndexing);
-         cacheInfo.put(cache.getName() + cdc.getHeader().getKeyMediaType().getTypeSubtype() + cdc.getHeader().getValueMediaType().getTypeSubtype(), info);
+         cacheInfo.put(cache.getName() + header.getKeyMediaType().getTypeSubtype() + header.getValueMediaType().getTypeSubtype(), info);
       }
       return info;
    }
 
-   AdvancedCache getCacheInstance(CacheDecodeContext cdc, String cacheName, EmbeddedCacheManager cacheManager, Boolean skipCacheCheck, Boolean addToKnownCaches) {
+   AdvancedCache getCacheInstance(HotRodHeader header, String cacheName, EmbeddedCacheManager cacheManager, Boolean skipCacheCheck, Boolean addToKnownCaches) {
       AdvancedCache cache = null;
-      String scopedCacheKey = scopedCacheKey(cacheName, cdc);
+      String scopedCacheKey = scopedCacheKey(cacheName, header);
       if (!skipCacheCheck) cache = knownCaches.get(scopedCacheKey);
 
       if (cache == null) {
@@ -445,8 +455,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          // We don't need synchronization as long as we store the cache last
          knownCacheConfigurations.put(cacheName, cacheConfiguration);
          knownCacheRegistries.put(cacheName, SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache()));
-         if (cdc != null) {
-            cache = cache.withMediaType(cdc.header.getKeyMediaType().toString(), cdc.header.getValueMediaType().toString());
+         if (header != null) {
+            cache = cache.withMediaType(header.getKeyMediaType().toString(), header.getValueMediaType().toString());
          }
          if (addToKnownCaches) {
             knownCaches.put(scopedCacheKey, cache);
@@ -491,6 +501,10 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return saslMechFactories.get(mech);
    }
 
+   public Cache<Address, ServerAddress> getAddressCache() {
+      return addressCache;
+   }
+
    public void addCacheEventFilterFactory(String name, CacheEventFilterFactory factory) {
       clientListenerRegistry.addCacheEventFilterFactory(name, factory);
    }
@@ -533,12 +547,12 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return iterationManager;
    }
 
-   private String scopedCacheKey(String cacheName, CacheDecodeContext cdc) {
+   private String scopedCacheKey(String cacheName, HotRodHeader header) {
       String keyType = MATCH_ALL.getTypeSubtype();
       String valueType = MATCH_ALL.getTypeSubtype();
-      if (cdc != null) {
-         keyType = cdc.getHeader().getKeyMediaType().getTypeSubtype();
-         valueType = cdc.getHeader().getValueMediaType().getTypeSubtype();
+      if (header != null) {
+         keyType = header.getKeyMediaType().getTypeSubtype();
+         valueType = header.getValueMediaType().getTypeSubtype();
       }
       return cacheName + "|" + keyType + "|" + valueType;
    }
@@ -567,6 +581,80 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       if (clientCounterNotificationManager != null) clientCounterNotificationManager.stop();
       if (executor != null) executor.shutdownNow();
       super.stop();
+   }
+
+   public HotRodAccessLogging accessLogging() {
+      return accessLogging;
+   }
+
+   public Metadata buildMetadata(HotRodHeader header, long lifespan, TimeUnitValue lifespanUnit, long maxIdle, TimeUnitValue maxIdleUnit) {
+      EmbeddedMetadata.Builder metadata = new EmbeddedMetadata.Builder();
+      ComponentRegistry cacheRegistry;
+      try {
+         cacheRegistry = getCacheRegistry(header.cacheName);
+         if (cacheRegistry == null) {
+            cache(header, null);
+            cacheRegistry = getCacheRegistry(header.cacheName);
+         }
+      } catch (Exception e) {
+         // Obtaining a protected/internal cache can result in an exception. However we have to finish reading
+         // the request and we can be sure that the exception will be thrown again once the request will be applied
+         // on given cache.
+         return null;
+      }
+      metadata.version(generateVersion(cacheRegistry));
+      if (lifespan != ServerConstants.EXPIRATION_DEFAULT && lifespanUnit != TimeUnitValue.DEFAULT) {
+         if (lifespanUnit == TimeUnitValue.INFINITE) {
+            metadata.lifespan(ServerConstants.EXPIRATION_NONE);
+         } else {
+            metadata.lifespan(toMillis(lifespan, lifespanUnit));
+         }
+      }
+      if (maxIdle != ServerConstants.EXPIRATION_DEFAULT && maxIdleUnit != TimeUnitValue.DEFAULT) {
+         if (maxIdleUnit == TimeUnitValue.INFINITE) {
+            metadata.maxIdle(ServerConstants.EXPIRATION_NONE);
+         } else {
+            metadata.maxIdle(toMillis(maxIdle, maxIdleUnit));
+         }
+      }
+      return metadata.build();
+   }
+
+   private EntryVersion generateVersion(ComponentRegistry registry) {
+      VersionGenerator cacheVersionGenerator = registry.getVersionGenerator();
+      if (cacheVersionGenerator == null) {
+         // It could be null, for example when not running in compatibility mode.
+         // The reason for that is that if no other component depends on the
+         // version generator, the factory does not get invoked.
+         NumericVersionGenerator newVersionGenerator = new NumericVersionGenerator()
+               .clustered(registry.getComponent(RpcManager.class) != null);
+         registry.registerVersionGenerator(newVersionGenerator);
+         return newVersionGenerator.generateNew();
+      } else {
+         return cacheVersionGenerator.generateNew();
+      }
+   }
+
+   /**
+    * Transforms lifespan pass as seconds into milliseconds following this rule (inspired by Memcached):
+    * <p>
+    * If lifespan is bigger than number of seconds in 30 days, then it is considered unix time. After converting it to
+    * milliseconds, we subtract the current time in and the result is returned.
+    * <p>
+    * Otherwise it's just considered number of seconds from now and it's returned in milliseconds unit.
+    */
+   private static long toMillis(long duration, TimeUnitValue unit) {
+      if (duration > 0) {
+         long milliseconds = unit.toTimeUnit().toMillis(duration);
+         if (milliseconds > MILLISECONDS_IN_30_DAYS) {
+            long unixTimeExpiry = milliseconds - System.currentTimeMillis();
+            return unixTimeExpiry < 0 ? 0 : unixTimeExpiry;
+         } else {
+            return milliseconds;
+         }
+      } else {
+         return duration;
+      }
    }
 
    public static class CacheInfo {

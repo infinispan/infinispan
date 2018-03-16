@@ -13,8 +13,10 @@ import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.Handle;
+import org.infinispan.server.hotrod.VersionedEncoder;
 import org.infinispan.server.hotrod.logging.Log;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 /**
@@ -37,13 +39,15 @@ class ClientNotificationManager {
    private final Map<String, Handle<Listener>> counterListener;
    private final CounterManager counterManager;
    private final Channel channel;
+   private final VersionedEncoder encoder;
    private final Queue<ClientCounterEvent> eventQueue;
    private final byte[] listenerId;
 
-   ClientNotificationManager(byte[] listenerId, CounterManager counterManager, Channel channel) {
+   ClientNotificationManager(byte[] listenerId, CounterManager counterManager, Channel channel, VersionedEncoder encoder) {
       this.listenerId = listenerId;
       this.counterManager = counterManager;
       this.channel = channel;
+      this.encoder = encoder;
       counterListener = new ConcurrentHashMap<>();
       eventQueue = new ConcurrentLinkedQueue<>();
    }
@@ -99,7 +103,9 @@ class ClientNotificationManager {
          if (trace) {
             log.tracef("Sending event %s", event);
          }
-         channel.write(event);
+         ByteBuf buf = channel.alloc().ioBuffer();
+         encoder.writeCounterEvent(event, buf);
+         channel.write(buf);
          written = true;
       }
       if (written) {

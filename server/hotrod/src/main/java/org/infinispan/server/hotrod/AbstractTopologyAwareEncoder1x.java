@@ -39,23 +39,23 @@ public abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x {
    }
 
    @Override
-   void writeHashTopologyUpdate(AbstractHashDistAwareResponse h, HotRodServer server, Response r, ByteBuf buffer) {
+   void writeHashTopologyUpdate(AbstractHashDistAwareResponse h, HotRodServer server, HotRodHeader header, ByteBuf buffer) {
       if (h instanceof HashDistAware11Response) {
-         writeHashTopologyUpdate11((HashDistAware11Response) h, server, r, buffer);
+         writeHashTopologyUpdate11((HashDistAware11Response) h, server, header, buffer);
       } else {
          throw new IllegalStateException(
                "Expected version 1.1 specific response: " + h);
       }
    }
 
-   void writeHashTopologyUpdate11(HashDistAware11Response h, HotRodServer server, Response r, ByteBuf buf) {
+   void writeHashTopologyUpdate11(HashDistAware11Response h, HotRodServer server, HotRodHeader header, ByteBuf buf) {
       log.tracef("Write hash distribution change response header %s", h);
       if (h.hashFunction == 0) {
          writeLimitedHashTopologyUpdate(h, buf);
          return;
       }
 
-      AdvancedCache<byte[], byte[]> cache = server.getCacheInstance(null, r.cacheName, server.getCacheManager(), false, true);
+      AdvancedCache<byte[], byte[]> cache = server.getCacheInstance(null, header.cacheName, server.getCacheManager(), false, true);
 
       // This is not quite correct, as the ownership of segments on the 1.0/1.1 clients is not exactly
       // the same as on the server. But the difference appears only for (numSegment*numOwners/MAX_INT)

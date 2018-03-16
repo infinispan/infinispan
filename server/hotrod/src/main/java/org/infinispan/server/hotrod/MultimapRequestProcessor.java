@@ -7,11 +7,11 @@ import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.hotrod.logging.Log;
-import org.infinispan.server.hotrod.multimap.MultimapGetWithMetadataResponse;
-import org.infinispan.server.hotrod.multimap.MultimapResponse;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.channel.Channel;
@@ -20,45 +20,45 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
    private static final Log log = LogFactory.getLog(MultimapRequestProcessor.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   MultimapRequestProcessor(Channel channel, Executor executor) {
-      super(channel, executor);
+   MultimapRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
+      super(channel, executor, server);
    }
 
-   void get(CacheDecodeContext cdc) {
+   void get(HotRodHeader header, Subject subject, byte[] key) {
       if (trace) {
          log.trace("Call get");
       }
-      WrappedByteArray keyWrappped = new WrappedByteArray(cdc.getKey());
-      cdc.multimap().get(keyWrappped).whenComplete(
-            (result, throwable) -> handleGet(cdc, result, throwable));
+      WrappedByteArray keyWrappped = new WrappedByteArray(key);
+      server.multimap(header, subject).get(keyWrappped).whenComplete(
+            (result, throwable) -> handleGet(header, result, throwable));
    }
 
-   private void handleGet(CacheDecodeContext cdc, Collection<WrappedByteArray> result, Throwable throwable) {
+   private void handleGet(HotRodHeader header, Collection<WrappedByteArray> result, Throwable throwable) {
       if (throwable != null) {
-         writeException(cdc, throwable);
+         writeException(header, throwable);
       } else try {
          OperationStatus status = OperationStatus.Success;
          if (result.isEmpty()) {
             status = OperationStatus.KeyDoesNotExist;
          }
-         writeResponse(new MultimapResponse<Collection<byte[]>>(cdc.header, HotRodOperation.GET_MULTIMAP, status,
+         writeResponse(header, header.encoder().multimapCollectionResponse(header, server, channel.alloc(), status,
                mapToCollectionOfByteArrays(result)));
       } catch (Throwable t2) {
-         writeException(cdc, t2);
+         writeException(header, t2);
       }
    }
 
-   void getWithMetadata(CacheDecodeContext cdc) {
+   void getWithMetadata(HotRodHeader header, Subject subject, byte[] key) {
       if (trace) {
          log.trace("Call getWithMetadata");
       }
-      WrappedByteArray keyWrappped = new WrappedByteArray(cdc.getKey());
-      cdc.multimap().getEntry(keyWrappped).whenComplete((entry, throwable) -> handleGetWithMetadata(cdc, entry, throwable));
+      WrappedByteArray keyWrappped = new WrappedByteArray(key);
+      server.multimap(header, subject).getEntry(keyWrappped).whenComplete((entry, throwable) -> handleGetWithMetadata(header, entry, throwable));
    }
 
-   private void handleGetWithMetadata(CacheDecodeContext cdc, Optional<CacheEntry<WrappedByteArray, Collection<WrappedByteArray>>> entry, Throwable throwable) {
+   private void handleGetWithMetadata(HotRodHeader header, Optional<CacheEntry<WrappedByteArray, Collection<WrappedByteArray>>> entry, Throwable throwable) {
       if (throwable != null) {
-         writeException(cdc, throwable);
+         writeException(header, throwable);
       } else try {
          OperationStatus status = OperationStatus.KeyDoesNotExist;
          CacheEntry<WrappedByteArray, Collection<WrappedByteArray>> ce = null;
@@ -68,9 +68,9 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
             ce = entry.get();
             result = mapToCollectionOfByteArrays(ce.getValue());
          }
-         writeResponse(new MultimapGetWithMetadataResponse(cdc.header, status, ce, result));
+         writeResponse(header, header.encoder().multimapEntryResponse(header, server, channel.alloc(), status, ce, result));
       } catch (Throwable t2) {
-         writeException(cdc, t2);
+         writeException(header, t2);
       }
    }
 
@@ -78,60 +78,72 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
       return result.stream().map(WrappedByteArray::getBytes).collect(Collectors.toSet());
    }
 
-   void put(CacheDecodeContext cdc) {
+   void put(HotRodHeader header, Subject subject, byte[] key, byte[] value) {
       if (trace) {
          log.trace("Call put");
       }
-      WrappedByteArray keyWrappped = new WrappedByteArray(cdc.getKey());
-      WrappedByteArray valueWrapped = new WrappedByteArray(cdc.getValue());
-      cdc.multimap().put(keyWrappped, valueWrapped).whenComplete(success(cdc, HotRodOperation.PUT_MULTIMAP));
+      WrappedByteArray keyWrappped = new WrappedByteArray(key);
+      WrappedByteArray valueWrapped = new WrappedByteArray(value);
+      server.multimap(header, subject).put(keyWrappped, valueWrapped).whenComplete((result, throwable) -> {
+         if (throwable != null) {
+            writeException(header, throwable);
+         } else {
+            writeResponse(header, header.encoder().emptyResponse(header, server, channel.alloc(), OperationStatus.Success));
+         }
+      });
    }
 
-   void removeKey(CacheDecodeContext cdc) {
+   void removeKey(HotRodHeader header, Subject subject, byte[] key) {
       if (trace) {
          log.trace("Call removeKey");
       }
-      WrappedByteArray keyWrappped = new WrappedByteArray(cdc.getKey());
-      cdc.multimap().remove(keyWrappped).whenComplete(success(cdc, HotRodOperation.REMOVE_MULTIMAP));
+      WrappedByteArray keyWrappped = new WrappedByteArray(key);
+      server.multimap(header, subject).remove(keyWrappped).whenComplete(handleBoolean(header));
    }
 
-   void removeEntry(CacheDecodeContext cdc) {
+   void removeEntry(HotRodHeader header, Subject subject, byte[] key, byte[] value) {
       log.trace("Call removeEntry");
-      WrappedByteArray keyWrappped = new WrappedByteArray(cdc.getKey());
-      WrappedByteArray valueWrapped = new WrappedByteArray(cdc.getValue());
-      cdc.multimap().remove(keyWrappped, valueWrapped).whenComplete(success(cdc, HotRodOperation.REMOVE_ENTRY_MULTIMAP));
+      WrappedByteArray keyWrappped = new WrappedByteArray(key);
+      WrappedByteArray valueWrapped = new WrappedByteArray(value);
+      server.multimap(header, subject).remove(keyWrappped, valueWrapped).whenComplete(handleBoolean(header));
    }
 
-   void size(CacheDecodeContext cdc) {
+   void size(HotRodHeader header, Subject subject) {
       log.trace("Call size");
-      cdc.multimap().size().whenComplete(success(cdc, HotRodOperation.SIZE_MULTIMAP));
+      server.multimap(header, subject).size().whenComplete((result, throwable) -> {
+         if (throwable != null) {
+            writeException(header, throwable);
+         } else {
+            writeResponse(header, header.encoder().unsignedLongResponse(header, server, channel.alloc(), result));
+         }
+      });
    }
 
-   void containsEntry(CacheDecodeContext cdc) {
+   void containsEntry(HotRodHeader header, Subject subject, byte[] key, byte[] value) {
       log.trace("Call containsEntry");
-      WrappedByteArray keyWrappped = new WrappedByteArray(cdc.getKey());
-      WrappedByteArray valueWrapped = new WrappedByteArray(cdc.getValue());
-      cdc.multimap().containsEntry(keyWrappped, valueWrapped).whenComplete(success(cdc, HotRodOperation.CONTAINS_ENTRY_MULTIMAP));
+      WrappedByteArray keyWrappped = new WrappedByteArray(key);
+      WrappedByteArray valueWrapped = new WrappedByteArray(value);
+      server.multimap(header, subject).containsEntry(keyWrappped, valueWrapped).whenComplete(handleBoolean(header));
    }
 
-   void containsKey(CacheDecodeContext cdc) {
+   void containsKey(HotRodHeader header, Subject subject, byte[] key) {
       log.trace("Call containsKey");
-      WrappedByteArray keyWrappped = new WrappedByteArray(cdc.getKey());
-      cdc.multimap().containsKey(keyWrappped).whenComplete(success(cdc, HotRodOperation.CONTAINS_KEY_MULTIMAP));
+      WrappedByteArray keyWrappped = new WrappedByteArray(key);
+      server.multimap(header, subject).containsKey(keyWrappped).whenComplete(handleBoolean(header));
    }
 
-   void containsValue(CacheDecodeContext cdc) {
+   void containsValue(HotRodHeader header, Subject subject, byte[] value) {
       log.trace("Call containsValue");
-      WrappedByteArray valueWrapped = new WrappedByteArray(cdc.getValue());
-      cdc.multimap().containsValue(valueWrapped).whenComplete(success(cdc, HotRodOperation.CONTAINS_VALUE_MULTIMAP));
+      WrappedByteArray valueWrapped = new WrappedByteArray(value);
+      server.multimap(header, subject).containsValue(valueWrapped).whenComplete(handleBoolean(header));
    }
 
-   private <T> BiConsumer<T, Throwable> success(CacheDecodeContext cdc, HotRodOperation operation) {
+   private BiConsumer<Boolean, Throwable> handleBoolean(HotRodHeader header) {
       return (result, throwable) -> {
          if (throwable != null) {
-            writeException(cdc, throwable);
+            writeException(header, throwable);
          } else {
-            writeResponse(new MultimapResponse<>(cdc.header, operation, OperationStatus.Success, result));
+            writeResponse(header, header.encoder().booleanResponse(header, server, channel.alloc(), result));
          }
       };
    }

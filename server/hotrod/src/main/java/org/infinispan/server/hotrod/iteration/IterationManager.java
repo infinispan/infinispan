@@ -2,19 +2,18 @@ package org.infinispan.server.hotrod.iteration;
 
 import java.util.BitSet;
 import java.util.List;
-import java.util.Optional;
 
+import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
-import org.infinispan.server.hotrod.CacheDecodeContext;
-import org.infinispan.util.KeyValuePair;
 
 /**
  * @author wburns
  * @since 9.0
  */
 public interface IterationManager {
-   String start(CacheDecodeContext cdc, Optional<BitSet> segments,
-                Optional<KeyValuePair<String, List<byte[]>>> filterConverterFactory, int batch, boolean metadata);
+   String start(Cache cache, BitSet segments,
+                String filterConverterFactory, List<byte[]> filterConverterParams, MediaType valueMediaType, int batch, boolean metadata);
 
    IterableIterationResult next(String cacheName, String iterationId);
 

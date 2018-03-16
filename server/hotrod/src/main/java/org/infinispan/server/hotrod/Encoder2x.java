@@ -1,48 +1,63 @@
 package org.infinispan.server.hotrod;
 
+import static org.infinispan.counter.util.EncodeUtil.encodeConfiguration;
+import static org.infinispan.server.core.transport.VInt.write;
+import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeString;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedLong;
 
+import java.security.PrivilegedActionException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.CacheSet;
+import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.hotrod.counter.listener.ClientCounterEvent;
-import org.infinispan.server.hotrod.counter.response.CounterResponse;
+import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.logging.Log;
-import org.infinispan.server.hotrod.multimap.MultimapGetWithMetadataResponse;
-import org.infinispan.server.hotrod.multimap.MultimapResponse;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
+import org.infinispan.stats.ClusterCacheStats;
+import org.infinispan.stats.Stats;
 import org.infinispan.topology.CacheTopology;
+import org.jgroups.SuspectedException;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 
 /**
  * @author Galder Zamarreño
  */
 class Encoder2x implements VersionedEncoder {
    private static final Log log = LogFactory.getLog(Encoder2x.class, Log.class);
-   private static final boolean isTrace = log.isTraceEnabled();
+   private static final boolean trace = log.isTraceEnabled();
 
    @Override
    public void writeEvent(Events.Event e, ByteBuf buf) {
-      if (isTrace)
+      if (trace)
          log.tracef("Write event %s", e);
       writeHeaderNoTopology(buf, e.messageId, e.op);
       ExtendedByteBuf.writeRangedBytes(e.listenerId, buf);
@@ -50,10 +65,335 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public void writeHeader(Response r, ByteBuf buf, Cache<Address, ServerAddress> addressCache, HotRodServer server) {
+   public ByteBuf authResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, byte[] challenge) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      if (challenge != null) {
+         buf.writeBoolean(false);
+         ExtendedByteBuf.writeRangedBytes(challenge, buf);
+      } else {
+         buf.writeBoolean(true);
+         ExtendedByteBuf.writeUnsignedInt(0, buf);
+      }
+      return buf;
+   }
+
+   @Override
+   public ByteBuf authMechListResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Set<String> mechs) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      ExtendedByteBuf.writeUnsignedInt(mechs.size(), buf);
+      for (String s : mechs) {
+         ExtendedByteBuf.writeString(s, buf);
+      }
+      return buf;
+   }
+
+   @Override
+   public ByteBuf notExecutedResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, byte[] prev) {
+      return valueResponse(header, server, alloc, OperationStatus.NotExecutedWithPrevious, prev);
+   }
+
+   @Override
+   public ByteBuf notExistResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc) {
+      return emptyResponse(header, server, alloc, OperationStatus.KeyDoesNotExist);
+   }
+
+   @Override
+   public ByteBuf valueResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status, byte[] prev) {
+      ByteBuf buf = writeHeader(header, server, alloc, status);
+      if (prev == null) {
+         ExtendedByteBuf.writeUnsignedInt(0, buf);
+      } else {
+         ExtendedByteBuf.writeRangedBytes(prev, buf);
+      }
+      if (trace) {
+         log.tracef("Write response to %s messageId=%d status=%s prev=%s", header.op, header.messageId, status, Util.printArray(prev));
+      }
+      return buf;
+   }
+
+   @Override
+   public ByteBuf successResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, byte[] result) {
+      return valueResponse(header, server, alloc, OperationStatus.SuccessWithPrevious, result);
+   }
+
+   @Override
+   public ByteBuf errorResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, String message, OperationStatus status) {
+      ByteBuf buf = writeHeader(header, server, alloc, status);
+      ExtendedByteBuf.writeString(message, buf);
+      return buf;
+   }
+
+   @Override
+   public ByteBuf bulkGetResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, int size, CacheSet<Map.Entry<byte[], byte[]>> entries) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      try (CloseableIterator<Map.Entry<byte[], byte[]>> iterator = entries.iterator()) {
+         int max = Integer.MAX_VALUE;
+         if (size != 0) {
+            if (trace) log.tracef("About to write (max) %d messages to the client", size);
+            max = size;
+         }
+         int count = 0;
+         while (iterator.hasNext() && count < max) {
+            Map.Entry<byte[], byte[]> entry = iterator.next();
+            buf.writeByte(1); // Not done
+            ExtendedByteBuf.writeRangedBytes(entry.getKey(), buf);
+            ExtendedByteBuf.writeRangedBytes(entry.getValue(), buf);
+            count++;
+         }
+         buf.writeByte(0); // Done
+      }
+      return buf;
+   }
+
+   @Override
+   public ByteBuf emptyResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status) {
+      return writeHeader(header, server, alloc, status);
+   }
+
+   @Override
+   public ByteBuf statsResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Stats stats, NettyTransport transport, ComponentRegistry cacheRegistry) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      int numStats = 11;
+      ClusterCacheStats clusterCacheStats = null;
+      if (HotRodVersion.HOTROD_24.isAtLeast(header.version)) {
+         clusterCacheStats = cacheRegistry.getComponent(ClusterCacheStats.class);
+         if (clusterCacheStats != null) {
+            numStats += 7;
+         }
+      }
+      ExtendedByteBuf.writeUnsignedInt(numStats, buf);
+      writePair(buf, "timeSinceStart", String.valueOf(stats.getTimeSinceStart()));
+      writePair(buf, "currentNumberOfEntries", String.valueOf(stats.getCurrentNumberOfEntries()));
+      writePair(buf, "totalNumberOfEntries", String.valueOf(stats.getTotalNumberOfEntries()));
+      writePair(buf, "stores", String.valueOf(stats.getStores()));
+      writePair(buf, "retrievals", String.valueOf(stats.getRetrievals()));
+      writePair(buf, "hits", String.valueOf(stats.getHits()));
+      writePair(buf, "misses", String.valueOf(stats.getMisses()));
+      writePair(buf, "removeHits", String.valueOf(stats.getRemoveHits()));
+      writePair(buf, "removeMisses", String.valueOf(stats.getRemoveMisses()));
+      writePair(buf, "totalBytesRead", String.valueOf(transport.getTotalBytesRead()));
+      writePair(buf, "totalBytesWritten", String.valueOf(transport.getTotalBytesWritten()));
+
+      if (clusterCacheStats != null) {
+         writePair(buf, "globalCurrentNumberOfEntries", String.valueOf(clusterCacheStats.getCurrentNumberOfEntries()));
+         writePair(buf, "globalStores", String.valueOf(clusterCacheStats.getStores()));
+         writePair(buf, "globalRetrievals", String.valueOf(clusterCacheStats.getRetrievals()));
+         writePair(buf, "globalHits", String.valueOf(clusterCacheStats.getHits()));
+         writePair(buf, "globalMisses", String.valueOf(clusterCacheStats.getMisses()));
+         writePair(buf, "globalRemoveHits", String.valueOf(clusterCacheStats.getRemoveHits()));
+         writePair(buf, "globalRemoveMisses", String.valueOf(clusterCacheStats.getRemoveMisses()));
+      }
+      return buf;
+   }
+
+   private void writePair(ByteBuf buf, String key, String value) {
+      ExtendedByteBuf.writeString(key, buf);
+      ExtendedByteBuf.writeString(value, buf);
+   }
+
+   @Override
+   public ByteBuf valueWithVersionResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, byte[] value, long version) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      buf.writeLong(version);
+      ExtendedByteBuf.writeRangedBytes(value, buf);
+      return buf;
+   }
+
+
+   @Override
+   public ByteBuf getWithMetadataResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, CacheEntry<byte[], byte[]> entry) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      MetadataUtils.writeMetadata(MetadataUtils.extractLifespan(entry), MetadataUtils.extractMaxIdle(entry),
+            MetadataUtils.extractCreated(entry), MetadataUtils.extractLastUsed(entry), MetadataUtils.extractVersion(entry), buf);
+      ExtendedByteBuf.writeRangedBytes(entry.getValue(), buf);
+      return buf;
+   }
+
+   @Override
+   public ByteBuf getStreamResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, int offset, CacheEntry<byte[], byte[]> entry) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      MetadataUtils.writeMetadata(MetadataUtils.extractLifespan(entry), MetadataUtils.extractMaxIdle(entry),
+            MetadataUtils.extractCreated(entry), MetadataUtils.extractLastUsed(entry), MetadataUtils.extractVersion(entry), buf);
+      ExtendedByteBuf.writeRangedBytes(entry.getValue(), offset, buf);
+      return buf;
+   }
+
+   @Override
+   public ByteBuf getAllResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Map<byte[], byte[]> entries) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      ExtendedByteBuf.writeUnsignedInt(entries.size(), buf);
+      for (Map.Entry<byte[], byte[]> entry : entries.entrySet()) {
+         ExtendedByteBuf.writeRangedBytes(entry.getKey(), buf);
+         ExtendedByteBuf.writeRangedBytes(entry.getValue(), buf);
+      }
+      return buf;
+   }
+
+   @Override
+   public ByteBuf bulkGetKeysResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, CloseableIterator<byte[]> iterator) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      while (iterator.hasNext()) {
+         buf.writeByte(1);
+         ExtendedByteBuf.writeRangedBytes(iterator.next(), buf);
+      }
+      buf.writeByte(0);
+      return buf;
+   }
+
+   @Override
+   public ByteBuf iterationStartResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, String iterationId) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      ExtendedByteBuf.writeString(iterationId, buf);
+      return buf;
+   }
+
+   @Override
+   public ByteBuf iterationNextResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, IterableIterationResult iterationResult) {
+      ByteBuf buf = writeHeader(header, server, alloc, iterationResult.getStatusCode());
+      ExtendedByteBuf.writeRangedBytes(iterationResult.segmentsToBytes(), buf);
+      List<CacheEntry> entries = iterationResult.getEntries();
+      ExtendedByteBuf.writeUnsignedInt(entries.size(), buf);
+      Optional<Integer> projectionLength = projectionInfo(entries, header.version);
+      projectionLength.ifPresent(i -> ExtendedByteBuf.writeUnsignedInt(i, buf));
+      for (CacheEntry cacheEntry : entries) {
+         if (HotRodVersion.HOTROD_25.isAtLeast(header.version)) {
+            if (iterationResult.isMetadata()) {
+               buf.writeByte(1);
+               InternalCacheEntry ice = (InternalCacheEntry) cacheEntry;
+               int lifespan = ice.getLifespan() < 0 ? -1 : (int) (ice.getLifespan() / 1000);
+               int maxIdle = ice.getMaxIdle() < 0 ? -1 : (int) (ice.getMaxIdle() / 1000);
+               long lastUsed = ice.getLastUsed();
+               long created = ice.getCreated();
+               long dataVersion = MetadataUtils.extractVersion(ice);
+               MetadataUtils.writeMetadata(lifespan, maxIdle, created, lastUsed, dataVersion, buf);
+            } else {
+               buf.writeByte(0);
+            }
+         }
+         Object key = iterationResult.getResultFunction().apply(cacheEntry.getKey());
+         Object value = cacheEntry.getValue();
+         ExtendedByteBuf.writeRangedBytes((byte[]) key, buf);
+         if (value instanceof Object[]) {
+            for (Object o : (Object[]) value) {
+               ExtendedByteBuf.writeRangedBytes((byte[]) o, buf);
+            }
+         } else if (value instanceof byte[]) {
+            ExtendedByteBuf.writeRangedBytes((byte[]) value, buf);
+         } else {
+            throw new IllegalArgumentException("Unsupported type passed: " + value.getClass());
+         }
+      }
+      return buf;
+   }
+
+   @Override
+   public ByteBuf counterConfigurationResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, CounterConfiguration configuration) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      encodeConfiguration(configuration, buf::writeByte, buf::writeLong,
+            value -> ExtendedByteBuf.writeUnsignedInt(value, buf));
+      return buf;
+   }
+
+   @Override
+   public ByteBuf counterNamesResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Collection<String> counterNames) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      write(buf, counterNames.size());
+      for (String s : counterNames) {
+         writeString(s, buf);
+      }
+      return buf;
+   }
+
+   @Override
+   public ByteBuf multimapCollectionResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status, Collection<byte[]> values) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      ExtendedByteBuf.writeUnsignedInt(values.size(), buf);
+      for (byte[] v : values) {
+         ExtendedByteBuf.writeRangedBytes(v, buf);
+      }
+      return buf;
+   }
+
+   @Override
+   public ByteBuf multimapEntryResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status, CacheEntry<WrappedByteArray, Collection<WrappedByteArray>> entry, Collection<byte[]> values) {
+      ByteBuf buf = writeHeader(header, server, alloc, status);
+      MetadataUtils.writeMetadata(MetadataUtils.extractLifespan(entry), MetadataUtils.extractMaxIdle(entry),
+            MetadataUtils.extractCreated(entry), MetadataUtils.extractLastUsed(entry), MetadataUtils.extractVersion(entry), buf);
+      if (values == null) {
+         buf.writeByte(0);
+      } else {
+         ExtendedByteBuf.writeUnsignedInt(values.size(), buf);
+         for (byte[] v : values) {
+            ExtendedByteBuf.writeRangedBytes(v, buf);
+         }
+      }
+      return buf;
+   }
+
+   @Override
+   public ByteBuf booleanResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, boolean result) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      buf.writeByte(result ? 1 : 0);
+      return buf;
+   }
+
+   @Override
+   public ByteBuf unsignedLongResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, long value) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      ExtendedByteBuf.writeUnsignedLong(value, buf);
+      return buf;
+   }
+
+   @Override
+   public ByteBuf longResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, long value) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      buf.writeLong(value);
+      return buf;
+   }
+
+   @Override
+   public ByteBuf transactionResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, int xaReturnCode) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      buf.writeInt(xaReturnCode);
+      return buf;
+   }
+
+   @Override
+   public OperationStatus errorStatus(Throwable t) {
+      if (t instanceof SuspectException) {
+         return OperationStatus.NodeSuspected;
+      } else if (t instanceof IllegalLifecycleStateException) {
+         return OperationStatus.IllegalLifecycleState;
+      } else if (t instanceof CacheException) {
+         // JGroups and remote exceptions (inside RemoteException) can come wrapped up
+         Throwable cause = t.getCause() == null ? t : t.getCause();
+         if (cause instanceof SuspectedException) {
+            return OperationStatus.NodeSuspected;
+         } else if (cause instanceof IllegalLifecycleStateException) {
+            return OperationStatus.IllegalLifecycleState;
+         } else if (cause instanceof InterruptedException) {
+            return OperationStatus.IllegalLifecycleState;
+         } else {
+            return OperationStatus.ServerError;
+         }
+      } else if (t instanceof InterruptedException) {
+         return OperationStatus.IllegalLifecycleState;
+      } else if (t instanceof PrivilegedActionException) {
+         return errorStatus(t.getCause());
+      } else if (t instanceof SuspectedException) {
+         return OperationStatus.NodeSuspected;
+      } else {
+         return OperationStatus.ServerError;
+      }
+   }
+
+   private ByteBuf writeHeader(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status) {
+      ByteBuf buf = alloc.ioBuffer();
       // Sometimes an error happens before we have added the cache to the knownCaches/knownCacheConfigurations map
       // If that happens, we pretend the cache is LOCAL and we skip the topology update
-      String cacheName = r.cacheName.isEmpty() ? server.getConfiguration().defaultCacheName() : r.cacheName;
+      String cacheName = header.cacheName.isEmpty() ? server.getConfiguration().defaultCacheName() : header.cacheName;
+      Cache<Address, ServerAddress> addressCache = HotRodVersion.forVersion(header.version) != HotRodVersion.UNKNOWN ?
+            server.getAddressCache() : null;
 
       Optional<AbstractTopologyResponse> newTopology;
       boolean compatibilityEnabled;
@@ -61,7 +401,7 @@ class Encoder2x implements VersionedEncoder {
 
       if (CounterModuleLifecycle.COUNTER_CACHE_NAME.equals(cacheName)) {
          cacheTopology = getCounterCacheTopology(server.getCacheManager());
-         newTopology = getTopologyResponse(r, addressCache, CacheMode.DIST_SYNC, cacheTopology);
+         newTopology = getTopologyResponse(header.clientIntel, header.topologyId, addressCache, CacheMode.DIST_SYNC, cacheTopology);
          compatibilityEnabled = false;
       } else {
          ComponentRegistry cr = server.getCacheRegistry(cacheName);
@@ -69,20 +409,20 @@ class Encoder2x implements VersionedEncoder {
          CacheMode cacheMode = configuration == null ? CacheMode.LOCAL : configuration.clustering().cacheMode();
 
          cacheTopology = cacheMode.isClustered() ? cr.getDistributionManager().getCacheTopology() : null;
-         newTopology = getTopologyResponse(r, addressCache, cacheMode, cacheTopology);
+         newTopology = getTopologyResponse(header.clientIntel, header.topologyId, addressCache, cacheMode, cacheTopology);
          compatibilityEnabled = configuration != null && configuration.compatibility().enabled();
       }
 
 
       buf.writeByte(Constants.MAGIC_RES);
-      writeUnsignedLong(r.messageId, buf);
-      buf.writeByte(r.operation.getResponseOpCode());
-      writeStatus(r, buf, server, compatibilityEnabled);
+      writeUnsignedLong(header.messageId, buf);
+      buf.writeByte(header.op.getResponseOpCode());
+      writeStatus(header, buf, server, compatibilityEnabled, status);
       if (newTopology.isPresent()) {
          AbstractTopologyResponse topology = newTopology.get();
          if (topology instanceof TopologyAwareResponse) {
             writeTopologyUpdate((TopologyAwareResponse) topology, buf);
-            if (r.clientIntel == Constants.INTELLIGENCE_HASH_DISTRIBUTION_AWARE)
+            if (header.clientIntel == Constants.INTELLIGENCE_HASH_DISTRIBUTION_AWARE)
                writeEmptyHashInfo(topology, buf);
          } else if (topology instanceof HashDistAware20Response) {
             writeHashTopologyUpdate((HashDistAware20Response) topology, cacheTopology, buf);
@@ -90,9 +430,10 @@ class Encoder2x implements VersionedEncoder {
             throw new IllegalArgumentException("Unsupported response: " + topology);
          }
       } else {
-         if (isTrace) log.trace("Write topology response header with no change");
+         if (trace) log.trace("Write topology response header with no change");
          buf.writeByte(0);
       }
+      return buf;
    }
 
    @Override
@@ -116,11 +457,11 @@ class Encoder2x implements VersionedEncoder {
       buffer.writeByte(0); // no topology change
    }
 
-   private void writeStatus(Response r, ByteBuf buf, HotRodServer server, boolean compatibilityEnabled) {
-      if (server == null || HotRodVersion.HOTROD_24.isOlder(r.version))
-         buf.writeByte(r.status.getCode());
+   private void writeStatus(HotRodHeader header, ByteBuf buf, HotRodServer server, boolean compatibilityEnabled, OperationStatus status) {
+      if (server == null || HotRodVersion.HOTROD_24.isOlder(header.version))
+         buf.writeByte(status.getCode());
       else {
-         OperationStatus st = OperationStatus.withCompatibility(r.status, compatibilityEnabled);
+         OperationStatus st = OperationStatus.withCompatibility(status, compatibilityEnabled);
          buf.writeByte(st.getCode());
       }
    }
@@ -131,7 +472,7 @@ class Encoder2x implements VersionedEncoder {
          log.noMembersInTopology();
          buffer.writeByte(0); // Topology not changed
       } else {
-         if (isTrace) log.tracef("Write topology change response header %s", t);
+         if (trace) log.tracef("Write topology change response header %s", t);
          buffer.writeByte(1); // Topology changed
          ExtendedByteBuf.writeUnsignedInt(t.topologyId, buffer);
          ExtendedByteBuf.writeUnsignedInt(topologyMap.size(), buffer);
@@ -143,7 +484,7 @@ class Encoder2x implements VersionedEncoder {
    }
 
    private void writeEmptyHashInfo(AbstractTopologyResponse t, ByteBuf buffer) {
-      if (isTrace) log.tracef("Return limited hash distribution aware header because the client %s doesn't ", t);
+      if (trace) log.tracef("Return limited hash distribution aware header because the client %s doesn't ", t);
       buffer.writeByte(0); // Hash Function Version
       ExtendedByteBuf.writeUnsignedInt(t.numSegments, buffer);
    }
@@ -154,7 +495,7 @@ class Encoder2x implements VersionedEncoder {
       Map<Address, ServerAddress> members = h.serverEndpointsMap.entrySet().stream().filter(e ->
             ch.getMembers().contains(e.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-      if (isTrace) {
+      if (trace) {
          log.trace("Topology cache contains: " + h.serverEndpointsMap);
          log.trace("After read consistent hash filter, members are: " + members);
       }
@@ -163,7 +504,7 @@ class Encoder2x implements VersionedEncoder {
          log.noMembersInHashTopology(ch, h.serverEndpointsMap.toString());
          buf.writeByte(0); // Topology not changed
       } else {
-         if (isTrace) log.tracef("Write hash distribution change response header %s", h);
+         if (trace) log.tracef("Write hash distribution change response header %s", h);
          buf.writeByte(1); // Topology changed
          ExtendedByteBuf.writeUnsignedInt(h.topologyId, buf); // Topology ID
 
@@ -204,11 +545,11 @@ class Encoder2x implements VersionedEncoder {
       }
    }
 
-   private Optional<AbstractTopologyResponse> getTopologyResponse(Response r, Cache<Address, ServerAddress> addressCache,
+   private Optional<AbstractTopologyResponse> getTopologyResponse(short clientIntel, int topologyId, Cache<Address, ServerAddress> addressCache,
                                                                   CacheMode cacheMode, CacheTopology cacheTopology) {
       // If clustered, set up a cache for topology information
       if (addressCache != null) {
-         switch (r.clientIntel) {
+         switch (clientIntel) {
             case Constants.INTELLIGENCE_TOPOLOGY_AWARE:
             case Constants.INTELLIGENCE_HASH_DISTRIBUTION_AWARE: {
                // Only send a topology update if the cache is clustered
@@ -216,8 +557,8 @@ class Encoder2x implements VersionedEncoder {
                   // Use the request cache's topology id as the HotRod topologyId.
                   int currentTopologyId = cacheTopology.getTopologyId();
                   // AND if the client's topology id is smaller than the server's topology id
-                  if (r.topologyId < currentTopologyId)
-                     return generateTopologyResponse(r, addressCache, cacheMode, cacheTopology);
+                  if (topologyId < currentTopologyId)
+                     return generateTopologyResponse(clientIntel, topologyId, addressCache, cacheMode, cacheTopology);
                }
             }
          }
@@ -225,8 +566,7 @@ class Encoder2x implements VersionedEncoder {
       return Optional.empty();
    }
 
-   private Optional<AbstractTopologyResponse> generateTopologyResponse(Response r,
-                                                                       Cache<Address, ServerAddress> addressCache, CacheMode cacheMode, CacheTopology cacheTopology) {
+   private Optional<AbstractTopologyResponse> generateTopologyResponse(short clientIntel, int responseTopologyId, Cache<Address, ServerAddress> addressCache, CacheMode cacheMode, CacheTopology cacheTopology) {
       // If the topology cache is incomplete, we assume that a node has joined but hasn't added his HotRod
       // endpoint address to the topology cache yet. We delay the topology update until the next client
       // request by returning null here (so the client topology id stays the same).
@@ -244,25 +584,24 @@ class Encoder2x implements VersionedEncoder {
 
       int topologyId = currentTopologyId;
 
-      if (isTrace) {
+      if (trace) {
          log.tracef("Check for partial topologies: members=%s, endpoints=%s, client-topology=%s, server-topology=%s",
-               cacheMembers, cacheMembers, r.topologyId, topologyId);
+               cacheMembers, cacheMembers, responseTopologyId, topologyId);
       }
 
       if (!serverEndpoints.keySet().containsAll(cacheMembers)) {
          // At least one cache member is missing from the topology cache
-         int clientTopologyId = r.topologyId;
-         if (currentTopologyId - clientTopologyId < 2) {
-            if (isTrace) log.trace("Postpone topology update");
+         if (currentTopologyId - responseTopologyId < 2) {
+            if (trace) log.trace("Postpone topology update");
             return Optional.empty(); // Postpone topology update
          } else {
             // Send partial topology update
             topologyId -= 1;
-            if (isTrace) log.tracef("Send partial topology update with topology id %s", topologyId);
+            if (trace) log.tracef("Send partial topology update with topology id %s", topologyId);
          }
       }
 
-      if (r.clientIntel == Constants.INTELLIGENCE_HASH_DISTRIBUTION_AWARE && !cacheMode.isInvalidation()) {
+      if (clientIntel == Constants.INTELLIGENCE_HASH_DISTRIBUTION_AWARE && !cacheMode.isInvalidation()) {
          int numSegments = cacheTopology.getReadConsistentHash().getNumSegments();
          return Optional.of(new HashDistAware20Response(topologyId, serverEndpoints, numSegments,
                Constants.DEFAULT_CONSISTENT_HASH_VERSION));
@@ -271,292 +610,7 @@ class Encoder2x implements VersionedEncoder {
       }
    }
 
-   @Override
-   public void writeResponse(Response response, ByteBuf buf, EmbeddedCacheManager cacheManager, HotRodServer server) {
-      switch (response.operation) {
-         case GET: {
-            GetResponse r = (GetResponse) response;
-            if (r.status == OperationStatus.Success) ExtendedByteBuf.writeRangedBytes(r.data, buf);
-            break;
-         }
-         case GET_WITH_METADATA: {
-            GetWithMetadataResponse r = (GetWithMetadataResponse) response;
-            if (r.status == OperationStatus.Success) {
-               MetadataUtils.writeMetadata(r.lifespan, r.maxIdle, r.created, r.lastUsed, r.dataVersion, buf);
-               ExtendedByteBuf.writeRangedBytes(r.data, buf);
-            }
-            break;
-         }
-         case GET_WITH_VERSION: {
-            GetWithVersionResponse r = (GetWithVersionResponse) response;
-            if (r.status == OperationStatus.Success) {
-               buf.writeLong(r.dataVersion);
-               ExtendedByteBuf.writeRangedBytes(r.data, buf);
-            }
-            break;
-         }
-         case GET_STREAM: {
-            GetStreamResponse r = (GetStreamResponse) response;
-            if (r.status == OperationStatus.Success) {
-               MetadataUtils.writeMetadata(r.lifespan, r.maxIdle, r.created, r.lastUsed, r.dataVersion, buf);
-               ExtendedByteBuf.writeRangedBytes(r.data, r.offset, buf);
-            }
-            break;
-         }
-         case PUT:
-         case PUT_IF_ABSENT:
-         case REPLACE:
-         case REPLACE_IF_UNMODIFIED:
-         case REMOVE:
-         case REMOVE_IF_UNMODIFIED: {
-            if (response instanceof ResponseWithPrevious) {
-               ResponseWithPrevious r = (ResponseWithPrevious) response;
-               if (!r.previous.isPresent())
-                  ExtendedByteBuf.writeUnsignedInt(0, buf);
-               else
-                  ExtendedByteBuf.writeRangedBytes(r.previous.get(), buf);
-            }
-            break;
-         }
-         case STATS: {
-            StatsResponse r = (StatsResponse) response;
-            ExtendedByteBuf.writeUnsignedInt(r.stats.size(), buf);
-            for (Map.Entry<String, String> stat : r.stats.entrySet()) {
-               ExtendedByteBuf.writeString(stat.getKey(), buf);
-               ExtendedByteBuf.writeString(stat.getValue(), buf);
-            }
-            break;
-         }
-         case PING:
-         case CLEAR:
-         case CONTAINS_KEY:
-         case PUT_ALL:
-         case PUT_STREAM:
-         case ITERATION_END:
-         case ADD_CLIENT_LISTENER:
-         case REMOVE_CLIENT_LISTENER:
-         case COUNTER_CREATE:
-         case COUNTER_REMOVE:
-         case COUNTER_IS_DEFINED:
-         case COUNTER_RESET:
-         case COUNTER_ADD_LISTENER:
-         case COUNTER_REMOVE_LISTENER:
-            // Empty response
-            break;
-         case COUNTER_ADD_AND_GET:
-         case COUNTER_GET:
-         case COUNTER_GET_CONFIGURATION:
-         case COUNTER_CAS:
-         case COUNTER_GET_NAMES:
-            if (response.status == OperationStatus.Success) {
-               ((CounterResponse) response).writeTo(buf);
-            }
-            break;
-         case SIZE: {
-            SizeResponse r = (SizeResponse) response;
-            writeUnsignedLong(r.size, buf);
-            break;
-         }
-         case AUTH_MECH_LIST: {
-            AuthMechListResponse r = (AuthMechListResponse) response;
-            ExtendedByteBuf.writeUnsignedInt(r.mechs.size(), buf);
-            r.mechs.forEach(s -> ExtendedByteBuf.writeString(s, buf));
-            break;
-         }
-         case AUTH: {
-            AuthResponse r = (AuthResponse) response;
-            if (r.challenge != null) {
-               buf.writeBoolean(false);
-               ExtendedByteBuf.writeRangedBytes(r.challenge, buf);
-            } else {
-               buf.writeBoolean(true);
-               ExtendedByteBuf.writeUnsignedInt(0, buf);
-            }
-            break;
-         }
-         case EXEC: {
-            ExecResponse r = (ExecResponse) response;
-            ExtendedByteBuf.writeRangedBytes(r.result, buf);
-            break;
-         }
-         case BULK_GET: {
-            BulkGetResponse r = (BulkGetResponse) response;
-            if (isTrace) log.trace("About to respond to bulk get request");
-            if (r.status == OperationStatus.Success) {
-               try (CloseableIterator<Map.Entry<byte[], byte[]>> iterator = (CloseableIterator<Map.Entry<byte[], byte[]>>) r.entries.iterator()) {
-                  int max = Integer.MAX_VALUE;
-                  if (r.count != 0) {
-                     if (isTrace) log.tracef("About to write (max) %d messages to the client", r.count);
-                     max = r.count;
-                  }
-                  int count = 0;
-                  while (iterator.hasNext() && count < max) {
-                     Map.Entry<byte[], byte[]> entry = iterator.next();
-                     buf.writeByte(1); // Not done
-                     ExtendedByteBuf.writeRangedBytes(entry.getKey(), buf);
-                     ExtendedByteBuf.writeRangedBytes(entry.getValue(), buf);
-                     count++;
-                  }
-                  buf.writeByte(0); // Done
-               }
-            }
-            break;
-         }
-         case BULK_GET_KEYS: {
-            BulkGetKeysResponse r = (BulkGetKeysResponse) response;
-            if (r.status == OperationStatus.Success) {
-               r.iterator.forEachRemaining(key -> {
-                  buf.writeByte(1); // Not done
-                  ExtendedByteBuf.writeRangedBytes(key, buf);
-               });
-               buf.writeByte(0); // Done
-            }
-            break;
-         }
-         case QUERY: {
-            QueryResponse r = (QueryResponse) response;
-            ExtendedByteBuf.writeRangedBytes(r.result, buf);
-            break;
-         }
-         case ITERATION_START: {
-            IterationStartResponse r = (IterationStartResponse) response;
-            ExtendedByteBuf.writeString(r.iterationId, buf);
-            break;
-         }
-         case ITERATION_NEXT: {
-            IterationNextResponse r = (IterationNextResponse) response;
-            ExtendedByteBuf.writeRangedBytes(r.iterationResult.segmentsToBytes(), buf);
-            List<CacheEntry> entries = r.iterationResult.getEntries();
-            ExtendedByteBuf.writeUnsignedInt(entries.size(), buf);
-            Optional<Integer> projectionLength = projectionInfo(entries, r.version);
-            projectionLength.ifPresent(i -> ExtendedByteBuf.writeUnsignedInt(i, buf));
-            entries.forEach(cacheEntry -> {
-               if (HotRodVersion.HOTROD_25.isAtLeast(r.version)) {
-                  if (r.iterationResult.isMetadata()) {
-                     buf.writeByte(1);
-                     InternalCacheEntry ice = (InternalCacheEntry) cacheEntry;
-                     int lifespan = ice.getLifespan() < 0 ? -1 : (int) (ice.getLifespan() / 1000);
-                     int maxIdle = ice.getMaxIdle() < 0 ? -1 : (int) (ice.getMaxIdle() / 1000);
-                     long lastUsed = ice.getLastUsed();
-                     long created = ice.getCreated();
-                     long dataVersion = MetadataUtils.extractVersion(ice);
-                     MetadataUtils.writeMetadata(lifespan, maxIdle, created, lastUsed, dataVersion, buf);
-                  } else {
-                     buf.writeByte(0);
-                  }
-               }
-               Object key = r.iterationResult.getResultFunction().apply(cacheEntry.getKey());
-               Object value = cacheEntry.getValue();
-               ExtendedByteBuf.writeRangedBytes((byte[]) key, buf);
-               if (value instanceof Object[]) {
-                  for (Object o : (Object[]) value) {
-                     ExtendedByteBuf.writeRangedBytes((byte[]) o, buf);
-                  }
-               } else if (value instanceof byte[]) {
-                  ExtendedByteBuf.writeRangedBytes((byte[]) value, buf);
-               } else {
-                  throw new IllegalArgumentException("Unsupported type passed: " + value.getClass());
-               }
-            });
-            break;
-         }
-         case GET_ALL: {
-            GetAllResponse r = (GetAllResponse) response;
-            if (r.status == OperationStatus.Success) {
-               ExtendedByteBuf.writeUnsignedInt(r.entries.size(), buf);
-               r.entries.forEach((k, v) -> {
-                  ExtendedByteBuf.writeRangedBytes(k, buf);
-                  ExtendedByteBuf.writeRangedBytes(v, buf);
-               });
-            }
-            break;
-         }
-         case ERROR: {
-            ErrorResponse r = (ErrorResponse) response;
-            ExtendedByteBuf.writeString(r.msg, buf);
-            break;
-         }
-         case CACHE_ENTRY_CREATED_EVENT:
-         case CACHE_ENTRY_MODIFIED_EVENT:
-         case CACHE_ENTRY_REMOVED_EVENT:
-         case CACHE_ENTRY_EXPIRED_EVENT:
-            throw new UnsupportedOperationException(response.toString());
-         case COMMIT_TX:
-         case PREPARE_TX:
-         case ROLLBACK_TX:
-            TransactionResponse txRsp = (TransactionResponse) response;
-            if (txRsp.status == OperationStatus.Success) {
-               buf.writeInt(txRsp.xaReturnCode);
-            }
-            break;
-         case PUT_MULTIMAP: {
-            break;
-         }
-         case GET_MULTIMAP: {
-            MultimapResponse<Collection<byte[]>> r = (MultimapResponse) response;
-            if (r.getStatus() == OperationStatus.Success) {
-               ExtendedByteBuf.writeUnsignedInt(r.getResult().size(), buf);
-               r.getResult().forEach(v -> ExtendedByteBuf.writeRangedBytes(v, buf));
-            }
-            break;
-         }
-         case GET_MULTIMAP_WITH_METADATA: {
-            MultimapGetWithMetadataResponse r = (MultimapGetWithMetadataResponse) response;
-            if (r.getStatus() == OperationStatus.Success) {
-               MetadataUtils.writeMetadata(r.getLifespan(), r.getMaxIdle(), r.getCreated(), r.getLastUsed(), r.getDataVersion(), buf);
-               ExtendedByteBuf.writeUnsignedInt(r.getResult().size(), buf);
-               r.getResult().forEach(v -> ExtendedByteBuf.writeRangedBytes(v, buf));
-            }
-            break;
-         }
-         case REMOVE_MULTIMAP: {
-            MultimapResponse<Boolean> r = (MultimapResponse) response;
-            if (r.getStatus() == OperationStatus.Success) {
-               ExtendedByteBuf.writeUnsignedInt(r.getResult().booleanValue() ? 1 : 0, buf);
-            }
-            break;
-         }
-         case REMOVE_ENTRY_MULTIMAP: {
-            MultimapResponse<Boolean> r = (MultimapResponse) response;
-            if (r.getStatus() == OperationStatus.Success) {
-               ExtendedByteBuf.writeUnsignedInt(r.getResult().booleanValue() ? 1 : 0, buf);
-            }
-            break;
-         }
-         case SIZE_MULTIMAP: {
-            MultimapResponse<Long> r = (MultimapResponse) response;
-            if (r.getStatus() == OperationStatus.Success) {
-               writeUnsignedLong(r.getResult(), buf);
-            }
-            break;
-         }
-         case CONTAINS_ENTRY_MULTIMAP: {
-            MultimapResponse<Boolean> r = (MultimapResponse) response;
-            if (r.getStatus() == OperationStatus.Success) {
-               ExtendedByteBuf.writeUnsignedInt(r.getResult().booleanValue() ? 1 : 0, buf);
-            }
-            break;
-         }
-         case CONTAINS_KEY_MULTIMAP: {
-            MultimapResponse<Boolean> r = (MultimapResponse) response;
-            if (r.getStatus() == OperationStatus.Success) {
-               ExtendedByteBuf.writeUnsignedInt(r.getResult().booleanValue() ? 1 : 0, buf);
-            }
-            break;
-         }
-         case CONTAINS_VALUE_MULTIMAP: {
-            MultimapResponse<Boolean> r = (MultimapResponse) response;
-            if (r.getStatus() == OperationStatus.Success) {
-               ExtendedByteBuf.writeUnsignedInt(r.getResult().booleanValue() ? 1 : 0, buf);
-            }
-            break;
-         }
-         default:
-            throw new UnsupportedOperationException(response.toString());
-      }
-   }
-
-   static Optional<Integer> projectionInfo(List<CacheEntry> entries, byte version) {
+   private static Optional<Integer> projectionInfo(List<CacheEntry> entries, byte version) {
       if (!entries.isEmpty()) {
          CacheEntry entry = entries.get(0);
          if (entry.getValue() instanceof Object[]) {

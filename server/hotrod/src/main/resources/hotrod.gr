@@ -1,0 +1,344 @@
+// Hot Rod 2.x protocol
+namespace hr2x;
+
+// Target class
+class org.infinispan.server.hotrod.HotRodDecoder extends BaseDecoder;
+
+// static final field values are literals
+constants org.infinispan.server.hotrod.Constants;
+constants org.infinispan.server.hotrod.HotRodConstants;
+
+// methods vInt, vLong, array, byte...
+intrinsics org.infinispan.server.hotrod.Intrinsics;
+
+import java.time.ZonedDateTime;
+import java.time.temporal.Temporal;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executor;
+import org.infinispan.commons.tx.XidImpl;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.MediaTypeIds;
+import org.infinispan.counter.api.CounterConfiguration;
+import org.infinispan.counter.util.EncodeUtil;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.server.hotrod.tx.ControlByte;
+
+init {
+   private final boolean accessLogging;
+   private Temporal requestStart;
+   private boolean deadEnd = false;
+
+   public HotRodDecoder(EmbeddedCacheManager cacheManager, Executor executor, HotRodServer server) {
+      super(cacheManager, executor, server);
+      accessLogging = server.accessLogging().isEnabled();
+   }
+
+   @Override
+   protected HotRodHeader getHeader() {
+      if (accessLogging && header != null) {
+         // this causes two checks for subject but we don't mind
+         return new AccessLoggingHeader(header, auth.getSubject(operation), key, requestBytes, requestStart);
+      } else {
+         return header;
+      }
+   }
+}
+
+exceptionally {
+   log.trace("Parsing error", t);
+   cacheProcessor.writeException(getHeader(), t);
+   state = 0;
+}
+
+deadend {
+   if (!deadEnd) {
+      cacheProcessor.writeException(getHeader(), new RequestParsingException("Invalid state of parsing", version, messageId));
+      deadEnd = true;
+   }
+   state = 0;
+}
+
+// this is the root
+root request
+   : magic { if (accessLogging) { requestStart = ZonedDateTime.now(); } }
+      header { if (trace) log.tracef("Parsed header: %s", header); }
+      parameters
+   ;
+
+header returns HotRodHeader
+   : { magic != MAGIC_REQ }? { throw new InvalidMagicIdException("Error reading magic byte or message id: " + magic); }
+   | { deadEnd = false } messageId version operation cacheName flags intelligence topologyId txMarker keyType valueType
+      { new HotRodHeader(operation, version, messageId, cacheName, flags, intelligence, topologyId, keyType, valueType) }
+;
+
+magic: byte;
+messageId: vLong;
+version: byte;
+operation returns HotRodOperation
+   : opCode { HotRodOperation.fromRequestOpCode(byte) }
+   ;
+opCode: byte;
+cacheName: string;
+flags: vInt;
+intelligence: byte;
+topologyId: vInt;
+txMarker returns byte
+   : { version < VERSION_20 }? byte
+   | { 0 }
+   ;
+keyType: mediaType;
+valueType: mediaType;
+
+mediaType returns MediaType
+   : { version >= VERSION_28 }? mediaTypeDefinition mediaTypeDescription { mediaTypeDescription }
+   | { null }
+   ;
+mediaTypeDefinition: byte;
+mediaTypeId: vInt;
+mediaTypeName: string;
+mediaTypeParams returns Map<String, String>
+   : mediaTypeParamsNum { mediaTypeParams = allocMap(mediaTypeParamsNum); }
+      #mediaTypeParamsNum ( mediaParamName mediaParamValue { mediaTypeParams.put(mediaParamName, mediaParamValue); } )
+   ;
+mediaTypeParamsNum: vInt;
+mediaParamName: string;
+mediaParamValue: string;
+mediaTypeDescription returns MediaType switch mediaTypeDefinition
+   : { 0 }? { MediaType.MATCH_ALL }
+   | { 1 }? mediaTypeId mediaTypeParams { MediaType.parse(MediaTypeIds.getMediaType((short) mediaTypeId)).withParameters(mediaTypeParams) }
+   | { 2 }? mediaTypeName mediaTypeParams { MediaType.parse(mediaTypeName).withParameters(mediaTypeParams) }
+   | { throw new RequestParsingException("Unknown MediaType definition: " + mediaTypeDefinition, version, messageId); }
+   ;
+
+key: array;
+value: array;
+
+expiration returns Metadata
+   : { version < VERSION_22 }? lifespanInt maxIdleInt {
+      server.buildMetadata(header,
+         defaultExpiration(lifespanInt, flags, ProtocolFlag.DefaultLifespan), TimeUnitValue.SECONDS,
+         defaultExpiration(maxIdleInt, flags, ProtocolFlag.DefaultMaxIdle), TimeUnitValue.SECONDS) }
+   | timeUnits lifespanLong maxIdleLong {
+      server.buildMetadata(header, lifespanLong, TimeUnitValue.decode(BitShift.right(timeUnits, 4)),
+                               maxIdleLong, TimeUnitValue.decode(BitShift.mask(timeUnits, 0x0F))) }
+   ;
+lifespanInt: vInt;
+maxIdleInt: vInt;
+lifespanLong
+   : { (timeUnits & 0xF0) != 0x70 && (timeUnits & 0xF0) != 0x80 }? vLong
+   | { 0L }
+   ;
+maxIdleLong
+   : { (timeUnits & 0x0F) != 0x07 && (timeUnits & 0x0F) != 0x08 }? vLong
+   | { 0L }
+   ;
+
+timeUnits : byte;
+entryVersion: long;
+scope: vInt;
+queryBytes: array;
+authMech: string;
+authResponse: array;
+
+listenerId: array;
+includeCurrentState: bool;
+useRawEvents: bool;
+listenerParams
+   : { version >= VERSION_21 }? filterFactory filterParams converterFactory converterParams useRawEvents
+   | filterFactory filterParams converterFactory converterParams
+   ;
+filterFactory: string;
+filterParams returns List<byte[]>
+   : { !filterFactory.isEmpty() }? numParams { filterParams = allocList(numParams); }
+      #numParams ( param { filterParams.add(param); })
+   | { null }
+   ;
+converterFactory: string;
+converterParams returns List<byte[]>
+   : { !converterFactory.isEmpty() }? numParams { converterParams = allocList(numParams); }
+      #numParams ( param { converterParams.add(param); })
+   | { null; }
+   ;
+numParams: byte;
+param: array;
+listenerInterests
+   : { version >= VERSION_26 }? vInt
+   | { 0 }
+   ;
+
+taskName: string;
+taskParam: string;
+taskParamValue: array;
+taskParams returns Map<String, byte[]>
+   : numParams { taskParams = allocMap(numParams); }
+      #numParams ( taskParam taskParamValue { taskParams.put(taskParam, taskParamValue); } )
+   ;
+
+numEntries: vInt;
+entryMap returns Map<byte[], byte[]>
+   : numEntries { entryMap = allocMap(numEntries); }
+     #numEntries ( key value { entryMap.put(key, value); } )
+   ;
+
+numKeys: vInt;
+keys returns Set<byte[]>:
+   numKeys { keys = allocSet(numKeys); } #numKeys ( key { keys.add(key); } )
+   ;
+
+segmentMask: optionalArray;
+filterConverterFactory: optionalString;
+filterConverterParams returns List<byte[]>
+   : { filterConverterFactory != null }? numParams { filterConverterParams = allocList(numParams); }
+      #numParams ( param { filterConverterParams.add(param); })
+   | { null }
+   ;
+batchSize: vInt;
+includeMetadata
+   : { version >= VERSION_24 }? bool
+   | { false }
+   ;
+iterationId: string;
+
+offset: vInt;
+
+chunkLength: vInt;
+// chunkBytes returns a buffer that has the readerIndex already shifted (to be able to continue)
+// therefore action in chunk needs to read from position before these
+chunkBytes returns ByteBuf
+   : { chunkLength > 0 }? readable[chunkLength]
+   | { cacheProcessor.channel().alloc().buffer(0); }
+   ;
+chunk
+   : chunkLength chunkBytes { chunkedValue.writeBytes(chunkBytes, chunkBytes.readerIndex() - chunkLength, chunkLength) }
+   ;
+// The use of #chunkLength exploits the way counters are implemented by initializing that to 1 as we know
+// that the value will be decremented immediately after, and reset by reading chunkLength.
+chunkedValue returns ByteBuf
+   : { chunkedValue = cacheProcessor.channel().alloc().buffer(); chunkLength = 1; } #chunkLength chunk
+   ;
+
+xid returns XidImpl: xidFormat xidLength transactionId branchLength branchId { XidImpl.create(xidFormat, transactionId, branchId) };
+xidFormat: signedVInt;
+xidLength: byte;
+// in case xidLength == 0 we would get into loop as we couldn't progress reading 0 bytes from buffer
+transactionId returns byte[]
+   :  { xidLength > 0 }? fixedArray[xidLength]
+   |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
+   ;
+branchLength: byte;
+branchId returns byte[]
+   :  { branchLength > 0 }? fixedArray[branchLength]
+   |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
+   ;
+
+onePhaseCommit: bool;
+
+numModifications: vInt;
+modifications returns List<TransactionWrite>
+   : numModifications { modifications = allocList(numModifications); }
+      #numModifications ( modification { modifications.add(modification); } )
+   ;
+modification
+   : key controlByte versionRead modificationData { new TransactionWrite(key, versionRead, controlByte, value, expiration) }
+   ;
+controlByte: byte;
+versionRead
+   : { !ControlByte.NOT_READ.hasFlag(controlByte) && !ControlByte.NON_EXISTING.hasFlag(controlByte) }? entryVersion
+   | { 0L }
+   ;
+modificationData
+   : { !ControlByte.REMOVE_OP.hasFlag(controlByte) }? expiration value
+   | { }
+   ;
+
+counterName: string;
+counterFlags: byte;
+counterConfiguration returns CounterConfiguration.Builder
+   : counterFlags { counterConfiguration = CounterConfiguration.builder(EncodeUtil.decodeType(counterFlags)).storage(EncodeUtil.decodeStorage(counterFlags)) }
+      counterConcurrency counterBounds initialValue { counterConfiguration.initialValue(initialValue); }
+   ;
+// applies only to weak counters
+counterConcurrency
+   : { (counterFlags & 1) == 1 }? vInt { counterConfiguration.concurrencyLevel(vInt); }
+   | { }
+   ;
+counterBounds
+   : { (counterFlags & 2) == 2 }? lowerBound upperBound { counterConfiguration.lowerBound(lowerBound).upperBound(upperBound); }
+   | { }
+   ;
+lowerBound: long;
+upperBound: long;
+initialValue: long;
+updateValue: long;
+expectValue: long;
+
+parameters switch opCode
+// Cache operations
+   : { PUT_REQUEST }? key expiration value { cacheProcessor.put(getHeader(), auth.getSubject(operation), key, value, expiration) }
+   | { GET_REQUEST }? key { cacheProcessor.get(getHeader(), auth.getSubject(operation), key) }
+   | { PUT_IF_ABSENT_REQUEST }? key expiration value { cacheProcessor.putIfAbsent(getHeader(), auth.getSubject(operation), key, value, expiration) }
+   | { REPLACE_REQUEST }? key expiration value { cacheProcessor.replace(getHeader(), auth.getSubject(operation), key, value, expiration) }
+   | { REPLACE_IF_UNMODIFIED_REQUEST }? key expiration entryVersion value { cacheProcessor.replaceIfUnmodified(getHeader(), auth.getSubject(operation), key, entryVersion, value, expiration) }
+   | { REMOVE_REQUEST }? key { cacheProcessor.remove(getHeader(), auth.getSubject(operation), key) }
+   | { REMOVE_IF_UNMODIFIED_REQUEST }? key entryVersion { cacheProcessor.removeIfUnmodified(getHeader(), auth.getSubject(operation), key, entryVersion) }
+   | { CONTAINS_KEY_REQUEST }? key { cacheProcessor.containsKey(getHeader(), auth.getSubject(operation), key) }
+   | { GET_WITH_VERSION }? key { cacheProcessor.get(getHeader(), auth.getSubject(operation), key) }
+   | { CLEAR_REQUEST }? { cacheProcessor.clear(getHeader(), auth.getSubject(operation)) }
+   | { STATS_REQUEST }? { cacheProcessor.stats(getHeader(), auth.getSubject(operation)) }
+   | { PING_REQUEST }? { cacheProcessor.ping(getHeader(), auth.getSubject(operation)); }
+   | { BULK_GET_REQUEST }? numKeys { cacheProcessor.bulkGet(getHeader(), auth.getSubject(operation), numKeys); }
+   | { GET_WITH_METADATA }? key { cacheProcessor.getWithMetadata(getHeader(), auth.getSubject(operation), key, 0) }
+   | { BULK_GET_KEYS_REQUEST }? scope { cacheProcessor.bulkGetKeys(getHeader(), auth.getSubject(operation), scope); }
+   | { QUERY_REQUEST }? queryBytes { cacheProcessor.query(getHeader(), auth.getSubject(operation), queryBytes); }
+   | { AUTH_MECH_LIST_REQUEST }? { auth.authMechList(header); }
+   | { AUTH_REQUEST }? authMech authResponse { auth.auth(header, authMech, authResponse); }
+   | { ADD_CLIENT_LISTENER_REQUEST }? listenerId includeCurrentState listenerParams listenerInterests
+      { cacheProcessor.addClientListener(getHeader(), auth.getSubject(operation), listenerId, includeCurrentState, filterFactory, filterParams, converterFactory, converterParams, useRawEvents, listenerInterests); }
+   | { REMOVE_CLIENT_LISTENER_REQUEST }? listenerId { cacheProcessor.removeClientListener(getHeader(), auth.getSubject(operation), listenerId); }
+   | { SIZE_REQUEST }? { cacheProcessor.size(getHeader(), auth.getSubject(operation)); }
+   | { EXEC_REQUEST }? taskName taskParams { taskProcessor.exec(getHeader(), auth.getSubject(operation), taskName, taskParams); }
+   | { PUT_ALL_REQUEST }? expiration entryMap { cacheProcessor.putAll(getHeader(), auth.getSubject(operation), entryMap, expiration) }
+   | { GET_ALL_REQUEST }? keys { cacheProcessor.getAll(getHeader(), auth.getSubject(operation), keys) }
+   | { ITERATION_START_REQUEST }? segmentMask filterConverterFactory filterConverterParams batchSize includeMetadata
+      { cacheProcessor.iterationStart(getHeader(), auth.getSubject(operation), segmentMask, filterConverterFactory, filterConverterParams, batchSize, includeMetadata); }
+   | { ITERATION_NEXT_REQUEST }? iterationId { cacheProcessor.iterationNext(getHeader(), auth.getSubject(operation), iterationId); }
+   | { ITERATION_END_REQUEST }? iterationId { cacheProcessor.iterationEnd(getHeader(), auth.getSubject(operation), iterationId); }
+   | { GET_STREAM_REQUEST }? key offset { cacheProcessor.getWithMetadata(getHeader(), auth.getSubject(operation), key, offset); }
+   | { PUT_STREAM_REQUEST }? key expiration entryVersion chunkedValue { cacheProcessor.putStream(getHeader(), auth.getSubject(operation), key, chunkedValue, entryVersion, expiration) }
+
+// Transactions
+   | { PREPARE_TX }? xid onePhaseCommit modifications { cacheProcessor.prepareTransaction(getHeader(), auth.getSubject(operation), xid, onePhaseCommit, modifications); }
+   | { COMMIT_TX }? xid { cacheProcessor.commitTransaction(getHeader(), auth.getSubject(operation), xid); }
+   | { ROLLBACK_TX }? xid { cacheProcessor.rollbackTransaction(getHeader(), auth.getSubject(operation), xid); }
+
+// Counters
+   | { COUNTER_CREATE_REQUEST }? counterName counterConfiguration { counterProcessor.createCounter(getHeader(), auth.getSubject(operation), counterName, counterConfiguration.build()); }
+   | { COUNTER_GET_CONFIGURATION_REQUEST }? counterName { counterProcessor.getCounterConfiguration(getHeader(), auth.getSubject(operation), counterName); }
+   | { COUNTER_IS_DEFINED_REQUEST }? counterName { counterProcessor.isCounterDefined(getHeader(), auth.getSubject(operation), counterName); }
+   | { COUNTER_ADD_AND_GET_REQUEST }? counterName updateValue { counterProcessor.counterAddAndGet(getHeader(), auth.getSubject(operation), counterName, updateValue); }
+   | { COUNTER_RESET_REQUEST }? counterName { counterProcessor.counterReset(getHeader(), auth.getSubject(operation), counterName); }
+   | { COUNTER_GET_REQUEST }? counterName  { counterProcessor.counterGet(getHeader(), auth.getSubject(operation), counterName); }
+   | { COUNTER_CAS_REQUEST }? counterName expectValue updateValue { counterProcessor.counterCompareAndSwap(getHeader(), auth.getSubject(operation), counterName, expectValue, updateValue); }
+   | { COUNTER_ADD_LISTENER_REQUEST }? counterName listenerId { counterProcessor.addCounterListener(getHeader(), auth.getSubject(operation), counterName, listenerId); }
+   | { COUNTER_REMOVE_LISTENER_REQUEST }? counterName listenerId { counterProcessor.removeCounterListener(getHeader(), auth.getSubject(operation), counterName, listenerId); }
+   | { COUNTER_REMOVE_REQUEST }? counterName { counterProcessor.counterRemove(getHeader(), auth.getSubject(operation), counterName); }
+   | { COUNTER_GET_NAMES_REQUEST }? { counterProcessor.getCounterNames(getHeader(), auth.getSubject(operation)); }
+
+// Multimap
+// TODO: for put and containsENtry expiration settings are included in the request but not used
+   | { GET_MULTIMAP_REQUEST }? key { multimapProcessor.get(getHeader(), auth.getSubject(operation), key); }
+   | { GET_MULTIMAP_WITH_METADATA_REQUEST }? key { multimapProcessor.getWithMetadata(getHeader(), auth.getSubject(operation), key); }
+   | { PUT_MULTIMAP_REQUEST }? key expiration value { multimapProcessor.put(getHeader(), auth.getSubject(operation), key, value); }
+   | { REMOVE_KEY_MULTIMAP_REQUEST }? key { multimapProcessor.removeKey(getHeader(), auth.getSubject(operation), key); }
+   | { REMOVE_ENTRY_MULTIMAP_REQUEST }? key expiration value { multimapProcessor.removeEntry(getHeader(), auth.getSubject(operation), key, value); }
+   | { SIZE_MULTIMAP_REQUEST }? { multimapProcessor.size(getHeader(), auth.getSubject(operation)); }
+   | { CONTAINS_ENTRY_REQUEST }? key expiration value { multimapProcessor.containsEntry(getHeader(), auth.getSubject(operation), key, value); }
+   | { CONTAINS_KEY_MULTIMAP_REQUEST }? key { multimapProcessor.containsKey(getHeader(), auth.getSubject(operation), key); }
+   | { CONTAINS_VALUE_MULTIMAP_REQUEST }? expiration value { multimapProcessor.containsValue(getHeader(), auth.getSubject(operation), value); }
+
+// Unknown
+   | { throw new HotRodUnknownOperationException("Unknown operation " + opCode, version, messageId); }
+   ;
