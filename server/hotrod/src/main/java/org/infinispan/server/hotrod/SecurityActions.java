@@ -80,4 +80,17 @@ final class SecurityActions {
          return cache;
       }
    }
+
+   static <K, V> AdvancedCache<K, V> anonymizeSecureCache(AdvancedCache<K, V> cache) {
+      return doPrivileged(() -> cache.transform(SecurityActions::unsetSubject));
+   }
+
+   private static <K, V> AdvancedCache<K, V> unsetSubject(AdvancedCache<K, V> cache) {
+      if (cache instanceof SecureCacheImpl) {
+         return new SecureCacheImpl<>(SecurityActions.getUnwrappedCache(cache));
+      } else {
+         return cache;
+      }
+   }
+
 }

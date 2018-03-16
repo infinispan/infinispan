@@ -176,6 +176,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
 
    @Override
    public AdvancedCache<K, V> transform(Function<AdvancedCache<K, V>, ? extends AdvancedCache<K, V>> transformation) {
+      authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
       AdvancedCache<K, V> newDelegate = delegate.transform(transformation);
       AdvancedCache<K, V> newInstance = newDelegate != delegate ? new SecureCacheImpl<>(newDelegate, authzManager, subject) : this;
       return transformation.apply(newInstance);

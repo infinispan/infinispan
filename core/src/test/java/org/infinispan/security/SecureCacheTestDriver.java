@@ -333,7 +333,7 @@ public class SecureCacheTestDriver {
       cache.noFlags();
    }
 
-   @TestCachePermission(AuthorizationPermission.NONE)
+   @TestCachePermission(AuthorizationPermission.ADMIN)
    public void testTransform_Function(SecureCache<String, String> cache) {
       cache.transform(Function.identity());
    }

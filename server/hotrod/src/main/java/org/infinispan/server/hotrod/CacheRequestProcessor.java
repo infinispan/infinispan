@@ -19,7 +19,6 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.security.impl.SecureCacheImpl;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.KeyValuePair;
@@ -56,8 +55,8 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       AdvancedCache<byte[], byte[]> cache = cdc.cache();
       CacheInfo info = cacheInfo.get(cache.getName());
       if (info == null) {
-         AdvancedCache<byte[], byte[]> localNonBlocking = cache
-               .noFlags().transform(CacheRequestProcessor::unsetSubject).withFlags(LOCAL_NON_BLOCKING_GET);
+         AdvancedCache<byte[], byte[]> localNonBlocking =
+               SecurityActions.anonymizeSecureCache(cache).noFlags().withFlags(LOCAL_NON_BLOCKING_GET);
          if (cache.getStatus() != ComponentStatus.RUNNING) {
             // stay on the safe side
             return new CacheInfo(localNonBlocking, true, true);
@@ -69,14 +68,6 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          cacheInfo.put(cache.getName(), info);
       }
       return info;
-   }
-
-   private static AdvancedCache<byte[], byte[]> unsetSubject(AdvancedCache<byte[], byte[]> cache) {
-      if (cache instanceof SecureCacheImpl) {
-         return new SecureCacheImpl<>(SecurityActions.getUnwrappedCache(cache));
-      } else {
-         return cache;
-      }
    }
 
    private boolean isBlockingRead(CacheDecodeContext cdc, CacheInfo info) {
