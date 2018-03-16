@@ -32,7 +32,7 @@ public interface StateReceiver<K, V> {
     *
     * @throws IllegalStateException if this method is invoked whilst a previous request for Replicas is still executing
     */
-   CompletableFuture<List<Map<Address, CacheEntry<K, V>>>> getAllReplicasForSegment(int segmentId, LocalizedCacheTopology topology);
+   CompletableFuture<List<Map<Address, CacheEntry<K, V>>>> getAllReplicasForSegment(int segmentId, LocalizedCacheTopology topology, long timeout);
 
    void receiveState(Address sender, int topologyId, Collection<StateChunk> stateChunks);
 }

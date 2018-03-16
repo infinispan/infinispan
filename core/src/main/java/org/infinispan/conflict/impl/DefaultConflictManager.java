@@ -449,8 +449,8 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
                try {
                   if (trace)
                      log.tracef("Cache %s attempting to receive all replicas for segment %s with topology %s", cacheName, nextSegment, topology);
-                  segmentRequestFuture = stateReceiver.getAllReplicasForSegment(nextSegment, topology);
                   long remainingTime = timeService.remainingTime(endTime, TimeUnit.MILLISECONDS);
+                  segmentRequestFuture = stateReceiver.getAllReplicasForSegment(nextSegment, topology, remainingTime);
                   List<Map<Address, CacheEntry<K, V>>> segmentEntries = segmentRequestFuture.get(remainingTime, TimeUnit.MILLISECONDS);
                   if (trace)
                      log.tracef("Cache %s segment %s entries received: %s", cacheName, nextSegment, segmentEntries);
