@@ -975,7 +975,7 @@ public class JGroupsTransport implements Transport {
       try {
          channel.send(message);
       } catch (Exception e) {
-         if (channel.isConnected()) {
+         if (channel != null && channel.isConnected()) {
             throw new CacheException(e);
          } else {
             throw log.cacheManagerIsStopping();
