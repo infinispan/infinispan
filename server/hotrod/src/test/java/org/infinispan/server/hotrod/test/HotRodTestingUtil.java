@@ -12,7 +12,6 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -23,7 +22,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -45,14 +43,13 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.server.core.transport.NettyInitializer;
+import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.OperationStatus;
 import org.infinispan.server.hotrod.ServerAddress;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.logging.Log;
-import org.infinispan.server.hotrod.transport.HotRodChannelInitializer;
 import org.infinispan.server.hotrod.transport.SingleByteFrameDecoderChannelInitializer;
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
 import org.infinispan.test.fwk.TestResourceTracker;
@@ -183,28 +180,23 @@ public class HotRodTestingUtil {
          @Override
          public ChannelInitializer<Channel> getInitializer() {
             // Pass by name since we have circular dependency
-            List<NettyInitializer> inits;
-
-            ExecutorService executor = getExecutor(getQualifiedName());
             if (perf) {
                if (configuration.idleTimeout() > 0)
-                  inits = Arrays.asList(
-                        new HotRodChannelInitializer(this, transport, getEncoder(), getDecoder(), cacheManager, executor),
+                  return new NettyInitializers(
+                        new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()),
                         new TimeoutEnabledChannelInitializer<>(this));
                else // Idle timeout logic is disabled with -1 or 0 values
-                  inits = Collections.singletonList(new HotRodChannelInitializer(this, transport, getEncoder(),
-                        getDecoder(), cacheManager, executor));
+                  return new NettyInitializers(new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()));
             } else {
                if (configuration.idleTimeout() > 0)
-                  inits = Arrays.asList(
-                        new HotRodChannelInitializer(this, transport, getEncoder(), getDecoder(), cacheManager, executor),
+                  return new NettyInitializers(
+                        new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()),
                         new TimeoutEnabledChannelInitializer<>(this), new SingleByteFrameDecoderChannelInitializer());
                else // Idle timeout logic is disabled with -1 or 0 values
-                  inits = Arrays.asList(
-                        new HotRodChannelInitializer(this, transport, getEncoder(), getDecoder(), cacheManager, executor),
+                  return new NettyInitializers(
+                        new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()),
                         new SingleByteFrameDecoderChannelInitializer());
             }
-            return new NettyInitializers(inits);
          }
       };
       String shortTestName = TestResourceTracker.getCurrentTestShortName();

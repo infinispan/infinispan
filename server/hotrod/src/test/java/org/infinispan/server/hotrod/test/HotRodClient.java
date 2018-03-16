@@ -45,7 +45,6 @@ import org.infinispan.server.hotrod.Constants;
 import org.infinispan.server.hotrod.HotRodOperation;
 import org.infinispan.server.hotrod.OperationStatus;
 import org.infinispan.server.hotrod.ProtocolFlag;
-import org.infinispan.server.hotrod.Response;
 import org.infinispan.server.hotrod.ServerAddress;
 import org.infinispan.server.hotrod.counter.impl.TestCounterEventResponse;
 import org.infinispan.server.hotrod.counter.impl.TestCounterNotificationManager;
@@ -61,6 +60,7 @@ import org.infinispan.util.KeyValuePair;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -690,6 +690,7 @@ class Decoder extends ReplayingDecoder<Void> {
       OperationStatus status = OperationStatus.fromCode((byte) buf.readUnsignedByte());
       short topologyChangeMarker = buf.readUnsignedByte();
       Op op = client.idToOp.get(id);
+      log.tracef("messageId=%d opCode=%s status=%s topologyChange=%d", id, opCode, status, topologyChangeMarker);
 
       AbstractTestTopologyAwareResponse topologyChangeResponse;
       if (topologyChangeMarker == 1) {
@@ -716,7 +717,7 @@ class Decoder extends ReplayingDecoder<Void> {
          topologyChangeResponse = null;
       }
 
-      Response resp;
+      TestResponse resp;
       switch (opCode) {
          case STATS:
             int size = readUnsignedInt(buf);
@@ -933,6 +934,11 @@ class Decoder extends ReplayingDecoder<Void> {
          default:
             resp = null;
             break;
+      }
+      // We cannot assert this since in concurrent case we could get two responses in single buffer
+      if (log.isTraceEnabled() && buf.readerIndex() != buf.writerIndex()) {
+         log.tracef("Left bytes in the buffer: " +
+               new String(ByteBufUtil.getBytes(buf, buf.readerIndex(), buf.writerIndex() - buf.readerIndex())));
       }
       if (resp != null) {
          log.tracef("Got response from server: %s", resp);

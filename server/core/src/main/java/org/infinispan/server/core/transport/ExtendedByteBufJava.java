@@ -1,5 +1,7 @@
 package org.infinispan.server.core.transport;
 
+import org.infinispan.commons.util.Util;
+
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -73,6 +75,9 @@ public class ExtendedByteBufJava {
          bf.resetReaderIndex();
          return null;
       } else {
+         if (length == 0) {
+            return Util.EMPTY_BYTE_ARRAY;
+         }
          byte[] bytes = new byte[length];
          bf.readBytes(bytes);
          return bytes;

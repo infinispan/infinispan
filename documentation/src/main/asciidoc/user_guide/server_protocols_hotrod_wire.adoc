@@ -2162,7 +2162,7 @@ The XID in the requests has the following format:
 |Field Name |Size |Value
 
 |Format ID
-|long
+| signed vInt
 | The XID format.
 
 |Length of Global Transaction id

@@ -79,6 +79,7 @@
       <module>commons</module>
       <module>commons-test</module>
       <module>plugins/infinispan-defaults-maven-plugin</module>
+      <module>plugins/protocol-parser-generator-maven-plugin</module>
       <module>core</module>
       <module>cloud</module>
       <module>extended-statistics</module>
@@ -280,6 +281,7 @@
       <version.howl>1.0.1-1</version.howl>
       <version.jackson>2.9.5</version.jackson>
       <version.jacoco>0.7.5.201505241946</version.jacoco>
+      <version.javaparser>3.5.17</version.javaparser>
       <version.javax.cache>1.1.0</version.javax.cache>
       <version.javax.cache.cache-tests>${version.javax.cache}</version.javax.cache.cache-tests>
       <version.javax.servlet>2.5</version.javax.servlet>
@@ -309,7 +311,9 @@
       <version.maven.bundle>3.5.0</version.maven.bundle>
       <version.maven.invoker>1.8</version.maven.invoker>
       <version.maven.jar>3.0.2</version.maven.jar>
-      <version.maven.plugin>3.5</version.maven.plugin>
+      <version.maven-plugin-annotations>3.5.1</version.maven-plugin-annotations>
+      <version.maven-plugin-api>3.5.3</version.maven-plugin-api>
+      <version.maven-plugin-plugin>3.5</version.maven-plugin-plugin>
       <version.maven.remote.resource>1.1</version.maven.remote.resource>
       <version.maven.shade>3.1.1</version.maven.shade>
       <version.maven.surefire>2.21.0</version.maven.surefire>
@@ -535,9 +539,14 @@
             <version>${version.com.intellij.forms_rt}</version>
          </dependency>
          <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-plugin-api</artifactId>
+            <version>${version.maven-plugin-api}</version>
+         </dependency>
+         <dependency>
             <groupId>org.apache.maven.plugin-tools</groupId>
             <artifactId>maven-plugin-annotations</artifactId>
-            <version>${version.maven.plugin}</version>
+            <version>${version.maven-plugin-annotations}</version>
             <scope>provided</scope>
          </dependency>
          <dependency>
@@ -560,6 +569,11 @@
             <artifactId>activation</artifactId>
             <scope>test</scope>
             <version>${version.javax.activation}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-symbol-solver-core</artifactId>
+            <version>${version.javaparser}</version>
          </dependency>
          <dependency>
             <groupId>javax.cache</groupId>
@@ -1243,7 +1257,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-plugin-plugin</artifactId>
-               <version>${version.maven.plugin}</version>
+               <version>${version.maven-plugin-plugin}</version>
             </plugin>
             <plugin>
                <groupId>org.wildfly.build</groupId>

@@ -1,15 +1,19 @@
 package org.infinispan.server.hotrod;
 
 import java.util.BitSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Executor;
+
+import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
@@ -26,12 +30,10 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    private static final boolean trace = log.isTraceEnabled();
    private static final Flag[] SKIP_STATISTICS = new Flag[]{Flag.SKIP_STATISTICS};
 
-   private final HotRodServer server;
    private final ClientListenerRegistry listenerRegistry;
 
    CacheRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
-      super(channel, executor);
-      this.server = server;
+      super(channel, executor, server);
       listenerRegistry = server.getClientListenerRegistry();
       SecurityActions.addListener(server.getCacheManager(), this);
    }
@@ -41,528 +43,539 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       server.cacheStopped(event.getCacheName());
    }
 
-   private boolean isBlockingRead(CacheDecodeContext cdc, CacheInfo info) {
-      return info.persistence && !cdc.decoder.isSkipCacheLoad(cdc.header);
+   private boolean isBlockingRead(CacheInfo info, HotRodHeader header) {
+      return info.persistence && !header.isSkipCacheLoad();
    }
 
-   private boolean isBlockingWrite(CacheDecodeContext cdc) {
-      CacheInfo info = server.getCacheInfo(cdc);
+   private boolean isBlockingWrite(AdvancedCache<byte[], byte[]> cache, HotRodHeader header) {
+      CacheInfo info = server.getCacheInfo(cache, header);
       // Note: cache store cannot be skipped (yet)
-      return info.persistence || info.indexing && !cdc.decoder.isSkipIndexing(cdc.header);
+      return info.persistence || info.indexing && !header.isSkipIndexing();
    }
 
-   void get(CacheDecodeContext cdc) {
+   void ping(HotRodHeader header, Subject subject) {
+      server.cache(header, subject); // we need to throw an exception when this cache is inaccessible
+      writeResponse(header, header.encoder().emptyResponse(header, server, channel.alloc(), OperationStatus.Success));
+   }
+
+   void stats(HotRodHeader header, Subject subject) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      writeResponse(header, header.encoder().statsResponse(header, server, channel.alloc(), cache.getStats(), server.getTransport(), server.getCacheRegistry(header.cacheName)));
+   }
+
+   void get(HotRodHeader header, Subject subject, byte[] key) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      CacheInfo info = server.getCacheInfo(cache, header);
       // This request is very fast, try to satisfy immediately
-      CacheInfo info = server.getCacheInfo(cdc);
-      CacheEntry<byte[], byte[]> entry = info.localNonBlocking(cdc.subject).getCacheEntry(cdc.key);
+      CacheEntry<byte[], byte[]> entry = info.localNonBlocking(subject).getCacheEntry(key);
       if (entry != null) {
-         handleGet(cdc, entry, null);
-      } else if (isBlockingRead(cdc, info)) {
-         executor.execute(() -> getInternal(cdc));
+         handleGet(header, entry, null);
+      } else if (isBlockingRead(info, header)) {
+         executor.execute(() -> getInternal(header, cache, key));
       } else {
-         getInternal(cdc);
+         getInternal(header, cache, key);
       }
    }
 
-   private void getInternal(CacheDecodeContext cdc) {
-      cdc.cache().withFlags(SKIP_STATISTICS).getCacheEntryAsync(cdc.key)
-            .whenComplete((result, throwable) -> handleGet(cdc, result, throwable));
+   private void getInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key) {
+      cache.withFlags(SKIP_STATISTICS).getCacheEntryAsync(key)
+            .whenComplete((result, throwable) -> handleGet(header, result, throwable));
    }
 
-   private void handleGet(CacheDecodeContext cdc, CacheEntry<byte[], byte[]> result, Throwable throwable) {
+   private void handleGet(HotRodHeader header, CacheEntry<byte[], byte[]> result, Throwable throwable) {
       if (throwable != null) {
-         writeException(cdc, throwable);
+         writeException(header, throwable);
       } else {
-         try {
-            writeResponse(cdc.decoder.createGetResponse(cdc.header, result));
-         } catch (Throwable t2) {
-            writeException(cdc, t2);
+         if (result == null) {
+            writeNotExist(header);
+         } else {
+            try {
+               switch (header.op) {
+                  case GET:
+                     writeResponse(header, header.encoder().valueResponse(header, server, channel.alloc(), OperationStatus.Success, result.getValue()));
+                     break;
+                  case GET_WITH_VERSION:
+                     NumericVersion numericVersion = (NumericVersion) result.getMetadata().version();
+                     long version;
+                     if (numericVersion != null) {
+                        version = numericVersion.getVersion();
+                     } else {
+                        version = 0;
+                     }
+                     writeResponse(header, header.encoder().valueWithVersionResponse(header, server, channel.alloc(), result.getValue(), version));
+                     break;
+                  default:
+                     throw new IllegalStateException();
+               }
+            } catch (Throwable t2) {
+               writeException(header, t2);
+            }
          }
       }
    }
 
-   void getKeyMetadata(CacheDecodeContext cdc) {
+   void getWithMetadata(HotRodHeader header, Subject subject, byte[] key, int offset) {
       // This request is very fast, try to satisfy immediately
-      CacheInfo info = server.getCacheInfo(cdc);
-      CacheEntry<byte[], byte[]> entry = info.localNonBlocking(cdc.subject).getCacheEntry(cdc.key);
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      CacheInfo info = server.getCacheInfo(cache, header);
+      CacheEntry<byte[], byte[]> entry = info.localNonBlocking(subject).getCacheEntry(key);
       if (entry != null) {
-         handleGetKeyMetadata(cdc, entry, null);
-      } else if (isBlockingRead(cdc, info)) {
-         executor.execute(() -> getKeyMetadataInternal(cdc));
+         handleGetWithMetadata(header, offset, entry, null);
+      } else if (isBlockingRead(info, header)) {
+         executor.execute(() -> getWithMetadataInternal(header, cache, key, offset));
       } else {
-         getKeyMetadataInternal(cdc);
+         getWithMetadataInternal(header, cache, key, offset);
       }
    }
 
-   private void getKeyMetadataInternal(CacheDecodeContext cdc) {
-      cdc.cache().withFlags(SKIP_STATISTICS).getCacheEntryAsync(cdc.key)
-            .whenComplete((ce, throwable) -> handleGetKeyMetadata(cdc, ce, throwable));
+   private void getWithMetadataInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, int offset) {
+      cache.withFlags(SKIP_STATISTICS).getCacheEntryAsync(key)
+            .whenComplete((ce, throwable) -> handleGetWithMetadata(header, offset, ce, throwable));
    }
 
-   private void handleGetKeyMetadata(CacheDecodeContext cdc, CacheEntry<byte[], byte[]> ce, Throwable throwable) {
+   private void handleGetWithMetadata(HotRodHeader header, int offset, CacheEntry<byte[], byte[]> entry, Throwable throwable) {
       if (throwable != null) {
-         writeException(cdc, throwable);
+         writeException(header, throwable);
          return;
       }
-      OperationStatus status = ce == null ? OperationStatus.KeyDoesNotExist : OperationStatus.Success;
-      if (cdc.header.op == HotRodOperation.GET_WITH_METADATA) {
-         writeResponse(new GetWithMetadataResponse(cdc.header.version, cdc.header.messageId, cdc.header.cacheName, cdc.header.clientIntel,
-               cdc.header.op, status, cdc.header.topologyId, ce));
+      if (entry == null) {
+         writeNotExist(header);
+      } else if (header.op == HotRodOperation.GET_WITH_METADATA) {
+         assert offset == 0;
+         writeResponse(header, header.encoder().getWithMetadataResponse(header, server, channel.alloc(), entry));
       } else {
-         int offset = ce == null ? 0 : (Integer) cdc.operationDecodeContext;
-         writeResponse(new GetStreamResponse(cdc.header.version, cdc.header.messageId, cdc.header.cacheName, cdc.header.clientIntel,
-               cdc.header.op, status, cdc.header.topologyId, offset, ce));
+         if (entry == null) {
+            offset = 0;
+         }
+         writeResponse(header, header.encoder().getStreamResponse(header, server, channel.alloc(), offset, entry));
       }
    }
 
-   void containsKey(CacheDecodeContext cdc) {
+   void containsKey(HotRodHeader header, Subject subject, byte[] key) {
       // This request is very fast, try to satisfy immediately
-      CacheInfo info = server.getCacheInfo(cdc);
-      boolean contains = info.localNonBlocking(cdc.subject).containsKey(cdc.key);
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      CacheInfo info = server.getCacheInfo(cache, header);
+      boolean contains = info.localNonBlocking(subject).containsKey(key);
       if (contains) {
-         writeSuccess(cdc, null);
-      } else if (isBlockingRead(cdc, info)) {
-         executor.execute(() -> containsKeyInternal(cdc));
+         writeSuccess(header);
+      } else if (isBlockingRead(info, header)) {
+         executor.execute(() -> containsKeyInternal(header, cache, key));
       } else {
-         containsKeyInternal(cdc);
+         containsKeyInternal(header, cache, key);
       }
    }
 
-   private void containsKeyInternal(CacheDecodeContext cdc) {
-      cdc.cache().withFlags(SKIP_STATISTICS).containsKeyAsync(cdc.key)
-            .whenComplete((result, throwable) -> handleContainsKey(cdc, result, throwable));
+   private void containsKeyInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key) {
+      cache.withFlags(SKIP_STATISTICS).containsKeyAsync(key)
+            .whenComplete((result, throwable) -> handleContainsKey(header, result, throwable));
    }
 
-   private void handleContainsKey(CacheDecodeContext cdc, Boolean result, Throwable throwable) {
+   private void handleContainsKey(HotRodHeader header, Boolean result, Throwable throwable) {
       if (throwable != null) {
-         writeException(cdc, throwable);
+         writeException(header, throwable);
       } else if (result) {
-         writeSuccess(cdc, null);
+         writeSuccess(header);
       } else {
-         writeNotExist(cdc);
+         writeNotExist(header);
       }
    }
 
-   void put(CacheDecodeContext cdc) {
-      if (isBlockingWrite(cdc)) {
-         executor.execute(() -> putInternal(cdc));
+   void put(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata metadata) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      if (isBlockingWrite(cache, header)) {
+         executor.execute(() -> putInternal(header, cache, key, value, metadata));
       } else {
-         putInternal(cdc);
+         putInternal(header, cache, key, value, metadata);
       }
    }
 
-   private void putInternal(CacheDecodeContext cdc) {
-      cdc.cache().putAsync(cdc.key, (byte[]) cdc.operationDecodeContext, cdc.buildMetadata())
-            .whenComplete((result, throwable) -> handlePut(cdc, result, throwable));
+   private void putInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value, Metadata metadata) {
+      cache.putAsync(key, value, metadata)
+            .whenComplete((result, throwable) -> handlePut(header, result, throwable));
    }
 
-   private void handlePut(CacheDecodeContext cdc, byte[] result, Throwable throwable) {
+   private void handlePut(HotRodHeader header, byte[] result, Throwable throwable) {
       if (throwable != null) {
-         writeException(cdc, throwable);
+         writeException(header, throwable);
       } else {
-         writeSuccess(cdc, result);
+         writeSuccess(header, result);
       }
    }
 
-   void replaceIfUnmodified(CacheDecodeContext cdc) {
-      if (isBlockingWrite(cdc)) {
-         executor.execute(() -> replaceIfUnmodifiedInternal(cdc));
+   void replaceIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version, byte[] value, Metadata metadata) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      if (isBlockingWrite(cache, header)) {
+         executor.execute(() -> replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata));
       } else {
-         replaceIfUnmodifiedInternal(cdc);
+         replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata);
       }
    }
 
-   private void replaceIfUnmodifiedInternal(CacheDecodeContext cdc) {
-      cdc.cache().withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getCacheEntryAsync(cdc.key)
-            .whenComplete((entry, throwable) -> handleGetForReplaceIfUnmodified(cdc, entry, throwable));
+   private void replaceIfUnmodifiedInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, long version, byte[] value, Metadata metadata) {
+      cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getCacheEntryAsync(key)
+            .whenComplete((entry, throwable) -> handleGetForReplaceIfUnmodified(header, cache, entry, version, value, metadata, throwable));
    }
 
-   private void handleGetForReplaceIfUnmodified(CacheDecodeContext cdc, CacheEntry<byte[], byte[]> entry, Throwable throwable) {
+   private void handleGetForReplaceIfUnmodified(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, CacheEntry<byte[], byte[]> entry, long version, byte[] value, Metadata metadata, Throwable throwable) {
       if (throwable != null) {
-         writeException(cdc, throwable);
+         writeException(header, throwable);
       } else if (entry != null) {
          byte[] prev = entry.getValue();
-         NumericVersion streamVersion = new NumericVersion(cdc.params.streamVersion);
+         NumericVersion streamVersion = new NumericVersion(version);
          if (entry.getMetadata().version().equals(streamVersion)) {
-            cdc.cache().replaceAsync(cdc.key, prev, (byte[]) cdc.operationDecodeContext, cdc.buildMetadata())
+            cache.replaceAsync(entry.getKey(), prev, value, metadata)
                   .whenComplete((replaced, throwable2) -> {
                      if (throwable2 != null) {
-                        writeException(cdc, throwable2);
+                        writeException(header, throwable2);
                      } else if (replaced) {
-                        writeSuccess(cdc, prev);
+                        writeSuccess(header, prev);
                      } else {
-                        writeNotExecuted(cdc, prev);
+                        writeNotExecuted(header, prev);
                      }
                   });
          } else {
-            writeNotExecuted(cdc, prev);
+            writeNotExecuted(header, prev);
          }
       } else {
-         writeNotExist(cdc);
+         writeNotExist(header);
       }
    }
 
-   void replace(CacheDecodeContext cdc) {
-      if (isBlockingWrite(cdc)) {
-         executor.execute(() -> replaceInternal(cdc));
+   void replace(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata metadata) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      if (isBlockingWrite(cache, header)) {
+         executor.execute(() -> replaceInternal(header, cache, key, value, metadata));
       } else {
-         replaceInternal(cdc);
+         replaceInternal(header, cache, key, value, metadata);
       }
    }
 
-   private void replaceInternal(CacheDecodeContext cdc) {
+   private void replaceInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value, Metadata metadata) {
       // Avoid listener notification for a simple optimization
       // on whether a new version should be calculated or not.
-      cdc.cache().withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getAsync(cdc.key)
-            .whenComplete((prev, throwable) -> handleGetForReplace(cdc, prev, throwable));
+      cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getAsync(key)
+            .whenComplete((prev, throwable) -> handleGetForReplace(header, cache, key, prev, value, metadata, throwable));
    }
 
-   private void handleGetForReplace(CacheDecodeContext cdc, byte[] prev, Throwable throwable) {
+   private void handleGetForReplace(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] prev, byte[] value, Metadata metadata, Throwable throwable) {
       if (throwable != null) {
-         writeException(cdc, throwable);
+         writeException(header, throwable);
       } else if (prev != null) {
          // Generate new version only if key present
-         cdc.cache().replaceAsync(cdc.key, (byte[]) cdc.operationDecodeContext, cdc.buildMetadata())
-               .whenComplete((result, throwable1) -> handleReplace(cdc, result, throwable1));
+         cache.replaceAsync(key, value, metadata)
+               .whenComplete((result, throwable1) -> handleReplace(header, result, throwable1));
       } else {
-         writeNotExecuted(cdc, null);
+         writeNotExecuted(header);
       }
    }
 
-   private void handleReplace(CacheDecodeContext cdc, byte[] result, Throwable throwable) {
+   private void handleReplace(HotRodHeader header, byte[] result, Throwable throwable) {
       if (throwable != null) {
-         writeException(cdc, throwable);
+         writeException(header, throwable);
       } else if (result != null) {
-         writeSuccess(cdc, result);
+         writeSuccess(header, result);
       } else {
-         writeNotExecuted(cdc, null);
+         writeNotExecuted(header);
       }
    }
 
-   void putIfAbsent(CacheDecodeContext cdc) {
-      if (isBlockingWrite(cdc)) {
-         executor.execute(() -> putIfAbsent(cdc));
+   void putIfAbsent(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata metadata) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      if (isBlockingWrite(cache, header)) {
+         executor.execute(() -> putIfAbsentInternal(header, cache, key, value, metadata));
       } else {
-         putIfAbsentInternal(cdc);
+         putIfAbsentInternal(header, cache, key, value, metadata);
       }
    }
 
-   private void putIfAbsentInternal(CacheDecodeContext cdc) {
-      cdc.cache().getAsync(cdc.key).whenComplete((prev, throwable) -> handleGetForPutIfAbsent(cdc, prev, throwable));
+   private void putIfAbsentInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value, Metadata metadata) {
+      cache.getAsync(key).whenComplete((prev, throwable) -> handleGetForPutIfAbsent(header, cache, key, prev, value, metadata, throwable));
    }
 
-   private void handleGetForPutIfAbsent(CacheDecodeContext cdc, byte[] prev, Throwable throwable) {
+   private void handleGetForPutIfAbsent(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] prev, byte[] value, Metadata metadata, Throwable throwable) {
       if (throwable != null) {
-         writeException(cdc, throwable);
+         writeException(header, throwable);
       } else if (prev == null) {
          // Generate new version only if key not present
-         cdc.cache().putIfAbsentAsync(cdc.key, (byte[]) cdc.operationDecodeContext, cdc.buildMetadata())
-               .whenComplete((result, throwable1) -> handlePutIfAbsent(cdc, result, throwable1));
+         cache.putIfAbsentAsync(key, value, metadata)
+               .whenComplete((result, throwable1) -> handlePutIfAbsent(header, result, throwable1));
       } else {
-         writeNotExecuted(cdc, prev);
+         writeNotExecuted(header, prev);
       }
    }
 
-   private void handlePutIfAbsent(CacheDecodeContext cdc, byte[] result, Throwable throwable) {
+   private void handlePutIfAbsent(HotRodHeader header, byte[] result, Throwable throwable) {
       if (throwable != null) {
-         writeException(cdc, throwable);
+         writeException(header, throwable);
       } else if (result == null) {
-         writeSuccess(cdc, null);
+         writeSuccess(header);
       } else {
-         writeNotExecuted(cdc, result);
+         writeNotExecuted(header, result);
       }
    }
 
-   void remove(CacheDecodeContext cdc) {
-      if (isBlockingWrite(cdc)) {
-         executor.execute(() -> removeInternal(cdc));
+   void remove(HotRodHeader header, Subject subject, byte[] key) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      if (isBlockingWrite(cache, header)) {
+         executor.execute(() -> removeInternal(header, cache, key));
       } else {
-         removeInternal(cdc);
+         removeInternal(header, cache, key);
       }
    }
 
-   private void removeInternal(CacheDecodeContext cdc) {
-      cdc.cache().removeAsync(cdc.key).whenComplete((prev, throwable) -> handleRemove(cdc, prev, throwable));
+   private void removeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key) {
+      cache.removeAsync(key).whenComplete((prev, throwable) -> handleRemove(header, prev, throwable));
    }
 
-   private void handleRemove(CacheDecodeContext cdc, byte[] prev, Throwable throwable) {
+   private void handleRemove(HotRodHeader header, byte[] prev, Throwable throwable) {
       if (throwable != null) {
-         writeException(cdc, throwable);
+         writeException(header, throwable);
       } else if (prev != null) {
-         writeSuccess(cdc, prev);
+         writeSuccess(header, prev);
       } else {
-         writeNotExist(cdc);
+         writeNotExist(header);
       }
    }
 
-   void removeIfUnmodified(CacheDecodeContext cdc) {
-      if (isBlockingWrite(cdc)) {
-         executor.execute(() -> removeIfUnmodifiedInternal(cdc));
+   void removeIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      if (isBlockingWrite(cache, header)) {
+         executor.execute(() -> removeIfUnmodifiedInternal(header, cache, key, version));
       } else {
-         removeIfUnmodifiedInternal(cdc);
+         removeIfUnmodifiedInternal(header, cache, key, version);
       }
    }
 
-   private void removeIfUnmodifiedInternal(CacheDecodeContext cdc) {
-      cdc.cache().getCacheEntryAsync(cdc.key)
-            .whenComplete((entry, throwable) -> handleGetForRemoveIfUnmodified(cdc, entry, throwable));
+   private void removeIfUnmodifiedInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, long version) {
+      cache.getCacheEntryAsync(key)
+            .whenComplete((entry, throwable) -> handleGetForRemoveIfUnmodified(header, cache, entry, key, version, throwable));
    }
 
-   private void handleGetForRemoveIfUnmodified(CacheDecodeContext cdc, CacheEntry<byte[], byte[]> entry, Throwable throwable) {
+   private void handleGetForRemoveIfUnmodified(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, CacheEntry<byte[], byte[]> entry, byte[] key, long version, Throwable throwable) {
       if (throwable != null) {
-         writeException(cdc, throwable);
+         writeException(header, throwable);
       } else if (entry != null) {
          byte[] prev = entry.getValue();
-         NumericVersion streamVersion = new NumericVersion(cdc.params.streamVersion);
+         NumericVersion streamVersion = new NumericVersion(version);
          if (entry.getMetadata().version().equals(streamVersion)) {
-            cdc.cache().removeAsync(cdc.key, prev).whenComplete((removed, throwable2) -> {
+            cache.removeAsync(key, prev).whenComplete((removed, throwable2) -> {
                if (throwable2 != null) {
-                  writeException(cdc, throwable2);
+                  writeException(header, throwable2);
                } else if (removed) {
-                  writeSuccess(cdc, prev);
+                  writeSuccess(header, prev);
                } else {
-                  writeNotExecuted(cdc, prev);
+                  writeNotExecuted(header, prev);
                }
             });
          } else {
-            writeNotExecuted(cdc, prev);
+            writeNotExecuted(header, prev);
          }
       } else {
-         writeNotExist(cdc);
+         writeNotExist(header);
       }
    }
 
-   void clear(CacheDecodeContext cdc) {
-      if (isBlockingWrite(cdc)) {
-         executor.execute(() -> clearInternal(cdc));
+   void clear(HotRodHeader header, Subject subject) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      if (isBlockingWrite(cache, header)) {
+         executor.execute(() -> clearInternal(header, cache));
       } else {
-         clearInternal(cdc);
+         clearInternal(header, cache);
       }
    }
 
-   private void clearInternal(CacheDecodeContext cdc) {
-      cdc.cache().clearAsync().whenComplete((nil, throwable) -> {
+   private void clearInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache) {
+      cache.clearAsync().whenComplete((nil, throwable) -> {
          if (throwable != null) {
-            writeException(cdc, throwable);
+            writeException(header, throwable);
          } else {
-            writeSuccess(cdc, null);
+            writeSuccess(header);
          }
       });
    }
 
-   void putAll(CacheDecodeContext cdc) {
-      if (isBlockingWrite(cdc)) {
-         executor.execute(() -> putAllInternal(cdc));
+   void putAll(HotRodHeader header, Subject subject, Map<byte[], byte[]> entries, Metadata metadata) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      if (isBlockingWrite(cache, header)) {
+         executor.execute(() -> putAllInternal(header, cache, entries, metadata));
       } else {
-         putAllInternal(cdc);
+         putAllInternal(header, cache, entries, metadata);
       }
    }
 
-   private void putAllInternal(CacheDecodeContext cdc) {
-      cdc.cache().putAllAsync(cdc.operationContext(), cdc.buildMetadata())
-            .whenComplete((nil, throwable) -> handlePutAll(cdc, throwable));
+   private void putAllInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Map<byte[], byte[]> entries, Metadata metadata) {
+      cache.putAllAsync(entries, metadata).whenComplete((nil, throwable) -> handlePutAll(header, throwable));
    }
 
-   private void handlePutAll(CacheDecodeContext cdc, Throwable throwable) {
+   private void handlePutAll(HotRodHeader header, Throwable throwable) {
       if (throwable != null) {
-         writeException(cdc, throwable);
+         writeException(header, throwable);
       } else {
-         writeSuccess(cdc, null);
+         writeSuccess(header);
       }
    }
 
-   void getAll(CacheDecodeContext cdc) {
-      if (isBlockingRead(cdc, server.getCacheInfo(cdc))) {
-         executor.execute(() -> getAllInternal(cdc));
+   void getAll(HotRodHeader header, Subject subject, Set<?> keys) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      if (isBlockingRead(server.getCacheInfo(cache, header), header)) {
+         executor.execute(() -> getAllInternal(header, cache, keys));
       } else {
-         getAllInternal(cdc);
+         getAllInternal(header, cache, keys);
       }
    }
 
-   private void getAllInternal(CacheDecodeContext cdc) {
-      cdc.cache().getAllAsync(cdc.operationContext())
-            .whenComplete((map, throwable) -> handleGetAll(cdc, map, throwable));
+   private void getAllInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Set<?> keys) {
+      cache.getAllAsync(keys)
+            .whenComplete((map, throwable) -> handleGetAll(header, map, throwable));
    }
 
-   private void handleGetAll(CacheDecodeContext cdc, Map<byte[], byte[]> map, Throwable throwable) {
+   private void handleGetAll(HotRodHeader header, Map<byte[], byte[]> map, Throwable throwable) {
       if (throwable != null) {
-         writeException(cdc, throwable);
+         writeException(header, throwable);
       } else {
-         writeResponse(new GetAllResponse(cdc.header.version, cdc.header.messageId, cdc.header.cacheName,
-               cdc.header.clientIntel, cdc.header.topologyId, map));
+         writeResponse(header, header.encoder().getAllResponse(header, server, channel.alloc(), map));
       }
    }
 
-   void size(CacheDecodeContext cdc) {
-      executor.execute(() -> sizeInternal(cdc));
+   void size(HotRodHeader header, Subject subject) {
+      executor.execute(() -> sizeInternal(header, subject));
    }
 
-   private void sizeInternal(CacheDecodeContext cdc) {
-      HotRodHeader h = cdc.header;
+   private void sizeInternal(HotRodHeader header, Subject subject) {
       try {
-         AdvancedCache<byte[], byte[]> cache = cdc.cache();
-         writeResponse(new SizeResponse(h.version, h.messageId, h.cacheName,
-               h.clientIntel, h.topologyId, cache.size()));
+         AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+         writeResponse(header, header.encoder().unsignedLongResponse(header, server, channel.alloc(), cache.size()));
       } catch (Throwable t) {
-         writeException(cdc, t);
+         writeException(header, t);
       }
    }
 
-   void bulkGet(CacheDecodeContext cdc) {
-      executor.execute(() -> bulkGetInternal(cdc));
+   void bulkGet(HotRodHeader header, Subject subject, int size) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      executor.execute(() -> bulkGetInternal(header, cache, size));
    }
 
-   private void bulkGetInternal(CacheDecodeContext cdc) {
+   private void bulkGetInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, int size) {
       try {
-         AdvancedCache<byte[], byte[]> cache = cdc.cache();
-         int size = (int) cdc.operationDecodeContext;
          if (trace) {
             log.tracef("About to create bulk response count = %d", size);
          }
-         HotRodHeader h = cdc.header;
-         writeResponse(new BulkGetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-               h.topologyId, size, cache.entrySet()));
+         writeResponse(header, header.encoder().bulkGetResponse(header, server, channel.alloc(), size, cache.entrySet()));
       } catch (Throwable t) {
-         writeException(cdc, t);
+         writeException(header, t);
       }
    }
 
-   public void bulkGetKeys(CacheDecodeContext cdc) {
-      executor.execute(() -> bulkGetKeysInternal(cdc));
+   void bulkGetKeys(HotRodHeader header, Subject subject, int scope) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      executor.execute(() -> bulkGetKeysInternal(header, cache, scope));
    }
 
-   private void bulkGetKeysInternal(CacheDecodeContext cdc) {
+   private void bulkGetKeysInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, int scope) {
       try {
-         int scope = (int) cdc.operationDecodeContext;
          if (trace) {
             log.tracef("About to create bulk get keys response scope = %d", scope);
          }
-         HotRodHeader h = cdc.header;
-         writeResponse(new BulkGetKeysResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-               h.topologyId, scope, cdc.cache().keySet().iterator()));
+         writeResponse(header, header.encoder().bulkGetKeysResponse(header, server, channel.alloc(), cache.keySet().iterator()));
       } catch (Throwable t) {
-         writeException(cdc, t);
+         writeException(header, t);
       }
    }
 
-   void query(CacheDecodeContext cdc) {
-      executor.execute(() -> queryInternal(cdc));
+   void query(HotRodHeader header, Subject subject, byte[] queryBytes) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      executor.execute(() -> queryInternal(header, cache, queryBytes));
    }
 
-   private void queryInternal(CacheDecodeContext cdc) {
+   private void queryInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] queryBytes) {
       try {
-         byte[] queryResult = server.query(cdc.cache(), (byte[]) cdc.operationDecodeContext);
-         HotRodHeader h = cdc.header;
-         writeResponse(new QueryResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId, queryResult));
+         byte[] queryResult = server.query(cache, queryBytes);
+         writeResponse(header, header.encoder().valueResponse(header, server, channel.alloc(), OperationStatus.Success, queryResult));
       } catch (Throwable t) {
-         writeException(cdc, t);
+         writeException(header, t);
       }
    }
 
-   void addClientListener(CacheDecodeContext cdc) {
-      executor.execute(() -> addClientListenerInternal(cdc));
+   void addClientListener(HotRodHeader header, Subject subject, byte[] listenerId, boolean includeCurrentState, String filterFactory, List<byte[]> filterParams, String converterFactory, List<byte[]> converterParams, boolean useRawData, int listenerInterests) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      executor.execute(() -> {
+         try {
+            listenerRegistry.addClientListener(this, channel, header, listenerId,
+                  cache, includeCurrentState,
+                  filterFactory, filterParams,
+                  converterFactory, converterParams,
+                  useRawData, listenerInterests);
+         } catch (Throwable t) {
+            log.trace("Failed to add listener", t);
+            writeException(header, t);
+         }
+      });
    }
 
-   private void addClientListenerInternal(CacheDecodeContext cdc) {
+   void removeClientListener(HotRodHeader header, Subject subject, byte[] listenerId) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      executor.execute(() -> removeClientListenerInternal(header, cache, listenerId));
+   }
+
+   private void removeClientListenerInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] listenerId) {
       try {
-         ClientListenerRequestContext clientContext = (ClientListenerRequestContext) cdc.operationDecodeContext;
-         listenerRegistry.addClientListener(cdc.decoder, channel, cdc.header, clientContext.getListenerId(),
-               cdc.cache(), clientContext.isIncludeCurrentState(),
-               clientContext.getFilterFactoryInfo().orElse(null),
-               clientContext.getConverterFactoryInfo().orElse(null),
-               clientContext.isUseRawData(), clientContext.getListenerInterests());
-      } catch (Throwable t) {
-         writeException(cdc, t);
-      }
-   }
-
-   void removeClientListener(CacheDecodeContext cdc) {
-      executor.execute(() -> removeClientListenerInternal(cdc));
-   }
-
-   private void removeClientListenerInternal(CacheDecodeContext cdc) {
-      try {
-         byte[] listenerId = (byte[]) cdc.operationDecodeContext;
-         if (server.getClientListenerRegistry().removeClientListener(listenerId, cdc.cache())) {
-            writeResponse(cdc.decoder.createSuccessResponse(cdc.header, null));
+         if (server.getClientListenerRegistry().removeClientListener(listenerId, cache)) {
+            writeSuccess(header);
          } else {
-            writeResponse(cdc.decoder.createNotExecutedResponse(cdc.header, null));
+            writeNotExecuted(header);
          }
       } catch (Throwable t) {
-         writeException(cdc, t);
+         writeException(header, t);
       }
    }
 
-   void iterationStart(CacheDecodeContext cdc) {
-      executor.execute(() -> iterationStartInternal(cdc));
-   }
-
-   private void iterationStartInternal(CacheDecodeContext cdc) {
-      try {
-         IterationStartRequest iterationStart = (IterationStartRequest) cdc.operationDecodeContext;
-
-         Optional<BitSet> optionBitSet;
-         if (iterationStart.getOptionBitSet().isPresent()) {
-            optionBitSet = Optional.of(BitSet.valueOf(iterationStart.getOptionBitSet().get()));
-         } else {
-            optionBitSet = Optional.empty();
+   void iterationStart(HotRodHeader header, Subject subject, byte[] segmentMask, String filterConverterFactory, List<byte[]> filterConverterParams, int batch, boolean includeMetadata) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      executor.execute(() -> {
+         try {
+            String iterationId = server.getIterationManager().start(cache, segmentMask != null ? BitSet.valueOf(segmentMask) : null,
+                  filterConverterFactory, filterConverterParams, header.getValueMediaType(), batch, includeMetadata);
+            writeResponse(header, header.encoder().iterationStartResponse(header, server, channel.alloc(), iterationId));
+         } catch (Throwable t) {
+            writeException(header, t);
          }
-         String iterationId = server.getIterationManager().start(cdc, optionBitSet,
-               iterationStart.getFactory(), iterationStart.getBatch(), iterationStart.isMetadata());
-         HotRodHeader h = cdc.header;
-         writeResponse(new IterationStartResponse(h.version, h.messageId, h.cacheName,
-               h.clientIntel, h.topologyId, iterationId));
-      } catch (Throwable t) {
-         writeException(cdc, t);
-      }
+      });
    }
 
-   void iterationNext(CacheDecodeContext cdc) {
-      executor.execute(() -> iterationNextInternal(cdc));
+   void iterationNext(HotRodHeader header, Subject subject, String iterationId) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      executor.execute(() -> {
+         try {
+            IterableIterationResult iterationResult = server.getIterationManager().next(cache.getName(), iterationId);
+            writeResponse(header, header.encoder().iterationNextResponse(header, server, channel.alloc(), iterationResult));
+         } catch (Throwable t) {
+            writeException(header, t);
+         }
+      });
    }
 
-   private void iterationNextInternal(CacheDecodeContext cdc) {
+   void iterationEnd(HotRodHeader header, Subject subject, String iterationId) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
+      executor.execute(() -> {
+         try {
+            boolean removed = server.getIterationManager().close(cache.getName(), iterationId);
+            writeResponse(header, header.encoder().emptyResponse(header, server, channel.alloc(), removed ? OperationStatus.Success : OperationStatus.InvalidIteration));
+         } catch (Throwable t) {
+            writeException(header, t);
+         }
+      });
+   }
+
+   void putStream(HotRodHeader header, Subject subject, byte[] key, ByteBuf buf, long version, Metadata metadata) {
       try {
-         String iterationId = (String) cdc.operationDecodeContext;
-         IterableIterationResult iterationResult = server.getIterationManager().next(cdc.cache().getName(), iterationId);
-         HotRodHeader h = cdc.header;
-         writeResponse(new IterationNextResponse(h.version, h.messageId, h.cacheName,
-               h.clientIntel, h.topologyId, iterationResult));
-      } catch (Throwable t) {
-         writeException(cdc, t);
-      }
-   }
-
-   void iterationEnd(CacheDecodeContext cdc) {
-      executor.execute(() -> iterationEndInternal(cdc));
-   }
-
-   private void iterationEndInternal(CacheDecodeContext cdc) {
-      try {
-         String iterationId = (String) cdc.operationDecodeContext;
-         boolean removed = server.getIterationManager().close(cdc.cache().getName(), iterationId);
-         HotRodHeader h = cdc.header;
-         writeResponse(new EmptyResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-               HotRodOperation.ITERATION_END,
-               removed ? OperationStatus.Success : OperationStatus.InvalidIteration, h.topologyId));
-      } catch (Throwable t) {
-         writeException(cdc, t);
-      }
-   }
-
-   public void putStream(CacheDecodeContext cdc) {
-      ByteBuf buf = (ByteBuf) cdc.operationDecodeContext;
-      try {
-         byte[] bytes = new byte[buf.readableBytes()];
-         buf.readBytes(bytes);
-         cdc.operationDecodeContext = bytes;
-         long version = cdc.params.streamVersion;
+         byte[] value = new byte[buf.readableBytes()];
+         buf.readBytes(value);
          if (version == 0) { // Normal put
-            put(cdc);
+            put(header, subject, key, value, metadata);
          } else if (version < 0) { // putIfAbsent
-            putIfAbsent(cdc);
+            putIfAbsent(header, subject, key, value, metadata);
          } else { // versioned replace
-            replaceIfUnmodified(cdc);
+            replaceIfUnmodified(header, subject, key, version, value, metadata);
          }
       } finally {
          buf.release();

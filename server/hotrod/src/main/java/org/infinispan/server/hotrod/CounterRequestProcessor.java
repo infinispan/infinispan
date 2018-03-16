@@ -1,10 +1,12 @@
 package org.infinispan.server.hotrod;
 
-import static org.infinispan.server.hotrod.Response.createEmptyResponse;
 import static org.infinispan.util.concurrent.CompletableFutures.extractException;
 
+import java.util.Collection;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
+
+import javax.security.auth.Subject;
 
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.StrongCounter;
@@ -12,18 +14,12 @@ import org.infinispan.counter.api.WeakCounter;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
-import org.infinispan.server.hotrod.counter.CounterAddDecodeContext;
-import org.infinispan.server.hotrod.counter.CounterCompareAndSetDecodeContext;
-import org.infinispan.server.hotrod.counter.CounterCreateDecodeContext;
-import org.infinispan.server.hotrod.counter.CounterListenerDecodeContext;
 import org.infinispan.server.hotrod.counter.listener.ClientCounterManagerNotificationManager;
 import org.infinispan.server.hotrod.counter.listener.ListenerOperationStatus;
-import org.infinispan.server.hotrod.counter.response.CounterConfigurationResponse;
-import org.infinispan.server.hotrod.counter.response.CounterNamesResponse;
-import org.infinispan.server.hotrod.counter.response.CounterValueResponse;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 class CounterRequestProcessor extends BaseRequestProcessor {
@@ -32,205 +28,195 @@ class CounterRequestProcessor extends BaseRequestProcessor {
    private final ClientCounterManagerNotificationManager notificationManager;
    private final EmbeddedCounterManager counterManager;
 
-   private final BiConsumer<CacheDecodeContext, StrongCounter> handleStrongGet = this::handleGetStrong;
-   private final BiConsumer<CacheDecodeContext, WeakCounter> handleWeakGet = this::handleGetWeak;
-   private final BiConsumer<CacheDecodeContext, StrongCounter> handleStrongReset = this::handleResetStrong;
-   private final BiConsumer<CacheDecodeContext, WeakCounter> handleWeakReset = this::handleResetWeak;
+   private final BiConsumer<HotRodHeader, StrongCounter> handleStrongGet = this::handleGetStrong;
+   private final BiConsumer<HotRodHeader, WeakCounter> handleWeakGet = this::handleGetWeak;
+   private final BiConsumer<HotRodHeader, StrongCounter> handleStrongReset = this::handleResetStrong;
+   private final BiConsumer<HotRodHeader, WeakCounter> handleWeakReset = this::handleResetWeak;
 
    CounterRequestProcessor(Channel channel, EmbeddedCounterManager counterManager, Executor executor, HotRodServer server) {
-      super(channel, executor);
+      super(channel, executor, server);
       this.counterManager = counterManager;
       notificationManager = server.getClientCounterNotificationManager();
    }
 
-   private EmbeddedCounterManager counterManager(CacheDecodeContext cdc) {
-      cdc.header.cacheName = CounterModuleLifecycle.COUNTER_CACHE_NAME;
+   private EmbeddedCounterManager counterManager(HotRodHeader header) {
+      header.cacheName = CounterModuleLifecycle.COUNTER_CACHE_NAME;
       return counterManager;
    }
 
-   void removeCounterListener(CacheDecodeContext cdc) {
-      executor.execute(() -> removeCounterListenerInternal(cdc));
+   void removeCounterListener(HotRodHeader header, Subject subject, String counterName, byte[] listenerId) {
+      executor.execute(() -> removeCounterListenerInternal(header, counterName, listenerId));
    }
 
-   private void removeCounterListenerInternal(CacheDecodeContext cdc) {
+   private void removeCounterListenerInternal(HotRodHeader header, String counterName, byte[] listenerId) {
       try {
-         CounterListenerDecodeContext opCtx = cdc.operationContext();
-         writeResponse(createResponseFrom(cdc, notificationManager
-               .removeCounterListener(opCtx.getListenerId(), opCtx.getCounterName())));
+         writeResponse(header, createResponseFrom(header, notificationManager
+               .removeCounterListener(listenerId, counterName)));
       } catch (Throwable t) {
-         writeException(cdc, t);
+         writeException(header, t);
       }
    }
 
-   void addCounterListener(CacheDecodeContext cdc) {
-      executor.execute(() -> addCounterListenerInternal(cdc));
+   void addCounterListener(HotRodHeader header, Subject subject, String counterName, byte[] listenerId) {
+      executor.execute(() -> addCounterListenerInternal(header, counterName, listenerId));
    }
 
-   private void addCounterListenerInternal(CacheDecodeContext cdc) {
+   private void addCounterListenerInternal(HotRodHeader header, String counterName, byte[] listenerId) {
       try {
-         CounterListenerDecodeContext opCtx = cdc.operationContext();
-         writeResponse(createResponseFrom(cdc, notificationManager
-               .addCounterListener(opCtx.getListenerId(), cdc.header.getVersion(), opCtx.getCounterName(), channel)));
+         writeResponse(header, createResponseFrom(header, notificationManager
+               .addCounterListener(listenerId, header.getVersion(), counterName, channel, header.encoder())));
       } catch (Throwable t) {
-         writeException(cdc, t);
+         writeException(header, t);
       }
    }
 
-   void getCounterNames(CacheDecodeContext cdc) {
-      writeResponse(new CounterNamesResponse(cdc.header, counterManager(cdc).getCounterNames()));
+   void getCounterNames(HotRodHeader header, Subject subject) {
+      Collection<String> counterNames = counterManager(header).getCounterNames();
+      writeResponse(header, header.encoder().counterNamesResponse(header, server, channel.alloc(), counterNames));
    }
 
-   void counterRemove(CacheDecodeContext cdc) {
-      executor.execute(() -> counterRemoveInternal(cdc));
+   void counterRemove(HotRodHeader header, Subject subject, String counterName) {
+      executor.execute(() -> counterRemoveInternal(header, counterName));
    }
 
-   private void counterRemoveInternal(CacheDecodeContext cdc) {
+   private void counterRemoveInternal(HotRodHeader header, String counterName) {
       try {
-         String counterName = cdc.operationContext();
-         counterManager(cdc).remove(counterName);
-         writeResponse(createEmptyResponse(cdc.header, OperationStatus.Success));
+         counterManager(header).remove(counterName);
+         writeSuccess(header);
       } catch (Throwable t) {
-         writeException(cdc, t);
+         writeException(header, t);
       }
    }
 
-   void counterCompareAndSwap(CacheDecodeContext cdc) {
-      CounterCompareAndSetDecodeContext decodeContext = cdc.operationContext();
-      final long expect = decodeContext.getExpected();
-      final long update = decodeContext.getUpdate();
-      final String name = decodeContext.getCounterName();
-
-      applyCounter(cdc, name,
-            (cdcx, counter) -> counter.compareAndSwap(expect, update).whenComplete((value, throwable) -> longResultHandler(cdcx, value, throwable)),
-            (cdcx, counter) -> writeException(cdcx, log.invalidWeakCounter(name))
+   void counterCompareAndSwap(HotRodHeader header, Subject subject, String counterName, long expect, long update) {
+      applyCounter(header, counterName,
+            (h, counter) -> counter.compareAndSwap(expect, update).whenComplete((value, throwable) -> longResultHandler(h, value, throwable)),
+            (h, counter) -> writeException(h, log.invalidWeakCounter(counterName))
       );
    }
 
-   void counterGet(CacheDecodeContext cdc) {
-      applyCounter(cdc, cdc.operationContext(), handleStrongGet, handleWeakGet);
+   void counterGet(HotRodHeader header, Subject subject, String counterName) {
+      applyCounter(header, counterName, handleStrongGet, handleWeakGet);
    }
 
-   private void handleGetStrong(CacheDecodeContext cdc, StrongCounter counter) {
-      counter.getValue().whenComplete((value, throwable) -> longResultHandler(cdc, value, throwable));
+   private void handleGetStrong(HotRodHeader header, StrongCounter counter) {
+      counter.getValue().whenComplete((value, throwable) -> longResultHandler(header, value, throwable));
    }
 
-   private void handleGetWeak(CacheDecodeContext cdc, WeakCounter counter) {
-      longResultHandler(cdc, counter.getValue(), null);
+   private void handleGetWeak(HotRodHeader header, WeakCounter counter) {
+      longResultHandler(header, counter.getValue(), null);
    }
 
-   void counterReset(CacheDecodeContext cdc) {
-      applyCounter(cdc, cdc.operationContext(), handleStrongReset, handleWeakReset);
+   void counterReset(HotRodHeader header, Subject subject, String counterName) {
+      applyCounter(header, counterName, handleStrongReset, handleWeakReset);
    }
 
-   private void handleResetStrong(CacheDecodeContext cdc, StrongCounter counter) {
-      counter.reset().whenComplete((value, throwable) -> voidResultHandler(cdc, throwable));
+   private void handleResetStrong(HotRodHeader header, StrongCounter counter) {
+      counter.reset().whenComplete((value, throwable) -> voidResultHandler(header, throwable));
    }
 
-   private void handleResetWeak(CacheDecodeContext cdc, WeakCounter counter) {
-      counter.reset().whenComplete((value, throwable) -> voidResultHandler(cdc, throwable));
+   private void handleResetWeak(HotRodHeader header, WeakCounter counter) {
+      counter.reset().whenComplete((value, throwable) -> voidResultHandler(header, throwable));
    }
 
-   void counterAddAndGet(CacheDecodeContext cdc) {
-      CounterAddDecodeContext decodeContext = cdc.operationContext();
-      final long value = decodeContext.getValue();
-      applyCounter(cdc, decodeContext.getCounterName(),
-            (cdcx, counter) -> counter.addAndGet(value).whenComplete((value1, throwable) -> longResultHandler(cdcx, value1, throwable)),
-            (cdcx, counter) -> counter.add(value).whenComplete((value2, throwable1) -> longResultHandler(cdcx, 0L, throwable1)));
+   void counterAddAndGet(HotRodHeader header, Subject subject, String counterName, long value) {
+      applyCounter(header, counterName,
+            (h, counter) -> counter.addAndGet(value).whenComplete((value1, throwable) -> longResultHandler(h, value1, throwable)),
+            (h, counter) -> counter.add(value).whenComplete((value2, throwable1) -> longResultHandler(h, 0L, throwable1)));
    }
 
-   void getCounterConfiguration(CacheDecodeContext cdc) {
-      counterManager(cdc).getConfigurationAsync(cdc.operationContext())
-            .whenComplete((configuration, throwable) -> handleGetCounterConfiguration(cdc, configuration, throwable));
+   void getCounterConfiguration(HotRodHeader header, Subject subject, String counterName) {
+      counterManager(header).getConfigurationAsync(counterName)
+            .whenComplete((configuration, throwable) -> handleGetCounterConfiguration(header, configuration, throwable));
    }
 
-   private void handleGetCounterConfiguration(CacheDecodeContext cdc, CounterConfiguration configuration, Throwable throwable) {
+   private void handleGetCounterConfiguration(HotRodHeader header, CounterConfiguration configuration, Throwable throwable) {
       if (throwable != null) {
-         checkCounterThrowable(cdc, throwable);
+         checkCounterThrowable(header, throwable);
       } else {
-         Response response = configuration == null ? missingCounterResponse(cdc) : new CounterConfigurationResponse(cdc.header, configuration);
-         writeResponse(response);
+         ByteBuf response = configuration == null ? missingCounterResponse(header) :
+               header.encoder().counterConfigurationResponse(header, server, channel.alloc(), configuration);
+         writeResponse(header, response);
       }
    }
 
-   void isCounterDefined(CacheDecodeContext cdc) {
-      counterManager(cdc).isDefinedAsync(cdc.operationContext()).whenComplete((value, throwable) -> booleanResultHandler(cdc, value, throwable));
+   void isCounterDefined(HotRodHeader header, Subject subject, String counterName) {
+      counterManager(header).isDefinedAsync(counterName).whenComplete((value, throwable) -> booleanResultHandler(header, value, throwable));
    }
 
-   void createCounter(CacheDecodeContext cdc) {
-      CounterCreateDecodeContext decodeContext = cdc.operationContext();
-      counterManager(cdc).defineCounterAsync(decodeContext.getCounterName(), decodeContext.getConfiguration())
-            .whenComplete((value, throwable) -> booleanResultHandler(cdc, value, throwable));
+   void createCounter(HotRodHeader header, Subject subject, String counterName, CounterConfiguration configuration) {
+      counterManager(header).defineCounterAsync(counterName, configuration)
+            .whenComplete((value, throwable) -> booleanResultHandler(header, value, throwable));
    }
 
-   private void applyCounter(CacheDecodeContext cdc, String counterName,
-                             BiConsumer<CacheDecodeContext, StrongCounter> applyStrong,
-                             BiConsumer<CacheDecodeContext, WeakCounter> applyWeak) {
-      EmbeddedCounterManager counterManager = counterManager(cdc);
+   private void applyCounter(HotRodHeader header, String counterName,
+                             BiConsumer<HotRodHeader, StrongCounter> applyStrong,
+                             BiConsumer<HotRodHeader, WeakCounter> applyWeak) {
+      EmbeddedCounterManager counterManager = counterManager(header);
       CounterConfiguration config = counterManager.getConfiguration(counterName);
       if (config == null) {
-         writeResponse(missingCounterResponse(cdc));
+         writeResponse(header, missingCounterResponse(header));
          return;
       }
       switch (config.type()) {
          case UNBOUNDED_STRONG:
          case BOUNDED_STRONG:
-            applyStrong.accept(cdc, counterManager.getStrongCounter(counterName));
+            applyStrong.accept(header, counterManager.getStrongCounter(counterName));
             break;
          case WEAK:
-            applyWeak.accept(cdc, counterManager.getWeakCounter(counterName));
+            applyWeak.accept(header, counterManager.getWeakCounter(counterName));
             break;
       }
    }
 
-   private Response createResponseFrom(CacheDecodeContext cdc, ListenerOperationStatus status) {
+   private ByteBuf createResponseFrom(HotRodHeader header, ListenerOperationStatus status) {
       switch (status) {
          case OK:
-            return createEmptyResponse(cdc.header, OperationStatus.OperationNotExecuted);
+            return header.encoder().emptyResponse(header, server, channel.alloc(), OperationStatus.OperationNotExecuted);
          case OK_AND_CHANNEL_IN_USE:
-            return createEmptyResponse(cdc.header, OperationStatus.Success);
+            return header.encoder().emptyResponse(header, server, channel.alloc(), OperationStatus.Success);
          case COUNTER_NOT_FOUND:
-            return missingCounterResponse(cdc);
+            return missingCounterResponse(header);
          default:
             throw new IllegalStateException();
       }
    }
 
-   private void checkCounterThrowable(CacheDecodeContext cdc, Throwable throwable) {
+   private void checkCounterThrowable(HotRodHeader header, Throwable throwable) {
       Throwable cause = extractException(throwable);
       if (cause instanceof CounterOutOfBoundsException) {
-         writeResponse(createEmptyResponse(cdc.header, OperationStatus.NotExecutedWithPrevious));
+         writeResponse(header, header.encoder().emptyResponse(header, server, channel.alloc(), OperationStatus.NotExecutedWithPrevious));
       } else {
-         writeException(cdc, cause);
+         writeException(header, cause);
       }
    }
 
-   private Response missingCounterResponse(CacheDecodeContext cdc) {
-      return createEmptyResponse(cdc.header, OperationStatus.KeyDoesNotExist);
+   private ByteBuf missingCounterResponse(HotRodHeader header) {
+      return header.encoder().emptyResponse(header, server, channel.alloc(), OperationStatus.KeyDoesNotExist);
    }
 
-   private void booleanResultHandler(CacheDecodeContext cdc, Boolean value, Throwable throwable) {
+   private void booleanResultHandler(HotRodHeader header, Boolean value, Throwable throwable) {
       if (throwable != null) {
-         checkCounterThrowable(cdc, throwable);
+         checkCounterThrowable(header, throwable);
       } else {
-         Response response = createEmptyResponse(cdc.header,
-               value ? OperationStatus.Success : OperationStatus.OperationNotExecuted);
-         writeResponse(response);
+         OperationStatus status = value ? OperationStatus.Success : OperationStatus.OperationNotExecuted;
+         writeResponse(header, header.encoder().emptyResponse(header, server, channel.alloc(), status));
       }
    }
 
-   private void longResultHandler(CacheDecodeContext cdc, Long value, Throwable throwable) {
+   private void longResultHandler(HotRodHeader header, Long value, Throwable throwable) {
       if (throwable != null) {
-         checkCounterThrowable(cdc, throwable);
+         checkCounterThrowable(header, throwable);
       } else {
-         writeResponse(new CounterValueResponse(cdc.header, value));
+         writeResponse(header, header.encoder().longResponse(header, server, channel.alloc(), value));
       }
    }
 
-   private void voidResultHandler(CacheDecodeContext cdc, Throwable throwable) {
+   private void voidResultHandler(HotRodHeader header, Throwable throwable) {
       if (throwable != null) {
-         checkCounterThrowable(cdc, throwable);
+         checkCounterThrowable(header, throwable);
       } else {
-         writeResponse(createEmptyResponse(cdc.header, OperationStatus.Success));
+         writeResponse(header, header.encoder().emptyResponse(header, server, channel.alloc(), OperationStatus.Success));
       }
    }
 }
