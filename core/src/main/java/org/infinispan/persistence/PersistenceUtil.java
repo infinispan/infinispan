@@ -88,7 +88,8 @@ public class PersistenceUtil {
             return oldEntry; //no changes in container
          }
 
-         MarshalledEntry loaded = loadAndCheckExpiration(persistenceManager, k, ctx, timeService);
+         // Load using key from command
+         MarshalledEntry<K, V> loaded = loadAndCheckExpiration(persistenceManager, key, ctx, timeService);
          if (loaded == null) {
             if (isLoaded != null) {
                isLoaded.set(Boolean.FALSE); //not loaded
@@ -124,7 +125,8 @@ public class PersistenceUtil {
             return action.compute(k, oldEntry, factory);
          }
 
-         MarshalledEntry loaded = loadAndCheckExpiration(persistenceManager, k, ctx, timeService);
+         // Load using key from command
+         MarshalledEntry<K, V> loaded = loadAndCheckExpiration(persistenceManager, key, ctx, timeService);
          if (loaded == null) {
             return action.compute(k, null, factory);
          }
@@ -139,9 +141,9 @@ public class PersistenceUtil {
       }
    }
 
-   public static MarshalledEntry loadAndCheckExpiration(PersistenceManager persistenceManager, Object key,
+   public static <K, V> MarshalledEntry<K, V> loadAndCheckExpiration(PersistenceManager persistenceManager, K key,
                                                         InvocationContext context, TimeService timeService) {
-      final MarshalledEntry loaded = persistenceManager.loadFromAllStores(key, context);
+      final MarshalledEntry<K, V> loaded = persistenceManager.loadFromAllStores(key, context);
       if (trace) {
          log.tracef("Loaded %s for key %s from persistence.", loaded, key);
       }
