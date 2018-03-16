@@ -38,8 +38,10 @@ public class LevelDBStoreConfigurationParser implements ConfigurationParser {
       Element element = Element.forName(reader.getLocalName());
       switch (element) {
          case LEVELDB_STORE: {
-            parseLevelDBCacheStore(reader, builder.persistence().addStore(LevelDBStoreConfigurationBuilder.class));
-            break;
+            if (!reader.getSchema().since(9, 0)) {
+               parseLevelDBCacheStore(reader, builder.persistence().addStore(LevelDBStoreConfigurationBuilder.class));
+               break;
+            }
          }
          default: {
             throw ParseUtils.unexpectedElement(reader);

@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<infinispan>
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="urn:infinispan:config:8.2 http://www.infinispan.org/schemas/infinispan-config-8.2.xsd
+                                urn:infinispan:config:store:leveldb:8.0 http://www.infinispan.org/schemas/infinispan-cachestore-leveldb-config-8.0.xsd"
+            xmlns="urn:infinispan:config:8.2" xmlns:leveldb="urn:infinispan:config:store:leveldb:8.0">
 
-   <cache-container>
+   <cache-container default-cache="testCache">
       <local-cache name="testCache">
          <persistence passivation="false">
-            <leveldb-store path="/tmp/leveldb/52/data" shared="false" preload="true">
-               <expiration path="/tmp/leveldb/52/expired"/>
-               <implementation/>
-            </leveldb-store>
+            <leveldb:leveldb-store path="/tmp/leveldb/52/data" preload="true">
+               <leveldb:expiration path="/tmp/leveldb/52/expired"/>
+               <leveldb:implementation/>
+            </leveldb:leveldb-store>
          </persistence>
       </local-cache>
    </cache-container>
