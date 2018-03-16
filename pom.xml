@@ -287,7 +287,7 @@
       <version.maven.plugin>3.5</version.maven.plugin>
       <version.maven.remote.resource>1.1</version.maven.remote.resource>
       <version.maven.shade>2.4.3</version.maven.shade>
-      <version.maven.surefire>2.20.1</version.maven.surefire>
+      <version.maven.surefire>2.21.0</version.maven.surefire>
       <version.mc4j>1.2.6</version.mc4j>
       <version.metainf-services>1.7</version.metainf-services>
       <version.microsoft.azure.storage>6.1.0</version.microsoft.azure.storage>
