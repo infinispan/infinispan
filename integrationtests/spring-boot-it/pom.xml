@@ -10,7 +10,7 @@
    </parent>
 
     <artifactId>infinispan-spring-boot-it</artifactId>
-    <name>Integration tests: Spring Boot</name>
+    <name>Integration tests - Spring Boot</name>
     <description>Integration tests for Infinispan and Spring Boot</description>
 
     <properties>

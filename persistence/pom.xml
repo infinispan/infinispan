@@ -8,7 +8,7 @@
       <relativePath>../pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-persistence-parent</artifactId>
-   <name>Parent pom for cachestore modules</name>
+   <name>Infinispan Cache Stores</name>
    <packaging>pom</packaging>
 
    <dependencies>

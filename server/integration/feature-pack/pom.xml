@@ -11,7 +11,7 @@
 
     <artifactId>infinispan-server-feature-pack</artifactId>
 
-    <name>Infinispan Server: Feature Pack</name>
+    <name>Infinispan Server - Feature Pack</name>
     <packaging>pom</packaging>
 
     <dependencies>

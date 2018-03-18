@@ -10,7 +10,7 @@
    </parent>
 
    <artifactId>infinispan-compatibility-mode-it</artifactId>
-   <name>Integration tests: Infinispan compatibility mode</name>
+   <name>Integration tests - Compatibility mode</name>
    <description>Integration tests for inter-server and in-VM compatibility</description>
 
    <dependencies>

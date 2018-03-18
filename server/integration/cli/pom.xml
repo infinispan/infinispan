@@ -11,7 +11,7 @@
 
     <artifactId>infinispan-server-cli</artifactId>
 
-    <name>Infinispan Server: Command line interface</name>
+    <name>Infinispan Server - Command line interface</name>
 
     <build>
         <plugins>

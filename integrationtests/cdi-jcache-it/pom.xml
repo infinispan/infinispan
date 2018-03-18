@@ -10,7 +10,7 @@
    </parent>
 
    <artifactId>infinispan-cdi-jcache-it</artifactId>
-   <name>Integration tests: Infinispan CDI/JCache interactions</name>
+   <name>Integration tests - CDI/JCache interactions</name>
    <description>Integration tests for Infinispan's CDI and JCache modules</description>
 
    <dependencies>

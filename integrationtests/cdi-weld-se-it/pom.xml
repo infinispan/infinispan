@@ -10,7 +10,7 @@
    </parent>
 
     <artifactId>infinispan-cdi-weld-se-it</artifactId>
-    <name>Integration tests: Weld SE CDI tests</name>
+    <name>Integration tests - Weld SE CDI tests</name>
     <description>Integration tests for Infinispan CDI and Weld SE</description>
 
     <dependencies>

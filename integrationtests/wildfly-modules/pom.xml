@@ -10,8 +10,8 @@
    </parent>
 
    <artifactId>infinispan-wildfly-module-integrationtests</artifactId>
-   <name>Integration tests: Wildfly Module Integration Tests</name>
-   <description>Integration tests: Wildfly Module Integration Tests</description>
+   <name>Integration tests - Wildfly Module Integration Tests</name>
+   <description>Integration tests - Wildfly Module Integration Tests</description>
 
    <properties>
       <ispnserver.project.dir>${basedir}/../../server/integration</ispnserver.project.dir>

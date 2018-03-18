@@ -10,7 +10,7 @@
    </parent>
 
    <artifactId>integrationtests-security-manager</artifactId>
-   <name>Integration tests: SecurityManager tests</name>
+   <name>Integration tests - SecurityManager tests</name>
    <description>Integration tests which need to run under a SecurityManager</description>
 
    <dependencies>
