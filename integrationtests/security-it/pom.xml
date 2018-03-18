@@ -10,8 +10,8 @@
    </parent>
 
    <artifactId>infinispan-security-integrationtests</artifactId>
-   <name>Integration tests: Security Tests</name>
-   <description>Integration tests: Security Tests</description>
+   <name>Integration tests - Security Tests</name>
+   <description>Integration tests - Security Tests</description>
 
    <dependencies>
       <dependency>

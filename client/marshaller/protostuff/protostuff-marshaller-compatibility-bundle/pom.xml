@@ -10,7 +10,7 @@
 
     <artifactId>infinispan-marshaller-protostuff-bundle</artifactId>
     <packaging>jar</packaging>
-    <name>Infinispan Protostuff Marshaller Bridge Compatibility Bundle</name>
+    <name>Infinispan Protostuff Marshaller Bridge Bundle</name>
 
     <dependencies>
         <dependency>

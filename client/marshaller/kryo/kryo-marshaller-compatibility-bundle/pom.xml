@@ -10,7 +10,7 @@
 
     <artifactId>infinispan-marshaller-kryo-bundle</artifactId>
     <packaging>jar</packaging>
-    <name>Infinispan kryo Marshaller Bridge Compatibility Bundle</name>
+    <name>Infinispan Kryo Marshaller Bridge Bundle</name>
 
     <dependencies>
         <dependency>

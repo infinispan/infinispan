@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>elasticsearch-indexmanager-it</artifactId>
-    <name>Integration tests: Elasticsearch IndexManager</name>
+    <name>Integration tests - Elasticsearch IndexManager</name>
     <description>Integration tests for storing indexes on Elasticsearch</description>
 
     <dependencies>
