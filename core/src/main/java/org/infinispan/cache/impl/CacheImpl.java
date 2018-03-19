@@ -327,6 +327,26 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(defaultMetadata.maxIdle(), MILLISECONDS).build();
+      return mergeInternal(key, value, remappingFunction,
+            metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET),
+            getInvocationContextWithImplicitTransaction(false, 1));
+   }
+
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdleTime, idleTimeUnit).build();
+      return mergeInternal(key, value, remappingFunction,
+            metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET),
+            getInvocationContextWithImplicitTransaction(false, 1));
+   }
+
+   @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       return mergeInternal(key, value, remappingFunction,
             metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET),

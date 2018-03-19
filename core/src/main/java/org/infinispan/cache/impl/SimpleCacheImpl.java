@@ -1371,6 +1371,16 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return mergeInternal(key, value, remappingFunction, new CacheEntryChange<>(), createMetadata(lifespan, lifespanUnit));
+   }
+
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return mergeInternal(key, value, remappingFunction, new CacheEntryChange<>(), createMetadata(lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
+   }
+
+   @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       return mergeInternal(key, value, remappingFunction, new CacheEntryChange<>(), metadata);
    }
