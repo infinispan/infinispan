@@ -3,6 +3,7 @@ package org.infinispan.commons.api;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 
 /**
  * BasicCache provides the common building block for the two different types of caches that Infinispan provides:
@@ -188,6 +189,33 @@ public interface BasicCache<K, V> extends AsyncCache<K, V>, ConcurrentMap<K, V>,
     * @return true if the value was replaced, false otherwise
     */
    boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
+
+   /**
+    * An overloaded form of {@link #merge(Object, Object, BiFunction)} which takes in lifespan parameters.
+    *
+    * @param key                key to use
+    * @param value              new value to merge with existing value
+    * @param remappingFunction  function to use to merge new and existing values into a merged value to store under key
+    * @param lifespan           lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
+    * @param lifespanUnit       time unit for lifespan
+    * @return the merged value that was stored under key
+    */
+   V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit);
+
+   /**
+    * An overloaded form of {@link #merge(Object, Object, BiFunction)} which takes in lifespan parameters.
+    *
+    * @param key                key to use
+    * @param value              new value to merge with existing value
+    * @param remappingFunction  function to use to merge new and existing values into a merged value to store under key
+    * @param lifespan           lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
+    * @param lifespanUnit       time unit for lifespan
+    * @param maxIdleTime        the maximum amount of time this key is allowed to be idle for before it is considered as
+    *                           expired
+    * @param maxIdleTimeUnit    time unit for max idle time
+    * @return the merged value that was stored under key
+    */
+   V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
 
    /**
     * {@inheritDoc}

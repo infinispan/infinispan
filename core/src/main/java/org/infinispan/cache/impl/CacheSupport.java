@@ -5,6 +5,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 
 import org.infinispan.commons.api.BasicCache;
 
@@ -133,5 +134,16 @@ public abstract class CacheSupport<K, V> implements BasicCache<K, V> {
    @Override
    public final boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
       return replace(key, oldValue, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @Override
+   public final V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+      return merge(key, value, remappingFunction, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @Override
+   public final V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan,
+                  TimeUnit lifespanUnit) {
+      return merge(key, value, remappingFunction, lifespan, lifespanUnit, defaultMaxIdleTime, MILLISECONDS);
    }
 }
