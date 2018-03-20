@@ -11,6 +11,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.lock.api.ClusteredLockManager;
 import org.infinispan.lock.impl.entries.ClusteredLockKey;
@@ -89,10 +90,14 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
    private static void registerClusteredLockManager(GlobalComponentRegistry registry, CompletableFuture<CacheHolder> future) {
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (registry) {
-         ClusteredLockManager counterManager = registry.getComponent(ClusteredLockManager.class);
-         if (counterManager == null || !(counterManager instanceof EmbeddedClusteredLockManager)) {
-            counterManager = new EmbeddedClusteredLockManager(future);
-            registry.registerComponent(counterManager, ClusteredLockManager.class);
+         ClusteredLockManager clusteredLockManager = registry.getComponent(ClusteredLockManager.class);
+         if (clusteredLockManager == null || !(clusteredLockManager instanceof EmbeddedClusteredLockManager)) {
+            clusteredLockManager = new EmbeddedClusteredLockManager(future);
+            registry.registerComponent(clusteredLockManager, ClusteredLockManager.class);
+            //this start() is only invoked when the DefaultCacheManager.start() is invoked
+            //it is invoked here again to force it to check the managed global components
+            // and register them in the MBeanServer, if they are missing.
+            registry.getComponent(CacheManagerJmxRegistration.class).start(); //HACK!
          }
       }
    }

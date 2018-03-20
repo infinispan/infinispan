@@ -38,4 +38,12 @@ public class ClusteredLockConfiguration {
       return ownershipLevel;
    }
 
+   @Override
+   public String toString() {
+      final StringBuilder sb = new StringBuilder("ClusteredLockConfiguration{");
+      sb.append("ownershipLevel=").append(ownershipLevel.name());
+      sb.append(", reentrant=").append(reentrant);
+      sb.append('}');
+      return sb.toString();
+   }
 }

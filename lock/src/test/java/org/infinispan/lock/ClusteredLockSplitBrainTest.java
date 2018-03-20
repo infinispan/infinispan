@@ -91,10 +91,12 @@ public class ClusteredLockSplitBrainTest extends BasePartitionHandlingTest {
 
       asList(lock0, lock1, lock2, lock3, lock4, lock5).forEach(lock -> {
          assertNotNull(lock);
-         assertFalse(await(lock.tryLock(100, TimeUnit.MILLISECONDS).exceptionally(ex -> {
-            assertException(ClusteredLockException.class, AvailabilityException.class, ex);
-            return Boolean.FALSE;
-         })));
+         await(lock.tryLock().whenComplete((r, ex) -> {
+            fail("should go the exceptionally! r=" + r + "ex= " + ex);
+         }).exceptionally(t -> {
+            assertException(CompletionException.class, ClusteredLockException.class, AvailabilityException.class, t);
+            return null;
+         }));
       });
    }
 
