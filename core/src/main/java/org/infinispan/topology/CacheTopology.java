@@ -181,6 +181,7 @@ public class CacheTopology {
 
       if (topologyId != that.topologyId) return false;
       if (rebalanceId != that.rebalanceId) return false;
+      if (phase != that.phase) return false;
       if (currentCH != null ? !currentCH.equals(that.currentCH) : that.currentCH != null) return false;
       if (pendingCH != null ? !pendingCH.equals(that.pendingCH) : that.pendingCH != null) return false;
       if (unionCH != null ? !unionCH.equals(that.unionCH) : that.unionCH != null) return false;
@@ -193,6 +194,7 @@ public class CacheTopology {
    public int hashCode() {
       int result = topologyId;
       result = 31 * result + rebalanceId;
+      result = 31 * result + (phase != null ? phase.hashCode() : 0);
       result = 31 * result + (currentCH != null ? currentCH.hashCode() : 0);
       result = 31 * result + (pendingCH != null ? pendingCH.hashCode() : 0);
       result = 31 * result + (unionCH != null ? unionCH.hashCode() : 0);

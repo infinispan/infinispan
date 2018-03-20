@@ -49,6 +49,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
    };
 
    private static final Log log = LogFactory.getLog(PreferAvailabilityStrategy.class);
+   private static final boolean trace = log.isTraceEnabled();
    private final EventLogManager eventLogManager;
    private final PersistentUUIDManager persistentUUIDManager;
    private final LostDataCheck lostDataCheck;
@@ -88,7 +89,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       CacheTopology currentTopology = context.getCurrentTopology();
       List<Address> newMembers = new ArrayList<>(currentTopology.getMembers());
       if (!newMembers.retainAll(clusterMembers)) {
-         log.tracef("Cache %s did not lose any members, skipping rebalance", context.getCacheName());
+         if (trace) log.tracef("Cache %s did not lose any members, skipping rebalance", context.getCacheName());
          return;
       }
 
@@ -200,7 +201,14 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
             }
          }
 
-         resolveConflicts = context.resolveConflictsOnMerge() && !possibleOwners.isEmpty() && possibleOwners.size() > 1 && !maxTopology.getMembers().containsAll(possibleOwners);
+         possibleOwners.retainAll(newMembers); // Remove nodes that have not yet fully rejoined the cluster
+         resolveConflicts = attemptConflictResolution(context, maxTopologyId, maxTopology, possibleOwners);
+
+         if (trace) {
+            log.tracef("Cache %s, resolveConflicts=%s, currentTopology=%s, newMembers=%s, possibleOwners=%s, maxTopology=%s, maxTopologyId=%s",
+                  context.getCacheName(), resolveConflicts, context.getCurrentTopology(), newMembers, possibleOwners, maxTopology, maxTopologyId);
+         }
+
          if (resolveConflicts) {
             List<Address> members = new ArrayList<>(possibleOwners);
             ConsistentHash conflictHash = context.calculateConflictHash(distinctHashes);
@@ -233,6 +241,18 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       }
       // Then start a rebalance with the merged members
       context.queueRebalance(newMembers);
+   }
+
+   private boolean attemptConflictResolution(AvailabilityStrategyContext context, int maxTopologyId,
+                                             CacheTopology maxTopology, Set<Address> possibleOwners) {
+      if (!context.resolveConflictsOnMerge() || possibleOwners.isEmpty() || possibleOwners.size() == 1)
+         return false;
+
+      if (!maxTopology.getMembers().containsAll(possibleOwners))
+         return true;
+
+      // ISPN-8903 attempt CR in the event that a paused/busy process resumes a larger CH then the previous coordinator
+      return maxTopologyId > maxTopology.getTopologyId();
    }
 
    @Override

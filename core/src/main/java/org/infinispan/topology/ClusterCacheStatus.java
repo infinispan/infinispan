@@ -872,7 +872,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
    @Override
    public boolean resolveConflictsOnMerge() {
-      return resolveConflictsOnMerge;
+      // It doesn't make sense to resolve conflicts if we are not going to rebalance the cache as entries on "old" owners
+      // will not be deleted when no rebalance occurs.
+      return resolveConflictsOnMerge && clusterTopologyManager.isRebalancingEnabled() && rebalancingEnabled;
    }
 
    @Override
