@@ -621,8 +621,8 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
       @Override
       protected AbstractLocalCacheStream.StreamSupplier<CacheEntry<K, V>, Stream<CacheEntry<K, V>>> supplier() {
-         return new EntryStreamSupplier<>(cache, isRemoteIteration, getSegmentMapper(cache),
-               () -> StreamSupport.stream(spliterator(), false));
+         return new EntryStreamSupplier<>(cache, getSegmentMapper(cache), () -> StreamSupport.stream(spliterator(),
+               false));
       }
 
       @Override
@@ -684,8 +684,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
       @Override
       protected AbstractLocalCacheStream.StreamSupplier<K, Stream<K>> supplier() {
-         return new KeyStreamSupplier<>(cache, isRemoteIteration, getSegmentMapper(cache),
-               () -> StreamSupport.stream(spliterator(), false));
+         return new KeyStreamSupplier<>(cache, getSegmentMapper(cache), () -> StreamSupport.stream(spliterator(), false));
       }
 
       @Override

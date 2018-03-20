@@ -69,11 +69,6 @@ public class CollectionMapper<E, R> extends AbstractCollection<R> {
       stream().forEach(action);
    }
 
-   @Override
-   public Object[] toArray() {
-      return super.toArray();
-   }
-
    // Write operations are not supported!
    @Override
    public boolean add(R e) {

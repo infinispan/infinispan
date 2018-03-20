@@ -4,7 +4,6 @@ import java.util.Set;
 import java.util.stream.BaseStream;
 
 import org.infinispan.BaseCacheStream;
-import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.stream.impl.local.AbstractLocalCacheStream;
 
 /**
@@ -24,11 +23,5 @@ class IntermediateCacheStreamSupplier<T, S extends BaseStream<T, S>> implements 
    @Override
    public S buildStream(Set<Integer> segmentsToFilter, Set<?> keysToFilter) {
       return (S) type.handleStream(streamable);
-   }
-
-   @Override
-   public CloseableIterator<T> removableIterator(CloseableIterator<T> realIterator) {
-      // TODO: we could do this if no map/flatMap operations
-      return realIterator;
    }
 }

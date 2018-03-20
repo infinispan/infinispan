@@ -9,9 +9,7 @@ import java.util.stream.Stream;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
-import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -27,14 +25,12 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
    private static final boolean trace = log.isTraceEnabled();
 
    private final Cache<K, V> cache;
-   private final boolean remoteIterator;
    private final ToIntFunction<Object> toIntFunction;
    private final Supplier<Stream<CacheEntry<K, V>>> supplier;
 
-   public EntryStreamSupplier(Cache<K, V> cache, boolean remoteIterator, ToIntFunction<Object> toIntFunction,
+   public EntryStreamSupplier(Cache<K, V> cache, ToIntFunction<Object> toIntFunction,
          Supplier<Stream<CacheEntry<K, V>>> supplier) {
       this.cache = cache;
-      this.remoteIterator = remoteIterator;
       this.toIntFunction = toIntFunction;
       this.supplier = supplier;
    }
@@ -74,13 +70,5 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
          });
       }
       return stream;
-   }
-
-   @Override
-   public CloseableIterator<CacheEntry<K, V>> removableIterator(CloseableIterator<CacheEntry<K, V>> realIterator) {
-      if (remoteIterator) {
-         return realIterator;
-      }
-      return new RemovableCloseableIterator<>(realIterator, e -> cache.remove(e.getKey(), e.getValue()));
    }
 }

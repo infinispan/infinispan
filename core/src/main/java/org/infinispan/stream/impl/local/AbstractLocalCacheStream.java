@@ -7,7 +7,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.BaseStream;
 
-import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.intops.UnorderedOperation;
@@ -29,8 +28,6 @@ public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>, S2
 
    public interface StreamSupplier<T, S extends BaseStream<T, S>> {
       S buildStream(Set<Integer> segmentsToFilter, Set<?> keysToFilter);
-
-      CloseableIterator<T> removableIterator(CloseableIterator<T> realIterator);
    }
 
    /**
