@@ -143,21 +143,6 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration();
 
    /**
-    * This method returns a collection of caches names which contains the
-    * caches that have been defined via XML or programmatically, and the
-    * caches that have been created at runtime via this cache manager
-    * instance.
-    *
-    * If no named caches are registered or no caches have been created, this
-    * method returns an empty set.  The default cache is never included in this
-    * set of cache names, as well a caches for internal-only use {@link org.infinispan.registry.InternalCacheRegistry}
-    *
-    * @return an immutable set of non-default named caches registered or
-    * created with this cache manager.
-    */
-   Set<String> getCacheNames();
-
-   /**
     * This method returns a collection of cache configuration names which contains the
     * cache configurations that have been defined via XML or programmatically, and the
     * cache configurations that have been defined at runtime via this cache manager

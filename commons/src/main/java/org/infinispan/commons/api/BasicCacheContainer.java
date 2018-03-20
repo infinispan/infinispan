@@ -1,5 +1,7 @@
 package org.infinispan.commons.api;
 
+import java.util.Set;
+
 /**
  * <tt>BasicCacheContainer</tt> defines the methods used to obtain a {@link org.infinispan.api.BasicCache}.
  * <p/>
@@ -49,4 +51,19 @@ public interface BasicCacheContainer extends Lifecycle {
     * @return a cache instance identified by cacheName
     */
    <K, V> BasicCache<K, V> getCache(String cacheName);
+
+   /**
+    * This method returns a collection of caches names which contains the
+    * caches that have been defined via XML or programmatically, and the
+    * caches that have been created at runtime via this cache manager
+    * instance.
+    *
+    * If no named caches are registered or no caches have been created, this
+    * method returns an empty set.  The list of caches does not include
+    * internal-only caches {@link org.infinispan.registry.InternalCacheRegistry}
+    *
+    * @return an immutable set of caches registered or
+    * created with this cache manager.
+    */
+   Set<String> getCacheNames();
 }
