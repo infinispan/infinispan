@@ -76,7 +76,7 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
       Set<String> cacheNames = cacheManager.getCacheNames();
       for (String name : cacheNames) {
          Configuration cacheConfiguration = cacheManager.getCacheConfiguration(name);
-         if (isBackupForRemoteCache(remoteSite, remoteCache, cacheConfiguration, name)) {
+         if (cacheConfiguration != null && isBackupForRemoteCache(remoteSite, remoteCache, cacheConfiguration, name)) {
             Cache<Object, Object> cache = cacheManager.getCache(name);
             toLookFor.setLocalCacheName(name);
             backupReceivers.putIfAbsent(toLookFor, createBackupReceiver(cache));
