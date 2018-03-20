@@ -23,7 +23,7 @@
       <invalidation-cache-configuration name="entity" mode="SYNC" remote-timeout="20000" statistics="false" statistics-available="false">
          <locking concurrency-level="1000" acquire-timeout="15000"/>
          <transaction mode="NONE" />
-         <eviction size="10000" strategy="LRU"/>
+         <memory size="10000" strategy="LRU"/>
          <expiration max-idle="100000" interval="5000"/>
       </invalidation-cache-configuration>
 
@@ -37,7 +37,7 @@
       <local-cache-configuration name="local-query" statistics="false" statistics-available="false">
          <locking concurrency-level="1000" acquire-timeout="15000"/>
          <transaction mode="NONE" />
-         <eviction size="10000" strategy="LRU"/>
+         <memory size="10000" strategy="LRU"/>
          <expiration max-idle="100000" interval="5000"/>
       </local-cache-configuration>
 
@@ -46,7 +46,7 @@
          <!-- TODO: Wait for Radim to come back and see if this is needed -->
          <locking concurrency-level="1000" acquire-timeout="15000" isolation="READ_COMMITTED"/>
          <transaction mode="NONE" />
-         <eviction size="10000" strategy="LRU"/>
+         <memory size="10000" strategy="LRU"/>
          <expiration max-idle="100000" interval="5000"/>
       </replicated-cache-configuration>
 
@@ -58,7 +58,7 @@
          <!-- Explicitly non transactional -->
          <transaction mode="NONE"/>
          <!--  Don't ever evict modification timestamps -->
-         <eviction strategy="NONE"/>
+         <memory strategy="NONE"/>
          <expiration interval="0"/>
       </replicated-cache-configuration>
 

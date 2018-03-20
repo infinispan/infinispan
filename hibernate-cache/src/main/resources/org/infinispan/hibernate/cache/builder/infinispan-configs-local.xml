@@ -18,14 +18,14 @@
       <!-- Default configuration is appropriate for entity/collection caching. -->
       <local-cache-configuration name="entity" simple-cache="true" statistics="false" statistics-available="false">
          <transaction mode="NONE" />
-         <eviction size="10000" strategy="LRU"/>
+         <memory size="10000" strategy="LRU"/>
          <expiration max-idle="100000" interval="5000"/>
       </local-cache-configuration>
 
       <!-- A config appropriate for query caching. Does not replicate queries. -->
       <local-cache-configuration name="local-query" simple-cache="true" statistics="false" statistics-available="false">
          <transaction mode="NONE"/>
-         <eviction size="10000" strategy="LRU"/>
+         <memory size="10000" strategy="LRU"/>
          <expiration max-idle="100000" interval="5000"/>
       </local-cache-configuration>
 
@@ -34,7 +34,7 @@
          <!-- Explicitly non transactional -->
          <transaction mode="NONE"/>
          <!--  Don't ever evict modification timestamps -->
-         <eviction strategy="NONE"/>
+         <memory strategy="NONE"/>
          <expiration interval="0"/>
       </local-cache-configuration>
 
