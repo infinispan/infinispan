@@ -5,6 +5,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 
 import org.infinispan.client.hotrod.RemoteCache;
 
@@ -166,5 +167,22 @@ public abstract class RemoteCacheSupport<K,V> implements RemoteCache<K,V> {
    @Override
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
       return replace(key, oldValue, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+      return merge(key, value, remappingFunction, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan,
+                  TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return merge(key, value, remappingFunction, lifespan, lifespanUnit, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan,
+                  TimeUnit lifespanUnit) {
+      throw new UnsupportedOperationException();
    }
 }
