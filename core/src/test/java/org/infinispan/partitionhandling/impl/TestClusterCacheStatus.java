@@ -83,6 +83,7 @@ class TestClusterCacheStatus {
                                    null, CacheTopology.Phase.NO_REBALANCE,
                                    topology.getActualMembers(), persistentUUIDs);
    }
+
    public void updateStableTopology() {
       assertEquals(CacheTopology.Phase.NO_REBALANCE, topology.getPhase());
       stableTopology = topology;
@@ -99,6 +100,11 @@ class TestClusterCacheStatus {
                                         null;
       topology = new CacheTopology(topology.getTopologyId() + 1, topology.getRebalanceId(), updatedCH, updatedPendingCH,
                                    topology.getPhase(), updatedMembers, persistentUUIDs);
+   }
+
+   public void startConflictResolution(Address... targetMembers) {
+      topology = new CacheTopology(topology.getTopologyId() + 1, topology.getRebalanceId() + 1, topology.getCurrentCH(), null,
+            CacheTopology.Phase.CONFLICT_RESOLUTION, asList(targetMembers), persistentUUIDs);
    }
 
    public ConsistentHash ch(Address... addresses) {

@@ -13,6 +13,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodSer
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -67,7 +68,9 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
    @Override
    protected void createCacheManagers() {
       ConfigurationBuilder dcc = hotRodCacheConfiguration(new ConfigurationBuilder());
-      dcc.clustering().cacheMode(cacheMode).hash().numOwners(1);
+      dcc.clustering().cacheMode(cacheMode).hash().numOwners(1)
+            // Must be less than timeout used in TestingUtil::waitForNoRebalance
+            .stateTransfer().timeout(1, TimeUnit.SECONDS);
       createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true));
       waitForClusterToForm();
    }
@@ -92,12 +95,15 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
       int initialTopology = advancedCache(0).getRpcManager().getTopologyId();
       expectCompleteTopology(client, initialTopology);
       PartitionDescriptor p1 = new PartitionDescriptor(0);
+      // isolatePartitions will always result in a CR fail as Node 0 tries to contact Node 1 in order to receive segments
+      // which is not possible as all messages received by Node 1 from Node 0 are discarded by the DISCARD protocol.
+      // Therefore, it is necessary for the state transfer timeout to be < then the timeout utilised by TestingUtil::waitForNoRebalance
       isolatePartition(p1.getNodes());
       TestingUtil.waitForNoRebalance(cache(p1.node(0)));
       eventuallyExpectPartialTopology(client, initialTopology + 1);
 
       partition(0).merge(partition(1));
-      eventuallyExpectCompleteTopology(client, initialTopology + 2);
+      eventuallyExpectCompleteTopology(client, initialTopology + 3);
    }
 
 
