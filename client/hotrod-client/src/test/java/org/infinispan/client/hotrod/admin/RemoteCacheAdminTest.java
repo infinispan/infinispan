@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -165,5 +166,12 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    private void verifyUserQuery(RemoteCache<Object, Object> cache, int count) {
       List<User> users = Search.getQueryFactory(cache).create("from sample_bank_account.User where name='Tom'").list();
       assertEquals(count, users.size());
+   }
+
+   public void testGetCacheNames(Method m) {
+      String cacheName = m.getName();
+      client(0).administration().createCache(cacheName, "template");
+      Set<String> cacheNames = client(0).getCacheNames();
+      assertEquals(manager(0).getCacheNames(), cacheNames);
    }
 }

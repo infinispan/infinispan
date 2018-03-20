@@ -2698,7 +2698,9 @@ Admin operations are handled by the Exec operation with a set of well known task
 All parameters are UTF-8 encoded strings.
 Parameters are specific to each task, with the exception of the *flags* parameter which is common to all commands.
 The *flags* parameter contains zero or more space-separated values which may affect the behaviour of the command.
-The following table lists all currently available flags
+The following table lists all currently available flags.
+
+Admin tasks return the result of the operation represented as a JSON string.
 
 .FLAGS
 [cols="3,10",options="header"]
@@ -2726,6 +2728,14 @@ The following table lists all currently available flags
 | name  | The name of the cache to remove. | Yes
 | flags | See the flags table above. |No
 |==============================================================================
+
+.@@cache@names
+[cols="3,10,2",options="header"]
+|==============================================================================
+| Parameter       | Description | Required
+|==============================================================================
+
+Returns the cache names as a JSON array of strings, e.g. ["cache1", "cache2"]
 
 .@@cache@reindex
 [cols="3,10,2",options="header"]

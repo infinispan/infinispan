@@ -38,11 +38,12 @@ public abstract class AdminServerTask<T> implements Task {
       Map<String, byte[]> rawParams = (Map<String, byte[]>) taskContext.getParameters().get();
       Map<String, String> parameters = rawParams.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> new String(entry.getValue(), CharsetUtil.UTF_8)));
       String sFlags = parameters.remove("flags");
-      return execute(
+      T result = execute(
             taskContext.getCacheManager(),
             parameters,
             AdminFlag.fromString(sFlags)
       );
+      return result;
    }
 
    protected String requireParameter(Map<String, String> parameters, String parameter) {
