@@ -8,11 +8,15 @@ import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
+import java.util.Collection;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
+import org.infinispan.server.core.test.ServerTestingUtil;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -50,7 +54,9 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
 
    @BeforeClass
    public void setupRemoteCacheFactory() {
-      hotrodServer = HotRodTestingUtil.startHotRodServer(cacheManager, 19722);
+      HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
+      serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
+      hotrodServer = HotRodTestingUtil.startHotRodServer(cacheManager, ServerTestingUtil.findFreePort(), serverBuilder);
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.addServer().host("localhost").port(hotrodServer.getPort());
       remoteCacheManager = new RemoteCacheManager(builder.build());
@@ -94,14 +100,15 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
     * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManager#getCacheNames()}.
     */
-   @Test(expectedExceptions = UnsupportedOperationException.class)
-   public final void getCacheNamesShouldThrowAnUnsupportedOperationException() {
-      final RemoteCacheManager nativeCacheManager = new RemoteCacheManager(true);
-      final SpringRemoteCacheManager objectUnderTest = new SpringRemoteCacheManager(
-            nativeCacheManager);
-      nativeCacheManager.stop();
-
-      objectUnderTest.getCacheNames();
+   @Test
+   public final void getCacheNamesShouldReturnAllCachesDefinedInConfigurationFile() {
+      final SpringRemoteCacheManager objectUnderTest = new SpringRemoteCacheManager(remoteCacheManager);
+      final Collection<String> cacheNames = objectUnderTest.getCacheNames();
+      assertTrue("SpringRemoteCacheManager should load all named caches found in the "
+            + "native cache manager. However, it does not know about the cache named "
+            + TEST_CACHE_NAME
+            + " defined in said cache manager.",
+            cacheNames.contains(TEST_CACHE_NAME));
    }
 
    /**

@@ -38,19 +38,11 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
    }
 
    /**
-    * <p>
-    * As of Infinispan 4.2.0.FINAL <code>org.infinispan.client.hotrod.RemoteCache</code> does
-    * <strong>not</strong> support retrieving the set of all cache names from the hotrod server.
-    * This restriction may be lifted in the future. Currently, this operation will always throw an
-    * <code>UnsupportedOperationException</code>.
-    * </p>
-    *
     * @see org.springframework.cache.CacheManager#getCacheNames()
     */
    @Override
    public Collection<String> getCacheNames() {
-      throw new UnsupportedOperationException(
-            "Operation getCacheNames() is currently not supported.");
+      return this.nativeCacheManager.getCacheNames();
    }
 
    /**
