@@ -265,6 +265,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
       int availableMarshallerIndex = 0;
       final ExtendedRiverUnmarshaller[] reusableUnMarshaller = new ExtendedRiverUnmarshaller[PER_THREAD_REUSABLE_INSTANCES];
       int availableUnMarshallerIndex = 0;
+      int instanceCacheResizeLimit = 1024;
 
       PerThreadInstanceHolder(final MarshallingConfiguration threadDedicatedConfiguration) {
          this.configuration = threadDedicatedConfiguration;
@@ -323,11 +324,18 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
       @Override
       public void closeMarshaller() {
          availableMarshallerIndex--;
+
+         final ExtendedRiverMarshaller marshaller = reusableMarshaller[availableMarshallerIndex];
+         if (marshaller != null && marshaller.instanceCacheResizeCount() >= instanceCacheResizeLimit)
+            reusableMarshaller[availableMarshallerIndex] = null;
       }
 
       @Override
       public void closeUnmarshaller() {
          availableUnMarshallerIndex--;
+
+         final ExtendedRiverUnmarshaller unmarshaller = reusableUnMarshaller[availableMarshallerIndex];
+         unmarshaller.trimInstanceCache();
       }
    }
 

@@ -1,5 +1,6 @@
 package org.infinispan.commons.marshall.jboss;
 
+import org.infinispan.commons.util.ReflectionUtil;
 import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.reflect.SerializableClassRegistry;
 import org.jboss.marshalling.river.RiverMarshaller;
@@ -33,6 +34,16 @@ public class ExtendedRiverMarshaller extends RiverMarshaller {
 
    void setCloseListener(RiverCloseListener listener) {
       this.listener = listener;
+   }
+
+   int instanceCacheResizeCount() {
+      Object instanceCache = ReflectionUtil
+         .getValue(this, "instanceCache");
+
+      final Object[] keys = (Object[]) ReflectionUtil
+         .getValue(instanceCache, "keys");
+
+      return keys.length;
    }
 
 }
