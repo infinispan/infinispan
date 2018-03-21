@@ -1,8 +1,11 @@
 package org.infinispan.commons.marshall.jboss;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.ReflectionUtil;
 import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.reflect.SerializableClassRegistry;
 import org.jboss.marshalling.river.RiverMarshallerFactory;
@@ -44,6 +47,13 @@ public class ExtendedRiverUnmarshaller extends RiverUnmarshaller {
       if (listener != null) {
          listener.closeUnmarshaller();
       }
+   }
+
+   void trimInstanceCache() {
+      ArrayList instanceCache = (ArrayList) ReflectionUtil
+         .getValue(this, "instanceCache");
+
+      instanceCache.trimToSize();
    }
 
 }
