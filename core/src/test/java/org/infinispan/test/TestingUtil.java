@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -1826,6 +1827,14 @@ public class TestingUtil {
 
    public static <K,V> Map.Entry<K,V> createMapEntry(K key, V value) {
       return new AbstractMap.SimpleEntry<>(key, value);
+   }
+
+   public static <T, U> Map<T, U> mapOf(Object... keyValueKeyValueKeyValue) {
+      Map<T, U> map = new HashMap<>();
+      for (int i = 0; i < keyValueKeyValueKeyValue.length; ) {
+         map.put((T) keyValueKeyValueKeyValue[i++], (U) keyValueKeyValueKeyValue[i++]);
+      }
+      return map;
    }
 
    /**
