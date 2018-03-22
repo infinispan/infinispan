@@ -72,7 +72,6 @@
       desired_avg_gossip="5000"
       max_bytes="1M"/>
    <pbcast.GMS
-      install_view_locally_first="true"
       print_local_addr="false"
       join_timeout="${jgroups.join_timeout:5000}"/>
    <UFC

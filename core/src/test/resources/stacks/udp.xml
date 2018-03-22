@@ -44,7 +44,6 @@
    <pbcast.STABLE stability_delay="1000" desired_avg_gossip="5000" max_bytes="1m"/>
    <pbcast.GMS print_local_addr="false"
                join_timeout="${jgroups.join_timeout:2000}"
-               install_view_locally_first="true"
                view_bundling="false"/>
    <tom.TOA/> <!-- the Total Order Anycast is only needed for total order transactions (in distributed mode)-->
 
