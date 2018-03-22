@@ -46,7 +46,6 @@
    <pbcast.STABLE stability_delay="500" desired_avg_gossip="5000" max_bytes="1m"/>
    <pbcast.GMS print_local_addr="false"
                join_timeout="${jgroups.join_timeout:2000}"
-               install_view_locally_first="true"
                view_bundling="false"/>
 
    <MFC max_credits="2m" min_threshold="0.40"/>

@@ -44,7 +44,6 @@
                   max_bytes="1M"
    />
    <pbcast.GMS print_local_addr="false"
-               install_view_locally_first="true"
                join_timeout="${jgroups.join_timeout:5000}"
    />
    <MFC max_credits="2m" 

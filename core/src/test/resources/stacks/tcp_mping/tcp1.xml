@@ -49,7 +49,6 @@
                   max_bytes="400000"/>
    <pbcast.GMS print_local_addr="false"
                join_timeout="${jgroups.join_timeout:2000}"
-               install_view_locally_first="true"
                view_bundling="false"/>
    <tom.TOA/> <!-- the Total Order Anycast is only needed for total order transactions (in distributed mode)-->
    <MFC max_credits="2M" min_threshold="0.40"/>
