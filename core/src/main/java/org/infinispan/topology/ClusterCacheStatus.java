@@ -792,11 +792,17 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
       boolean updateTopology = false;
       boolean rebalance = false;
+      boolean updateStableTopology = false;
       if (rebalanceType == RebalanceType.NONE) {
          updateTopology = true;
       } else if (balancedCH.equals(currentCH)) {
          log.tracef("The balanced CH is the same as the current CH, not rebalancing");
          updateTopology = cacheTopology.getPendingCH() != null;
+         // After a cluster view change that leaves only 1 node, we don't need either a topology update or a rebalance
+         // but we must still update the stable topology
+         updateStableTopology =
+            cacheTopology.getPendingCH() == null &&
+               (stableTopology == null || cacheTopology.getTopologyId() != stableTopology.getTopologyId());
       } else {
          rebalance = true;
       }
@@ -831,6 +837,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                newTopology.getMembers(), this::endRebalance);
 
          clusterTopologyManager.broadcastRebalanceStart(cacheName, newTopology, isTotalOrder(), isDistributed());
+      } else if (updateStableTopology) {
+         stableTopology = currentTopology;
+         clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, stableTopology, isTotalOrder(), isDistributed());
       }
    }
 

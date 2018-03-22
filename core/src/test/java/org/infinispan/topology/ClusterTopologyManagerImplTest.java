@@ -40,7 +40,7 @@ import org.testng.annotations.Test;
 public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
    private static final String CACHE_NAME = "testCache";
 
-   ExecutorService transportExecutor = Executors.newFixedThreadPool(2, getTestThreadFactory("Transport"));
+   private ExecutorService transportExecutor = Executors.newFixedThreadPool(2, getTestThreadFactory("Transport"));
 
    private static final Address A = new TestAddress(0, "A");
    private static final Address B = new TestAddress(1, "B");
@@ -188,11 +188,11 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       // Node B becomes coordinator and CTMI tries to recover the cluster status
       transport.expectTopologyCommand(CacheTopologyControlCommand.Type.GET_STATUS).finish();
 
-      // CTMI broadcasts the only cache topology it got, but without the pending CH
-      ltm.expectTopology(5, singletonList(A), null, CacheTopology.Phase.NO_REBALANCE);
+      // CTMI gets a single cache topology with READ_NEW and broadcasts a new topology with only the read CH
+      ltm.expectTopology(5, asList(A, B), null, CacheTopology.Phase.NO_REBALANCE);
       transport.expectTopologyCommand(CacheTopologyControlCommand.Type.CH_UPDATE, c -> {
          assertEquals(5, c.getTopologyId());
-         assertCHMembers(c.getCurrentCH(), A);
+         assertCHMembers(c.getCurrentCH(), A, B);
          assertNull(c.getPendingCH());
       });
       transport.expectTopologyCommand(CacheTopologyControlCommand.Type.STABLE_TOPOLOGY_UPDATE, c -> {
@@ -204,6 +204,13 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       // CTMI broadcasts a new cache topology with only node B
       ltm.expectTopology(6, singletonList(B), null, CacheTopology.Phase.NO_REBALANCE);
       transport.expectTopologyCommand(CacheTopologyControlCommand.Type.CH_UPDATE, c -> {
+         assertEquals(6, c.getTopologyId());
+         assertCHMembers(c.getCurrentCH(), B);
+         assertNull(c.getPendingCH());
+      });
+
+      // The new topology doesn't need rebalancing, so CTMI updates the stable topology
+      transport.expectTopologyCommand(CacheTopologyControlCommand.Type.STABLE_TOPOLOGY_UPDATE, c -> {
          assertEquals(6, c.getTopologyId());
          assertCHMembers(c.getCurrentCH(), B);
          assertNull(c.getPendingCH());

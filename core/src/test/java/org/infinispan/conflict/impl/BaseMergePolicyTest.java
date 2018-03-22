@@ -5,10 +5,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
@@ -21,11 +18,13 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.partitionhandling.PartitionHandling;
+import org.infinispan.partitionhandling.impl.LostDataCheck;
 import org.infinispan.partitionhandling.impl.PreferAvailabilityStrategy;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.ManagerStatusResponse;
 import org.infinispan.util.KeyValuePair;
@@ -144,45 +143,24 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
    }
 
    protected <K, V> AdvancedCache<K, V> getCacheFromPreferredPartition() {
-      AdvancedCache[] caches = caches().stream().map(AdvancedCache.class::cast).toArray(AdvancedCache[]::new);
+      AdvancedCache[] caches = caches().stream().map(Cache::getAdvancedCache).toArray(AdvancedCache[]::new);
       return getCacheFromPreferredPartition(caches);
    }
 
    protected <K, V> AdvancedCache<K, V> getCacheFromPreferredPartition(AdvancedCache... caches) {
-      // Emulate the algorithm in PreferAvailabilityStrategy/PreferConsistencyStrategy to determine the
-      // preferred topology and pick the cache on the node that will send it during cluster status recovery.
-      List<KeyValuePair<AdvancedCache, CacheStatusResponse>> statusResponses =
-         Arrays.stream(caches).map(c -> new KeyValuePair<>(c, getCacheStatus(c)))
-               .sorted(Comparator.comparing(KeyValuePair::getValue, PreferAvailabilityStrategy.RESPONSE_COMPARATOR))
-               .collect(Collectors.toList());
+      Map<Address, CacheStatusResponse> statusResponses =
+         Arrays.stream(caches).map(c -> new KeyValuePair<>(address(c), getCacheStatus(c)))
+               .collect(Collectors.toMap(KeyValuePair::getKey, KeyValuePair::getValue));
 
-      CacheTopology maxStableTopology = null;
-      for (KeyValuePair<AdvancedCache, CacheStatusResponse> response : statusResponses) {
-         CacheTopology stableTopology = response.getValue().getStableTopology();
-         if (stableTopology == null) continue;
+      LostDataCheck lostDataCheck = cacheMode.isScattered() ? ClusterTopologyManagerImpl::scatteredLostDataCheck :
+                                    ClusterTopologyManagerImpl::distLostDataCheck;
+      CacheTopology preferredTopology = new PreferAvailabilityStrategy(null, null, lostDataCheck)
+                                           .computePreferredTopology(statusResponses);
 
-         if (maxStableTopology == null || maxStableTopology.getMembers().size() < stableTopology.getMembers().size()) {
-            maxStableTopology = stableTopology;
-         }
-      }
-
-      AdvancedCache<K, V> maxTopologySender = null;
-      CacheTopology maxTopology = null;
-
-      for (KeyValuePair<AdvancedCache, CacheStatusResponse> response : statusResponses) {
-         CacheTopology stableTopology = response.getValue().getStableTopology();
-         if (!Objects.equals(stableTopology, maxStableTopology)) continue;
-
-         CacheTopology topology = response.getValue().getCacheTopology();
-         if (topology == null) continue;
-
-         if (maxTopology == null || maxTopology.getMembers().size() < topology.getMembers().size()) {
-            maxTopology = topology;
-            maxTopologySender = response.getKey();
-         }
-      }
-      if (trace) log.tracef("getCacheFromPreferredPartition: partition=%s", maxTopology != null ? maxTopology.getCurrentCH().getMembers() : null);
-      return maxTopologySender;
+      if (trace) log.tracef("getCacheFromPreferredPartition: partition=%s", preferredTopology.getMembers());
+      return Arrays.stream(caches)
+                   .filter(c -> address(c).equals(preferredTopology.getMembers().get(0)))
+                   .findFirst().get();
    }
 
    private CacheStatusResponse getCacheStatus(AdvancedCache cache) {

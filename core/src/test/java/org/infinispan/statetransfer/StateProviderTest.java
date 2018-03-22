@@ -272,7 +272,7 @@ public class StateProviderTest {
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.emptyList());
 
-      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch1, CacheTopology.Phase.READ_OLD_WRITE_ALL, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch1.getMembers()));
+      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch1, CacheTopology.Phase.READ_OLD_WRITE_ALL, ch1.getMembers(), persistentUUIDManager.mapAddresses(ch1.getMembers()));
       stateProvider.onTopologyUpdate(cacheTopology, false);
 
       log.debug("ch1: " + ch1);

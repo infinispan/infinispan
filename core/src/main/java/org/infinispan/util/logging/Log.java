@@ -1761,4 +1761,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The state file for '%s' is invalid. Startup halted to prevent further corruption of persistent state", id = 516)
    CacheConfigurationException invalidPersistentState(String globalScope);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Ignoring cache topology from %s during merge: %s", id = 517)
+   void ignoringCacheTopology(Collection<Address> sender, CacheTopology topology);
 }
