@@ -406,7 +406,7 @@ public class TestingUtil {
       int numberOfManagers = managers.length;
       assert numberOfManagers > 0;
       Set<String> testCaches = getInternalAndUserCacheNames(managers[0]);
-      System.err.printf("waitForNoRebalance with managers %s, for caches %s\n", Arrays.toString(managers), testCaches);
+      log.debugf("waitForNoRebalance with managers %s, for caches %s", Arrays.toString(managers), testCaches);
 
       for (String cacheName : testCaches) {
          Cache[] caches = new Cache[numberOfManagers];
@@ -1819,6 +1819,11 @@ public class TestingUtil {
          map.put((T) keyValueKeyValueKeyValue[i++], (U) keyValueKeyValueKeyValue[i++]);
       }
       return map;
+   }
+
+   @SafeVarargs
+   public static <T> Set<T> setOf(T... elements) {
+      return new HashSet<>(Arrays.asList(elements));
    }
 
    /**

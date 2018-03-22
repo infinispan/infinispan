@@ -502,7 +502,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       CountDownLatch latch = new CountDownLatch(responsesByCache.size());
       LimitedExecutor cs = new LimitedExecutor("Merge-" + newViewId, stateTransferExecutor, maxThreads);
       for (final Map.Entry<String, Map<Address, CacheStatusResponse>> e : responsesByCache.entrySet()) {
-         CacheJoinInfo joinInfo = e.getValue().values().stream().findAny().get().getCacheJoinInfo();
+         CacheJoinInfo joinInfo = e.getValue().values().iterator().next().getCacheJoinInfo();
          ClusterCacheStatus cacheStatus = initCacheStatusIfAbsent(e.getKey(), joinInfo.getCacheMode());
          cs.execute(() -> {
             try {
@@ -787,7 +787,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    public static boolean scatteredLostDataCheck(ConsistentHash stableCH, List<Address> newMembers) {
       Set<Address> lostMembers = new HashSet<>(stableCH.getMembers());
       lostMembers.removeAll(newMembers);
-      log.debugf("Stable CH members: %s, actual members: %s, lost members: %s",
+      log.tracef("Stable CH members: %s, actual members: %s, lost members: %s",
                  stableCH.getMembers(), newMembers, lostMembers);
       return lostMembers.size() > 1;
    }

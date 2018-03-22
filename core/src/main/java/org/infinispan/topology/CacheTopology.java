@@ -40,6 +40,7 @@ public class CacheTopology {
    private final ConsistentHash unionCH;
    private final Phase phase;
    private List<Address> actualMembers;
+   // The persistent UUID of each actual member
    private List<PersistentUUID> persistentUUIDs;
 
    public CacheTopology(int topologyId, int rebalanceId, ConsistentHash currentCH, ConsistentHash pendingCH,
@@ -52,6 +53,9 @@ public class CacheTopology {
       if (pendingCH != null && !pendingCH.getMembers().containsAll(currentCH.getMembers()) && phase != Phase.CONFLICT_RESOLUTION) {
          throw new IllegalArgumentException("A cache topology's pending consistent hash must " +
                "contain all the current consistent hash's members: currentCH=" + currentCH + ", pendingCH=" + pendingCH);
+      }
+      if (persistentUUIDs != null && persistentUUIDs.size() != actualMembers.size()) {
+         throw new IllegalArgumentException("There must be one persistent UUID for each actual member");
       }
       this.topologyId = topologyId;
       this.rebalanceId = rebalanceId;

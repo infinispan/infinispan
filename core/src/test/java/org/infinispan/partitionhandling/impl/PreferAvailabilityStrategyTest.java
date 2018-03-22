@@ -3,23 +3,27 @@ package org.infinispan.partitionhandling.impl;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.infinispan.partitionhandling.AvailabilityMode.AVAILABLE;
+import static org.infinispan.partitionhandling.impl.PreferAvailabilityStrategyTest.ConflictResolution.IGNORE;
+import static org.infinispan.partitionhandling.impl.PreferAvailabilityStrategyTest.ConflictResolution.RESOLVE;
 import static org.infinispan.test.TestingUtil.mapOf;
+import static org.infinispan.test.TestingUtil.setOf;
+import static org.infinispan.topology.TestClusterCacheStatus.conflictResolutionConsistentHash;
+import static org.infinispan.topology.TestClusterCacheStatus.persistentUUID;
+import static org.infinispan.topology.TestClusterCacheStatus.start;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.testng.AssertJUnit.assertSame;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.TestAddress;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -28,9 +32,15 @@ import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
+import org.infinispan.topology.TestClusterCacheStatus;
 import org.infinispan.util.logging.events.impl.EventLogManagerImpl;
+import org.mockito.Mockito;
+import org.mockito.MockitoSession;
+import org.mockito.quality.Strictness;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -41,6 +51,16 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "unit", testName = "partitionhandling.impl.PreferAvailabilityStrategyNoConflictResolutionTest")
 public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
+   private final ConflictResolution conflicts;
+
+   public enum ConflictResolution {
+      RESOLVE, IGNORE;
+
+      boolean resolve() {
+         return this == RESOLVE;
+      }
+   }
+
    private static final CacheJoinInfo JOIN_INFO =
       new CacheJoinInfo(new DefaultConsistentHashFactory(), MurmurHash3.getInstance(), 8, 2, 1000, false,
                         CacheMode.DIST_SYNC, 1.0f, null, Optional.empty());
@@ -53,162 +73,199 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
    private PersistentUUIDManagerImpl persistentUUIDManager;
    private AvailabilityStrategyContext context;
    private PreferAvailabilityStrategy strategy;
+   private MockitoSession mockitoSession;
 
-   @DataProvider(name = "dp")
-   public Object[][] data() {
-      return new Object[][] {{true},{false}};
+   @DataProvider
+   public static Object[][] conflictResolutionProvider() {
+      return new Object[][]{{RESOLVE}, {IGNORE}};
+   }
+
+   @Factory(dataProvider = "conflictResolutionProvider")
+   public PreferAvailabilityStrategyTest(ConflictResolution conflicts) {
+      this.conflicts = conflicts;
    }
 
    @BeforeMethod(alwaysRun = true)
    public void setup() {
+      mockitoSession = Mockito.mockitoSession()
+                              .strictness(Strictness.STRICT_STUBS)
+                              .startMocking();
       persistentUUIDManager = new PersistentUUIDManagerImpl();
       eventLogManager = new EventLogManagerImpl();
       context = mock(AvailabilityStrategyContext.class);
 
-      persistentUUIDManager.addPersistentAddressMapping(A, TestClusterCacheStatus.persistentUUID(A));
-      persistentUUIDManager.addPersistentAddressMapping(B, TestClusterCacheStatus.persistentUUID(B));
-      persistentUUIDManager.addPersistentAddressMapping(C, TestClusterCacheStatus.persistentUUID(C));
+      persistentUUIDManager.addPersistentAddressMapping(A, persistentUUID(A));
+      persistentUUIDManager.addPersistentAddressMapping(B, persistentUUID(B));
+      persistentUUIDManager.addPersistentAddressMapping(C, persistentUUID(C));
 
       strategy = new PreferAvailabilityStrategy(eventLogManager, persistentUUIDManager,
                                                 ClusterTopologyManagerImpl::distLostDataCheck);
    }
 
-   public void testCoordinatorChangeTopologyNotUpdatedAfterLeave() {
-      TestClusterCacheStatus cache = TestClusterCacheStatus.start(JOIN_INFO, A, B, C);
-      List<Address> remainingMembers = asList(A, B);
-      CacheStatusResponse responseA = availableResponse(A, cache);
-      CacheStatusResponse responseB = availableResponse(B, cache);
-      Map<Address, CacheStatusResponse> statusResponses = mapOf(A, responseA, B, responseB);
+   @AfterMethod(alwaysRun = true)
+   public void teardown() {
+      mockitoSession.finishMocking();
+   }
 
-      when(context.getExpectedMembers()).thenReturn(remainingMembers);
-      when(context.resolveConflictsOnMerge()).thenReturn(true);
+   public void testSinglePartitionOnlyJoiners() {
+      // There's no cache topology, so the first cache topology is created with the joiners
+      List<Address> joiners = asList(A, B);
+      CacheStatusResponse response = new CacheStatusResponse(JOIN_INFO, null, null, AVAILABLE);
+      Map<Address, CacheStatusResponse> statusResponses = mapOf(A, response, B, response);
+
+      when(context.getCacheName()).thenReturn(CACHE_NAME);
+      when(context.getExpectedMembers()).thenReturn(joiners);
 
       strategy.onPartitionMerge(context, statusResponses);
 
-      // FIXME Either the stable topology id should also be incremented, or even better the current topology id
-      // shouldn't change if all members report the same topology
-      cache.incrementIds(1, 1);
-      verify(context).getExpectedMembers();
-      verify(context).resolveConflictsOnMerge();
-      verify(context).updateTopologiesAfterMerge(cache.topology(), cache.stableTopology(), null, false);
+      verify(context).updateCurrentTopology(joiners);
+      verify(context).queueRebalance(joiners);
+      verifyNoMoreInteractions(context);
+   }
+
+   public void testSinglePartitionJoinersAndMissingNode() {
+      // B and C both tried to join, but only B got a response from the old coordinator
+      List<Address> mergeMembers = asList(B, C);
+      TestClusterCacheStatus cacheA = start(JOIN_INFO, A);
+      CacheStatusResponse responseB = availableResponse(B, cacheA);
+      CacheStatusResponse responseC = new CacheStatusResponse(JOIN_INFO, null, null, AVAILABLE);
+      Map<Address, CacheStatusResponse> statusResponses = mapOf(B, responseB, C, responseC);
+
+      when(context.getCacheName()).thenReturn(CACHE_NAME);
+      when(context.getExpectedMembers()).thenReturn(mergeMembers);
+
+      strategy.onPartitionMerge(context, statusResponses);
+
+      TestClusterCacheStatus expectedCache = cacheA.copy();
+      expectedCache.incrementIds();
+      verify(context).updateCurrentTopology(mergeMembers);
+      verify(context).queueRebalance(mergeMembers);
+      verifyNoMoreInteractions(context);
+   }
+
+   public void testSinglePartitionTopologyNotUpdatedAfterLeave() {
+      // A crashed and it's the next coordinator's job to remove it from the cache topology
+      List<Address> remainingMembers = asList(B, C);
+      TestClusterCacheStatus cacheABC = start(JOIN_INFO, A, B, C);
+      CacheStatusResponse responseB = availableResponse(B, cacheABC);
+      CacheStatusResponse responseC = availableResponse(C, cacheABC);
+      Map<Address, CacheStatusResponse> statusResponses = mapOf(B, responseB, C, responseC);
+
+      when(context.getExpectedMembers()).thenReturn(remainingMembers);
+      when(context.getCacheName()).thenReturn(CACHE_NAME);
+
+      strategy.onPartitionMerge(context, statusResponses);
+
+      TestClusterCacheStatus expectedCache = cacheABC.copy();
+      expectedCache.updateActualMembers(B, C);
+      verify(context).updateTopologiesAfterMerge(expectedCache.topology(), expectedCache.stableTopology(), null, false);
       verify(context).updateCurrentTopology(remainingMembers);
       verify(context).queueRebalance(remainingMembers);
       verifyNoMoreInteractions(context);
    }
 
-   @Test(dataProvider = "dp")
-   public void testCoordinatorChangeTopologyPartiallyUpdatedAfterLeave(boolean resolveConflicts) {
-      TestClusterCacheStatus cacheA = TestClusterCacheStatus.start(JOIN_INFO, A, B, C);
-      List<Address> remainingMembers = asList(A, B);
-      TestClusterCacheStatus cacheStatusB = cacheA.copy();
-      cacheStatusB.removeMember(C);
-      CacheStatusResponse responseA = availableResponse(A, cacheA);
-      CacheStatusResponse responseB = availableResponse(B, cacheStatusB);
-      Map<Address, CacheStatusResponse> statusResponses = mapOf(A, responseA, B, responseB);
-
-      when(context.getExpectedMembers()).thenReturn(remainingMembers);
-      when(context.resolveConflictsOnMerge()).thenReturn(resolveConflicts);
-
-      strategy.onPartitionMerge(context, statusResponses);
-
-      verify(context).getExpectedMembers();
-      verify(context).resolveConflictsOnMerge();
-      if (resolveConflicts) {
-         cacheA.incrementIds(1, 0);
-         cacheA.startConflictResolution(A, B);
-         verify(context).calculateConflictHash(distinctHashes(statusResponses));
-      } else {
-         cacheA.incrementIds(2, 1);
-      }
-      // FIXME Node B's topology is more recent, so it should be used instead
-      verify(context).updateTopologiesAfterMerge(cacheA.topology(), cacheA.stableTopology(), null, resolveConflicts);
-      if (!resolveConflicts) verify(context).updateCurrentTopology(remainingMembers);
-      verify(context).queueRebalance(remainingMembers);
-      verifyNoMoreInteractions(context);
-   }
-
-   @Test(dataProvider = "dp")
-   public void testCoordinatorChangeLeaveDuringRebalanceReadOld(boolean resolveConflicts) {
-      TestClusterCacheStatus cacheA = TestClusterCacheStatus.start(JOIN_INFO, A, B);
-      List<Address> remainingMembers = asList(A, C);
-      TestClusterCacheStatus cacheC = cacheA.copy();
-      cacheC.startRebalance(CacheTopology.Phase.READ_OLD_WRITE_ALL, A, B, C);
-      cacheC.removeMember(B);
-      CacheStatusResponse responseA = availableResponse(A, cacheA);
+   public void testSinglePartitionTopologyPartiallyUpdatedAfterLeave() {
+      // A crashed, but only C has the updated cache topology
+      List<Address> remainingMembers = asList(B, C);
+      TestClusterCacheStatus cacheAB = start(JOIN_INFO, A, B, C);
+      TestClusterCacheStatus cacheC = cacheAB.copy();
+      cacheC.removeMembers(A);
+      CacheStatusResponse responseB = availableResponse(B, cacheAB);
       CacheStatusResponse responseC = availableResponse(C, cacheC);
-      Map<Address, CacheStatusResponse> statusResponses = mapOf(A, responseA, C, responseC);
+      Map<Address, CacheStatusResponse> statusResponses = mapOf(B, responseB, C, responseC);
 
       when(context.getExpectedMembers()).thenReturn(remainingMembers);
-      when(context.resolveConflictsOnMerge()).thenReturn(resolveConflicts);
-      when(context.getStableTopology()).thenReturn(cacheA.stableTopology());
       when(context.getCacheName()).thenReturn(CACHE_NAME);
 
       strategy.onPartitionMerge(context, statusResponses);
 
-      verify(context).getExpectedMembers();
-      verify(context).resolveConflictsOnMerge();
-      if (resolveConflicts) {
-         cacheA.incrementIds(2, 1);
-         cacheA.startConflictResolution(A,C);
-         verify(context).calculateConflictHash(distinctHashes(statusResponses));
-      } else {
-         cacheA.incrementIds(3, 2);
-      }
-      // FIXME Node C's topology is more recent, so it should be used instead
-      verify(context).updateTopologiesAfterMerge(cacheA.topology(), cacheA.stableTopology(), null, resolveConflicts);
-      // FIXME Shouldn't be used at all during merge
-      verify(context).getStableTopology();
-      verify(context).getCacheName();
-      if (!resolveConflicts)  verify(context).updateCurrentTopology(singletonList(A));
+      TestClusterCacheStatus expectedCache = cacheC.copy();
+      expectedCache.incrementIds();
+      verify(context).updateTopologiesAfterMerge(expectedCache.topology(), expectedCache.stableTopology(), null, false);
       verify(context).queueRebalance(remainingMembers);
       verifyNoMoreInteractions(context);
    }
 
-   @Test(dataProvider = "dp")
-   public void testCoordinatorChangeLeaveDuringRebalanceReadNew(boolean resolveConflicts) {
-      TestClusterCacheStatus cacheA = TestClusterCacheStatus.start(JOIN_INFO, A, B);
+   public void testSinglePartitionLeaveDuringRebalancePhaseReadOld() {
+      // C joins and rebalance starts, but A crashes and B doesn't receive either rebalance start or leave topology
+      // Leave topology updates are fire-and-forget, so it's possible for A to miss both the leave topology
+      // and the phase change and still have a single partition
+      // However, PreferAvailabilityStrategy will not recognize it as a single partition
+      List<Address> remainingMembers = asList(B, C);
+      TestClusterCacheStatus cacheAB = start(JOIN_INFO, A, B);
+      TestClusterCacheStatus cacheC = cacheAB.copy();
+      cacheC.startRebalance(CacheTopology.Phase.READ_OLD_WRITE_ALL, A, B, C);
+      cacheC.removeMembers(A);
+      CacheStatusResponse responseB = availableResponse(B, cacheAB);
+      CacheStatusResponse responseC = availableResponse(C, cacheC);
+      Map<Address, CacheStatusResponse> statusResponses = mapOf(B, responseB, C, responseC);
+
+      when(context.getExpectedMembers()).thenReturn(remainingMembers);
+      when(context.getCacheName()).thenReturn(CACHE_NAME);
+
+      strategy.onPartitionMerge(context, statusResponses);
+
+      TestClusterCacheStatus expectedCache = cacheC.copy();
+      expectedCache.cancelRebalance();
+      verify(context).updateTopologiesAfterMerge(expectedCache.topology(), expectedCache.stableTopology(), null, false);
+      verify(context).queueRebalance(remainingMembers);
+      verifyNoMoreInteractions(context);
+   }
+
+   public void testSinglePartitionLeaveDuringRebalancePhaseReadNew() {
+      // C joins and rebalance starts, but A crashes and B doesn't receive 2 topology updates (rebalance phase + leave)
+      // Leave topology updates are fire-and-forget, so it's possible for B to miss both the leave topology
+      // and the phase change and still have a single partition
+      List<Address> mergeMembers = asList(B, C);
+      TestClusterCacheStatus cacheA = start(JOIN_INFO, A, B);
       cacheA.startRebalance(CacheTopology.Phase.READ_OLD_WRITE_ALL, A, B, C);
       cacheA.advanceRebalance(CacheTopology.Phase.READ_ALL_WRITE_ALL);
-      List<Address> remainingMembers = asList(A, C);
       TestClusterCacheStatus cacheC = cacheA.copy();
-      cacheC.removeMember(B);
+      cacheC.removeMembers(A);
       cacheC.advanceRebalance(CacheTopology.Phase.READ_NEW_WRITE_ALL);
-      CacheStatusResponse responseA = availableResponse(A, cacheA);
+      CacheStatusResponse responseB = availableResponse(B, cacheA);
       CacheStatusResponse responseC = availableResponse(C, cacheC);
-      Map<Address, CacheStatusResponse> statusResponses = mapOf(A, responseA, C, responseC);
+      Map<Address, CacheStatusResponse> statusResponses = mapOf(B, responseB, C, responseC);
 
-      when(context.getExpectedMembers()).thenReturn(remainingMembers);
-      when(context.resolveConflictsOnMerge()).thenReturn(resolveConflicts);
-      when(context.getStableTopology()).thenReturn(cacheA.stableTopology());
+      when(context.getExpectedMembers()).thenReturn(mergeMembers);
       when(context.getCacheName()).thenReturn(CACHE_NAME);
 
       strategy.onPartitionMerge(context, statusResponses);
 
-      cacheA.cancelRebalance();
-      verify(context).getExpectedMembers();
-      verify(context).resolveConflictsOnMerge();
-      if (resolveConflicts) {
-         cacheA.incrementIds(1, 0);
-         cacheA.startConflictResolution(A, C);
-         verify(context).calculateConflictHash(distinctHashes(statusResponses));
-      } else {
-         cacheA.incrementIds(2, 1);
-      }
-      verify(context).updateTopologiesAfterMerge(cacheA.topology(), cacheA.stableTopology(), null, resolveConflicts);
-      // FIXME Shouldn't be used here
-      verify(context).getStableTopology();
-      verify(context).getCacheName();
-      if (!resolveConflicts) verify(context).updateCurrentTopology(singletonList(A));
+      TestClusterCacheStatus expectedCache = cacheC.copy();
+      expectedCache.cancelRebalance();
+      verify(context).updateTopologiesAfterMerge(expectedCache.topology(), expectedCache.stableTopology(), null, false);
+      verify(context).queueRebalance(mergeMembers);
+      verifyNoMoreInteractions(context);
+   }
+
+   public void testSinglePartitionOneNodeSplits() {
+      // C starts a partition by itself
+      TestClusterCacheStatus cacheABC = start(JOIN_INFO, A, B, C);
+      List<Address> remainingMembers = singletonList(C);
+      CacheStatusResponse responseC = availableResponse(C, cacheABC);
+      Map<Address, CacheStatusResponse> statusResponses = mapOf(C, responseC);
+
+      when(context.getExpectedMembers()).thenReturn(remainingMembers);
+      when(context.getCacheName()).thenReturn(CACHE_NAME);
+
+      strategy.onPartitionMerge(context, statusResponses);
+
+      TestClusterCacheStatus expectedCache = cacheABC.copy();
+      expectedCache.updateActualMembers(C);
+      verify(context).updateTopologiesAfterMerge(expectedCache.topology(), expectedCache.stableTopology(), null, false);
+      verify(context).updateCurrentTopology(remainingMembers);
       verify(context).queueRebalance(remainingMembers);
       verifyNoMoreInteractions(context);
    }
 
-   @Test(dataProvider = "dp")
-   public void testMergeWithPausedNodeDuringRebalance(boolean resolveConflicts) {
+   public void testMerge1Paused2Rebalancing() {
+      // A was paused and keeps the stable topology, B and C are rebalancing
       List<Address> mergeMembers = asList(A, B, C);
-      TestClusterCacheStatus cacheA = TestClusterCacheStatus.start(JOIN_INFO, A, B, C);
+      TestClusterCacheStatus cacheA = start(JOIN_INFO, A, B, C);
       TestClusterCacheStatus cacheB = cacheA.copy();
-      cacheB.startRebalance(CacheTopology.Phase.READ_OLD_WRITE_ALL, A, B, C);
+      cacheB.removeMembers(A);
+      cacheB.startRebalance(CacheTopology.Phase.READ_OLD_WRITE_ALL, B, C);
       TestClusterCacheStatus cacheC = cacheB.copy();
       cacheC.advanceRebalance(CacheTopology.Phase.READ_ALL_WRITE_ALL);
       CacheStatusResponse responseA = availableResponse(A, cacheA);
@@ -217,89 +274,144 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
       Map<Address, CacheStatusResponse> statusResponses = mapOf(A, responseA, B, responseB, C, responseC);
 
       when(context.getExpectedMembers()).thenReturn(mergeMembers);
-      when(context.resolveConflictsOnMerge()).thenReturn(resolveConflicts);
+      when(context.getCacheName()).thenReturn(CACHE_NAME);
 
       strategy.onPartitionMerge(context, statusResponses);
 
-      cacheA.cancelRebalance();
-      verify(context).getExpectedMembers();
-      verify(context).resolveConflictsOnMerge();
-      if (resolveConflicts) {
-         verify(context).calculateConflictHash(distinctHashes(statusResponses));
-         cacheA.incrementIds(1, 1);
-         cacheA.startConflictResolution(A, B, C);
-      } else {
-         cacheA.incrementIds(2, 2);
-      }
-
-      verify(context).updateTopologiesAfterMerge(cacheA.topology(), cacheA.stableTopology(), null, resolveConflicts);
-      if (!resolveConflicts) verify(context).updateCurrentTopology(asList(A, B, C));
+      TestClusterCacheStatus expectedCache = cacheC.copy();
+      expectedCache.cancelRebalance();
+      verify(context).updateTopologiesAfterMerge(expectedCache.topology(), expectedCache.stableTopology(), null, false);
       verify(context).queueRebalance(mergeMembers);
       verifyNoMoreInteractions(context);
    }
 
-   @Test(dataProvider = "dp")
-   public void testMergeWithPausedNodeAfterRebalance(boolean resolveConflicts) {
+   public void testMerge1Paused2StableAfterRebalance() {
+      // A was paused and keeps the stable topology, B and C finished rebalancing and have a new stable topology
       List<Address> mergeMembers = asList(A, B, C);
-      TestClusterCacheStatus cacheA = TestClusterCacheStatus.start(JOIN_INFO, A, B, C);
-      TestClusterCacheStatus cacheB = cacheA.copy();
-      cacheB.startRebalance(CacheTopology.Phase.READ_OLD_WRITE_ALL, A, B, C);
-      cacheB.advanceRebalance(CacheTopology.Phase.READ_ALL_WRITE_ALL);
-      cacheB.finishRebalance();
-      cacheB.updateStableTopology();
+      TestClusterCacheStatus cacheA = start(JOIN_INFO, A, B, C);
+      TestClusterCacheStatus cacheBC = cacheA.copy();
+      cacheBC.removeMembers(A);
+      cacheBC.startRebalance(CacheTopology.Phase.READ_OLD_WRITE_ALL, B, C);
+      cacheBC.advanceRebalance(CacheTopology.Phase.READ_ALL_WRITE_ALL);
+      cacheBC.finishRebalance();
+      cacheBC.updateStableTopology();
       CacheStatusResponse responseA = availableResponse(A, cacheA);
-      CacheStatusResponse responseB = availableResponse(B, cacheB);
-      CacheStatusResponse responseC = availableResponse(C, cacheB);
+      CacheStatusResponse responseB = availableResponse(B, cacheBC);
+      CacheStatusResponse responseC = availableResponse(C, cacheBC);
       Map<Address, CacheStatusResponse> statusResponses = mapOf(A, responseA, B, responseB, C, responseC);
 
       when(context.getExpectedMembers()).thenReturn(mergeMembers);
-      when(context.resolveConflictsOnMerge()).thenReturn(resolveConflicts);
+      when(context.getCacheName()).thenReturn(CACHE_NAME);
 
       strategy.onPartitionMerge(context, statusResponses);
 
-      cacheA.cancelRebalance();
-      verify(context).getExpectedMembers();
-      verify(context).resolveConflictsOnMerge();
-      if (resolveConflicts) {
-         verify(context).calculateConflictHash(distinctHashes(statusResponses));
-         cacheA.incrementIds(2, 1);
-         cacheA.startConflictResolution(A, B, C);
-      } else {
-         cacheA.incrementIds(3, 2);
-      }
-      verify(context).updateTopologiesAfterMerge(cacheA.topology(), cacheA.stableTopology(), null, resolveConflicts);
-      if (!resolveConflicts) verify(context).updateCurrentTopology(asList(A, B, C));
+      TestClusterCacheStatus expectedCache = cacheBC.copy();
+      expectedCache.incrementIds();
+      expectedCache.incrementIdsIfNeeded(cacheA);
+      verify(context).updateTopologiesAfterMerge(expectedCache.topology(), expectedCache.stableTopology(), null, false);
       verify(context).queueRebalance(mergeMembers);
       verifyNoMoreInteractions(context);
    }
 
-   @Test(dataProvider = "dp", description = "ISPN-8903")
-   public void testMergeWithPausedNodeTriggersCR(boolean resolveConflicts) {
+   public void testMerge1Paused2StableNoRebalance() {
+      // A was paused and keeps the stable topology, B has a new stable topology (no rebalance needed)
+      // No conflict resolution needed, because B has all the data
       List<Address> mergeMembers = asList(A, B);
       TestClusterCacheStatus cacheA = TestClusterCacheStatus.start(JOIN_INFO, A, B);
       TestClusterCacheStatus cacheB = cacheA.copy();
-      cacheB.removeMember(A);
+      cacheB.removeMembers(A);
+      cacheB.updateStableTopology();
       CacheStatusResponse responseA = availableResponse(A, cacheA);
       CacheStatusResponse responseB = availableResponse(B, cacheB);
       Map<Address, CacheStatusResponse> statusResponses = mapOf(A, responseA, B, responseB);
 
       when(context.getExpectedMembers()).thenReturn(mergeMembers);
-      when(context.resolveConflictsOnMerge()).thenReturn(resolveConflicts);
+      when(context.getCacheName()).thenReturn(CACHE_NAME);
 
       strategy.onPartitionMerge(context, statusResponses);
 
-      verify(context).getExpectedMembers();
-      verify(context).resolveConflictsOnMerge();
-      if (resolveConflicts) {
-         verify(context).calculateConflictHash(distinctHashes(statusResponses));
-         cacheA.incrementIds(1, 0);
-         cacheA.startConflictResolution(A, B);
-      } else {
-         cacheA.incrementIds(2, 1);
+      TestClusterCacheStatus expectedCache = cacheB.copy();
+      expectedCache.incrementIds();
+      verify(context).updateTopologiesAfterMerge(expectedCache.topology(), expectedCache.stableTopology(), null, false);
+      verify(context).queueRebalance(mergeMembers);
+      verifyNoMoreInteractions(context);
+   }
+
+   public void testMerge1HigherTopologyId2MoreNodesSameStableTopology() {
+      // Partition A has a higher topology id, but BCD should win because it is larger
+      List<Address> mergeMembers = asList(A, B, C);
+      TestClusterCacheStatus cacheA = start(JOIN_INFO, A, B, C);
+      TestClusterCacheStatus cacheBC = cacheA.copy();
+      cacheA.removeMembers(B);
+      cacheA.removeMembers(C);
+      cacheBC.removeMembers(A);
+      CacheStatusResponse responseA = availableResponse(A, cacheA);
+      CacheStatusResponse responseB = availableResponse(B, cacheBC);
+      CacheStatusResponse responseC = availableResponse(C, cacheBC);
+      Map<Address, CacheStatusResponse> statusResponses = mapOf(A, responseA, B, responseB, C, responseC);
+      assertTrue(cacheA.topology().getTopologyId() > cacheBC.topology().getTopologyId());
+      assertSame(cacheA.stableTopology(), cacheBC.stableTopology());
+
+      when(context.getExpectedMembers()).thenReturn(mergeMembers);
+      when(context.resolveConflictsOnMerge()).thenReturn(conflicts.resolve());
+      when(context.getCacheName()).thenReturn(CACHE_NAME);
+      if (conflicts.resolve()) {
+         when(context.calculateConflictHash(setOf(cacheA.readConsistentHash(), cacheBC.readConsistentHash())))
+            .thenReturn(conflictResolutionConsistentHash(cacheA, cacheBC));
       }
-      // FIXME This is wrong, should use the topologies of B and C
-      verify(context).updateTopologiesAfterMerge(cacheA.topology(), cacheA.stableTopology(), null, resolveConflicts);
-      if (!resolveConflicts) verify(context).updateCurrentTopology(asList(A, B));
+
+      strategy.onPartitionMerge(context, statusResponses);
+
+      TestClusterCacheStatus expectedCache = cacheBC.copy();
+      if (conflicts.resolve()) {
+         expectedCache.startConflictResolution(conflictResolutionConsistentHash(cacheA, cacheBC), A, B, C);
+      } else {
+         expectedCache.incrementIds();
+      }
+      expectedCache.incrementIdsIfNeeded(cacheA);
+      verify(context).updateTopologiesAfterMerge(expectedCache.topology(), expectedCache.stableTopology(), null,
+                                                 conflicts.resolve());
+      if (!conflicts.resolve()) {
+         verify(context).updateCurrentTopology(expectedCache.topology().getMembers());
+      }
+      verify(context).queueRebalance(mergeMembers);
+      verifyNoMoreInteractions(context);
+   }
+
+   public void testMerge1HigherTopologyId2MoreNodesIndependentStableTopology() {
+      // Partition A has a higher topology id, but BC should win because it is larger
+      List<Address> mergeMembers = asList(A, B, C);
+      TestClusterCacheStatus cacheA = start(JOIN_INFO, A);
+      cacheA.incrementIds();
+      TestClusterCacheStatus cacheBC = start(JOIN_INFO, B, C);
+      CacheStatusResponse responseA = availableResponse(A, cacheA);
+      CacheStatusResponse responseB = availableResponse(B, cacheBC);
+      CacheStatusResponse responseC = availableResponse(C, cacheBC);
+      Map<Address, CacheStatusResponse> statusResponses = mapOf(A, responseA, B, responseB, C, responseC);
+      assertTrue(cacheA.topology().getTopologyId() > cacheBC.topology().getTopologyId());
+
+      when(context.getExpectedMembers()).thenReturn(mergeMembers);
+      when(context.resolveConflictsOnMerge()).thenReturn(conflicts.resolve());
+      when(context.getCacheName()).thenReturn(CACHE_NAME, CACHE_NAME);
+      if (conflicts.resolve()) {
+         when(context.calculateConflictHash(setOf(cacheA.readConsistentHash(), cacheBC.readConsistentHash())))
+            .thenReturn(conflictResolutionConsistentHash(cacheA, cacheBC));
+      }
+
+      strategy.onPartitionMerge(context, statusResponses);
+
+      TestClusterCacheStatus expectedCache = cacheBC.copy();
+      if (conflicts.resolve()) {
+         expectedCache.startConflictResolution(conflictResolutionConsistentHash(cacheA, cacheBC), A, B, C);
+      } else {
+         expectedCache.incrementIds();
+      }
+      expectedCache.incrementIdsIfNeeded(cacheA);
+      verify(context).updateTopologiesAfterMerge(expectedCache.topology(), expectedCache.stableTopology(), null,
+                                                 conflicts.resolve());
+      if (!conflicts.resolve()) {
+         verify(context).updateCurrentTopology(expectedCache.topology().getMembers());
+      }
       verify(context).queueRebalance(mergeMembers);
       verifyNoMoreInteractions(context);
    }
@@ -309,12 +421,8 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
                                      AVAILABLE);
    }
 
-   private Set<ConsistentHash> distinctHashes(Map<Address, CacheStatusResponse> statusResponses) {
-      return statusResponses.values().stream()
-            .map(CacheStatusResponse::getCacheTopology)
-            .filter(Objects::nonNull)
-            .map(CacheTopology::getCurrentCH)
-            .filter(h -> h != null && !h.getMembers().isEmpty())
-            .collect(Collectors.toSet());
+   @Override
+   protected String parameters() {
+      return "[" + conflicts + "]";
    }
 }
