@@ -23,11 +23,13 @@ import static org.infinispan.server.endpoint.subsystem.SniResource.SNI_ATTRIBUTE
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
 import org.jboss.as.controller.AttributeDefinition;
+import org.jboss.as.controller.ListAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleListAttributeDefinition;
 import org.jboss.as.controller.StringListAttributeDefinition;
@@ -117,6 +119,7 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
       }
       writeRestAuthentication(writer, connector);
       writeEncryption(writer, connector);
+      writeCorsRules(writer, connector);
       writer.writeEndElement();
    }
 
@@ -298,6 +301,42 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
             attribute.marshallAsAttribute(encryption, true, writer);
          }
          writeSni(writer, encryption);
+         writer.writeEndElement();
+      }
+   }
+
+   private void writeCorsRules(final XMLExtendedStreamWriter writer, final ModelNode connector)
+         throws XMLStreamException {
+      if (connector.hasDefined(ModelKeys.CORS_RULE)) {
+         writer.writeStartElement(Element.CORS_RULES.getLocalName());
+         for (ModelNode modelRule : connector.get(ModelKeys.CORS_RULE).asList()) {
+            String ruleName = modelRule.keys().iterator().next();
+            ModelNode rule = modelRule.get(ruleName);
+            writer.writeStartElement(Element.CORS_RULE.getLocalName());
+            for (AttributeDefinition attributeDefinition : CorsRuleResource.CORS_RULE_ATTRIBUTES) {
+               if (attributeDefinition instanceof SimpleAttributeDefinition) {
+                  SimpleAttributeDefinition.class.cast(attributeDefinition).marshallAsAttribute(rule, true, writer);
+               }
+            }
+            for (AttributeDefinition attributeDefinition : CorsRuleResource.CORS_RULE_ATTRIBUTES) {
+               if (attributeDefinition instanceof ListAttributeDefinition) {
+                  ListAttributeDefinition listAttribute = ListAttributeDefinition.class.cast(attributeDefinition);
+                  writeListAsElement(writer, rule, listAttribute.getName());
+               }
+            }
+            writer.writeEndElement();
+         }
+         writer.writeEndElement();
+      }
+   }
+
+   private void writeListAsElement(XMLExtendedStreamWriter writer, ModelNode node, String key) throws XMLStreamException {
+      if (node.hasDefined(key)) {
+         ModelNode list = node.get(key);
+         List<ModelNode> modelNodes = list.asList();
+         writer.writeStartElement(key);
+         String text = modelNodes.stream().map(ModelNode::asString).collect(Collectors.joining(","));
+         writer.writeCharacters(text);
          writer.writeEndElement();
       }
    }

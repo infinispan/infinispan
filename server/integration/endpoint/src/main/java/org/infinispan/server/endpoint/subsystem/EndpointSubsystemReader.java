@@ -364,6 +364,10 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
                parseEncryption(reader, connector, operations);
                break;
             }
+            case CORS_RULES: {
+               parseCorsRules(reader, connector, operations);
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedElement(reader);
             }
@@ -726,6 +730,86 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
 
       operations.add(property);
   }
+
+   private void parseCorsRules(XMLExtendedStreamReader reader, ModelNode connector, List<ModelNode> operations)
+         throws XMLStreamException {
+      ParseUtils.requireNoAttributes(reader);
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         final Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case CORS_RULE: {
+               if (namespace.since(Namespace.INFINISPAN_ENDPOINT_9_2)) {
+                  parseCorsRule(reader, connector, operations);
+                  break;
+               }
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+   }
+
+   private String parseCorsRuleAttributes(XMLExtendedStreamReader reader, ModelNode corsRule) throws XMLStreamException {
+      String name = null;
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case ALLOW_CREDENTIALS: {
+               CorsRuleResource.ALLOW_CREDENTIALS.parseAndSetParameter(value, corsRule, reader);
+               break;
+            }
+            case MAX_AGE_SECONDS: {
+               CorsRuleResource.MAX_AGE_SECONDS.parseAndSetParameter(value, corsRule, reader);
+               break;
+            }
+            case NAME: {
+               CorsRuleResource.NAME.parseAndSetParameter(value, corsRule, reader);
+               name = value;
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      return name;
+   }
+
+   private void parseCorsRule(XMLExtendedStreamReader reader, ModelNode connector, List<ModelNode> operations)
+         throws XMLStreamException {
+      ModelNode corsRule = Util.getEmptyOperation(ADD, null);
+      String name = parseCorsRuleAttributes(reader, corsRule);
+      PathAddress address = PathAddress.pathAddress(connector.get(OP_ADDR)).append(PathElement.pathElement(ModelKeys.CORS_RULE, name));
+      corsRule.get(OP_ADDR).set(address.toModelNode());
+      operations.add(corsRule);
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         final Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case ALLOWED_HEADERS: {
+               CorsRuleResource.ALLOWED_HEADERS.parseAndSetParameter(reader.getElementText(), corsRule, reader);
+               break;
+            }
+            case ALLOWED_ORIGINS: {
+               CorsRuleResource.ALLOWED_ORIGINS.parseAndSetParameter(reader.getElementText(), corsRule, reader);
+               break;
+            }
+            case ALLOWED_METHODS: {
+               CorsRuleResource.ALLOWED_METHODS.parseAndSetParameter(reader.getElementText(), corsRule, reader);
+               break;
+            }
+            case EXPOSE_HEADERS: {
+               CorsRuleResource.EXPOSE_HEADERS.parseAndSetParameter(reader.getElementText(), corsRule, reader);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+   }
 
    private void parseEncryption(XMLExtendedStreamReader reader, ModelNode connector, List<ModelNode> operations)
          throws XMLStreamException {

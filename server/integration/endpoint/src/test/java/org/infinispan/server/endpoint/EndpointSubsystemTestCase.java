@@ -45,9 +45,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-
-
-
 /**
  *
  * @author <a href="kabir.khan@jboss.com">Kabir Khan</a>
@@ -72,7 +69,7 @@ public class EndpointSubsystemTestCase extends ClusteringSubsystemTest {
             { "endpoint-7.2.xml", 15, "schema/jboss-infinispan-endpoint_7_2.xsd", null },
             { "endpoint-8.0.xml", 15, "schema/jboss-infinispan-endpoint_8_0.xsd", null },
             { "endpoint-9.0.xml", 37, "schema/jboss-infinispan-endpoint_9_0.xsd", null },
-            { "endpoint-9.2.xml", 37, "schema/jboss-infinispan-endpoint_9_2.xsd", new String[] { "/subsystem-templates/infinispan-endpoint.xml"} },
+            { "endpoint-9.2.xml", 40, "schema/jboss-infinispan-endpoint_9_2.xsd", new String[] { "/subsystem-templates/infinispan-endpoint.xml"} },
       };
       return Arrays.asList(data);
    }

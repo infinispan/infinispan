@@ -32,6 +32,22 @@
             <sni host-name="sni2" security-realm="other2" />
             <sni host-name="sni3" />
         </encryption>
+        <cors-rules>
+            <cors-rule name="restrict host1" allow-credentials="false">
+                <allowed-methods>GET</allowed-methods>
+                <allowed-origins>http://host1</allowed-origins>
+            </cors-rule>
+            <cors-rule name="allow host2" allow-credentials="true" max-age-seconds="2000">
+                <allowed-headers>Key-Content-Type</allowed-headers>
+                <allowed-methods>GET,OPTIONS,POST,PUT,DELETE</allowed-methods>
+                <allowed-origins>http://host2:8080</allowed-origins>
+                <expose-headers>X-Custom-Header</expose-headers>
+            </cors-rule>
+            <cors-rule max-age-seconds="2000" name="allow from all">
+                <allowed-methods>GET,OPTIONS,POST,PUT,DELETE</allowed-methods>
+                <allowed-origins>*</allowed-origins>
+            </cors-rule>
+        </cors-rules>
     </rest-connector>
     <websocket-connector socket-binding="websocket" cache-container="default" idle-timeout="100" tcp-nodelay="true" worker-threads="5" receive-buffer-size="10000" send-buffer-size="10000" />
     <router-connector name="router" hotrod-socket-binding="router-hotrood" rest-socket-binding="router-restStatsChannelHandler" tcp-nodelay="true" keep-alive="true" receive-buffer-size="10000" send-buffer-size="10000">
