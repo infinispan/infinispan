@@ -23,6 +23,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jcache.embedded.JCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -69,7 +70,13 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
 
       try {
          // given - creating sample jar file
-         sampleJarWithResourceFile = new File("sampleJarWithResource.jar");
+         String tmpDir = TestingUtil.tmpDirectory(JCacheConfigurationTest.class);
+         File tmpDirFile = new File(tmpDir);
+         if (!tmpDirFile.exists()) {
+            tmpDirFile.mkdirs();
+         }
+         String sampleJarWithResourcePathString = tmpDir + File.separator + "sampleJarWithResource.jar";
+         sampleJarWithResourceFile = new File(sampleJarWithResourcePathString);
          String existingResourceToAddInJar = "infinispan_uri.xml";
          String targetPathInJar = "sample-dir-inside-jar/";
          createJar(sampleJarWithResourceFile, existingResourceToAddInJar, targetPathInJar);
