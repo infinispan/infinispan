@@ -264,7 +264,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
    }
 
    @Test
-   public void testCORSPrefligh() throws Exception {
+   public void testCORSPreflight() throws Exception {
       putValueInCache("default", "key", "value");
 
       ContentResponse preFlight = client

@@ -138,8 +138,9 @@
 
     <xs:complexType name="rest-connector">
         <xs:all>
-            <xs:element name="authentication" type="tns:rest-authentication" minOccurs="0" maxOccurs="1" />
-            <xs:element name="encryption" type="tns:encryption" minOccurs="0" maxOccurs="1" />
+            <xs:element name="authentication" type="tns:rest-authentication" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="cors-rules" type="tns:cors-rules" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="encryption" type="tns:encryption" minOccurs="0" maxOccurs="1"/>
         </xs:all>
         <xs:attribute name="name" type="xs:string" use="optional">
             <xs:annotation>
@@ -469,6 +470,21 @@
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
+    
+    <xs:complexType name="cors-rules">
+        <xs:annotation>
+            <xs:documentation>
+            <![CDATA[
+                Configures CORS (Cross Origin Resource Sharing) for the REST Server. 
+                
+                Contains one or more rules that specify the permissions for cross-domain requests based on the origin.
+            ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="cors-rule" type="tns:cors-rule" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
 
     <xs:complexType name="sni">
         <xs:annotation>
@@ -556,4 +572,47 @@
         </xs:annotation>
         <xs:list itemType="xs:string"/>
     </xs:simpleType>
+    
+    <xs:complexType name="cors-rule">
+        <xs:annotation>
+            <xs:documentation>A Cors rule for one or more origins</xs:documentation>
+        </xs:annotation>
+        <xs:all>
+            <xs:element name="allowed-origins" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>A comma separated list used to set the CORS 'Access-Control-Allow-Origin' to indicate the response can be shared with a certain origin</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="allowed-methods" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>A comma separated list used to set the CORS 'Access-Control-Allow-Methods' in the preflight response to specify the methods allowed for the configured origin(s)</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="allowed-headers" type="xs:string" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>A comma separated list used to set the CORS 'Access-Control-Allow-Headers' in the preflight response to specify which headers can be used by the configured origin(s)</xs:documentation>
+                </xs:annotation>
+            </xs:element>        
+            <xs:element name="expose-headers" type="xs:string" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>A comma separated list used to set the CORS 'Access-Control-Expose-Headers' in the preflight response to specify which headers can be exposed to the configured origin(s)</xs:documentation>
+                </xs:annotation>
+            </xs:element>        
+        </xs:all>  
+         <xs:attribute name="name" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>The rule name</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="allow-credentials" type="xs:boolean" default="false">
+            <xs:annotation>
+                <xs:documentation>Sets the CORS 'Access-Control-Allow-Credentials' response header to true. Enable CORS requests to use credentials</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="max-age-seconds" type="xs:int" default="0">
+            <xs:annotation>
+                <xs:documentation>Sets the CORS 'Access-Control-Max-Age' response header with the amount of time CORS preflight request headers can be cached</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
 </xs:schema>

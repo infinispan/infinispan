@@ -91,6 +91,7 @@ public class RestConnectorResource extends CommonConnectorResource {
    public void registerChildren(ManagementResourceRegistration resourceRegistration) {
       resourceRegistration.registerSubModel(new RestAuthenticationResource());
       resourceRegistration.registerSubModel(new EncryptionResource());
+      resourceRegistration.registerSubModel(new CorsRuleResource());
    }
 
    @Override

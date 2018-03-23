@@ -1,12 +1,5 @@
 package org.infinispan.rest;
 
-import static io.netty.handler.codec.http.HttpMethod.DELETE;
-import static io.netty.handler.codec.http.HttpMethod.GET;
-import static io.netty.handler.codec.http.HttpMethod.HEAD;
-import static io.netty.handler.codec.http.HttpMethod.OPTIONS;
-import static io.netty.handler.codec.http.HttpMethod.POST;
-import static io.netty.handler.codec.http.HttpMethod.PUT;
-
 import java.util.List;
 
 import org.infinispan.rest.configuration.RestServerConfiguration;
@@ -15,13 +8,10 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentCompressor;
-import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler;
 import io.netty.handler.codec.http.cors.CorsConfig;
-import io.netty.handler.codec.http.cors.CorsConfigBuilder;
-import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.codec.http2.DefaultHttp2Connection;
 import io.netty.handler.codec.http2.Http2CodecUtil;
 import io.netty.handler.codec.http2.Http2ServerUpgradeCodec;
@@ -44,17 +34,12 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
    private static final int MAX_HEADER_SIZE = 8192;
 
    private final RestServer restServer;
-   private final CorsConfig corsConfig;
+   private final List<CorsConfig> corsRules;
 
    Http11To2UpgradeHandler(RestServer restServer) {
       super(ApplicationProtocolNames.HTTP_1_1);
       this.restServer = restServer;
-      List<String> corsAllowOrigins = restServer.getConfiguration().getCorsAllowOrigins();
-      String[] corsOrigins = new String[corsAllowOrigins.size()];
-      this.corsConfig = CorsConfigBuilder.forOrigins(corsAllowOrigins.toArray(corsOrigins))
-            .allowedRequestMethods(GET, POST, PUT, DELETE, HEAD, OPTIONS)
-            .allowedRequestHeaders(HttpHeaderNames.CONTENT_TYPE)
-            .build();
+      this.corsRules = restServer.getConfiguration().getCorsRules();
    }
 
    @Override
@@ -85,7 +70,9 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
       RestServerConfiguration configuration = restServer.getConfiguration();
       final HttpServerCodec httpCodec = new HttpServerCodec(MAX_INITIAL_LINE_SIZE, MAX_HEADER_SIZE, configuration.maxContentLength());
       pipeline.addLast(httpCodec);
-      pipeline.addLast(new CorsHandler(corsConfig));
+      if(!corsRules.isEmpty()) {
+         pipeline.addLast(new org.infinispan.rest.cors.CorsHandler(corsRules, true));
+      }
       pipeline.addLast(new HttpContentCompressor(configuration.getCompressionLevel()));
       pipeline.addLast(new HttpServerUpgradeHandler(httpCodec, protocol -> {
          if (AsciiString.contentEquals(Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME, protocol)) {

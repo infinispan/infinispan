@@ -189,7 +189,7 @@
         <transform in="clustered.xml" out="testsuite/clustered-1.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-2.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-jmx.xml" modifyInfinispan="${infinispan.parts}/jmx.xml" infinispanServerEndpoint="${infinispan.parts}/all-endpoints-clustered.xml"/>
-        <transform in="standalone.xml" out="testsuite/standalone-default-local.xml" modifyInfinispan="${infinispan.parts}/default-local.xml"/>
+        <transform in="standalone.xml" out="testsuite/standalone-default-local.xml" modifyInfinispan="${infinispan.parts}/default-local.xml" infinispanServerEndpoint="${infinispan.parts}/local-endpoint-no-auth.xml" />
         <transform in="clustered.xml" out="testsuite/clustered-default-dist.xml" modifyInfinispan="${infinispan.parts}/default-dist.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-default-repl.xml" modifyInfinispan="${infinispan.parts}/default-repl.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-indexing.xml" modifyInfinispan="${infinispan.parts}/indexing.xml" filtering="true"/>

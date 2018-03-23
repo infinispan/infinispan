@@ -52,6 +52,7 @@ public class ModelKeys {
    public static final String SECURITY_MODE = "security-mode"; // string
    public static final String EXTENDED_HEADERS = "extended-headers"; //enum
    public static final String MAX_CONTENT_LENGTH = "max-content-length"; //int
+   public static final String MAX_AGE_SECONDS = "max-age-seconds"; //int
    public static final String COMPRESSION_LEVEL = "compression-level"; //int
 
    public static final String TOPOLOGY_STATE_TRANSFER_NAME = "TOPOLOGY_STATE_TRANSFER";
@@ -68,7 +69,14 @@ public class ModelKeys {
 
    public static final String AUTHENTICATION_NAME = "AUTHENTICATION";
    public static final String AUTHENTICATION = "authentication";
+   public static final String ALLOW_CREDENTIALS = "allow-credentials";
+   public static final String ALLOWED_ORIGINS = "allowed-origins";
+   public static final String ALLOWED_METHODS = "allowed-methods";
+   public static final String ALLOWED_HEADERS = "allowed-headers";
+   public static final String CORS_RULES = "cors-rules";
+   public static final String CORS_RULE = "cors-rule";
    public static final String ENCRYPTION_NAME = "ENCRYPTION";
+   public static final String EXPOSE_HEADERS = "expose-headers";
    public static final String ENCRYPTION = "encryption";
    public static final String SNI = "sni";
    public static final String PREFIX = "prefix";

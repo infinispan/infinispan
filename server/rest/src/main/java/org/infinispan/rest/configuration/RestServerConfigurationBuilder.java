@@ -1,5 +1,12 @@
 package org.infinispan.rest.configuration;
 
+import static io.netty.handler.codec.http.HttpMethod.DELETE;
+import static io.netty.handler.codec.http.HttpMethod.GET;
+import static io.netty.handler.codec.http.HttpMethod.HEAD;
+import static io.netty.handler.codec.http.HttpMethod.OPTIONS;
+import static io.netty.handler.codec.http.HttpMethod.POST;
+import static io.netty.handler.codec.http.HttpMethod.PUT;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,6 +14,10 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.util.logging.LogFactory;
+
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.cors.CorsConfig;
+import io.netty.handler.codec.http.cors.CorsConfigBuilder;
 
 /**
  * RestServerConfigurationBuilder.
@@ -26,7 +37,7 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
    public static final int DEFAULT_COMPRESS_LEVEL = 6;
 
    private ExtendedHeaders extendedHeaders = ExtendedHeaders.ON_DEMAND;
-   private List<String> corsAllowOrigins = new ArrayList<>(6);
+   private List<CorsConfig> corsRules = new ArrayList<>(3);
    private String contextPath = DEFAULT_CONTEXT_PATH;
    private int maxContentLength = DEFAULT_MAX_CONTENT_LENGTH;
    private int compressionLevel = DEFAULT_COMPRESS_LEVEL;
@@ -57,9 +68,20 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
    }
 
    public RestServerConfigurationBuilder corsAllowForLocalhost(String scheme, int port) {
-      this.corsAllowOrigins.add(scheme + "://" + "127.0.0.1" + ":" + port);
-      this.corsAllowOrigins.add(scheme + "://" + "localhost" + ":" + port);
-      this.corsAllowOrigins.add(scheme + "://" + "[::1]" + ":" + port);
+      String local1 = scheme + "://" + "127.0.0.1" + ":" + port;
+      String local2 = scheme + "://" + "localhost" + ":" + port;
+      String local3 = scheme + "://" + "[::1]" + ":" + port;
+      CorsConfig corsConfig = CorsConfigBuilder.forOrigins(local1, local2, local3)
+            .allowCredentials()
+            .allowedRequestMethods(GET, POST, PUT, DELETE, HEAD, OPTIONS)
+            .allowedRequestHeaders(HttpHeaderNames.CONTENT_TYPE)
+            .build();
+      corsRules.add(corsConfig);
+      return this;
+   }
+
+   public RestServerConfigurationBuilder addAll(List<CorsConfig> corsConfig) {
+      corsRules.addAll(corsConfig);
       return this;
    }
 
@@ -73,7 +95,7 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
    @Override
    public RestServerConfiguration create() {
       return new RestServerConfiguration(defaultCacheName, name, extendedHeaders, host, port, ignoredCaches, ssl.create(),
-            startTransport, contextPath, adminOperationsHandler, maxContentLength, corsAllowOrigins, compressionLevel);
+            startTransport, contextPath, adminOperationsHandler, maxContentLength, corsRules, compressionLevel);
    }
 
    @Override
@@ -82,7 +104,7 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       this.host = template.host();
       this.port = template.port();
       this.maxContentLength = template.maxContentLength();
-      this.corsAllowOrigins = template.getCorsAllowOrigins();
+      this.corsRules = template.getCorsRules();
       this.compressionLevel = template.getCompressionLevel();
       return this;
    }

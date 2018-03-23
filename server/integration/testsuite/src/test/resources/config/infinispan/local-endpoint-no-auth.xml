@@ -1,0 +1,23 @@
+        <subsystem xmlns="urn:infinispan:server:endpoint:9.2">
+            <hotrod-connector socket-binding="hotrod" cache-container="local">
+                <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000"/>
+            </hotrod-connector>
+            <rest-connector socket-binding="rest" cache-container="local">
+                <cors-rules>
+                    <cors-rule name="allow surveillance" allow-credentials="true">
+                        <allowed-origins>http://www.google.com,http://www.facebook.com</allowed-origins>
+                        <allowed-methods>POST,GET,OPTIONS</allowed-methods>
+                    </cors-rule>
+                    <cors-rule name="restrict host1">
+                        <allowed-origins>http://host1</allowed-origins>
+                        <allowed-methods>GET</allowed-methods>
+                    </cors-rule>
+                    <cors-rule name="full">
+                        <allowed-origins>*</allowed-origins>
+                        <allowed-methods>GET,POST,PUT</allowed-methods>
+                        <expose-headers>X-Header-1,X-Header-2</expose-headers>
+                        <allowed-headers>Key-Content-Type</allowed-headers>
+                    </cors-rule>
+                </cors-rules>
+            </rest-connector>
+        </subsystem>

@@ -18,7 +18,10 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -34,6 +37,10 @@ import org.jboss.as.controller.services.path.PathManagerService;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceController;
+
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.cors.CorsConfig;
+import io.netty.handler.codec.http.cors.CorsConfigBuilder;
 
 /**
  * RestSubsystemAdd.
@@ -66,8 +73,10 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
       }
       int maxContentLength = RestConnectorResource.MAX_CONTENT_LENGTH.resolveModelAttribute(context, config).asInt();
       int compressLevel = RestConnectorResource.COMPRESSION_LEVEL.resolveModelAttribute(context, config).asInt();
+      List<CorsConfig> corsConfig = getCorsConfig(config);
+
       // Create the service
-      final RestService service = new RestService(getServiceName(config), restAuthMethod, cleanContextPath(contextPath), extendedHeaders, ignoredCaches, maxContentLength, compressLevel);
+      final RestService service = new RestService(getServiceName(config), restAuthMethod, cleanContextPath(contextPath), extendedHeaders, ignoredCaches, maxContentLength, compressLevel, corsConfig);
 
       // Setup the various dependencies with injectors and install the service
       ServiceBuilder<?> builder = context.getServiceTarget().addService(EndpointUtils.getServiceName(operation, "rest"), service);
@@ -122,6 +131,57 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
       for(AttributeDefinition attr : RestConnectorResource.REST_ATTRIBUTES) {
          attr.validateAndSet(source, target);
       }
+   }
+
+   private List<CorsConfig> getCorsConfig(ModelNode modelNode) {
+      List<CorsConfig> corsConfigList = new ArrayList<>();
+      if (modelNode.hasDefined(ModelKeys.CORS_RULE)) {
+         List<ModelNode> rules = modelNode.get(ModelKeys.CORS_RULE).asList();
+         for(ModelNode rule: rules) {
+            ModelNode ruleDefinition = rule.get(rule.keys().iterator().next());
+            Integer maxAgeSeconds = extractInt(ruleDefinition, ModelKeys.MAX_AGE_SECONDS);
+            Boolean allowCredentials = extractBool(ruleDefinition, ModelKeys.ALLOW_CREDENTIALS);
+            String[] origins = asArray(ruleDefinition, ModelKeys.ALLOWED_ORIGINS);
+            String[] methods = asArray(ruleDefinition, ModelKeys.ALLOWED_METHODS);
+            String[] headers = asArray(ruleDefinition, ModelKeys.ALLOWED_HEADERS);
+            String[] exposes = asArray(ruleDefinition, ModelKeys.EXPOSE_HEADERS);
+
+            HttpMethod[] httpMethods = Arrays.stream(methods).map(HttpMethod::valueOf).toArray(HttpMethod[]::new);
+
+            CorsConfigBuilder builder;
+            if (Arrays.stream(origins).anyMatch(s -> s.equals("*"))) {
+               builder = CorsConfigBuilder.forAnyOrigin();
+            } else {
+               builder = CorsConfigBuilder.forOrigins(origins);
+            }
+            builder.allowedRequestMethods(httpMethods);
+            if (headers.length > 0) builder.allowedRequestHeaders(headers);
+            if (exposes.length > 0) builder.exposeHeaders(exposes);
+            if (maxAgeSeconds != null) builder.maxAge(maxAgeSeconds);
+            if (allowCredentials) builder.allowCredentials();
+            corsConfigList.add(builder.build());
+         }
+      }
+      return corsConfigList;
+   }
+
+   private String[] asArray(ModelNode node, String listProperty) {
+      if (node != null && node.isDefined() && node.hasDefined(listProperty)) {
+         return node.get(listProperty).asList().stream()
+               .map(ModelNode::asString).toArray(String[]::new);
+      }
+      return new String[0];
+   }
+
+   private Integer extractInt(ModelNode node, String property) {
+      if (node != null && node.isDefined() && node.hasDefined(property)) {
+         return node.get(property).asInt();
+      }
+      return null;
+   }
+
+   private Boolean extractBool(ModelNode node, String property) {
+      return node != null && node.isDefined() && node.hasDefined(property) && node.get(property).asBoolean();
    }
 
    @Override

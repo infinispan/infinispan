@@ -340,6 +340,48 @@ Example:
 }
 ----
 
+==== CORS
+
+The REST server supports https://en.wikipedia.org/wiki/Cross-origin_resource_sharing[CORS] including preflight and rules based on the request origin.
+
+Example:
+
+[source,xml]
+----
+<rest-connector name="rest1" socket-binding="rest" cache-container="default">
+   <cors-rules>
+      <cors-rule name="restrict host1" allow-credentials="false">
+         <allowed-origins>http://host1,https://host1</allowed-origins>
+         <allowed-methods>GET</allowed-methods>
+      </cors-rule>
+      <cors-rule name="allow ALL" allow-credentials="true" max-age-seconds="2000">
+         <allowed-origins>*</allowed-origins>
+         <allowed-methods>GET,OPTIONS,POST,PUT,DELETE</allowed-methods>
+         <allowed-headers>Key-Content-Type</allowed-headers>
+      </cors-rule>
+   </cors-rules>
+</rest-connector>
+----
+
+The rules are evaluated sequentially based on the "Origin" header set by the browser; in the example above if the origin is either "http://host1" or "https://host1" the rule "restrict host1" will apply,
+otherwise the next rule will be tested. Since the rule "allow ALL" permits all origins, any script coming from a different origin will be able to perform the methods specified and use the headers supplied.
+
+The <cors-rule> element can be configured as follows:
+
+
+
+|===
+| Config   | Description  | Mandatory 
+
+| name  | The name of the rule | yes 
+| allow-credentials | Enable CORS requests to use credentials | no   
+| allowed-origins | A comma separated list used to set the CORS 'Access-Control-Allow-Origin' header to indicate the response can be shared with the origins | yes 
+| allowed-methods | A comma separated list used to set the CORS 'Access-Control-Allow-Methods' header in the preflight response to specify the methods allowed for the configured origin(s) | yes 
+| max-age-seconds | The amount of time CORS preflight request headers can be cached | no 
+| expose-headers | A comma separated list used to set the CORS 'Access-Control-Expose-Headers' in the preflight response to specify which headers can be exposed to the configured origin(s) | no 
+|===
+
+
 ==== Client side code
 Part of the point of a RESTful service is that you don't need to have tightly coupled client libraries/bindings. All you need is a HTTP client library. For Java, Apache HTTP Commons Client works just fine (and is used in the integration tests), or you can use java.net API.
 

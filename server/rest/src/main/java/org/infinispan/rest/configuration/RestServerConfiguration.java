@@ -8,24 +8,26 @@ import org.infinispan.server.core.admin.AdminOperationsHandler;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
 
+import io.netty.handler.codec.http.cors.CorsConfig;
+
 @BuiltBy(RestServerConfigurationBuilder.class)
 public class RestServerConfiguration extends ProtocolServerConfiguration {
    private final ExtendedHeaders extendedHeaders;
    private final String contextPath;
    private final int maxContentLength;
-   private final List<String> corsAllowOrigins;
+   private final List<CorsConfig> corsRules;
    private final int compressionLevel;
 
    RestServerConfiguration(String defaultCacheName, String name, ExtendedHeaders extendedHeaders, String host, int port,
                            Set<String> ignoredCaches, SslConfiguration ssl, boolean startTransport, String contextPath,
                            AdminOperationsHandler adminOperationsHandler, int maxContentLength,
-                           List<String> corsAllowOrigins, int compressionLevel) {
+                           List<CorsConfig> corsRules, int compressionLevel) {
       super(defaultCacheName, name, host, port, -1, -1, -1, ssl, false,
             -1, ignoredCaches, startTransport, adminOperationsHandler);
       this.extendedHeaders = extendedHeaders;
       this.contextPath = contextPath;
       this.maxContentLength = maxContentLength;
-      this.corsAllowOrigins = corsAllowOrigins;
+      this.corsRules = corsRules;
       this.compressionLevel = compressionLevel;
    }
 
@@ -49,8 +51,8 @@ public class RestServerConfiguration extends ProtocolServerConfiguration {
       return maxContentLength;
    }
 
-   public List<String> getCorsAllowOrigins() {
-      return corsAllowOrigins;
+   public List<CorsConfig> getCorsRules() {
+      return corsRules;
    }
 
    public int getCompressionLevel() {

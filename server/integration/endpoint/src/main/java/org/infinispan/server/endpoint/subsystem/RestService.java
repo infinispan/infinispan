@@ -22,6 +22,7 @@ import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 
 import java.net.InetSocketAddress;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,6 +44,8 @@ import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
+
+import io.netty.handler.codec.http.cors.CorsConfig;
 
 
 /**
@@ -73,9 +76,10 @@ public class RestService implements Service<RestServer>, EncryptableService {
    private boolean clientAuth;
    private final int maxContentLength;
    private int compressionLevel;
+   private List<CorsConfig> corsConfigList;
 
    public RestService(String serverName, RestAuthMethod authMethod, String contextPath, ExtendedHeaders extendedHeaders, Set<String> ignoredCaches,
-                      int maxContentLength, int compressionLevel) {
+                      int maxContentLength, int compressionLevel, List<CorsConfig> corsConfigList) {
       this.serverName = serverName;
       this.authMethod = authMethod;
       this.contextPath = contextPath;
@@ -83,6 +87,7 @@ public class RestService implements Service<RestServer>, EncryptableService {
       this.ignoredCaches = ignoredCaches;
       this.maxContentLength = maxContentLength;
       this.compressionLevel = compressionLevel;
+      this.corsConfigList = corsConfigList;
    }
 
    /** {@inheritDoc} */
@@ -115,6 +120,7 @@ public class RestService implements Service<RestServer>, EncryptableService {
          builder.corsAllowForLocalhost("https", mgmtHttpsPort);
          builder.corsAllowForLocalhost("http", CROSS_ORIGIN_CONSOLE_PORT);
          builder.corsAllowForLocalhost("https", CROSS_ORIGIN_CONSOLE_PORT);
+         builder.addAll(corsConfigList);
 
          Authenticator authenticator;
          switch (authMethod) {
