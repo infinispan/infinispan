@@ -8,7 +8,6 @@ import javax.transaction.Transaction;
 
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
@@ -65,7 +64,7 @@ public interface PersistenceManager extends Lifecycle {
 
    void processOnAllStores(Executor executor, KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata, AccessMode mode);
 
-   MarshalledEntry loadFromAllStores(Object key, InvocationContext context);
+   MarshalledEntry loadFromAllStores(Object key, boolean localInvocation);
 
    /**
     * Returns the store one configured with fetch persistent state, or null if none exist.

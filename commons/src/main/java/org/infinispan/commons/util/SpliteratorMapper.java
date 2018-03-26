@@ -15,8 +15,8 @@ import java.util.function.Function;
  * @since 9.0
  */
 public class SpliteratorMapper<E, S> implements Spliterator<S> {
-   private final Spliterator<E> spliterator;
-   private final Function<? super E, ? extends S> mapper;
+   protected final Spliterator<E> spliterator;
+   protected final Function<? super E, ? extends S> mapper;
 
    public SpliteratorMapper(Spliterator<E> spliterator, Function<? super E, ? extends S> mapper) {
       this.spliterator = Objects.requireNonNull(spliterator);

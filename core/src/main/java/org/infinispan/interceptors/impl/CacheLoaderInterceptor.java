@@ -3,9 +3,11 @@ package org.infinispan.interceptors.impl;
 import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 import static org.infinispan.persistence.PersistenceUtil.convert;
 
+import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.ExecutorService;
@@ -13,9 +15,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.ToIntFunction;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
+import org.infinispan.CacheStream;
 import org.infinispan.cache.impl.Caches;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -40,8 +46,9 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.InternalEntryFactory;
@@ -50,6 +57,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupFilter;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.factories.annotations.ComponentName;
@@ -70,11 +78,14 @@ import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.util.PersistenceManagerCloseableSupplier;
-import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
-import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
+import org.infinispan.stream.impl.local.AbstractLocalCacheStream;
+import org.infinispan.stream.impl.local.EntryStreamSupplier;
+import org.infinispan.stream.impl.local.KeyStreamSupplier;
+import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
 import org.infinispan.util.CloseableSuppliedIterator;
 import org.infinispan.util.DistinctKeyDoubleEntryCloseableIterator;
+import org.infinispan.util.EntryWrapper;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.function.CloseableSupplier;
 import org.infinispan.util.logging.Log;
@@ -101,6 +112,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    @Inject @ComponentName(PERSISTENCE_EXECUTOR)
    private ExecutorService executorService;
    @Inject private Cache<K, V> cache;
+   @Inject private KeyPartitioner partitioner;
 
    private boolean activation;
 
@@ -212,13 +224,16 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command)
          throws Throwable {
+      // Acquire the remote iteration flag and set it for all below - so they won't wrap unnecessarily
+      boolean isRemoteIteration = command.hasAnyFlag(FlagBitSets.REMOTE_ITERATION);
+      command.addFlags(FlagBitSets.REMOTE_ITERATION);
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if (hasSkipLoadFlag(command)) {
             // Continue with the existing throwable/return value
             return rv;
          }
          CacheSet<CacheEntry<K, V>> entrySet = (CacheSet<CacheEntry<K, V>>) rv;
-         return new WrappedEntrySet(command, entrySet);
+         return new WrappedEntrySet(command, isRemoteIteration, entrySet);
       });
    }
 
@@ -247,6 +262,9 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    @Override
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command)
          throws Throwable {
+      // Acquire the remote iteration flag and set it for all below - so they won't wrap unnecessarily
+      boolean isRemoteIteration = command.hasAnyFlag(FlagBitSets.REMOTE_ITERATION);
+      command.addFlags(FlagBitSets.REMOTE_ITERATION);
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if (hasSkipLoadFlag(command)) {
             // Continue with the existing throwable/return value
@@ -254,7 +272,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          }
 
          CacheSet<K> keySet = (CacheSet<K>) rv;
-         return new WrappedKeySet(command, keySet);
+         return new WrappedKeySet(command, isRemoteIteration, keySet);
       });
    }
 
@@ -483,12 +501,79 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       persistenceManager.disableStore(storeType);
    }
 
-   private class WrappedEntrySet extends AbstractDelegatingEntryCacheSet<K, V> {
-      private final CacheSet<CacheEntry<K, V>> entrySet;
+   private ToIntFunction<Object> getSegmentMapper(Cache<?, ?> cache) {
+      return partitioner::getSegment;
+   }
 
-      public WrappedEntrySet(EntrySetCommand command, CacheSet<CacheEntry<K, V>> entrySet) {
-         super(Caches.getCacheWithFlags(CacheLoaderInterceptor.this.cache, command), entrySet);
-         this.entrySet = entrySet;
+   private abstract class AbstractLoaderSet<R> extends AbstractSet<R> implements CacheSet<R> {
+      protected final CacheSet<R> cacheSet;
+
+      AbstractLoaderSet(CacheSet<R> cacheSet) {
+         this.cacheSet = cacheSet;
+      }
+
+      protected abstract CloseableIterator<R> innerIterator();
+
+      @Override
+      public CloseableSpliterator<R> spliterator() {
+         return new IteratorAsSpliterator.Builder<>(innerIterator())
+               .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL).get();
+      }
+
+      @Override
+      public void clear() {
+         cache.clear();
+      }
+
+      @Override
+      public int size() {
+         long size = stream().count();
+         if (size > Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
+         }
+         return (int) size;
+      }
+
+      @Override
+      public boolean isEmpty() {
+         boolean empty = cacheSet.isEmpty();
+         // Check the store if the data container was empty
+         if (empty) {
+            empty = persistenceManager.size() == 0;
+         }
+         return empty;
+      }
+
+      @Override
+      public CacheStream<R> stream() {
+         return getStream(false);
+      }
+
+      @Override
+      public CacheStream<R> parallelStream() {
+         return getStream(true);
+      }
+
+      protected CacheStream<R> getStream(boolean parallel) {
+         CloseableSpliterator<R> closeableSpliterator = spliterator();
+         CacheStream<R> stream = new LocalCacheStream<>(supplier(), parallel,
+               cache.getAdvancedCache().getComponentRegistry());
+         // We rely on the fact that on close returns the same instance
+         stream.onClose(closeableSpliterator::close);
+         return stream;
+      }
+
+      protected abstract AbstractLocalCacheStream.StreamSupplier<R, Stream<R>> supplier();
+   }
+
+   private class WrappedEntrySet extends AbstractLoaderSet<CacheEntry<K, V>> {
+      private final Cache<K, V> cache;
+      private final boolean isRemoteIteration;
+
+      public WrappedEntrySet(EntrySetCommand command, boolean isRemoteIteration, CacheSet<CacheEntry<K, V>> entrySet) {
+         super(entrySet);
+         this.cache = Caches.getCacheWithFlags(CacheLoaderInterceptor.this.cache, command);
+         this.isRemoteIteration = isRemoteIteration;
       }
 
       long calculateTimeoutSeconds() {
@@ -498,76 +583,120 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          return Math.round(Math.log1p(size) * 10);
       }
 
+      private Map.Entry<K, V> toEntry(Object obj) {
+         if (obj instanceof Map.Entry) {
+            return (Map.Entry) obj;
+         } else {
+            return null;
+         }
+      }
+
+      @Override
+      public boolean remove(Object o) {
+         Map.Entry entry = toEntry(o);
+         // Remove must be done by the cache
+         return entry != null && cache.remove(entry.getKey(), entry.getValue());
+      }
+
       @Override
       public CloseableIterator<CacheEntry<K, V>> iterator() {
-         CloseableIterator<CacheEntry<K, V>> iterator = Closeables.iterator(entrySet.stream());
+         if (isRemoteIteration) {
+            return innerIterator();
+         }
+         return new CloseableIteratorMapper<>(new RemovableCloseableIterator<>(innerIterator(),
+               e -> cache.remove(e.getKey(), e.getValue())), e -> new EntryWrapper<>(cache, e));
+      }
+
+      protected CloseableIterator<CacheEntry<K, V>> innerIterator() {
+         CloseableIterator<CacheEntry<K, V>> iterator = cacheSet.iterator();
          Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
          // TODO: how to handle concurrent activation....
          return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
                // TODO: how to pass in key filter...
                new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager, iceFactory,
                      new CollectionKeyFilter<>(seenKeys), calculateTimeoutSeconds(), TimeUnit.SECONDS, 2048, true)),
-                     CacheEntry::getKey, seenKeys);
+               CacheEntry::getKey, seenKeys);
       }
 
       @Override
-      public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
-         return spliteratorFromIterator(iterator());
-      }
-
-      private <E> CloseableSpliterator<E> spliteratorFromIterator(CloseableIterator<E> iterator) {
-         return new IteratorAsSpliterator.Builder<>(iterator)
-               .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL).get();
+      protected AbstractLocalCacheStream.StreamSupplier<CacheEntry<K, V>, Stream<CacheEntry<K, V>>> supplier() {
+         return new EntryStreamSupplier<>(cache, getSegmentMapper(cache), () -> StreamSupport.stream(spliterator(),
+               false));
       }
 
       @Override
-      public int size() {
-         long size = stream().count();
-         if (size > Integer.MAX_VALUE) {
-            return Integer.MAX_VALUE;
+      public boolean contains(Object o) {
+         boolean contains = false;
+         if (o != null) {
+            contains = super.contains(o);
+            if (!contains) {
+               Map.Entry<K, V> entry = toEntry(o);
+               if (entry != null) {
+                  MarshalledEntry<K, V> me = persistenceManager.loadFromAllStores(entry.getKey(), true);
+                  if (me != null) {
+                     contains = entry.getValue().equals(me.getValue());
+                  }
+               }
+            }
          }
-         return (int) size;
+         return contains;
       }
    }
 
-   private class WrappedKeySet extends AbstractDelegatingKeyCacheSet<K, V> {
+   private class WrappedKeySet extends AbstractLoaderSet<K> implements CacheSet<K> {
 
-      private final CacheSet<K> keySet;
+      private final Cache<K, ?> cache;
+      private final boolean isRemoteIteration;
 
-      public WrappedKeySet(KeySetCommand command, CacheSet<K> keySet) {
-         super(Caches.getCacheWithFlags(CacheLoaderInterceptor.this.cache, command), keySet);
-         this.keySet = keySet;
+      public WrappedKeySet(KeySetCommand command, boolean isRemoteIteration, CacheSet<K> keySet) {
+         super(keySet);
+         this.cache = Caches.getCacheWithFlags(CacheLoaderInterceptor.this.cache, command);
+         this.isRemoteIteration = isRemoteIteration;
+      }
+
+      @Override
+      public boolean remove(Object o) {
+         // Remove must be done by the cache
+         return o != null && cache.remove(o) != null;
       }
 
       @Override
       public CloseableIterator<K> iterator() {
-         CloseableIterator<K> iterator = Closeables.iterator(keySet.stream());
+         if (isRemoteIteration) {
+            return innerIterator();
+         }
+         // Need to support remove of iterator
+         return new RemovableCloseableIterator<>(innerIterator(), cache::remove);
+      }
+
+      @Override
+      protected CloseableIterator<K> innerIterator() {
+         CloseableIterator<K> iterator = cacheSet.iterator();
          Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
          // TODO: how to handle concurrent activation....
-         return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(new SupplierFunction<>(
-               new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager,
-                     // TODO: how to pass in key filter...
-                     iceFactory, new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048, false))),
+         return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
+               new SupplierFunction<>(// TODO: how to pass in key filter...
+                     new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager, iceFactory,
+                           new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048, false))),
                Function.identity(), seenKeys);
       }
 
       @Override
-      public CloseableSpliterator<K> spliterator() {
-         return spliteratorFromIterator(iterator());
-      }
-
-      private <E> CloseableSpliterator<E> spliteratorFromIterator(CloseableIterator<E> iterator) {
-         return new IteratorAsSpliterator.Builder<>(iterator).setCharacteristics(
-               Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL).get();
+      protected AbstractLocalCacheStream.StreamSupplier<K, Stream<K>> supplier() {
+         return new KeyStreamSupplier<>(cache, getSegmentMapper(cache), () -> StreamSupport.stream(spliterator(), false));
       }
 
       @Override
-      public int size() {
-         long size = stream().count();
-         if (size > Integer.MAX_VALUE) {
-            return Integer.MAX_VALUE;
+      public boolean contains(Object o) {
+         boolean contains = false;
+         if (o != null) {
+            contains = super.contains(o);
+            if (!contains) {
+               MarshalledEntry<K, V> me = persistenceManager.loadFromAllStores(o, true);
+               contains = me != null;
+            }
          }
-         return (int) size;
+         return contains;
       }
    }
 }

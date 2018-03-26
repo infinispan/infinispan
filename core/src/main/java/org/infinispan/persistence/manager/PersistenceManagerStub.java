@@ -7,7 +7,6 @@ import java.util.concurrent.Executor;
 
 import javax.transaction.Transaction;
 
-import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -86,7 +85,7 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public MarshalledEntry loadFromAllStores(Object key, InvocationContext context) {
+   public MarshalledEntry loadFromAllStores(Object key, boolean localContext) {
       return null;
    }
 

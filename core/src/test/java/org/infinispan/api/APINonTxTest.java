@@ -173,7 +173,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       //noinspection unchecked
       Collection<Object>[] collections = new Collection[]{keys, values};
 
-      Object newObj = new Object();
+      String newObj = "4";
       List<Object> newObjCol = new ArrayList<>();
       newObjCol.add(newObj);
       for (Collection<Object> col : collections) {
@@ -377,6 +377,48 @@ public class APINonTxTest extends SingleCacheManagerTest {
       entries.retainAll(entryCollection);
 
       assertCacheSize(2);
+   }
+
+   public void testRemoveIfMethodOfKeyCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache.putAll(m);
+
+      Collection<Object> keys = cache.keySet();
+      keys.removeIf(k -> k.equals("2"));
+
+      assertCacheSize(2);
+   }
+
+   public void testRemoveIfMethodOfValuesCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache.putAll(m);
+
+      Collection<Object> values = cache.values();
+      values.removeIf(v -> ((String) v).startsWith("t"));
+
+      assertCacheSize(1);
+   }
+
+   public void testRemoveIfMethodOfEntryCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache.putAll(m);
+
+      Set<Map.Entry<Object, Object>> entries = cache.entrySet();
+      entries.removeIf(e -> ((String) e.getValue()).startsWith("t"));
+
+      assertCacheSize(1);
    }
 
    public void testEntrySetValueFromEntryCollections() {

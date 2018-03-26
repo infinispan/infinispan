@@ -11,6 +11,8 @@ import java.util.function.Function;
  * transferred.
  * @author wburns
  * @since 9.0
+ * @deprecated since 9.2.1 this interface is no longer supported as we don't support remove operation on iterators produced from a Stream
  */
+@Deprecated
 public interface RemovableFunction<T, R> extends Function<T, R> {
 }

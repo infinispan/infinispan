@@ -3,7 +3,6 @@ package org.infinispan.stream.impl.local;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Spliterator;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
@@ -14,7 +13,7 @@ import org.infinispan.commands.read.AbstractCloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.CloseableSpliteratorMapper;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.stream.StreamMarshalling;
 
@@ -40,8 +39,7 @@ public class ValueCacheCollection<K, V> extends AbstractCloseableIteratorCollect
 
    @Override
    public CloseableSpliterator<V> spliterator() {
-      return Closeables.spliterator(iterator(), cache.getAdvancedCache().getDataContainer().sizeIncludingExpired(),
-              Spliterator.CONCURRENT | Spliterator.NONNULL);
+      return new CloseableSpliteratorMapper<>(cacheSet.spliterator(), CacheEntry::getValue);
    }
 
    @Override

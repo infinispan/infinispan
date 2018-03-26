@@ -41,6 +41,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollectionAdapter;
 import org.infinispan.commons.util.CloseableIteratorSetAdapter;
 import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.CloseableSpliteratorMapper;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.IteratorMapper;
@@ -1621,8 +1622,8 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CloseableSpliterator<Entry<K, V>> spliterator() {
-         return Closeables.spliterator(iterator(), dataContainer.sizeIncludingExpired(),
-               Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
+         // Cast to raw since we need to convert from ICE to Entry
+         return Closeables.spliterator((Spliterator) dataContainer.spliterator());
       }
 
       @Override
@@ -1637,13 +1638,13 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CacheStream<Entry<K, V>> stream() {
-         return cacheStreamCast(new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, false, null,
+         return cacheStreamCast(new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, null,
                getStreamSupplier(false)), false, componentRegistry));
       }
 
       @Override
       public CacheStream<Entry<K, V>> parallelStream() {
-         return cacheStreamCast(new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, false, null,
+         return cacheStreamCast(new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, null,
                getStreamSupplier(false)), true, componentRegistry));
       }
    }
@@ -1661,8 +1662,8 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
-         return Closeables.spliterator(iterator(), dataContainer.sizeIncludingExpired(),
-               Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
+         // Cast to raw since we need to convert from ICE to CE
+         return Closeables.spliterator((Spliterator) dataContainer.spliterator());
       }
 
       @Override
@@ -1677,13 +1678,13 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CacheStream<CacheEntry<K, V>> stream() {
-         return new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, false, null, getStreamSupplier(false)),
+         return new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, null, getStreamSupplier(false)),
                false, componentRegistry);
       }
 
       @Override
       public CacheStream<CacheEntry<K, V>> parallelStream() {
-         return new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, false, null, getStreamSupplier(true)),
+         return new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, null, getStreamSupplier(true)),
                true, componentRegistry);
       }
    }
@@ -1744,7 +1745,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CloseableIterator<V> iterator() {
-         return Closeables.iterator(new IteratorMapper<>(dataContainer.iterator(), Map.Entry::getValue));
+         return Closeables.iterator(new IteratorMapper<>(new DataContainerRemoveIterator<>(SimpleCacheImpl.this), Map.Entry::getValue));
       }
 
       @Override
@@ -1760,16 +1761,22 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       @Override
       public CacheStream<V> stream() {
          LocalCacheStream<CacheEntry<K, V>> lcs = new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this,
-               false, null, getStreamSupplier(false)), false, componentRegistry);
+               null, getStreamSupplier(false)), false, componentRegistry);
          return lcs.map(CacheEntry::getValue);
       }
 
       @Override
       public CacheStream<V> parallelStream() {
          LocalCacheStream<CacheEntry<K, V>> lcs = new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this,
-               false, null, getStreamSupplier(false)), true, componentRegistry);
+               null, getStreamSupplier(false)), true, componentRegistry);
          return lcs.map(CacheEntry::getValue);
       }
+   }
+
+   protected Supplier<Stream<CacheEntry<K, V>>> getStreamSupplier(boolean parallel) {
+      // This is raw due to not being able to cast inner ICE to CE
+      Spliterator spliterator = dataContainer.spliterator();
+      return () -> StreamSupport.stream(spliterator, parallel);
    }
 
    protected class KeySet extends CloseableIteratorSetAdapter<K> implements CacheSet<K> {
@@ -1815,6 +1822,11 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       }
 
       @Override
+      public CloseableSpliterator<K> spliterator() {
+         return new CloseableSpliteratorMapper<>(dataContainer.spliterator(), Map.Entry::getKey);
+      }
+
+      @Override
       public int size() {
          return SimpleCacheImpl.this.size();
       }
@@ -1826,24 +1838,15 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CacheStream<K> stream() {
-         Supplier<Stream<CacheEntry<K, V>>> supplier = getStreamSupplier(false);
-         return new LocalCacheStream<>(new KeyStreamSupplier<>(SimpleCacheImpl.this, null,
-               () -> supplier.get().map(CacheEntry::getKey)), false, componentRegistry);
+         return new LocalCacheStream<>(new KeyStreamSupplier<>(SimpleCacheImpl.this, null, super::stream), false,
+               componentRegistry);
       }
 
       @Override
       public CacheStream<K> parallelStream() {
-         Supplier<Stream<CacheEntry<K, V>>> supplier = getStreamSupplier(true);
-         return new LocalCacheStream<>(new KeyStreamSupplier<>(SimpleCacheImpl.this, null,
-               () -> supplier.get().map(CacheEntry::getKey)), true, componentRegistry);
+         return new LocalCacheStream<>(new KeyStreamSupplier<>(SimpleCacheImpl.this, null, super::stream), true,
+               componentRegistry);
       }
-   }
-
-   protected Supplier<Stream<CacheEntry<K, V>>> getStreamSupplier(boolean parallel) {
-      CloseableSpliterator<CacheEntry<K, V>> spliterator =
-            Closeables.spliterator(Closeables.iterator(dataContainer.iterator()), dataContainer.sizeIncludingExpired(),
-                  Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
-      return () -> StreamSupport.stream(spliterator, parallel);
    }
 
    @Override

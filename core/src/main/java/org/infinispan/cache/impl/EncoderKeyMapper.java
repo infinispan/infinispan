@@ -8,10 +8,10 @@ import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.util.function.RemovableFunction;
 
 /**
  * {@link java.util.function.Function} that uses a keyEncoder to converter keys from the configured storage format to
@@ -19,7 +19,7 @@ import org.infinispan.util.function.RemovableFunction;
  *
  * @since 9.1
  */
-public class EncoderKeyMapper<K> implements RemovableFunction<K, K> {
+public class EncoderKeyMapper<K> implements InjectiveFunction<K, K> {
    private final DataConversion dataConversion;
 
    public EncoderKeyMapper(DataConversion dataConversion) {

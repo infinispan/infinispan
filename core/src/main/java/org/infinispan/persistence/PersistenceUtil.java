@@ -141,9 +141,9 @@ public class PersistenceUtil {
       }
    }
 
-   public static <K, V> MarshalledEntry<K, V> loadAndCheckExpiration(PersistenceManager persistenceManager, K key,
+   public static <K, V> MarshalledEntry<K, V> loadAndCheckExpiration(PersistenceManager persistenceManager, Object key,
                                                         InvocationContext context, TimeService timeService) {
-      final MarshalledEntry<K, V> loaded = persistenceManager.loadFromAllStores(key, context);
+      final MarshalledEntry<K, V> loaded = persistenceManager.loadFromAllStores(key, context.isOriginLocal());
       if (trace) {
          log.tracef("Loaded %s for key %s from persistence.", loaded, key);
       }

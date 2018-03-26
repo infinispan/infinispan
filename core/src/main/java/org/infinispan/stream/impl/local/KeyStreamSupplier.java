@@ -8,9 +8,7 @@ import java.util.stream.Stream;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
-import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.context.Flag;
 import org.infinispan.util.logging.Log;
@@ -61,10 +59,5 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
          stream = stream.filter(k -> intSet.contains(toIntFunction.applyAsInt(k)));
       }
       return stream;
-   }
-
-   @Override
-   public CloseableIterator<K> removableIterator(CloseableIterator<K> realIterator) {
-      return new RemovableCloseableIterator<>(realIterator, cache::remove);
    }
 }

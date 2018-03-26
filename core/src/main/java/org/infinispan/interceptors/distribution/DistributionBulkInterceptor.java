@@ -2,7 +2,6 @@ package org.infinispan.interceptors.distribution;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Spliterator;
 import java.util.concurrent.Executor;
@@ -23,7 +22,6 @@ import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.RemovableCloseableIterator;
-import org.infinispan.commons.util.RemovableIterator;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -36,12 +34,9 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.DistributedCacheStream;
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-import org.infinispan.stream.impl.intops.object.MapOperation;
 import org.infinispan.stream.impl.tx.TxClusterStreamManager;
 import org.infinispan.stream.impl.tx.TxDistributedCacheStream;
 import org.infinispan.util.EntryWrapper;
-import org.infinispan.util.function.RemovableFunction;
 
 /**
  * Interceptor that handles bulk entrySet and keySet commands when using in a distributed/replicated environment.
@@ -55,11 +50,14 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
 
    @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
+         return super.visitEntrySetCommand(ctx, command);
+      }
+      // We just set it, we always wrap our iterator and support removal
+      command.addFlags(FlagBitSets.REMOTE_ITERATION);
+
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          EntrySetCommand entrySetCommand = (EntrySetCommand) rCommand;
-         if (entrySetCommand.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL))
-            return rv;
-
          CacheSet<CacheEntry<K, V>> entrySet = (CacheSet<CacheEntry<K, V>>) rv;
          if (rCtx.isInTxScope()) {
             entrySet = new TxBackingEntrySet<>(Caches.getCacheWithFlags(cache, entrySetCommand), entrySet, entrySetCommand,
@@ -124,33 +122,13 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
       public CacheStream<CacheEntry<K, V>> stream() {
          AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
          ComponentRegistry registry = advancedCache.getComponentRegistry();
-         CacheStream<CacheEntry<K, V>> cacheStream = new DistributedCacheStream<CacheEntry<K, V>, CacheEntry<K, V>>(
+         CacheStream<CacheEntry<K, V>> cacheStream = new DistributedCacheStream<>(
                cache.getCacheManager().getAddress(), false, advancedCache.getDistributionManager(),
                entrySet::stream, registry.getComponent(ClusterStreamManager.class),
                !command.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD),
                cache.getCacheConfiguration().clustering().stateTransfer().chunkSize(),
                registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry,
-               StreamMarshalling.entryToKeyFunction()) {
-            @Override
-            public Iterator<CacheEntry<K, V>> iterator() {
-               int size = intermediateOperations.size();
-               if (size == 0) {
-                  // If no intermediate operations we can support remove
-                  return new RemovableIterator<>(super.iterator(), e -> cache.remove(e.getKey(), e.getValue()));
-               }
-               else if (size == 1) {
-                  IntermediateOperation intOp = intermediateOperations.peek();
-                  if (intOp instanceof MapOperation) {
-                     MapOperation map = (MapOperation) intOp;
-                     if (map.getFunction() instanceof RemovableFunction) {
-                        // If function was removable means we can just use remove as is
-                        return new RemovableIterator<>(super.iterator(), e -> cache.remove(e.getKey(), e.getValue()));
-                     }
-                  }
-               }
-               return super.iterator();
-            }
-         };
+               StreamMarshalling.entryToKeyFunction());
          return applyTimeOut(cacheStream, cache);
       }
 
@@ -222,11 +200,13 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
 
    @Override
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         KeySetCommand entrySetCommand = (KeySetCommand) rCommand;
-         if (entrySetCommand.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL))
-            return rv;
+      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
+         return super.visitKeySetCommand(ctx, command);
+      }
+      // We just set it, we always wrap our iterator and support removal
+      command.addFlags(FlagBitSets.REMOTE_ITERATION);
 
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          CacheSet<K> keySet = (CacheSet<K>) rv;
          if (ctx.isInTxScope()) {
             keySet = new TxBackingKeySet<>(Caches.getCacheWithFlags(cache, command), keySet, command,
@@ -274,32 +254,11 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
       public CacheStream<K> stream() {
          AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
          ComponentRegistry registry = advancedCache.getComponentRegistry();
-         return new DistributedCacheStream<K, K>(cache.getCacheManager().getAddress(), false,
+         return new DistributedCacheStream<>(cache.getCacheManager().getAddress(), false,
                  advancedCache.getDistributionManager(), keySet::stream,
                  registry.getComponent(ClusterStreamManager.class), !command.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD),
                  cache.getCacheConfiguration().clustering().stateTransfer().chunkSize(),
-                 registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry, null) {
-            @Override
-            public Iterator<K> iterator() {
-               int size = intermediateOperations.size();
-               // The act of mapping to key requires 1 intermediate operation
-               if (size == 1) {
-                  return new RemovableIterator<>(super.iterator(), cache::remove);
-               } else if (size == 2) {
-                  Iterator<IntermediateOperation> iter = intermediateOperations.iterator();
-                  iter.next();
-                  IntermediateOperation intOp = iter.next();
-                  if (intOp instanceof MapOperation) {
-                     MapOperation map = (MapOperation) intOp;
-                     if (map.getFunction() instanceof RemovableFunction) {
-                        // If function was removable means we can just use remove as is
-                        return new RemovableIterator<>(super.iterator(), cache::remove);
-                     }
-                  }
-               }
-               return super.iterator();
-            }
-         };
+                 registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry, null);
       }
 
       @Override
