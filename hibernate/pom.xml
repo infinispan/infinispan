@@ -13,9 +13,11 @@
    <name>Infinispan Hibernate Parent</name>
 
    <modules>
+      <module>cache-spi</module>
       <module>cache-commons</module>
       <module>cache-v51</module>
-      <module>cache</module>
+      <module>cache-v52</module>
+      <module>cache-v53</module>
    </modules>
 
    <dependencies>
@@ -100,30 +102,6 @@
                   <configLocation>checkstyle-hibernate-cache.xml</configLocation>
                </configuration>
             </plugin>
-            <!--<plugin>-->
-               <!--<groupId>org.apache.maven.plugins</groupId>-->
-               <!--<artifactId>maven-surefire-plugin</artifactId>-->
-               <!--<configuration combine.self="override">-->
-                  <!--<groups combine.self="override">${defaultJUnitGroups}</groups>-->
-                  <!--<excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>-->
-                  <!--<trimStackTrace>false</trimStackTrace>-->
-                  <!--<systemPropertyVariables>-->
-                     <!--<java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>-->
-                     <!--<jgroups.ping.timeout>500</jgroups.ping.timeout>-->
-                     <!--<jgroups.ping.num_initial_members>1</jgroups.ping.num_initial_members>-->
-                     <!--<jgroups.udp.enable_bundling>false</jgroups.udp.enable_bundling>-->
-                     <!--<jgroups.bind_addr>localhost</jgroups.bind_addr>-->
-                     <!--<hibernate.cache.infinispan.jgroups_cfg>2lc-test-tcp.xml</hibernate.cache.infinispan.jgroups_cfg>-->
-                  <!--</systemPropertyVariables>-->
-               <!--</configuration>-->
-               <!--<dependencies>-->
-                  <!--<dependency>-->
-                     <!--<groupId>org.apache.maven.surefire</groupId>-->
-                     <!--<artifactId>surefire-junit47</artifactId>-->
-                     <!--<version>${version.maven.surefire}</version>-->
-                  <!--</dependency>-->
-               <!--</dependencies>-->
-            <!--</plugin>-->
          </plugins>
       </pluginManagement>
    </build>

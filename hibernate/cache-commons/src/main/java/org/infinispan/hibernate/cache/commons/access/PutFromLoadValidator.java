@@ -17,7 +17,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.hibernate.engine.spi.SessionImplementor;
-import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
+import org.infinispan.hibernate.cache.spi.InfinispanProperties;
+import org.infinispan.hibernate.cache.commons.TimeSource;
 import org.infinispan.hibernate.cache.commons.util.CacheCommandInitializer;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.hibernate.cache.spi.RegionFactory;
@@ -103,7 +104,7 @@ public class PutFromLoadValidator {
 	 */
 	private final AdvancedCache cache;
 
-	private final InfinispanRegionFactory regionFactory;
+	private final TimeSource timeSource;
 
 	/**
 	 * The time of the last call to {@link #endInvalidatingRegion()}. Puts from transactions started after
@@ -119,22 +120,23 @@ public class PutFromLoadValidator {
 	/**
 	 * Creates a new put from load validator instance.
 	 *
+	 * @param pendingPutsConfiguration
 	 * @param cache Cache instance on which to store pending put information.
 	 */
-	public PutFromLoadValidator(AdvancedCache cache, InfinispanRegionFactory regionFactory) {
-		this(cache, regionFactory, cache.getCacheManager());
+	public PutFromLoadValidator(AdvancedCache cache, TimeSource timeSource, Configuration pendingPutsConfiguration) {
+		this(cache, timeSource, cache.getCacheManager(), pendingPutsConfiguration);
 	}
 
 	/**
 	 * Creates a new put from load validator instance.
 	 * @param cache Cache instance on which to store pending put information.
-	 * @param regionFactory
+	 * @param timeSource
 	 * @param cacheManager where to find a cache to store pending put information
+	 * @param pendingPutsConfiguration
 	 */
-	public PutFromLoadValidator(AdvancedCache cache, InfinispanRegionFactory regionFactory, EmbeddedCacheManager cacheManager) {
-		this.regionFactory = regionFactory;
+	public PutFromLoadValidator(AdvancedCache cache, TimeSource timeSource, EmbeddedCacheManager cacheManager, Configuration pendingPutsConfiguration) {
+		this.timeSource = timeSource;
 		Configuration cacheConfiguration = cache.getCacheConfiguration();
-		Configuration pendingPutsConfiguration = regionFactory.getPendingPutsCacheConfiguration();
 		ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
 		configurationBuilder.read(pendingPutsConfiguration);
 		configurationBuilder.dataContainer().keyEquivalence(cacheConfiguration.dataContainer().keyEquivalence());
@@ -166,7 +168,7 @@ public class PutFromLoadValidator {
 	}
 
 	private String getPendingPutsName(AdvancedCache cache) {
-      return cache.getName() + "-" + InfinispanRegionFactory.DEF_PENDING_PUTS_RESOURCE;
+      return cache.getName() + "-" + InfinispanProperties.DEF_PENDING_PUTS_RESOURCE;
    }
 
 	/**
@@ -412,7 +414,7 @@ public class PutFromLoadValidator {
 			log.trace("Started invalidating region " + cache.getName());
 		}
 		boolean ok = true;
-		long now = regionFactory.nextTimestamp();
+		long now = timeSource.nextTimestamp();
 		// deny all puts until endInvalidatingRegion is called; at that time the region should be already
 		// in INVALID state, therefore all new requests should be blocked and ongoing should fail by timestamp
 		synchronized (this) {
@@ -453,7 +455,7 @@ public class PutFromLoadValidator {
 	public void endInvalidatingRegion() {
 		synchronized (this) {
 			if (--regionInvalidations == 0) {
-				regionInvalidationTimestamp = regionFactory.nextTimestamp();
+				regionInvalidationTimestamp = timeSource.nextTimestamp();
 				if (trace) {
 					log.tracef("Finished invalidating region %s at %d", cache.getName(), regionInvalidationTimestamp);
 				}
@@ -561,7 +563,7 @@ public class PutFromLoadValidator {
 						}
 						continue;
 					}
-					long now = regionFactory.nextTimestamp();
+					long now = timeSource.nextTimestamp();
                if (trace) {
                   log.tracef("beginInvalidatingKey(%s#%s, %s) remove invalidator from %s", cache.getName(), key, lockOwnerToString(lockOwner), pending);
                }
@@ -605,7 +607,7 @@ public class PutFromLoadValidator {
 		}
 		if (pending.acquireLock(60, TimeUnit.SECONDS)) {
 			try {
-				long now = regionFactory.nextTimestamp();
+				long now = timeSource.nextTimestamp();
 				pending.removeInvalidator(lockOwner, key, now, doPFER);
 				// we can't remove the pending put yet because we wait for naked puts
 				// pendingPuts should be configured with maxIdle time so won't have memory leak
@@ -791,7 +793,7 @@ public class PutFromLoadValidator {
 		 */
 		private void gc() {
 			assert fullMap != null;
-			long now = regionFactory.nextTimestamp();
+			long now = timeSource.nextTimestamp();
 			log.tracef("Contains %d, doing GC at %d, expiration %d", size(), now, expirationPeriod);
 			for ( Iterator<PendingPut> it = fullMap.values().iterator(); it.hasNext(); ) {
 				PendingPut pp = it.next();

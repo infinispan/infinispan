@@ -7,7 +7,6 @@ import java.util.Properties;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.cache.spi.TimestampsRegion;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.criterion.Restrictions;
@@ -18,10 +17,11 @@ import org.hibernate.testing.BeforeClassOnce;
 import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.junit4.CustomRunner;
 import org.infinispan.distribution.DistributionInfo;
-import org.infinispan.hibernate.cache.commons.timestamp.ClusteredTimestampsRegionImpl;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Person;
-import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
 import org.infinispan.util.ControlledTimeService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,13 +49,13 @@ public class QueryStalenessTest {
       Configuration configuration = new Configuration()
             .setProperty(Environment.USE_SECOND_LEVEL_CACHE, "true")
             .setProperty(Environment.USE_QUERY_CACHE, "true")
-            .setProperty(Environment.CACHE_REGION_FACTORY, TestInfinispanRegionFactory.class.getName())
+            .setProperty(Environment.CACHE_REGION_FACTORY, TestRegionFactoryProvider.load().getRegionFactoryClass().getName())
             .setProperty(Environment.DEFAULT_CACHE_CONCURRENCY_STRATEGY, "transactional")
             .setProperty("hibernate.allow_update_outside_transaction", "true") // only applies in 5.2
             .setProperty(AvailableSettings.SHARED_CACHE_MODE, "ALL")
             .setProperty(Environment.HBM2DDL_AUTO, "create-drop");
       Properties testProperties = new Properties();
-      testProperties.put(TestInfinispanRegionFactory.TIME_SERVICE, timeService);
+      testProperties.put(TestRegionFactory.TIME_SERVICE, timeService);
       configuration.addProperties(testProperties);
       configuration.addAnnotatedClass(Person.class);
       return configuration.buildSessionFactory();
@@ -70,12 +70,12 @@ public class QueryStalenessTest {
       s1.flush();
       s1.close();
 
-      TimestampsRegion timestampsRegion = ((CacheImplementor) sf1.getCache()).getUpdateTimestampsCache().getRegion();
-      DistributionInfo distribution = ((ClusteredTimestampsRegionImpl) timestampsRegion).getCache().getDistributionManager().getCacheTopology().getDistribution(Person.class.getSimpleName());
+      InfinispanBaseRegion timestampsRegion = TestRegionFactoryProvider.load().findTimestampsRegion((CacheImplementor) sf1.getCache());
+      DistributionInfo distribution = timestampsRegion.getCache().getDistributionManager().getCacheTopology().getDistribution(Person.class.getSimpleName());
       SessionFactory qsf = distribution.isPrimary() ? sf2 : sf1;
 
       // The initial insert invalidates the queries for 60s to the future
-      timeService.advance(timestampsRegion.getTimeout() + 1);
+      timeService.advance(60001);
 
       Session s2 = qsf.openSession();
       List<Person> list1 = s2.createCriteria(Person.class).setCacheable(true).add(Restrictions.le("age", 29)).list();

@@ -9,11 +9,11 @@ package org.infinispan.test.hibernate.cache.commons.functional;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
-import org.hibernate.stat.SecondLevelCacheStatistics;
 import org.hibernate.stat.Statistics;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
-import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.util.ControlledTimeService;
 import org.junit.Test;
 
@@ -36,13 +36,12 @@ public class ReadOnlyTest extends SingleNodeTest {
 	}
 
 	@Test
-	public void testEmptySecondLevelCacheEntry() throws Exception {
+	public void testEmptySecondLevelCacheEntry() {
 		sessionFactory().getCache().evictCollectionRegion( Item.class.getName() + ".items" );
 		Statistics stats = sessionFactory().getStatistics();
 		stats.clear();
-		SecondLevelCacheStatistics statistics = stats.getSecondLevelCacheStatistics( Item.class.getName() + ".items" );
-		Map cacheEntries = statistics.getEntries();
-		assertEquals( 0, cacheEntries.size() );
+		InfinispanBaseRegion region = TEST_SESSION_ACCESS.getRegion(sessionFactory(), Item.class.getName() + ".items");
+		assertEquals( 0, region.getCache().size() );
 	}
 
 	@Test
@@ -95,6 +94,6 @@ public class ReadOnlyTest extends SingleNodeTest {
 	@Override
 	protected void addSettings(Map settings) {
 		super.addSettings(settings);
-		settings.put(TestInfinispanRegionFactory.TIME_SERVICE, TIME_SERVICE);
+		settings.put(TestRegionFactory.TIME_SERVICE, TIME_SERVICE);
 	}
 }

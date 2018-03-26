@@ -8,14 +8,11 @@ package org.infinispan.test.hibernate.cache.commons.entity;
 
 import java.util.Properties;
 
-import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
-import org.hibernate.cache.spi.CacheDataDescription;
-import org.hibernate.cache.spi.EntityRegion;
-import org.hibernate.cache.spi.Region;
-import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.test.hibernate.cache.commons.AbstractEntityCollectionRegionTest;
-import org.infinispan.AdvancedCache;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -29,31 +26,20 @@ public class EntityRegionImplTest extends AbstractEntityCollectionRegionTest {
 	protected static final String CACHE_NAME = "test";
 
 	@Override
-	protected void supportedAccessTypeTest(RegionFactory regionFactory, Properties properties) {
-		EntityRegion region = regionFactory.buildEntityRegion("test", properties, MUTABLE_NON_VERSIONED);
-		assertNotNull(region.buildAccessStrategy(accessType));
-		((InfinispanRegionFactory) regionFactory).getCacheManager().administration().removeCache(CACHE_NAME);
+	protected void supportedAccessTypeTest(TestRegionFactory regionFactory, Properties properties) {
+		InfinispanBaseRegion region = regionFactory.buildEntityRegion("test", accessType);
+		assertNotNull(TEST_SESSION_ACCESS.entityAccess(region, accessType));
+		regionFactory.getCacheManager().administration().removeCache(CACHE_NAME);
+	}
+
+	private TestSessionAccess.TestRegionAccessStrategy entityAccess(InfinispanBaseRegion region) {
+		Object access = TEST_SESSION_ACCESS.entityAccess(region, AccessType.TRANSACTIONAL);
+		return TEST_SESSION_ACCESS.fromAccess(access);
 	}
 
 	@Override
-	protected void putInRegion(Region region, Object key, Object value) {
-		((EntityRegion) region).buildAccessStrategy(AccessType.TRANSACTIONAL).insert(null, key, value, 1);
-	}
-
-	@Override
-	protected void removeFromRegion(Region region, Object key) {
-		((EntityRegion) region).buildAccessStrategy(AccessType.TRANSACTIONAL).remove(null, key);
-	}
-
-	@Override
-	protected Region createRegion(InfinispanRegionFactory regionFactory, String regionName, Properties properties, CacheDataDescription cdd) {
-		return regionFactory.buildEntityRegion(regionName, properties, cdd);
-	}
-
-	@Override
-	protected AdvancedCache getInfinispanCache(InfinispanRegionFactory regionFactory) {
-		return regionFactory.getCacheManager().getCache(
-				InfinispanRegionFactory.DEF_ENTITY_RESOURCE).getAdvancedCache();
+	protected InfinispanBaseRegion createRegion(TestRegionFactory regionFactory, String regionName) {
+		return regionFactory.buildEntityRegion(regionName, accessType);
 	}
 
 }

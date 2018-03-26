@@ -31,7 +31,7 @@ import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
+import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.hibernate.cfg.Environment;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.PersistentClass;
@@ -40,6 +40,7 @@ import org.hibernate.mapping.RootClass;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Address;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Family;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Person;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -116,9 +117,9 @@ public class SecondLevelCacheStressTestCase {
    }
 
    protected void applyCacheSettings(StandardServiceRegistryBuilder ssrb) {
-      ssrb.applySetting( Environment.CACHE_REGION_FACTORY, "org.infinispan.hibernate.cache.InfinispanRegionFactory" );
+      ssrb.applySetting( Environment.CACHE_REGION_FACTORY, TestRegionFactoryProvider.load().getRegionFactoryClass().getName() );
       ssrb.applySetting( Environment.JTA_PLATFORM, "org.hibernate.service.jta.platform.internal.JBossStandAloneJtaPlatform" );
-      ssrb.applySetting( InfinispanRegionFactory.INFINISPAN_CONFIG_RESOURCE_PROP, "stress-local-infinispan.xml" );
+      ssrb.applySetting( InfinispanProperties.INFINISPAN_CONFIG_RESOURCE_PROP, "stress-local-infinispan.xml" );
    }
 
    @After

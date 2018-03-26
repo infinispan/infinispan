@@ -5,6 +5,7 @@ import org.hibernate.SessionBuilder;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
+import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.infinispan.test.hibernate.cache.commons.util.TxUtil;
 
 import javax.transaction.TransactionManager;
@@ -18,14 +19,14 @@ import static org.junit.Assert.assertNotNull;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public abstract class SingleNodeTest extends AbstractFunctionalTest {
+	protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
+
 	@Override
 	protected void afterSessionFactoryBuilt(SessionFactoryImplementor sessionFactory) {
 		super.afterSessionFactoryBuilt(sessionFactory);
 		JtaPlatform jtaPlatform = sessionFactory().getServiceRegistry().getService(JtaPlatform.class);
-		if (jtaPlatformClass != null) {
-			assertNotNull(jtaPlatform);
-			assertEquals(jtaPlatformClass, jtaPlatform.getClass());
-		}
+		assertNotNull(jtaPlatform);
+		assertEquals(jtaPlatformClass, jtaPlatform.getClass());
 	}
 
 	protected void withTxSession(TxUtil.ThrowingConsumer<Session, Exception> consumer) throws Exception {

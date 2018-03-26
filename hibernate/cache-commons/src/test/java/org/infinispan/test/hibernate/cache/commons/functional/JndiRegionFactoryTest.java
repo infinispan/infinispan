@@ -18,15 +18,15 @@ import javax.naming.Reference;
 import javax.naming.StringRefAddr;
 
 import org.hibernate.boot.registry.StandardServiceRegistry;
-import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
-import org.infinispan.hibernate.cache.commons.JndiInfinispanRegionFactory;
+import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
-import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cfg.Environment;
 import org.hibernate.engine.config.spi.ConfigurationService;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.stat.Statistics;
 
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.junit.Test;
 
@@ -60,11 +60,6 @@ public class JndiRegionFactoryTest extends SingleNodeTest {
 	}
 
 	@Override
-	protected Class<? extends RegionFactory> getRegionFactoryClass() {
-		return JndiInfinispanRegionFactory.class;
-	}
-
-	@Override
 	protected void cleanupTest() throws Exception {
 		Context ctx = new InitialContext( props );
 		unbind( JNDI_NAME, ctx );
@@ -88,10 +83,10 @@ public class JndiRegionFactoryTest extends SingleNodeTest {
 				props.put( "java.naming.factory.url.pkgs", "org.jboss.naming:org.jnp.interfaces" );
 
 				final String cfgFileName = (String) ssr.getService( ConfigurationService.class ).getSettings().get(
-						InfinispanRegionFactory.INFINISPAN_CONFIG_RESOURCE_PROP
+						InfinispanProperties.INFINISPAN_CONFIG_RESOURCE_PROP
 				);
 				manager = new DefaultCacheManager(
-						cfgFileName == null ? InfinispanRegionFactory.DEF_INFINISPAN_CONFIG_RESOURCE : cfgFileName,
+						cfgFileName == null ? InfinispanProperties.DEF_INFINISPAN_CONFIG_RESOURCE : cfgFileName,
 						false
 				);
 				Context ctx = new InitialContext( props );
@@ -108,7 +103,7 @@ public class JndiRegionFactoryTest extends SingleNodeTest {
 	protected void addSettings(Map settings) {
 		super.addSettings( settings );
 
-		settings.put( JndiInfinispanRegionFactory.CACHE_MANAGER_RESOURCE_PROP, JNDI_NAME );
+		settings.put( InfinispanProperties.CACHE_MANAGER_RESOURCE_PROP, JNDI_NAME );
 		settings.put( Environment.JNDI_CLASS, "org.jnp.interfaces.NamingContextFactory" );
 		settings.put( "java.naming.factory.url.pkgs", "org.jboss.naming:org.jnp.interfaces" );
 	}
@@ -120,7 +115,7 @@ public class JndiRegionFactoryTest extends SingleNodeTest {
 		rebuildSessionFactory();
 
 		addEntityCheckCache( sessionFactory() );
-		JndiInfinispanRegionFactory regionFactory = (JndiInfinispanRegionFactory) sessionFactory().getSettings().getRegionFactory();
+		TestRegionFactory regionFactory = TestRegionFactoryProvider.load().wrap(sessionFactory().getSettings().getRegionFactory());
 		Cache cache = regionFactory.getCacheManager().getCache( Item.class.getName() );
 		assertEquals( ComponentStatus.RUNNING, cache.getStatus() );
 	}
