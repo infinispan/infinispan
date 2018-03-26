@@ -6,18 +6,15 @@
  */
 package org.infinispan.test.hibernate.cache.commons.collection;
 
-import org.hibernate.cache.spi.CollectionRegion;
-import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
 import org.infinispan.test.hibernate.cache.commons.AbstractExtraAPITest;
 
 /**
  * @author Galder Zamarreño
  * @since 3.5
  */
-public class CollectionRegionAccessExtraAPITest extends AbstractExtraAPITest<CollectionRegionAccessStrategy> {
+public class CollectionRegionAccessExtraAPITest extends AbstractExtraAPITest<Object> {
 	@Override
-	protected CollectionRegionAccessStrategy getAccessStrategy() {
-		return ((CollectionRegion) environment.getCollectionRegion( REGION_NAME, CACHE_DATA_DESCRIPTION))
-         .buildAccessStrategy( accessType );
+	protected Object getAccessStrategy() {
+		return TEST_SESSION_ACCESS.collectionAccess(environment.getCollectionRegion( REGION_NAME, accessType), accessType);
 	}
 }

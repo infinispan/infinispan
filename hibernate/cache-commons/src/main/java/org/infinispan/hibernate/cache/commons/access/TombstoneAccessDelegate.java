@@ -8,7 +8,7 @@ package org.infinispan.hibernate.cache.commons.access;
 
 import org.hibernate.cache.CacheException;
 import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
-import org.infinispan.hibernate.cache.commons.impl.BaseTransactionalDataRegion;
+import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.hibernate.cache.commons.util.FutureUpdate;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
@@ -27,14 +27,14 @@ public class TombstoneAccessDelegate implements AccessDelegate {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( TombstoneAccessDelegate.class );
    private static final SessionAccess SESSION_ACCESS = SessionAccess.findSessionAccess();
 
-	protected final BaseTransactionalDataRegion region;
+	protected final InfinispanDataRegion region;
 	protected final AdvancedCache cache;
 	protected final AdvancedCache writeCache;
 	protected final AdvancedCache asyncWriteCache;
 	protected final AdvancedCache putFromLoadCache;
 	protected final boolean requiresTransaction;
 
-   public TombstoneAccessDelegate(BaseTransactionalDataRegion region) {
+   public TombstoneAccessDelegate(InfinispanDataRegion region) {
 		this.region = region;
 		this.cache = region.getCache();
 		this.writeCache = Caches.ignoreReturnValuesCache(cache);

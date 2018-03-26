@@ -13,8 +13,8 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
 import org.hibernate.cache.spi.access.SoftLock;
+import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -29,7 +29,7 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 	private final CommandsFactory commandsFactory;
 	private final Metadata metadata;
 
-	public NonTxInvalidationCacheAccessDelegate(BaseRegion region, PutFromLoadValidator validator) {
+	public NonTxInvalidationCacheAccessDelegate(InfinispanDataRegion region, PutFromLoadValidator validator) {
 		super(region, validator);
 		ComponentRegistry cr = region.getCache().getComponentRegistry();
 		invoker = cr.getComponent(AsyncInterceptorChain.class);

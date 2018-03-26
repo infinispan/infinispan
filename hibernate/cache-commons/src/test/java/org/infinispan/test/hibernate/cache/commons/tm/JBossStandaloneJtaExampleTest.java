@@ -33,8 +33,8 @@ import org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoo
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.stat.Statistics;
 
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
-import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
 import org.hibernate.testing.ServiceRegistryBuilder;
 import org.hibernate.testing.jta.JtaAwareConnectionProviderImpl;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
@@ -54,7 +54,6 @@ import org.jnp.server.NamingServer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * This is an example test based on http://community.jboss.org/docs/DOC-14617 that shows how to interact with
@@ -221,7 +220,7 @@ public class JBossStandaloneJtaExampleTest {
 			try {
 				ctx = (Context) ctx.lookup(ctxName);
 			} catch (NameNotFoundException e) {
-				System.out.println("Creating subcontext:" + ctxName);
+				log.debug("Creating subcontext:" + ctxName);
 				ctx = ctx.createSubcontext(ctxName);
 			}
 			n = n.getSuffix(1);
@@ -252,7 +251,7 @@ public class JBossStandaloneJtaExampleTest {
 				  .applySetting( Environment.USE_SECOND_LEVEL_CACHE, "true" )
 				  .applySetting( Environment.USE_QUERY_CACHE, "true" )
 				  .applySetting( Environment.JTA_PLATFORM, new JBossStandAloneJtaPlatform() )
-				  .applySetting( Environment.CACHE_REGION_FACTORY, TestInfinispanRegionFactory.class.getName() );
+				  .applySetting( Environment.CACHE_REGION_FACTORY, TestRegionFactoryProvider.load().getRegionFactoryClass().getName() );
 
 		StandardServiceRegistry serviceRegistry = ssrb.build();
 
@@ -262,7 +261,9 @@ public class JBossStandaloneJtaExampleTest {
 		Metadata metadata = metadataSources.buildMetadata();
 		for ( PersistentClass entityBinding : metadata.getEntityBindings() ) {
 			if ( entityBinding instanceof RootClass ) {
-				( (RootClass) entityBinding ).setCacheConcurrencyStrategy( "transactional" );
+				RootClass rootClass = (RootClass) entityBinding;
+				rootClass.setCacheConcurrencyStrategy( "transactional" );
+				rootClass.setCachingExplicitlyRequested(true);
 			}
 		}
 		for ( Collection collectionBinding : metadata.getCollectionBindings() ) {

@@ -22,16 +22,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.transaction.TransactionManager;
 
-import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
+import org.hibernate.testing.boot.ServiceRegistryTestingImpl;
+import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 
-import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;
 import org.hibernate.testing.TestForIssue;
 import org.infinispan.test.hibernate.cache.commons.functional.cluster.DualNodeJtaTransactionManagerImpl;
-import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
 import org.hibernate.testing.junit4.CustomRunner;
 import org.infinispan.AdvancedCache;
 import org.infinispan.test.fwk.TestResourceTracker;
@@ -52,9 +53,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 
 /**
  * Tests of {@link PutFromLoadValidator}.
@@ -105,68 +103,71 @@ public class PutFromLoadValidatorUnitTest {
 			DualNodeJtaTransactionManagerImpl.cleanupTransactionManagers();
 		}
 		cache.clear();
-		cm.getCache(cache.getName() + "-" + InfinispanRegionFactory.DEF_PENDING_PUTS_RESOURCE).clear();
+		cm.getCache(cache.getName() + "-" + InfinispanProperties.DEF_PENDING_PUTS_RESOURCE).clear();
 
       testee.removePendingPutsCache();
 	}
 
-	private static InfinispanRegionFactory regionFactory(EmbeddedCacheManager cm) {
+	private static TestRegionFactory regionFactory(EmbeddedCacheManager cm) {
 		Properties properties = new Properties();
-		properties.put(TestInfinispanRegionFactory.TIME_SERVICE, TIME_SERVICE);
-		InfinispanRegionFactory regionFactory = new TestInfinispanRegionFactory(properties);
+		properties.put(TestRegionFactory.TIME_SERVICE, TIME_SERVICE);
+		TestRegionFactory regionFactory = TestRegionFactoryProvider.load().create(properties);
 		regionFactory.setCacheManager(cm);
-		regionFactory.start(CacheTestUtil.sfOptionsForStart(), properties);
+		regionFactory.start(ServiceRegistryTestingImpl.forUnitTesting(), properties);
 		return regionFactory;
 	}
 
 	@Test
-	public void testNakedPut() throws Exception {
+	public void testNakedPut() {
 		nakedPutTest(false);
 	}
 	@Test
-	public void testNakedPutTransactional() throws Exception {
+	public void testNakedPutTransactional() {
 		nakedPutTest(true);
 	}
 
-	private void nakedPutTest(final boolean transactional) throws Exception {
-		testee = new PutFromLoadValidator(cache, regionFactory(cm));
+	private void nakedPutTest(final boolean transactional) {
+		TestRegionFactory regionFactory = regionFactory(cm);
+		testee = new PutFromLoadValidator(cache, regionFactory, regionFactory.getPendingPutsCacheConfiguration());
 		exec(transactional, new NakedPut(testee, true));
 	}
 
 	@Test
-	public void testRegisteredPut() throws Exception {
+	public void testRegisteredPut() {
 		registeredPutTest(false);
 	}
 	@Test
-	public void testRegisteredPutTransactional() throws Exception {
+	public void testRegisteredPutTransactional() {
 		registeredPutTest(true);
 	}
 
-	private void registeredPutTest(final boolean transactional) throws Exception {
-		testee = new PutFromLoadValidator(cache, regionFactory(cm));
+	private void registeredPutTest(final boolean transactional) {
+		TestRegionFactory regionFactory = regionFactory(cm);
+		testee = new PutFromLoadValidator(cache, regionFactory, regionFactory.getPendingPutsCacheConfiguration());
 		exec(transactional, new RegularPut(testee));
 	}
 
 	@Test
-	public void testNakedPutAfterKeyRemoval() throws Exception {
+	public void testNakedPutAfterKeyRemoval() {
 		nakedPutAfterRemovalTest(false, false);
 	}
 	@Test
-	public void testNakedPutAfterKeyRemovalTransactional() throws Exception {
+	public void testNakedPutAfterKeyRemovalTransactional() {
 		nakedPutAfterRemovalTest(true, false);
 	}
 	@Test
-	public void testNakedPutAfterRegionRemoval() throws Exception {
+	public void testNakedPutAfterRegionRemoval() {
 		nakedPutAfterRemovalTest(false, true);
 	}
 	@Test
-	public void testNakedPutAfterRegionRemovalTransactional() throws Exception {
+	public void testNakedPutAfterRegionRemovalTransactional() {
 		nakedPutAfterRemovalTest(true, true);
 	}
 
 	private void nakedPutAfterRemovalTest(final boolean transactional,
-			final boolean removeRegion) throws Exception {
-		testee = new PutFromLoadValidator(cache, regionFactory(cm));
+			final boolean removeRegion) {
+		TestRegionFactory regionFactory = regionFactory(cm);
+		testee = new PutFromLoadValidator(cache, regionFactory, regionFactory.getPendingPutsCacheConfiguration());
 		Invalidation invalidation = new Invalidation(testee, removeRegion);
 		// the naked put can succeed because it has txTimestamp after invalidation
 		NakedPut nakedPut = new NakedPut(testee, true);
@@ -174,50 +175,51 @@ public class PutFromLoadValidatorUnitTest {
 	}
 
 	@Test
-	public void testRegisteredPutAfterKeyRemoval() throws Exception {
+	public void testRegisteredPutAfterKeyRemoval() {
 		registeredPutAfterRemovalTest(false, false);
 	}
 	@Test
-	public void testRegisteredPutAfterKeyRemovalTransactional() throws Exception {
+	public void testRegisteredPutAfterKeyRemovalTransactional() {
 		registeredPutAfterRemovalTest(true, false);
 	}
 	 @Test
-	public void testRegisteredPutAfterRegionRemoval() throws Exception {
+	public void testRegisteredPutAfterRegionRemoval() {
 		registeredPutAfterRemovalTest(false, true);
 	}
 	 @Test
-	public void testRegisteredPutAfterRegionRemovalTransactional() throws Exception {
+	public void testRegisteredPutAfterRegionRemovalTransactional() {
 		registeredPutAfterRemovalTest(true, true);
 	}
 
 	private void registeredPutAfterRemovalTest(final boolean transactional,
-			final boolean removeRegion) throws Exception {
-		testee = new PutFromLoadValidator(cache, regionFactory(cm));
+			final boolean removeRegion) {
+		TestRegionFactory regionFactory = regionFactory(cm);
+		testee = new PutFromLoadValidator(cache, regionFactory, regionFactory.getPendingPutsCacheConfiguration());
 		Invalidation invalidation = new Invalidation(testee, removeRegion);
 		RegularPut regularPut = new RegularPut(testee);
 		exec(transactional, invalidation, regularPut);
 	}
 	 @Test
-	public void testRegisteredPutWithInterveningKeyRemoval() throws Exception {
+	public void testRegisteredPutWithInterveningKeyRemoval() {
 		registeredPutWithInterveningRemovalTest(false, false);
 	}
 	 @Test
-	public void testRegisteredPutWithInterveningKeyRemovalTransactional() throws Exception {
+	public void testRegisteredPutWithInterveningKeyRemovalTransactional() {
 		registeredPutWithInterveningRemovalTest(true, false);
 	}
 	 @Test
-	public void testRegisteredPutWithInterveningRegionRemoval() throws Exception {
+	public void testRegisteredPutWithInterveningRegionRemoval() {
 		registeredPutWithInterveningRemovalTest(false, true);
 	}
 	 @Test
-	public void testRegisteredPutWithInterveningRegionRemovalTransactional() throws Exception {
+	public void testRegisteredPutWithInterveningRegionRemovalTransactional() {
 		registeredPutWithInterveningRemovalTest(true, true);
 	}
 
 	private void registeredPutWithInterveningRemovalTest(
-			final boolean transactional, final boolean removeRegion)
-			throws Exception {
-		testee = new PutFromLoadValidator(cache, regionFactory(cm));
+			final boolean transactional, final boolean removeRegion) {
+		TestRegionFactory regionFactory = regionFactory(cm);
+		testee = new PutFromLoadValidator(cache, regionFactory, regionFactory.getPendingPutsCacheConfiguration());
 		try {
 			long txTimestamp = TIME_SERVICE.wallClockTime();
 			if (transactional) {
@@ -262,7 +264,8 @@ public class PutFromLoadValidatorUnitTest {
 	}
 
 	private void multipleRegistrationtest(final boolean transactional) throws Exception {
-		testee = new PutFromLoadValidator(cache, regionFactory(cm));
+		TestRegionFactory regionFactory = regionFactory(cm);
+		testee = new PutFromLoadValidator(cache, regionFactory, regionFactory.getPendingPutsCacheConfiguration());
 
 		final CountDownLatch registeredLatch = new CountDownLatch(3);
 		final CountDownLatch finishedLatch = new CountDownLatch(3);
@@ -326,7 +329,8 @@ public class PutFromLoadValidatorUnitTest {
 	}
 
 	private void invalidationBlocksForInProgressPutTest(final boolean keyOnly) throws Exception {
-		testee = new PutFromLoadValidator(cache, regionFactory(cm));
+		TestRegionFactory regionFactory = regionFactory(cm);
+		testee = new PutFromLoadValidator(cache, regionFactory, regionFactory.getPendingPutsCacheConfiguration());
 		final CountDownLatch removeLatch = new CountDownLatch(1);
 		final CountDownLatch pferLatch = new CountDownLatch(1);
 		final AtomicReference<Object> cache = new AtomicReference<>("INITIAL");
@@ -494,11 +498,7 @@ public class PutFromLoadValidatorUnitTest {
 		cb.simpleCache(true).expiration().maxIdle(500);
 		Configuration ppCfg = cb.build();
 
-		InfinispanRegionFactory regionFactory = mock(InfinispanRegionFactory.class);
-		doReturn(ppCfg).when(regionFactory).getPendingPutsCacheConfiguration();
-		doAnswer(invocation -> TIME_SERVICE.wallClockTime()).when(regionFactory).nextTimestamp();
-
-		testee = new PutFromLoadValidator(cache, regionFactory, cm);
+		testee = new PutFromLoadValidator(cache, TIME_SERVICE::wallClockTime, cm, ppCfg);
 
 		for (int i = 0; i < 100; ++i) {
 			try {
@@ -512,7 +512,7 @@ public class PutFromLoadValidatorUnitTest {
 				throw new RuntimeException(e);
 			}
 		}
-		String ppName = cm.getCache().getName() + "-" + InfinispanRegionFactory.DEF_PENDING_PUTS_RESOURCE;
+		String ppName = cm.getCache().getName() + "-" + InfinispanProperties.DEF_PENDING_PUTS_RESOURCE;
 		Map ppCache = cm.getCache(ppName, false);
 		assertNotNull(ppCache);
 		Object pendingPutMap = ppCache.get(KEY1);

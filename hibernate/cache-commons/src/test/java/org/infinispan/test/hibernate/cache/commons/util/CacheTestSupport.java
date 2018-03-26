@@ -11,9 +11,6 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.infinispan.Cache;
-import org.jboss.logging.Logger;
-
-import org.hibernate.cache.spi.RegionFactory;
 
 /**
  * Support class for tracking and cleaning up objects used in tests.
@@ -21,12 +18,10 @@ import org.hibernate.cache.spi.RegionFactory;
  * @author <a href="brian.stansberry@jboss.com">Brian Stansberry</a>
  */
 public class CacheTestSupport {
-	private static final Logger log = Logger.getLogger( CacheTestSupport.class );
-
 	private static final String PREFER_IPV4STACK = "java.net.preferIPv4Stack";
 
-    private Set<Cache> caches = new HashSet();
-    private Set<RegionFactory> factories = new HashSet();
+    private Set<Cache> caches = new HashSet<>();
+    private Set<TestRegionFactory> factories = new HashSet<>();
     private Exception exception;
     private String preferIPv4Stack;
 
@@ -34,7 +29,7 @@ public class CacheTestSupport {
         caches.add(cache);
     }
 
-    public void registerFactory(RegionFactory factory) {
+    public void registerFactory(TestRegionFactory factory) {
         factories.add(factory);
     }
 
@@ -42,7 +37,7 @@ public class CacheTestSupport {
         caches.remove( cache );
     }
 
-    public void unregisterFactory(RegionFactory factory) {
+    public void unregisterFactory(TestRegionFactory factory) {
         factories.remove( factory );
     }
 
@@ -66,9 +61,9 @@ public class CacheTestSupport {
     }
 
     private void cleanUp() {
-        for (Iterator it = factories.iterator(); it.hasNext(); ) {
+        for (Iterator<TestRegionFactory> it = factories.iterator(); it.hasNext(); ) {
             try {
-                ((RegionFactory) it.next()).stop();
+                it.next().stop();
             }
             catch (Exception e) {
                 storeException(e);
@@ -79,10 +74,9 @@ public class CacheTestSupport {
         }
         factories.clear();
 
-        for (Iterator it = caches.iterator(); it.hasNext(); ) {
+        for (Iterator<Cache> it = caches.iterator(); it.hasNext(); ) {
             try {
-                Cache cache = (Cache) it.next();
-                cache.stop();
+                it.next().stop();
             }
             catch (Exception e) {
                 storeException(e);

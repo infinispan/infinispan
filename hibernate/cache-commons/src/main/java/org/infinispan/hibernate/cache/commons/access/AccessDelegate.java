@@ -8,7 +8,6 @@ package org.infinispan.hibernate.cache.commons.access;
 
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.access.SoftLock;
-import org.hibernate.engine.spi.SessionImplementor;
 
 /**
  * Defines the strategy for access to entity or collection data in a Infinispan instance.
