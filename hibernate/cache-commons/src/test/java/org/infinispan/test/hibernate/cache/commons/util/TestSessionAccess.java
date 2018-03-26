@@ -2,10 +2,11 @@ package org.infinispan.test.hibernate.cache.commons.util;
 
 import org.hibernate.Transaction;
 import org.hibernate.cache.CacheException;
-import org.hibernate.cache.spi.GeneralDataRegion;
-import org.hibernate.cache.spi.access.RegionAccessStrategy;
+import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.SoftLock;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.util.ControlledTimeService;
 
 import java.util.List;
@@ -19,9 +20,9 @@ public interface TestSessionAccess {
 
    Transaction beginTransaction(Object session);
 
-   TestRegionAccessStrategy fromAccessStrategy(RegionAccessStrategy strategy);
+   TestRegionAccessStrategy fromAccess(Object access);
 
-   TestGeneralDataRegion fromGeneralDataRegion(GeneralDataRegion region);
+   TestRegion fromRegion(InfinispanBaseRegion region);
 
    List execQueryList(Object session, String query, String[]... params);
 
@@ -37,6 +38,12 @@ public interface TestSessionAccess {
       ServiceLoader<TestSessionAccess> loader = ServiceLoader.load(TestSessionAccess.class);
       return loader.iterator().next();
    }
+
+   Object collectionAccess(InfinispanBaseRegion region, AccessType accessType);
+
+   Object entityAccess(InfinispanBaseRegion region, AccessType accessType);
+
+   InfinispanBaseRegion getRegion(SessionFactoryImplementor sessionFactory, String regionName);
 
    interface TestRegionAccessStrategy {
 
@@ -60,14 +67,26 @@ public interface TestSessionAccess {
 
       boolean update(Object session, Object key, Object value, Object currentVersion, Object previousVersion) throws CacheException;
 
+      SoftLock lockRegion();
+
+      void unlockRegion(SoftLock softLock);
+
+      void evict(Object key);
+
+      void evictAll();
+
+      void removeAll(Object session);
    }
 
-   interface TestGeneralDataRegion {
+   interface TestRegion {
 
       Object get(Object session, Object key) throws CacheException;
 
       void put(Object session, Object key, Object value) throws CacheException;
 
+      void evict(Object key);
+
+      void evictAll();
    }
 
 }

@@ -18,7 +18,6 @@ import org.hibernate.Session;
 import org.hibernate.StaleStateException;
 import org.infinispan.hibernate.cache.commons.access.SessionAccess;
 import org.infinispan.hibernate.cache.commons.access.VersionedCallInterceptor;
-import org.infinispan.hibernate.cache.commons.impl.BaseTransactionalDataRegion;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.hibernate.cache.commons.util.VersionedEntry;
 
@@ -273,7 +272,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
          otherItems.remove(otherItems.iterator().next());
       });
 
-      AdvancedCache collectionCache = ((BaseTransactionalDataRegion) sessionFactory().getSecondLevelCacheRegion(Item.class.getName() + ".otherItems")).getCache();
+      AdvancedCache collectionCache = TEST_SESSION_ACCESS.getRegion(sessionFactory(), Item.class.getName() + ".otherItems").getCache();
       CountDownLatch putFromLoadLatch = new CountDownLatch(1);
       AtomicBoolean committing = new AtomicBoolean(false);
       CollectionUpdateTestInterceptor collectionUpdateTestInterceptor = new CollectionUpdateTestInterceptor(putFromLoadLatch);

@@ -17,8 +17,7 @@ import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Contact;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
-import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
-import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.util.ControlledTimeService;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -39,7 +38,6 @@ public class BulkOperationsTest extends SingleNodeTest {
 
    private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(BulkOperationsTest.class);
    private static final ControlledTimeService TIME_SERVICE = new AlwaysMoveForwardTimeService();
-   protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
 
    @Rule
    public TestName name = new TestName();
@@ -68,7 +66,7 @@ public class BulkOperationsTest extends SingleNodeTest {
    @Override
    protected void addSettings(Map settings) {
       super.addSettings(settings);
-      settings.put(TestInfinispanRegionFactory.TIME_SERVICE, TIME_SERVICE);
+      settings.put(TestRegionFactory.TIME_SERVICE, TIME_SERVICE);
    }
 
 	@Test
@@ -217,7 +215,7 @@ public class BulkOperationsTest extends SingleNodeTest {
 	}
 
 	private Customer createCustomer(int id) throws Exception {
-		System.out.println( "CREATE CUSTOMER " + id );
+		log.trace("CREATE CUSTOMER " + id);
 		try {
 			Customer customer = new Customer();
 			customer.setName( (id % 2 == 0) ? "JBoss" : "Red Hat" );
@@ -240,7 +238,7 @@ public class BulkOperationsTest extends SingleNodeTest {
 			return customer;
 		}
 		finally {
-			System.out.println( "CREATE CUSTOMER " + id + " -  END" );
+			log.trace("CREATE CUSTOMER " + id + " -  END");
 		}
 	}
 
@@ -252,7 +250,7 @@ public class BulkOperationsTest extends SingleNodeTest {
     *
     * By doing that, we can guarantee that when a region is invalidated in same session,
     * the region invalidation timestamp will be in the future and we avoid potential invalid things being added to second level cache.
-    * More info can be found in {@link org.infinispan.hibernate.cache.access.FutureUpdateSynchronization}.
+    * More info can be found in {@link org.infinispan.hibernate.cache.commons.access.FutureUpdateSynchronization}.
     */
    private static final class AlwaysMoveForwardTimeService extends ControlledTimeService {
 

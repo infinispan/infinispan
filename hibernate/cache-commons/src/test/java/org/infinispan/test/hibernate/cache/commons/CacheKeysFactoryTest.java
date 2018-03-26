@@ -3,6 +3,7 @@ package org.infinispan.test.hibernate.cache.commons;
 import org.hibernate.SessionFactory;
 import org.hibernate.cache.internal.DefaultCacheKeysFactory;
 import org.hibernate.cache.internal.SimpleCacheKeysFactory;
+import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.engine.spi.CacheImplementor;
@@ -10,9 +11,10 @@ import org.hibernate.jpa.AvailableSettings;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Name;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Person;
 import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
-import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
 import org.hibernate.testing.junit4.BaseUnitTestCase;
 import org.infinispan.Cache;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -29,7 +31,7 @@ public class CacheKeysFactoryTest extends BaseUnitTestCase {
    private SessionFactory getSessionFactory(String cacheKeysFactory) {
       Configuration configuration = new Configuration()
          .setProperty(Environment.USE_SECOND_LEVEL_CACHE, "true")
-         .setProperty(Environment.CACHE_REGION_FACTORY, TestInfinispanRegionFactory.class.getName())
+         .setProperty(Environment.CACHE_REGION_FACTORY, TestRegionFactoryProvider.load().getRegionFactoryClass().getName())
          .setProperty(Environment.DEFAULT_CACHE_CONCURRENCY_STRATEGY, "transactional")
          .setProperty(AvailableSettings.SHARED_CACHE_MODE, "ALL")
          .setProperty(Environment.HBM2DDL_AUTO, "create-drop");
@@ -72,8 +74,9 @@ public class CacheKeysFactoryTest extends BaseUnitTestCase {
          s.persist(person);
       });
 
-      TestInfinispanRegionFactory regionFactory = (TestInfinispanRegionFactory) ((CacheImplementor) sessionFactory.getCache()).getRegionFactory();
-      Cache<Object, Object> cache = regionFactory.getCacheManager().getCache(Person.class.getName());
+      RegionFactory regionFactory = ((CacheImplementor) sessionFactory.getCache()).getRegionFactory();
+      TestRegionFactory factory = TestRegionFactoryProvider.load().wrap(regionFactory);
+      Cache<Object, Object> cache = factory.getCacheManager().getCache(Person.class.getName());
       Iterator<Object> iterator = cache.getAdvancedCache().getDataContainer().keySet().iterator();
       assertTrue(iterator.hasNext());
       Object key = iterator.next();

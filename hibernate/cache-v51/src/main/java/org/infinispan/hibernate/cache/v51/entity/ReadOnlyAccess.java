@@ -8,10 +8,9 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.persister.entity.EntityPersister;
 import org.infinispan.hibernate.cache.commons.access.AccessDelegate;
+import org.infinispan.hibernate.cache.v51.access.AbstractAccess;
 
-class ReadOnlyAccess
-   extends org.infinispan.hibernate.cache.commons.access.AbstractAccess
-   implements EntityRegionAccessStrategy {
+class ReadOnlyAccess extends AbstractAccess implements EntityRegionAccessStrategy {
 
    private final EntityRegionImpl region;
 
@@ -70,10 +69,12 @@ class ReadOnlyAccess
       delegate.remove (session, key);
    }
 
+   @Override
    public Object generateCacheKey(Object id, EntityPersister persister, SessionFactoryImplementor factory, String tenantIdentifier) {
       return region.getCacheKeysFactory().createEntityKey(id, persister, factory, tenantIdentifier);
    }
 
+   @Override
    public Object getCacheKeyId(Object cacheKey) {
       return region.getCacheKeysFactory().getEntityId(cacheKey);
    }

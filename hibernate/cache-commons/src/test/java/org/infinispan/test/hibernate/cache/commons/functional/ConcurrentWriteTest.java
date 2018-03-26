@@ -27,8 +27,7 @@ import org.hibernate.stat.SecondLevelCacheStatistics;
 
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Contact;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
-import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
-import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.util.ControlledTimeService;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -59,8 +58,6 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 	 */
 	private static volatile boolean TERMINATE_ALL_USERS = false;
 
-   protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
-
 	/**
 	 * collection of IDs of all customers participating in this test
 	 */
@@ -80,7 +77,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 	@Override
 	protected void addSettings(Map settings) {
 		super.addSettings(settings);
-		settings.put(TestInfinispanRegionFactory.TIME_SERVICE, TIME_SERVICE);
+		settings.put(TestRegionFactory.TIME_SERVICE, TIME_SERVICE);
 	}
 
 	@Override
@@ -120,15 +117,16 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 				.getSecondLevelCacheStatistics( Customer.class.getName() );
 		assertEquals( 1, customerSlcs.getPutCount() );
 		assertEquals( 1, customerSlcs.getElementCountInMemory() );
-		assertEquals( 1, customerSlcs.getEntries().size() );
+		assertEquals( 1, TEST_SESSION_ACCESS.getRegion(sessionFactory(), Customer.class.getName()).getCache().size());
 
 		log.infof( "Add contact to customer {0}", customerId );
+		String contactsRegionName = Customer.class.getName() + ".contacts";
 		SecondLevelCacheStatistics contactsCollectionSlcs = sessionFactory()
 				.getStatistics()
-				.getSecondLevelCacheStatistics( Customer.class.getName() + ".contacts" );
+				.getSecondLevelCacheStatistics(contactsRegionName);
 		assertEquals( 1, contactsCollectionSlcs.getPutCount() );
 		assertEquals( 1, contactsCollectionSlcs.getElementCountInMemory() );
-		assertEquals( 1, contactsCollectionSlcs.getEntries().size() );
+		assertEquals( 1, TEST_SESSION_ACCESS.getRegion(sessionFactory(), contactsRegionName).getCache().size() );
 
 		final Contact contact = addContact( customerId );
 		assertNotNull( "contact returned by addContact is null", contact );

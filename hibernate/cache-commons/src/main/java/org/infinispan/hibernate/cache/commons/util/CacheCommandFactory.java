@@ -12,11 +12,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
-
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.util.ByteString;
 
 /**
@@ -31,15 +30,14 @@ public class CacheCommandFactory implements ModuleCommandFactory {
     * Keeps track of regions to which second-level cache specific
     * commands have been plugged.
     */
-	private ConcurrentMap<String, BaseRegion> allRegions =
-			new ConcurrentHashMap<String, BaseRegion>();
+	private ConcurrentMap<String, InfinispanBaseRegion> allRegions = new ConcurrentHashMap<>();
 
    /**
     * Add region so that commands can be cleared on shutdown.
     *
     * @param region instance to keep track of
     */
-	public void addRegion(BaseRegion region) {
+	public void addRegion(InfinispanBaseRegion region) {
 		allRegions.put( region.getName(), region );
 	}
 
@@ -48,7 +46,7 @@ public class CacheCommandFactory implements ModuleCommandFactory {
     *
     * @param regions collection of regions to clear
     */
-	public void clearRegions(Collection<BaseRegion> regions) {
+	public void clearRegions(Collection<? extends InfinispanBaseRegion> regions) {
 		regions.forEach( region -> allRegions.remove( region.getName() ) );
 	}
 

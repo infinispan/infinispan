@@ -8,15 +8,14 @@ package org.infinispan.test.hibernate.cache.commons;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
-import org.hibernate.cache.spi.CacheDataDescription;
 
-import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
+import org.hibernate.cache.spi.access.AccessType;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 
 /**
  * Defines the environment for a node.
@@ -25,66 +24,54 @@ import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
  */
 public class NodeEnvironment {
    private final StandardServiceRegistryBuilder ssrb;
-   private final Properties properties;
 
    private StandardServiceRegistry serviceRegistry;
-   private InfinispanRegionFactory regionFactory;
+   private TestRegionFactory regionFactory;
 
-   private Map<String, BaseRegion> entityRegionMap;
-   private Map<String, BaseRegion> collectionRegionMap;
+   private Map<String, InfinispanBaseRegion> entityRegionMap;
+   private Map<String, InfinispanBaseRegion> collectionRegionMap;
 
    public NodeEnvironment(StandardServiceRegistryBuilder ssrb) {
       this.ssrb = ssrb;
-      properties = CacheTestUtil.toProperties( ssrb.getSettings() );
    }
 
    public StandardServiceRegistry getServiceRegistry() {
       return serviceRegistry;
    }
 
-   public BaseRegion getEntityRegion(String name, CacheDataDescription cacheDataDescription) {
+   public InfinispanBaseRegion getEntityRegion(String name, AccessType accessType) {
       if (entityRegionMap == null) {
          entityRegionMap = new HashMap<>();
-         return buildAndStoreEntityRegion(name, cacheDataDescription);
+         return buildAndStoreEntityRegion(name, accessType);
       }
-      BaseRegion region = entityRegionMap.get(name);
+      InfinispanBaseRegion region = entityRegionMap.get(name);
       if (region == null) {
-         region = buildAndStoreEntityRegion(name, cacheDataDescription);
+         region = buildAndStoreEntityRegion(name, accessType);
       }
       return region;
    }
 
-   private BaseRegion buildAndStoreEntityRegion(String name, CacheDataDescription cacheDataDescription) {
-      BaseRegion region = (BaseRegion) regionFactory.buildEntityRegion(
-            name,
-            properties,
-            cacheDataDescription
-      );
+   private InfinispanBaseRegion buildAndStoreEntityRegion(String name, AccessType accessType) {
+      InfinispanBaseRegion region = regionFactory.buildEntityRegion(name, accessType);
       entityRegionMap.put(name, region);
       return region;
    }
 
-   public BaseRegion getCollectionRegion(String name, CacheDataDescription cacheDataDescription) {
+   public InfinispanBaseRegion getCollectionRegion(String name, AccessType accessType) {
       if (collectionRegionMap == null) {
          collectionRegionMap = new HashMap<>();
-         return buildAndStoreCollectionRegion(name, cacheDataDescription);
+         return buildAndStoreCollectionRegion(name, accessType);
       }
-      BaseRegion region = collectionRegionMap.get(name);
+      InfinispanBaseRegion region = collectionRegionMap.get(name);
       if (region == null) {
-         region = buildAndStoreCollectionRegion(name, cacheDataDescription);
+         region = buildAndStoreCollectionRegion(name, accessType);
          collectionRegionMap.put(name, region);
       }
       return region;
    }
 
-   private BaseRegion buildAndStoreCollectionRegion(String name, CacheDataDescription cacheDataDescription) {
-      BaseRegion region;
-      region = (BaseRegion) regionFactory.buildCollectionRegion(
-            name,
-            properties,
-            cacheDataDescription
-      );
-      return region;
+   private InfinispanBaseRegion buildAndStoreCollectionRegion(String name, AccessType accessType) {
+      return regionFactory.buildCollectionRegion(name, accessType);
    }
 
    public void prepare() throws Exception {
@@ -95,7 +82,7 @@ public class NodeEnvironment {
    public void release() throws Exception {
       try {
          if (entityRegionMap != null) {
-            for (BaseRegion region : entityRegionMap.values()) {
+            for (InfinispanBaseRegion region : entityRegionMap.values()) {
                try {
                   region.getCache().stop();
                } catch (Exception e) {
@@ -105,7 +92,7 @@ public class NodeEnvironment {
             entityRegionMap.clear();
          }
          if (collectionRegionMap != null) {
-            for (BaseRegion reg : collectionRegionMap.values()) {
+            for (InfinispanBaseRegion reg : collectionRegionMap.values()) {
                try {
                   reg.getCache().stop();
                } catch (Exception e) {

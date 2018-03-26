@@ -1,8 +1,10 @@
 package org.infinispan.test.hibernate.cache.commons;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -11,36 +13,31 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.cache.spi.entry.CacheEntry;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
 import org.infinispan.hibernate.cache.commons.access.SessionAccess;
-import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.hibernate.cache.commons.util.FutureUpdate;
 import org.infinispan.hibernate.cache.commons.util.TombstoneUpdate;
-import org.hibernate.cache.internal.CacheDataDescriptionImpl;
-import org.hibernate.cache.spi.CacheDataDescription;
 import org.hibernate.cache.spi.access.AccessType;
-import org.hibernate.cache.spi.access.RegionAccessStrategy;
 import org.hibernate.cache.spi.access.SoftLock;
-import org.hibernate.internal.util.compare.ComparableComparator;
 
 import org.infinispan.hibernate.cache.commons.util.VersionedEntry;
 import org.infinispan.test.hibernate.cache.commons.util.ExpectingInterceptor;
-import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess.TestRegionAccessStrategy;
 import org.infinispan.test.hibernate.cache.commons.util.TestSynchronization;
 import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;
 import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.util.ControlledTimeService;
 import org.junit.After;
 import org.junit.Test;
-import junit.framework.AssertionFailedError;
 
 import org.infinispan.Cache;
 import org.infinispan.test.TestingUtil;
@@ -59,28 +56,26 @@ import static org.mockito.Mockito.spy;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S extends RegionAccessStrategy>
+public abstract class AbstractRegionAccessStrategyTest<S>
 		extends AbstractNonFunctionalTest {
 	protected final Logger log = Logger.getLogger(getClass());
 
 	public static final String REGION_NAME = "test/com.foo.test";
 	public static final String KEY_BASE = "KEY";
-	public static final String VALUE1 = "VALUE1";
-	public static final String VALUE2 = "VALUE2";
-	public static final CacheDataDescription CACHE_DATA_DESCRIPTION
-			= new CacheDataDescriptionImpl(true, true, ComparableComparator.INSTANCE, null);
+	public static final TestCacheEntry VALUE1 = new TestCacheEntry("VALUE1", 1);
+	public static final TestCacheEntry VALUE2 = new TestCacheEntry("VALUE2", 2);
 
 	protected static final ControlledTimeService TIME_SERVICE = new ControlledTimeService();
    protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
    protected static final SessionAccess SESSION_ACCESS = SessionAccess.findSessionAccess();
 
 	protected NodeEnvironment localEnvironment;
-	protected R localRegion;
+	protected InfinispanBaseRegion localRegion;
 	protected S localAccessStrategy;
    protected TestRegionAccessStrategy testLocalAccessStrategy;
 
 	protected NodeEnvironment remoteEnvironment;
-	protected R remoteRegion;
+	protected InfinispanBaseRegion remoteRegion;
    protected S remoteAccessStrategy;
    protected TestRegionAccessStrategy testRemoteAccessStrategy;
 
@@ -89,8 +84,8 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 	protected boolean synchronous;
 	protected Exception node1Exception;
 	protected Exception node2Exception;
-	protected AssertionFailedError node1Failure;
-	protected AssertionFailedError node2Failure;
+	protected AssertionError node1Failure;
+	protected AssertionError node2Failure;
 
 	protected List<Runnable> cleanup = new ArrayList<>();
 
@@ -101,7 +96,6 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 
 	@BeforeClassOnce
 	public void prepareResources() throws Exception {
-		TestResourceTracker.testStarted( getClass().getSimpleName() );
 		// to mimic exactly the old code results, both environments here are exactly the same...
 		StandardServiceRegistryBuilder ssrb = createStandardServiceRegistryBuilder();
 		localEnvironment = new NodeEnvironment( ssrb );
@@ -109,7 +103,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 
 		localRegion = getRegion(localEnvironment);
 		localAccessStrategy = getAccessStrategy(localRegion);
-      testLocalAccessStrategy = TEST_SESSION_ACCESS.fromAccessStrategy(localAccessStrategy);
+      testLocalAccessStrategy = TEST_SESSION_ACCESS.fromAccess(localAccessStrategy);
 
 		transactional = Caches.isTransactionalCache(localRegion.getCache());
 		invalidation = Caches.isInvalidationCache(localRegion.getCache());
@@ -120,7 +114,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 
 		remoteRegion = getRegion(remoteEnvironment);
 		remoteAccessStrategy = getAccessStrategy(remoteRegion);
-      testRemoteAccessStrategy = TEST_SESSION_ACCESS.fromAccessStrategy(remoteAccessStrategy);
+      testRemoteAccessStrategy = TEST_SESSION_ACCESS.fromAccess(remoteAccessStrategy);
 
 		waitForClusterToForm(localRegion.getCache(), remoteRegion.getCache());
 	}
@@ -131,6 +125,8 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		cleanup.clear();
 		if (localRegion != null) localRegion.getCache().clear();
 		if (remoteRegion != null) remoteRegion.getCache().clear();
+		node1Exception = node2Exception = null;
+		node1Failure = node2Failure = null;
 	}
 
 	@AfterClassOnce
@@ -145,13 +141,12 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 				remoteEnvironment.release();
 			}
 		}
-		TestResourceTracker.testFinished(getClass().getSimpleName());
 	}
 
 	@Override
 	protected StandardServiceRegistryBuilder createStandardServiceRegistryBuilder() {
 		StandardServiceRegistryBuilder ssrb = super.createStandardServiceRegistryBuilder();
-		ssrb.applySetting(TestInfinispanRegionFactory.TIME_SERVICE, TIME_SERVICE);
+		ssrb.applySetting(TestRegionFactory.TIME_SERVICE, TIME_SERVICE);
 		return ssrb;
 	}
 
@@ -187,18 +182,18 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 
                   CountDownLatch latch = expectPutFromLoad(remoteRegion, KEY);
 						if (useMinimalAPI) {
-							testLocalAccessStrategy.putFromLoad(session, KEY, VALUE1, SESSION_ACCESS.getTimestamp(session), 1, true);
+							testLocalAccessStrategy.putFromLoad(session, KEY, VALUE1, SESSION_ACCESS.getTimestamp(session), VALUE1.version, true);
 						} else {
-							testLocalAccessStrategy.putFromLoad(session, KEY, VALUE1, SESSION_ACCESS.getTimestamp(session), 1);
+							testLocalAccessStrategy.putFromLoad(session, KEY, VALUE1, SESSION_ACCESS.getTimestamp(session), VALUE1.version);
 						}
 
-						doUpdate(testLocalAccessStrategy, session, KEY, VALUE2, 2);
+						doUpdate(testLocalAccessStrategy, session, KEY, VALUE2);
 						return latch;
 					});
 				} catch (Exception e) {
 					log.error("node1 caught exception", e);
 					node1Exception = e;
-				} catch (AssertionFailedError e) {
+				} catch (AssertionError e) {
 					node1Failure = e;
 				} finally {
                // Let node2 write
@@ -221,16 +216,16 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 
                   CountDownLatch latch = expectPutFromLoad(localRegion, KEY);
 						if (useMinimalAPI) {
-                     testRemoteAccessStrategy.putFromLoad(session, KEY, VALUE1, SESSION_ACCESS.getTimestamp(session), 1, true);
+                     testRemoteAccessStrategy.putFromLoad(session, KEY, VALUE1, SESSION_ACCESS.getTimestamp(session), VALUE1.version, true);
 						} else {
-                     testRemoteAccessStrategy.putFromLoad(session, KEY, VALUE1, SESSION_ACCESS.getTimestamp(session), 1);
+                     testRemoteAccessStrategy.putFromLoad(session, KEY, VALUE1, SESSION_ACCESS.getTimestamp(session), VALUE1.version);
 						}
 						return latch;
 					});
 				} catch (Exception e) {
 					log.error("node2 caught exception", e);
 					node2Exception = e;
-				} catch (AssertionFailedError e) {
+				} catch (AssertionError e) {
 					node2Failure = e;
 				} finally {
 					completionLatch.countDown();
@@ -316,7 +311,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		return expectPutWithValue(value -> value instanceof TombstoneUpdate);
 	}
 
-   protected CountDownLatch expectPutFromLoad(R region, Object key) {
+   protected CountDownLatch expectPutFromLoad(InfinispanBaseRegion region, Object key) {
       Predicate<Object> valuePredicate = accessType == AccessType.NONSTRICT_READ_WRITE
          ? value -> value instanceof VersionedEntry
          : value -> value instanceof TombstoneUpdate;
@@ -341,9 +336,9 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
       return latch;
    }
 
-   protected abstract void doUpdate(TestRegionAccessStrategy strategy, Object session, Object key, Object value, Object version) throws RollbackException, SystemException;
+   protected abstract void doUpdate(TestRegionAccessStrategy strategy, Object session, Object key, TestCacheEntry entry);
 
-	protected abstract S getAccessStrategy(R region);
+	protected abstract S getAccessStrategy(InfinispanBaseRegion region);
 
 	@Test
 	public void testRemove() throws Exception {
@@ -355,7 +350,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		evictOrRemoveTest( true );
 	}
 
-	protected abstract R getRegion(NodeEnvironment environment);
+	protected abstract InfinispanBaseRegion getRegion(NodeEnvironment environment);
 
 	protected void waitForClusterToForm(Cache... caches) {
 		TestingUtil.blockUntilViewsReceived(10000, Arrays.asList(caches));
@@ -387,9 +382,9 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		assertNull("remote is clean", testRemoteAccessStrategy.get(s2, KEY, SESSION_ACCESS.getTimestamp(s2)));
 
       Object s3 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
-		testLocalAccessStrategy.putFromLoad(s3, KEY, VALUE1, SESSION_ACCESS.getTimestamp(s3), 1);
+		testLocalAccessStrategy.putFromLoad(s3, KEY, VALUE1, SESSION_ACCESS.getTimestamp(s3), VALUE1.version);
       Object s5 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
-		testRemoteAccessStrategy.putFromLoad(s5, KEY, VALUE1, SESSION_ACCESS.getTimestamp(s5), 1);
+		testRemoteAccessStrategy.putFromLoad(s5, KEY, VALUE1, SESSION_ACCESS.getTimestamp(s5), VALUE1.version);
 
 		// putFromLoad is applied on local node synchronously, but if there's a concurrent update
 		// from the other node it can silently fail when acquiring the loc . Then we could try to read
@@ -407,7 +402,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
       Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
 		withTx(localEnvironment, session, () -> {
 			if (evict) {
-				localAccessStrategy.evict(KEY);
+				testLocalAccessStrategy.evict(KEY);
 			}
 			else {
 				doRemove(testLocalAccessStrategy, session, KEY);
@@ -478,9 +473,9 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 
       Object s3 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
 //      log.infof("Call putFromLoad strategy get for key=%s", KEY);
-		testLocalAccessStrategy.putFromLoad(s3, KEY, VALUE1, SESSION_ACCESS.getTimestamp(s3), 1);
+		testLocalAccessStrategy.putFromLoad(s3, KEY, VALUE1, SESSION_ACCESS.getTimestamp(s3), VALUE1.version);
       Object s5 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
-		testRemoteAccessStrategy.putFromLoad(s5, KEY, VALUE1, SESSION_ACCESS.getTimestamp(s5), 1);
+		testRemoteAccessStrategy.putFromLoad(s5, KEY, VALUE1, SESSION_ACCESS.getTimestamp(s5), VALUE2.version);
 
 		// putFromLoad is applied on local node synchronously, but if there's a concurrent update
 		// from the other node it can silently fail when acquiring the loc . Then we could try to read
@@ -496,13 +491,14 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 
       CountDownLatch endInvalidationLatch = createEndInvalidationLatch(evict, KEY);
 
-		withTx(localEnvironment, TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE), () -> {
+		Object removeSession = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+		withTx(localEnvironment, removeSession, () -> {
 			if (evict) {
-				localAccessStrategy.evictAll();
+				testLocalAccessStrategy.evictAll();
 			} else {
-				SoftLock softLock = localAccessStrategy.lockRegion();
-				localAccessStrategy.removeAll();
-				localAccessStrategy.unlockRegion(softLock);
+				SoftLock softLock = testLocalAccessStrategy.lockRegion();
+				testLocalAccessStrategy.removeAll(removeSession);
+				testLocalAccessStrategy.unlockRegion(softLock);
 			}
 			return null;
 		});
@@ -557,7 +553,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
       return endInvalidationLatch;
    }
 
-   private void expectPutFromLoadEndInvalidating(R region, Object key, CountDownLatch endInvalidationLatch) {
+   private void expectPutFromLoadEndInvalidating(InfinispanBaseRegion region, Object key, CountDownLatch endInvalidationLatch) {
       PutFromLoadValidator originalValidator = PutFromLoadValidator.removeFromCache(region.getCache());
       assertEquals(PutFromLoadValidator.class, originalValidator.getClass());
       PutFromLoadValidator mockValidator = spy(originalValidator);
@@ -576,7 +572,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
       });
    }
 
-   private void expectInvalidateCommand(R region, CountDownLatch latch) {
+   private void expectInvalidateCommand(InfinispanBaseRegion region, CountDownLatch latch) {
       ExpectingInterceptor.get(region.getCache())
          .when((ctx, cmd) -> cmd instanceof InvalidateCommand || cmd instanceof ClearCommand)
          .countDown(latch);
@@ -606,5 +602,55 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 			putFromLoadLatch = new CountDownLatch(0);
 		}
 		return putFromLoadLatch;
+	}
+
+	public static class TestCacheEntry implements CacheEntry, Serializable {
+		private final Serializable value;
+		private final Serializable version;
+
+		public TestCacheEntry(Serializable value, Serializable version) {
+			this.value = value;
+			this.version = version;
+		}
+
+		@Override
+		public boolean isReferenceEntry() {
+			return false;
+		}
+
+		@Override
+		public String getSubclass() {
+			return REGION_NAME;
+		}
+
+		@Override
+		public Object getVersion() {
+			return version;
+		}
+
+		@Override
+		public Serializable[] getDisassembledState() {
+			return new Serializable[] { value, version };
+		}
+
+		@Override
+		public String toString() {
+			return value + "/" + version;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			TestCacheEntry that = (TestCacheEntry) o;
+			return Objects.equals(value, that.value) &&
+					Objects.equals(version, that.version);
+		}
+
+		@Override
+		public int hashCode() {
+
+			return Objects.hash(value, version);
+		}
 	}
 }

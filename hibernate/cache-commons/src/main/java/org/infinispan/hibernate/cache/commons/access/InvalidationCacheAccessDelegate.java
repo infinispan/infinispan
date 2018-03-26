@@ -7,7 +7,7 @@
 package org.infinispan.hibernate.cache.commons.access;
 
 import org.hibernate.cache.CacheException;
-import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
+import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 
@@ -23,7 +23,7 @@ public abstract class InvalidationCacheAccessDelegate implements AccessDelegate 
 	protected static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( InvalidationCacheAccessDelegate.class );
 	protected static final boolean TRACE_ENABLED = log.isTraceEnabled();
 	protected final AdvancedCache cache;
-	protected final BaseRegion region;
+	protected final InfinispanDataRegion region;
 	protected final PutFromLoadValidator putValidator;
 	protected final AdvancedCache<Object, Object> writeCache;
 
@@ -34,7 +34,7 @@ public abstract class InvalidationCacheAccessDelegate implements AccessDelegate 
     * @param validator put from load validator
     */
 	@SuppressWarnings("unchecked")
-	protected InvalidationCacheAccessDelegate(BaseRegion region, PutFromLoadValidator validator) {
+	protected InvalidationCacheAccessDelegate(InfinispanDataRegion region, PutFromLoadValidator validator) {
 		this.region = region;
 		this.cache = region.getCache();
 		this.putValidator = validator;
@@ -58,7 +58,7 @@ public abstract class InvalidationCacheAccessDelegate implements AccessDelegate 
 			return null;
 		}
 		final Object val = cache.get( key );
-		if ( val == null ) {
+		if (val == null && session != null) {
 			putValidator.registerPendingPut(session, key, txTimestamp );
 		}
 		return val;

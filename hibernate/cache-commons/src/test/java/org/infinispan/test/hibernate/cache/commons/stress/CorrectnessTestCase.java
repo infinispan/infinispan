@@ -65,7 +65,7 @@ import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
+import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.hibernate.cache.commons.access.InvalidationCacheAccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
@@ -90,12 +90,14 @@ import org.hibernate.testing.BeforeClassOnce;
 import org.hibernate.testing.jta.JtaAwareConnectionProviderImpl;
 import org.hibernate.testing.jta.TestingJtaPlatformImpl;
 import org.hibernate.testing.junit4.CustomParameterized;
+import org.infinispan.test.hibernate.cache.commons.util.TestConfigurationHook;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Address;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Family;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Person;
-import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -241,8 +243,8 @@ public abstract class CorrectnessTestCase {
               .applySetting( Environment.URL, "jdbc:h2:mem:" + getDbName() + ";TRACE_LEVEL_FILE=4")
               .applySetting( Environment.DIALECT, H2Dialect.class.getName() )
               .applySetting( Environment.HBM2DDL_AUTO, "create-drop" )
-              .applySetting( Environment.CACHE_REGION_FACTORY, FailingInfinispanRegionFactory.class.getName())
-              .applySetting( TestInfinispanRegionFactory.CACHE_MODE, cacheMode )
+              .applySetting( TestRegionFactory.CONFIGURATION_HOOK, InjectFailures.class)
+              .applySetting( TestRegionFactory.CACHE_MODE, cacheMode )
               .applySetting( Environment.USE_MINIMAL_PUTS, "false" )
               .applySetting( Environment.GENERATE_STATISTICS, "false" );
       applySettings(ssrb);
@@ -257,7 +259,7 @@ public abstract class CorrectnessTestCase {
 
    protected void applySettings(StandardServiceRegistryBuilder ssrb) {
       ssrb.applySetting( Environment.DEFAULT_CACHE_CONCURRENCY_STRATEGY, accessType.getExternalName());
-      ssrb.applySetting(TestInfinispanRegionFactory.TRANSACTIONAL, accessType == AccessType.TRANSACTIONAL);
+      ssrb.applySetting(TestRegionFactory.TRANSACTIONAL, TestRegionFactoryProvider.load().supportTransactionalCaches() && accessType == AccessType.TRANSACTIONAL);
    }
 
    @AfterClassOnce
@@ -316,18 +318,18 @@ public abstract class CorrectnessTestCase {
       }
    }
 
-   public static class FailingInfinispanRegionFactory extends TestInfinispanRegionFactory {
-      public FailingInfinispanRegionFactory(Properties properties) {
+   public static class InjectFailures extends TestConfigurationHook {
+      public InjectFailures(Properties properties) {
          super(properties);
       }
 
       @Override
-      protected void amendCacheConfiguration(String cacheName, ConfigurationBuilder configurationBuilder) {
+      public void amendCacheConfiguration(String cacheName, ConfigurationBuilder configurationBuilder) {
          super.amendCacheConfiguration(cacheName, configurationBuilder);
          configurationBuilder.transaction().cacheStopTimeout(1, TimeUnit.SECONDS);
          if (INJECT_FAILURES) {
             // failure to write into timestamps would cause failure even though both DB and cache has been updated
-            if (!cacheName.equals("timestamps") && !cacheName.endsWith(InfinispanRegionFactory.DEF_PENDING_PUTS_RESOURCE)) {
+            if (!cacheName.equals("timestamps") && !cacheName.endsWith(InfinispanProperties.DEF_PENDING_PUTS_RESOURCE)) {
                configurationBuilder.customInterceptors().addInterceptor()
                   .interceptorClass(FailureInducingInterceptor.class)
                   .position(InterceptorConfiguration.Position.FIRST);

@@ -10,8 +10,7 @@ import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import org.hibernate.cache.CacheException;
-import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
-import org.infinispan.hibernate.cache.commons.JndiInfinispanRegionFactory;
+import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.util.ByteString;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -52,7 +51,7 @@ public interface InfinispanMessageLogger extends BasicLogger {
 	CacheException pendingPutsMustHaveMaxIdle();
 
 	@LogMessage(level = WARN)
-	@Message(value = "Property '" + InfinispanRegionFactory.INFINISPAN_USE_SYNCHRONIZATION_PROP + "' is deprecated; 2LC with transactional cache must always use synchronizations.", id = 25005)
+	@Message(value = "Property '" + InfinispanProperties.INFINISPAN_USE_SYNCHRONIZATION_PROP + "' is deprecated; 2LC with transactional cache must always use synchronizations.", id = 25005)
 	void propertyUseSynchronizationDeprecated();
 
 	@LogMessage(level = ERROR)
@@ -126,7 +125,7 @@ public interface InfinispanMessageLogger extends BasicLogger {
 	@Message(value = "Failed to invalidate pending putFromLoad calls for region %s", id = 25025)
 	void failedInvalidateRegion(String regionName);
 
-	@Message(value = "Property '" + JndiInfinispanRegionFactory.CACHE_MANAGER_RESOURCE_PROP + "' not set", id = 25026)
+	@Message(value = "Property '" + InfinispanProperties.CACHE_MANAGER_RESOURCE_PROP + "' not set", id = 25026)
 	CacheException propertyCacheManagerResourceNotSet();
 
 	@Message(value = "Timestamp cache cannot be configured with invalidation", id = 25027)
@@ -139,4 +138,8 @@ public interface InfinispanMessageLogger extends BasicLogger {
 	@LogMessage(level = WARN)
 	@Message(value = "Property '%s' is deprecated, please use '%s' instead", id = 25029)
 	void deprecatedProperty(String deprecated, String alternative);
+
+	@LogMessage(level = WARN)
+	@Message(value = "Transactional caches are not supported. The configuration option will be ignored; please unset.", id = 25030)
+	void transactionalConfigurationIgnored();
 }

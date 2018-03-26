@@ -14,8 +14,8 @@ import javax.transaction.TransactionManager;
 
 import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform;
 import org.infinispan.hibernate.cache.commons.util.Caches;
-import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 import org.hibernate.resource.transaction.spi.TransactionStatus;
@@ -25,18 +25,16 @@ import org.infinispan.test.hibernate.cache.commons.util.BatchModeJtaPlatform;
 import org.infinispan.test.hibernate.cache.commons.util.CacheTestSupport;
 import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
 import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
-import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
-
-import org.jboss.logging.Logger;
 
 /**
  * Base class for all non-functional tests of Infinispan integration.
@@ -46,48 +44,10 @@ import org.jboss.logging.Logger;
  */
 @RunWith(CustomParameterized.class)
 public abstract class AbstractNonFunctionalTest extends org.hibernate.testing.junit4.BaseUnitTestCase {
-	private static final Logger log = Logger.getLogger(AbstractNonFunctionalTest.class);
-
-	@Rule
-	public InfinispanTestingSetup infinispanTestIdentifier = new InfinispanTestingSetup();
+	@ClassRule
+	public static final InfinispanTestingSetup infinispanTestIdentifier = new InfinispanTestingSetup();
 
    protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
-
-	@CustomParameterized.Order(0)
-	@Parameterized.Parameters(name = "{0}")
-	public List<Object[]> getJtaParameters() {
-		return Arrays.asList(
-				new Object[] { "JTA", BatchModeJtaPlatform.class },
-				new Object[] { "non-JTA", null });
-	}
-
-	@CustomParameterized.Order(1)
-	@Parameterized.Parameters(name = "{2},{3}")
-	public List<Object[]> getCacheModeParameters() {
-		ArrayList<Object[]> modes = new ArrayList<>();
-		for (AccessType accessType : new AccessType[] {
-				AccessType.TRANSACTIONAL,
-				AccessType.READ_ONLY,
-				AccessType.READ_WRITE
-		}) {
-			modes.add(new Object[]{CacheMode.INVALIDATION_SYNC, accessType});
-		}
-		for (AccessType accessType : new AccessType[] {
-				AccessType.READ_ONLY,
-				AccessType.READ_WRITE,
-				AccessType.NONSTRICT_READ_WRITE
-		}) {
-			modes.add(new Object[]{CacheMode.REPL_SYNC, accessType});
-			modes.add(new Object[]{CacheMode.DIST_SYNC, accessType});
-			if (canUseLocalMode()) {
-				modes.add(new Object[]{CacheMode.LOCAL, accessType});
-			}
-		}
-		if (canUseLocalMode()) {
-			modes.add(new Object[]{CacheMode.LOCAL, AccessType.TRANSACTIONAL});
-		}
-		return modes;
-	}
 
 	@Parameterized.Parameter(0)
 	public String mode;
@@ -101,7 +61,6 @@ public abstract class AbstractNonFunctionalTest extends org.hibernate.testing.ju
 	@Parameterized.Parameter(3)
 	public AccessType accessType;
 
-
 	public static final String REGION_PREFIX = "test";
 
 	private static final String PREFER_IPV4STACK = "java.net.preferIPv4Stack";
@@ -111,8 +70,44 @@ public abstract class AbstractNonFunctionalTest extends org.hibernate.testing.ju
 
 	private CacheTestSupport testSupport = new CacheTestSupport();
 
+	@Parameterized.Parameters(name = "{0}, {2}, {3}")
+	public List<Object[]> getParameters() {
+		List<Object[]> parameters = new ArrayList<>(Arrays.asList(
+				new Object[]{"JTA", BatchModeJtaPlatform.class, CacheMode.INVALIDATION_SYNC, AccessType.TRANSACTIONAL},
+				new Object[]{"JTA", BatchModeJtaPlatform.class, CacheMode.INVALIDATION_SYNC, AccessType.READ_WRITE},
+				new Object[]{"JTA", BatchModeJtaPlatform.class, CacheMode.INVALIDATION_SYNC, AccessType.READ_ONLY},
+				new Object[]{"JTA", BatchModeJtaPlatform.class, CacheMode.DIST_SYNC, AccessType.READ_WRITE},
+				new Object[]{"JTA", BatchModeJtaPlatform.class, CacheMode.DIST_SYNC, AccessType.READ_ONLY},
+				new Object[]{"JTA", BatchModeJtaPlatform.class, CacheMode.DIST_SYNC, AccessType.NONSTRICT_READ_WRITE},
+				new Object[]{"JTA", BatchModeJtaPlatform.class, CacheMode.REPL_SYNC, AccessType.READ_WRITE},
+				new Object[]{"JTA", BatchModeJtaPlatform.class, CacheMode.REPL_SYNC, AccessType.READ_ONLY},
+				new Object[]{"JTA", BatchModeJtaPlatform.class, CacheMode.REPL_SYNC, AccessType.NONSTRICT_READ_WRITE},
+				new Object[]{"non-JTA", NoJtaPlatform.class, CacheMode.INVALIDATION_SYNC, AccessType.READ_WRITE},
+				new Object[]{"non-JTA", NoJtaPlatform.class, CacheMode.INVALIDATION_SYNC, AccessType.READ_ONLY},
+				new Object[]{"non-JTA", NoJtaPlatform.class, CacheMode.DIST_SYNC, AccessType.READ_WRITE},
+				new Object[]{"non-JTA", NoJtaPlatform.class, CacheMode.DIST_SYNC, AccessType.READ_ONLY},
+				new Object[]{"non-JTA", NoJtaPlatform.class, CacheMode.DIST_SYNC, AccessType.NONSTRICT_READ_WRITE},
+				new Object[]{"non-JTA", NoJtaPlatform.class, CacheMode.REPL_SYNC, AccessType.READ_WRITE},
+				new Object[]{"non-JTA", NoJtaPlatform.class, CacheMode.REPL_SYNC, AccessType.READ_ONLY},
+				new Object[]{"non-JTA", NoJtaPlatform.class, CacheMode.REPL_SYNC, AccessType.NONSTRICT_READ_WRITE}
+		));
+		if (canUseLocalMode()) {
+			parameters.addAll(Arrays.asList(
+					new Object[]{"JTA", BatchModeJtaPlatform.class, CacheMode.LOCAL, AccessType.TRANSACTIONAL},
+					new Object[]{"JTA", BatchModeJtaPlatform.class, CacheMode.LOCAL, AccessType.READ_WRITE},
+					new Object[]{"JTA", BatchModeJtaPlatform.class, CacheMode.LOCAL, AccessType.READ_ONLY},
+					new Object[]{"JTA", BatchModeJtaPlatform.class, CacheMode.LOCAL, AccessType.NONSTRICT_READ_WRITE},
+					new Object[]{"non-JTA", NoJtaPlatform.class, CacheMode.LOCAL, AccessType.READ_WRITE},
+					new Object[]{"non-JTA", NoJtaPlatform.class, CacheMode.LOCAL, AccessType.READ_ONLY},
+					new Object[]{"non-JTA", NoJtaPlatform.class, CacheMode.LOCAL, AccessType.NONSTRICT_READ_WRITE}
+			));
+		}
+		return parameters;
+	}
+
 	@Before
 	public void prepareCacheSupport() throws Exception {
+		infinispanTestIdentifier.joinContext();
 		preferIPv4Stack = System.getProperty(PREFER_IPV4STACK);
 		System.setProperty(PREFER_IPV4STACK, "true");
 		jgroupsCfgFile = System.getProperty(JGROUPS_CFG_FILE);
@@ -142,8 +137,8 @@ public abstract class AbstractNonFunctionalTest extends org.hibernate.testing.ju
 	}
 
 	protected <T> T withTx(NodeEnvironment environment, Object session, Callable<T> callable) throws Exception {
-		if (jtaPlatform != null) {
-			TransactionManager tm = environment.getServiceRegistry().getService(JtaPlatform.class).retrieveTransactionManager();
+		TransactionManager tm = environment.getServiceRegistry().getService(JtaPlatform.class).retrieveTransactionManager();
+		if (tm != null) {
 			return Caches.withinTx(tm, callable);
 		} else {
 			Transaction transaction = TEST_SESSION_ACCESS.beginTransaction(session);
@@ -170,35 +165,16 @@ public abstract class AbstractNonFunctionalTest extends org.hibernate.testing.ju
 		}
 	}
 
-	protected void registerCache(Cache cache) {
-		testSupport.registerCache(cache);
-	}
-
-	protected void unregisterCache(Cache cache) {
-		testSupport.unregisterCache(cache);
-	}
-
-	protected void registerFactory(RegionFactory factory) {
-		testSupport.registerFactory(factory);
-	}
-
-	protected void unregisterFactory(RegionFactory factory) {
-		testSupport.unregisterFactory(factory);
-	}
-
 	protected CacheTestSupport getCacheTestSupport() {
 		return testSupport;
 	}
 
 	protected StandardServiceRegistryBuilder createStandardServiceRegistryBuilder() {
 		final StandardServiceRegistryBuilder ssrb = CacheTestUtil.buildBaselineStandardServiceRegistryBuilder(
-				REGION_PREFIX, getRegionFactoryClass(), true, false, jtaPlatform);
-		ssrb.applySetting(TestInfinispanRegionFactory.TRANSACTIONAL, accessType == AccessType.TRANSACTIONAL);
-		ssrb.applySetting(TestInfinispanRegionFactory.CACHE_MODE, cacheMode);
+				REGION_PREFIX, true, false, jtaPlatform);
+		ssrb.applySetting(TestRegionFactory.TRANSACTIONAL, TestRegionFactoryProvider.load().supportTransactionalCaches() && accessType == AccessType.TRANSACTIONAL);
+		ssrb.applySetting(TestRegionFactory.CACHE_MODE, cacheMode);
 		return ssrb;
 	}
 
-	protected Class<? extends RegionFactory> getRegionFactoryClass() {
-		return TestInfinispanRegionFactory.class;
-	}
 }
