@@ -50,7 +50,9 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -78,6 +80,7 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoverableTransactionIdentifier;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.EntryWrapper;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -271,13 +274,22 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       enlistIfNeeded(ctx);
       if (ctx.isInTxScope()) {
-         // We just set it, unfortunately we always wrap even if this flag was set
-         FlagBitSets.getAndSetFlags(command, FlagBitSets.REMOTE_ITERATION);
+         // Acquire the remote iteration flag and set it for all below - so they won't wrap unnecessarily
+         boolean isRemoteIteration = command.hasAnyFlag(FlagBitSets.REMOTE_ITERATION);
+         command.setFlagsBitSet(FlagBitSets.REMOTE_ITERATION);
          return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
             CacheSet<K> set = (CacheSet<K>) rv;
             return new AbstractDelegatingKeyCacheSet<K, V>(Caches.getCacheWithFlags(cache, (FlagAffectedCommand) rCommand), set) {
                @Override
                public CloseableIterator<K> iterator() {
+                  if (isRemoteIteration) {
+                     return innerIterator();
+                  }
+                  // Need to support remove of iterator
+                  return new RemovableCloseableIterator<>(innerIterator(), cache::remove);
+               }
+
+               CloseableIterator<K> innerIterator() {
                   return new TransactionAwareKeyCloseableIterator<>(super.iterator(),
                         (TxInvocationContext<LocalTransaction>) rCtx, cache);
                }
@@ -317,7 +329,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
                         parentSpliterator.estimateSize() + rCtx.getLookedUpEntries().size();
                   // This is an overestimate for size if we have looked up entries that don't map to
                   // this node
-                  return new IteratorAsSpliterator.Builder<>(iterator())
+                  return new IteratorAsSpliterator.Builder<>(innerIterator())
                         .setEstimateRemaining(estimateSize < 0L ? Long.MAX_VALUE : estimateSize)
                         .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT |
                               Spliterator.NONNULL).get();
@@ -341,8 +353,9 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       enlistIfNeeded(ctx);
       if (ctx.isInTxScope()) {
-         // We just set it, unfortunately we always wrap even if this flag was set
-         FlagBitSets.getAndSetFlags(command, FlagBitSets.REMOTE_ITERATION);
+         // Acquire the remote iteration flag and set it for all below - so they won't wrap unnecessarily
+         boolean isRemoteIteration = command.hasAnyFlag(FlagBitSets.REMOTE_ITERATION);
+         command.setFlagsBitSet(FlagBitSets.REMOTE_ITERATION);
          return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
             CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) rv;
             return new AbstractDelegatingEntryCacheSet<K, V>(
@@ -381,6 +394,14 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
 
                @Override
                public CloseableIterator<CacheEntry<K, V>> iterator() {
+                  if (isRemoteIteration) {
+                     return innerIterator();
+                  }
+                  return new CloseableIteratorMapper<>(new RemovableCloseableIterator<>(innerIterator(),
+                        e -> cache.remove(e.getKey(), e.getValue())), e -> new EntryWrapper<>(cache, e));
+               }
+
+               CloseableIterator<CacheEntry<K, V>> innerIterator() {
                   return new TransactionAwareEntryCloseableIterator<>(super.iterator(),
                         (TxInvocationContext<LocalTransaction>) rCtx, cache);
                }
@@ -392,7 +413,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
                         parentSpliterator.estimateSize() + rCtx.getLookedUpEntries().size();
                   // This is an overestimate for size if we have looked up entries that don't map to
                   // this node
-                  return new IteratorAsSpliterator.Builder<>(iterator())
+                  return new IteratorAsSpliterator.Builder<>(innerIterator())
                         .setEstimateRemaining(estimateSize < 0L ? Long.MAX_VALUE : estimateSize)
                         .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT |
                               Spliterator.NONNULL).get();

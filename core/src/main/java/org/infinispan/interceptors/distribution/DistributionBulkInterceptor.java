@@ -54,7 +54,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
          return super.visitEntrySetCommand(ctx, command);
       }
       // We just set it, we always wrap our iterator and support removal
-      FlagBitSets.getAndSetFlags(command, FlagBitSets.REMOTE_ITERATION);
+      command.addFlags(FlagBitSets.REMOTE_ITERATION);
 
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          EntrySetCommand entrySetCommand = (EntrySetCommand) rCommand;
@@ -204,7 +204,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
          return super.visitKeySetCommand(ctx, command);
       }
       // We just set it, we always wrap our iterator and support removal
-      FlagBitSets.getAndSetFlags(command, FlagBitSets.REMOTE_ITERATION);
+      command.addFlags(FlagBitSets.REMOTE_ITERATION);
 
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          CacheSet<K> keySet = (CacheSet<K>) rv;

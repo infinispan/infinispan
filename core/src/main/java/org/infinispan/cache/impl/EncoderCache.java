@@ -471,7 +471,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
       EncoderEntryMapper<K, V, CacheEntry<K, V>> cacheEntryMapper = EncoderEntryMapper.newCacheEntryMapper(
-            keyDataConversion, valueDataConversion);
+            keyDataConversion, valueDataConversion, entryFactory);
       return new WriteableCacheSetMapper<>(super.cacheEntrySet(), cacheEntryMapper,
             e -> new CacheEntryWrapper<>(cacheEntryMapper.apply(e), e), this::toCacheEntry, this::keyToStorage);
    }
@@ -714,8 +714,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public CacheSet<Map.Entry<K, V>> entrySet() {
       EncoderEntryMapper<K, V, Map.Entry<K, V>> entryMapper = EncoderEntryMapper.newEntryMapper(keyDataConversion,
-            valueDataConversion);
-      componentRegistry.wireDependencies(entryMapper);
+            valueDataConversion, entryFactory);
       return new WriteableCacheSetMapper<>(super.entrySet(), entryMapper,
             e -> new EntryWrapper<>(e, entryMapper.apply(e, true)), this::toEntry, this::keyToStorage);
    }
@@ -766,11 +765,11 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    private class EntryWrapper<A, B> implements Entry<A, B> {
-      private final Entry<A, B> previousEntry;
+      private final Entry<A, B> storageEntry;
       private final Entry<A, B> entry;
 
-      EntryWrapper(Entry<A, B> previousEntry, Entry<A, B> entry) {
-         this.previousEntry = previousEntry;
+      EntryWrapper(Entry<A, B> storageEntry, Entry<A, B> entry) {
+         this.storageEntry = storageEntry;
          this.entry = entry;
       }
 
@@ -786,7 +785,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
       @Override
       public B setValue(B value) {
-         previousEntry.setValue((B) valueToStorage(value));
+         storageEntry.setValue((B) valueToStorage(value));
          return entry.setValue(value);
       }
    }

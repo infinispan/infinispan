@@ -11,9 +11,9 @@ import org.infinispan.commons.util.InjectiveFunction;
  * @author wburns
  * @since 9.2
  */
-class CacheStreamMapper<R> extends AbstractDelegatingCacheStream<R> {
+class MappedCacheStream<R> extends AbstractDelegatingCacheStream<R> {
    private final InjectiveFunction<Object, ?> keyMapper;
-   CacheStreamMapper(CacheStream<R> stream, InjectiveFunction<Object, ?> keyMapper) {
+   MappedCacheStream(CacheStream<R> stream, InjectiveFunction<Object, ?> keyMapper) {
       super(stream);
       this.keyMapper = keyMapper;
    }

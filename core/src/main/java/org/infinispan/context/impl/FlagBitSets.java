@@ -65,18 +65,4 @@ public class FlagBitSets {
       }
       return null;
    }
-
-   /**
-    * Retrieves the values for the given flags and then sets those flags on the command. This can be useful
-    * if subsequent users of this command know that an upstream operation has already handled a given flag
-    * @param command the command to get the flags from and then set
-    * @param flagsToSet the flags to get and set
-    * @return the flags that were set
-    */
-   public static long getAndSetFlags(FlagAffectedCommand command, long flagsToSet) {
-      long originalFlags = command.getFlagsBitSet();
-      long setFlags = originalFlags & flagsToSet;
-      command.setFlagsBitSet(originalFlags | flagsToSet);
-      return setFlags;
-   }
 }

@@ -4,7 +4,7 @@ import java.util.Spliterator;
 import java.util.function.Function;
 
 /**
- * A spliterator that maps each value to the output of the Function that is also closeable. If the underlying
+ * A spliterator that maps each value to the output of the Function and is also closeable. If the underlying
  * spliterator is closeable, it will also close it
  * @author wburns
  * @since 9.0

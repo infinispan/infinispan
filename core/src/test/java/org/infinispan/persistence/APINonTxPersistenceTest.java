@@ -21,12 +21,13 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
  * @author wburns
  * @since 9.2
  */
-public class CacheAPIPersistenceTest extends APINonTxTest {
+public class APINonTxPersistenceTest extends APINonTxTest {
    @Override
    protected void configure(ConfigurationBuilder builder) {
       // We use a mocked container, so nothing is written
       DataContainer mockContainer = mock(DataContainer.class);
       when(mockContainer.iterator()).thenReturn(Collections.emptyIterator());
+      when(mockContainer.iteratorIncludingExpired()).thenReturn(Collections.emptyIterator());
       when(mockContainer.spliterator()).thenReturn(Spliterators.emptySpliterator());
       when(mockContainer.entrySet()).thenReturn(Collections.emptySet());
       when(mockContainer.keySet()).thenReturn(Collections.emptySet());

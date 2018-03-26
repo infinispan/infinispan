@@ -5,8 +5,11 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.infinispan.CacheCollection;
+import org.infinispan.CacheStream;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorMapper;
+import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.CloseableSpliteratorMapper;
 import org.infinispan.commons.util.InjectiveFunction;
 
 /**
@@ -20,18 +23,24 @@ import org.infinispan.commons.util.InjectiveFunction;
  * can be useful to intercept calls such as {@link java.util.Map.Entry#setValue(Object)} and update appropriately.
  * @author wburns
  * @since 9.2
+ * @param <E> the original collection type - referred to as old in some methods
+ * @param <R> the resulting collection type - referred to as new in some methods
  */
-public class WriteableCacheCollectionMapper<E, R> extends CacheCollectionMapper<E, R> {
+public class WriteableCacheCollectionMapper<E, R> extends CollectionMapper<E, R> implements CacheCollection<R> {
+   protected final CacheCollection<E> realCacheCollection;
    protected final Function<? super E, ? extends R> toNewTypeIteratorFunction;
    protected final Function<? super R, ? extends E> fromNewTypeFunction;
+   protected final InjectiveFunction<Object, ?> keyFilterMapper;
 
    public WriteableCacheCollectionMapper(CacheCollection<E> realCollection,
          Function<? super E, ? extends R> toNewTypeFunction,
          Function<? super R, ? extends E> fromNewTypeFunction,
          InjectiveFunction<Object, ?> keyFilterFunction) {
-      super(realCollection, toNewTypeFunction, keyFilterFunction);
+      super(realCollection, toNewTypeFunction);
+      this.realCacheCollection = realCollection;
       this.toNewTypeIteratorFunction = toNewTypeFunction;
       this.fromNewTypeFunction = fromNewTypeFunction;
+      this.keyFilterMapper = keyFilterFunction;
    }
 
    public WriteableCacheCollectionMapper(CacheCollection<E> realCollection,
@@ -39,9 +48,11 @@ public class WriteableCacheCollectionMapper<E, R> extends CacheCollectionMapper<
          Function<? super E, ? extends R> toNewTypeIteratorFunction,
          Function<? super R, ? extends E> fromNewTypeFunction,
          InjectiveFunction<Object, ?> keyFilterFunction) {
-      super(realCollection, toNewTypeFunction, keyFilterFunction);
+      super(realCollection, toNewTypeFunction);
+      this.realCacheCollection = realCollection;
       this.toNewTypeIteratorFunction = toNewTypeIteratorFunction;
       this.fromNewTypeFunction = fromNewTypeFunction;
+      this.keyFilterMapper = keyFilterFunction;
    }
 
    @Override
@@ -92,5 +103,24 @@ public class WriteableCacheCollectionMapper<E, R> extends CacheCollectionMapper<
    @Override
    public void clear() {
       realCollection.clear();
+   }
+
+   @Override
+   public CloseableSpliterator<R> spliterator() {
+      return new CloseableSpliteratorMapper<>(realCacheCollection.spliterator(), mapper);
+   }
+
+   private CacheStream<R> getStream(CacheStream<E> parentStream) {
+      return new MappedCacheStream<>(parentStream.map(mapper), keyFilterMapper);
+   }
+
+   @Override
+   public CacheStream<R> stream() {
+      return getStream(realCacheCollection.stream());
+   }
+
+   @Override
+   public CacheStream<R> parallelStream() {
+      return getStream(realCacheCollection.parallelStream());
    }
 }

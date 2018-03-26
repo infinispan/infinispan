@@ -13,9 +13,11 @@ import org.infinispan.commons.util.InjectiveFunction;
  * needed by the underlying set.
  * <p>
  * This implementation is basically identical to {@link WriteableCacheCollectionMapper} except that this class
- * also implements {@link java.util.Set}.
+ * also implements {@link java.util.Set} and all of its optional operations.
  * @author wburns
  * @since 9.2
+ * @param <E> the original collection type - referred to as old in some methods
+ * @param <R> the resulting collection type - referred to as new in some methods
  */
 public class WriteableCacheSetMapper<E, R> extends WriteableCacheCollectionMapper<E, R> implements CacheSet<R> {
    public WriteableCacheSetMapper(CacheSet<E> realSet,

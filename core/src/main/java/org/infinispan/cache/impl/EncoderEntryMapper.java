@@ -17,27 +17,29 @@ import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.util.function.RemovableFunction;
 
 /**
  * {@link java.util.function.Function} that uses an encoder to converter entries from the configured storage format to
  * the requested format.
  */
-public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements RemovableFunction<T, T>,
-      InjectiveFunction<T, T> {
+public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements InjectiveFunction<T, T> {
    @Inject private transient InternalEntryFactory entryFactory;
 
    private final DataConversion keyDataConversion;
    private final DataConversion valueDataConversion;
 
    public static <K, V> EncoderEntryMapper<K, V, Map.Entry<K, V>> newEntryMapper(DataConversion keyDataConversion,
-         DataConversion valueDataConversion) {
-      return new EncoderEntryMapper<>(keyDataConversion, valueDataConversion);
+         DataConversion valueDataConversion, InternalEntryFactory entryFactory) {
+      EncoderEntryMapper<K, V, Map.Entry<K, V>> mapper = new EncoderEntryMapper<>(keyDataConversion, valueDataConversion);
+      mapper.entryFactory = entryFactory;
+      return mapper;
    }
 
    public static <K, V> EncoderEntryMapper<K, V, CacheEntry<K, V>> newCacheEntryMapper(
-         DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return new EncoderEntryMapper<>(keyDataConversion, valueDataConversion);
+         DataConversion keyDataConversion, DataConversion valueDataConversion, InternalEntryFactory entryFactory) {
+      EncoderEntryMapper<K, V, CacheEntry<K, V>> mapper = new EncoderEntryMapper<>(keyDataConversion, valueDataConversion);
+      mapper.entryFactory = entryFactory;
+      return mapper;
    }
 
    private EncoderEntryMapper(DataConversion keyDataConversion, DataConversion valueDataConversion) {

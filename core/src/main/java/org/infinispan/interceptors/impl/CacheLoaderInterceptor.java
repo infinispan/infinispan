@@ -57,7 +57,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupFilter;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.factories.annotations.ComponentName;
@@ -112,6 +112,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    @Inject @ComponentName(PERSISTENCE_EXECUTOR)
    private ExecutorService executorService;
    @Inject private Cache<K, V> cache;
+   @Inject private KeyPartitioner partitioner;
 
    private boolean activation;
 
@@ -224,14 +225,15 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command)
          throws Throwable {
       // Acquire the remote iteration flag and set it for all below - so they won't wrap unnecessarily
-      long flags = FlagBitSets.getAndSetFlags(command, FlagBitSets.REMOTE_ITERATION);
+      boolean isRemoteIteration = command.hasAnyFlag(FlagBitSets.REMOTE_ITERATION);
+      command.addFlags(FlagBitSets.REMOTE_ITERATION);
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if (hasSkipLoadFlag(command)) {
             // Continue with the existing throwable/return value
             return rv;
          }
          CacheSet<CacheEntry<K, V>> entrySet = (CacheSet<CacheEntry<K, V>>) rv;
-         return new WrappedEntrySet(command, flags, entrySet);
+         return new WrappedEntrySet(command, isRemoteIteration, entrySet);
       });
    }
 
@@ -261,7 +263,8 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command)
          throws Throwable {
       // Acquire the remote iteration flag and set it for all below - so they won't wrap unnecessarily
-      long flags = FlagBitSets.getAndSetFlags(command, FlagBitSets.REMOTE_ITERATION);
+      boolean isRemoteIteration = command.hasAnyFlag(FlagBitSets.REMOTE_ITERATION);
+      command.addFlags(FlagBitSets.REMOTE_ITERATION);
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if (hasSkipLoadFlag(command)) {
             // Continue with the existing throwable/return value
@@ -269,7 +272,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          }
 
          CacheSet<K> keySet = (CacheSet<K>) rv;
-         return new WrappedKeySet(command, flags, keySet);
+         return new WrappedKeySet(command, isRemoteIteration, keySet);
       });
    }
 
@@ -499,11 +502,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    }
 
    private ToIntFunction<Object> getSegmentMapper(Cache<?, ?> cache) {
-      DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-      if (dm != null) {
-         return dm.getCacheTopology()::getSegment;
-      }
-      return null;
+      return partitioner::getSegment;
    }
 
    private abstract class AbstractLoaderSet<R> extends AbstractSet<R> implements CacheSet<R> {
@@ -571,10 +570,10 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       private final Cache<K, V> cache;
       private final boolean isRemoteIteration;
 
-      public WrappedEntrySet(EntrySetCommand command, long remoteIterationFlags, CacheSet<CacheEntry<K, V>> entrySet) {
+      public WrappedEntrySet(EntrySetCommand command, boolean isRemoteIteration, CacheSet<CacheEntry<K, V>> entrySet) {
          super(entrySet);
          this.cache = Caches.getCacheWithFlags(CacheLoaderInterceptor.this.cache, command);
-         this.isRemoteIteration = remoteIterationFlags == FlagBitSets.REMOTE_ITERATION;
+         this.isRemoteIteration = isRemoteIteration;
       }
 
       long calculateTimeoutSeconds() {
@@ -649,10 +648,10 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       private final Cache<K, ?> cache;
       private final boolean isRemoteIteration;
 
-      public WrappedKeySet(KeySetCommand command, long remoteIterationFlags, CacheSet<K> keySet) {
+      public WrappedKeySet(KeySetCommand command, boolean isRemoteIteration, CacheSet<K> keySet) {
          super(keySet);
          this.cache = Caches.getCacheWithFlags(CacheLoaderInterceptor.this.cache, command);
-         this.isRemoteIteration = remoteIterationFlags == FlagBitSets.REMOTE_ITERATION;
+         this.isRemoteIteration = isRemoteIteration;
       }
 
       @Override
