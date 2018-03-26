@@ -7,8 +7,8 @@
 package org.infinispan.hibernate.cache.commons.access;
 
 import org.hibernate.cache.CacheException;
-import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
 import org.hibernate.cache.spi.access.SoftLock;
+import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 
 /**
  * Delegate for transactional caches
@@ -16,7 +16,7 @@ import org.hibernate.cache.spi.access.SoftLock;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class TxInvalidationCacheAccessDelegate extends InvalidationCacheAccessDelegate {
-	public TxInvalidationCacheAccessDelegate(BaseRegion region, PutFromLoadValidator validator) {
+	public TxInvalidationCacheAccessDelegate(InfinispanDataRegion region, PutFromLoadValidator validator) {
 		super(region, validator);
 	}
 

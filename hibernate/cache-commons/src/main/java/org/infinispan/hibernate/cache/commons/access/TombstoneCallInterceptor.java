@@ -6,19 +6,15 @@
  */
 package org.infinispan.hibernate.cache.commons.access;
 
-import org.infinispan.hibernate.cache.commons.impl.BaseTransactionalDataRegion;
+import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.hibernate.cache.commons.util.FutureUpdate;
 import org.infinispan.hibernate.cache.commons.util.TombstoneUpdate;
 import org.infinispan.hibernate.cache.commons.util.Tombstone;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.Closeables;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -35,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Note that this does not implement all commands, only those appropriate for {@link TombstoneAccessDelegate}
- * and {@link org.infinispan.hibernate.cache.impl.BaseTransactionalDataRegion}
  *
  * The behaviour here also breaks notifications, which are not used for 2LC caches.
  *
@@ -45,12 +40,12 @@ public class TombstoneCallInterceptor extends DDAsyncInterceptor {
 	private static final Log log = LogFactory.getLog(TombstoneCallInterceptor.class);
 	private static final UUID ZERO = new UUID(0, 0);
 
-	private final BaseTransactionalDataRegion region;
+	private final InfinispanDataRegion region;
 	private final Metadata expiringMetadata;
 	private Metadata defaultMetadata;
 	@Inject private AdvancedCache cache;
 
-	public TombstoneCallInterceptor(BaseTransactionalDataRegion region) {
+	public TombstoneCallInterceptor(InfinispanDataRegion region) {
 		this.region = region;
 		expiringMetadata = new EmbeddedMetadata.Builder().lifespan(region.getTombstoneExpiration(), TimeUnit.MILLISECONDS).build();
 	}

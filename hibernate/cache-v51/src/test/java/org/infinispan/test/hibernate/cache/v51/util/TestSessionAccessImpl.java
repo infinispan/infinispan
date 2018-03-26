@@ -5,15 +5,20 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.cache.CacheException;
+import org.hibernate.cache.spi.CollectionRegion;
+import org.hibernate.cache.spi.EntityRegion;
 import org.hibernate.cache.spi.GeneralDataRegion;
+import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
 import org.hibernate.cache.spi.access.RegionAccessStrategy;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.jdbc.connections.spi.JdbcConnectionAccess;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.engine.jdbc.spi.SqlExceptionHelper;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.transaction.internal.TransactionImpl;
+import org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 import org.hibernate.resource.jdbc.spi.JdbcSessionContext;
 import org.hibernate.resource.jdbc.spi.JdbcSessionOwner;
@@ -22,6 +27,7 @@ import org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLoca
 import org.hibernate.resource.transaction.backend.jdbc.spi.JdbcResourceTransactionAccess;
 import org.hibernate.resource.transaction.spi.TransactionCoordinatorOwner;
 import org.hibernate.service.ServiceRegistry;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.test.hibernate.cache.commons.util.BatchModeJtaPlatform;
 import org.infinispan.test.hibernate.cache.commons.util.JdbcResourceTransactionMock;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
@@ -56,7 +62,7 @@ public final class TestSessionAccessImpl implements TestSessionAccess {
             tx.begin();
             return tx;
          });
-      } else if (jtaPlatform == null) {
+      } else if (jtaPlatform == null || jtaPlatform == NoJtaPlatform.class) {
          Connection connection = mock(Connection.class);
          JdbcConnectionAccess jdbcConnectionAccess = mock(JdbcConnectionAccess.class);
          try {
@@ -98,13 +104,13 @@ public final class TestSessionAccessImpl implements TestSessionAccess {
    }
 
    @Override
-   public TestRegionAccessStrategy fromAccessStrategy(RegionAccessStrategy strategy) {
-      return new TestRegionAccessStrategyImpl(strategy);
+   public TestRegionAccessStrategy fromAccess(Object access) {
+      return new TestRegionAccessStrategyImpl((RegionAccessStrategy) access);
    }
 
    @Override
-   public TestGeneralDataRegion fromGeneralDataRegion(GeneralDataRegion region) {
-      return new TestGeneralDataRegionImpl(region);
+   public TestRegion fromRegion(InfinispanBaseRegion region) {
+      return new TestRegionImpl((GeneralDataRegion) region);
    }
 
    @Override
@@ -144,6 +150,21 @@ public final class TestSessionAccessImpl implements TestSessionAccess {
    @Override
    public void execQueryUpdate(Object session, String query) {
       ((Session) session).createQuery(query).executeUpdate();
+   }
+
+   @Override
+   public Object collectionAccess(InfinispanBaseRegion region, AccessType accessType) {
+      return ((CollectionRegion) region).buildAccessStrategy(accessType);
+   }
+
+   @Override
+   public Object entityAccess(InfinispanBaseRegion region, AccessType accessType) {
+      return ((EntityRegion) region).buildAccessStrategy(accessType);
+   }
+
+   @Override
+   public InfinispanBaseRegion getRegion(SessionFactoryImplementor sessionFactory, String regionName) {
+      return (InfinispanBaseRegion) sessionFactory.getSecondLevelCacheRegion(regionName);
    }
 
    private static SessionImplementor unwrap(Object session) {
@@ -208,6 +229,31 @@ public final class TestSessionAccessImpl implements TestSessionAccess {
          return unwrapEntity().update(unwrap(session), key, value, currentVersion, previousVersion);
       }
 
+      @Override
+      public SoftLock lockRegion() {
+         return delegate.lockRegion();
+      }
+
+      @Override
+      public void unlockRegion(SoftLock softLock) {
+         delegate.unlockRegion(softLock);
+      }
+
+      @Override
+      public void evict(Object key) {
+         delegate.evict(key);
+      }
+
+      @Override
+      public void evictAll() {
+         delegate.evictAll();
+      }
+
+      @Override
+      public void removeAll(Object session) {
+         delegate.removeAll();
+      }
+
       private EntityRegionAccessStrategy unwrapEntity() {
          return (EntityRegionAccessStrategy) delegate;
       }
@@ -220,11 +266,11 @@ public final class TestSessionAccessImpl implements TestSessionAccess {
    private interface NonJtaTransactionCoordinator extends TransactionCoordinatorOwner, JdbcResourceTransactionAccess {
    }
 
-   private static final class TestGeneralDataRegionImpl implements TestGeneralDataRegion {
+   private static final class TestRegionImpl implements TestRegion {
 
       private final GeneralDataRegion delegate;
 
-      private TestGeneralDataRegionImpl(GeneralDataRegion delegate) {
+      private TestRegionImpl(GeneralDataRegion delegate) {
          this.delegate = delegate;
       }
 
@@ -236,6 +282,16 @@ public final class TestSessionAccessImpl implements TestSessionAccess {
       @Override
       public void put(Object session, Object key, Object value) throws CacheException {
          delegate.put(unwrap(session), key, value);
+      }
+
+      @Override
+      public void evict(Object key) {
+         delegate.evict(key);
+      }
+
+      @Override
+      public void evictAll() {
+         delegate.evictAll();
       }
 
    }

@@ -11,7 +11,7 @@ import java.util.Map;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
+import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.hibernate.cfg.Environment;
 
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Account;
@@ -51,7 +51,7 @@ public class SessionRefreshTest extends DualNodeTest {
 	@Override
 	protected void applyStandardSettings(Map settings) {
 		super.applyStandardSettings( settings );
-		settings.put( InfinispanRegionFactory.ENTITY_CACHE_RESOURCE_PROP, getEntityCacheConfigName() );
+		settings.put( InfinispanProperties.ENTITY_CACHE_RESOURCE_PROP, getEntityCacheConfigName() );
 	}
 
 	protected String getEntityCacheConfigName() {
@@ -78,7 +78,7 @@ public class SessionRefreshTest extends DualNodeTest {
 	@Test
 	public void testRefreshAfterExternalChange() throws Exception {
 		// First session factory uses a cache
-		CacheContainer localManager = ClusterAwareRegionFactory.getCacheManager( DualNodeTest.LOCAL );
+		CacheContainer localManager = ClusterAware.getCacheManager(DualNodeTest.LOCAL);
 		localCache = localManager.getCache( Account.class.getName() );
 		SessionFactory localFactory = sessionFactory();
 

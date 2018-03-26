@@ -11,14 +11,23 @@ This chapter focuses on what you need to know to use {brandname} as second-level
 Applications running in environments where {brandname} is not default cache provider for Hibernate will need to depend on the correct cache provider version.
 The {brandname} cache provider version suitable for your application depends on the Hibernate version in use:
 
-If using Hibernate 5.2 or higher, the Maven coordinates are the following:
+If using Hibernate 5.3, the Maven coordinates are the following:
+
+[source, XML, indent=0]
+<dependency>
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-hibernate-cache-v53</artifactId>
+   <version>${version.infinispan}</version> <!-- 9.2.2.Final or higher -->
+</dependency>
+
+Hibernate 5.2 has been supported in Infinispan 9.2 but it won't be supported in further versions. Use these Maven coordinates:
 
 [source, XML, indent=0]
 <dependency>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-hibernate-cache</artifactId>
-   <version>${version.infinispan}</version> <!-- 9.2.0.Final or higher -->
- </dependency>
+   <version>${version.infinispan}</version> <!-- 9.2.x.Final -->
+</dependency>
 
 If using Hibernate 5.1, the Maven coordinates are the following:
 
@@ -264,6 +273,8 @@ _query cache_ uses the _same eviction/expiration settings as for entities/collec
 
 _query cache has initial state transfer disabled_. It is not recommended that this is enabled.
 
+Up to Hibernate 5.2 both transactional and non-transactional query caches have been supported, though non-transactional variant is recommended. Hibernate 5.3 drops support for transactional caches, only non-transactional variant is supported. If the cache is configured with transactions this setting is ignored and warning is logged.
+
 .Timestamps
 
 The _timestamps cache is configured with asynchronous replication_ as clustering mode.
@@ -430,18 +441,17 @@ link:https://github.com/infinispan/infinispan-simple-tutorials/tree/master/hiber
 {brandname} cache provider supports all Hibernate cache strategies:
 `transactional`, `read-write`, `nonstrict-read-write` and `read-only`.
 
-However, when running in a cluster configuration combinations are limited:
+Integrations with Hibernate 4.x required _transactional invalidation caches_ and in integrations with Hibernate &le; 5.2 _transactional invalidation caches_ are supported (in JTA environment). However for all 5.x versions _non-transactional caches_ are preferred. With Hibernate 5.3 the support for transactional caches has been dropped completely, and both `read-write` and `transactional` use the same implementation. Infinispan provides the same consistency guarantees for both `transactional` and `read-write` strategies, use of transactions is considered an implementation detail.
 
-* _non-transactional invalidation_ caches are supported with `read-write` strategy.
-The actual setting of cache concurrency mode (`read-write` vs. `transactional`) is not honored, the appropriate strategy is selected based on the cache configuration (_non-transactional_ vs. _transactional_).
-* `read-write` mode is supported on _non-transactional distributed/replicated_ caches, however, eviction should not be used in this configuration.
-Use of eviction can lead to consistency issues.
-Expiration (with reasonably long max-idle times) can be used.
-* `nonstrict-read-write` mode is supported on _non-transactional distributed/replicated_ caches, but the eviction should be turned off as well.
-In addition to that, the entities must use versioning.
-This mode mildly relaxes the consistency - between DB commit and end of transaction commit a stale read (see <<caching-provider-infinispan-stale-read-example,example>>) may occur in another transaction.
+In integrations with Hibernate 5.2 or lower the actual setting of cache concurrency mode (`read-write` vs. `transactional`) is not honored on invalidation caches, the appropriate strategy is selected based on the cache configuration (_non-transactional_ vs. _transactional_).
+
+Support for _replicated/distributed_ caches for `read-write` and `read-only` strategies has been added during 5.x development and this requires exclusively _non-transactional configuration_.
+Also eviction should not be used in this configuration as it can lead to consistency issues. Expiration (with reasonably long max-idle times) can be used.
+
+`Nonstrict-read-write` strategy is supported on _non-transactional distributed/replicated_ caches, but the eviction should be turned off as well. In addition to that, the entities must use versioning. This means that this strategy cannot be used for caching natural IDs (which are never versioned). This mode mildly relaxes the consistency - between DB commit and end of transaction commit a stale read (see <<caching-provider-infinispan-stale-read-example,example>>) may occur in another transaction.
 However this strategy uses less RPCs and can be more performant than the other ones.
-* `read-only` mode is supported on both _transactional_ and _non-transactional_ _invalidation_ caches and _non-transactional distributed/replicated_ caches, but use of this mode currently does not bring any performance gains.
+
+`Read-only` mode is supported in all configurations mentioned above but use of this mode currently does not bring any performance gains.
 
 The available combinations are summarized in table below:
 
@@ -449,14 +459,17 @@ The available combinations are summarized in table below:
 .Cache concurrency strategy/cache mode compatibility table
 [options="header"]
 |===
-|Concurrency strategy|Cache transactions|Cache mode             |Eviction
-|transactional       |transactional     |invalidation           |yes
+|Concurrency strategy|Cache transactions         |Cache mode             |Eviction
+|transactional       |&le; 5.2 transactional     |invalidation           |yes
+|transactional       |&ge; 5.3 non-transactional |invalidation           |yes
 |read-write          |non-transactional |invalidation           |yes
 |read-write          |non-transactional |distributed/replicated |no
 |nonstrict-read-write|non-transactional |distributed/replicated |no
 |===
 
 Changing caches to behave different to the default behaviour explained in previous section is explained in the <<_configuration_properties, configuration properties>> section.
+
+IMPORTANT: Use of transactional caches is possible only in JTA environment. Hibernate supports JDBC-only transactions but Infinispan transactional caches do not integrate with these. Therefore, in non-JTA environment the only option is to use `read-write`, `nonstrict-read-write` or `read-only` on non-transactional cache. Configuring the cache as transactional in non-JTA can lead to undefined behaviour.
 
 [[caching-provider-infinispan-stale-read-example]]
 .Stale read with `nonstrict-read-write` strategy

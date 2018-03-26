@@ -6,7 +6,9 @@
  */
 package org.infinispan.hibernate.cache.commons.access;
 
-import org.infinispan.hibernate.cache.commons.impl.BaseTransactionalDataRegion;
+import org.hibernate.cache.spi.entry.CacheEntry;
+import org.hibernate.cache.spi.entry.StructuredCacheEntry;
+import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.hibernate.cache.commons.util.FilterNullValueConverter;
 import org.infinispan.hibernate.cache.commons.util.VersionedEntry;
 import org.infinispan.AdvancedCache;
@@ -23,25 +25,25 @@ import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 
 import java.util.Comparator;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Note that this does not implement all commands, only those appropriate for {@link TombstoneAccessDelegate}
- * and {@link org.infinispan.hibernate.cache.impl.BaseTransactionalDataRegion}
  *
  * The behaviour here also breaks notifications, which are not used for 2LC caches.
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class VersionedCallInterceptor extends DDAsyncInterceptor {
-	private final Comparator<Object> versionComparator;
+	private final InfinispanDataRegion region;
 	private final Metadata expiringMetadata;
 	@Inject private AdvancedCache cache;
 	private Metadata defaultMetadata;
 
-	public VersionedCallInterceptor(BaseTransactionalDataRegion region, Comparator<Object> versionComparator) {
-		this.versionComparator = versionComparator;
+	public VersionedCallInterceptor(InfinispanDataRegion region) {
+		this.region = region;
 		expiringMetadata = new EmbeddedMetadata.Builder().lifespan(region.getTombstoneExpiration(), TimeUnit.MILLISECONDS).build();
 	}
 
@@ -66,9 +68,8 @@ public class VersionedCallInterceptor extends DDAsyncInterceptor {
 			oldVersion = ((VersionedEntry) oldValue).getVersion();
 			oldTimestamp = ((VersionedEntry) oldValue).getTimestamp();
 			oldValue = ((VersionedEntry) oldValue).getValue();
-		}
-		else if (oldValue instanceof org.hibernate.cache.spi.entry.CacheEntry) {
-			oldVersion = ((org.hibernate.cache.spi.entry.CacheEntry) oldValue).getVersion();
+		} else {
+			oldVersion = findVersion(oldValue);
 		}
 
 		Object newValue = command.getValue();
@@ -76,18 +77,24 @@ public class VersionedCallInterceptor extends DDAsyncInterceptor {
 		long newTimestamp;
 		Object actualNewValue = newValue;
 		boolean isRemoval = false;
+		String subclass = null;
 		if (newValue instanceof VersionedEntry) {
 			VersionedEntry ve = (VersionedEntry) newValue;
 			newVersion = ve.getVersion();
 			newTimestamp = ve.getTimestamp();
 			if (ve.getValue() == null) {
 				isRemoval = true;
-			}
-			else if (ve.getValue() instanceof org.hibernate.cache.spi.entry.CacheEntry) {
+			} else if (ve.getValue() instanceof CacheEntry) {
 				actualNewValue = ve.getValue();
+				subclass = ((CacheEntry) ve.getValue()).getSubclass();
+			} else if (ve.getValue() instanceof Map) {
+				actualNewValue = ve.getValue();
+				Object maybeSubclass = ((Map) ve.getValue()).get(StructuredCacheEntry.SUBCLASS_KEY);
+				if (maybeSubclass instanceof String) {
+					subclass = (String) maybeSubclass;
+				}
 			}
-		}
-		else {
+		} else {
 			throw new IllegalArgumentException(String.valueOf(newValue));
 		}
 
@@ -109,14 +116,33 @@ public class VersionedCallInterceptor extends DDAsyncInterceptor {
 			}
 			return null;
 		}
-		int compareResult = versionComparator.compare(newVersion, oldVersion);
-		if (isRemoval && compareResult >= 0) {
-			setValue(e, actualNewValue, expiringMetadata, command);
+
+		Comparator<Object> versionComparator = null;
+		if (subclass != null) {
+			versionComparator = region.getComparator(subclass);
 		}
-		else if (compareResult > 0) {
-			setValue(e, actualNewValue, defaultMetadata, command);
+		if (versionComparator == null) {
+			// when we cannot compare versions we'll just invalidate
+			setValue(e, new VersionedEntry(null, null, newTimestamp), expiringMetadata, command);
+		} else {
+			int compareResult = versionComparator.compare(newVersion, oldVersion);
+			if (isRemoval && compareResult >= 0) {
+				setValue(e, actualNewValue, expiringMetadata, command);
+			} else if (compareResult > 0) {
+				setValue(e, actualNewValue, defaultMetadata, command);
+			}
 		}
 		return null;
+	}
+
+	private Object findVersion(Object entry) {
+		if (entry instanceof CacheEntry) {
+			return ((CacheEntry) entry).getVersion();
+		} else if (entry instanceof Map) {
+			return ((Map) entry).get(StructuredCacheEntry.VERSION_KEY);
+		} else {
+			return null;
+		}
 	}
 
 	private Object setValue(MVCCEntry e, Object value, Metadata metadata, PutKeyValueCommand command) {

@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -26,7 +27,6 @@ import org.infinispan.test.hibernate.cache.commons.functional.entities.WithEmbed
 import org.infinispan.test.hibernate.cache.commons.functional.entities.PK;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.WithSimpleId;
 import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
-import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
 import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.junit4.BaseUnitTestCase;
 
@@ -43,7 +43,7 @@ public class CacheKeySerializationTest extends BaseUnitTestCase {
 	private SessionFactoryImplementor getSessionFactory(String cacheKeysFactory) {
 		Configuration configuration = new Configuration()
 				.setProperty( Environment.USE_SECOND_LEVEL_CACHE, "true")
-				.setProperty(Environment.CACHE_REGION_FACTORY, TestInfinispanRegionFactory.class.getName())
+				.setProperty(Environment.CACHE_REGION_FACTORY, TestRegionFactoryProvider.load().getRegionFactoryClass().getName())
 				.setProperty(Environment.DEFAULT_CACHE_CONCURRENCY_STRATEGY, "transactional")
 				.setProperty( AvailableSettings.SHARED_CACHE_MODE, "ALL")
 				.setProperty(Environment.HBM2DDL_AUTO, "create-drop");

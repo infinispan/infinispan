@@ -1,0 +1,70 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-hibernate-parent</artifactId>
+      <version>9.3.0-SNAPSHOT</version>
+      <relativePath>../pom.xml</relativePath>
+   </parent>
+
+   <artifactId>infinispan-hibernate-cache</artifactId>
+   <packaging>jar</packaging>
+   <name>Infinispan Hibernate 5.2 Cache</name>
+   <description>Infinispan Hibernate 5.2 Cache module</description>
+
+   <properties>
+      <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
+      <version.hibernate.core>5.2.16.Final</version.hibernate.core>
+   </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-hibernate-cache-commons</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-hibernate-cache-commons</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+   </dependencies>
+
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-checkstyle-plugin</artifactId>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration combine.self="override">
+               <groups combine.self="override">${defaultJUnitGroups}</groups>
+               <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
+               <trimStackTrace>false</trimStackTrace>
+               <dependenciesToScan>
+                  <dependency>${project.groupId}:infinispan-hibernate-cache-commons</dependency>
+               </dependenciesToScan>
+               <systemPropertyVariables>
+                  <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+                  <jgroups.ping.timeout>500</jgroups.ping.timeout>
+                  <jgroups.ping.num_initial_members>1</jgroups.ping.num_initial_members>
+                  <jgroups.udp.enable_bundling>false</jgroups.udp.enable_bundling>
+                  <jgroups.bind_addr>localhost</jgroups.bind_addr>
+                  <hibernate.cache.infinispan.jgroups_cfg>2lc-test-tcp.xml</hibernate.cache.infinispan.jgroups_cfg>
+               </systemPropertyVariables>
+            </configuration>
+            <dependencies>
+               <dependency>
+                  <groupId>org.apache.maven.surefire</groupId>
+                  <artifactId>surefire-junit47</artifactId>
+                  <version>${version.maven.surefire}</version>
+               </dependency>
+            </dependencies>
+         </plugin>
+      </plugins>
+   </build>
+
+</project>

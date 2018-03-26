@@ -12,16 +12,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.hibernate.cache.spi.CollectionRegion;
 import org.infinispan.commons.test.categories.Smoke;
 import org.infinispan.hibernate.cache.commons.access.AccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.NonTxInvalidationCacheAccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
 import org.infinispan.hibernate.cache.commons.access.TxInvalidationCacheAccessDelegate;
-import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
 import org.hibernate.cache.spi.access.SoftLock;
 
-import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
+import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.test.hibernate.cache.commons.AbstractRegionAccessStrategyTest;
 import org.infinispan.test.hibernate.cache.commons.NodeEnvironment;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess.TestRegionAccessStrategy;
@@ -30,7 +29,6 @@ import org.infinispan.test.hibernate.cache.commons.util.TestingKeyFactory;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
@@ -45,7 +43,7 @@ import static org.mockito.Mockito.spy;
  */
 @Category(Smoke.class)
 public class CollectionRegionAccessStrategyTest extends
-		AbstractRegionAccessStrategyTest<BaseRegion, CollectionRegionAccessStrategy> {
+		AbstractRegionAccessStrategyTest<Object> {
 	protected static int testCount;
 
 	@Override
@@ -54,18 +52,13 @@ public class CollectionRegionAccessStrategyTest extends
 	}
 
 	@Override
-	protected BaseRegion getRegion(NodeEnvironment environment) {
-		return environment.getCollectionRegion( REGION_NAME, CACHE_DATA_DESCRIPTION );
+	protected InfinispanBaseRegion getRegion(NodeEnvironment environment) {
+		return environment.getCollectionRegion( REGION_NAME, accessType);
 	}
 
 	@Override
-	protected CollectionRegionAccessStrategy getAccessStrategy(BaseRegion region) {
-		return ((CollectionRegion) region).buildAccessStrategy( accessType );
-	}
-
-	@Test
-	public void testGetRegion() {
-		assertEquals( "Correct region", localRegion, localAccessStrategy.getRegion() );
+	protected Object getAccessStrategy(InfinispanBaseRegion region) {
+		return TEST_SESSION_ACCESS.collectionAccess(region, accessType);
 	}
 
 	@Test
@@ -105,8 +98,8 @@ public class CollectionRegionAccessStrategyTest extends
 		});
 
 		final AccessDelegate delegate = localRegion.getCache().getCacheConfiguration().transaction().transactionMode().isTransactional() ?
-			new TxInvalidationCacheAccessDelegate(localRegion, mockValidator) :
-			new NonTxInvalidationCacheAccessDelegate(localRegion, mockValidator);
+			new TxInvalidationCacheAccessDelegate((InfinispanDataRegion) localRegion, mockValidator) :
+			new NonTxInvalidationCacheAccessDelegate((InfinispanDataRegion) localRegion, mockValidator);
 
 		ExecutorService executorService = Executors.newCachedThreadPool();
 		cleanup.add(() -> executorService.shutdownNow());
@@ -147,8 +140,8 @@ public class CollectionRegionAccessStrategyTest extends
 	}
 
 	@Override
-	protected void doUpdate(TestRegionAccessStrategy strategy, Object session, Object key, Object value, Object version) throws javax.transaction.RollbackException, javax.transaction.SystemException {
-		SoftLock softLock = strategy.lockItem(session, key, version);
+	protected void doUpdate(TestRegionAccessStrategy strategy, Object session, Object key, TestCacheEntry entry) {
+		SoftLock softLock = strategy.lockItem(session, key, null);
 		strategy.remove(session, key);
       SESSION_ACCESS.getTransactionCoordinator(session).registerLocalSynchronization(
 			new TestSynchronization.UnlockItem(strategy, session, key, softLock));

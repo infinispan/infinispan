@@ -7,15 +7,15 @@
 package org.infinispan.hibernate.cache.v51.collection;
 
 import org.hibernate.cache.CacheException;
-import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
 import org.infinispan.hibernate.cache.commons.access.AccessDelegate;
-import org.infinispan.hibernate.cache.commons.impl.BaseTransactionalDataRegion;
 import org.hibernate.cache.spi.CacheDataDescription;
 import org.hibernate.cache.spi.CacheKeysFactory;
 import org.hibernate.cache.spi.CollectionRegion;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
 import org.infinispan.AdvancedCache;
+import org.infinispan.hibernate.cache.v51.InfinispanRegionFactory;
+import org.infinispan.hibernate.cache.v51.impl.BaseTransactionalDataRegion;
 
 import javax.transaction.TransactionManager;
 

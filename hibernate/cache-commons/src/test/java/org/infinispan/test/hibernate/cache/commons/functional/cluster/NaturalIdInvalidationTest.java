@@ -71,13 +71,13 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 
 		// Bind a listener to the "local" cache
 		// Our region factory makes its CacheManager available to us
-		CacheContainer localManager = ClusterAwareRegionFactory.getCacheManager(DualNodeTest.LOCAL);
+		CacheContainer localManager = ClusterAware.getCacheManager(DualNodeTest.LOCAL);
 		Cache localNaturalIdCache = localManager.getCache(Citizen.class.getName() + "##NaturalId");
 		MyListener localListener = new MyListener( "local" );
 		localNaturalIdCache.addListener(localListener);
 
 		// Bind a listener to the "remote" cache
-		CacheContainer remoteManager = ClusterAwareRegionFactory.getCacheManager(DualNodeTest.REMOTE);
+		CacheContainer remoteManager = ClusterAware.getCacheManager(DualNodeTest.REMOTE);
 		Cache remoteNaturalIdCache = remoteManager.getCache(Citizen.class.getName() + "##NaturalId");
 		MyListener remoteListener = new MyListener( "remote" );
 		remoteNaturalIdCache.addListener(remoteListener);
@@ -167,7 +167,7 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
    public CountDownLatch getRemoteUpdateLatch(Cache remoteNaturalIdCache) {
       CountDownLatch latch;
       if (cacheMode.isInvalidation()) {
-         latch= useTransactionalCache
+         latch = useTransactionalCache()
             ? expectAfterEndInvalidation(remoteNaturalIdCache.getAdvancedCache(), 1)
             : expectAfterEndInvalidation(remoteNaturalIdCache.getAdvancedCache(), 2);
       } else {

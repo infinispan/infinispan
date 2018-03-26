@@ -11,22 +11,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.hibernate.boot.internal.SessionFactoryBuilderImpl;
-import org.hibernate.boot.internal.SessionFactoryOptionsImpl;
-import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.boot.spi.SessionFactoryOptions;
-import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
+import org.hibernate.cache.spi.RegionFactory;
+import org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform;
+import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Environment;
 import org.hibernate.engine.config.spi.ConfigurationService;
-import org.hibernate.engine.config.spi.StandardConverters;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 import org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLocalTransactionCoordinatorBuilderImpl;
 import org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoordinatorBuilderImpl;
 import org.hibernate.service.ServiceRegistry;
-
-import org.hibernate.testing.boot.ServiceRegistryTestingImpl;
 
 /**
  * Utilities for cache testing.
@@ -37,7 +32,6 @@ public class CacheTestUtil {
 	@SuppressWarnings("unchecked")
 	public static Map buildBaselineSettings(
 			String regionPrefix,
-			Class regionFactory,
 			boolean use2ndLevel,
 			boolean useQueries,
 			Class<? extends JtaPlatform> jtaPlatform) {
@@ -45,13 +39,14 @@ public class CacheTestUtil {
 
 		settings.put( AvailableSettings.GENERATE_STATISTICS, "true" );
 		settings.put( AvailableSettings.USE_STRUCTURED_CACHE, "true" );
-		if (jtaPlatform == null) {
+		if (jtaPlatform == null || jtaPlatform == NoJtaPlatform.class) {
 			settings.put(Environment.TRANSACTION_COORDINATOR_STRATEGY, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class.getName());
+			settings.put(AvailableSettings.JTA_PLATFORM, NoJtaPlatform.class);
 		} else {
 			settings.put(Environment.TRANSACTION_COORDINATOR_STRATEGY, JtaTransactionCoordinatorBuilderImpl.class.getName());
 			settings.put(AvailableSettings.JTA_PLATFORM, jtaPlatform);
 		}
-		settings.put( AvailableSettings.CACHE_REGION_FACTORY, regionFactory.getName() );
+		settings.put( AvailableSettings.CACHE_REGION_FACTORY, TestRegionFactoryProvider.load().getRegionFactoryClass() );
 		settings.put( AvailableSettings.CACHE_REGION_PREFIX, regionPrefix );
 		settings.put( AvailableSettings.USE_SECOND_LEVEL_CACHE, String.valueOf( use2ndLevel ) );
 		settings.put( AvailableSettings.USE_QUERY_CACHE, String.valueOf( useQueries ) );
@@ -60,15 +55,14 @@ public class CacheTestUtil {
 	}
 
 	public static StandardServiceRegistryBuilder buildBaselineStandardServiceRegistryBuilder(
-			  String regionPrefix,
-			  Class regionFactory,
-			  boolean use2ndLevel,
-			  boolean useQueries,
-			  Class<? extends JtaPlatform> jtaPlatform) {
+			String regionPrefix,
+			boolean use2ndLevel,
+			boolean useQueries,
+			Class<? extends JtaPlatform> jtaPlatform) {
 		StandardServiceRegistryBuilder ssrb = new StandardServiceRegistryBuilder();
 
 		ssrb.applySettings(
-				  buildBaselineSettings( regionPrefix, regionFactory, use2ndLevel, useQueries, jtaPlatform )
+				  buildBaselineSettings( regionPrefix, use2ndLevel, useQueries, jtaPlatform )
 		);
 
 		return ssrb;
@@ -79,16 +73,16 @@ public class CacheTestUtil {
 			  String queryCacheName,
 			  Class<? extends JtaPlatform> jtaPlatform) {
 		final StandardServiceRegistryBuilder ssrb = buildBaselineStandardServiceRegistryBuilder(
-				  regionPrefix, InfinispanRegionFactory.class, true, true, jtaPlatform
+				  regionPrefix, true, true, jtaPlatform
 		);
-		ssrb.applySetting( InfinispanRegionFactory.QUERY_CACHE_RESOURCE_PROP, queryCacheName );
+		ssrb.applySetting( InfinispanProperties.QUERY_CACHE_RESOURCE_PROP, queryCacheName );
 		return ssrb;
 	}
 
-	public static InfinispanRegionFactory createRegionFactory(Class<? extends InfinispanRegionFactory> clazz, Properties properties) {
+	public static <RF extends RegionFactory> RF createRegionFactory(Class<RF> clazz, Properties properties) {
 		try {
 			try {
-				Constructor<? extends InfinispanRegionFactory> constructor = clazz.getConstructor(Properties.class);
+				Constructor<RF> constructor = clazz.getConstructor(Properties.class);
 				return constructor.newInstance(properties);
 			}
 			catch (NoSuchMethodException e) {
@@ -103,32 +97,13 @@ public class CacheTestUtil {
 		}
 	}
 
-	public static InfinispanRegionFactory startRegionFactory(ServiceRegistry serviceRegistry) {
+	public static TestRegionFactory startRegionFactory(ServiceRegistry serviceRegistry) {
 		try {
 			final ConfigurationService cfgService = serviceRegistry.getService( ConfigurationService.class );
 			final Properties properties = toProperties( cfgService.getSettings() );
 
-			String factoryType = cfgService.getSetting( AvailableSettings.CACHE_REGION_FACTORY, StandardConverters.STRING );
-			Class clazz = Thread.currentThread().getContextClassLoader().loadClass( factoryType );
-			InfinispanRegionFactory regionFactory;
-			if (clazz == InfinispanRegionFactory.class) {
-				regionFactory = new TestInfinispanRegionFactory(properties);
-			}
-			else {
-				if (InfinispanRegionFactory.class.isAssignableFrom(clazz)) {
-					regionFactory = createRegionFactory(clazz, properties);
-				} else {
-					throw new IllegalArgumentException(clazz + " is not InfinispanRegionFactory");
-				}
-			}
-
-			final SessionFactoryOptionsImpl sessionFactoryOptions = new SessionFactoryOptionsImpl(
-					  new SessionFactoryBuilderImpl.SessionFactoryOptionsStateStandardImpl(
-								 (StandardServiceRegistry) serviceRegistry
-					  )
-			);
-
-			regionFactory.start( sessionFactoryOptions, properties );
+			TestRegionFactory regionFactory = TestRegionFactoryProvider.load().create(properties);
+			regionFactory.start( serviceRegistry, properties );
 
 			return regionFactory;
 		}
@@ -140,16 +115,16 @@ public class CacheTestUtil {
 		}
 	}
 
-	public static InfinispanRegionFactory startRegionFactory(
+	public static TestRegionFactory startRegionFactory(
 			  ServiceRegistry serviceRegistry,
 			  CacheTestSupport testSupport) {
-		InfinispanRegionFactory factory = startRegionFactory( serviceRegistry );
+		TestRegionFactory factory = startRegionFactory( serviceRegistry );
 		testSupport.registerFactory( factory );
 		return factory;
 	}
 
 	public static void stopRegionFactory(
-			  InfinispanRegionFactory factory,
+			  TestRegionFactory factory,
 			  CacheTestSupport testSupport) {
 		testSupport.unregisterFactory( factory );
 		factory.stop();
@@ -167,14 +142,6 @@ public class CacheTestUtil {
 		Properties properties = new Properties();
 		properties.putAll( map );
 		return properties;
-	}
-
-	public static SessionFactoryOptions sfOptionsForStart() {
-		return new SessionFactoryOptionsImpl(
-				new SessionFactoryBuilderImpl.SessionFactoryOptionsStateStandardImpl(
-						ServiceRegistryTestingImpl.forUnitTesting()
-				)
-		);
 	}
 
 	/**
