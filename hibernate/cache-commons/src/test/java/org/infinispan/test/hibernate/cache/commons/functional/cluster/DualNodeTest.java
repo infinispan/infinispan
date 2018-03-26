@@ -15,14 +15,12 @@ import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.hibernate.cfg.Environment;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoordinatorBuilderImpl;
-import org.hibernate.resource.transaction.TransactionCoordinatorBuilder;
 
 import org.infinispan.test.hibernate.cache.commons.functional.AbstractFunctionalTest;
 import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.test.hibernate.cache.commons.util.TxUtil;
 import org.infinispan.marshall.core.ExternallyMarshallable;
 import org.junit.ClassRule;
@@ -32,8 +30,6 @@ import org.junit.ClassRule;
  * @since 3.5
  */
 public abstract class DualNodeTest extends AbstractFunctionalTest {
-
-	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( DualNodeTest.class );
 
 	@ClassRule
 	public static final InfinispanTestingSetup infinispanTestIdentifier = new InfinispanTestingSetup();
@@ -76,7 +72,7 @@ public abstract class DualNodeTest extends AbstractFunctionalTest {
 
 		settings.put( NODE_ID_PROP, LOCAL );
 		settings.put( NODE_ID_FIELD, LOCAL );
-		settings.put( REGION_FACTORY_DELEGATE, getRegionFactoryClass() );
+      settings.put( REGION_FACTORY_DELEGATE, TestRegionFactoryProvider.load().getRegionFactoryClass());
 	}
 
 	@Override
@@ -110,24 +106,12 @@ public abstract class DualNodeTest extends AbstractFunctionalTest {
 		return secondNodeEnvironment;
 	}
 
-	protected Class getCacheRegionFactory() {
-		return ClusterAwareRegionFactory.class;
-	}
-
-	protected Class getJtaPlatformClass() {
-		return DualNodeJtaPlatformImpl.class;
-	}
-
-	protected Class<? extends TransactionCoordinatorBuilder> getTransactionCoordinatorBuilder() {
-		return JtaTransactionCoordinatorBuilderImpl.class;
-	}
-
 	protected void configureSecondNode(StandardServiceRegistryBuilder ssrb) {
 	}
 
 	@SuppressWarnings("unchecked")
 	protected void applyStandardSettings(Map settings) {
-		settings.put( Environment.CACHE_REGION_FACTORY, ClusterAwareRegionFactory.class.getName() );
+		settings.put( Environment.CACHE_REGION_FACTORY, TestRegionFactoryProvider.load().getClusterAwareClass().getName() );
 	}
 
 	public class SecondNodeEnvironment {

@@ -10,19 +10,10 @@ import java.util.Properties;
 
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
-import org.hibernate.cache.internal.CacheDataDescriptionImpl;
-import org.hibernate.cache.spi.CacheDataDescription;
-import org.hibernate.cache.spi.RegionFactory;
-import org.hibernate.cache.spi.TransactionalDataRegion;
 import org.hibernate.cache.spi.access.AccessType;
-import org.hibernate.internal.util.compare.ComparableComparator;
 import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Base class for tests of EntityRegion and CollectionRegion implementations.
@@ -31,18 +22,12 @@ import static org.junit.Assert.assertTrue;
  * @since 3.5
  */
 public abstract class AbstractEntityCollectionRegionTest extends AbstractRegionImplTest {
-	protected static CacheDataDescription MUTABLE_NON_VERSIONED = new CacheDataDescriptionImpl(true, false, ComparableComparator.INSTANCE, null);
-
 	@Test
-	public void testSupportedAccessTypes() throws Exception {
-		supportedAccessTypeTest();
-	}
-
-	private void supportedAccessTypeTest() throws Exception {
+	public void testSupportedAccessTypes() {
 		StandardServiceRegistryBuilder ssrb = createStandardServiceRegistryBuilder();
 		final StandardServiceRegistry registry = ssrb.build();
 		try {
-			InfinispanRegionFactory regionFactory = CacheTestUtil.startRegionFactory(
+			TestRegionFactory regionFactory = CacheTestUtil.startRegionFactory(
 					registry,
 					getCacheTestSupport()
 			);
@@ -58,69 +43,5 @@ public abstract class AbstractEntityCollectionRegionTest extends AbstractRegionI
 	 * buildAccessStrategy as expected when all the various {@link AccessType}s are passed as
 	 * arguments.
 	 */
-	protected abstract void supportedAccessTypeTest(RegionFactory regionFactory, Properties properties);
-
-	@Test
-	public void testIsTransactionAware() throws Exception {
-		StandardServiceRegistryBuilder ssrb = CacheTestUtil.buildBaselineStandardServiceRegistryBuilder(
-				"test",
-				InfinispanRegionFactory.class,
-				true,
-				false,
-				jtaPlatform
-		);
-		final StandardServiceRegistry registry = ssrb.build();
-		try {
-			Properties properties = CacheTestUtil.toProperties( ssrb.getSettings() );
-			InfinispanRegionFactory regionFactory = CacheTestUtil.startRegionFactory(
-					registry,
-					getCacheTestSupport()
-			);
-			TransactionalDataRegion region = (TransactionalDataRegion) createRegion(
-					regionFactory,
-					"test/test",
-					properties,
-					getCacheDataDescription()
-			);
-			assertTrue( "Region is transaction-aware", region.isTransactionAware() );
-			CacheTestUtil.stopRegionFactory( regionFactory, getCacheTestSupport() );
-		}
-		finally {
-			StandardServiceRegistryBuilder.destroy( registry );
-		}
-	}
-
-	@Test
-	public void testGetCacheDataDescription() throws Exception {
-		StandardServiceRegistryBuilder ssrb = CacheTestUtil.buildBaselineStandardServiceRegistryBuilder(
-				"test",
-				InfinispanRegionFactory.class,
-				true,
-				false,
-				jtaPlatform
-		);
-		final StandardServiceRegistry registry = ssrb.build();
-		try {
-			Properties properties = CacheTestUtil.toProperties( ssrb.getSettings() );
-			InfinispanRegionFactory regionFactory = CacheTestUtil.startRegionFactory(
-					registry,
-					getCacheTestSupport()
-			);
-			TransactionalDataRegion region = (TransactionalDataRegion) createRegion(
-					regionFactory,
-					"test/test",
-					properties,
-					getCacheDataDescription()
-			);
-			CacheDataDescription cdd = region.getCacheDataDescription();
-			assertNotNull( cdd );
-			CacheDataDescription expected = getCacheDataDescription();
-			assertEquals( expected.isMutable(), cdd.isMutable() );
-			assertEquals( expected.isVersioned(), cdd.isVersioned() );
-			assertEquals( expected.getVersionComparator(), cdd.getVersionComparator() );
-		}
-		finally {
-			StandardServiceRegistryBuilder.destroy( registry );
-		}
-	}
+	protected abstract void supportedAccessTypeTest(TestRegionFactory regionFactory, Properties properties);
 }

@@ -8,7 +8,7 @@ import org.hibernate.cfg.Environment;
 import org.hibernate.engine.jdbc.connections.spi.AbstractMultiTenantConnectionProvider;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
 import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider;
-import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.infinispan.test.hibernate.cache.commons.tm.XaConnectionProvider;
 import org.hibernate.testing.env.ConnectionProviderBuilder;
@@ -107,7 +107,7 @@ public class MultiTenancyTest extends SingleNodeTest {
 //                }
 //            });
 //        }
-		  BaseRegion region = (BaseRegion) sessionFactory().getSecondLevelCacheRegion(Item.class.getName());
+		  InfinispanBaseRegion region = TEST_SESSION_ACCESS.getRegion(sessionFactory(), Item.class.getName());
 		  AdvancedCache localCache = region.getCache().withFlags(Flag.CACHE_MODE_LOCAL);
 		  assertEquals(1, localCache.size());
 		  try (CloseableIterator iterator = localCache.keySet().iterator()) {

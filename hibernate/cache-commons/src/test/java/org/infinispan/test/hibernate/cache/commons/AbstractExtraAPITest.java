@@ -1,17 +1,12 @@
 package org.infinispan.test.hibernate.cache.commons;
 
-import org.hibernate.cache.internal.CacheDataDescriptionImpl;
-import org.hibernate.cache.spi.CacheDataDescription;
-import org.hibernate.cache.spi.access.RegionAccessStrategy;
 import org.hibernate.cache.spi.access.SoftLock;
-import org.hibernate.internal.util.compare.ComparableComparator;
 
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess.TestRegionAccessStrategy;
 import org.infinispan.test.hibernate.cache.commons.util.TestingKeyFactory;
 import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;
-import org.infinispan.test.fwk.TestResourceTracker;
 import org.junit.Test;
 
 import static org.junit.Assert.assertNull;
@@ -19,12 +14,10 @@ import static org.junit.Assert.assertNull;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public abstract class AbstractExtraAPITest<S extends RegionAccessStrategy> extends AbstractNonFunctionalTest {
+public abstract class AbstractExtraAPITest<S> extends AbstractNonFunctionalTest {
 
 	public static final String REGION_NAME = "test/com.foo.test";
 	public static final Object KEY = TestingKeyFactory.generateCollectionCacheKey( "KEY" );
-	public static final CacheDataDescription CACHE_DATA_DESCRIPTION
-			= new CacheDataDescriptionImpl(true, true, ComparableComparator.INSTANCE, null);
    protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
    protected static final Object SESSION = TEST_SESSION_ACCESS.mockSessionImplementor();
 
@@ -34,12 +27,11 @@ public abstract class AbstractExtraAPITest<S extends RegionAccessStrategy> exten
 
 	@BeforeClassOnce
 	public final void prepareLocalAccessStrategy() throws Exception {
-		TestResourceTracker.testStarted(getClass().getSimpleName());
 		environment = new NodeEnvironment( createStandardServiceRegistryBuilder() );
 		environment.prepare();
 
 		accessStrategy = getAccessStrategy();
-      testAccessStrategy = TEST_SESSION_ACCESS.fromAccessStrategy(accessStrategy);
+      testAccessStrategy = TEST_SESSION_ACCESS.fromAccess(accessStrategy);
 	}
 
 	protected abstract S getAccessStrategy();
@@ -49,7 +41,6 @@ public abstract class AbstractExtraAPITest<S extends RegionAccessStrategy> exten
 		if ( environment != null ) {
 			environment.release();
 		}
-		TestResourceTracker.testFinished(getClass().getSimpleName());
 	}
 
 	@Test
@@ -59,7 +50,7 @@ public abstract class AbstractExtraAPITest<S extends RegionAccessStrategy> exten
 
 	@Test
 	public void testLockRegion() {
-		assertNull( accessStrategy.lockRegion() );
+		assertNull( testAccessStrategy.lockRegion() );
 	}
 
 	@Test
