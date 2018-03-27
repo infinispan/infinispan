@@ -19,6 +19,7 @@ import org.infinispan.server.hotrod.counter.impl.CounterManagerImplTestStrategy;
 import org.infinispan.server.hotrod.counter.impl.TestCounterManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -40,12 +41,14 @@ public class CounterManagerOperationTest extends HotRodMultiNodeTest implements 
       strategy = new CounterManagerImplTestStrategy(this::allTestCounterManagers, this::log, this::cacheManager);
    }
 
-   @BeforeClass
-   public void cleanup() {
+   @BeforeClass(alwaysRun = true)
+   @Override
+   public void createBeforeClass() throws Throwable {
       Util.recursiveFileRemove(PERSISTENT_LOCATION);
       if (!new File(PERSISTENT_LOCATION).mkdirs()) {
          log.warnf("Unable to create persistent location file: '%s'", PERSISTENT_LOCATION);
       }
+      super.createBeforeClass();
    }
 
    @Override
@@ -86,6 +89,13 @@ public class CounterManagerOperationTest extends HotRodMultiNodeTest implements 
    @Override
    public void testGetCounterNames(Method method) {
       strategy.testGetCounterNames(method);
+   }
+
+   @AfterClass(alwaysRun = true)
+   @Override
+   protected void destroy() {
+      super.destroy();
+      Util.recursiveFileRemove(PERSISTENT_LOCATION);
    }
 
    @Override
