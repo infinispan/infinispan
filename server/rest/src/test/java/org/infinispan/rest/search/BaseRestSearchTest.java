@@ -243,6 +243,14 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       assertEquals(person.get("id").getIntValue(), 2);
    }
 
+   @Test
+   public void testErrorPropagation() throws Exception {
+      ContentResponse response = executeQueryRequest(CACHE_NAME, HttpMethod.GET,
+            "from org.infinispan.rest.search.entity.Person where id:1", 0, 10);
+
+      assertEquals(response.getStatus(), HttpStatus.BAD_REQUEST_400);
+   }
+
    @AfterClass
    public void tearDown() throws Exception {
       client.stop();
@@ -335,7 +343,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       return query(q, method, 0, 10, CACHE_NAME);
    }
 
-   private JsonNode query(String q, HttpMethod method, int offset, int maxResults, String cacheName) throws Exception {
+   private ContentResponse executeQueryRequest(String cacheName, HttpMethod method, String q, int offset, int maxResults) throws Exception {
       Request request;
       String searchUrl = getUrl(pickServer(), cacheName);
       String mode = getQueryMode().toString();
@@ -354,7 +362,11 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
          queryReq.append("&").append(QUERY_MODE).append("=").append(mode);
          request = client.newRequest(queryReq.toString()).method(GET);
       }
-      ContentResponse response = request.send();
+      return request.send();
+   }
+
+   private JsonNode query(String q, HttpMethod method, int offset, int maxResults, String cacheName) throws Exception {
+      ContentResponse response = executeQueryRequest(cacheName, method, q, offset, maxResults);
       String contentAsString = response.getContentAsString();
       assertEquals(response.getStatus(), HttpStatus.OK_200);
       return MAPPER.readTree(contentAsString);
