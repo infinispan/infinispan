@@ -75,7 +75,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    // We synchronize on the entire map while handling a status request, to make sure there are no concurrent topology
    // updates from the old coordinator.
    private final Map<String, LocalCacheStatus> runningCaches =
-         Collections.synchronizedMap(new HashMap<String, LocalCacheStatus>());
+         Collections.synchronizedMap(new HashMap<>());
    private volatile boolean running;
    @GuardedBy("runningCaches")
    private int latestStatusResponseViewId;
@@ -405,7 +405,9 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
    private void resetLocalTopologyBeforeRebalance(String cacheName, CacheTopology newCacheTopology,
          CacheTopology oldCacheTopology, CacheTopologyHandler handler) {
-      boolean newRebalance = newCacheTopology.getPendingCH() != null;
+      // Cannot rely on the pending CH, because it is also used for conflict resolution
+      boolean newRebalance = newCacheTopology.getPhase() != CacheTopology.Phase.NO_REBALANCE &&
+                             newCacheTopology.getPhase() != CacheTopology.Phase.CONFLICT_RESOLUTION;
       if (newRebalance) {
          // The initial topology doesn't need a reset because we are guaranteed not to be a member
          if (oldCacheTopology == null)
