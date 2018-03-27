@@ -1,6 +1,8 @@
 package org.infinispan.test.hibernate.cache.commons.util;
 
+import org.infinispan.hibernate.cache.commons.DefaultCacheManagerProvider;
 import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
+import org.hibernate.service.ServiceRegistry;
 import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -40,12 +42,13 @@ public class TestInfinispanRegionFactory extends InfinispanRegionFactory {
 	}
 
 	@Override
-	protected EmbeddedCacheManager createCacheManager(ConfigurationBuilderHolder holder) {
+	protected EmbeddedCacheManager createCacheManager(Properties properties, ServiceRegistry serviceRegistry) {
 		// If the cache manager has been provided by calling setCacheManager, don't create a new one
 		EmbeddedCacheManager cacheManager = getCacheManager();
 		if (cacheManager != null) {
 			return cacheManager;
 		}
+		ConfigurationBuilderHolder holder = DefaultCacheManagerProvider.loadConfiguration(serviceRegistry, properties);
 		amendConfiguration(holder);
 		cacheManager = new DefaultCacheManager(holder, true);
 		if (timeService != null) {
