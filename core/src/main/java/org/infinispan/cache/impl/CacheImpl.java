@@ -590,7 +590,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private void transactionalRemoveGroup(String groupName, long explicitFlagsBitSet) {
-      final boolean onGoingTransaction = getOngoingTransaction() != null;
+      final boolean onGoingTransaction = getOngoingTransaction(true) != null;
       if (!onGoingTransaction) {
          tryBegin();
       }
@@ -945,7 +945,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       boolean txInjected = false;
       if (transactional) {
          if (!isPutForExternalRead) {
-            Transaction transaction = getOngoingTransaction();
+            Transaction transaction = getOngoingTransaction(true);
             if (transaction == null && config.transaction().autoCommit()) {
                transaction = tryBegin();
                txInjected = true;
@@ -1694,12 +1694,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return this; // NO-OP
    }
 
-   private Transaction getOngoingTransaction() {
+   private Transaction getOngoingTransaction(boolean includeBatchTx) {
       try {
          Transaction transaction = null;
          if (transactionManager != null) {
             transaction = transactionManager.getTransaction();
-            if (transaction == null && batchingEnabled) {
+            if (includeBatchTx && transaction == null && batchingEnabled) {
                transaction = batchContainer.getBatchTransaction();
             }
          }
@@ -1780,7 +1780,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       }
       try {
          transactionManager.begin();
-         final Transaction transaction = getOngoingTransaction();
+         final Transaction transaction = getOngoingTransaction(true);
          if (trace) {
             log.tracef("Implicit transaction started! Transaction: %s", transaction);
          }
@@ -1805,7 +1805,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          return;
       }
       if (trace)
-         log.tracef("Committing transaction as it was implicit: %s", getOngoingTransaction());
+         log.tracef("Committing transaction as it was implicit: %s", getOngoingTransaction(true));
       try {
          transactionManager.commit();
       } catch (Throwable e) {
@@ -1864,7 +1864,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private Transaction suspendOngoingTransactionIfExists() {
-      final Transaction tx = getOngoingTransaction();
+      final Transaction tx = getOngoingTransaction(false);
       if (tx != null) {
          try {
             transactionManager.suspend();

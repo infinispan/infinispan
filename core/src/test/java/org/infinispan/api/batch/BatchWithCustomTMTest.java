@@ -1,42 +1,28 @@
 package org.infinispan.api.batch;
 
+import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.test.TestingUtil.getTransactionManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
+
+import java.lang.reflect.Method;
 
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedBaseTransactionManager;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 
 @Test(groups = {"functional", "transaction"}, testName = "api.batch.BatchWithCustomTMTest")
 public class BatchWithCustomTMTest extends AbstractBatchTest {
 
-   private EmbeddedCacheManager cm;
-
-   @BeforeClass
-   public void createCacheManager() {
-      cm = TestCacheManagerFactory.createCacheManager(false);
-   }
-
-   @AfterClass
-   public void destroyCacheManager() {
-      TestingUtil.killCacheManagers(cm);
-      cm = null;
-   }
-
-   public void testBatchWithOngoingTM() throws Exception {
-      Cache<String, String> cache =createCache("testBatchWithOngoingTM");
-      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+   public void testBatchWithOngoingTM(Method method) throws Exception {
+      Cache<String, String> cache = createCache(method.getName());
+      TransactionManager tm = getTransactionManager(cache);
       assertEquals(MyDummyTransactionManager.class, tm.getClass());
       tm.begin();
       cache.put("k", "v");
@@ -52,28 +38,23 @@ public class BatchWithCustomTMTest extends AbstractBatchTest {
       assertEquals("v2", cache.get("k2"));
    }
 
-   public void testBatchWithoutOngoingTMSuspension() throws Exception {
-      Cache<String, String> cache = createCache("testBatchWithoutOngoingTMSuspension");
-      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+   public void testBatchWithoutOngoingTMSuspension(Method method) throws Exception {
+      Cache<String, String> cache = createCache(method.getName());
+      TransactionManager tm = getTransactionManager(cache);
       assertEquals(MyDummyTransactionManager.class, tm.getClass());
-      assertNull("Should have no ongoing txs", tm.getTransaction());
+      assertNoTransaction(tm);
       cache.startBatch();
 
       cache.put("k", "v");
-      assertNull("Should have no ongoing txs", tm.getTransaction());
+      assertNoTransaction(tm);
       cache.put("k2", "v2");
 
       assertNull(getOnDifferentThread(cache, "k"));
       assertNull(getOnDifferentThread(cache, "k2"));
 
-      try {
-         tm.commit(); // should have no effect
-      }
-      catch (Exception e) {
-         // the TM may barf here ... this is OK.
-      }
+      expectException(IllegalStateException.class, tm::commit);
 
-      assertNull("Should have no ongoing txs", tm.getTransaction());
+      assertNoTransaction(tm);
 
       assertNull(getOnDifferentThread(cache, "k"));
       assertNull(getOnDifferentThread(cache, "k2"));
@@ -84,8 +65,8 @@ public class BatchWithCustomTMTest extends AbstractBatchTest {
       assertEquals("v2", getOnDifferentThread(cache, "k2"));
    }
 
-   public void testBatchRollback() throws Exception {
-      Cache<String, String> cache = createCache("testBatchRollback");
+   public void testBatchRollback(Method method) throws Exception {
+      Cache<String, String> cache = createCache(method.getName());
       cache.startBatch();
       cache.put("k", "v");
       cache.put("k2", "v2");
@@ -99,20 +80,20 @@ public class BatchWithCustomTMTest extends AbstractBatchTest {
       assertNull(getOnDifferentThread(cache, "k2"));
    }
 
-   private Cache<String, String> createCache(String name) {
+   protected <K, V> Cache<K, V> createCache(String name) {
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.transaction().transactionManagerLookup(new MyDummyTransactionManagerLookup());
       c.invocationBatching().enable();
       c.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      cm.defineConfiguration(name, c.build());
-      return cm.getCache(name);
+      cacheManager.defineConfiguration(name, c.build());
+      return cacheManager.getCache(name);
    }
 
    static class MyDummyTransactionManagerLookup extends EmbeddedTransactionManagerLookup {
       MyDummyTransactionManager tm = new MyDummyTransactionManager();
 
       @Override
-      public TransactionManager getTransactionManager() throws Exception {
+      public TransactionManager getTransactionManager() {
          return tm;
       }
    }

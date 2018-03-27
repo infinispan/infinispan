@@ -1,102 +1,86 @@
 package org.infinispan.api.batch;
 
-import static org.testng.Assert.assertEquals;
+import static org.infinispan.test.Exceptions.expectException;
+import static org.infinispan.test.TestingUtil.getTransactionManager;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.getDefaultCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+
+import java.lang.reflect.Method;
 
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 
 @Test(groups = {"functional", "transaction"}, testName = "api.batch.BatchWithTMTest")
 public class BatchWithTMTest extends AbstractBatchTest {
 
-   EmbeddedCacheManager cm;
-
-   @BeforeClass
-   public void createCacheManager() {
-      cm = TestCacheManagerFactory.createCacheManager(false);
-   }
-
-   @AfterClass
-   public void destroyCacheManager() {
-      TestingUtil.killCacheManagers(cm);
-      cm = null;
-   }
-
-   public void testBatchWithOngoingTM() throws Exception {
-      Cache<String, String> cache = null;
-      cache = createCache("testBatchWithOngoingTM");
-      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+   public void testBatchWithOngoingTM(Method method) throws Exception {
+      Cache<String, String> cache = createCache(method.getName());
+      TransactionManager tm = getTransactionManager(cache);
+      assertNoTransaction(tm);
       tm.begin();
       cache.put("k", "v");
       cache.startBatch();
       cache.put("k2", "v2");
       tm.commit();
 
-      assert "v".equals(cache.get("k"));
-      assert "v2".equals(cache.get("k2"));
+      assertEquals("v", cache.get("k"));
+      assertEquals("v2", cache.get("k2"));
 
       cache.endBatch(false); // should be a no op
-      assert "v".equals(cache.get("k"));
-      assert "v2".equals(cache.get("k2"));
+
+      assertEquals("v", cache.get("k"));
+      assertEquals("v2", cache.get("k2"));
    }
 
-   public void testBatchWithoutOngoingTMSuspension() throws Exception {
-      Cache<String, String> cache = createCache("testBatchWithoutOngoingTMSuspension");
-      TransactionManager tm = TestingUtil.getTransactionManager(cache);
-      assert tm.getTransaction() == null : "Should have no ongoing txs";
+   public void testBatchWithoutOngoingTMSuspension(Method method) throws Exception {
+      Cache<String, String> cache = createCache(method.getName());
+      TransactionManager tm = getTransactionManager(cache);
+      assertNoTransaction(tm);
       cache.startBatch();
       cache.put("k", "v");
-      assert tm.getTransaction() == null : "Should have no ongoing txs";
+      assertNoTransaction(tm);
       cache.put("k2", "v2");
 
-      assert getOnDifferentThread(cache, "k") == null;
-      assert getOnDifferentThread(cache, "k2") == null;
+      assertNull(getOnDifferentThread(cache, "k"));
+      assertNull(getOnDifferentThread(cache, "k2"));
 
-      try {
-         tm.commit(); // should have no effect
-      }
-      catch (Exception e) {
-         // the TM may barf here ... this is OK.
-      }
+      expectException(IllegalStateException.class, tm::commit);
 
-      assert tm.getTransaction() == null : "Should have no ongoing txs";
+      assertNoTransaction(tm);
 
-      assert getOnDifferentThread(cache, "k") == null;
-      assert getOnDifferentThread(cache, "k2") == null;
+      assertNull(getOnDifferentThread(cache, "k"));
+      assertNull(getOnDifferentThread(cache, "k2"));
 
-      cache.endBatch(true); // should be a no op
+      cache.endBatch(true);
 
-      assert "v".equals(getOnDifferentThread(cache, "k"));
-      assert "v2".equals(getOnDifferentThread(cache, "k2"));
+      assertEquals("v", getOnDifferentThread(cache, "k"));
+      assertEquals("v2", getOnDifferentThread(cache, "k2"));
    }
 
-   public void testBatchRollback() throws Exception {
-      Cache<String, String> cache = createCache("testBatchRollback");
+   public void testBatchRollback(Method method) throws Exception {
+      Cache<String, String> cache = createCache(method.getName());
       cache.startBatch();
       cache.put("k", "v");
       cache.put("k2", "v2");
 
-      assertEquals(getOnDifferentThread(cache, "k"), null);
-      assert getOnDifferentThread(cache, "k2") == null;
+      assertNull(getOnDifferentThread(cache, "k"));
+      assertNull(getOnDifferentThread(cache, "k2"));
 
       cache.endBatch(false);
 
-      assert getOnDifferentThread(cache, "k") == null;
-      assert getOnDifferentThread(cache, "k2") == null;
+      assertNull(getOnDifferentThread(cache, "k"));
+      assertNull(getOnDifferentThread(cache, "k2"));
    }
 
-   private Cache<String, String> createCache(String name) {
-      ConfigurationBuilder c = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+   protected <K, V> Cache<K, V> createCache(String name) {
+      ConfigurationBuilder c = getDefaultCacheConfiguration(true);
       c.invocationBatching().enable();
-      cm.defineConfiguration(name, c.build());
-      return cm.getCache(name);
+      cacheManager.defineConfiguration(name, c.build());
+      return cacheManager.getCache(name);
    }
 }

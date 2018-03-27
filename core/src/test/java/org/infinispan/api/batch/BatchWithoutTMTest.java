@@ -1,124 +1,90 @@
 package org.infinispan.api.batch;
 
-import static org.testng.Assert.assertEquals;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.getDefaultCacheConfiguration;
+import static org.testng.AssertJUnit.assertNull;
+
+import java.lang.reflect.Method;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.TestingUtil;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 @Test(groups = {"functional", "smoke"}, testName = "api.batch.BatchWithoutTMTest")
 public class BatchWithoutTMTest extends AbstractBatchTest {
 
-   EmbeddedCacheManager cm;
-
-   @BeforeClass
-   public void createCacheManager() {
-      final ConfigurationBuilder defaultConfiguration = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+   @Override
+   public EmbeddedCacheManager createCacheManager() {
+      final ConfigurationBuilder defaultConfiguration = getDefaultCacheConfiguration(true);
       defaultConfiguration.invocationBatching().enable().transaction().autoCommit(false);
-      cm = TestCacheManagerFactory.createCacheManager(defaultConfiguration);
+      return TestCacheManagerFactory.createCacheManager(defaultConfiguration);
    }
 
-   @AfterClass
-   public void destroyCacheManager() {
-      TestingUtil.killCacheManagers(cm);
-      cm = null;
+   public void testBatchWithoutCfg(Method method) {
+      Cache<String, String> cache = createCache(false, method.getName());
+      Exceptions.expectException(CacheConfigurationException.class, cache::startBatch);
+      Exceptions.expectException(CacheConfigurationException.class, () -> cache.endBatch(true));
+      Exceptions.expectException(CacheConfigurationException.class, () -> cache.endBatch(false));
    }
 
-   public void testBatchWithoutCfg() {
-      Cache<String, String> cache = null;
-      cache = createCache(false, "testBatchWithoutCfg");
-      try {
-         cache.startBatch();
-         assert false : "Should have failed";
-      }
-      catch (CacheConfigurationException good) {
-         // do nothing
-      }
-
-      try {
-         cache.endBatch(true);
-         assert false : "Should have failed";
-      }
-      catch (CacheConfigurationException good) {
-         // do nothing
-      }
-
-      try {
-         cache.endBatch(false);
-         assert false : "Should have failed";
-      }
-      catch (CacheConfigurationException good) {
-         // do nothing
-      }
-   }
-
-   public void testEndBatchWithoutStartBatch() {
-      Cache<String, String> cache = null;
-      cache = createCache(true, "testEndBatchWithoutStartBatch");
+   public void testEndBatchWithoutStartBatch(Method method) {
+      Cache<String, String> cache = createCache(method.getName());
       cache.endBatch(true);
       cache.endBatch(false);
       // should not fail.
    }
 
-   public void testStartBatchIdempotency() {
-      Cache<String, String> cache = null;
-      cache = createCache(true, "testStartBatchIdempotency");
+   public void testStartBatchIdempotency(Method method) {
+      Cache<String, String> cache = createCache(method.getName());
       cache.startBatch();
       cache.put("k", "v");
       cache.startBatch();     // again
       cache.put("k2", "v2");
       cache.endBatch(true);
 
-      assert "v".equals(cache.get("k"));
-      assert "v2".equals(cache.get("k2"));
+      AssertJUnit.assertEquals("v", cache.get("k"));
+      AssertJUnit.assertEquals("v2", cache.get("k2"));
    }
 
-
-   private static final Log log = LogFactory.getLog(BatchWithoutTMTest.class);
-
-   public void testBatchVisibility() throws InterruptedException {
-      Cache<String, String> cache = null;
-      cache = createCache(true, "testBatchVisibility");
-
-      log.info("Here it starts...");
-
+   public void testBatchVisibility(Method method) throws Exception {
+      Cache<String, String> cache = createCache(method.getName());
       cache.startBatch();
       cache.put("k", "v");
-      assertEquals(getOnDifferentThread(cache, "k"), null , "Other thread should not see batch update till batch completes!");
+      assertNull("Other thread should not see batch update till batch completes!", getOnDifferentThread(cache, "k"));
 
       cache.endBatch(true);
 
-      assertEquals("v", getOnDifferentThread(cache, "k"));
+      AssertJUnit.assertEquals("v", getOnDifferentThread(cache, "k"));
    }
 
-   public void testBatchRollback() throws Exception {
-      Cache<String, String> cache = null;
-      cache = createCache(true, "testBatchRollback");
+   public void testBatchRollback(Method method) throws Exception {
+      Cache<String, String> cache = createCache(method.getName());
       cache.startBatch();
       cache.put("k", "v");
       cache.put("k2", "v2");
 
-      assert getOnDifferentThread(cache, "k") == null;
-      assert getOnDifferentThread(cache, "k2") == null;
+      assertNull(getOnDifferentThread(cache, "k"));
+      assertNull(getOnDifferentThread(cache, "k2"));
 
       cache.endBatch(false);
 
-      assert getOnDifferentThread(cache, "k") == null;
-      assert getOnDifferentThread(cache, "k2") == null;
+      assertNull(getOnDifferentThread(cache, "k"));
+      assertNull(getOnDifferentThread(cache, "k2"));
    }
 
-   private Cache<String, String> createCache(boolean enableBatch, String name) {
+   @Override
+   protected <K, V> Cache<K, V> createCache(String name) {
+      return createCache(true, name);
+   }
+
+   private <K, V> Cache<K, V> createCache(boolean enableBatch, String name) {
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.invocationBatching().enable(enableBatch);
-      cm.defineConfiguration(name, c.build());
-      return cm.getCache(name);
+      cacheManager.defineConfiguration(name, c.build());
+      return cacheManager.getCache(name);
    }
 }
