@@ -2366,7 +2366,7 @@
     <dependency>
       <groupId>org.hibernate.common</groupId>
       <artifactId>hibernate-commons-annotations</artifactId>
-      <version>5.0.2.Final</version>
+      <version>5.0.3.Final</version>
       <licenses>
         <license>
           <name>GNU Lesser General Public License v2 (or 2.1) only</name>

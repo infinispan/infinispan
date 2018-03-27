@@ -249,7 +249,7 @@
       <version.hibernate_dep.antlr>2.7.7_5</version.hibernate_dep.antlr>
       <version.hibernate_dep.classmate>1.3.0</version.hibernate_dep.classmate>
       <version.hibernate_dep.dom4j>1.6.1_5</version.hibernate_dep.dom4j>
-      <version.hibernate_dep.hibernate-commons-annotations>5.0.2.Final</version.hibernate_dep.hibernate-commons-annotations>
+      <version.hibernate_dep.hibernate-commons-annotations>5.0.3.Final</version.hibernate_dep.hibernate-commons-annotations>
       <version.hibernate_dep.jandex>2.0.3.Final</version.hibernate_dep.jandex>
       <version.hibernate_dep.javassist>3.20.0-GA</version.hibernate_dep.javassist>
       <version.howl>1.0.1-1</version.howl>
