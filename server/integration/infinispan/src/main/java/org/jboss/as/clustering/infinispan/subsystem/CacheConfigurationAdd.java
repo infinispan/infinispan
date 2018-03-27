@@ -1041,6 +1041,8 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         builder.batchSize(BaseJDBCStoreConfigurationResource.BATCH_SIZE.resolveModelAttribute(context, table).asInt())
               .fetchSize(BaseJDBCStoreConfigurationResource.FETCH_SIZE.resolveModelAttribute(context, table).asInt())
               .tableNamePrefix(tableNamePrefix.isDefined() ? tableNamePrefix.asString() : defaultTableNamePrefix)
+              .createOnStart(BaseJDBCStoreConfigurationResource.CREATE_ON_START.resolveModelAttribute(context, table).asBoolean())
+              .dropOnExit(BaseJDBCStoreConfigurationResource.DROP_ON_EXIT.resolveModelAttribute(context, table).asBoolean())
               .idColumnName(this.getColumnProperty(context, table, ModelKeys.ID_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_NAME, "id"))
               .idColumnType(this.getColumnProperty(context, table, ModelKeys.ID_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_TYPE, "VARCHAR"))
               .dataColumnName(this.getColumnProperty(context, table, ModelKeys.DATA_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_NAME, "datum"))
