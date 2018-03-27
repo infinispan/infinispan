@@ -6,9 +6,12 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.util.logging.Log;
@@ -28,9 +31,22 @@ public class BatchingInterceptor extends DDAsyncInterceptor {
    private static final Log log = LogFactory.getLog(BatchingInterceptor.class);
 
    @Override
-   public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+   public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) {
       // eviction is non-tx, so this interceptor should be no-op for EvictCommands
       return invokeNext(ctx, command);
+   }
+
+   @Override
+   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) {
+      //clear is non transactional and it suspends all running tx before invocation. nothing to do here.
+      return invokeNext(ctx, command);
+   }
+
+   @Override
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      return command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ) ?
+            invokeNext(ctx, command) :
+            handleDefault(ctx, command);
    }
 
    /**
