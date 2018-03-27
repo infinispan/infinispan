@@ -13,6 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lock.api.ClusteredLock;
 import org.infinispan.lock.api.ClusteredLockManager;
@@ -30,16 +31,13 @@ public class ClusteredLockSplitBrainTest extends BasePartitionHandlingTest {
 
    public ClusteredLockSplitBrainTest() {
       this.numMembersInCluster = 6;
-      //this.cacheMode = CacheMode.REPL_SYNC;
+      this.cacheMode = null;
    }
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = cacheConfiguration();
-      dcc.clustering().cacheMode(cacheMode).partitionHandling().whenSplit(partitionHandling).mergePolicy(mergePolicy);
-      if (biasAcquisition != null) {
-         dcc.clustering().biasAcquisition(biasAcquisition);
-      }
+      dcc.clustering().cacheMode(CacheMode.REPL_SYNC).partitionHandling().whenSplit(partitionHandling);
       createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true));
       waitForClusterToForm(CLUSTERED_LOCK_CACHE_NAME);
    }
@@ -89,10 +87,14 @@ public class ClusteredLockSplitBrainTest extends BasePartitionHandlingTest {
 
       splitCluster(new int[]{0, 1, 2}, new int[]{3, 4, 5});
 
+      // Wait for degraded topologies to work around ISPN-9008
+      partition(0).assertDegradedMode();
+      partition(1).assertDegradedMode();
+
       asList(lock0, lock1, lock2, lock3, lock4, lock5).forEach(lock -> {
          assertNotNull(lock);
          await(lock.tryLock().whenComplete((r, ex) -> {
-            fail("should go the exceptionally! r=" + r + "ex= " + ex);
+            fail("should go the exceptionally! result=" + r + " exception= " + ex);
          }).exceptionally(t -> {
             assertException(CompletionException.class, ClusteredLockException.class, AvailabilityException.class, t);
             return null;
