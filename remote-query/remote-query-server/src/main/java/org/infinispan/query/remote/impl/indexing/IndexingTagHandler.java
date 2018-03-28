@@ -45,9 +45,12 @@ final class IndexingTagHandler implements TagHandler {
 
    private MessageContext<? extends MessageContext> messageContext;
 
+   private final boolean isLegacyIndexingEnabled;
+
    IndexingTagHandler(Descriptor messageDescriptor, Document document) {
       this.document = document;
       this.messageContext = new MessageContext<>(null, null, messageDescriptor);
+      isLegacyIndexingEnabled = IndexingMetadata.isLegacyIndexingEnabled(messageDescriptor);
    }
 
    @Override
@@ -64,7 +67,7 @@ final class IndexingTagHandler implements TagHandler {
       if (fieldDescriptor != null) {
          IndexingMetadata indexingMetadata = messageContext.getMessageDescriptor().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
          FieldMapping fieldMapping = indexingMetadata != null ? indexingMetadata.getFieldMapping(fieldDescriptor.getName()) : null;
-         if (indexingMetadata == null || fieldMapping != null && fieldMapping.index()) {
+         if (indexingMetadata == null && isLegacyIndexingEnabled || fieldMapping != null && fieldMapping.index()) {
             //TODO [anistor] should we still store if isStore==true but isIndexed==false?
             addFieldToDocument(fieldDescriptor, tagValue, fieldMapping);
          }
@@ -174,7 +177,7 @@ final class IndexingTagHandler implements TagHandler {
                   || fieldDescriptor.hasDefaultValue() ? fieldDescriptor.getDefaultValue() : null;
             IndexingMetadata indexingMetadata = messageContext.getMessageDescriptor().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
             FieldMapping fieldMapping = indexingMetadata != null ? indexingMetadata.getFieldMapping(fieldDescriptor.getName()) : null;
-            if (indexingMetadata == null || fieldMapping != null && fieldMapping.index()) {
+            if (indexingMetadata == null && isLegacyIndexingEnabled || fieldMapping != null && fieldMapping.index()) {
                addFieldToDocument(fieldDescriptor, defaultValue, fieldMapping);
             }
          }

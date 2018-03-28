@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.apache.lucene.document.Document;
 import org.hibernate.search.bridge.LuceneOptions;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.TagHandler;
@@ -12,12 +13,15 @@ import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
+import org.infinispan.query.remote.impl.logging.Log;
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
 final class WrappedMessageTagHandler implements TagHandler {
+
+   private static final Log log = LogFactory.getLog(WrappedMessageTagHandler.class, Log.class);
 
    private final ProtobufValueWrapper valueWrapper;
    private final Document document;
@@ -94,11 +98,15 @@ final class WrappedMessageTagHandler implements TagHandler {
       if (bytes != null) {
          // it's a message, not a primitive value
          if (messageDescriptor == null) {
-            throw new IllegalStateException("Type name/id is missing");
+            throw new IllegalStateException("Type name or type id is missing");
          }
+
          IndexingMetadata indexingMetadata = messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
-         // if the message definition is not annotated at all we consider all fields indexed and stored, just to be backwards compatible
-         if (indexingMetadata == null || indexingMetadata.isIndexed()) {
+         // if the message definition is not annotated at all we consider all fields indexed and stored (but not analyzed), just to be backwards compatible
+         if (indexingMetadata == null && IndexingMetadata.isLegacyIndexingEnabled(messageDescriptor) || indexingMetadata != null && indexingMetadata.isIndexed()) {
+            if (indexingMetadata == null) {
+               log.legacyIndexingIsDeprecated(messageDescriptor.getFullName(), messageDescriptor.getFileDescriptor().getName());
+            }
             valueWrapper.setMessageDescriptor(messageDescriptor);
             try {
                ProtobufParser.INSTANCE.parse(new IndexingTagHandler(messageDescriptor, document), messageDescriptor, bytes);

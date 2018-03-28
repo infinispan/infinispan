@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
+import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -175,6 +176,9 @@ public class QueryStringTest extends AbstractQueryDslTest {
          transaction.setValid(true);
          getCacheForWrite().put("transaction_" + transaction.getId(), transaction);
       }
+
+      getCacheForWrite().put("notIndexed1", new NotIndexed("testing 123"));
+      getCacheForWrite().put("notIndexed2", new NotIndexed("xyz"));
    }
 
    public void testParam() {
@@ -385,6 +389,14 @@ public class QueryStringTest extends AbstractQueryDslTest {
 
       List<User> list = q.list();
       assertEquals(3, list.size());
+   }
+
+   public void testEqNonIndexedType() {
+      Query q = createQueryFromString("from " + NotIndexed.class.getName() + " where notIndexedField = 'testing 123'");
+
+      List<NotIndexed> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals("testing 123", list.get(0).notIndexedField);
    }
 
    protected Query createQueryFromString(String q) {
