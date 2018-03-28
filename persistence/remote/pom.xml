@@ -13,6 +13,7 @@
    <description>Infinispan remote CacheStore based on Hot Rod protocol</description>
 
    <properties>
+      <module.skipCopyDependencies>false</module.skipCopyDependencies>
       <ca.dname>CN=CA,OU=Infinispan,O=JBoss,L=Red Hat</ca.dname>
       <ca.alias>infinispan-ca</ca.alias>
       <ca.keystore>${project.build.testOutputDirectory}/ca.jks</ca.keystore>
