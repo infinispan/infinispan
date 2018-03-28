@@ -606,6 +606,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       expectedMembers = Collections.emptyList();
 
       // Try to preserve the member order at least for the first partition
+      // TODO First partition is random, it would be better to use the topology selected by the availability strategy
       for (CacheTopology topology : stableTopologies) {
          addMembers(topology.getMembers(), joinInfos);
       }
@@ -761,14 +762,14 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          return;
       }
 
-      List<Address> newMembers = new ArrayList<Address>(queuedRebalanceMembers);
-      queuedRebalanceMembers = null;
-      log.tracef("Rebalancing consistent hash for cache %s, members are %s", cacheName, newMembers);
-
       if (cacheTopology == null) {
          createInitialCacheTopology();
          return;
       }
+
+      List<Address> newMembers = updateMembersPreservingOrder(cacheTopology.getMembers(), queuedRebalanceMembers);
+      queuedRebalanceMembers = null;
+      log.tracef("Rebalancing consistent hash for cache %s, members are %s", cacheName, newMembers);
 
       int newTopologyId = cacheTopology.getTopologyId() + 1;
       int newRebalanceId = cacheTopology.getRebalanceId() + 1;
@@ -843,6 +844,17 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       }
    }
 
+   private static List<Address> updateMembersPreservingOrder(List<Address> oldMembers, List<Address> newMembers) {
+      List<Address> membersPreservingOrder = new ArrayList<>(oldMembers);
+      membersPreservingOrder.retainAll(newMembers);
+      for (Address a : newMembers) {
+         if (!membersPreservingOrder.contains(a)) {
+            membersPreservingOrder.add(a);
+         }
+      }
+      return membersPreservingOrder;
+   }
+
    public boolean isRebalanceEnabled() {
       return rebalancingEnabled && clusterTopologyManager.isRebalancingEnabled();
    }
@@ -887,15 +899,11 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    @Override
-   public ConsistentHash calculateConflictHash(Set<ConsistentHash> distinctHashes) {
+   public ConsistentHash calculateConflictHash(ConsistentHash preferredHash, Set<ConsistentHash> distinctHashes) {
       // If we are required to resolveConflicts, then we utilise a union of all distinct CHs. This is necessary
       // to ensure that we read the entries associated with all possible read owners before the rebalance occurs
       ConsistentHashFactory chf = getJoinInfo().getConsistentHashFactory();
-      Optional<ConsistentHash> hash = distinctHashes.stream().reduce(chf::union);
-      if (hash.isPresent()) {
-         ConsistentHash unionHash = hash.get();
-         return chf.union(unionHash, chf.rebalance(unionHash));
-      }
-      return null;
+      ConsistentHash unionHash = distinctHashes.stream().reduce(preferredHash, chf::union);
+      return chf.union(unionHash, chf.rebalance(unionHash));
    }
 }

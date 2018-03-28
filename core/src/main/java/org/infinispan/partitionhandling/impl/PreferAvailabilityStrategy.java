@@ -1,5 +1,6 @@
 package org.infinispan.partitionhandling.impl;
 
+import static org.infinispan.partitionhandling.impl.AvailabilityStrategy.readConsistentHash;
 import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 import java.util.ArrayList;
@@ -10,7 +11,6 @@ import java.util.Set;
 
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheStatusResponse;
@@ -184,7 +184,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
 
          // Start conflict resolution by using the preferred topology's read CH as a base
          // And the union of all distinct consistent hashes as the source
-         ConsistentHash conflictHash = context.calculateConflictHash(distinctHashes);
+         ConsistentHash conflictHash = context.calculateConflictHash(preferredPartition.readCH, distinctHashes);
          mergedTopology = new CacheTopology(mergeTopologyId, mergeRebalanceId, preferredPartition.readCH,
                                             conflictHash, conflictHash, CacheTopology.Phase.CONFLICT_RESOLUTION,
                                             actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
@@ -345,28 +345,6 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
          }
       }
       return partitions;
-   }
-
-   /**
-    * The topologies included in the status responses do not have a union CH, so
-    * {@link CacheTopology#getReadConsistentHash()} doesn't work.
-    */
-   private static ConsistentHash readConsistentHash(CacheTopology topology, ConsistentHashFactory chFactory) {
-      switch (topology.getPhase()) {
-         case NO_REBALANCE:
-            return topology.getCurrentCH();
-         case TRANSITORY:
-            return topology.getPendingCH();
-         case CONFLICT_RESOLUTION:
-         case READ_OLD_WRITE_ALL:
-            return topology.getCurrentCH();
-         case READ_ALL_WRITE_ALL:
-            return chFactory.union(topology.getCurrentCH(), topology.getPendingCH());
-         case READ_NEW_WRITE_ALL:
-            return topology.getPendingCH();
-         default:
-            throw new IllegalStateException();
-      }
    }
 
    @Override

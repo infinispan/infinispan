@@ -213,7 +213,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
                   }
                }
             }
-            ConsistentHash conflictHash = context.calculateConflictHash(distinctHashes);
+            ConsistentHash conflictHash = context.calculateConflictHash(mergedTopology.getCurrentCH(), distinctHashes);
             mergedTopology = new CacheTopology(++maxTopologyId, maxRebalanceId + 1, mergedTopology.getCurrentCH(),
                   conflictHash, conflictHash, CacheTopology.Phase.CONFLICT_RESOLUTION, actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
 
