@@ -46,7 +46,7 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
 
    @BeforeMethod(alwaysRun = true)
    public void setup() {
-      mockitoSession = Mockito.mockitoSession().initMocks(this).strictness(Strictness.STRICT_STUBS).startMocking();
+      mockitoSession = Mockito.mockitoSession().strictness(Strictness.STRICT_STUBS).startMocking();
 
       EventLogManager eventLogManager = new EventLogManagerImpl();
       PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();

@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.partitionhandling.impl.AvailabilityStrategy;
 import org.infinispan.partitionhandling.impl.AvailabilityStrategyContext;
 import org.infinispan.remoting.transport.Address;
 
@@ -32,7 +33,7 @@ public class TestClusterCacheStatus {
    private CacheTopology topology;
    private CacheTopology stableTopology;
 
-   TestClusterCacheStatus(CacheJoinInfo joinInfo, CacheTopology topology, CacheTopology stableTopology) {
+   public TestClusterCacheStatus(CacheJoinInfo joinInfo, CacheTopology topology, CacheTopology stableTopology) {
       this.joinInfo = joinInfo;
       this.topology = topology;
       assertNull(stableTopology.getPendingCH());
@@ -97,21 +98,7 @@ public class TestClusterCacheStatus {
     * {@link CacheTopology#getReadConsistentHash()} doesn't work.
     */
    public ConsistentHash readConsistentHash() {
-      switch (topology.getPhase()) {
-         case NO_REBALANCE:
-            return topology.getCurrentCH();
-         case TRANSITORY:
-            return topology.getPendingCH();
-         case CONFLICT_RESOLUTION:
-         case READ_OLD_WRITE_ALL:
-            return topology.getCurrentCH();
-         case READ_ALL_WRITE_ALL:
-            return joinInfo.getConsistentHashFactory().union(topology.getCurrentCH(), topology.getPendingCH());
-         case READ_NEW_WRITE_ALL:
-            return topology.getPendingCH();
-         default:
-            throw new IllegalStateException();
-      }
+      return AvailabilityStrategy.readConsistentHash(topology, joinInfo.getConsistentHashFactory());
    }
 
    public void updateStableTopology() {
