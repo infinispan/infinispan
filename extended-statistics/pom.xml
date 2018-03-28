@@ -16,6 +16,7 @@
     <!-- This module declares components that either has lifecycle (@Start or @Stop) or uses @Inject to retrieve dependencies -->
     <properties>
         <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
+        <module.skipCopyDependencies>false</module.skipCopyDependencies>
     </properties>
 
     <dependencies>

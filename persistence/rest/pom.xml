@@ -12,6 +12,10 @@
    <name>Infinispan REST CacheStore</name>
    <description>Infinispan REST CacheStore</description>
 
+   <properties>
+      <module.skipCopyDependencies>false</module.skipCopyDependencies>
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>

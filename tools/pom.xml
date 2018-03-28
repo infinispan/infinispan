@@ -14,6 +14,10 @@
    <name>Infinispan Tools</name>
    <description>Infinispan - Tools for project</description>
 
+   <properties>
+      <module.skipCopyDependencies>false</module.skipCopyDependencies>
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
