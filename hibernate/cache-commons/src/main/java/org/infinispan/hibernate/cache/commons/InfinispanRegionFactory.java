@@ -6,8 +6,6 @@
  */
 package org.infinispan.hibernate.cache.commons;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -19,7 +17,6 @@ import java.util.function.Consumer;
 
 import javax.transaction.TransactionManager;
 
-import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.registry.selector.spi.StrategySelector;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.CacheException;
@@ -39,21 +36,17 @@ import org.hibernate.internal.util.config.ConfigurationHelper;
 import org.hibernate.service.ServiceRegistry;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.module.ModuleCommandFactory;
-import org.infinispan.commons.util.FileLookup;
-import org.infinispan.commons.util.FileLookupFactory;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
 import org.infinispan.hibernate.cache.commons.tm.HibernateTransactionManagerLookup;
 import org.infinispan.hibernate.cache.commons.util.CacheCommandFactory;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.hibernate.cache.spi.EmbeddedCacheManagerProvider;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 
@@ -270,7 +263,6 @@ public class InfinispanRegionFactory implements RegionFactory {
 	protected final Map<String, ConfigurationBuilder> configOverrides = new HashMap<>();
 
 	private CacheKeysFactory cacheKeysFactory;
-	private ConfigurationBuilderHolder defaultConfiguration;
 	private final Map<DataType, Configuration> dataTypeConfigurations = new HashMap<>();
 	private EmbeddedCacheManager manager;
 
@@ -430,14 +422,12 @@ public class InfinispanRegionFactory implements RegionFactory {
 				}
 			}
 
-			defaultConfiguration = loadConfiguration(settings.getServiceRegistry(), DEF_INFINISPAN_CONFIG_RESOURCE);
-			manager = createCacheManager(properties, settings.getServiceRegistry());
-			if (!manager.getCacheManagerConfiguration().isClustered()) {
-				// If we got non-clustered cache manager, use non-clustered (local) configuration as defaults
-				// for the data types
-				defaultConfiguration = loadConfiguration(settings.getServiceRegistry(), INFINISPAN_CONFIG_LOCAL_RESOURCE);
-			}
-			defineDataTypeCacheConfigurations();
+			String globalStatsProperty = ConfigurationHelper.extractPropertyValue(INFINISPAN_GLOBAL_STATISTICS_PROP, properties);
+			globalStats = (globalStatsProperty != null) ? Boolean.valueOf(globalStatsProperty) : null;
+
+			ServiceRegistry serviceRegistry = settings.getServiceRegistry();
+			manager = createCacheManager(properties, serviceRegistry);
+			defineDataTypeCacheConfigurations(serviceRegistry);
 		}
 		catch (CacheException ce) {
 			throw ce;
@@ -455,36 +445,20 @@ public class InfinispanRegionFactory implements RegionFactory {
 		);
 	}
 
-	/* This method is overridden in WildFly, so the signature must not change. */
-	/* In WF, the global configuration setting is ignored */
 	protected EmbeddedCacheManager createCacheManager(Properties properties, ServiceRegistry serviceRegistry) {
 		if (properties.containsKey(INFINISPAN_USE_SYNCHRONIZATION_PROP)) {
 			log.propertyUseSynchronizationDeprecated();
 		}
-		ConfigurationBuilderHolder cfgHolder;
-		String configFile = ConfigurationHelper.extractPropertyValue(INFINISPAN_CONFIG_RESOURCE_PROP, properties);
-		if (configFile != null) {
-			cfgHolder = loadConfiguration(serviceRegistry, configFile);
-		}
-		else {
-			cfgHolder = defaultConfiguration;
-		}
 
-		// We cannot just add the default configurations not defined in provided configuration
-		// since WF overrides this method - we have to deal with missing configuration for each cache separately
-		String globalStatsStr = extractProperty( INFINISPAN_GLOBAL_STATISTICS_PROP, properties	);
-		if ( globalStatsStr != null ) {
-			globalStats = Boolean.parseBoolean(globalStatsStr);
-		}
-		if (globalStats != null) {
-			cfgHolder.getGlobalConfigurationBuilder().globalJmxStatistics().enabled(globalStats);
-		}
-
-		return createCacheManager(cfgHolder);
+		return findCacheManagerProvider(serviceRegistry).getEmbeddedCacheManager(properties);
 	}
 
-	protected EmbeddedCacheManager createCacheManager(ConfigurationBuilderHolder cfgHolder) {
-		return new DefaultCacheManager( cfgHolder, true );
+	private static EmbeddedCacheManagerProvider findCacheManagerProvider(ServiceRegistry serviceRegistry) {
+		for (EmbeddedCacheManagerProvider provider : ServiceLoader.load(EmbeddedCacheManagerProvider.class, EmbeddedCacheManagerProvider.class.getClassLoader())) {
+			log.debugf("EmbeddedCacheManager will be provided by %s", provider.getClass().getName());
+			return provider;
+		}
+		return new JndiCacheManagerProvider(serviceRegistry, new DefaultCacheManagerProvider(serviceRegistry));
 	}
 
 	protected org.infinispan.transaction.lookup.TransactionManagerLookup createTransactionManagerLookup(
@@ -513,56 +487,6 @@ public class InfinispanRegionFactory implements RegionFactory {
 	protected void stopCacheManager() {
 		log.debug( "Stop cache manager" );
 		manager.stop();
-	}
-
-	private ConfigurationBuilderHolder loadConfiguration(ServiceRegistry serviceRegistry, String configFile) {
-		final FileLookup fileLookup = FileLookupFactory.newInstance();
-		final ClassLoader infinispanClassLoader = InfinispanRegionFactory.class.getClassLoader();
-		return serviceRegistry.getService( ClassLoaderService.class ).workWithClassLoader(
-				new ClassLoaderService.Work<ConfigurationBuilderHolder>() {
-					@Override
-					public ConfigurationBuilderHolder doWork(ClassLoader classLoader) {
-						InputStream is = null;
-						try {
-							is = fileLookup.lookupFile(configFile, classLoader );
-							if ( is == null ) {
-								// when it's not a user-provided configuration file, it might be a default configuration file,
-								// and if that's included in [this] module might not be visible to the ClassLoaderService:
-								classLoader = infinispanClassLoader;
-								// This time use lookupFile*Strict* so to provide an exception if we can't find it yet:
-								is = FileLookupFactory.newInstance().lookupFileStrict(configFile, classLoader );
-							}
-							final ParserRegistry parserRegistry = new ParserRegistry( infinispanClassLoader );
-							final ConfigurationBuilderHolder holder = parseWithOverridenClassLoader( parserRegistry, is, infinispanClassLoader );
-
-							return holder;
-						}
-						catch (IOException e) {
-							throw log.unableToCreateCacheManager(e);
-						}
-						finally {
-							Util.close( is );
-						}
-					}
-				}
-		);
-	}
-
-	private static ConfigurationBuilderHolder parseWithOverridenClassLoader(ParserRegistry configurationParser, InputStream is, ClassLoader infinispanClassLoader) {
-		// Infinispan requires the context ClassLoader to have full visibility on all
-		// its components and eventual extension points even *during* configuration parsing.
-		final Thread currentThread = Thread.currentThread();
-		final ClassLoader originalContextClassLoader = currentThread.getContextClassLoader();
-		try {
-			currentThread.setContextClassLoader( infinispanClassLoader );
-			ConfigurationBuilderHolder builderHolder = configurationParser.parse( is );
-			// Workaround Infinispan's ClassLoader strategies to bend to our will:
-			builderHolder.getGlobalConfigurationBuilder().classLoader( infinispanClassLoader );
-			return builderHolder;
-		}
-		finally {
-			currentThread.setContextClassLoader( originalContextClassLoader );
-		}
 	}
 
 	private void startRegion(BaseRegion region) {
@@ -615,7 +539,9 @@ public class InfinispanRegionFactory implements RegionFactory {
 		return configOverrides.computeIfAbsent(name, Void -> new ConfigurationBuilder());
 	}
 
-	private void defineDataTypeCacheConfigurations() {
+	private void defineDataTypeCacheConfigurations(ServiceRegistry serviceRegistry) {
+		String defaultResource = manager.getCacheManagerConfiguration().isClustered() ? DEF_INFINISPAN_CONFIG_RESOURCE : INFINISPAN_CONFIG_LOCAL_RESOURCE;
+		ConfigurationBuilderHolder defaultConfiguration = DefaultCacheManagerProvider.loadConfiguration(serviceRegistry, defaultResource);
 		for ( DataType type : DataType.values() ) {
 			String cacheName = baseConfigurations.get(type.key);
 			if (cacheName == null) {

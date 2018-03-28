@@ -13,6 +13,7 @@
    <name>Infinispan Hibernate Parent</name>
 
    <modules>
+      <module>cache-spi</module>
       <module>cache-commons</module>
       <module>cache-v51</module>
       <module>cache</module>
