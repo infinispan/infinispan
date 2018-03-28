@@ -32,6 +32,9 @@ public class PartitionHandlingConfiguration implements Matchable<PartitionHandli
       this.attributes = attributes.checkProtection();
    }
 
+   /**
+    * @deprecated Since 9.2, replaced with {@link #whenSplit()}.
+    */
    @Deprecated
    public boolean enabled() {
       return whenSplit() != PartitionHandling.ALLOW_READ_WRITES;

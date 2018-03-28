@@ -1591,7 +1591,7 @@ public interface Log extends BasicLogger {
    IllegalStateException getConflictsStateTransferInProgress(String cacheName);
 
    @LogMessage(level = WARN)
-   @Message(value = "The partition handling 'enable' attribute has been deprecated. Please update your configuration file to use the 'type' attribute instead", id = 464)
+   @Message(value = "The partition handling 'enabled' attribute has been deprecated. Please update your configuration to use 'when-split' instead", id = 464)
    void partitionHandlingConfigurationEnabledDeprecated();
 
 //   @Message(value = "Keys '%s' are not available. No owners exist in this partition", id = 465)
