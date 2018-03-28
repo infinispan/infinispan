@@ -73,7 +73,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
       ConfigurationBuilder dcc = hotRodCacheConfiguration(new ConfigurationBuilder());
       dcc.clustering().cacheMode(cacheMode).hash().numOwners(1)
             // Must be less than timeout used in TestingUtil::waitForNoRebalance
-            .stateTransfer().timeout(1, TimeUnit.SECONDS);
+            .stateTransfer().timeout(10, TimeUnit.SECONDS);
       createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true));
       waitForClusterToForm();
    }
