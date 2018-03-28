@@ -99,8 +99,9 @@ public interface AvailabilityStrategyContext {
    boolean resolveConflictsOnMerge();
 
    /**
+    * @param preferredHash the base consistent hash
     * @param distinctHashes a set of all hashes to be utilised as part of the conflict resolution hash
     * @return the hash to be utilised as a pending CH during Phase.CONFLICT_RESOLUTION
     */
-   ConsistentHash calculateConflictHash(Set<ConsistentHash> distinctHashes);
+   ConsistentHash calculateConflictHash(ConsistentHash preferredHash, Set<ConsistentHash> distinctHashes);
 }

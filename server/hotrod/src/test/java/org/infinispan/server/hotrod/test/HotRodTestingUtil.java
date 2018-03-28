@@ -318,7 +318,7 @@ public class HotRodTestingUtil {
    public static void assertHashTopology20Received(AbstractTestTopologyAwareResponse topoResp,
                                                    List<HotRodServer> servers, String cacheName, int expectedTopologyId) {
       TestHashDistAware20Response hashTopologyResp = (TestHashDistAware20Response) topoResp;
-      assertEquals(hashTopologyResp.topologyId, expectedTopologyId);
+      assertEquals(expectedTopologyId, hashTopologyResp.topologyId);
       Set<ServerAddress> serverAddresses = servers.stream().map(HotRodServer::getAddress).collect(Collectors.toSet());
       assertEquals(new HashSet<>(hashTopologyResp.members), serverAddresses);
       assertEquals(hashTopologyResp.hashFunction, 3);
