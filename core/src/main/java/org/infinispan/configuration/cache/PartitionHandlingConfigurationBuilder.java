@@ -7,6 +7,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.conflict.EntryMergePolicy;
+import org.infinispan.conflict.MergePolicy;
 import org.infinispan.partitionhandling.PartitionHandling;
 /**
  * Controls how the cache handles partitioning and/or multiple node failures.
@@ -25,10 +26,13 @@ public class PartitionHandlingConfigurationBuilder extends AbstractClusteringCon
 
    /**
     * @param enabled If {@code true}, partitions will enter degraded mode. If {@code false}, they will keep working independently.
+    *
+    * @deprecated Since 9.2, please use {@link #whenSplit(PartitionHandling)} instead.
     */
    @Deprecated
    public PartitionHandlingConfigurationBuilder enabled(boolean enabled) {
       whenSplit(enabled ? PartitionHandling.DENY_READ_WRITES : PartitionHandling.ALLOW_READ_WRITES);
+      mergePolicy(MergePolicy.NONE);
       return this;
    }
 
