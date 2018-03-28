@@ -13,6 +13,10 @@
    <name>Infinispan GUI Demo</name>
    <description>Infinispan - GUI Demo</description>
 
+   <properties>
+      <module.skipCopyDependencies>false</module.skipCopyDependencies>
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>

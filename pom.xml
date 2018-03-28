@@ -185,6 +185,7 @@
       <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
       <module.skipTestComponentMetaDataProcessing>true</module.skipTestComponentMetaDataProcessing>
       <module.skipMavenRemoteResource>false</module.skipMavenRemoteResource>
+      <module.skipCopyDependencies>true</module.skipCopyDependencies>
       <packaging>jar</packaging>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -1271,7 +1272,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-dependency-plugin</artifactId>
-               <version>2.8</version>
+               <version>3.0.2</version>
             </plugin>
             <plugin>
                <groupId>org.apache.servicemix.tooling</groupId>
@@ -1971,6 +1972,7 @@
                            <goal>build-classpath</goal>
                         </goals>
                         <configuration>
+                           <skip>${module.skipCopyDependencies}</skip>
                            <includeScope>runtime</includeScope>
                            <excludeScope>test</excludeScope>
                            <excludeArtifactIds>
@@ -1991,6 +1993,7 @@
                            <goal>copy-dependencies</goal>
                         </goals>
                         <configuration>
+                           <skip>${module.skipCopyDependencies}</skip>
                            <includeScope>runtime</includeScope>
                            <excludeScope>test</excludeScope>
                            <excludeGroupIds>
