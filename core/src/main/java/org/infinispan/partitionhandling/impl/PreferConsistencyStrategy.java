@@ -1,5 +1,6 @@
 package org.infinispan.partitionhandling.impl;
 
+import static org.infinispan.partitionhandling.impl.AvailabilityStrategy.readConsistentHash;
 import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.Set;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.PersistentUUIDManager;
@@ -122,6 +124,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       CacheTopology maxActiveTopology = null;
       Set<CacheTopology> degradedTopologies = new HashSet<>();
       CacheTopology maxDegradedTopology = null;
+      CacheJoinInfo joinInfo = null;
       for (CacheStatusResponse response : statusResponseMap.values()) {
          CacheTopology partitionStableTopology = response.getStableTopology();
          if (partitionStableTopology == null) {
@@ -130,6 +133,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          }
          if (maxStableTopology == null || maxStableTopology.getTopologyId() < partitionStableTopology.getTopologyId()) {
             maxStableTopology = partitionStableTopology;
+            joinInfo = response.getCacheJoinInfo();
          }
 
          CacheTopology partitionTopology = response.getCacheTopology();
@@ -199,7 +203,6 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       // confirmation status (yet).
       AvailabilityMode newAvailabilityMode = computeAvailabilityAfterMerge(context, maxStableTopology, actualMembers);
       if (mergedTopology != null) {
-
          boolean resolveConflicts = context.resolveConflictsOnMerge() && !degradedTopologies.isEmpty() && newAvailabilityMode == AvailabilityMode.AVAILABLE;
          if (resolveConflicts) {
             // Record all distinct read owners and hashes
@@ -207,23 +210,28 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
             for (CacheStatusResponse response : statusResponseMap.values()) {
                CacheTopology cacheTopology = response.getCacheTopology();
                if (cacheTopology != null) {
-                  ConsistentHash hash = cacheTopology.getCurrentCH();
-                  if (hash != null && !hash.getMembers().isEmpty()) {
-                     distinctHashes.add(hash);
+                  ConsistentHash readCH = readConsistentHash(cacheTopology, joinInfo.getConsistentHashFactory());
+                  if (readCH != null && !readCH.getMembers().isEmpty()) {
+                     distinctHashes.add(readCH);
                   }
                }
             }
-            ConsistentHash conflictHash = context.calculateConflictHash(mergedTopology.getCurrentCH(), distinctHashes);
-            mergedTopology = new CacheTopology(++maxTopologyId, maxRebalanceId + 1, mergedTopology.getCurrentCH(),
-                  conflictHash, conflictHash, CacheTopology.Phase.CONFLICT_RESOLUTION, actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
+            ConsistentHash preferredHash = readConsistentHash(mergedTopology, joinInfo.getConsistentHashFactory());
+            ConsistentHash conflictHash = context.calculateConflictHash(preferredHash, distinctHashes);
+
+            mergedTopology = new CacheTopology(++maxTopologyId, maxRebalanceId + 1,
+                                               preferredHash,
+                                               conflictHash, conflictHash, CacheTopology.Phase.CONFLICT_RESOLUTION,
+                                               actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
 
             // Update the currentTopology and try to resolve conflicts
             context.updateTopologiesAfterMerge(mergedTopology, null, mergedAvailabilityMode, true);
          }
          // There's no pendingCH, therefore the topology is in stable phase
          mergedTopology = new CacheTopology(maxTopologyId + 1, mergedTopology.getRebalanceId(),
-               mergedTopology.getCurrentCH(), null, CacheTopology.Phase.NO_REBALANCE, actualMembers,
-               persistentUUIDManager.mapAddresses(actualMembers));
+                                            mergedTopology.getCurrentCH(), null,
+                                            CacheTopology.Phase.NO_REBALANCE, actualMembers,
+                                            persistentUUIDManager.mapAddresses(actualMembers));
       }
 
       context.updateTopologiesAfterMerge(mergedTopology, maxStableTopology, mergedAvailabilityMode, false);
