@@ -7,15 +7,6 @@
 package org.infinispan.hibernate.cache.commons;
 
 import java.util.Properties;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-
-import org.hibernate.cache.CacheException;
-import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
-import org.hibernate.internal.util.config.ConfigurationHelper;
-import org.hibernate.internal.util.jndi.JndiHelper;
-import org.hibernate.service.ServiceRegistry;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 
@@ -25,16 +16,16 @@ import org.infinispan.manager.EmbeddedCacheManager;
  *
  * @author Galder Zamarreño
  * @since 3.5
+ * @deprecated Replaced by {@link JndiCacheManagerProvider}
  */
+@Deprecated
 public class JndiInfinispanRegionFactory extends InfinispanRegionFactory {
-
-	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( JndiInfinispanRegionFactory.class );
 
 	/**
 	 * Specifies the JNDI name under which the {@link EmbeddedCacheManager} to use is bound.
 	 * There is no default value -- the user must specify the property.
 	 */
-	public static final String CACHE_MANAGER_RESOURCE_PROP = "hibernate.cache.infinispan.cachemanager";
+	public static final String CACHE_MANAGER_RESOURCE_PROP = JndiCacheManagerProvider.CACHE_MANAGER_RESOURCE_PROP;
 
 	/**
 	 * Constructs a JndiInfinispanRegionFactory
@@ -52,42 +43,5 @@ public class JndiInfinispanRegionFactory extends InfinispanRegionFactory {
 	@SuppressWarnings("UnusedDeclaration")
 	public JndiInfinispanRegionFactory(Properties props) {
 		super( props );
-	}
-
-	@Override
-	protected EmbeddedCacheManager createCacheManager(
-			Properties properties,
-			ServiceRegistry serviceRegistry) throws CacheException {
-		final String name = ConfigurationHelper.getString( CACHE_MANAGER_RESOURCE_PROP, properties, null );
-		if ( name == null ) {
-			throw log.propertyCacheManagerResourceNotSet();
-		}
-		return locateCacheManager( name, JndiHelper.extractJndiProperties( properties ) );
-	}
-
-	private EmbeddedCacheManager locateCacheManager(String jndiNamespace, Properties jndiProperties) {
-		Context ctx = null;
-		try {
-			ctx = new InitialContext( jndiProperties );
-			return (EmbeddedCacheManager) ctx.lookup( jndiNamespace );
-		}
-		catch (NamingException ne) {
-			throw log.unableToRetrieveCmFromJndi(jndiNamespace);
-		}
-		finally {
-			if ( ctx != null ) {
-				try {
-					ctx.close();
-				}
-				catch (NamingException ne) {
-					log.unableToReleaseContext(ne);
-				}
-			}
-		}
-	}
-
-	@Override
-	public void stop() {
-		// Do not attempt to stop a cache manager because it wasn't created by this region factory.
 	}
 }

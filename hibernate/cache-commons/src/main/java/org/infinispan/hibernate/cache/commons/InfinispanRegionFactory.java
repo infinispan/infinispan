@@ -458,7 +458,7 @@ public class InfinispanRegionFactory implements RegionFactory {
 			log.debugf("EmbeddedCacheManager will be provided by %s", provider.getClass().getName());
 			return provider;
 		}
-		return new DefaultCacheManagerProvider(serviceRegistry);
+		return new JndiCacheManagerProvider(serviceRegistry, new DefaultCacheManagerProvider(serviceRegistry));
 	}
 
 	protected org.infinispan.transaction.lookup.TransactionManagerLookup createTransactionManagerLookup(
