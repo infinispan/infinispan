@@ -228,16 +228,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       for (Partition p : partitions) {
          // TODO Investigate comparing the number of segments owned by the senders +
          // the number of the number of segments for partition(senders includes owner) agrees
-         if (preferredPartition == null) {
-            preferredPartition = p;
-         } else if (preferredPartition.senders.size() < p.senders.size()) {
-            preferredPartition = p;
-         } else if (preferredPartition.senders.size() == p.senders.size() &&
-                    preferredPartition.actualMembers.size() < p.actualMembers.size()) {
-            preferredPartition = p;
-         } else if (preferredPartition.topology.getTopologyId() < p.topology.getTopologyId()) {
-            // Partitions are already sorted in reverse topology order,
-            // but we make an explicit check for clarity
+         if (p.isPreferable(preferredPartition)) {
             preferredPartition = p;
          }
       }
@@ -269,30 +260,22 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
             // The node hasn't properly joined yet, so it can't be part of a partition
             continue;
          }
-         Partition p = new Partition();
-         p.topology = topology;
-         p.stableTopology = response.getStableTopology();
-         // The topologies used here do not have a union CH, so CacheTopology.getReadConsistentHash() doesn't work
-         p.readCH = readConsistentHash(topology, response.getCacheJoinInfo().getConsistentHashFactory());
-         p.actualMembers = topology.getActualMembers();
-         p.senders.add(sender);
+         ConsistentHash readCH = readConsistentHash(topology, response.getCacheJoinInfo().getConsistentHashFactory());
+         Partition p = new Partition(sender, topology, response.getStableTopology(), readCH);
          partitions.add(p);
       }
 
       // Sort partitions in reverse topology id order to simplify the algorithm
-      partitions.sort((p1, p2) -> {
-         if (p1.topology.getTopologyId() != p2.topology.getTopologyId()) {
-            return p2.topology.getTopologyId() - p1.topology.getTopologyId();
-         }
-         return 0;
-      });
+      partitions.sort((p1, p2) -> p2.topology.getTopologyId() - p1.topology.getTopologyId());
 
-      for (int i = 0; i < partitions.size();) {
-         Partition p = partitions.get(i);
+      for (int i = 0; i < partitions.size(); i++) {
+         Partition referencePartition = partitions.get(i);
+         if (trace)
+            log.tracef("Cache %s keeping partition from %s: %s",
+                       cacheName, referencePartition.senders, referencePartition.topology);
 
-         boolean fold = false;
-         for (int j = 0; j < i; j++) {
-            Partition referencePartition = partitions.get(j);
+         for (int j = i + 1; j < partitions.size(); j++) {
+            Partition p = partitions.get(j);
 
             // If read owners don't overlap then we clearly have 2 independent partitions
             if (!InfinispanCollections.containsAny(p.readCH.getMembers(), referencePartition.readCH.getMembers())) {
@@ -303,19 +286,20 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
             // But only rebalance start and phase changes are kept in step,
             // topology updates are fire-and-forget, so the difference can be higher
             // even when communication between nodes is not interrupted.
+            boolean fold = false;
             int referenceTopologyId = referencePartition.topology.getTopologyId();
             int topologyId = p.topology.getTopologyId();
             if (topologyId == referenceTopologyId) {
                if (p.topology.equals(referencePartition.topology)) {
                   // The topology is exactly the same, ignore it
-                  log.tracef("Cache %s ignoring topology from %s, same as topology from %s: %s",
-                             cacheName, p.senders, referencePartition.senders, p.topology);
+                  if (trace)
+                     log.tracef("Cache %s ignoring topology from %s, same as topology from %s: %s",
+                                cacheName, p.senders, referencePartition.senders, p.topology);
                   fold = true;
                } else {
                   if (trace)
-                     log.tracef(
-                        "Cache %s partition of %s overlaps with partition of %s, with the same topology id",
-                        cacheName, p.senders, referencePartition.senders);
+                     log.tracef("Cache %s partition of %s overlaps with partition of %s, with the same topology id",
+                                cacheName, p.senders, referencePartition.senders);
                }
             } else {
                // topologyId < referenceTopologyId
@@ -325,7 +309,9 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
                // Having a majority doesn't matter, because the lost data check ensures p's sender
                // couldn't make any updates without talking to the reference partition's members
                if (!lostDataCheck.test(p.readCH, referencePartition.actualMembers)) {
-                  log.tracef("Cache %s ignoring compatible old topology from %s: %s", cacheName, p.senders, p.topology);
+                  if (trace)
+                     log.tracef("Cache %s ignoring compatible old topology from %s: %s",
+                                cacheName, p.senders, p.topology);
                   fold = true;
                } else {
                   if (trace)
@@ -335,13 +321,9 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
             }
             if (fold) {
                referencePartition.senders.addAll(p.senders);
-               partitions.remove(i);
-               break;
+               partitions.remove(j);
+               --j;
             }
-         }
-         if (!fold) {
-            if (trace) log.tracef("Cache %s keeping partition from %s: %s", cacheName, p.senders, p.topology);
-            i++;
          }
       }
       return partitions;
@@ -358,10 +340,35 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
    }
 
    private static class Partition {
-      CacheTopology topology;
-      CacheTopology stableTopology;
-      ConsistentHash readCH;
-      List<Address> actualMembers;
-      List<Address> senders = new ArrayList<>();
+      final CacheTopology topology;
+      final CacheTopology stableTopology;
+      final ConsistentHash readCH;
+      final List<Address> actualMembers;
+      final List<Address> senders = new ArrayList<>();
+
+      Partition(Address sender, CacheTopology topology, CacheTopology stableTopology, ConsistentHash readCH) {
+         this.topology = topology;
+         this.stableTopology = stableTopology;
+         // The topologies used here do not have a union CH, so CacheTopology.getReadConsistentHash() doesn't work
+         this.readCH = readCH;
+         this.actualMembers = topology.getActualMembers();
+         this.senders.add(sender);
+      }
+
+      private boolean isPreferable(Partition other) {
+         if (other == null) {
+            return true;
+         } else if (other.senders.size() < senders.size()) {
+            return true;
+         } else if (other.senders.size() == senders.size() &&
+                    other.actualMembers.size() < actualMembers.size()) {
+            return true;
+         } else if (other.topology.getTopologyId() < topology.getTopologyId()) {
+            // Partitions are already sorted in reverse topology order,
+            // but we make an explicit check for clarity
+            return true;
+         }
+         return false;
+      }
    }
 }
