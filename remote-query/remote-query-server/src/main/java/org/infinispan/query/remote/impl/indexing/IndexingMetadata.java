@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 import org.hibernate.search.annotations.Field;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.AnnotationElement;
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.Option;
 
 /**
  * All fields of Protobuf types are indexed and stored by default if no indexing annotations are present. This behaviour
@@ -85,6 +87,21 @@ import org.infinispan.protostream.descriptors.AnnotationElement;
  * @since 7.0
  */
 public final class IndexingMetadata {
+
+   /**
+    * A protobuf boolean option that controls 'indexing by default' for message types in current schema file that do not
+    * have indexing annotations. This behaviour is active by default and exists only for compatibility with the first
+    * release of remote query. It is deprecated and should not be relied upon; a warning message will be logged on every
+    * indexing operation that relies on 'indexing by default' behaviour. You are encouraged to turn this behaviour
+    * off completely by specifying {@code option indexed_by_default = false;} at the beginning of your schema file.
+    * and to annotate your message types in order to properly control indexing.
+    * <p>
+    * This 'indexing by default' behaviour is transient; it will be removed in a future version and the option that
+    * controls it will become deprecated too and will be ignored (and will trigger a deprecation warning message if
+    * encountered).
+    */
+   //TODO [anistor] to be removed in Infinispan 10
+   private static final String INDEXED_BY_DEFAULT_OPTION = "indexed_by_default";
 
    /**
     * Similar to org.hibernate.search.annotations.Indexed. Indicates if a type will be indexed or not.
@@ -302,5 +319,21 @@ public final class IndexingMetadata {
                .parentBuilder()
             .annotation(SORTABLE_FIELD_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
                .repeatable(SORTABLE_FIELDS_ANNOTATION);
+   }
+
+   //TODO [anistor] to be removed in Infinispan 10
+   /**
+    * Retrieves the value of the 'indexed_by_default' protobuf option from the schema file defining the given
+    * message descriptor.
+    */
+   public static boolean isLegacyIndexingEnabled(Descriptor messageDescriptor) {
+      boolean isLegacyIndexingEnabled = true;
+      for (Option o : messageDescriptor.getFileDescriptor().getOptions()) {
+         if (o.getName().equals(INDEXED_BY_DEFAULT_OPTION)) {
+            isLegacyIndexingEnabled = Boolean.valueOf((String) o.getValue());
+            break;
+         }
+      }
+      return isLegacyIndexingEnabled;
    }
 }

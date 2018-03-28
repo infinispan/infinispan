@@ -18,26 +18,29 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
 
    private final Descriptor messageDescriptor;
 
+   private final boolean isLegacyIndexingEnabled;
+
    ProtobufFieldIndexingMetadata(Descriptor messageDescriptor) {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("argument cannot be null");
       }
       this.messageDescriptor = messageDescriptor;
+      this.isLegacyIndexingEnabled = IndexingMetadata.isLegacyIndexingEnabled(messageDescriptor);
    }
 
    @Override
    public boolean isIndexed(String[] propertyPath) {
-      return getMetadata(propertyPath, IndexingMetadata::isFieldIndexed, true);
+      return getFlag(propertyPath, IndexingMetadata::isFieldIndexed, isLegacyIndexingEnabled);
    }
 
    @Override
    public boolean isAnalyzed(String[] propertyPath) {
-      return getMetadata(propertyPath, IndexingMetadata::isFieldAnalyzed, false);
+      return getFlag(propertyPath, IndexingMetadata::isFieldAnalyzed, false);
    }
 
    @Override
    public boolean isStored(String[] propertyPath) {
-      return getMetadata(propertyPath, IndexingMetadata::isFieldStored, true);
+      return getFlag(propertyPath, IndexingMetadata::isFieldStored, isLegacyIndexingEnabled);
    }
 
    @Override
@@ -62,7 +65,7 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
       return null;
    }
 
-   private boolean getMetadata(String[] propertyPath, BiFunction<IndexingMetadata, String, Boolean> metadataFun, boolean defVal) {
+   private boolean getFlag(String[] propertyPath, BiFunction<IndexingMetadata, String, Boolean> metadataFun, boolean defVal) {
       Descriptor md = messageDescriptor;
       int i = 0;
       for (String p : propertyPath) {

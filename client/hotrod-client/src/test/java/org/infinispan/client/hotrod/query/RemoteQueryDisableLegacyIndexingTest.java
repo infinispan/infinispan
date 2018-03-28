@@ -4,63 +4,52 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemo
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.List;
 
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.AnalyzerTestEntity;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.ModelFactoryPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.AnalyzerTestEntityMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.NotIndexedMarshaller;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.embedded.QueryStringTest;
+import org.infinispan.query.dsl.embedded.AbstractQueryDslTest;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
-import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.query.remote.impl.ProgrammaticSearchMappingProviderImpl;
+import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * Test for query language in remote mode.
+ * Test the disabling of indexing for message types that are not annotated. Non-indexing querying should still work.
  *
  * @author anistor@redhat.com
- * @since 9.0
+ * @since 9.3
  */
-@Test(groups = "functional", testName = "client.hotrod.query.RemoteQueryStringTest")
-public class RemoteQueryStringTest extends QueryStringTest {
+@Test(groups = "functional", testName = "client.hotrod.query.RemoteQueryDisableLegacyIndexingTest")
+public class RemoteQueryDisableLegacyIndexingTest extends AbstractQueryDslTest {
 
    private static final String NOT_INDEXED_PROTO_SCHEMA = "package sample_bank_account;\n" +
-         "/* @Indexed(false) */\n" +
+         "option indexed_by_default = false;\n" +
          "message NotIndexed {\n" +
          "\toptional string notIndexedField = 1;\n" +
-         "}\n";
-
-   private static final String CUSTOM_ANALYZER_PROTO_SCHEMA = "package sample_bank_account;\n" +
-         "/* @Indexed \n" +
-         "   @Analyzer(definition = \"standard\") */" +
-         "message AnalyzerTestEntity {\n" +
-         "\t/* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"stemmer\")) */\n" +
-         "\toptional string f1 = 1;\n" +
-         "\t/* @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = \"-1\") */\n" +
-         "\toptional int32 f2 = 2;\n" +
          "}\n";
 
    protected HotRodServer hotRodServer;
@@ -69,13 +58,9 @@ public class RemoteQueryStringTest extends QueryStringTest {
    protected Cache<Object, Object> cache;
 
    @BeforeClass
-   @Override
-   protected void populateCache() throws Exception {
-      super.populateCache();
-
-      getCacheForWrite().put("analyzed1", new AnalyzerTestEntity("tested 123", 3));
-      getCacheForWrite().put("analyzed2", new AnalyzerTestEntity("testing 1234", 3));
-      getCacheForWrite().put("analyzed3", new AnalyzerTestEntity("xyz", null));
+   protected void populateCache() {
+      getCacheForWrite().put("notIndexed1", new NotIndexed("testing 123"));
+      getCacheForWrite().put("notIndexed2", new NotIndexed("xyz"));
    }
 
    @Override
@@ -121,18 +106,14 @@ public class RemoteQueryStringTest extends QueryStringTest {
    protected void initProtoSchema(RemoteCacheManager remoteCacheManager) throws IOException {
       //initialize server-side serialization context
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
       metadataCache.put("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA);
-      metadataCache.put("custom_analyzer.proto", CUSTOM_ANALYZER_PROTO_SCHEMA);
       RemoteQueryTestUtils.checkSchemaErrors(metadataCache);
 
       //initialize client-side serialization context
       SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
       MarshallerRegistration.registerMarshallers(serCtx);
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA));
-      serCtx.registerProtoFiles(FileDescriptorSource.fromString("custom_analyzer.proto", CUSTOM_ANALYZER_PROTO_SCHEMA));
       serCtx.registerMarshaller(new NotIndexedMarshaller());
-      serCtx.registerMarshaller(new AnalyzerTestEntityMarshaller());
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {
@@ -149,66 +130,23 @@ public class RemoteQueryStringTest extends QueryStringTest {
       killServers(hotRodServer);
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN014036: Prefix, wildcard or regexp queries cannot be fuzzy.*")
-   @Override
-   public void testFullTextWildcardFuzzyNotAllowed() {
-      super.testFullTextWildcardFuzzyNotAllowed();
+   public void testEmptyIndexIsPresent() {
+      SearchIntegrator searchIntegrator = org.infinispan.query.Search.getSearchManager(cache).unwrap(SearchIntegrator.class);
+
+      // we have indexing for remote query!
+      assertTrue(searchIntegrator.getIndexBindings().containsKey(ProtobufValueWrapper.INDEXING_TYPE));
+
+      // we have an index for this cache
+      String indexName = cache.getName() + ProgrammaticSearchMappingProviderImpl.INDEX_NAME_SUFFIX;
+      assertNotNull(searchIntegrator.getIndexManager(indexName));
+
+      // index must be empty
+      //TODO [anistor] this assert is disabled due to https://issues.jboss.org/browse/ISPN-9020
+      //assertEquals(0, searchIntegrator.getStatistics().getNumberOfIndexedEntities(ProtobufValueWrapper.class.getName()));
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028526: Invalid query.*")
-   @Override
-   public void testFullTextRegexpFuzzyNotAllowed() {
-      super.testFullTextRegexpFuzzyNotAllowed();
-   }
-
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028522: .*property is analyzed.*")
-   @Override
-   public void testExactMatchOnAnalyzedFieldNotAllowed() {
-      // exception is wrapped in HotRodClientException
-      super.testExactMatchOnAnalyzedFieldNotAllowed();
-   }
-
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN028521: .*unless the property is indexed and analyzed.*")
-   @Override
-   public void testFullTextTermOnNonAnalyzedFieldNotAllowed() {
-      // exception is wrapped in HotRodClientException
-      super.testFullTextTermOnNonAnalyzedFieldNotAllowed();
-   }
-
-   /**
-    * This test is overridden because instants need special handling for protobuf (being actually emulated as long
-    * timestamps).
-    */
-   @Override
-   public void testInstant1() {
-      Query q = createQueryFromString("from " + getModelFactory().getUserTypeName() + " u where u.creationDate = " + Instant.parse("2011-12-03T10:15:30Z").toEpochMilli());
-
-      List<User> list = q.list();
-      assertEquals(3, list.size());
-   }
-
-   /**
-    * This test is overridden because instants need special handling for protobuf (being actually emulated as long
-    * timestamps).
-    */
-   @Override
-   public void testInstant2() {
-      Query q = createQueryFromString("from " + getModelFactory().getUserTypeName() + " u where u.passwordExpirationDate = " + Instant.parse("2011-12-03T10:15:30Z").toEpochMilli());
-
-      List<User> list = q.list();
-      assertEquals(3, list.size());
-   }
-
-   public void testCustomFieldAnalyzer() {
-      Query q = createQueryFromString("from sample_bank_account.AnalyzerTestEntity where f1:'test'");
-
-      List<AnalyzerTestEntity> list = q.list();
-      assertEquals(2, list.size());
-   }
-
-   @Override
    public void testEqNonIndexedType() {
-      Query q = createQueryFromString("from sample_bank_account.NotIndexed where notIndexedField = 'testing 123'");
+      Query q = getQueryFactory().create("from sample_bank_account.NotIndexed where notIndexedField = 'testing 123'");
 
       List<NotIndexed> list = q.list();
       assertEquals(1, list.size());
