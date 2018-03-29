@@ -8,6 +8,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.REA
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUCCESS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -53,7 +54,6 @@ public class InfinispanExtensionIT {
    @ContainerResource("container.active-1")
    ManagementClient managementClient;
 
-
    @Deployment(name = "dep1", order = 1)
    public static Archive<?> dep1() {
       return createDeployment("dep1.war");
@@ -74,7 +74,7 @@ public class InfinispanExtensionIT {
 
    private static Asset manifest() {
       String manifest = Descriptors.create(ManifestDescriptor.class)
-            .attribute("Dependencies", createDepString("org.infinispan.extension", "org.infinispan.server.endpoint",
+            .attribute("Dependencies", createDepString("org.infinispan", "org.infinispan.extension", "org.infinispan.server.endpoint",
                   "org.jgroups.extension")).exportAsString();
       return new StringAsset(manifest);
    }
@@ -90,6 +90,7 @@ public class InfinispanExtensionIT {
    @OperateOnDeployment("dep1")
    public void testDep1() {
       assertNotNull(container);
+      assertTrue(container.getCacheManagerConfiguration().isClustered());
       assertNotNull(cache);
       cache.put("1", 1);
       assertEquals(1, cache.get("1"));
@@ -99,6 +100,7 @@ public class InfinispanExtensionIT {
    @OperateOnDeployment("dep2")
    public void testDep2() {
       assertNotNull(container);
+      assertTrue(container.getCacheManagerConfiguration().isClustered());
       assertNotNull(cache);
       assertEquals(1, cache.get("1"));
    }
