@@ -3,7 +3,7 @@
    <modelVersion>4.0.0</modelVersion>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-parent</artifactId>
-   <version>9.2.2-SNAPSHOT</version>
+   <version>9.3.0-SNAHPSHOT</version>
    <packaging>pom</packaging>
    <name>Infinispan Common Parent</name>
    <description>Infinispan common parent POM module</description>
@@ -171,8 +171,8 @@
       <testjvm.commonArgs>-XX:+UseG1GC -XX:-TieredCompilation -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}</testjvm.commonArgs>
       <testjvm.jigsawArgs />
       <forkJvmArgs>-Xmx1G ${testjvm.commonArgs}</forkJvmArgs>
-      <infinispan.codename>Gaina</infinispan.codename>
-      <infinispan.base.version>9.2</infinispan.base.version>
+      <infinispan.codename>WIP</infinispan.codename>
+      <infinispan.base.version>9.3</infinispan.base.version>
       <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
       <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>

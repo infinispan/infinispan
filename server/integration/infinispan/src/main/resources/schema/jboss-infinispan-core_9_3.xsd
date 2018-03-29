@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<xs:schema targetNamespace="urn:infinispan:server:core:9.2"
+<xs:schema targetNamespace="urn:infinispan:server:core:9.3"
             xmlns:xs="http://www.w3.org/2001/XMLSchema"
-            xmlns:tns="urn:infinispan:server:core:9.2"
+            xmlns:tns="urn:infinispan:server:core:9.3"
             elementFormDefault="qualified"
             attributeFormDefault="unqualified">
 

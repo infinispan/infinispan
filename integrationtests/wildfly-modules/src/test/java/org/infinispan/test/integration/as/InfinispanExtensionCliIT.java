@@ -8,6 +8,7 @@ import java.io.IOException;
 
 import javax.enterprise.context.ApplicationScoped;
 
+import org.infinispan.Version;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.as.arquillian.api.ContainerResource;
 import org.jboss.as.arquillian.container.ManagementClient;
@@ -28,7 +29,7 @@ public class InfinispanExtensionCliIT {
    public void testCliContainerCreation() throws IOException {
       assert managementClient != null;
 
-      PathAddress extension = PathAddress.pathAddress("extension", "org.infinispan.extension:ispn-9.2");
+      PathAddress extension = PathAddress.pathAddress("extension", "org.infinispan.extension:" + Version.getModuleSlot());
       PathAddress subsystem = PathAddress.pathAddress("subsystem", "datagrid-infinispan");
       PathAddress container = PathAddress.pathAddress(subsystem.append("cache-container", "testContainer"));
       PathAddress configurations = PathAddress.pathAddress(container.append("configurations", "CONFIGURATIONS"));
