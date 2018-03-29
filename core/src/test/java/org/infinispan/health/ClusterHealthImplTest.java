@@ -63,11 +63,10 @@ public class ClusterHealthImplTest {
 
    @AfterMethod
    private void cleanAfterMethod() {
-      Cache testCache = cacheManager.getCache(CACHE_NAME, false);
-      if (testCache != null)
-         testCache.shutdown();
+      cacheManager.administration().removeCache(CACHE_NAME);
       cacheManager.undefineConfiguration(CACHE_NAME);
 
+      cacheManager.administration().removeCache(INTERNAL_CACHE_NAME);
       internalCacheRegistry.unregisterInternalCache(INTERNAL_CACHE_NAME);
    }
 
