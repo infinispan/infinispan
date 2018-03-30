@@ -230,21 +230,26 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
 
    /**
     * Asserts that number of entries worth of counts is stored in the interceptors
-    * @param entryCount
     */
-   void assertInterceptorCount(long entryCount) {
-      entryCount = convertAmountForStorage(entryCount);
-      long currentCount = 0;
-      for (Cache cache : caches()) {
-         TransactionalExceptionEvictionInterceptor interceptor = cache.getAdvancedCache().getAsyncInterceptorChain()
-               .findInterceptorWithClass(TransactionalExceptionEvictionInterceptor.class);
-         long size = interceptor.getCurrentSize();
-         log.debugf("Exception eviction size for cache: %s is: %d", cache.getName(), size);
-         currentCount += size;
-         entryCount += interceptor.getMinSize();
-      }
+   void assertInterceptorCount() {
 
-      assertEquals(entryCount, currentCount);
+      for (Cache cache : caches()) {
+         // We use eventually as waitForNoRebalance does not wait until old entries are removed - causing random failures
+         eventually(() -> {
+            long expectedCount = convertAmountForStorage(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
+            TransactionalExceptionEvictionInterceptor interceptor = cache.getAdvancedCache().getAsyncInterceptorChain()
+                  .findInterceptorWithClass(TransactionalExceptionEvictionInterceptor.class);
+            long size = interceptor.getCurrentSize();
+            log.debugf("Exception eviction size for cache: %s is: %d", cache.getCacheManager().getAddress(), size);
+            expectedCount += interceptor.getMinSize();
+
+            boolean equal = expectedCount == size;
+            if (!equal) {
+               log.fatal("Expected: " + expectedCount + " but was: " + size + " for: " + cache.getCacheManager().getAddress());
+            }
+            return equal;
+         });
+      }
    }
 
    public void testExceptionOnInsert() {
@@ -307,7 +312,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          cache(0).put(i, i);
       }
 
-      assertInterceptorCount(nodeCount * (SIZE - 1));
+      assertInterceptorCount();
 
       TransactionManager tm = cache(0).getAdvancedCache().getTransactionManager();
       tm.begin();
@@ -316,13 +321,13 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
 
       tm.rollback();
 
-      assertInterceptorCount(nodeCount * (SIZE - 1));
+      assertInterceptorCount();
 
       assertNull(cache(0).get(0));
 
       cache(0).put(SIZE + 1, SIZE + 1);
 
-      assertInterceptorCount(nodeCount * SIZE);
+      assertInterceptorCount();
 
       // This should fail now
       try {
@@ -332,7 +337,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          Exceptions.assertException(ContainerFullException.class, getMostNestedSuppressedThrowable(t));
       }
 
-      assertInterceptorCount(nodeCount * SIZE);
+      assertInterceptorCount();
    }
 
    /**
@@ -487,7 +492,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          }
 
          // We should have interceptor count equal to number of owners times how much storage takes up
-         assertInterceptorCount(nodeCount * SIZE);
+         assertInterceptorCount();
 
          for (Cache cache : caches()) {
             if (targetNode.equals(cache.getCacheManager().getAddress())) {
@@ -505,7 +510,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          }
 
          // Now that it partially failed it should have rolled back all the results
-         assertInterceptorCount(nodeCount * SIZE);
+         assertInterceptorCount();
       } finally {
          killMember(3);
          killMember(3);
@@ -556,7 +561,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
    /**
     * Test to make sure the counts are properly updated after adding and taking down nodes
     */
-   public void testSizeCorrectWithStateTransfer() {
+   public void testInterceptorSizeCorrectWithStateTransfer() {
       // Test only works with REPL or DIST (latter only if numOwners > 1)
       if (!cacheMode.isClustered() || cacheMode.isDistributed() && nodeCount == 1) {
          return;
@@ -567,7 +572,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
 
       int numberToKill = 0;
 
-      assertInterceptorCount(nodeCount * SIZE);
+      assertInterceptorCount();
 
       try {
          addClusterEnabledCacheManager(configurationBuilder);
@@ -577,7 +582,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          numberToKill++;
 
          boolean dist = cacheMode.isDistributed();
-         assertInterceptorCount((dist ? nodeCount : nodeCount + 1) * SIZE);
+         assertInterceptorCount();
 
          addClusterEnabledCacheManager(configurationBuilder);
 
@@ -585,19 +590,19 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
 
          numberToKill++;
 
-         assertInterceptorCount((dist ? nodeCount : nodeCount + 2) * SIZE);
+         assertInterceptorCount();
 
          killMember(nodeCount);
 
          numberToKill--;
 
-         assertInterceptorCount((dist ? nodeCount : nodeCount + 1) * SIZE);
+         assertInterceptorCount();
 
          killMember(nodeCount);
 
          numberToKill--;
 
-         assertInterceptorCount(nodeCount * SIZE);
+         assertInterceptorCount();
       } finally {
          for (int i = 0; i < numberToKill; ++i) {
             killMember(nodeCount);
