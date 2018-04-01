@@ -442,14 +442,16 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          writer.writeStartElement(Element.CUSTOM_INTERCEPTORS);
          for (InterceptorConfiguration interceptor : customInterceptors.interceptors()) {
             AttributeSet attributes = interceptor.attributes();
-            writer.writeStartElement(Element.INTERCEPTOR);
-            attributes.write(writer, InterceptorConfiguration.INTERCEPTOR_CLASS, Attribute.CLASS);
-            attributes.write(writer, InterceptorConfiguration.AFTER, Attribute.AFTER);
-            attributes.write(writer, InterceptorConfiguration.BEFORE, Attribute.BEFORE);
-            attributes.write(writer, InterceptorConfiguration.INDEX, Attribute.INDEX);
-            attributes.write(writer, InterceptorConfiguration.POSITION, Attribute.POSITION);
-            writeTypedProperties(writer, interceptor.properties());
-            writer.writeEndElement();
+            if (!attributes.attribute(InterceptorConfiguration.INTERCEPTOR_CLASS).isNull()) {
+               writer.writeStartElement(Element.INTERCEPTOR);
+               attributes.write(writer, InterceptorConfiguration.INTERCEPTOR_CLASS, Attribute.CLASS);
+               attributes.write(writer, InterceptorConfiguration.AFTER, Attribute.AFTER);
+               attributes.write(writer, InterceptorConfiguration.BEFORE, Attribute.BEFORE);
+               attributes.write(writer, InterceptorConfiguration.INDEX, Attribute.INDEX);
+               attributes.write(writer, InterceptorConfiguration.POSITION, Attribute.POSITION);
+               writeTypedProperties(writer, interceptor.properties());
+               writer.writeEndElement();
+            }
          }
          writer.writeEndElement();
       }
