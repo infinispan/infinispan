@@ -8,7 +8,7 @@
     <dependencies>
         <module name="javax.api"/>
         <module name="javax.transaction.api"/>
-        <module name="org.infinispan" services="import" slot="${slot}"/>
+        <module name="org.infinispan" export="true" services="import" slot="${slot}"/>
         <module name="org.infinispan.persistence.jdbc" slot="${slot}"/>
         <module name="org.infinispan.persistence.remote" services="import" slot="${slot}"/>
         <module name="org.infinispan.persistence.rest" services="import" slot="${slot}"/>

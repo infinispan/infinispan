@@ -75,7 +75,8 @@ public class InfinispanExtensionIT {
    private static Asset manifest() {
       String manifest = Descriptors.create(ManifestDescriptor.class)
             .attribute("Dependencies", createDepString("org.infinispan.extension", "org.infinispan.server.endpoint",
-                  "org.infinispan.core", "org.jgroups.extension")).exportAsString();
+                  //"org.infinispan.core",
+                  "org.jgroups.extension")).exportAsString();
       return new StringAsset(manifest);
    }
 
