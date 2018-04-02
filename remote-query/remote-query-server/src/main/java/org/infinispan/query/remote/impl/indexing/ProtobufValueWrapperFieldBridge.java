@@ -7,17 +7,21 @@ import org.hibernate.search.bridge.FieldBridge;
 import org.hibernate.search.bridge.LuceneOptions;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
+import org.infinispan.query.remote.impl.logging.Log;
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
 public final class ProtobufValueWrapperFieldBridge implements FieldBridge {
+
+   private static final Log log = LogFactory.getLog(ProtobufValueWrapperFieldBridge.class, Log.class);
 
    private final Cache cache;
 
@@ -42,6 +46,9 @@ public final class ProtobufValueWrapperFieldBridge implements FieldBridge {
          throw new IllegalArgumentException("This FieldBridge can only be applied to a " + ProtobufValueWrapper.class.getName());
       }
       ProtobufValueWrapper valueWrapper = (ProtobufValueWrapper) value;
+      if (log.isDebugEnabled()) {
+         log.debugf("Setting Lucene document properties for %s in cache %s", valueWrapper.toString(), cache.getName());
+      }
       decodeAndIndex(valueWrapper, document, luceneOptions);
    }
 
