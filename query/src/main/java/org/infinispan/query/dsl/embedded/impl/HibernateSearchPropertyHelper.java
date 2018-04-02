@@ -294,33 +294,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
          if (entityIndexBinding == null) {
             return IndexedFieldProvider.NO_INDEXING;
          }
-         return new IndexedFieldProvider.FieldIndexingMetadata() {
-
-            @Override
-            public boolean isIndexed(String[] propertyPath) {
-               DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(entityIndexBinding, propertyPath);
-               return fieldMetadata != null && fieldMetadata.getIndex().isIndexed();
-            }
-
-            @Override
-            public boolean isAnalyzed(String[] propertyPath) {
-               DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(entityIndexBinding, propertyPath);
-               return fieldMetadata != null && fieldMetadata.getIndex().isAnalyzed();
-            }
-
-            @Override
-            public boolean isStored(String[] propertyPath) {
-               DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(entityIndexBinding, propertyPath);
-               return fieldMetadata != null && fieldMetadata.getStore() != Store.NO;
-            }
-
-            @Override
-            public Object getNullMarker(String[] propertyPath) {
-               DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(entityIndexBinding, propertyPath);
-               return fieldMetadata != null && fieldMetadata.getNullMarkerCodec() != null && fieldMetadata.getNullMarkerCodec().getNullMarker() != null
-                     ? fieldMetadata.getNullMarkerCodec().getNullMarker().nullEncoded() : null;
-            }
-         };
+         return new HibernateSearchFieldIndexingMetadata(entityIndexBinding);
       };
    }
 
@@ -382,5 +356,38 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
          }
       }
       return null;
+   }
+
+   private class HibernateSearchFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata {
+      private final EntityIndexBinding entityIndexBinding;
+
+      HibernateSearchFieldIndexingMetadata(EntityIndexBinding entityIndexBinding) {
+         this.entityIndexBinding = entityIndexBinding;
+      }
+
+      @Override
+      public boolean isIndexed(String[] propertyPath) {
+         DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(entityIndexBinding, propertyPath);
+         return fieldMetadata != null && fieldMetadata.getIndex().isIndexed();
+      }
+
+      @Override
+      public boolean isAnalyzed(String[] propertyPath) {
+         DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(entityIndexBinding, propertyPath);
+         return fieldMetadata != null && fieldMetadata.getIndex().isAnalyzed();
+      }
+
+      @Override
+      public boolean isStored(String[] propertyPath) {
+         DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(entityIndexBinding, propertyPath);
+         return fieldMetadata != null && fieldMetadata.getStore() != Store.NO;
+      }
+
+      @Override
+      public Object getNullMarker(String[] propertyPath) {
+         DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(entityIndexBinding, propertyPath);
+         return fieldMetadata != null && fieldMetadata.getNullMarkerCodec() != null && fieldMetadata.getNullMarkerCodec().getNullMarker() != null
+               ? fieldMetadata.getNullMarkerCodec().getNullMarker().nullEncoded() : null;
+      }
    }
 }
