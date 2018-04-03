@@ -11,10 +11,10 @@ import java.util.Map;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.lifecycle.ModuleLifecycle;
-import org.kohsuke.MetaInfServices;
 
-@MetaInfServices(ModuleLifecycle.class)
+@InfinispanModule(name = "hibernate-cache-commons", requiredModules = "core")
 public class LifecycleCallbacks implements ModuleLifecycle {
 
 	@Override

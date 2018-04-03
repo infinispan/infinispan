@@ -26,6 +26,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.manager.TestModuleRepository;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -62,7 +63,8 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       // Create global component registry with dependencies
       GlobalConfiguration gc = GlobalConfigurationBuilder.defaultClusteredBuilder().build();
       EmbeddedCacheManager cacheManager = mock(EmbeddedCacheManager.class);
-      GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cacheManager, Collections.emptySet());
+      GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cacheManager, Collections.emptySet(),
+                                                                TestModuleRepository.defaultModuleRepository());
       BasicComponentRegistry gbcr = gcr.getComponent(BasicComponentRegistry.class);
 
       CacheManagerNotifierImpl managerNotifier = new CacheManagerNotifierImpl();
@@ -138,7 +140,8 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       // Create global component registry with dependencies
       GlobalConfiguration gc = GlobalConfigurationBuilder.defaultClusteredBuilder().build();
       EmbeddedCacheManager cacheManager = mock(EmbeddedCacheManager.class);
-      GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cacheManager, Collections.emptySet());
+      GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cacheManager, Collections.emptySet(),
+                                                                TestModuleRepository.defaultModuleRepository());
       BasicComponentRegistry gbcr = gcr.getComponent(BasicComponentRegistry.class);
 
       CacheManagerNotifierImpl managerNotifier = new CacheManagerNotifierImpl();

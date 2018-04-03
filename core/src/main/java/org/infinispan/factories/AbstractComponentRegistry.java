@@ -23,6 +23,7 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.ModuleRepository;
 import org.infinispan.util.logging.Log;
 
 /**
@@ -56,21 +57,24 @@ import org.infinispan.util.logging.Log;
  * @deprecated Since 9.4, please use {@link BasicComponentRegistry} instead.
  */
 @SurvivesRestarts
-@Scope(Scopes.NAMED_CACHE)
+@Scope(Scopes.NONE)
 @Deprecated
 public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable {
    // Not used
    public static final boolean DEBUG_DEPENDENCIES = false;
 
    final ComponentMetadataRepo componentMetadataRepo;
+   final ModuleRepository moduleRepository;
    final BasicComponentRegistry basicComponentRegistry;
    protected volatile ComponentStatus state = ComponentStatus.INSTANTIATED;
 
-   protected AbstractComponentRegistry(ComponentMetadataRepo componentMetadataRepo, ClassLoader classLoader,
+   protected AbstractComponentRegistry(ComponentMetadataRepo componentMetadataRepo,
+                                       ModuleRepository moduleRepository,
                                        Scopes scope, BasicComponentRegistry nextBasicComponentRegistry) {
       this.componentMetadataRepo = componentMetadataRepo;
+      this.moduleRepository = moduleRepository;
       this.basicComponentRegistry =
-         new BasicComponentRegistryImpl(classLoader, componentMetadataRepo, scope, nextBasicComponentRegistry);
+         new BasicComponentRegistryImpl(moduleRepository, scope, nextBasicComponentRegistry);
    }
 
    /**
@@ -180,7 +184,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @return component factory capable of constructing such components
     */
    protected AbstractComponentFactory getFactory(Class<?> componentClass) {
-      String cfClass = getComponentMetadataRepo().findFactoryForComponent(componentClass);
+      String cfClass = moduleRepository.getFactoryName(componentClass.getName());
       if (cfClass == null) {
          throw new CacheConfigurationException("No registered default factory for component '" + componentClass + "' found!");
       }
@@ -194,7 +198,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    protected Component lookupComponent(String componentClassName, String componentName, boolean nameIsFQCN) {
       Class<Object> componentType = Util.loadClass(componentClassName, getClassLoader());
       ComponentRef<Object> component = basicComponentRegistry.getComponent(componentName, componentType);
-      return new Component(component, componentMetadataRepo.getComponentMetadata(component.wired().getClass()));
+      return new Component(component, null);
    }
 
    /**
@@ -446,9 +450,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    public Set<Component> getRegisteredComponents() {
       Set<Component> set = new HashSet<>();
       for (ComponentRef<?> c : basicComponentRegistry.getRegisteredComponents()) {
-         ComponentMetadata metadata = c.wired() != null ?
-                                      componentMetadataRepo.getComponentMetadata(c.wired().getClass()) : null;
-         Component component = new Component(c, metadata);
+         Component component = new Component(c, null);
          set.add(component);
       }
       return set;

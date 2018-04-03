@@ -11,6 +11,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 import java.util.function.ObjIntConsumer;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Policy;
+import net.jcip.annotations.ThreadSafe;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.EntrySizeCalculator;
@@ -21,15 +25,10 @@ import org.infinispan.container.entries.CacheEntrySizeCalculator;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.PrimitiveEntrySizeCalculator;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.marshall.core.WrappedByteArraySizeCalculator;
-
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.Policy;
-
-import net.jcip.annotations.ThreadSafe;
 
 /**
  * DefaultDataContainer is both eviction and non-eviction based data container.
@@ -165,6 +164,7 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
       }
    }
 
+   @Stop
    @Override
    public void clear() {
       log.tracef("Clearing data container");

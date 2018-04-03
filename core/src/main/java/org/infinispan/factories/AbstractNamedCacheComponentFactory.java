@@ -13,7 +13,7 @@ import org.infinispan.factories.scopes.Scopes;
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
-public abstract class AbstractNamedCacheComponentFactory extends AbstractComponentFactory {
+public abstract class AbstractNamedCacheComponentFactory extends AnyScopeComponentFactory {
    @Inject protected Configuration configuration;
    @Deprecated
    @Inject protected ComponentRegistry componentRegistry;

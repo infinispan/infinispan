@@ -18,6 +18,7 @@ import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import io.reactivex.Flowable;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
@@ -28,8 +29,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.reactivestreams.Publisher;
-
-import io.reactivex.Flowable;
 
 /**
  * DataContainer implementation that internally stores entries in an array of maps. This array is indexed by
@@ -204,6 +203,7 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
       return size;
    }
 
+   @Stop
    @Override
    public void clear() {
       for (int i = 0; i < maps.length(); ++i) {

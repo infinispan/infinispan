@@ -4,15 +4,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import javax.management.MBeanServer;
 
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.components.ComponentMetadata;
-import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.impl.MBeanMetadata;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -22,13 +22,13 @@ import org.infinispan.util.logging.LogFactory;
  * @author Galder Zamarreño
  * @since 4.0
  */
+@Scope(Scopes.NONE)
 public abstract class AbstractJmxRegistration {
    private static final Log log = LogFactory.getLog(AbstractJmxRegistration.class);
 
    protected ComponentsJmxRegistration registrar;
    @Inject GlobalConfiguration globalConfig;
    @Inject BasicComponentRegistry basicComponentRegistry;
-   @Inject ComponentMetadataRepo componentMetadataRepo;
 
    String jmxDomain;
    MBeanServer mBeanServer;
@@ -74,17 +74,13 @@ public abstract class AbstractJmxRegistration {
    }
 
    protected ResourceDMBean getResourceDMBean(Object instance, String componentName) {
-      ComponentMetadata md = instance != null ?
-                             componentMetadataRepo.getComponentMetadata(instance.getClass()) : null;
-      if (md == null || !md.isManageable())
+      if (instance == null)
          return null;
 
-      ResourceDMBean resourceDMBean;
-      try {
-         resourceDMBean = new ResourceDMBean(instance, md.toManageableComponentMetadata(), componentName);
-      } catch (NoSuchFieldException | ClassNotFoundException e) {
-         throw new CacheConfigurationException(e);
-      }
-      return resourceDMBean;
+      MBeanMetadata md = basicComponentRegistry.getMBeanMetadata(instance.getClass().getName());
+      if (md == null)
+         return null;
+
+      return new ResourceDMBean(instance, md, componentName);
    }
 }

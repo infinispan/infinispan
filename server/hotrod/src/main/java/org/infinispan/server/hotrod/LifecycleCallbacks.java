@@ -27,6 +27,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -56,6 +57,7 @@ import org.infinispan.transaction.impl.TransactionOriginatorChecker;
  * @author Galder Zamarreño
  * @since 5.0
  */
+@InfinispanModule(name = "server-hotrod", requiredModules = "core")
 public class LifecycleCallbacks implements ModuleLifecycle {
 
    /**

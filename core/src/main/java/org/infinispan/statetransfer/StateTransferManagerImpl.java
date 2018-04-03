@@ -34,6 +34,9 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalStateManager;
 import org.infinispan.globalstate.ScopedPersistentState;
+import org.infinispan.jmx.annotations.DataType;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.persistence.manager.PreloadManager;
@@ -57,6 +60,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author anistor@redhat.com
  * @since 5.2
  */
+@MBean(objectName = "StateTransferManager", description = "Component that handles state transfer")
 @Scope(Scopes.NAMED_CACHE)
 public class StateTransferManagerImpl implements StateTransferManager {
 
@@ -262,16 +266,19 @@ public class StateTransferManagerImpl implements StateTransferManager {
       localTopologyManager.leave(cacheName, configuration.clustering().remoteTimeout());
    }
 
+   @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.", displayName = "Is join completed?", dataType = DataType.TRAIT)
    @Override
    public boolean isJoinComplete() {
       return distributionManager.getCacheTopology() != null; // TODO [anistor] this does not mean we have received a topology update or a rebalance yet
    }
 
+   @ManagedAttribute(description = "Retrieves the rebalancing status for this cache. Possible values are PENDING, SUSPENDED, IN_PROGRESS, BALANCED", displayName = "Rebalancing progress", dataType = DataType.TRAIT)
    @Override
    public String getRebalancingStatus() throws Exception {
       return localTopologyManager.getRebalancingStatus(cacheName).toString();
    }
 
+   @ManagedAttribute(description = "Checks whether there is a pending inbound state transfer on this cluster member.", displayName = "Is state transfer in progress?", dataType = DataType.TRAIT)
    @Override
    public boolean isStateTransferInProgress() {
       return stateConsumer.isStateTransferInProgress();

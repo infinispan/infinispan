@@ -77,7 +77,7 @@ public class ComponentsJmxRegistration {
       }
    }
 
-   private ObjectName getObjectName(ResourceDMBean resource) throws Exception {
+   ObjectName getObjectName(ResourceDMBean resource) throws Exception {
       return getObjectName(resource.getObjectName());
    }
 

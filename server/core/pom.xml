@@ -115,8 +115,7 @@
                   </Export-Package>
                   <Include-Resource>
                      {maven-resources},
-                     /META-INF/services=${project.basedir}/target/classes/META-INF/services,
-                     ${project.build.outputDirectory}/${project.artifactId}-component-metadata.dat
+                     /META-INF/services=${project.basedir}/target/classes/META-INF/services
                   </Include-Resource>
                </instructions>
             </configuration>

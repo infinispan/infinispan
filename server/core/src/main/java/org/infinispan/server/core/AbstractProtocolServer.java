@@ -4,27 +4,23 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import javax.management.DynamicMBean;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import io.netty.util.concurrent.DefaultThreadFactory;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
-import org.infinispan.factories.components.ManageableComponentMetadata;
-import org.infinispan.jmx.ResourceDMBean;
+import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.core.utils.ManageableThreadPoolExecutorService;
 import org.infinispan.tasks.TaskManager;
-
-import io.netty.util.concurrent.DefaultThreadFactory;
 
 /**
  * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
@@ -160,13 +156,9 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    }
 
    private ObjectName registerMBean(Object instance, String jmxDomain, String groupName, String name) throws Exception {
-      // Pick up metadata from the component metadata repository
-      ManageableComponentMetadata meta = LifecycleCallbacks.componentMetadataRepo
-            .findComponentMetadata(instance.getClass()).toManageableComponentMetadata();
-      DynamicMBean dynamicMBean = new ResourceDMBean(instance, meta);
-      ObjectName objectName = new ObjectName(String.format("%s:%s,component=%s", jmxDomain, groupName, name != null ? name : meta.getJmxObjectName()));
-      JmxUtil.registerMBean(dynamicMBean, objectName, mbeanServer);
-      return objectName;
+      CacheManagerJmxRegistration jmxRegistration =
+         cacheManager.getGlobalComponentRegistry().getComponent(CacheManagerJmxRegistration.class);
+      return jmxRegistration.registerExternalMBean(instance, jmxDomain, groupName, name);
    }
 
    protected void unregisterServerMBeans() throws Exception {

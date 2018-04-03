@@ -55,6 +55,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -397,6 +398,7 @@ public class JGroupsTransport implements Transport {
       return channel.getProtocolStack().getTransport().supportsMulticasting();
    }
 
+   @Start
    @Override
    public void start() {
       probeHandler.updateThreadPool(remoteExecutor);

@@ -12,7 +12,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -40,19 +39,18 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.components.ManageableComponentMetadata;
+import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.infinispan.jmx.ResourceDMBean;
+import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
-import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.affinity.ShardAllocationManagerImpl;
 import org.infinispan.query.affinity.ShardAllocatorManager;
@@ -95,7 +93,6 @@ import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.InternalCacheRegistry.Flag;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.LogFactory;
-import org.kohsuke.MetaInfServices;
 
 /**
  * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down at cache stop. Each cache
@@ -103,7 +100,7 @@ import org.kohsuke.MetaInfServices;
  *
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  */
-@MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
+@InfinispanModule(name = "query", requiredModules = "core", optionalModules = "lucene-directory")
 public class LifecycleManager implements ModuleLifecycle {
 
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
@@ -306,18 +303,13 @@ public class LifecycleManager implements ModuleLifecycle {
       }
 
       // Register mass indexer MBean, picking metadata from repo
-      ManageableComponentMetadata massIndexerCompMetadata = cr.getGlobalComponentRegistry().getComponentMetadataRepo()
-            .findComponentMetadata(MassIndexer.class)
-            .toManageableComponentMetadata();
       try {
          KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
          TimeService timeService = ComponentRegistryUtils.getTimeService(cache);
          // TODO: MassIndexer should be some kind of query cache component?
          DistributedExecutorMassIndexer massIndexer = new DistributedExecutorMassIndexer(cache, searchIntegrator, keyTransformationHandler, timeService);
-         ResourceDMBean mbean = new ResourceDMBean(massIndexer, massIndexerCompMetadata);
-         ObjectName massIndexerObjName = new ObjectName(jmxDomain + ":"
-               + queryGroupName + ",component=" + massIndexerCompMetadata.getJmxObjectName());
-         JmxUtil.registerMBean(mbean, massIndexerObjName, mbeanServer);
+         CacheManagerJmxRegistration jmxRegistration = cr.getComponent(CacheManagerJmxRegistration.class);
+         jmxRegistration.registerExternalMBean(massIndexer, jmxDomain, queryGroupName, null);
       } catch (Exception e) {
          throw new CacheException("Unable to create MassIndexer MBean", e);
       }

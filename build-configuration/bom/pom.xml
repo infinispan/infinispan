@@ -179,11 +179,23 @@
                 <artifactId>infinispan-commons-test</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
+           <dependency>
+              <groupId>org.infinispan</groupId>
+              <artifactId>infinispan-component-annotations</artifactId>
+              <version>${version.infinispan}</version>
+           </dependency>
+           <!-- TODO should be here? -->
             <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-core</artifactId>
-                <version>${version.infinispan}</version>
+               <groupId>org.infinispan</groupId>
+               <artifactId>infinispan-component-processor</artifactId>
+               <version>${version.infinispan}</version>
+               <optional>true</optional>
             </dependency>
+           <dependency>
+              <groupId>org.infinispan</groupId>
+              <artifactId>infinispan-core</artifactId>
+              <version>${version.infinispan}</version>
+           </dependency>
             <!-- TODO should be here? -->
             <dependency>
                 <groupId>org.infinispan</groupId>

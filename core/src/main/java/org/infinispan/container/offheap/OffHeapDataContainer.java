@@ -125,6 +125,7 @@ public class OffHeapDataContainer extends AbstractInternalDataContainer<WrappedB
       return map.size();
    }
 
+   @Stop
    @Override
    public void clear() {
       map.clear();

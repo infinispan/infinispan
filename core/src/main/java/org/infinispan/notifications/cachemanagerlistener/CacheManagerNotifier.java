@@ -4,9 +4,6 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.Listenable;
 import org.infinispan.remoting.transport.Address;
 
@@ -16,8 +13,6 @@ import org.infinispan.remoting.transport.Address;
  * @author Manik Surtani
  * @since 4.0
  */
-@Scope(Scopes.GLOBAL)
-@SurvivesRestarts
 public interface CacheManagerNotifier extends Listenable {
    /**
     * Notifies all registered listeners of a viewChange event.  Note that viewChange notifications are ALWAYS sent

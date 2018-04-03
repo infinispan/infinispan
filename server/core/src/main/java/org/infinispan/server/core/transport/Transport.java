@@ -1,7 +1,5 @@
 package org.infinispan.server.core.transport;
 
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
@@ -14,9 +12,7 @@ import org.infinispan.jmx.annotations.MeasurementType;
  * @author Galder Zamarreño
  * @since 5.1
  */
-@Scope(Scopes.GLOBAL) // So that annotation parser detects this as a cache manager level component
-@MBean(objectName = "Transport",
-       description = "Transport component manages read and write operations to/from server.")
+@MBean
 public interface Transport {
 
    void start();

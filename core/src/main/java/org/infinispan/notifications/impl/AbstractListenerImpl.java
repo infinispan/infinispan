@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
-
 import javax.security.auth.Subject;
 import javax.transaction.Transaction;
 
@@ -27,6 +26,8 @@ import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.IncorrectListenerException;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -47,6 +48,7 @@ import org.infinispan.util.logging.Log;
  * @author Manik Surtani
  * @author William Burns
  */
+@Scope(Scopes.NONE)
 public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
 
    protected final Map<Class<? extends Annotation>, List<L>> listenersMap = new HashMap<>(16, 0.99f);

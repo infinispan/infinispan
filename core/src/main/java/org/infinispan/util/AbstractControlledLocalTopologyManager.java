@@ -2,6 +2,8 @@ package org.infinispan.util;
 
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
@@ -22,6 +24,7 @@ import org.infinispan.topology.RebalancingStatus;
  * @author Pedro Ruivo
  * @since 6.0
  */
+@Scope(Scopes.GLOBAL)
 public abstract class AbstractControlledLocalTopologyManager implements LocalTopologyManager {
 
    private final LocalTopologyManager delegate;

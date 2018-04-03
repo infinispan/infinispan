@@ -7,15 +7,13 @@ import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.components.ManageableComponentMetadata;
+import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.jmx.ComponentsJmxRegistration;
-import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.util.logging.LogFactory;
-import org.kohsuke.MetaInfServices;
 
-@MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
+@InfinispanModule(name = "cli-interpreter", requiredModules = "core")
 public class LifecycleCallbacks implements ModuleLifecycle {
    private static final Log log = LogFactory.getLog(LifecycleCallbacks.class, Log.class);
 
@@ -26,20 +24,14 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       // This works because the interpreter is not yet used internally, otherwise it would have to be in cacheManagerStarting
       GlobalJmxStatisticsConfiguration globalCfg = gcr.getGlobalConfiguration().globalJmxStatistics();
       if (globalCfg.enabled()) {
-         MBeanServer mbeanServer = JmxUtil.lookupMBeanServer(globalCfg.mbeanServerLookup(), globalCfg.properties());
          String groupName = getGroupName(globalCfg.cacheManagerName());
          Interpreter interpreter = new Interpreter();
 
          gcr.registerComponent(interpreter, Interpreter.class);
 
-         // Pick up metadata from the component metadata repository
-         ManageableComponentMetadata meta = gcr.getComponentMetadataRepo().findComponentMetadata(Interpreter.class)
-               .toManageableComponentMetadata();
-         // And use this metadata when registering the transport as a dynamic MBean
          try {
-            ResourceDMBean mbean = new ResourceDMBean(interpreter, meta);
-            interpreterObjName = new ObjectName(String.format("%s:%s,component=Interpreter", globalCfg.domain(), groupName));
-            JmxUtil.registerMBean(mbean, interpreterObjName, mbeanServer);
+            CacheManagerJmxRegistration jmxRegistration = gcr.getComponent(CacheManagerJmxRegistration.class);
+            jmxRegistration.registerExternalMBean(interpreter, globalCfg.domain(), groupName, "Interpreter");
          } catch (Exception e) {
             interpreterObjName = null;
             log.jmxRegistrationFailed();

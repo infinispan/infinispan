@@ -16,6 +16,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.manager.TestModuleRepository;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -41,7 +42,7 @@ public class ComponentRegistryTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cm = mock(EmbeddedCacheManager.class);
       AdvancedCache cache = mock(AdvancedCache.class);
 
-      gcr = new GlobalComponentRegistry(gc, cm, cachesSet);
+      gcr = new GlobalComponentRegistry(gc, cm, cachesSet, TestModuleRepository.defaultModuleRepository());
       cr1 = new ComponentRegistry("cache", c, cache, gcr, ComponentRegistryTest.class.getClassLoader());
       cr2 = new ComponentRegistry("cache", c, cache, gcr, ComponentRegistryTest.class.getClassLoader());
 

@@ -21,6 +21,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ContentTypeConfiguration;
@@ -36,6 +37,7 @@ import org.infinispan.eviction.impl.ActivationManagerStub;
 import org.infinispan.eviction.impl.PassivationManagerStub;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -52,7 +54,6 @@ import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerStub;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.upgrade.RollingUpgradeManager;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
@@ -158,21 +159,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       }
       this.configuration = configuration;
 
-      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry,
-                                                globalComponentRegistry.getClassLoader()) {
-         @Override
-         protected void bootstrapComponents() {
-            registerComponent(new ClusterEventManagerStub<K, V>(), ClusterEventManager.class);
-            registerComponent(new PassivationManagerStub(), PassivationManager.class);
-            registerComponent(new ActivationManagerStub(), ActivationManager.class);
-            registerComponent(new PersistenceManagerStub(), PersistenceManager.class);
-         }
-
-         @Override
-         public void cacheComponents() {
-            getOrCreateComponent(InternalExpirationManager.class);
-         }
-      };
+      componentRegistry = new SimpleComponentRegistry<>(cacheName, configuration, cache, globalComponentRegistry);
 
       basicComponentRegistry = componentRegistry.getComponent(BasicComponentRegistry.class);
       basicComponentRegistry.registerAlias(Cache.class.getName(), AdvancedCache.class.getName(), AdvancedCache.class);
@@ -530,6 +517,27 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
             CompletionStages.join(cacheNotifier.notifyCacheEntryVisited((K) key, value, false, ImmutableContext.INSTANCE, null));
          }
          return value;
+      }
+   }
+
+   @SurvivesRestarts
+   class SimpleComponentRegistry<K, V> extends ComponentRegistry {
+      public SimpleComponentRegistry(String cacheName, Configuration configuration, AdvancedCache<K, V> cache,
+                                     GlobalComponentRegistry globalComponentRegistry) {
+         super(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader());
+      }
+
+      @Override
+      protected void bootstrapComponents() {
+         registerComponent(new ClusterEventManagerStub<K, V>(), ClusterEventManager.class);
+         registerComponent(new PassivationManagerStub(), PassivationManager.class);
+         registerComponent(new ActivationManagerStub(), ActivationManager.class);
+         registerComponent(new PersistenceManagerStub(), PersistenceManager.class);
+      }
+
+      @Override
+      public void cacheComponents() {
+         getOrCreateComponent(InternalExpirationManager.class);
       }
    }
 }

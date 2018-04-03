@@ -17,7 +17,7 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.eviction.PassivationManager;
+import org.infinispan.eviction.AbstractPassivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
@@ -34,7 +34,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 @Scope(Scopes.NAMED_CACHE)
-public class PassivationManagerImpl implements PassivationManager {
+public class PassivationManagerImpl extends AbstractPassivationManager {
    private static final Log log = LogFactory.getLog(PassivationManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 

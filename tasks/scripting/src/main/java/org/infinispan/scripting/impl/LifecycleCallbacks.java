@@ -5,9 +5,9 @@ import java.util.Map;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.scripting.ScriptingManager;
-import org.kohsuke.MetaInfServices;
 
 /**
  * LifecycleCallbacks.
@@ -15,7 +15,7 @@ import org.kohsuke.MetaInfServices;
  * @author Tristan Tarrant
  * @since 7.2
  */
-@MetaInfServices(ModuleLifecycle.class)
+@InfinispanModule(name = "scripting", requiredModules = "core")
 public class LifecycleCallbacks implements ModuleLifecycle {
 
    @Override

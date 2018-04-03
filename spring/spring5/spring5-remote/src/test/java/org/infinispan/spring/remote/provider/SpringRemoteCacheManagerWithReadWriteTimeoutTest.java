@@ -92,7 +92,7 @@ public class SpringRemoteCacheManagerWithReadWriteTimeoutTest extends SingleCach
       Exceptions.expectException(CacheException.class, TimeoutException.class, () -> defaultCache.put("k1", "v2"));
    }
 
-   private static class DelayingInterceptor extends DDAsyncInterceptor {
+   static class DelayingInterceptor extends DDAsyncInterceptor {
       private final long readDelay;
       private final long writeDelay;
       private final CountDownLatch latch;

@@ -5,15 +5,14 @@ import static org.testng.AssertJUnit.assertNotNull;
 
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.factories.AutoInstantiableFactory;
 import org.infinispan.factories.ComponentFactory;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.util.ModuleProperties;
+import org.infinispan.manager.ModuleRepository;
+import org.infinispan.manager.TestModuleRepository;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -21,17 +20,16 @@ import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "factories.impl.BasicComponentRegistryImplTest")
 public class BasicComponentRegistryImplTest {
-   private ComponentMetadataRepo metadataRepo;
+   private ModuleRepository moduleRepository;
    private BasicComponentRegistryImpl globalRegistry;
    private BasicComponentRegistryImpl cacheRegistry;
 
    @BeforeMethod(alwaysRun = true)
    public void setup() {
-      metadataRepo = new ComponentMetadataRepo();
       ClassLoader classLoader = this.getClass().getClassLoader();
-      metadataRepo.initialize(ModuleProperties.getModuleMetadataFiles(classLoader), classLoader);
-      globalRegistry = new BasicComponentRegistryImpl(classLoader, metadataRepo, Scopes.GLOBAL, null);
-      cacheRegistry = new BasicComponentRegistryImpl(classLoader, metadataRepo, Scopes.NAMED_CACHE, globalRegistry);
+      moduleRepository = TestModuleRepository.defaultModuleRepository();
+      globalRegistry = new BasicComponentRegistryImpl(moduleRepository, Scopes.GLOBAL, null);
+      cacheRegistry = new BasicComponentRegistryImpl(moduleRepository, Scopes.NAMED_CACHE, globalRegistry);
    }
 
    @AfterMethod(alwaysRun = true)
@@ -72,13 +70,14 @@ public class BasicComponentRegistryImplTest {
       assertNotNull(c2.b);
    }
 
-   @Test(enabled = false, description = "scope check doesn't work yet")
    public void testRegisterWrongScope() {
       // There's no check that the class scope matches the interface (or superclass) scope yet
       expectException(CacheConfigurationException.class,
                       () -> globalRegistry.registerComponent(D.class.getName(), new D3(), false));
+      cacheRegistry.registerComponent(D.class.getName(), new D3(), false);
       expectException(CacheConfigurationException.class,
-                      () -> cacheRegistry.registerComponent(D.class.getName(), new D3(), false));
+                      () -> cacheRegistry.registerComponent(H.class.getName(), new H(), false));
+      globalRegistry.registerComponent(H.class.getName(), new H(), false);
    }
 
    @DataProvider(name = "cycleClasses")
@@ -185,7 +184,7 @@ public class BasicComponentRegistryImplTest {
       @Inject ComponentRef<F> f;
    }
 
-   @Scope(Scopes.GLOBAL)
+   @Scope(Scopes.NAMED_CACHE)
    static class D3 implements D {
    }
 
@@ -244,7 +243,7 @@ public class BasicComponentRegistryImplTest {
 
    @DefaultFactoryFor(classes = H.class)
    @Scope(Scopes.GLOBAL)
-   public static class HFactory implements ComponentFactory, AutoInstantiableFactory {
+   public static class HFactory implements ComponentFactory {
       final BasicComponentRegistry registry;
 
       HFactory(BasicComponentRegistry registry) {

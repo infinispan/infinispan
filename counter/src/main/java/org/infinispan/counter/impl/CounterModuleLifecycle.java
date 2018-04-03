@@ -34,6 +34,7 @@ import org.infinispan.counter.impl.strong.StrongCounterKey;
 import org.infinispan.counter.impl.weak.WeakCounterKey;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
@@ -43,7 +44,6 @@ import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.LogFactory;
-import org.kohsuke.MetaInfServices;
 
 /**
  * It register a {@link EmbeddedCounterManager} to each {@link EmbeddedCacheManager} started and starts the cache on it.
@@ -51,7 +51,7 @@ import org.kohsuke.MetaInfServices;
  * @author Pedro Ruivo
  * @since 9.0
  */
-@MetaInfServices(value = ModuleLifecycle.class)
+@InfinispanModule(name = "clustered-counter", requiredModules = "core")
 public class CounterModuleLifecycle implements ModuleLifecycle {
 
    public static final String COUNTER_CACHE_NAME = "org.infinispan.COUNTER";

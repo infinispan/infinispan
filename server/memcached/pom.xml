@@ -58,8 +58,7 @@
                      ${project.groupId}.server.memcached.*;version=${project.version};-split-package:=error
                   </Export-Package>
                   <Include-Resources>
-                     {maven-resources},
-                     ${project.build.outputDirectory}/${project.artifactId}-component-metadata.dat
+                     {maven-resources}
                   </Include-Resources>
                </instructions>
             </configuration>

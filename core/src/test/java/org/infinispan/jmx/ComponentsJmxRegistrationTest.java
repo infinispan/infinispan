@@ -13,9 +13,10 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.factories.components.ComponentMetadata;
-import org.infinispan.factories.components.ComponentMetadataRepo;
+import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.manager.ModuleRepository;
+import org.infinispan.manager.TestModuleRepository;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -65,9 +66,9 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
       cm.defineConfiguration("first", configuration.build());
       Cache first = cm.getCache("first");
 
-      ComponentMetadataRepo metadataRepo = cm.getGlobalComponentRegistry().getComponentMetadataRepo();
-      ComponentMetadata metadata = metadataRepo.getComponentMetadata(first.getClass());
-      ResourceDMBean mbean = new ResourceDMBean(first, metadata.toManageableComponentMetadata());
+      ModuleRepository metadataRepo = TestModuleRepository.defaultModuleRepository();
+      MBeanMetadata metadata = metadataRepo.getMBeanMetadata(first.getClass().getName());
+      ResourceDMBean mbean = new ResourceDMBean(first, metadata, null);
       Collection<ResourceDMBean> mbeans = singleton(mbean);
 
       ComponentsJmxRegistration regComponents = buildRegistrator(first);
@@ -98,9 +99,9 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
       cm.defineConfiguration("first", configurationOverride.build());
       Cache first = cm.getCache("first");
 
-      ComponentMetadataRepo metadataRepo = cm.getGlobalComponentRegistry().getComponentMetadataRepo();
-      ComponentMetadata metadata = metadataRepo.getComponentMetadata(first.getClass());
-      ResourceDMBean mbean = new ResourceDMBean(first, metadata.toManageableComponentMetadata());
+      ModuleRepository metadataRepo = TestModuleRepository.defaultModuleRepository();
+      MBeanMetadata metadata = metadataRepo.getMBeanMetadata(first.getClass().getName());
+      ResourceDMBean mbean = new ResourceDMBean(first, metadata, null);
       Collection<ResourceDMBean> mbeans = singleton(mbean);
 
       ComponentsJmxRegistration regComponents = buildRegistrator(first);
@@ -128,10 +129,10 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
       Cache replicatedCache = cm.getCache("replicated");
       Cache localCache = cm.getCache("local");
 
-      ComponentMetadataRepo metadataRepo = cm.getGlobalComponentRegistry().getComponentMetadataRepo();
-      ComponentMetadata metadata = metadataRepo.getComponentMetadata(replicatedCache.getClass());
-      ResourceDMBean replicatedMBean = new ResourceDMBean(replicatedCache, metadata.toManageableComponentMetadata());
-      ResourceDMBean localMBean = new ResourceDMBean(localCache, metadata.toManageableComponentMetadata());
+      ModuleRepository metadataRepo = TestModuleRepository.defaultModuleRepository();
+      MBeanMetadata metadata = metadataRepo.getMBeanMetadata(replicatedCache.getClass().getName());
+      ResourceDMBean replicatedMBean = new ResourceDMBean(replicatedCache, metadata, null);
+      ResourceDMBean localMBean = new ResourceDMBean(localCache, metadata, null);
 
       ComponentsJmxRegistration replicatedRegComponents = buildRegistrator(replicatedCache);
       ComponentsJmxRegistration localRegComponents = buildRegistrator(localCache);

@@ -5,7 +5,6 @@ import static org.infinispan.test.Exceptions.expectExecutionException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
-import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -18,12 +17,13 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.SingleKeyNonTxInvocationContext;
-import org.infinispan.factories.components.ComponentMetadataRepo;
+import org.infinispan.factories.impl.BasicComponentRegistryImpl;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.interceptors.InterceptorChainTest;
 import org.infinispan.interceptors.InvocationSuccessFunction;
+import org.infinispan.manager.TestModuleRepository;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestException;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -382,10 +382,9 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
    }
 
    private AsyncInterceptorChain newInterceptorChain(AsyncInterceptor... interceptors) {
-      ComponentMetadataRepo componentMetadataRepo = new ComponentMetadataRepo();
-      componentMetadataRepo.initialize(Collections.emptyList(), InterceptorChainTest.class.getClassLoader());
-
-      AsyncInterceptorChain chain = new AsyncInterceptorChainImpl(componentMetadataRepo);
+      BasicComponentRegistryImpl basicComponentRegistry =
+         new BasicComponentRegistryImpl(TestModuleRepository.defaultModuleRepository(), Scopes.NAMED_CACHE, null);
+      AsyncInterceptorChainImpl chain = new AsyncInterceptorChainImpl(basicComponentRegistry);
       for (AsyncInterceptor i : interceptors) {
          chain.appendInterceptor(i, false);
       }

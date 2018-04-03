@@ -34,6 +34,10 @@ public final class ModuleProperties {
    private Map<Byte, ModuleCommandInitializer> commandInitializers;
    private Collection<Class<? extends ReplicableCommand>> moduleCommands;
 
+   /**
+    * @deprecated Since 10.0, ModuleLifecycle implementations are no longer services
+    */
+   @Deprecated
    public static Collection<ModuleLifecycle> resolveModuleLifecycles(ClassLoader cl) {
       return ServiceFinder.load(ModuleLifecycle.class, cl);
    }

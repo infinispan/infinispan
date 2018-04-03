@@ -1,12 +1,7 @@
 package org.infinispan.commons.util;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.Arrays;
-
-import org.infinispan.commons.CacheException;
 
 /**
  * Privileged actions for the package
@@ -70,22 +65,6 @@ final class SecurityActions {
       } else {
          return action.run();
       }
-   }
-
-   static Object invokeAccessibly(Object instance, Method method, Object[] parameters) {
-      return doPrivileged(() -> {
-         try {
-            method.setAccessible(true);
-            return method.invoke(instance, parameters);
-         } catch (InvocationTargetException e) {
-            Throwable cause = e.getCause() != null ? e.getCause() : e;
-            throw new CacheException("Unable to invoke method " + method + " on object of type " + (instance == null ? "null" : instance.getClass().getSimpleName()) +
-                  (parameters != null ? " with parameters " + Arrays.asList(parameters) : ""), cause);
-         } catch (Exception e) {
-            throw new CacheException("Unable to invoke method " + method + " on object of type " + (instance == null ? "null" : instance.getClass().getSimpleName()) +
-                  (parameters != null ? " with parameters " + Arrays.asList(parameters) : ""), e);
-         }
-      });
    }
 
    static ClassLoader[] getClassLoaders(ClassLoader appClassLoader) {
