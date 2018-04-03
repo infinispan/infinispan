@@ -1,5 +1,7 @@
 package org.infinispan.commands.module;
 
+import java.util.HashMap;
+
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -19,8 +21,16 @@ public class TestGlobalConfigurationBuilder implements Builder<TestGlobalConfigu
       this.attributes = TestGlobalConfiguration.attributeSet();
    }
 
-   public TestGlobalConfigurationBuilder testComponent(String componentName, Object instance) {
-      this.attributes.attribute(TestGlobalConfiguration.TEST_COMPONENTS).get().put(componentName, instance);
+   public TestGlobalConfigurationBuilder testGlobalComponent(String componentName, Object instance) {
+      this.attributes.attribute(TestGlobalConfiguration.GLOBAL_TEST_COMPONENTS).get()
+                     .put(componentName, instance);
+      return this;
+   }
+
+   public TestGlobalConfigurationBuilder testCacheComponent(String cacheName, String componentName, Object instance) {
+      this.attributes.attribute(TestGlobalConfiguration.CACHE_TEST_COMPONENTS).get()
+                     .computeIfAbsent(cacheName, name -> new HashMap<>())
+                     .put(componentName, instance);
       return this;
    }
 

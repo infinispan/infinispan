@@ -23,7 +23,9 @@ import org.infinispan.factories.annotations.Stop;
  *
  * @author Manik Surtani
  * @since 5.1
+ * @deprecated Since 10.0, no longer used
  */
+@Deprecated
 public interface ModuleMetadataFileFinder {
    String getMetadataFilename();
 }

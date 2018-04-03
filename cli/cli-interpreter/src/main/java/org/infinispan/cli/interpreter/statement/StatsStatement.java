@@ -4,20 +4,18 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.infinispan.Cache;
+import org.infinispan.AdvancedCache;
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.result.StatementException;
 import org.infinispan.cli.interpreter.result.StringResult;
 import org.infinispan.cli.interpreter.session.Session;
-import org.infinispan.factories.components.ComponentMetadata;
-import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.components.JmxAttributeMetadata;
-import org.infinispan.factories.components.ManageableComponentMetadata;
+import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.util.logging.LogFactory;
@@ -59,7 +57,7 @@ public class StatsStatement implements Statement {
             }
          }
       } else {
-         printCacheStats(pw, session.getCache(cacheName));
+         printCacheStats(pw, session.getCache(cacheName).getAdvancedCache());
       }
 
       pw.flush();
@@ -83,31 +81,30 @@ public class StatsStatement implements Statement {
       pw.println("}");
    }
 
-   private void printCacheStats(PrintWriter pw, Cache<?, ?> cache) throws StatementException {
+   private void printCacheStats(PrintWriter pw, AdvancedCache<?, ?> cache) throws StatementException {
       if (!cache.getCacheConfiguration().jmxStatistics().enabled()) {
          throw log.statisticsNotEnabled(cache.getName());
       }
 
-      for (AsyncInterceptor interceptor : cache.getAdvancedCache().getAsyncInterceptorChain().getInterceptors()) {
+      for (AsyncInterceptor interceptor : cache.getAsyncInterceptorChain().getInterceptors()) {
          printComponentStats(pw, cache, interceptor);
       }
-      printComponentStats(pw, cache, cache.getAdvancedCache().getLockManager());
-      printComponentStats(pw, cache, cache.getAdvancedCache().getRpcManager());
+      printComponentStats(pw, cache, cache.getLockManager());
+      printComponentStats(pw, cache, cache.getRpcManager());
    }
 
-   private void printComponentStats(PrintWriter pw, Cache<?, ?> cache, Object component) {
+   private void printComponentStats(PrintWriter pw, AdvancedCache<?, ?> cache, Object component) {
       if (component == null) {
          return;
       }
-      ComponentMetadataRepo mr = cache.getAdvancedCache().getComponentRegistry().getComponentMetadataRepo();
-      ComponentMetadata cm = mr.findComponentMetadata(component.getClass().getName());
-      if (cm == null || !(cm instanceof ManageableComponentMetadata)) {
+      BasicComponentRegistry bcr = cache.getComponentRegistry().getComponent(BasicComponentRegistry.class);
+      MBeanMetadata mBeanMetadata = bcr.getMBeanMetadata(component.getClass().getName());
+      if (mBeanMetadata == null) {
          return;
       }
-      ManageableComponentMetadata mcm = cm.toManageableComponentMetadata();
-      pw.printf("%s: {\n", mcm.getJmxObjectName());
-      List<JmxAttributeMetadata> attrs = new ArrayList<>(mcm.getAttributeMetadata());
-      Collections.sort(attrs, Comparator.comparing(JmxAttributeMetadata::getName));
+      pw.printf("%s: {\n", mBeanMetadata.getJmxObjectName());
+      List<JmxAttributeMetadata> attrs = new ArrayList<>(mBeanMetadata.getAttributes());
+      attrs.sort(Comparator.comparing(JmxAttributeMetadata::getName));
       for (JmxAttributeMetadata s : attrs) {
          pw.printf("  %s: %s\n", s.getName(), getAttributeValue(component, s));
       }

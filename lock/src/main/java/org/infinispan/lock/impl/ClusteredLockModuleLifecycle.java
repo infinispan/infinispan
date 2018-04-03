@@ -12,6 +12,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.lock.api.ClusteredLockManager;
@@ -31,7 +32,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.TransactionMode;
-import org.kohsuke.MetaInfServices;
 
 /**
  * Locks module configuration
@@ -39,7 +39,7 @@ import org.kohsuke.MetaInfServices;
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.2
  */
-@MetaInfServices(value = ModuleLifecycle.class)
+@InfinispanModule(name = "clustered-lock", requiredModules = "core")
 public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
    private static final Log log = LogFactory.getLog(ClusteredLockModuleLifecycle.class, Log.class);
 

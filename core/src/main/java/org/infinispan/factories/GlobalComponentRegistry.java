@@ -34,6 +34,7 @@ import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.manager.ModuleRepository;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
@@ -84,7 +85,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    private final ModuleProperties moduleProperties = new ModuleProperties();
 
    final Collection<ModuleLifecycle> moduleLifecycles;
-   boolean modulesStarted;
 
    final ConcurrentMap<ByteString, ComponentRegistry> namedComponents = new ConcurrentHashMap<>(4);
 
@@ -97,14 +97,11 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
     */
    public GlobalComponentRegistry(GlobalConfiguration configuration,
                                   EmbeddedCacheManager cacheManager,
-                                  Set<String> createdCaches) {
-      super(new ComponentMetadataRepo(), configuration.classLoader(), Scopes.GLOBAL, null);
+                                  Set<String> createdCaches, ModuleRepository moduleRepository) {
+      super(new ComponentMetadataRepo(), moduleRepository, Scopes.GLOBAL, null);
 
       ClassLoader configuredClassLoader = configuration.classLoader();
-      moduleLifecycles = ModuleProperties.resolveModuleLifecycles(configuredClassLoader);
-
-      // Load up the component metadata
-      componentMetadataRepo.initialize(ModuleProperties.getModuleMetadataFiles(configuredClassLoader), configuredClassLoader);
+      moduleLifecycles = moduleRepository.getModuleLifecycles();
 
       classLoader = configuredClassLoader;
 
@@ -175,6 +172,10 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       return log;
    }
 
+   /**
+    * @deprecated Since 10.0, the component metadata repository is empty and no longer used.
+    */
+   @Deprecated
    @Override
    public ComponentMetadataRepo getComponentMetadataRepo() {
       return componentMetadataRepo;

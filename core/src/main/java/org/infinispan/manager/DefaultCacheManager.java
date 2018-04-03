@@ -255,7 +255,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             defaultCacheName = null;
          }
       }
-      this.globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
+      ModuleRepository.Builder moduleRepositoryBuilder = new ModuleRepository.Builder(
+         globalConfiguration.classLoader());
+      ModuleRepository moduleRepository = moduleRepositoryBuilder.build(globalConfiguration);
+      this.globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet(),
+                                                                 moduleRepository);
       this.globalComponentRegistry.registerComponent(configurationManager, ConfigurationManager.class);
       this.globalComponentRegistry.registerComponent(cacheDependencyGraph, CACHE_DEPENDENCY_GRAPH, false);
 
@@ -263,8 +267,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       this.globalComponentRegistry.registerComponent(authzHelper, AuthorizationHelper.class);
 
       this.stats = new CacheContainerStatsImpl(this);
+      globalComponentRegistry.registerComponent(stats, CacheContainerStats.class);
+
       health = new HealthImpl(this);
       globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
+
       this.cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authzHelper, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class));
       if (start)
          start();
@@ -330,16 +337,20 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          configurationManager = new ConfigurationManager(holder);
          GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
          defaultCacheName = globalConfiguration.defaultCacheName().orElse(null);
-         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
+         ModuleRepository.Builder moduleRepositoryBuilder = new ModuleRepository.Builder(globalConfiguration.classLoader());
+         ModuleRepository moduleRepository = moduleRepositoryBuilder.build(globalConfiguration);
+         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet(), moduleRepository);
          globalComponentRegistry.registerComponent(configurationManager, ConfigurationManager.class);
          globalComponentRegistry.registerComponent(cacheDependencyGraph, CACHE_DEPENDENCY_GRAPH, false);
 
          stats = new CacheContainerStatsImpl(this);
+         globalComponentRegistry.registerComponent(stats, CacheContainerStats.class);
+
          health = new HealthImpl(this);
          globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
 
          authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.globalJmxStatistics().cacheManagerName());
-         this.globalComponentRegistry.registerComponent(authzHelper, AuthorizationHelper.class);
+         globalComponentRegistry.registerComponent(authzHelper, AuthorizationHelper.class);
 
          cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authzHelper, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class));
       } catch (CacheConfigurationException ce) {

@@ -87,6 +87,8 @@
       <module>commons-test</module>
       <module>plugins/infinispan-defaults-maven-plugin</module>
       <module>plugins/protocol-parser-generator-maven-plugin</module>
+      <module>component-annotations</module>
+      <module>component-processor</module>
       <module>core</module>
       <module>cloud</module>
       <module>extended-statistics</module>
@@ -243,6 +245,7 @@
       <versionx.com.google.inject.guice>4.2.0</versionx.com.google.inject.guice>
       <versionx.com.google.j2objc.j2objc-annotations>1.1</versionx.com.google.j2objc.j2objc-annotations>
       <versionx.com.google.protobuf.protobuf-java>3.0.2</versionx.com.google.protobuf.protobuf-java>
+      <versionx.com.google.testing.compile>0.15</versionx.com.google.testing.compile>
       <versionx.com.h2database.h2>1.4.193</versionx.com.h2database.h2>
       <versionx.com.intellij.forms_rt>6.0.5</versionx.com.intellij.forms_rt>
       <versionx.com.io7m.xom.xom>1.2.10</versionx.com.io7m.xom.xom>
@@ -951,6 +954,12 @@
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
             <version>${versionx.com.google.protobuf.protobuf-java}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.google.testing.compile</groupId>
+            <artifactId>compile-testing</artifactId>
+            <version>${versionx.com.google.testing.compile}</version>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>com.h2database</groupId>
@@ -4361,7 +4370,6 @@
                   <excludes>
                      <exclude>**/package-info.java</exclude>
                   </excludes>
-                  <!--compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files</compilerArgument-->
                </configuration>
             </plugin>
             <plugin>
@@ -4490,61 +4498,6 @@
             <configuration>
                <encoding>UTF-8</encoding>
             </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <executions>
-               <execution>
-                  <!-- Scan module for components and persist these into a data file, for use at runtime -->
-                  <id>serialize_component_metadata</id>
-                  <phase>process-classes</phase>
-                  <goals>
-                     <goal>java</goal>
-                  </goals>
-                  <configuration>
-                     <classpathScope>compile</classpathScope>
-                     <skip>${module.skipComponentMetaDataProcessing}</skip>
-                     <mainClass>org.infinispan.factories.components.ComponentMetadataPersister</mainClass>
-                     <arguments>
-                        <argument>${project.build.outputDirectory}</argument>
-                        <argument>${project.build.outputDirectory}/${project.artifactId}-component-metadata.dat</argument>
-                     </arguments>
-                     <systemProperties>
-                        <systemProperty>
-                           <key>infinispan.isCoreModule</key>
-                           <value>${module.metadata.isCoreModule}</value>
-                        </systemProperty>
-                        <systemProperty>
-                           <key>org.jboss.logging.provider</key>
-                           <value>jdk</value>
-                        </systemProperty>
-                     </systemProperties>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>serialize_test_component_metadata</id>
-                  <phase>process-test-classes</phase>
-                  <goals>
-                     <goal>java</goal>
-                  </goals>
-                  <configuration>
-                     <skip>${module.skipTestComponentMetaDataProcessing}</skip>
-                     <mainClass>org.infinispan.factories.components.ComponentMetadataPersister</mainClass>
-                     <classpathScope>test</classpathScope>
-                     <arguments>
-                        <argument>${project.build.testOutputDirectory}</argument>
-                        <argument>${project.build.testOutputDirectory}/${project.artifactId}-tests-component-metadata.dat</argument>
-                     </arguments>
-                     <systemProperties>
-                        <systemProperty>
-                           <key>org.jboss.logging.provider</key>
-                           <value>jdk</value>
-                        </systemProperty>
-                     </systemProperties>
-                  </configuration>
-               </execution>
-            </executions>
          </plugin>
          <plugin>
             <groupId>org.wildfly.maven.plugins</groupId>

@@ -42,7 +42,9 @@ import org.infinispan.factories.scopes.Scopes;
  * @since 5.1
  * @see ManageableComponentMetadata
  * @see ComponentMetadataRepo
+ * @deprecated Since 10.0, no longer used and will be removed.
  */
+@Deprecated
 public class ComponentMetadata implements Serializable {
    private static final long serialVersionUID = 0xC0119011E7ADA7AL;
    private static final InjectFieldMetadata[] EMPTY_INJECT_FIELDS = {};

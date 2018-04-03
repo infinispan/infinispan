@@ -22,6 +22,16 @@ public class JmxAttributeMetadata implements Serializable {
    private String type;
    private boolean is;
 
+   public JmxAttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type,
+                               boolean is) {
+      this.name = name;
+      this.description = description;
+      this.writable = writable;
+      this.useSetter = useSetter;
+      this.type = type;
+      this.is = is;
+   }
+
    private JmxAttributeMetadata(ManagedAttribute annotation) {
       description = annotation.description();
       writable = annotation.writable();

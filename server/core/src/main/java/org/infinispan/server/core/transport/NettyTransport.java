@@ -5,13 +5,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.Util;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
-import org.infinispan.server.core.logging.Log;
-
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
@@ -33,6 +26,17 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Log4J2LoggerFactory;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.Util;
+import org.infinispan.jmx.annotations.DataType;
+import org.infinispan.jmx.annotations.DisplayType;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.jmx.annotations.MeasurementType;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
+import org.infinispan.server.core.logging.Log;
 
 /**
  * A Netty based transport.
@@ -41,6 +45,8 @@ import io.netty.util.internal.logging.Log4J2LoggerFactory;
  * @author wburns
  * @since 4.1
  */
+@MBean(objectName = "Transport",
+       description = "Transport component manages read and write operations to/from server.")
 public class NettyTransport implements Transport {
 
    static private final Log log = LogFactory.getLog(NettyTransport.class, Log.class);
@@ -171,31 +177,67 @@ public class NettyTransport implements Transport {
       nettyPort = Optional.empty();
    }
 
+   @ManagedAttribute(
+      description = "Returns the total number of bytes written " +
+                    "by the server back to clients which includes both protocol and user information.",
+      displayName = "Number of total number of bytes written",
+      measurementType = MeasurementType.TRENDSUP,
+      displayType = DisplayType.SUMMARY
+   )
    @Override
    public long getTotalBytesWritten() {
       return connectionStats.getTotalBytesWritten();
    }
 
+   @ManagedAttribute(description = "Returns the total number of bytes read " +
+                                   "by the server from clients which includes both protocol and user information.",
+                     displayName = "Number of total number of bytes read",
+                     measurementType = MeasurementType.TRENDSUP,
+                     displayType = DisplayType.SUMMARY
+   )
    @Override
    public long getTotalBytesRead() {
       return connectionStats.getTotalBytesRead();
    }
 
+   @ManagedAttribute(
+      description = "Returns the host to which the transport binds.",
+      displayName = "Host name",
+      dataType = DataType.TRAIT,
+      displayType = DisplayType.SUMMARY)
    @Override
    public String getHostName() {
       return address.getHostName();
    }
 
+   @ManagedAttribute(
+      description = "Returns the port to which the transport binds.",
+      displayName = "Port",
+      dataType = DataType.TRAIT,
+      displayType = DisplayType.SUMMARY
+   )
    @Override
    public int getPort() {
       return nettyPort.orElse(address.getPort());
    }
 
+   @ManagedAttribute(
+      description = "Returns the number of I/O threads.",
+      displayName = "Number of I/O threads",
+      dataType = DataType.TRAIT,
+      displayType = DisplayType.SUMMARY
+   )
    @Override
    public int getNumberIOThreads() {
       return configuration.ioThreads();
    }
 
+   @ManagedAttribute(
+      description = "Returns the number of pending tasks.",
+      displayName = "Pending tasks",
+      dataType = DataType.MEASUREMENT,
+      displayType = DisplayType.SUMMARY
+   )
    @Override
    public int getPendingTasks() {
       AtomicInteger count = new AtomicInteger(0);
@@ -203,31 +245,68 @@ public class NettyTransport implements Transport {
       return count.get();
    }
 
+   @ManagedAttribute(
+      description = "Returns the idle timeout.",
+      displayName = "Idle timeout",
+      dataType = DataType.TRAIT,
+      displayType = DisplayType.SUMMARY
+   )
    @Override
    public int getIdleTimeout() {
       return configuration.idleTimeout();
    }
 
+   @ManagedAttribute(
+      description = "Returns whether TCP no delay was configured or not.",
+      displayName = "TCP no delay",
+      dataType = DataType.TRAIT,
+      displayType = DisplayType.SUMMARY
+   )
    @Override
    public boolean getTcpNoDelay() {
       return configuration.tcpNoDelay();
    }
 
+   @ManagedAttribute(
+      description = "Returns the send buffer size.",
+      displayName = "Send buffer size",
+      dataType = DataType.TRAIT,
+      displayType = DisplayType.SUMMARY
+   )
    @Override
    public int getSendBufferSize() {
       return configuration.sendBufSize();
    }
 
+   @ManagedAttribute(
+      description = "Returns the receive buffer size.",
+      displayName = "Receive buffer size",
+      dataType = DataType.TRAIT,
+      displayType = DisplayType.SUMMARY
+   )
    @Override
    public int getReceiveBufferSize() {
       return configuration.recvBufSize();
    }
 
+   @ManagedAttribute(
+      description = "Returns a count of active connections this server.",
+      displayName = "Local active connections",
+      dataType = DataType.MEASUREMENT, displayType = DisplayType.SUMMARY
+   )
    @Override
    public int getNumberOfLocalConnections() {
       return connectionStats.getNumberOfLocalConnections();
    }
 
+   @ManagedAttribute(
+      description = "Returns a count of active connections in the cluster. " +
+                    "This operation will make remote calls to aggregate results, " +
+                    "so latency might have an impact on the speed of calculation of this attribute.",
+      displayName = "Cluster-wide number of active connections",
+      dataType = DataType.MEASUREMENT,
+      displayType = DisplayType.SUMMARY
+   )
    @Override
    public int getNumberOfGlobalConnections() {
       return connectionStats.getNumberOfGlobalConnections();

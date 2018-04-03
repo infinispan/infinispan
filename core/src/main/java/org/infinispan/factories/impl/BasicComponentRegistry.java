@@ -2,7 +2,6 @@ package org.infinispan.factories.impl;
 
 import java.util.Collection;
 
-import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.factories.annotations.Inject;
 
@@ -39,18 +38,17 @@ import org.infinispan.factories.annotations.Inject;
  * <p>Dependency cycles are not allowed. Declaring the dependency field of type {@link ComponentRef},
  * breaks the cycle by allowing the registry to inject/start the dependency lazily.</p>
  *
- * <p>For all the components that implement {@link Lifecycle}, the registry calls {@linkplain Lifecycle#start()} during
- * startup, in the order they were registered.
- * If a component is registered when the registry is already running, {@linkplain Lifecycle#start()} is called during
- * registration.</p>
+ * <p>Components are not started by default.
+ * Methods annotated with {@link org.infinispan.factories.annotations.Start} and
+ * {@link org.infinispan.factories.annotations.PostStart} are invoked only on
+ * {@link ComponentRef#running()}.</p>
  *
  * <p>During shutdown, registration of new components is not allowed.
  * The registry stops all the components in the reverse order of their start, by invoking all the methods annotated
- * with {@link org.infinispan.factories.annotations.Stop}.
- * The </p>
+ * with {@link org.infinispan.factories.annotations.Stop}.</p>
  *
- * <p>Methods annotated with {@link org.infinispan.factories.annotations.Start} and
- * {@link org.infinispan.factories.annotations.PostStart} a</p>
+ * @author Dan Berindei
+ * @since 9.4
  */
 public interface BasicComponentRegistry {
    /**
@@ -166,5 +164,22 @@ public interface BasicComponentRegistry {
    @Experimental
    Collection<ComponentRef<?>> getRegisteredComponents();
 
+   /**
+    * @return The MBean metadata for class {@code className}
+    */
+   @Experimental
+   MBeanMetadata getMBeanMetadata(String className);
+
+   /**
+    * Check if a component accessor has been registered for class {@code componentClassName}
+    */
+   @Experimental
+   boolean hasComponentAccessor(String componentClassName);
+
+   /**
+    * Stop the registry and all the components that have been started.
+    *
+    * <p>Components cannot be instantiated or started after this.</p>
+    */
    void stop();
 }

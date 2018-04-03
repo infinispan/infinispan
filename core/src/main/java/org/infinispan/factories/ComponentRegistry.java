@@ -17,9 +17,9 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.factories.components.ComponentMetadata;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.factories.impl.ComponentAccessor;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -76,8 +76,8 @@ public class ComponentRegistry extends AbstractComponentRegistry {
     */
    public ComponentRegistry(String cacheName, Configuration configuration, AdvancedCache<?, ?> cache,
                             GlobalComponentRegistry globalComponents, ClassLoader defaultClassLoader) {
-      super(globalComponents.getComponentMetadataRepo(), defaultClassLoader, Scopes.NAMED_CACHE,
-            globalComponents.getComponent(BasicComponentRegistry.class));
+      super(globalComponents.componentMetadataRepo, globalComponents.moduleRepository,
+            Scopes.NAMED_CACHE, globalComponents.getComponent(BasicComponentRegistry.class));
 
       if (cacheName == null) throw new CacheConfigurationException("Cache name cannot be null!");
 
@@ -107,14 +107,12 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   @SuppressWarnings("unchecked")
    public final <T> T getComponent(String componentTypeName, String name, boolean nameIsFQCN) {
       Class<T> componentType = Util.loadClass(componentTypeName, getClassLoader());
       ComponentRef<T> component = basicComponentRegistry.getComponent(name, componentType);
       return component != null ? component.running() : null;
    }
 
-   @SuppressWarnings("unchecked")
    public final <T> T getLocalComponent(String componentTypeName, String name, boolean nameIsFQCN) {
       Class<T> componentType = Util.loadClass(componentTypeName, getClassLoader());
       ComponentRef<T> componentRef = basicComponentRegistry.getComponent(name, componentType);
@@ -122,7 +120,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
          return null;
 
       Class<?> componentClass = componentRef.wired().getClass();
-      ComponentMetadata metadata = getComponentMetadataRepo().getComponentMetadata(componentClass);
+      ComponentAccessor metadata = moduleRepository.getComponentAccessor(componentClass.getName());
       if (metadata != null && metadata.isGlobalScope())
          return null;
 

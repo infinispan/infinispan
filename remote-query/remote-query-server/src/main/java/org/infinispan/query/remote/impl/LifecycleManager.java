@@ -5,7 +5,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 
 import java.util.Collection;
 import java.util.Map;
-
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -23,9 +22,9 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.components.ComponentMetadataRepo;
-import org.infinispan.factories.components.ManageableComponentMetadata;
+import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -50,7 +49,6 @@ import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapperSearchWorkCreator;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.kohsuke.MetaInfServices;
 
 /**
  * Initializes components for remote query. Each cache manager has its own instance of this class during its lifetime.
@@ -58,7 +56,7 @@ import org.kohsuke.MetaInfServices;
  * @author anistor@redhat.com
  * @since 6.0
  */
-@MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
+@InfinispanModule(name = "remote-query-server", requiredModules = "core")
 public final class LifecycleManager implements ModuleLifecycle {
 
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
@@ -128,11 +126,11 @@ public final class LifecycleManager implements ModuleLifecycle {
 
       String groupName = "type=RemoteQuery,name=" + ObjectName.quote(jmxConfig.cacheManagerName());
       String jmxDomain = JmxUtil.buildJmxDomain(jmxConfig.domain(), mbeanServer, groupName);
-      ComponentMetadataRepo metadataRepo = gcr.getComponentMetadataRepo();
-      ManageableComponentMetadata metadata = metadataRepo.findComponentMetadata(ProtobufMetadataManagerImpl.class)
-            .toManageableComponentMetadata();
+      BasicComponentRegistry basicComponentRegistry = gcr.getComponent(BasicComponentRegistry.class);
+      MBeanMetadata metadata = basicComponentRegistry.getMBeanMetadata(ProtobufMetadataManagerImpl.class.getName());
+
       try {
-         ResourceDMBean mBean = new ResourceDMBean(protobufMetadataManager, metadata);
+         ResourceDMBean mBean = new ResourceDMBean(protobufMetadataManager, metadata, null);
          ObjectName objName = new ObjectName(jmxDomain + ":" + groupName + ",component=" + metadata.getJmxObjectName());
          protobufMetadataManager.setObjectName(objName);
          JmxUtil.registerMBean(mBean, objName, mbeanServer);

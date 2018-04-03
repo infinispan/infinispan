@@ -123,4 +123,13 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
       registrar.registerMBeans(Collections.singleton(resourceDMBean));
       resourceDMBeans.add(resourceDMBean);
    }
+
+   public ObjectName registerExternalMBean(Object managedComponent, String jmxDomain, String groupName, String name)
+      throws Exception {
+      ResourceDMBean resourceDMBean = getResourceDMBean(managedComponent, name);
+      String fullName = ComponentsJmxRegistration.getObjectName(jmxDomain, groupName, resourceDMBean.getObjectName());
+      ObjectName objectName = new ObjectName(fullName);
+      JmxUtil.registerMBean(resourceDMBean, objectName, mBeanServer);
+      return objectName;
+   }
 }

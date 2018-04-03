@@ -46,10 +46,10 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    private LocalConfigurationStorage localConfigurationManager;
    private LocalTopologyManager localTopologyManager;
    @Inject @ComponentName(KnownComponentNames.PERSISTENCE_EXECUTOR)
-   private ExecutorService blockingExecutorService;
+   ExecutorService blockingExecutorService;
 
    @Inject
-   public void inject(GlobalConfiguration globalConfiguration, EmbeddedCacheManager cacheManager, LocalTopologyManager ltm) {
+   void inject(GlobalConfiguration globalConfiguration, EmbeddedCacheManager cacheManager, LocalTopologyManager ltm) {
       this.cacheManager = cacheManager;
       this.localTopologyManager = ltm;
       switch(globalConfiguration.globalState().configurationStorage()) {
@@ -76,7 +76,6 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
             new ConfigurationBuilder().build(),
             EnumSet.of(InternalCacheRegistry.Flag.GLOBAL));
       parserRegistry = new ParserRegistry();
-      cacheManager.getGlobalComponentRegistry().wireDependencies(localConfigurationManager);
 
       localConfigurationManager.initialize(cacheManager);
       // Initialize caches which are present in the initial state. We do this before installing the listener.

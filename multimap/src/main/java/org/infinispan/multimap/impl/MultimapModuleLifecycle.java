@@ -5,12 +5,12 @@ import java.util.Map;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.multimap.impl.function.ContainsFunction;
 import org.infinispan.multimap.impl.function.GetFunction;
 import org.infinispan.multimap.impl.function.PutFunction;
 import org.infinispan.multimap.impl.function.RemoveFunction;
-import org.kohsuke.MetaInfServices;
 
 /**
  * MultimapModuleLifecycle is necessary for the Multimap Cache module.
@@ -19,7 +19,7 @@ import org.kohsuke.MetaInfServices;
  * @author Katia Aresti - karesti@redhat.com
  * @since 9.2
  */
-@MetaInfServices(value = ModuleLifecycle.class)
+@InfinispanModule(name = "multimap", requiredModules = "core")
 public class MultimapModuleLifecycle implements ModuleLifecycle {
 
    private static void addAdvancedExternalizer(Map<Integer, AdvancedExternalizer<?>> map, AdvancedExternalizer<?> ext) {

@@ -358,7 +358,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       FailingGlobalComponent failingGlobalComponent = new FailingGlobalComponent();
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
       globalBuilder.addModule(TestGlobalConfigurationBuilder.class)
-                   .testComponent(FailingGlobalComponent.class.getName(), failingGlobalComponent);
+                   .testGlobalComponent(FailingGlobalComponent.class.getName(), failingGlobalComponent);
       ConfigurationBuilder builder = new ConfigurationBuilder();
 
       Exceptions.expectException(EmbeddedCacheManagerStartupException.class, () -> createCacheManager(globalBuilder, builder));

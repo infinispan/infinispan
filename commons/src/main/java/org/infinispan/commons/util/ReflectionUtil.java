@@ -2,6 +2,7 @@ package org.infinispan.commons.util;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,6 +13,7 @@ import java.util.List;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+
 /**
  * Basic reflection utilities to enhance what the JDK provides.
  *
@@ -178,7 +180,17 @@ public class ReflectionUtil {
     * @param parameters parameters
     */
    public static Object invokeAccessibly(Object instance, Method method, Object[] parameters) {
-      return SecurityActions.invokeAccessibly(instance, method, parameters);
+      try {
+         method.setAccessible(true);
+         return method.invoke(instance, parameters);
+      } catch (InvocationTargetException e) {
+         Throwable cause = e.getCause() != null ? e.getCause() : e;
+         throw new CacheException("Unable to invoke method " + method + " on object of type " + (instance == null ? "null" : instance.getClass().getSimpleName()) +
+                                  (parameters != null ? " with parameters " + Arrays.asList(parameters) : ""), cause);
+      } catch (Exception e) {
+         throw new CacheException("Unable to invoke method " + method + " on object of type " + (instance == null ? "null" : instance.getClass().getSimpleName()) +
+                                  (parameters != null ? " with parameters " + Arrays.asList(parameters) : ""), e);
+      }
    }
 
    public static void setAccessibly(Object instance, Field field, Object value) {

@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.impl.MBeanMetadata;
 import org.mockito.Mockito;
 
 public class MockBasicComponentRegistry implements BasicComponentRegistry {
@@ -61,6 +62,16 @@ public class MockBasicComponentRegistry implements BasicComponentRegistry {
    @Override
    public Collection<ComponentRef<?>> getRegisteredComponents() {
       throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public MBeanMetadata getMBeanMetadata(String className) {
+      return null;
+   }
+
+   @Override
+   public boolean hasComponentAccessor(String componentClassName) {
+      return false;
    }
 
    @Override

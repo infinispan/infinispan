@@ -6,6 +6,7 @@ import java.util.Map;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.lucene.impl.FileListCacheValue;
 
@@ -17,6 +18,7 @@ import org.infinispan.lucene.impl.FileListCacheValue;
  * @author Sanne Grinovero
  * @since 5.0
  */
+@InfinispanModule(name = "lucene-directory", requiredModules = "core")
 public class LifecycleCallbacks implements ModuleLifecycle {
 
    @Override

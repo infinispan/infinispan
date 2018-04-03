@@ -2,6 +2,8 @@ package org.infinispan.commands.module;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
@@ -19,8 +21,12 @@ import org.infinispan.configuration.serializing.SerializedWith;
 @BuiltBy(TestGlobalConfigurationBuilder.class)
 public class TestGlobalConfiguration {
 
-   public static final AttributeDefinition<Map<String, Object>> TEST_COMPONENTS =
-      AttributeDefinition.<Map<String, Object>>builder("testComponents", new HashMap<>())
+   static final AttributeDefinition<Map<String, Object>> GLOBAL_TEST_COMPONENTS =
+      AttributeDefinition.<Map<String, Object>>builder("globalTestComponents", new HashMap<>())
+         .initializer(HashMap::new)
+         .copier(CollectionAttributeCopier.INSTANCE).build();
+   static final AttributeDefinition<Map<String, Map<String, Object>>> CACHE_TEST_COMPONENTS =
+      AttributeDefinition.<Map<String, Map<String, Object>>>builder("cacheTestComponents", new HashMap<>())
          .initializer(HashMap::new)
          .copier(CollectionAttributeCopier.INSTANCE).build();
 
@@ -31,15 +37,25 @@ public class TestGlobalConfiguration {
    }
 
    static AttributeSet attributeSet() {
-      return new AttributeSet(TestGlobalConfiguration.class, TEST_COMPONENTS);
+      return new AttributeSet(TestGlobalConfiguration.class, GLOBAL_TEST_COMPONENTS, CACHE_TEST_COMPONENTS);
    }
 
    public AttributeSet attributes() {
       return attributes;
    }
 
-   public Map<String, Object> getComponents() {
-      return attributes.attribute(TEST_COMPONENTS).get();
+   public Map<String, Object> globalTestComponents() {
+      return attributes.attribute(GLOBAL_TEST_COMPONENTS).get();
+   }
+
+   public Map<String, Object> cacheTestComponents(String cacheName) {
+      return attributes.attribute(CACHE_TEST_COMPONENTS).get().get(cacheName);
+   }
+
+   public Set<String> cacheTestComponentNames() {
+      return attributes.attribute(CACHE_TEST_COMPONENTS).get().values().stream()
+                       .flatMap(m -> m.keySet().stream())
+                       .collect(Collectors.toSet());
    }
 
    @Override

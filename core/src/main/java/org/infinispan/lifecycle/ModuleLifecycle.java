@@ -4,6 +4,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.manager.ModuleRepository;
 
 /**
  * ModuleLifecycle is an internal API hook for delegating lifecycle events to Infinispan sub-modules.
@@ -21,6 +22,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
  * @since 4.0
  */
 public interface ModuleLifecycle {
+    default void addDynamicMetadata(ModuleRepository.Builder moduleBuilder, GlobalConfiguration globalConfiguration) {}
 
     default void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {}
 

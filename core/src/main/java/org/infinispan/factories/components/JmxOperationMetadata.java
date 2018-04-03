@@ -18,14 +18,23 @@ public class JmxOperationMetadata implements Serializable {
    private static final long serialVersionUID = 0x111402E12A71017L;
    private final String methodName;
    private final String operationName;
-   private final JmxOperationParameter[] methodParameters;
    private final String description;
    private final String returnType;
+   private final JmxOperationParameter[] methodParameters;
+
+   public JmxOperationMetadata(String methodName, String operationName, String description, String returnType,
+                               JmxOperationParameter... methodParameters) {
+      this.methodName = methodName;
+      this.operationName = operationName.isEmpty() ? methodName : operationName;
+      this.description = description;
+      this.returnType = returnType;
+      this.methodParameters = methodParameters;
+   }
 
    public JmxOperationMetadata(Method m) {
       methodName = m.getName();
       returnType = m.getReturnType().getName();
-      Class<?>[] params = m.getParameterTypes();
+      java.lang.reflect.Parameter[] params = m.getParameters();
       Annotation[][] annots = m.getParameterAnnotations();
       methodParameters = new JmxOperationParameter[params.length];
       for (int i = 0; i < params.length; i++) {
@@ -36,10 +45,12 @@ public class JmxOperationMetadata implements Serializable {
                break;
             }
          }
+         String paramType = params[i].getType().getName();
          if (annot == null) {
-            methodParameters[i] = new JmxOperationParameter("p" + i, params[i].getName(), null);
+            String paramName = params[i].getName() != null ? params[i].getName() : "p" + i;
+            methodParameters[i] = new JmxOperationParameter(paramName, paramType, null);
          } else {
-            methodParameters[i] = new JmxOperationParameter(annot.name(), params[i].getName(), annot.description());
+            methodParameters[i] = new JmxOperationParameter(annot.name(), paramType, annot.description());
          }
       }
       ManagedOperation mo = m.getAnnotation(ManagedOperation.class);

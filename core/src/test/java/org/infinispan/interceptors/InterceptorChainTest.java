@@ -1,17 +1,16 @@
 package org.infinispan.interceptors;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.factories.components.ComponentMetadataRepo;
+import org.infinispan.factories.impl.BasicComponentRegistryImpl;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.AsyncInterceptorChainImpl;
+import org.infinispan.manager.TestModuleRepository;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
@@ -31,11 +30,9 @@ public class InterceptorChainTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(InterceptorChainTest.class);
 
    public void testConcurrentAddRemove() throws Exception {
-      ComponentMetadataRepo componentMetadataRepo = new ComponentMetadataRepo();
-      componentMetadataRepo.initialize(Collections.emptyList(), InterceptorChainTest.class.getClassLoader());
-      AsyncInterceptorChainImpl asyncInterceptorChain =
-            new AsyncInterceptorChainImpl(componentMetadataRepo);
-      GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().build();
+      BasicComponentRegistryImpl basicComponentRegistry =
+         new BasicComponentRegistryImpl(TestModuleRepository.defaultModuleRepository(), Scopes.NAMED_CACHE, null);
+      AsyncInterceptorChainImpl asyncInterceptorChain = new AsyncInterceptorChainImpl(basicComponentRegistry);
       InterceptorChain ic = new InterceptorChain();
       TestingUtil.inject(ic, asyncInterceptorChain);
       ic.setFirstInChain(new DummyCallInterceptor());

@@ -15,8 +15,6 @@
 
     <bean id="jpaStoreConfigurationParser" class="org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationParser"/>
     <service ref="jpaStoreConfigurationParser" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
-    <bean id="jpaStoreLifecycleManager" class="org.infinispan.persistence.jpa.impl.JpaStoreLifecycleManager"/>
-    <service ref="jpaStoreLifecycleManager" interface="org.infinispan.lifecycle.ModuleLifecycle"/>
 
     <bean id="rocksDBStoreConfigurationParser" class="org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationParser"/>
     <service ref="rocksDBStoreConfigurationParser" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>

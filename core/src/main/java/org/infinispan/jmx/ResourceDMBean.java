@@ -4,6 +4,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,7 +19,6 @@ import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
-import javax.management.ReflectionException;
 import javax.management.ServiceNotFoundException;
 
 import org.infinispan.commons.util.ReflectionUtil;
@@ -25,6 +26,7 @@ import org.infinispan.factories.components.JmxAttributeMetadata;
 import org.infinispan.factories.components.JmxOperationMetadata;
 import org.infinispan.factories.components.JmxOperationParameter;
 import org.infinispan.factories.components.ManageableComponentMetadata;
+import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.util.logging.Log;
@@ -53,35 +55,52 @@ public class ResourceDMBean implements DynamicMBean {
    private final Class<?> objectClass;
    private final IspnMBeanOperationInfo[] opInfos;
    private final MBeanAttributeInfo[] attInfos;
-   private final HashMap<String, InvokableMBeanAttributeInfo> atts = new HashMap<String, InvokableMBeanAttributeInfo>(2);
-   private final ManageableComponentMetadata mBeanMetadata;
-   private final String name;
+   private final HashMap<String, InvokableMBeanAttributeInfo> atts = new HashMap<>(2);
+   private final String jmxObjectName;
+   private final String description;
+   private final String componentName;
 
    private static final Map<String, Field> FIELD_CACHE = new ConcurrentHashMap<>(64);
    private static final Map<String, Method> METHOD_CACHE = new ConcurrentHashMap<>(64);
 
-   public ResourceDMBean(Object instance, ManageableComponentMetadata mBeanMetadata) throws NoSuchFieldException, ClassNotFoundException {
+   @Deprecated
+   public ResourceDMBean(Object instance, ManageableComponentMetadata mBeanMetadata) {
       this(instance, mBeanMetadata, null);
    }
 
-   public ResourceDMBean(Object instance, ManageableComponentMetadata mBeanMetadata, String name) throws NoSuchFieldException, ClassNotFoundException {
-      if (instance == null)
+   @Deprecated
+   public ResourceDMBean(Object instance, ManageableComponentMetadata mBeanMetadata, String componentName) {
+      this(instance, componentName, mBeanMetadata.getJmxObjectName(), mBeanMetadata.getDescription(),
+           mBeanMetadata.getAttributeMetadata(), mBeanMetadata.getOperationMetadata());
+   }
+
+   public ResourceDMBean(Object instance, MBeanMetadata mBeanMetadata, String componentName) {
+      this(instance, componentName, mBeanMetadata.getJmxObjectName(), mBeanMetadata.getDescription(),
+           mBeanMetadata.getAttributes(), mBeanMetadata.getOperations());
+   }
+
+   private ResourceDMBean(Object instance, String componentName,
+                         String jmxObjectName, String description, Collection<JmxAttributeMetadata> attributes,
+                         Collection<JmxOperationMetadata> operations) {
+      if (instance == null) {
          throw new NullPointerException("Cannot make an MBean wrapper for null instance");
+      }
 
       this.obj = instance;
       this.objectClass = instance.getClass();
-      this.mBeanMetadata = mBeanMetadata;
-      this.name = name;
+      this.jmxObjectName = jmxObjectName;
+      this.description = description;
+      this.componentName = componentName;
 
       // Load up all fields.
       int i = 0;
-      attInfos = new MBeanAttributeInfo[mBeanMetadata.getAttributeMetadata().size()];
-      for (JmxAttributeMetadata attributeMetadata : mBeanMetadata.getAttributeMetadata()) {
+      attInfos = new MBeanAttributeInfo[attributes.size()];
+      for (JmxAttributeMetadata attributeMetadata : attributes) {
          String attributeName = attributeMetadata.getName();
          InvokableMBeanAttributeInfo info = toJmxInfo(attributeMetadata);
          if (atts.containsKey(attributeName)) {
-            throw new IllegalArgumentException("Component " + mBeanMetadata.getName()
-                                                     + " metadata has a duplicate attribute: " + attributeName);
+            throw new IllegalArgumentException("Component " + objectClass.getName()
+                                               + " metadata has a duplicate attribute: " + attributeName);
          }
          atts.put(attributeName, info);
          attInfos[i++] = info.getMBeanAttributeInfo();
@@ -93,16 +112,16 @@ public class ResourceDMBean implements DynamicMBean {
 
       // And operations
       IspnMBeanOperationInfo op;
-      opInfos = new IspnMBeanOperationInfo[mBeanMetadata.getOperationMetadata().size()];
+      opInfos = new IspnMBeanOperationInfo[operations.size()];
       i = 0;
-      for (JmxOperationMetadata operation : mBeanMetadata.getOperationMetadata()) {
+      for (JmxOperationMetadata operation : operations) {
          op = toJmxInfo(operation);
          opInfos[i++] = op;
          if (trace) log.tracef("Operation %s %s", op.getReturnType(), op.getName());
       }
    }
 
-   private static Field findField(Class<?> objectClass, String fieldName) throws NoSuchFieldException {
+   private static Field findField(Class<?> objectClass, String fieldName) {
       String key = objectClass.getName() + "#" + fieldName;
       Field f = FIELD_CACHE.get(key);
       if (f == null) {
@@ -112,7 +131,7 @@ public class ResourceDMBean implements DynamicMBean {
       return f;
    }
 
-   private static Method findSetter(Class<?> objectClass, String fieldName) throws NoSuchFieldException {
+   private static Method findSetter(Class<?> objectClass, String fieldName) {
       String key = objectClass.getName() + "#s#" + fieldName;
       Method m = METHOD_CACHE.get(key);
       if (m == null) {
@@ -122,7 +141,7 @@ public class ResourceDMBean implements DynamicMBean {
       return m;
    }
 
-   private static Method findGetter(Class<?> objectClass, String fieldName) throws NoSuchFieldException {
+   private static Method findGetter(Class<?> objectClass, String fieldName) {
       String key = objectClass.getName() + "#g#" + fieldName;
       Method m = METHOD_CACHE.get(key);
       if (m == null) {
@@ -132,7 +151,7 @@ public class ResourceDMBean implements DynamicMBean {
       return m;
    }
 
-   private InvokableMBeanAttributeInfo toJmxInfo(JmxAttributeMetadata attributeMetadata) throws NoSuchFieldException {
+   private InvokableMBeanAttributeInfo toJmxInfo(JmxAttributeMetadata attributeMetadata) {
       if (!attributeMetadata.isUseSetter()) {
          Field field = findField(objectClass, attributeMetadata.getName());
          if (field != null) {
@@ -149,7 +168,7 @@ public class ResourceDMBean implements DynamicMBean {
                                                         attributeMetadata.isIs(), getter, setter, this);
    }
 
-   private IspnMBeanOperationInfo toJmxInfo(JmxOperationMetadata operationMetadata) throws ClassNotFoundException {
+   private IspnMBeanOperationInfo toJmxInfo(JmxOperationMetadata operationMetadata) {
       JmxOperationParameter[] parameters = operationMetadata.getMethodParameters();
       MBeanParameterInfo[] params = new MBeanParameterInfo[parameters.length];
       for (int i = 0; i < parameters.length; i++) {
@@ -172,7 +191,8 @@ public class ResourceDMBean implements DynamicMBean {
          operationInfoForClient[i] = new MBeanOperationInfo(current.getOperationName(), current.getDescription(),
                                                             current.getSignature(), current.getReturnType(), MBeanOperationInfo.UNKNOWN);
       }
-      return new MBeanInfo(getObject().getClass().getCanonicalName(), mBeanMetadata.getDescription(), attInfos, null, operationInfoForClient, null);
+      return new MBeanInfo(getObject().getClass().getCanonicalName(), description, attInfos, null,
+                           operationInfoForClient, null);
    }
 
    @Override
@@ -227,8 +247,7 @@ public class ResourceDMBean implements DynamicMBean {
    }
 
    @Override
-   public Object invoke(String name, Object[] args, String[] sig) throws MBeanException,
-                                                                         ReflectionException {
+   public Object invoke(String name, Object[] args, String[] sig) throws MBeanException {
       if (log.isDebugEnabled()) {
          log.debugf("Invoke method called on %s", name);
       }
@@ -242,7 +261,7 @@ public class ResourceDMBean implements DynamicMBean {
       }
 
       if (opInfo == null) {
-         final String msg = "Operation " + name + " not amongst operations in " + opInfos;
+         final String msg = "Operation " + name + " not amongst operations in " + Arrays.toString(opInfos);
          throw new MBeanException(new ServiceNotFoundException(msg), msg);
       }
 
@@ -288,12 +307,12 @@ public class ResourceDMBean implements DynamicMBean {
    private Attribute getNamedAttribute(String name) {
       Attribute result = null;
       if (name.equals(MBEAN_DESCRITION)) {
-         result = new Attribute(MBEAN_DESCRITION, mBeanMetadata.getDescription());
+         result = new Attribute(MBEAN_DESCRITION, description);
       } else {
          InvokableMBeanAttributeInfo i = atts.get(name);
          if (i == null && name.length() > 0) {
             // This is legacy.  Earlier versions used an upper-case starting letter for *some* attributes.
-            Character firstChar = name.charAt(0);
+            char firstChar = name.charAt(0);
             if (Character.isUpperCase(firstChar)) {
                name = name.replaceFirst(Character.toString(firstChar), Character.toString(Character.toLowerCase(firstChar)));
                i = atts.get(name);
@@ -324,7 +343,7 @@ public class ResourceDMBean implements DynamicMBean {
       InvokableMBeanAttributeInfo i = atts.get(name);
       if (i == null && name.length() > 0) {
          // This is legacy.  Earlier versions used an upper-case starting letter for *some* attributes.
-         Character firstChar = name.charAt(0);
+         char firstChar = name.charAt(0);
          if (Character.isUpperCase(firstChar)) {
             name = name.replaceFirst(Character.toString(firstChar), Character.toString(Character.toLowerCase(firstChar)));
             i = atts.get(name);
@@ -397,7 +416,7 @@ public class ResourceDMBean implements DynamicMBean {
       public Object invoke(Attribute a) throws IllegalAccessException, InvocationTargetException {
          if (a == null) {
             if (!Modifier.isPublic(getter.getModifiers())) getter.setAccessible(true);
-            return getter.invoke(resource.getObject(), null);
+            return getter.invoke(resource.getObject());
          } else {
             if (!Modifier.isPublic(setter.getModifiers())) setter.setAccessible(true);
             return setter.invoke(resource.getObject(), a.getValue());
@@ -406,11 +425,11 @@ public class ResourceDMBean implements DynamicMBean {
    }
 
    public String getObjectName() {
-      String s = mBeanMetadata.getJmxObjectName();
+      String s = jmxObjectName;
       if (s != null && s.trim().length() > 0) {
          return s;
-      } else if (name != null) {
-         return name;
+      } else if (componentName != null) {
+         return componentName;
       } else {
           return objectClass.getSimpleName();
       }

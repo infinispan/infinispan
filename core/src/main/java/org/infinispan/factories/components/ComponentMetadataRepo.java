@@ -30,7 +30,9 @@ import org.infinispan.util.logging.LogFactory;
  * @author Manik Surtani
  * @since 5.1
  * @see ComponentMetadata
+ * @deprecated Since 10.0, no longer used and will be removed.
  */
+@Deprecated
 public class ComponentMetadataRepo {
    private static final Log log = LogFactory.getLog(ComponentMetadataRepo.class);
    final Map<String, ComponentMetadata> componentMetadataMap = new HashMap<>(128);

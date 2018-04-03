@@ -5,6 +5,7 @@ import java.util.Map;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.persistence.remote.upgrade.MigrationTask;
 import org.infinispan.persistence.remote.upgrade.RemovedFilter;
@@ -13,6 +14,7 @@ import org.infinispan.persistence.remote.upgrade.RemovedFilter;
  * @author gustavonalle
  * @since 8.2
  */
+@InfinispanModule(name = "cachestore-remote", requiredModules = "core")
 public class LifecycleCallbacks implements ModuleLifecycle {
 
    @Override

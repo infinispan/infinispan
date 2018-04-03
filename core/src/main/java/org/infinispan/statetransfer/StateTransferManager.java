@@ -7,9 +7,6 @@ import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.jmx.annotations.DataType;
-import org.infinispan.jmx.annotations.MBean;
-import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
@@ -23,17 +20,14 @@ import org.infinispan.topology.CacheTopology;
  * @since 5.1
  */
 @Scope(Scopes.NAMED_CACHE)
-@MBean(objectName = "StateTransferManager", description = "Component that handles state transfer")
 public interface StateTransferManager {
 
    //todo [anistor] this is inaccurate. this node does not hold state yet in current implementation
-   @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.", displayName = "Is join completed?", dataType = DataType.TRAIT)
    boolean isJoinComplete();
 
    /**
     * Checks if an inbound state transfer is in progress.
     */
-   @ManagedAttribute(description = "Checks whether there is a pending inbound state transfer on this cluster member.", displayName = "Is state transfer in progress?", dataType = DataType.TRAIT)
    boolean isStateTransferInProgress();
 
    /**
@@ -78,6 +72,5 @@ public interface StateTransferManager {
    @Deprecated
    int getFirstTopologyAsMember();
 
-   @ManagedAttribute(description = "Retrieves the rebalancing status for this cache. Possible values are PENDING, SUSPENDED, IN_PROGRESS, BALANCED", displayName = "Rebalancing progress", dataType = DataType.TRAIT)
    String getRebalancingStatus() throws Exception;
 }

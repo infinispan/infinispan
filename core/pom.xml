@@ -18,11 +18,20 @@
       <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
       <module.skipTestComponentMetaDataProcessing>false</module.skipTestComponentMetaDataProcessing>
    </properties>
-   <dependencies>
 
+   <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-commons</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-component-annotations</artifactId>
+      </dependency>
+      <!-- TODO remove dependency and only reference in annotation processor path -->
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-component-processor</artifactId>
       </dependency>
 
       <dependency>
@@ -206,6 +215,10 @@
             <configuration>
                <instructions>
                   <Export-Package>
+                     !${project.groupId}.component.*,
+                     !${project.groupId}.factories.annotations,
+                     !${project.groupId}.factories.scopes,
+                     !${project.groupId}.jmx.annotations,
                      !${project.groupId}.commons.*,
                      !${project.groupId}.counter.*,
                      !${project.groupId}.multimap.*,
@@ -220,8 +233,7 @@
                   <Include-Resource>
                      {maven-resources},
                      /META-INF/services=${project.basedir}/target/classes/META-INF/services,
-                     /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml,
-                     ${project.build.outputDirectory}/${project.artifactId}-component-metadata.dat
+                     /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
                   </Include-Resource>
                   <DynamicImport-Package>*</DynamicImport-Package>
                </instructions>

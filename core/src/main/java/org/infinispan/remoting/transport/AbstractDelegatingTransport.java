@@ -10,6 +10,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
@@ -24,6 +28,7 @@ import org.infinispan.xsite.XSiteReplicateCommand;
  * @author Pedro Ruivo
  * @since 6.0
  */
+@Scope(Scopes.GLOBAL)
 public abstract class AbstractDelegatingTransport implements Transport {
 
    protected final Transport actual;
@@ -116,11 +121,13 @@ public abstract class AbstractDelegatingTransport implements Transport {
       return actual.isMulticastCapable();
    }
 
+   @Start
    @Override
    public void start() {
       actual.start();
    }
 
+   @Stop
    @Override
    public void stop() {
       actual.stop();
