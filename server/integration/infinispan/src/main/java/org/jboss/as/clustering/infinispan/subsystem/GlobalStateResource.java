@@ -65,7 +65,7 @@ public class GlobalStateResource extends SimpleResourceDefinition {
     static final SimpleAttributeDefinition SHARED_PERSISTENT_RELATIVE_TO = new SimpleAttributeDefinitionBuilder(ModelKeys.RELATIVE_TO,
           ModelType.STRING, true).setXmlName(Attribute.RELATIVE_TO.getLocalName()).setAllowExpression(false)
           .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-          .setDefaultValue(new ModelNode().set(ServerEnvironment.SERVER_DATA_DIR)).build();
+          .build();
 
     static final SimpleAttributeDefinition TEMPORARY_RELATIVE_TO = new SimpleAttributeDefinitionBuilder(ModelKeys.RELATIVE_TO,
             ModelType.STRING, true).setXmlName(Attribute.RELATIVE_TO.getLocalName()).setAllowExpression(false)
