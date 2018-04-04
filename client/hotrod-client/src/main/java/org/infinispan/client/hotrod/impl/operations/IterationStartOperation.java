@@ -1,9 +1,6 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import static java.util.Arrays.stream;
-
 import java.net.SocketAddress;
-import java.util.BitSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -47,25 +44,8 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
    @Override
    protected IterationStartResponse executeOperation(Transport transport) {
       HeaderParams params = writeHeader(transport, ITERATION_START_REQUEST);
-      if (segments == null) {
-         transport.writeSignedVInt(-1);
-      } else {
-         // TODO use a more compact BitSet implementation, like http://roaringbitmap.org/
-         BitSet bitSet = new BitSet();
-         segments.stream().forEach(bitSet::set);
-         transport.writeOptionalArray(bitSet.toByteArray());
-      }
-      transport.writeOptionalString(filterConverterFactory);
-      if (filterConverterFactory != null) {
-         if (filterParameters != null && filterParameters.length > 0) {
-            transport.writeByte((short) filterParameters.length);
-            stream(filterParameters).forEach(transport::writeArray);
-         } else {
-            transport.writeByte((short) 0);
-         }
-      }
-      transport.writeVInt(batchSize);
-      transport.writeByte((short) (metadata ? 1 : 0));
+
+      codec.writeIteratorStartOperation(transport, segments, filterConverterFactory, batchSize, metadata, filterParameters);
 
       transport.flush();
 

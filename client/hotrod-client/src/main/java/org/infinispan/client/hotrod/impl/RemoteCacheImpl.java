@@ -5,7 +5,6 @@ import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
 
 import java.io.IOException;
 import java.util.AbstractCollection;
-import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -557,12 +556,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
       @Override
       public CloseableIterator<K> iterator() {
-         return new RemovableCloseableIterator<>(
-               // Use the ToEmptyBytesKeyValueFilterConverter to reduce value payload
-               new CloseableIteratorMapper<>(retrieveEntries(
-                     "org.infinispan.server.hotrod.HotRodServer$ToEmptyBytesKeyValueFilterConverter",
-                     batchSize), e -> (K) e.getKey()),
-               RemoteCacheImpl.this::remove);
+         CloseableIterator<K> keyIterator = operationsFactory.getCodec().keyIterator(RemoteCacheImpl.this, operationsFactory, batchSize);
+         return new RemovableCloseableIterator<>(keyIterator, this::remove);
       }
 
       @Override
@@ -611,10 +606,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       }
    }
 
-   private CloseableIterator<Entry<K, VersionedValue<V>>> castIterator(CloseableIterator iterator) {
-      return iterator;
-   }
-
    private boolean removeEntry(Map.Entry<K, V> entry) {
       return removeEntry(entry.getKey(), entry.getValue());
    }
@@ -629,13 +620,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
       @Override
       public CloseableIterator<Entry<K, V>> iterator() {
-         return new CloseableIteratorMapper<>(new RemovableCloseableIterator<>(
-               // First make <K, VersionedValue<V>>
-               castIterator(retrieveEntriesWithMetadata(null, batchSize)),
-               // Apply remove using version
-               e -> removeWithVersion(e.getKey(), e.getValue().getVersion())),
-               // Convert to <K, V> for user
-               e -> new AbstractMap.SimpleImmutableEntry<>(e.getKey(), e.getValue().getValue()));
+         return new RemovableCloseableIterator<>(operationsFactory.getCodec().entryIterator(RemoteCacheImpl.this, batchSize),
+               this::remove);
       }
 
       @Override
@@ -692,13 +678,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
       @Override
       public CloseableIterator<V> iterator() {
-         return new CloseableIteratorMapper<>(new RemovableCloseableIterator<>(
-               // First make <K, VersionedValue<V>>
-               castIterator(retrieveEntriesWithMetadata(null, batchSize)),
-               // Apply remove using version
-               e -> removeWithVersion(e.getKey(), e.getValue().getVersion())),
+         CloseableIterator<Map.Entry<K, V>> entryIterator = operationsFactory.getCodec().entryIterator(
+               RemoteCacheImpl.this, batchSize);
+         return new CloseableIteratorMapper<>(new RemovableCloseableIterator<>(entryIterator, e -> RemoteCacheImpl.this.remove(e.getKey(), e.getValue())),
                // Convert to V for user
-               e -> e.getValue().getValue());
+               Entry::getValue);
       }
 
       @Override

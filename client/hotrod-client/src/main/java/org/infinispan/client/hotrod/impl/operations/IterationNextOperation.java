@@ -54,9 +54,9 @@ public class IterationNextOperation<E> extends HotRodOperation {
       int entriesSize = transport.readVInt();
       List<Entry<Object, E>> entries = new ArrayList<>(entriesSize);
       if (entriesSize > 0) {
-         int projectionsSize = transport.readVInt();
+         int projectionsSize = codec.readProjectionSize(transport);
          for (int i = 0; i < entriesSize; i++) {
-            short meta = transport.readByte();
+            short meta = codec.readMeta(transport);
             long creation = -1;
             int lifespan = -1;
             long lastUsed = -1;

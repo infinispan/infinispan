@@ -1,8 +1,15 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import java.util.Set;
+
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.impl.operations.BulkGetKeysOperation;
+import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Closeables;
 
 /**
  * A Hot Rod encoder/decoder for version 1.2 of the protocol.
@@ -44,4 +51,10 @@ public class Codec12 extends Codec11 {
       return log;
    }
 
+   @Override
+   public <K> CloseableIterator<K> keyIterator(RemoteCache<K, ?> remoteCache, OperationsFactory operationsFactory, int batchSize) {
+      BulkGetKeysOperation<K> op = operationsFactory.newBulkGetKeysOperation(0);
+      Set<K> keys = op.execute();
+      return Closeables.iterator(keys.iterator());
+   }
 }
