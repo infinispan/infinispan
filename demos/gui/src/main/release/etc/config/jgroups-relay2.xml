@@ -37,7 +37,7 @@
     <VERIFY_SUSPECT timeout="1500"  />
     <pbcast.NAKACK2 use_mcast_xmit="true"
                    discard_delivered_msgs="true"/>
-    <UNICAST3 conn_expiry_timeout="0"/>
+    <UNICAST3/>
     <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
                    max_bytes="1000000"/>
     <pbcast.GMS print_local_addr="true" join_timeout="${jgroups.join_timeout:5000}"
