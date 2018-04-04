@@ -19,7 +19,6 @@ import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
-import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration;
 import org.infinispan.persistence.rocksdb.logging.Log;
@@ -40,6 +39,7 @@ import org.rocksdb.WriteOptions;
 @ConfiguredBy(RocksDBStoreConfiguration.class)
 public class RocksDBStore<K,V> implements AdvancedLoadWriteStore<K,V> {
     private static final Log log = LogFactory.getLog(RocksDBStore.class, Log.class);
+    private static final String NUM_KEYS_COUNT_PROPERTY = "rocksdb.estimate-num-keys";
 
     private RocksDBStoreConfiguration configuration;
     private BlockingQueue<ExpiryEntry> expiryEntryQueue;
@@ -207,7 +207,14 @@ public class RocksDBStore<K,V> implements AdvancedLoadWriteStore<K,V> {
 
     @Override
     public int size() {
-        return PersistenceUtil.count(this, null);
+       //see https://github.com/facebook/rocksdb/wiki/RocksDB-FAQ
+       Long count = -1L;
+       try {
+          count = db.getLongProperty(NUM_KEYS_COUNT_PROPERTY);
+       } catch (RocksDBException e) {
+          throw new PersistenceException(e);
+       }
+       return count.intValue();
     }
 
     @Override
