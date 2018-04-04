@@ -17,7 +17,7 @@ import javax.enterprise.context.ApplicationScoped;
 
 import org.infinispan.Cache;
 import org.infinispan.Version;
-import org.infinispan.server.infinispan.spi.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.OperateOnDeployment;
 import org.jboss.arquillian.junit.Arquillian;
@@ -46,7 +46,7 @@ import org.junit.runner.RunWith;
 public class InfinispanExtensionIT {
 
    @Resource(lookup = "java:jboss/datagrid-infinispan/container/infinispan_container")
-   CacheContainer container;
+   EmbeddedCacheManager container;
 
    @Resource(lookup = "java:jboss/datagrid-infinispan/container/infinispan_container/cache/default")
    Cache cache;
@@ -74,7 +74,7 @@ public class InfinispanExtensionIT {
 
    private static Asset manifest() {
       String manifest = Descriptors.create(ManifestDescriptor.class)
-            .attribute("Dependencies", createDepString("org.infinispan", "org.infinispan.extension", "org.infinispan.server.endpoint",
+            .attribute("Dependencies", createDepString("org.infinispan", "org.infinispan.server.endpoint",
                   "org.jgroups.extension")).exportAsString();
       return new StringAsset(manifest);
    }
