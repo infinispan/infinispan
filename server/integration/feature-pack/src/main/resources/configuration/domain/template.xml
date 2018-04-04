@@ -44,6 +44,8 @@
     <socket-binding-groups>
         <socket-binding-group name="clustered-sockets" default-interface="public">
             <!-- Needed for server groups using the 'clustered' profile  -->
+            <socket-binding name="management-http" interface="management" port="${jboss.management.http.port:9990}"/>
+            <socket-binding name="management-https" interface="management" port="${jboss.management.https.port:9993}"/>
             <?SOCKET-BINDINGS?>
         </socket-binding-group>
     </socket-binding-groups>
