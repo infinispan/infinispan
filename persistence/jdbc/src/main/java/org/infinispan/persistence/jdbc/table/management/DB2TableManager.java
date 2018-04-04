@@ -22,6 +22,15 @@ class DB2TableManager extends AbstractTableManager {
    }
 
    @Override
+   public String getInsertRowSql() {
+      if (insertRowSql == null) {
+         insertRowSql = String.format("INSERT INTO %s (%s,%s,%s) VALUES (?,?,?)", getTableName(),
+               config.idColumnName(), config.timestampColumnName(), config.dataColumnName());
+      }
+      return insertRowSql;
+   }
+
+   @Override
    public String getUpsertRowSql() {
       if (upsertRowSql == null) {
          upsertRowSql = String.format("MERGE INTO %1$s AS t " +
@@ -35,10 +44,15 @@ class DB2TableManager extends AbstractTableManager {
    }
 
    @Override
-   public void prepareUpdateStatement(PreparedStatement ps, String key, long timestamp, ByteBuffer byteBuffer) throws SQLException {
+   public void prepareUpsertStatement(PreparedStatement ps, String key, long timestamp, ByteBuffer byteBuffer) throws SQLException {
       ps.setString(1, key);
       ps.setLong(2, timestamp);
       ps.setBinaryStream(3, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
+   }
+
+   @Override
+   public void prepareUpdateStatement(PreparedStatement ps, String key, long timestamp, ByteBuffer byteBuffer) throws SQLException {
+      super.prepareUpsertStatement(ps, key, timestamp, byteBuffer);
    }
 
    @Override

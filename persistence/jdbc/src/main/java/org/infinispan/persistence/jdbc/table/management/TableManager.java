@@ -73,5 +73,9 @@ public interface TableManager {
 
    String encodeString(String stringToEncode);
 
-   void prepareUpdateStatement(PreparedStatement ps, String key, long timestamp, ByteBuffer byteBuffer) throws SQLException;
+   void prepareUpsertStatement(PreparedStatement ps, String key, long timestamp, ByteBuffer byteBuffer) throws SQLException;
+
+   default void prepareUpdateStatement(PreparedStatement ps, String key, long timestamp, ByteBuffer byteBuffer) throws SQLException {
+      prepareUpsertStatement(ps, key, timestamp, byteBuffer);
+   }
 }

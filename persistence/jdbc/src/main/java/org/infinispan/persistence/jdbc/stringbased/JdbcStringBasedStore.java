@@ -219,7 +219,7 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
          log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
       } try {
          ps = connection.prepareStatement(sql);
-         prepareUpdateStatement(entry, keyStr, ps);
+         prepareUpsertStatement(entry, keyStr, ps);
          ps.executeUpdate();
       } finally {
          JdbcUtil.safeClose(ps);
@@ -237,7 +237,8 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
          ps = connection.prepareStatement(sql);
          ps.setString(1, keyStr);
          ResultSet rs = ps.executeQuery();
-         if (rs.next()) {
+         boolean update = rs.next();
+         if (update) {
             sql = tableManager.getUpdateRowSql();
          } else {
             sql = tableManager.getInsertRowSql();
@@ -248,7 +249,7 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
             log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
          }
          ps = connection.prepareStatement(sql);
-         prepareUpdateStatement(entry, keyStr, ps);
+         prepareStatement(entry, keyStr, ps, !update);
          ps.executeUpdate();
       } finally {
          JdbcUtil.safeClose(ps);
@@ -270,7 +271,7 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
             int batchSize = 0;
             for (MarshalledEntry entry : marshalledEntries) {
                String keyStr = key2Str(entry.getKey());
-               prepareUpdateStatement(entry, keyStr, upsertBatch);
+               prepareUpsertStatement(entry, keyStr, upsertBatch);
                upsertBatch.addBatch();
                batchSize++;
 
@@ -521,7 +522,7 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
             for (MarshalledEntry entry : batchModification.getMarshalledEntries()) {
                if (upsertSupported) {
                   String keyStr = key2Str(entry.getKey());
-                  prepareUpdateStatement(entry, keyStr, upsertBatch);
+                  prepareUpsertStatement(entry, keyStr, upsertBatch);
                   upsertBatch.addBatch();
                } else {
                   write(entry, connection);
@@ -612,10 +613,18 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
       }
    }
 
-   private void prepareUpdateStatement(MarshalledEntry entry, String key, PreparedStatement ps) throws InterruptedException, SQLException {
+   private void prepareUpsertStatement(MarshalledEntry entry, String key, PreparedStatement ps) throws InterruptedException, SQLException {
+      prepareStatement(entry, key, ps, true);
+   }
+
+   private void prepareStatement(MarshalledEntry entry, String key, PreparedStatement ps, boolean upsert) throws InterruptedException, SQLException {
       ByteBuffer byteBuffer = marshall(new KeyValuePair(entry.getValueBytes(), entry.getMetadataBytes()));
       long expiryTime = getExpiryTime(entry.getMetadata());
-      tableManager.prepareUpdateStatement(ps, key, expiryTime, byteBuffer);
+      if (upsert) {
+         tableManager.prepareUpsertStatement(ps, key, expiryTime, byteBuffer);
+      } else {
+         tableManager.prepareUpdateStatement(ps, key, expiryTime, byteBuffer);
+      }
    }
 
    private String key2Str(Object key) throws PersistenceException {
