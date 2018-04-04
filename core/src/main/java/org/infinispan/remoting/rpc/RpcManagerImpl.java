@@ -22,6 +22,7 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeListener;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -41,7 +42,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -68,7 +68,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    @Inject private Transport t;
    @Inject private Configuration configuration;
    @Inject private CommandsFactory cf;
-   @Inject private StateTransferManager stateTransferManager;
+   @Inject private DistributionManager distributionManager;
    @Inject private TimeService timeService;
 
    private final Function<ReplicableCommand, ReplicableCommand> toCacheRpcCommand = this::toCacheRpcCommand;
@@ -112,7 +112,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @ManagedAttribute(description = "Retrieves the committed view.", displayName = "Committed view", dataType = DataType.TRAIT)
    public String getCommittedViewAsString() {
-      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+      CacheTopology cacheTopology = distributionManager.getCacheTopology();
       if (cacheTopology == null)
          return "N/A";
 
@@ -121,7 +121,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @ManagedAttribute(description = "Retrieves the pending view.", displayName = "Pending view", dataType = DataType.TRAIT)
    public String getPendingViewAsString() {
-      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+      CacheTopology cacheTopology = distributionManager.getCacheTopology();
       if (cacheTopology == null)
          return "N/A";
 
@@ -196,17 +196,18 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
                                                     RpcOptions rpcOptions) {
       CacheRpcCommand cacheRpc = toCacheRpcCommand(command);
+      List<Address> cacheMembers = distributionManager.getCacheTopology().getMembers();
 
       if (!statisticsEnabled) {
-         return t.invokeCommandOnAll(cacheRpc, collector, rpcOptions.deliverOrder(), rpcOptions.timeout(),
-                                     rpcOptions.timeUnit());
+         return t.invokeCommandOnAll(cacheMembers, cacheRpc, collector, rpcOptions.deliverOrder(),
+                                     rpcOptions.timeout(), rpcOptions.timeUnit());
       }
 
       long startTimeNanos = timeService.time();
       CompletionStage<T> invocation;
       try {
-         invocation = t.invokeCommandOnAll(cacheRpc, collector, rpcOptions.deliverOrder(), rpcOptions.timeout(),
-                                           rpcOptions.timeUnit());
+         invocation = t.invokeCommandOnAll(cacheMembers, cacheRpc, collector, rpcOptions.deliverOrder(),
+                                           rpcOptions.timeout(), rpcOptions.timeUnit());
       } catch (Exception e) {
          return errorReplicating(e);
       }
@@ -410,7 +411,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       if (command instanceof TopologyAffectedCommand) {
          TopologyAffectedCommand topologyAffectedCommand = (TopologyAffectedCommand) command;
          if (topologyAffectedCommand.getTopologyId() == -1) {
-            int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
+            int currentTopologyId = distributionManager.getCacheTopology().getTopologyId();
             if (trace) {
                log.tracef("Topology id missing on command %s, setting it to %d", command, currentTopologyId);
             }
@@ -511,7 +512,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @Override
    public int getTopologyId() {
-      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+      CacheTopology cacheTopology = distributionManager.getCacheTopology();
       return cacheTopology != null ? cacheTopology.getTopologyId() : -1;
    }
 
@@ -548,6 +549,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @Override
    public List<Address> getMembers() {
-      return stateTransferManager.getCacheTopology().getMembers();
+      return distributionManager.getCacheTopology().getMembers();
    }
 }

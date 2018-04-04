@@ -324,6 +324,21 @@ public interface Transport extends Lifecycle {
    }
 
    /**
+    * Invoke a command on all the nodes in the cluster and pass the responses to a {@link ResponseCollector}.
+    * <p>
+    * The command is only executed on the local node if the delivery order is {@link DeliverOrder#TOTAL}.
+    * The command is not sent across RELAY2 bridges to remote sites.
+    *
+    * @since 9.3
+    */
+   @Experimental
+   default <T> CompletionStage<T> invokeCommandOnAll(Collection<Address> requiredTargets, ReplicableCommand command,
+                                                       ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                       long timeout, TimeUnit unit) {
+      return invokeCommand(requiredTargets, command, collector, deliverOrder, timeout, unit);
+   }
+
+   /**
     * Invoke a command on a collection of nodes and pass the responses to a {@link ResponseCollector}.
     * <p>
     * The command is only sent immediately to the first target, and there is an implementation-dependent

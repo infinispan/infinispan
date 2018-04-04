@@ -873,6 +873,29 @@ public class JGroupsTransport implements Transport {
    }
 
    @Override
+   public <T> CompletionStage<T> invokeCommandOnAll(Collection<Address> requiredTargets, ReplicableCommand command,
+                                                    ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                    long timeout, TimeUnit unit) {
+      long requestId = requests.newRequestId();
+      logRequest(requestId, command, "all-required");
+      Address excludedTarget = deliverOrder == DeliverOrder.TOTAL ? null : getAddress();
+      MultiTargetRequest<T> request =
+         new MultiTargetRequest<>(collector, requestId, requests, requiredTargets, excludedTarget);
+      try {
+         addRequest(request);
+         request.onNewView(clusterView.getMembersSet());
+         sendCommandToAll(command, requestId, deliverOrder, isRsvpCommand(command));
+      } catch (Throwable t) {
+         request.cancel(true);
+         throw t;
+      }
+      if (timeout > 0) {
+         request.setTimeout(timeoutExecutor, timeout, unit);
+      }
+      return request;
+   }
+
+   @Override
    public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
                                                         ResponseCollector<T> collector, DeliverOrder deliverOrder,
                                                         long timeout, TimeUnit unit) {

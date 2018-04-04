@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
@@ -281,8 +282,7 @@ public class Immutables {
     * We have to re-implement Collections.unmodifiableXXX, since it is not
     * simple to detect them (the class names are JDK dependent).
     */
-
-   private static class ImmutableIteratorWrapper<E> implements Iterator<E> {
+   public static class ImmutableIteratorWrapper<E> implements Iterator<E> {
       private Iterator<? extends E> iterator;
 
       public ImmutableIteratorWrapper(Iterator<? extends E> iterator) {
@@ -299,9 +299,11 @@ public class Immutables {
          return iterator.next();
       }
 
+      // Use the default remove() implementation
+
       @Override
-      public void remove() {
-         throw new UnsupportedOperationException();
+      public void forEachRemaining(Consumer<? super E> action) {
+         iterator.forEachRemaining(action);
       }
    }
 

@@ -2,8 +2,8 @@ package org.infinispan.jmx;
 
 import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -15,6 +15,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -24,6 +25,8 @@ import javax.management.ObjectName;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commons.CacheException;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -31,6 +34,7 @@ import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -92,7 +96,7 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
 
    @Test(dependsOnMethods = "testEnableJmxStats")
    public void testSuccessRatio() throws Exception {
-      Cache<String, Serializable> cache1 = manager(0).getCache(cachename);
+      Cache<MagicKey, Serializable> cache1 = manager(0).getCache(cachename);
       Cache cache2 = manager(1).getCache(cachename);
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       ObjectName rpcManager1 = getCacheObjectName(jmxDomain, cachename + "(repl_sync)", "RpcManager");
@@ -102,18 +106,15 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
       assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationFailures"), (long) 0);
       assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), "N/A");
 
-      cache1.put("a1", new SlowToSerialize("b1", 50));
-      cache1.put("a2", new SlowToSerialize("b2", 50));
-      cache1.put("a3", new SlowToSerialize("b3", 50));
-      cache1.put("a4", new SlowToSerialize("b4", 50));
-      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) 4);
+      cache1.put(new MagicKey("a1", cache1), new SlowToSerialize("b1", 50));
+      cache1.put(new MagicKey("a2", cache2), new SlowToSerialize("b2", 50));
+      assertEquals(mBeanServer.getAttribute(rpcManager1, "ReplicationCount"), (long) 2);
       assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), "100%");
       Object avgReplTime = mBeanServer.getAttribute(rpcManager1, "AverageReplicationTime");
       assertNotEquals(avgReplTime, (long) 0);
 
       RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
       Transport originalTransport = rpcManager.getTransport();
-
       try {
          Address mockAddress1 = mock(Address.class);
          Address mockAddress2 = mock(Address.class);
@@ -127,16 +128,13 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
          when(transport.invokeCommand(any(Address.class), any(ReplicableCommand.class), any(ResponseCollector.class),
                                       any(DeliverOrder.class), anyLong(), any(TimeUnit.class)))
                .thenThrow(new RuntimeException());
-         when(transport.invokeCommandOnAll(any(ReplicableCommand.class), any(ResponseCollector.class),
-               any(DeliverOrder.class), anyLong(), any(TimeUnit.class))).thenThrow(new RuntimeException());
+         when(transport.invokeCommandOnAll(any(Collection.class), any(ReplicableCommand.class), any(ResponseCollector.class),
+                                           any(DeliverOrder.class), anyLong(), any(TimeUnit.class))).thenThrow(new RuntimeException());
          rpcManager.setTransport(transport);
-         cache1.put("a5", "b5");
-         assert false : "rpc manager should have thrown an exception";
-      } catch (Throwable expected) {
-         //expected
-         assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), ("80%"));
-      }
-      finally {
+         Exceptions.expectException(CacheException.class, () -> cache1.put(new MagicKey("a3", cache1), "b3"));
+         Exceptions.expectException(CacheException.class, () -> cache1.put(new MagicKey("a4", cache2), "b4"));
+         assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), ("50%"));
+      } finally {
          rpcManager.setTransport(originalTransport);
       }
    }
