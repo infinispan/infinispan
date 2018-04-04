@@ -93,6 +93,15 @@ class OracleTableManager extends AbstractTableManager {
    }
 
    @Override
+   public String getUpdateRowSql() {
+      if (updateRowSql == null) {
+         updateRowSql = String.format("UPDATE %s SET %s = ? , %s = ? WHERE %s = ?", getTableName(),
+               config.timestampColumnName(), config.dataColumnName(), config.idColumnName());
+      }
+      return updateRowSql;
+   }
+
+   @Override
    public String getUpsertRowSql() {
       if (upsertRowSql == null) {
          upsertRowSql = String.format("MERGE INTO %1$s t " +
@@ -105,10 +114,17 @@ class OracleTableManager extends AbstractTableManager {
    }
 
    @Override
-   public void prepareUpdateStatement(PreparedStatement ps, String key, long timestamp, ByteBuffer byteBuffer) throws SQLException {
+   public void prepareUpsertStatement(PreparedStatement ps, String key, long timestamp, ByteBuffer byteBuffer) throws SQLException {
       ps.setString(1, key);
       ps.setLong(2, timestamp);
       // We must use BLOB here to avoid ORA-01461 caused by implicit casts on dual
       ps.setBlob(3, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
+   }
+
+   @Override
+   public void prepareUpdateStatement(PreparedStatement ps, String key, long timestamp, ByteBuffer byteBuffer) throws SQLException {
+      ps.setLong(1, timestamp);
+      ps.setBinaryStream(2, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
+      ps.setString(3, key);
    }
 }
