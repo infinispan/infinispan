@@ -12,4 +12,9 @@ public class Codec25 extends Codec24 {
    public HeaderParams writeHeader(Transport transport, HeaderParams params) {
       return writeHeader(transport, params, HotRodConstants.VERSION_25);
    }
+
+   @Override
+   public short readMeta(Transport transport) {
+      return transport.readByte();
+   }
 }
