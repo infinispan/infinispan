@@ -10,24 +10,19 @@ import static org.testng.AssertJUnit.assertNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-
 import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.api.mvcc.LockAssert;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -208,8 +203,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
          when(mockTransport.getMembers()).thenReturn(members);
          when(mockTransport.getAddress()).thenReturn(addressOne);
-         when(mockTransport.invokeCommandOnAll(any(ReplicableCommand.class), any(ResponseCollector.class),
-                                               any(DeliverOrder.class), anyLong(), any(TimeUnit.class)))
+         when(mockTransport.invokeCommandOnAll(any(), any(), any(), any(), anyLong(), any()))
                .thenReturn(CompletableFutures.completedNull());
 
          cache1.put("k", "v");

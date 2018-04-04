@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.commons.util.ImmutableHopscotchHashSet;
 import org.infinispan.commons.util.ImmutableIntSet;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.IntSet;
@@ -30,6 +31,7 @@ import org.infinispan.topology.CacheTopology;
 public class LocalizedCacheTopology extends CacheTopology {
 
    private final Address localAddress;
+   private final Set<Address> membersSet;
    private final KeyPartitioner keyPartitioner;
    private final boolean isDistributed;
    private final boolean allLocal;
@@ -57,6 +59,7 @@ public class LocalizedCacheTopology extends CacheTopology {
       ConsistentHash writeCH = getWriteConsistentHash();
 
       this.localAddress = localAddress;
+      this.membersSet = new ImmutableHopscotchHashSet<>(cacheTopology.getMembers());
       this.keyPartitioner = keyPartitioner;
       this.isDistributed = cacheMode.isDistributed();
       isScattered = cacheMode.isScattered();
@@ -209,5 +212,9 @@ public class LocalizedCacheTopology extends CacheTopology {
     */
    public Address getLocalAddress() {
       return localAddress;
+   }
+
+   public Set<Address> getMembersSet() {
+      return membersSet;
    }
 }

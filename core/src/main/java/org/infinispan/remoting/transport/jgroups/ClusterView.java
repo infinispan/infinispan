@@ -1,10 +1,9 @@
 package org.infinispan.remoting.transport.jgroups;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.infinispan.commons.util.ImmutableHopscotchHashSet;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.remoting.transport.Address;
 
@@ -27,7 +26,7 @@ public class ClusterView {
    ClusterView(int viewId, List<Address> members, Address self) {
       this.viewId = viewId;
       this.members = Immutables.immutableListCopy(members);
-      this.membersSet = Collections.unmodifiableSet(new HashSet<>(members));
+      this.membersSet = new ImmutableHopscotchHashSet<>(members);
       if (!members.isEmpty()) {
          this.coordinator = members.get(0);
          this.isCoordinator = coordinator.equals(self);

@@ -2,6 +2,7 @@ package org.infinispan.test;
 
 import static java.io.File.separator;
 import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
+import static org.infinispan.commons.util.Util.EMPTY_OBJECT_ARRAY;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.fail;
@@ -13,6 +14,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -49,7 +51,6 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.management.MBeanInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
@@ -1856,6 +1857,13 @@ public class TestingUtil {
                matching = currentMatch;
             }
          }
+      }
+   }
+
+   public static void invokeLifecycle(Object component, Class<? extends Annotation> lifecycle) {
+      List<Method> methods = ReflectionUtil.getAllMethods(component.getClass(), lifecycle);
+      for (Method m : methods) {
+         ReflectionUtil.invokeAccessibly(component, m, EMPTY_OBJECT_ARRAY);
       }
    }
 

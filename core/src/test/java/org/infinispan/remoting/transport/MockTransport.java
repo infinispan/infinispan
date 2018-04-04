@@ -21,6 +21,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -118,6 +120,15 @@ public class MockTransport implements Transport {
          checker.accept(c);
       });
    }
+
+   /**
+    * Expect a non-{@link CacheRpcCommand} wrapped in a {@link SingleRpcCommand}.
+    */
+   public BlockedRequest expectSingleRpcCommand(Class<? extends ReplicableCommand> wrappedCommand) throws InterruptedException {
+      assertFalse(CacheRpcCommand.class.isAssignableFrom(wrappedCommand));
+      return expectCommand(SingleRpcCommand.class, c -> assertTrue(wrappedCommand.isInstance(c.getCommand())));
+   }
+
 
    /**
     * Assert that all the commands already invoked remotely have been verified and there were no errors.
@@ -282,6 +293,13 @@ public class MockTransport implements Transport {
    @Override
    public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
                                                     DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
+      return blockRequest(command, collector);
+   }
+
+   @Override
+   public <T> CompletableFuture<T> invokeCommandOnAll(Collection<Address> requiredTargets, ReplicableCommand command,
+                                                      ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                      long timeout, TimeUnit unit) {
       return blockRequest(command, collector);
    }
 

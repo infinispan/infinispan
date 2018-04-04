@@ -8,8 +8,6 @@ import static org.mockito.Mockito.verify;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -17,7 +15,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
-import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -153,8 +150,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          // check that the replication call was sync
          cache1.put("k", "v");
          verify(mockTransport)
-               .invokeCommandOnAll(any(ReplicableCommand.class), any(ResponseCollector.class), any(DeliverOrder.class),
-                                   anyLong(), any(TimeUnit.class));
+               .invokeCommandOnAll(any(), any(), any(), any(), anyLong(), any());
 
          // resume to test for async
          asyncRpcManager = (RpcManagerImpl) TestingUtil.extractComponent(asyncCache1, RpcManager.class);
