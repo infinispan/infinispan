@@ -14,21 +14,28 @@ import java.util.stream.Collectors;
  */
 public enum ProtocolVersion {
 
-   PROTOCOL_VERSION_27(2, 7),
-   PROTOCOL_VERSION_26(2, 6),
-   PROTOCOL_VERSION_25(2, 5),
-   PROTOCOL_VERSION_24(2, 4),
-   PROTOCOL_VERSION_23(2, 3),
-   PROTOCOL_VERSION_22(2, 2),
-   PROTOCOL_VERSION_21(2, 1),
-   PROTOCOL_VERSION_20(2, 0),
-   PROTOCOL_VERSION_13(1, 3),
-   PROTOCOL_VERSION_12(1, 2),
-   PROTOCOL_VERSION_11(1, 1),
+   // These need to go in order of lowest version is first - this way compareTo works for versions
    PROTOCOL_VERSION_10(1, 0),
+   PROTOCOL_VERSION_11(1, 1),
+   PROTOCOL_VERSION_12(1, 2),
+   PROTOCOL_VERSION_13(1, 3),
+   PROTOCOL_VERSION_20(2, 0),
+   PROTOCOL_VERSION_21(2, 1),
+   PROTOCOL_VERSION_22(2, 2),
+   PROTOCOL_VERSION_23(2, 3),
+   PROTOCOL_VERSION_24(2, 4),
+   PROTOCOL_VERSION_25(2, 5),
+   PROTOCOL_VERSION_26(2, 6),
+   PROTOCOL_VERSION_27(2, 7),
+   // New versions go above this line to satisfy compareTo of enum working for versions
    ;
 
-   public static final ProtocolVersion DEFAULT_PROTOCOL_VERSION = PROTOCOL_VERSION_27;
+   public static final ProtocolVersion DEFAULT_PROTOCOL_VERSION;
+
+   static {
+      ProtocolVersion[] versions = values();
+      DEFAULT_PROTOCOL_VERSION = versions[versions.length - 1];
+   }
 
    private final String version;
 

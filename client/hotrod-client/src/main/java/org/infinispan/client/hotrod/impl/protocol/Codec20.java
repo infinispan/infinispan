@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import static org.infinispan.client.hotrod.impl.Util.await;
 import static org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil.hexDump;
 import static org.infinispan.commons.util.Util.printArray;
 
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.counter.impl.HotRodCounterEvent;
@@ -24,12 +26,16 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
+import org.infinispan.client.hotrod.impl.operations.BulkGetKeysOperation;
+import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.Either;
 import org.infinispan.counter.api.CounterState;
 
@@ -228,6 +234,13 @@ public class Codec20 implements Codec, HotRodConstants {
       byte[] receivedListenerId = ByteBufUtil.readArray(buf);
       assert Arrays.equals(receivedListenerId, listenerId);
       return decodeCounterEvent(counterName, buf);
+   }
+
+   @Override
+   public <K> CloseableIterator<K> keyIterator(RemoteCache<K, ?> remoteCache, OperationsFactory operationsFactory, int batchSize) {
+      BulkGetKeysOperation<K> op = operationsFactory.newBulkGetKeysOperation(0);
+      Set<K> keys = await(op.execute());
+      return Closeables.iterator(keys.iterator());
    }
 
    protected ClientEvent readPartialEvent(ByteBuf buf, byte[] expectedListenerId, Marshaller marshaller, short eventTypeId, List<String> whitelist, SocketAddress serverAddress) {

@@ -72,11 +72,11 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
             return;
          }
          entries = new ArrayList<>(entriesSize);
-         projectionsSize = ByteBufUtil.readVInt(buf);
+         projectionsSize = codec.readProjectionSize(buf);
          decoder.checkpoint();
       }
       while (entries.size() + untrackedEntries < entriesSize) {
-         short meta = buf.readUnsignedByte();
+         short meta = codec.readMeta(buf);
          long creation = -1;
          int lifespan = -1;
          long lastUsed = -1;
