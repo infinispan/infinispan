@@ -83,6 +83,10 @@ class OracleTableManager extends AbstractTableManager {
       return indexName;
    }
 
+   protected String getDropTimestampSql() {
+      return String.format("DROP INDEX %s", getIndexName(true));
+   }
+
    @Override
    public String getInsertRowSql() {
       if (insertRowSql == null) {
