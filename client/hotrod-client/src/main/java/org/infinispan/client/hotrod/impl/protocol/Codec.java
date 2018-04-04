@@ -3,15 +3,19 @@ package org.infinispan.client.hotrod.impl.protocol;
 import java.lang.annotation.Annotation;
 import java.net.SocketAddress;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.counter.impl.HotRodCounterEvent;
 import org.infinispan.client.hotrod.event.ClientEvent;
+import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Either;
 
 import io.netty.buffer.ByteBuf;
@@ -75,4 +79,50 @@ public interface Codec {
     * Reads a {@link HotRodCounterEvent} with the {@code listener-id}.
     */
    HotRodCounterEvent readCounterEvent(ByteBuf buf, byte[] listenerId);
+
+   /**
+    * Iteration read for projection size
+    * @param buf
+    * @return
+    */
+   default int readProjectionSize(ByteBuf buf) {
+      return 0;
+   }
+
+   /**
+    * Iteration read to tell if metadata is present for entry
+    * @param buf
+    * @return
+    */
+   default short readMeta(ByteBuf buf) {
+      return 0;
+   }
+
+   default void writeIteratorStartOperation(ByteBuf buf, Set<Integer> segments, String filterConverterFactory, int batchSize,
+         boolean metadata, byte[][] filterParameters) {
+      throw new UnsupportedOperationException("This version doesn't support iterating upon entries!");
+   }
+
+   /**
+    * Creates a key iterator with the given batch size if applicable. This iterator does not support removal.
+    * @param remoteCache
+    * @param batchSize
+    * @param <K>
+    * @return
+    */
+   default <K> CloseableIterator<K> keyIterator(RemoteCache<K, ?> remoteCache, OperationsFactory operationsFactory, int batchSize) {
+      throw new UnsupportedOperationException("This version doesn't support iterating upon keys!");
+   }
+
+   /**
+    * Creates an entry iterator with the given batch size if applicable. This iterator does not support removal.
+    * @param remoteCache
+    * @param batchSize
+    * @param <K>
+    * @param <V>
+    * @return
+    */
+   default <K, V> CloseableIterator<Map.Entry<K, V>> entryIterator(RemoteCache<K, V> remoteCache, int batchSize) {
+      throw new UnsupportedOperationException("This version doesn't support iterating upon entries!");
+   }
 }

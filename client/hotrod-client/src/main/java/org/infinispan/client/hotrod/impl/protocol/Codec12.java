@@ -1,8 +1,17 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import static org.infinispan.client.hotrod.impl.Util.await;
+
+import java.util.Set;
+
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.impl.operations.BulkGetKeysOperation;
+import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Closeables;
 
 import io.netty.buffer.ByteBuf;
 
@@ -46,4 +55,10 @@ public class Codec12 extends Codec11 {
       return log;
    }
 
+   @Override
+   public <K> CloseableIterator<K> keyIterator(RemoteCache<K, ?> remoteCache, OperationsFactory operationsFactory, int batchSize) {
+      BulkGetKeysOperation<K> op = operationsFactory.newBulkGetKeysOperation(0);
+      Set<K> keys = await(op.execute());
+      return Closeables.iterator(keys.iterator());
+   }
 }

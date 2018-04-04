@@ -12,4 +12,9 @@ public class Codec25 extends Codec24 {
    public HeaderParams writeHeader(ByteBuf buf, HeaderParams params) {
       return writeHeader(buf, params, HotRodConstants.VERSION_25);
    }
+
+   @Override
+   public short readMeta(ByteBuf buf) {
+      return buf.readUnsignedByte();
+   }
 }

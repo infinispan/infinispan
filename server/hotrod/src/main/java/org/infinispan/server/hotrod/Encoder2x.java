@@ -430,7 +430,7 @@ class Encoder2x implements VersionedEncoder {
             Optional<Integer> projectionLength = projectionInfo(entries, r.version);
             projectionLength.ifPresent(i -> ExtendedByteBuf.writeUnsignedInt(i, buf));
             entries.forEach(cacheEntry -> {
-               if (HotRodVersion.HOTROD_24.isAtLeast(r.version)) {
+               if (HotRodVersion.HOTROD_25.isAtLeast(r.version)) {
                   if (r.iterationResult.isMetadata()) {
                      buf.writeByte(1);
                      InternalCacheEntry ice = (InternalCacheEntry) cacheEntry;
