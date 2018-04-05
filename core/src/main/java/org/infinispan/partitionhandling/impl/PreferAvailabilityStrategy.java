@@ -182,8 +182,8 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
 
          // Start conflict resolution by using the preferred topology's read CH as a base
          // And the union of all distinct consistent hashes as the source
-         ConsistentHash conflictHash = context.calculateConflictHash(preferredPartition.readCH, distinctHashes);
-         mergedTopology = new CacheTopology(mergeTopologyId, mergeRebalanceId, preferredPartition.readCH,
+         ConsistentHash conflictHash = context.calculateConflictHash(preferredPartition.readCH, distinctHashes, actualMembers);
+         mergedTopology = new CacheTopology(mergeTopologyId, mergeRebalanceId, conflictHash,
                                             conflictHash, conflictHash, CacheTopology.Phase.CONFLICT_RESOLUTION,
                                             actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
       } else {

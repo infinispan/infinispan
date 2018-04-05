@@ -171,7 +171,8 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          log.tracef("Max degraded partition topology: %s, all degraded: %s", maxDegradedTopology, degradedTopologies);
       }
 
-      List<Address> actualMembers = new ArrayList<>(context.getExpectedMembers());
+      List<Address> expectedMembers = context.getExpectedMembers();
+      List<Address> actualMembers = new ArrayList<>(expectedMembers);
       CacheTopology mergedTopology;
       AvailabilityMode mergedAvailabilityMode;
       if (maxActiveTopology != null) {
@@ -217,7 +218,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
                }
             }
             ConsistentHash preferredHash = readConsistentHash(mergedTopology, joinInfo.getConsistentHashFactory());
-            ConsistentHash conflictHash = context.calculateConflictHash(preferredHash, distinctHashes);
+            ConsistentHash conflictHash = context.calculateConflictHash(preferredHash, distinctHashes, expectedMembers);
 
             mergedTopology = new CacheTopology(++maxTopologyId, maxRebalanceId + 1,
                                                preferredHash,

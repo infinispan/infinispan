@@ -101,7 +101,8 @@ public interface AvailabilityStrategyContext {
    /**
     * @param preferredHash the base consistent hash
     * @param distinctHashes a set of all hashes to be utilised as part of the conflict resolution hash
+    * @param actualMembers a set of all valid addresses
     * @return the hash to be utilised as a pending CH during Phase.CONFLICT_RESOLUTION
     */
-   ConsistentHash calculateConflictHash(ConsistentHash preferredHash, Set<ConsistentHash> distinctHashes);
+   ConsistentHash calculateConflictHash(ConsistentHash preferredHash, Set<ConsistentHash> distinctHashes, List<Address> actualMembers);
 }
