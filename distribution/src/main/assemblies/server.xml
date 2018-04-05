@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+   <id>server</id>
+   <formats>
+      <format>zip</format>
+   </formats>
+
+   <includeBaseDirectory>true</includeBaseDirectory>
+   <baseDirectory>${infinispan.brand.prefix}-server-${infinispan.brand.version}</baseDirectory>
+
+   <fileSets>
+      <fileSet>
+         <directory>src/main/resources/licenses</directory>
+         <outputDirectory />
+         <excludes>
+           <exclude>licenses-console.xml</exclude>
+         </excludes>
+      </fileSet>
+      <fileSet>
+         <directory>target/classes</directory>
+         <outputDirectory />
+         <includes>
+            <include>**/**</include>
+         </includes>
+      </fileSet>
+      <fileSet>
+         <directory>../server/integration/build/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</directory>
+         <outputDirectory />
+         <includes>
+            <include>**/**</include>
+         </includes>
+      </fileSet>
+   </fileSets>
+</assembly>

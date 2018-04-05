@@ -1,8 +1,8 @@
 <project name="documentation" basedir="." default="optimize-pdf">
 
     <target name="optimize-pdf" depends="check-gs" if="havegs">
-        <property name="generated.pdf.directory" value="${project.build.directory}/generated-pdf"/>
-        <property name="optimized.pdf.directory" value="${project.build.directory}/optimized-pdf"/>
+        <property name="generated.pdf.directory" value="${project.build.directory}/generated/${infinispan.base.version}/pdf"/>
+        <property name="optimized.pdf.directory" value="${project.build.directory}/generated/${infinispan.base.version}/optimized"/>
         <mkdir dir="${optimized.pdf.directory}" />
         <apply executable="gs" failonerror="false" dest="${optimized.pdf.directory}" verbose="true">
             <arg value="-sDEVICE=pdfwrite"/>
