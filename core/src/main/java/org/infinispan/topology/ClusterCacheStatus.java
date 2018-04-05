@@ -899,11 +899,13 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    @Override
-   public ConsistentHash calculateConflictHash(ConsistentHash preferredHash, Set<ConsistentHash> distinctHashes) {
+   public ConsistentHash calculateConflictHash(ConsistentHash preferredHash, Set<ConsistentHash> distinctHashes,
+                                               List<Address> actualMembers) {
       // If we are required to resolveConflicts, then we utilise a union of all distinct CHs. This is necessary
       // to ensure that we read the entries associated with all possible read owners before the rebalance occurs
       ConsistentHashFactory chf = getJoinInfo().getConsistentHashFactory();
       ConsistentHash unionHash = distinctHashes.stream().reduce(preferredHash, chf::union);
-      return chf.union(unionHash, chf.rebalance(unionHash));
+      unionHash = chf.union(unionHash, chf.rebalance(unionHash));
+      return chf.updateMembers(unionHash, actualMembers, capacityFactors);
    }
 }
