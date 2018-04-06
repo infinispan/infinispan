@@ -2,6 +2,7 @@ package org.infinispan.manager.impl;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
@@ -101,8 +102,9 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
          return super.submit(runnable);
       } else {
          ReplicableCommand command = new ReplicableCommandRunnable(runnable);
-         CompletableFuture<Response> request = transport
-               .invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE, time, unit);
+         CompletionStage<Response> request =
+            transport.invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE,
+                                    time, unit);
          request.whenComplete((r, t) -> {
             if (t != null) {
                future.completeExceptionally(t);
@@ -130,8 +132,9 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
       } else {
          CompletableFuture<Void> future = new CompletableFuture<>();
          ReplicableCommand command = new ReplicableCommandManagerFunction(function);
-         CompletableFuture<Response> request = transport
-               .invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE, time, unit);
+         CompletionStage<Response> request =
+            transport.invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE,
+                                    time, unit);
          request.whenComplete((r, t) -> {
             try {
                if (t != null) {

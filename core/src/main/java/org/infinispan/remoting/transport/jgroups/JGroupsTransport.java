@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -282,11 +283,11 @@ public class JGroupsTransport implements Transport {
 
       if (mode.isSynchronous()) {
          MapResponseCollector collector = MapResponseCollector.validOnly(commands.size());
-         CompletableFuture<Map<Address, Response>> request =
+         CompletionStage<Map<Address, Response>> request =
                invokeCommands(commands.keySet(), commands::get, collector, deliverOrder, timeout, TimeUnit.MILLISECONDS);
 
          try {
-            return CompletableFutures.await(request);
+            return CompletableFutures.await(request.toCompletableFuture());
          } catch (ExecutionException e) {
             Throwable cause = e.getCause();
             cause.addSuppressed(e);
@@ -803,9 +804,9 @@ public class JGroupsTransport implements Transport {
    }
 
    @Override
-   public <T> CompletableFuture<T> invokeCommand(Address target, ReplicableCommand command,
-                                                 ResponseCollector<T> collector, DeliverOrder deliverOrder,
-                                                 long timeout, TimeUnit unit) {
+   public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
+                                               ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                               long timeout, TimeUnit unit) {
       if (target.equals(address) && deliverOrder != DeliverOrder.TOTAL) {
          return CompletableFuture.completedFuture(collector.finish());
       }
@@ -821,9 +822,9 @@ public class JGroupsTransport implements Transport {
    }
 
    @Override
-   public <T> CompletableFuture<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
-                                                 ResponseCollector<T> collector, DeliverOrder deliverOrder,
-                                                 long timeout, TimeUnit unit) {
+   public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
+                                               ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                               long timeout, TimeUnit unit) {
       long requestId = requests.newRequestId();
       logRequest(requestId, command, targets);
       if (targets.isEmpty()) {
@@ -846,8 +847,8 @@ public class JGroupsTransport implements Transport {
    }
 
    @Override
-   public <T> CompletableFuture<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
-                                                      DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
+   public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
+                                                    DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
       long requestId = requests.newRequestId();
       logRequest(requestId, command, "all");
       Address excludedTarget = deliverOrder == DeliverOrder.TOTAL ? null : getAddress();
@@ -867,9 +868,9 @@ public class JGroupsTransport implements Transport {
    }
 
    @Override
-   public <T> CompletableFuture<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
-                                                          ResponseCollector<T> collector, DeliverOrder deliverOrder,
-                                                          long timeout, TimeUnit unit) {
+   public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
+                                                        ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                        long timeout, TimeUnit unit) {
       long requestId = requests.newRequestId();
       logRequest(requestId, command, "staggered " + targets);
       StaggeredRequest<T> request =
@@ -886,11 +887,10 @@ public class JGroupsTransport implements Transport {
    }
 
    @Override
-   public <T> CompletableFuture<T> invokeCommands(Collection<Address> targets,
-                                                  Function<Address, ReplicableCommand> commandGenerator,
-                                                  ResponseCollector<T> collector, DeliverOrder deliverOrder,
-                                                  long timeout,
-                                                  TimeUnit timeUnit) {
+   public <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
+                                                Function<Address, ReplicableCommand> commandGenerator,
+                                                ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                long timeout, TimeUnit timeUnit) {
       long requestId;
       requestId = requests.newRequestId();
       Address excludedTarget = getAddress();
@@ -1048,7 +1048,7 @@ public class JGroupsTransport implements Transport {
          Collection<Address> targets, ReplicableCommand command, ResponseMode mode, long timeout,
          ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean ignoreLeavers, boolean sendStaggeredRequest,
          boolean broadcast, Address singleTarget) {
-      CompletableFuture<Map<Address, Response>> request;
+      CompletionStage<Map<Address, Response>> request;
       if (sendStaggeredRequest) {
          FilterMapResponseCollector collector = new FilterMapResponseCollector(responseFilter, false, targets.size());
          request = invokeCommandStaggered(targets, command, collector, deliverOrder, timeout, TimeUnit.MILLISECONDS);
@@ -1073,7 +1073,7 @@ public class JGroupsTransport implements Transport {
             }
          }
       }
-      return request;
+      return request.toCompletableFuture();
    }
 
    public void sendToAll(ReplicableCommand command, DeliverOrder deliverOrder) {
