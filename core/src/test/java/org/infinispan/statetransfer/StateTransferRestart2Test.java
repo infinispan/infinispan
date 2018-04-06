@@ -3,7 +3,7 @@ package org.infinispan.statetransfer;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
@@ -83,9 +83,9 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
       GlobalConfigurationBuilder gcb2 = new GlobalConfigurationBuilder();
       gcb2.transport().transport(new JGroupsTransport() {
          @Override
-         public <T> CompletableFuture<T> invokeCommand(Address target, ReplicableCommand command,
-                                                       ResponseCollector<T> collector, DeliverOrder deliverOrder,
-                                                       long timeout, TimeUnit unit) {
+         public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
+                                                     ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                     long timeout, TimeUnit unit) {
             if (command instanceof StateRequestCommand &&
                   ((StateRequestCommand) command).getType() == StateRequestCommand.Type.START_STATE_TRANSFER &&
                   target.equals(address(1))) {

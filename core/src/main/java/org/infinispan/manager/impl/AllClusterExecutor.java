@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -96,7 +97,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
          }
          remoteFuture = new CompletableFuture<>();
          ReplicableCommand command = new ReplicableCommandRunnable(runnable);
-         CompletableFuture<Response> request = transport.invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE, time, unit);
+         CompletionStage<Response> request = transport.invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE, time, unit);
          request.handle((r, t) -> {
             if (t != null) {
                remoteFuture.completeExceptionally(t);
@@ -111,7 +112,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
          remoteFuture = new CompletableFuture<>();
          ReplicableCommand command = new ReplicableCommandRunnable(runnable);
          ResponseCollector<Map<Address, Response>> collector = new PassthroughMapResponseCollector(targets.size());
-         CompletableFuture<Map<Address, Response>> request = transport.invokeCommand(targets, command, collector, DeliverOrder.NONE, time, unit);
+         CompletionStage<Map<Address, Response>> request = transport.invokeCommand(targets, command, collector, DeliverOrder.NONE, time, unit);
          request.handle((r, t) -> {
             if (t != null) {
                remoteFuture.completeExceptionally(t);
@@ -178,8 +179,8 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
                log.tracef("Submitting consumer to single remote node - JGroups Address %s", target);
             }
             ReplicableCommand command = new ReplicableCommandManagerFunction(function);
-            CompletableFuture<Response> request = transport.invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE, time, unit);
-            futures[i] = request.whenComplete((r, t) -> {
+            CompletionStage<Response> request = transport.invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE, time, unit);
+            futures[i] = request.toCompletableFuture().whenComplete((r, t) -> {
                if (t != null) {
                   if (t instanceof TimeoutException) {
                      // Consumers for individual nodes should not be able to obscure the timeout
