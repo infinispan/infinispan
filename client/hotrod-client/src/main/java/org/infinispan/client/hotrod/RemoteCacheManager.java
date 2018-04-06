@@ -47,19 +47,17 @@ import org.infinispan.commons.util.uberjar.UberJarDuplicatedJarsWarner;
 import org.infinispan.counter.api.CounterManager;
 
 /**
- * Factory for {@link org.infinispan.client.hotrod.RemoteCache}s. <p/> <p> <b>Lifecycle:</b> </p> In order to be able to
- * use an {@link org.infinispan.client.hotrod.RemoteCache}, the {@link org.infinispan.client.hotrod.RemoteCacheManager}
- * must be started first: beside other things, this instantiates connections to Hot Rod server(s). Starting the {@link
- * org.infinispan.client.hotrod.RemoteCacheManager} can be done either at creation by passing start==true to constructor
- * or by using a constructor that does that for you (see C-tor documentation); or after construction by calling {@link
- * #start()}.
- * <p/>
- * This is an "expensive" object, as it manages a set of persistent TCP connections to the Hot Rod servers. It is recommended
- * to only have one instance of this per JVM, and to cache it between calls to the server (i.e. remoteCache
- * operations).
- * <p/>
- * {@link #stop()} needs to be called explicitly in order to release all the resources (e.g. threads, TCP connections).
- * <p/>
+ * <p>Factory for {@link org.infinispan.client.hotrod.RemoteCache}s.</p>
+ * <p>In order to be able to use a {@link org.infinispan.client.hotrod.RemoteCache}, the
+ * {@link org.infinispan.client.hotrod.RemoteCacheManager} must be started first: this instantiates connections to
+ * Hot Rod server(s). Starting the {@link org.infinispan.client.hotrod.RemoteCacheManager} can be done either at
+ * creation by passing start==true to the constructor or by using a constructor that does that for you; or after
+ * construction by calling {@link #start()}.</p>
+ * <p><b>NOTE:</b> this is an "expensive" object, as it manages a set of persistent TCP connections to the Hot Rod
+ * servers. It is recommended to only have one instance of this per JVM, and to cache it between calls to the server
+ * (i.e. remoteCache operations)</p>
+ * <p>{@link #stop()} needs to be called explicitly in order to release all the resources (e.g. threads,
+ * TCP connections).</p>
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -119,9 +117,12 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    }
 
    /**
-    * Same as {@link RemoteCacheManager(java.util.Properties)}, but it will try to lookup the config properties in the
-    * classpath, in a file named <tt>hotrod-client.properties</tt>. If no properties can be found in the classpath, the
-    * server tries to connect to "127.0.0.1:11222" in start.
+    * <p>Similar to {@link RemoteCacheManager#RemoteCacheManager(Configuration, boolean)}, but it will try to lookup
+    * the config properties in the classpath, in a file named <tt>hotrod-client.properties</tt>. If no properties can
+    * be found in the classpath, defaults will be used, attempting to connect to <tt>127.0.0.1:11222</tt></p>
+    *
+    * <p>Refer to
+    * {@link ConfigurationBuilder} for a detailed list of available properties.</p>
     *
     * @param start whether or not to start the RemoteCacheManager
     * @throws HotRodClientException if such a file cannot be found in the classpath

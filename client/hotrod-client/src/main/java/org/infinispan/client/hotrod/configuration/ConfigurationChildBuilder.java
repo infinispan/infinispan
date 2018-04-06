@@ -10,8 +10,6 @@ import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.marshall.Marshaller;
 
-import javax.net.ssl.SSLContext;
-
 /**
  * ConfigurationChildBuilder.
  *
@@ -73,7 +71,7 @@ public interface ConfigurationChildBuilder {
     * (e.g. certificate stores). Infinispan will search through the classloader which loaded this class, the system
     * classloader, the TCCL and the OSGi classloader (if applicable).
     * @deprecated since 9.0.  If you need to load configuration resources from other locations, you will need to do so
-    * yourself and use the appropriate configuration methods (e.g. {@link SslConfigurationBuilder#sslContext(SSLContext)})
+    * yourself and use the appropriate configuration methods (e.g. {@link SslConfigurationBuilder#sslContext(javax.net.ssl.SSLContext)})
     */
    @Deprecated
    ConfigurationBuilder classLoader(ClassLoader classLoader);
@@ -212,7 +210,7 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder batchSize(int batchSize);
 
    /**
-    * Configures this builder using the specified properties
+    * Configures this builder using the specified properties. See {@link ConfigurationBuilder} for a list.
     */
    ConfigurationBuilder withProperties(Properties properties);
 
