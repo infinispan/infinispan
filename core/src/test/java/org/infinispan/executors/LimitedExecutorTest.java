@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -120,6 +121,17 @@ public class LimitedExecutorTest extends AbstractInfinispanTest {
       limitedExecutor.executeAsync(() -> blocker1.thenAccept(cf1::complete));
 
       verifyTaskIsBlocked(limitedExecutor, blocker1, cf1);
+   }
+
+   public void testExecuteAsyncSupplierReturnsNull() throws Exception {
+      eventuallyEquals(0, executor::getActiveCount);
+      LimitedExecutor limitedExecutor = new LimitedExecutor(NAME, executor, 1);
+
+      limitedExecutor.executeAsync(() -> null);
+
+      CompletableFuture<String> cf1 = new CompletableFuture<>();
+      limitedExecutor.execute(() -> cf1.complete("a"));
+      cf1.get(10, TimeUnit.SECONDS);
    }
 
    private void verifyTaskIsBlocked(LimitedExecutor limitedExecutor, CompletableFuture<String> blocker1,

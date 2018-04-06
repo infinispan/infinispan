@@ -2,7 +2,10 @@ package org.infinispan.executors;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -10,6 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
+import net.jcip.annotations.GuardedBy;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -34,28 +38,43 @@ public class LimitedExecutor implements Executor {
    private static final Log log = LogFactory.getLog(LimitedExecutor.class);
 
    private final Lock lock = new ReentrantLock();
-   private final Condition condition = lock.newCondition();
+   private final Condition taskFinishedCondition = lock.newCondition();
    private final String name;
    private final Executor executor;
    private final boolean blocking;
-   private int availablePermits;
-   private final Deque<Runnable> queue = new ArrayDeque<>();
    private final Runner runner = new Runner();
+   private volatile boolean running = true;
+   @GuardedBy("lock")
+   private int availablePermits;
+   @GuardedBy("lock")
+   private Map<Thread, Object> threads;
+   @GuardedBy("lock")
+   private final Deque<Runnable> queue = new ArrayDeque<>();
 
    public LimitedExecutor(String name, Executor executor, int maxConcurrentTasks) {
       this.name = name;
       this.executor = executor;
       this.availablePermits = maxConcurrentTasks;
       this.blocking = executor instanceof WithinThreadExecutor;
+
+      threads = new IdentityHashMap<>(maxConcurrentTasks);
    }
 
    /**
-    * When stopping, cancel any queued tasks.
+    * Stops the executor and cancels any queued tasks.
+    *
+    * Stop and interrupt any tasks that have already been handed to the underlying executor.
     */
-   public void cancelQueuedTasks() {
+   public void shutdownNow() {
+      log.tracef("Stopping limited executor %s", name);
+      running = false;
       lock.lock();
       try {
          queue.clear();
+
+         for (Thread t : threads.keySet()) {
+            t.interrupt();
+         }
       } finally {
          lock.unlock();
       }
@@ -63,6 +82,9 @@ public class LimitedExecutor implements Executor {
 
    @Override
    public void execute(Runnable command) {
+      if (!running)
+         throw new IllegalLifecycleStateException("Limited executor " + name + " is not running!");
+
       if (blocking) {
          CompletableFuture<Void> f1 = new CompletableFuture<>();
          executeInternal(() -> {
@@ -76,7 +98,7 @@ public class LimitedExecutor implements Executor {
             Thread.currentThread().interrupt();
             throw new IllegalLifecycleStateException(ie);
          } catch (Exception e) {
-            log.debug("Exception in blocking task", e);
+            log.error("Exception in task", e);
          } finally {
             addPermit();
             tryExecute();
@@ -86,7 +108,7 @@ public class LimitedExecutor implements Executor {
       executeInternal(command);
    }
 
-   public void executeInternal(Runnable command) {
+   private void executeInternal(Runnable command) {
       lock.lock();
       try {
          queue.add(command);
@@ -96,13 +118,21 @@ public class LimitedExecutor implements Executor {
       tryExecute();
    }
 
-   public void executeAsync(Supplier<CompletableFuture<Void>> command) {
+   /**
+    * Similar to {@link #execute(Runnable)}, but the task can continue executing asynchronously,
+    * without blocking the OS thread, while still counting against this executor's limit.
+    *
+    * @param asyncCommand A task that returns a non-null {@link CompletionStage},
+    *                     which may be already completed or may complete at some point in the future.
+    */
+   public void executeAsync(Supplier<CompletionStage<Void>> asyncCommand) {
       execute(() -> {
-         CompletableFuture<Void> future = command.get();
-         if (!future.isDone()) {
-            removePermit();
-            future.whenComplete(runner);
-         }
+         CompletionStage<Void> future = asyncCommand.get();
+         // The current permit will be released automatically
+         // If the future is null, don't reserve another permit
+         assert future != null;
+         removePermit();
+         future.whenComplete(runner);
       });
    }
 
@@ -123,7 +153,8 @@ public class LimitedExecutor implements Executor {
    }
 
    private void runTasks() {
-      while (true) {
+      runnerStarting();
+      while (running) {
          Runnable runnable = null;
          lock.lock();
          try {
@@ -147,6 +178,28 @@ public class LimitedExecutor implements Executor {
          } finally {
             NDC.pop();
          }
+      }
+      runnerFinished();
+   }
+
+   private void runnerStarting() {
+      lock.lock();
+      try {
+         Thread thread = Thread.currentThread();
+         threads.put(thread, thread);
+      } finally {
+         lock.unlock();
+      }
+   }
+
+   private void runnerFinished() {
+      lock.lock();
+      try {
+         Thread thread = Thread.currentThread();
+         threads.remove(thread);
+         taskFinishedCondition.signalAll();
+      } finally {
+         lock.unlock();
       }
    }
 

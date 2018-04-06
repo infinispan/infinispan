@@ -34,6 +34,7 @@ import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -186,6 +187,7 @@ public class StateConsumerImpl implements StateConsumer {
 
    // Use the state transfer timeout for RPCs instead of the regular remote timeout
    protected RpcOptions rpcOptions;
+   private volatile boolean running;
 
    public StateConsumerImpl() {
    }
@@ -232,6 +234,10 @@ public class StateConsumerImpl implements StateConsumer {
 
    @Override
    public CompletableFuture<Void> onTopologyUpdate(final CacheTopology cacheTopology, final boolean isRebalance) {
+      if (!running) {
+         if (trace) log.tracef("State consumer not running for cache %s, ignoring topology update %s",
+                               cacheName, cacheTopology);
+      }
       final boolean isMember = cacheTopology.getMembers().contains(rpcManager.getAddress());
       final boolean startConflictResolution = !isRebalance && cacheTopology.getPhase() == CacheTopology.Phase.CONFLICT_RESOLUTION;
       if (trace) log.tracef("Received new topology for cache %s, isRebalance = %b, isMember = %b, topology = %s", cacheName, isRebalance, isMember, cacheTopology);
@@ -711,6 +717,7 @@ public class StateConsumerImpl implements StateConsumer {
       rpcOptions = new RpcOptions(DeliverOrder.NONE, timeout, TimeUnit.MILLISECONDS);
 
       stateRequestExecutor = new LimitedExecutor("StateRequest-" + cacheName, stateTransferExecutor, 1);
+      running = true;
    }
 
    @Stop(priority = 0)
@@ -719,12 +726,11 @@ public class StateConsumerImpl implements StateConsumer {
       if (trace) {
          log.tracef("Shutting down StateConsumer of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
+      running = false;
 
       try {
          synchronized (transferMapsLock) {
             // cancel all inbound transfers
-            stateRequestExecutor.cancelQueuedTasks();
-
             // make a copy, cancel might remove the transfers
             Collection<List<InboundTransferTask>> transfers = new ArrayList<>(transfersBySource.values());
             for (List<InboundTransferTask> inboundTransfers : transfers) {
@@ -733,6 +739,8 @@ public class StateConsumerImpl implements StateConsumer {
             transfersBySource.clear();
             transfersBySegment.clear();
          }
+
+         stateRequestExecutor.shutdownNow();
       } catch (Throwable t) {
          log.errorf(t, "Failed to stop StateConsumer of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
@@ -1068,6 +1076,9 @@ public class StateConsumerImpl implements StateConsumer {
 
    @GuardedBy("transferMapsLock")
    protected void addTransfer(InboundTransferTask inboundTransfer, Set<Integer> segments) {
+      if (!running)
+         throw new IllegalLifecycleStateException("State consumer is not running for cache " + cacheName);
+
       for (int segmentId : segments) {
          transfersBySegment.computeIfAbsent(segmentId, s -> new ArrayList<>()).add(inboundTransfer);
       }

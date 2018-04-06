@@ -342,6 +342,11 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    public synchronized void confirmRebalancePhase(Address member, int receivedTopologyId) throws Exception {
+      if (currentTopology == null) {
+         log.debugf("Ignoring rebalance confirmation from %s for cache %s because the cache has no members",
+                    member, cacheName);
+         return;
+      }
       if (receivedTopologyId < currentTopology.getTopologyId()) {
          log.debugf("Ignoring rebalance confirmation from %s " +
                     "for cache %s because the topology id is old (%d, expected %d)",
@@ -926,8 +931,10 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       startQueuedRebalance();
    }
 
-   public void forceAvailabilityMode(AvailabilityMode newAvailabilityMode) {
-      availabilityStrategy.onManualAvailabilityChange(this, newAvailabilityMode);
+   public synchronized void forceAvailabilityMode(AvailabilityMode newAvailabilityMode) {
+      if (currentTopology != null && newAvailabilityMode != availabilityMode) {
+         availabilityStrategy.onManualAvailabilityChange(this, newAvailabilityMode);
+      }
    }
 
    public synchronized void shutdownCache() throws Exception {

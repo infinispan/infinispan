@@ -252,10 +252,19 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Override
    public void handleTopologyUpdate(final String cacheName, final CacheTopology cacheTopology,
          final AvailabilityMode availabilityMode, final int viewId, final Address sender) throws InterruptedException {
-      if (ignoreTopologyUpdate(cacheName, cacheTopology))
+      if (!running) {
+         log.tracef("Ignoring consistent hash update %s for cache %s, the local cache manager is not running",
+                    cacheTopology.getTopologyId(), cacheName);
          return;
+      }
 
-      final LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
+      LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
+      if (cacheStatus == null) {
+         log.tracef("Ignoring consistent hash update %s for cache %s that doesn't exist locally",
+                    cacheTopology.getTopologyId(), cacheName);
+         return;
+      }
+
       cacheStatus.getTopologyUpdatesExecutor().execute(() -> {
          try {
             doHandleTopologyUpdate(cacheName, cacheTopology, availabilityMode, viewId, sender, cacheStatus);
@@ -263,21 +272,6 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             log.topologyUpdateError(cacheName, t);
          }
       });
-   }
-
-   private boolean ignoreTopologyUpdate(final String cacheName, final CacheTopology cacheTopology) {
-      if (!running) {
-         log.tracef("Ignoring consistent hash update %s for cache %s, the local cache manager is not running",
-               cacheTopology.getTopologyId(), cacheName);
-         return true;
-      }
-
-      if (runningCaches.get(cacheName) == null) {
-         log.tracef("Ignoring consistent hash update %s for cache %s that doesn't exist locally",
-               cacheTopology.getTopologyId(), cacheName);
-         return true;
-      }
-      return false;
    }
 
    /**

@@ -64,13 +64,18 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
       this.stateReceiverExecutor = new LimitedExecutor("StateReceiver-" + cacheName, stateTransferExecutor, 1);
    }
 
-   @Override
    @Stop
    public void stop() {
+      cancelRequests();
+      stateReceiverExecutor.shutdownNow();
+   }
+
+   @Override
+   public void cancelRequests() {
       if (trace) log.tracef("Cache %s stop() called on StateReceiverImpl", cacheName);
-      for (SegmentRequest request : requestMap.values())
+      for (SegmentRequest request : requestMap.values()) {
          request.cancel(null);
-      stateReceiverExecutor.cancelQueuedTasks();
+      }
    }
 
    @DataRehashed
@@ -81,7 +86,6 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
          for (SegmentRequest request : requestMap.values())
             request.cancel(new CacheException("Cancelling replica request as the owners of the requested " +
                "segment have changed."));
-         stateReceiverExecutor.cancelQueuedTasks();
       }
    }
 
@@ -139,7 +143,13 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
       }
 
       synchronized CompletableFuture<List<Map<Address, CacheEntry<K, V>>>> requestState() {
-         assert future == null;
+         if (future != null) {
+            assert future.isCompletedExceptionally();
+            if (trace) log.tracef("Cache %s already cancelled replicas request for segment %s from %s with topology %s",
+                                  cacheName, segmentId, replicaHosts, topology);
+            return future;
+         }
+
          if (trace) log.tracef("Cache %s attempting to receive replicas for segment %s from %s with topologyId=%s, timeout=%d",
                cacheName, segmentId, replicaHosts, topology.getTopologyId(), timeout);
 
@@ -227,6 +237,10 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
             return;
 
          log.debugf(throwable, "Cache %s cancelling request for segment %s", cacheName, segmentId);
+         if (future == null) {
+            // requestState() has not run yet, so we create the future first
+            future = new CompletableFuture<>();
+         }
          transferTaskMap.forEach((address, inboundTransferTask) -> inboundTransferTask.cancel());
          if (throwable != null) {
             future.completeExceptionally(throwable);
