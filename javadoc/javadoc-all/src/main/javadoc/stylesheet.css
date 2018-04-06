@@ -103,3 +103,15 @@ th, table { border-collapse:collapse;border-color: #E6E7E8; }
 .overviewSummary caption {
     color: #333;
 }
+
+.block table {
+   border: 1px solid black !important;
+}
+
+.block table tr th {
+   font-size: 1.3em;
+}
+
+.block table tr:nth-child(even) {background: #CCC}
+
+.block table tr:nth-child(odd) {background: #FFF}

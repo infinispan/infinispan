@@ -30,8 +30,261 @@ import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.Util;
 
 /**
- * ConfigurationBuilder used to generate immutable {@link Configuration} objects to pass to the
- * {@link RemoteCacheManager#RemoteCacheManager(Configuration)} constructor.
+ * <p>ConfigurationBuilder used to generate immutable {@link Configuration} objects to pass to the
+ * {@link RemoteCacheManager#RemoteCacheManager(Configuration)} constructor.</p>
+ *
+ * <p>It is also possible to configure the {@link RemoteCacheManager} via a properties file named
+ * <tt>hotrod-client.properties</tt> and placed in the classpath. The following table describes the individual properties
+ * and the related programmatic configuration API.</p>
+ *
+ * <table>
+ *    <tr>
+ *       <th>Name</th>
+ *       <th>Type</th>
+ *       <th>Default</th>
+ *       <th>Description</th>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.server_list</b></td>
+ *       <td>String</td>
+ *       <td>N/A</td>
+ *       <td>{@link ServerConfigurationBuilder#addServers(String)}</td>
+ *    </tr>
+ *    <tr>
+ *      <td><b>infinispan.client.hotrod.marshaller</b></td>
+ *       <td>String (class name)</td>
+ *       <td>{@link org.infinispan.commons.marshall.jboss.GenericJBossMarshaller GenericJBossMarshaller}</td>
+ *       <td>{@link #marshaller(String)}</td>
+ *    </tr>
+ *    <tr>
+ *      <td><b>infinispan.client.hotrod.async_executor_factory</b></td>
+ *       <td>String (class name)</td>
+ *       <td>{@link org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory DefaultAsyncExecutorFactory}</td>
+ *       <td>{@link ExecutorFactoryConfigurationBuilder#factoryClass(String)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.default_executor_factory.pool_size</b></td>
+ *       <td>Integer</td>
+ *       <td>99</td>
+ *       <td>Size of the thread pool</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.client_intelligence</b></td>
+ *       <td>String</td>
+ *       <td>HASH_DISTRIBUTION_AWARE</td>
+ *       <td>{@link #clientIntelligence(ClientIntelligence)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.tcp_no_delay</b></td>
+ *       <td>Boolean</td>
+ *       <td>true</td>
+ *       <td>{@link #tcpNoDelay(boolean)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.tcp_keep_alive</b></td>
+ *       <td>Boolean</td>
+ *       <td>true</td>
+ *       <td>{@link #tcpKeepAlive(boolean)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.request_balancing_strategy</b></td>
+ *       <td>String (class name)</td>
+ *       <td>{@link org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy RoundRobinBalancingStrategy}</td>
+ *       <td>{@link #balancingStrategy(String)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.key_size_estimate</b></td>
+ *       <td>Integer</td>
+ *       <td>64</td>
+ *       <td>{@link #keySizeEstimate(int)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.value_size_estimate</b></td>
+ *       <td>Integer</td>
+ *       <td>512</td>
+ *       <td>{@link #valueSizeEstimate(int)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.force_return_values</b></td>
+ *       <td>Boolean</td>
+ *       <td>false</td>
+ *       <td>{@link #forceReturnValues(boolean)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.hash_function_impl.2</b></td>
+ *       <td>String</td>
+ *       <td>{@link org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2 ConsistentHashV2}</td>
+ *       <td>{@link #consistentHashImpl(int, String)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.socket_timeout</b></td>
+ *       <td>Integer</td>
+ *       <td>60000</td>
+ *       <td>{@link #socketTimeout(int)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.connect_timeout</b></td>
+ *       <td>Integer</td>
+ *       <td>60000</td>
+ *       <td>{@link #connectionTimeout(int)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.protocol_version</b></td>
+ *       <td>String</td>
+ *       <td>The highest version supported by the client in use</td>
+ *       <td>{@link #version(ProtocolVersion)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.use_ssl</b></td>
+ *       <td>Boolean</td>
+ *       <td>false</td>
+ *       <td>Will be implicitly enabled if a trust store is set.<br>{@link SslConfigurationBuilder#enabled(boolean)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.key_store_file_name</b></td>
+ *       <td>String</td>
+ *       <td>N/A</td>
+ *       <td>{@link SslConfigurationBuilder#keyStoreFileName(String)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.key_store_type</b></td>
+ *       <td>String</td>
+ *       <td>JKS</td>
+ *       <td>{@link SslConfigurationBuilder#keyStoreType(String)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.key_store_password</b></td>
+ *       <td>String</td>
+ *       <td>N/A</td>
+ *       <td>{@link SslConfigurationBuilder#keyStorePassword(char[])}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.sni_host_name</b></td>
+ *       <td>String</td>
+ *       <td>N/A</td>
+ *       <td>{@link SslConfigurationBuilder#sniHostName(String)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.key_alias</b></td>
+ *       <td>String</td>
+ *       <td>N/A</td>
+ *       <td>{@link SslConfigurationBuilder#keyAlias(String)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.key_store_certificate_password</b></td>
+ *       <td>String</td>
+ *       <td>N/A</td>
+ *       <td>{@link SslConfigurationBuilder#keyStoreCertificatePassword(char[])}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.trust_store_file_name</b></td>
+ *       <td>String</td>
+ *       <td>N/A</td>
+ *       <td>{@link SslConfigurationBuilder#trustStoreFileName(String)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.trust_store_path</b></td>
+ *       <td>String</td>
+ *       <td>N/A</td>
+ *       <td>{@link SslConfigurationBuilder#trustStorePath(String)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.trust_store_type</b></td>
+ *       <td>String</td>
+ *       <td>JKS</td>
+ *       <td>{@link SslConfigurationBuilder#trustStoreType(String)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.trust_store_password</b></td>
+ *       <td>String</td>
+ *       <td>N/A</td>
+ *       <td>{@link SslConfigurationBuilder#trustStorePassword(char[])}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.ssl_protocol</b></td>
+ *       <td>String</td>
+ *       <td>N/A</td>
+ *       <td>{@link SslConfigurationBuilder#protocol(String)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.ssl_context</b></td>
+ *       <td>javax.net.ssl.SSLContext</td>
+ *       <td>N/A</td>
+ *       <td>Can only be set programmatically.<br>{@link SslConfigurationBuilder#sslContext(javax.net.ssl.SSLContext)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.max_retries</b></td>
+ *       <td>Integer</td>
+ *       <td>10</td>
+ *       <td>{@link #maxRetries(int)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.use_auth</b></td>
+ *       <td>Boolean</td>
+ *       <td>Implicitly enabled by other authentication properties</td>
+ *       <td>{@link AuthenticationConfigurationBuilder#enabled(boolean)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.sasl_mechanism</b></td>
+ *       <td>String</td>
+ *       <td>DIGEST-MD5 if username and password are set<br>EXTERNAL if a key store is set</td>
+ *       <td>{@link AuthenticationConfigurationBuilder#saslMechanism(String)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.auth_callback_handler</b></td>
+ *       <td>String</td>
+ *       <td>Chosen automatically based on selected SASL mech</td>
+ *       <td>{@link AuthenticationConfigurationBuilder#callbackHandler(javax.security.auth.callback.CallbackHandler)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.auth_server_name</b></td>
+ *       <td>String</td>
+ *       <td>N/A</td>
+ *       <td>{@link AuthenticationConfigurationBuilder#serverName(String)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.auth_username</b></td>
+ *       <td>String</td>
+ *       <td>N/A</td>
+ *       <td>{@link AuthenticationConfigurationBuilder#username(String)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.auth_password</b></td>
+ *       <td>String</td>
+ *       <td>N/A</td>
+ *       <td>{@link AuthenticationConfigurationBuilder#password(char[])}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.auth_realm</b></td>
+ *       <td>String</td>
+ *       <td>ApplicationRealm</td>
+ *       <td>{@link AuthenticationConfigurationBuilder#realm(String)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.auth_client_subject</b></td>
+ *       <td>javax.security.auth.Subject</td>
+ *       <td>N/A</td>
+ *       <td>Can only be set programmatically.<br>{@link AuthenticationConfigurationBuilder#clientSubject(javax.security.auth.Subject)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.sasl_properties.*</b></td>
+ *       <td>String</td>
+ *       <td>N/A</td>
+ *       <td>One per SASL property.<br>{@link AuthenticationConfigurationBuilder#saslProperties(java.util.Map)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.java_serial_whitelist</b></td>
+ *       <td>String</td>
+ *       <td>N/A</td>
+ *       <td>{@link #addJavaSerialWhiteList(String...)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.batch_size</b></td>
+ *       <td>Integer</td>
+ *       <td>10000</td>
+ *       <td>{@link #batchSize(int)}</td>
+ *    </tr>
+ * </table>
  *
  * @author Tristan Tarrant
  * @since 5.3
@@ -408,7 +661,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
    @Override
    public ConfigurationBuilder read(Configuration template) {
-      this.classLoader = new WeakReference<ClassLoader>(template.classLoader());
+      this.classLoader = new WeakReference<>(template.classLoader());
       this.asyncExecutorFactory.read(template.asyncExecutorFactory());
       this.balancingStrategyClass = template.balancingStrategyClass();
       this.balancingStrategy = template.balancingStrategy();
