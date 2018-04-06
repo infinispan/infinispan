@@ -17,6 +17,7 @@ import static org.infinispan.persistence.remote.configuration.RemoteStoreConfigu
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -106,6 +107,7 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
       return this;
    }
 
+   @Deprecated
    @Override
    public RemoteStoreConfigurationBuilder protocolVersion(String protocolVersion) {
       attributes.attribute(PROTOCOL_VERSION).set(ProtocolVersion.parseVersion(protocolVersion));
@@ -194,6 +196,16 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
       this.security.read(template.security());
 
       return this;
+   }
+
+   @Override
+   public RemoteStoreConfigurationBuilder withProperties(Properties props) {
+      String version = (String) props.remove(RemoteStoreConfiguration.PROTOCOL_VERSION.name());
+      if (version != null) {
+         this.protocolVersion(ProtocolVersion.parseVersion(version));
+      }
+
+      return super.withProperties(props);
    }
 
    @Override
