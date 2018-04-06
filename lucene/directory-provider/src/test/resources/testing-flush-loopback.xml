@@ -29,7 +29,6 @@
 		max_bytes="400000" />
 	<pbcast.GMS
 			print_local_addr="false"
-			join_timeout="${jgroups.join_timeout:500}"
-			view_bundling="false" />
+			join_timeout="${jgroups.join_timeout:500}" />
 	<RSVP resend_interval="20" timeout="10000" ack_on_delivery="false" />
 </config>
