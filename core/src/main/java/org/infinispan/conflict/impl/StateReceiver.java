@@ -21,9 +21,8 @@ public interface StateReceiver<K, V> {
 
    /**
     * Cancels all ongoing replica requests.
-    * This is executed when the cache is shutting down.
     */
-   void stop();
+   void cancelRequests();
 
    /**
     * Return all replicas of a cache entry for a given segment. We require the ConsitentHash to be passed here, as it is

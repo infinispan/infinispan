@@ -508,7 +508,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
       void handleException(Exception e) {
          if (trace) log.tracef("Cache %s replicaSpliterator caught %s", cacheName, e);
-         stateReceiver.stop();
+         stateReceiver.cancelRequests();
          streamInProgress.set(false);
       }
    }

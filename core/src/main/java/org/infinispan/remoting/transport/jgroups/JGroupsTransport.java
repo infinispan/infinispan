@@ -172,6 +172,7 @@ public class JGroupsTransport implements Transport {
    private boolean globalStatsEnabled;
    private MBeanServer mbeanServer;
    private String domain;
+   private boolean running;
 
    /**
     * This form is used when the transport is created by an external source and passed in to the
@@ -305,8 +306,7 @@ public class JGroupsTransport implements Transport {
    }
 
    @Override
-   public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand command)
-         throws Exception {
+   public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand command) {
       if (trace)
          log.tracef("About to send to backups %s, command %s", backups, command);
       boolean rsvp = isRsvpCommand(command);
@@ -395,6 +395,7 @@ public class JGroupsTransport implements Transport {
 
       waitForInitialNodes();
       channel.getProtocolStack().getTransport().registerProbeHandler(probeHandler);
+      running = true;
    }
 
    protected void initChannel() {
@@ -682,6 +683,8 @@ public class JGroupsTransport implements Transport {
 
    @Override
    public void stop() {
+      running = false;
+
       if (channel != null) {
          channel.getProtocolStack().getTransport().unregisterProbeHandler(probeHandler);
       }
@@ -709,12 +712,9 @@ public class JGroupsTransport implements Transport {
          requests.forEach(request -> request.cancel(log.cacheManagerIsStopping()));
       }
 
+      // Don't keep a reference to the channel, but keep the address and physical address
       channel = null;
-      address = null;
-      physicalAddress = null;
       clusterView = new ClusterView(ClusterView.FINAL_VIEW_ID, Collections.emptyList(), null);
-
-      requests = null;
 
       CompletableFuture<Void> oldFuture = null;
       viewUpdateLock.lock();
@@ -947,6 +947,9 @@ public class JGroupsTransport implements Transport {
    private void addRequest(AbstractRequest<?> request) {
       try {
          requests.addRequest(request);
+         if (!running) {
+            request.cancel(log.cacheManagerIsStopping());
+         }
       } catch (Throwable t) {
          // Removes the request and the scheduled task, if necessary
          request.cancel(true);
@@ -1004,9 +1007,12 @@ public class JGroupsTransport implements Transport {
 
    private void send(Message message) {
       try {
-         channel.send(message);
+         JChannel channel = this.channel;
+         if (channel != null) {
+            channel.send(message);
+         }
       } catch (Exception e) {
-         if (channel != null && channel.isConnected()) {
+         if (running) {
             throw new CacheException(e);
          } else {
             throw log.cacheManagerIsStopping();
@@ -1226,9 +1232,9 @@ public class JGroupsTransport implements Transport {
          type = SINGLE_MESSAGE;
          requestId = Request.NO_REQUEST_ID;
       }
-      if (address == null) {
+      if (!running) {
          if (trace)
-            log.tracef("Ignoring message received before initial view");
+            log.tracef("Ignoring message received before start or after stop");
          if (type == REQUEST) {
             sendResponse(src, CacheNotFoundResponse.INSTANCE, requestId, null);
          }

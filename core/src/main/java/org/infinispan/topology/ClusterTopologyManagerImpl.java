@@ -192,7 +192,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          cacheManagerNotifier.removeListener(viewListener);
       }
       if (viewHandlingExecutor != null) {
-         viewHandlingExecutor.cancelQueuedTasks();
+         viewHandlingExecutor.shutdownNow();
       }
    }
 
