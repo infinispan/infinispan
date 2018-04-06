@@ -48,7 +48,6 @@
    />
    <pbcast.GMS print_local_addr="false"
                join_timeout="15000"
-               view_bundling="true"
    />
 
     <!-- At this place we can react on DISCONNECTs immediatelly -->
