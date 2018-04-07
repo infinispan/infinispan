@@ -1,8 +1,8 @@
 ==  Source Control
-In this chapter we discuss how to interact with Infinispan's source control repository.
+In this chapter we discuss how to interact with {brandname}'s source control repository.
 
 NOTE: As a convention, _upstream_ is used as the name of the link:http://github.com/infinispan/infinispan[] repository.
-This repository is the canonical repository for Infinispan.
+This repository is the canonical repository for {brandname}.
 We usually name _origin_ the fork on link:https://github.com[GitHub] of each contributor.
 So the exact meaning of _origin_ is relative to the developer: you could think of _origin_ as your own fork.
 
@@ -14,12 +14,12 @@ At very least, we recommend that you read link:http://progit.org/book/ch2-0.html
 link:http://progit.org/book/ch3-0.html[Chapter 3] and link:http://progit.org/book/ch5-0.html[Chapter 5] of _Pro Git_ before proceeding.
 
 === Repositories
-Infinispan uses link:http://github.com/infinispan/infinispan[] as its canonical repository, and this repository contains the stable code on master as well as the maintenance branches for previous minor versions (e.g., 5.0.x, 4.2.x, 4.1.x, etc)
+{brandname} uses link:http://github.com/infinispan/infinispan[] as its canonical repository, and this repository contains the stable code on master as well as the maintenance branches for previous minor versions (e.g., 5.0.x, 4.2.x, 4.1.x, etc)
 
 Typically, only _Project Admins_ would be able to push to this repository while all else may clone or fork the repository.
 
 === Roles
-The project assumes one of 2 _roles_ an individual may assume when interacting with the Infinispan codebase. The 2 roles here are:
+The project assumes one of 2 _roles_ an individual may assume when interacting with the {brandname} codebase. The 2 roles here are:
 
 .Roles
 *  _Contributor_
@@ -34,15 +34,15 @@ A contributor will only ever submit patches via GitHub's _pull request_ mechanis
 
 Contributors should _always_ fork the upstream project on GitHub and work off a clone of this fork.
 
-NOTE: All Infinispan core developers are considered contributors and work off personal forks of the upstream repository.
+NOTE: All {brandname} core developers are considered contributors and work off personal forks of the upstream repository.
 This allows for complex features to be developed in parallel without tripping up over one another.
-This process is certainly not restricted to just Infinispan core developers; any contributor should also participate in this manner.
+This process is certainly not restricted to just {brandname} core developers; any contributor should also participate in this manner.
 
 ===== Creating a pull request on GitHub
 
 image::images/git_wf_2.png[]
 
-In this workflow, the contributor forks the Infinispan upstream repository on GitHub, clones their fork, and makes changes to this private fork.
+In this workflow, the contributor forks the {brandname} upstream repository on GitHub, clones their fork, and makes changes to this private fork.
 When changes have been tested and are ready to be contributed back to the project, a _pull request_ is issued via GitHub so that one of the _Project Administrators_ can pull in the change.
 
 .Topic Branches
@@ -103,26 +103,26 @@ If your topic branch has been open for a while and you are afraid changes upstre
 . Continue your work on your topic branch.
 
 
-TIP:  If you are sharing your forked Infinispan repo with others, then do not rebase! Use a merge instead.
+TIP:  If you are sharing your forked {brandname} repo with others, then do not rebase! Use a merge instead.
 
 ===== Multi-step coordination between developers using forked repositories
 Sometimes a feature/task is rather complex to implement and requires competence from multiple areas of the projects.
-In such occasions it is not uncommon for developers to coordinate feature implementation using personal forks of Infinispan prior to finally issuing request to integrate into Infinispan main repository on GitHub.
+In such occasions it is not uncommon for developers to coordinate feature implementation using personal forks of {brandname} prior to finally issuing request to integrate into {brandname} main repository on GitHub.
 
-For example, developer A using his personal Infinispan fork creates a topic branch T and completes as much work as he/she can before requesting for assistance from developer B.
-Developer A pushes topic T to his personal Infinispan fork where developer B picks it up and brings it down to his local repo.
+For example, developer A using his personal {brandname} fork creates a topic branch T and completes as much work as he/she can before requesting for assistance from developer B.
+Developer A pushes topic T to his personal {brandname} fork where developer B picks it up and brings it down to his local repo.
 Developer B then in turn completes necessary work, commits his/her changes on branch T, and finally pushes back T to his own personal fork.
 After issuing request for pull to developer A, developer B waits for notification that developer A integrated his changes.
 This exchange can be repeated as much as it is necessary and can involve multiple developers.
 
 ====== A worked example
-This example assumes that developer A and B have added each others Infinispan forked repositories with the `git add remote` command.
-For example, developer B would add developer A's personal Infinispan fork repository with the command
+This example assumes that developer A and B have added each others {brandname} forked repositories with the `git add remote` command.
+For example, developer B would add developer A's personal {brandname} fork repository with the command
 
  git remote add devA https://github.com/developerA/infinispan.git
 
 . Developer A starts implementing feature ISPN-244 and works on a local topic branch `t_ISPN244`.
-Developer A pushes `t_ISPN244` to personal Infinispan fork. For example:
+Developer A pushes `t_ISPN244` to personal {brandname} fork. For example:
 
  git push origin t_ISPN244
 
@@ -144,7 +144,7 @@ All Project Admins do is pull in and merge changes from contributors (even if th
 
 NOTE: All Contributors who are also Project Admins are encouraged to not merge their own changes, to ensure that all changes are reviewed by someone else.
 
-This approach ensures Infinispan maintains quality on the main code source tree, and allows for important code reviews to take place again ensuring quality.
+This approach ensures {brandname} maintains quality on the main code source tree, and allows for important code reviews to take place again ensuring quality.
 Further, it ensures clean and easily traceable code history and makes sure that more than one person knows about the changes being performed.
 
 ===== Handling pull requests
@@ -192,10 +192,10 @@ No one should ever use this option unless unanimously approved on the public mai
 
 ===== Cutting releases
 Releases can only be cut by Project Admins, and must be done off a recently updated (`git fetch` and `git pull origin`) clone of the upstream repo.
-Infinispan's `bin/release.py` script takes care of the rest.
+{brandname}'s `bin/release.py` script takes care of the rest.
 
 ==== Release branches
-Infinispan has several main release branches. These are master (ongoing work on the current unstable release),
+{brandname} has several main release branches. These are master (ongoing work on the current unstable release),
 and maintenance branches for previous minor releases (e.g., `5.0.x`, `4.2.x`, `4.1.x`).
 Work should never be committed directly to any of these release branches directly; topic branches should always be used for work, and these topic branches should be merged in using the process outlined above.
 
@@ -205,7 +205,7 @@ As a result, best practices involve making frequent use of branches.
 Creating several topic branches a day, even, should not be considered excessive, and working on several topic branches simultaneously again should be commonplace.
 
 link:http://progit.org/book/ch3-4.html[Chapter 3, Section 4] of Pro Git has a detailed discussion of topic branches.
-For Infinispan, it makes sense to create a topic branch and name it after the JIRA it corresponds to. (if it doesn't correspond to a JIRA, a simple but descriptive name should be used).
+For {brandname}, it makes sense to create a topic branch and name it after the JIRA it corresponds to. (if it doesn't correspond to a JIRA, a simple but descriptive name should be used).
 
 ===== Topic Branches Affecting More Than One Release Branch
 Most topic branches will only affect a single release branch, e.g. features targeted at the current unstable release will only affect the master release branch.
@@ -264,7 +264,7 @@ Also, it is important to make sure you don't accidentally commit files for which
 This often happens with some IDEs. `git diff --check` should be run before you issue such a pull request, which will check for such "noise" commits and warn you accordingly.
 Such files should be reverted and not be committed to the branch.
 
-Adhering to link:chapter-1-The_Basics.html#style_requirements[Infinispan's code style] guidelines will help minimise "noise" commits.
+Adhering to link:chapter-1-The_Basics.html#style_requirements[{brandname}'s code style] guidelines will help minimise "noise" commits.
 Project Admins are going to ask contributors to reformat their code if necessary.
 
 === Keeping your repo in sync with upstream

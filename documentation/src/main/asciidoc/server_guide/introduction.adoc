@@ -1,12 +1,12 @@
-== About the Infinispan Server
-Infinispan Server is a standalone server which exposes any number of caches to clients over a variety of protocols, including HotRod, Memcached and REST.
+== About the {brandname} Server
+{brandname} Server is a standalone server which exposes any number of caches to clients over a variety of protocols, including HotRod, Memcached and REST.
 The server itself is built on top of the robust foundation provided by WildFly, therefore delegating services such as management, configuration, datasources, transactions, logging, security to the respective subsystems.
-Because Infinispan Server is closely tied to the latest releases of Infinispan and JGroups, the subsystems which control these components are different, in that they introduce new features and change some existing ones (e.g. cross-site replication, etc).
-For this reason, the configuration of these subsystems should use the Infinispan Server-specific schema, although for most use-cases the configuration is interchangeable.
+Because {brandname} Server is closely tied to the latest releases of {brandname} and JGroups, the subsystems which control these components are different, in that they introduce new features and change some existing ones (e.g. cross-site replication, etc).
+For this reason, the configuration of these subsystems should use the {brandname} Server-specific schema, although for most use-cases the configuration is interchangeable.
 See the Configuration section for more information.
 
 == Getting Started
-To get started using the server, download the Infinispan Server distribution, unpack it to a local directory and launch it using the +bin/standalone.sh+ or +bin/standalone.bat+ scripts depending on your platform.
+To get started using the server, download the {brandname} Server distribution, unpack it to a local directory and launch it using the +bin/standalone.sh+ or +bin/standalone.bat+ scripts depending on your platform.
 This will start a single-node server using the +standalone/configuration/standalone.xml+ configuration file, with four endpoints, one for each of the supported protocols.
-These endpoints allow access to all of the caches configured in the Infinispan subsystem (apart from the Memcached endpoint which, because of the protocol's design, only allows access to a single cache).
+These endpoints allow access to all of the caches configured in the {brandname} subsystem (apart from the Memcached endpoint which, because of the protocol's design, only allows access to a single cache).
 

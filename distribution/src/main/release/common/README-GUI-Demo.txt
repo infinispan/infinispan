@@ -1,9 +1,9 @@
-Infinispan GUI Demo
+${infinispan.brand.name} GUI Demo
 -------------------
 
-Infinispan comes with a GUI demo, to visually demonstrate state being moved around a cluster.
+${infinispan.brand.name} comes with a GUI demo, to visually demonstrate state being moved around a cluster.
 
-The demo is packaged in the infinispan-<version>-all.ZIP and infinispan-<version>-bin.ZIP distributions.
+The demo is packaged in the ${infinispan.brand.prefix}-<version>-all.ZIP and ${infinispan.brand.prefix}-<version>-bin.ZIP distributions.
 
 The demo can be launched using the bin/runGuiDemo.sh script from the project root.  Note that the configuration file
 used by the demo can be changed by modifying runGuiDemo.sh to pass in
@@ -17,7 +17,7 @@ instances.
 Alternatively, you can pass the config file directly to runGuiDemo.sh, e.g. runGuiDemo.sh config-samples/relay1.xml.
 
 
-Running the Infinispan GUI demo over 2 data centers
+Running the ${infinispan.brand.name} GUI demo over 2 data centers
 ---------------------------------------------------
 
 If you have 2 local clusters (data centers), you can use JGroups' RELAY to bridge the 2 and make them appear as if they
@@ -25,7 +25,7 @@ were a (virtual) global cluster. Consult the JGroups manual on www.jgroups.org f
 
 There are 5 configuration files in config-samples which are needed to do this:
 
-* relay1.xml and relay2.xml: these configure an Infinispan instance. The relay1.xml configuration points to
+* relay1.xml and relay2.xml: these configure an ${infinispan.brand.name} instance. The relay1.xml configuration points to
   config-samples/jgroups-relay1.xml, which is the JGroups configuration including RELAY. Same for relay2.xml.
 
 * jgroups-relay1.xml and jgroups-relay2.xml define configurations for 2 different local clusters (data centers): they

@@ -1,12 +1,12 @@
 == Architectural Overview [[arch:overview]]
 
-This section contains a high level overview of Infinispan's internal
+This section contains a high level overview of {brandname}'s internal
 architecture.  This document is geared towards people with an interest in
-extending or enhancing Infinispan, or just curious about Infinispan’s internals.
+extending or enhancing {brandname}, or just curious about {brandname}’s internals.
 
 === Cache hierarchy
 
-Infinispan's Cache interface extends the JRE's ConcurrentMap interface
+{brandname}'s Cache interface extends the JRE's ConcurrentMap interface
 which provides for a familiar and easy-to-use API.
 
 [source,java]
@@ -95,7 +95,7 @@ command, one in turn, until all registered interceptors visit the command.
 The class to note is the
 link:://{javadocroot}/org/infinispan/interceptors/base/CommandInterceptor.html[CommandInterceptor].
 This abstract class implements the interceptor pattern, and also implements
-Visitor.  Infinispan's interceptors extend CommandInterceptor, and these add
+Visitor.  {brandname}'s interceptors extend CommandInterceptor, and these add
 specific behaviour to specific commands, such as distribution across a network
 or writing through to disk.
 

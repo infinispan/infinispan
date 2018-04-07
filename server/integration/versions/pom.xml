@@ -17,11 +17,9 @@
    <description>Infinispan Server - BOM</description>
 
    <properties>
-      <product.version>${project.version}</product.version>
-      <product.name>infinispan-server</product.name>
       <maven.compiler.target>1.8</maven.compiler.target>
       <maven.compiler.source>1.8</maven.compiler.source>
-      <server.output.dir.prefix>infinispan-server</server.output.dir.prefix>
+      <server.output.dir.prefix>${infinispan.brand.prefix}-server</server.output.dir.prefix>
       <forkJvmArgs>-Xmx500m ${testjvm.commonArgs}</forkJvmArgs>
       <testjvm.jigsawArgs/>
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>

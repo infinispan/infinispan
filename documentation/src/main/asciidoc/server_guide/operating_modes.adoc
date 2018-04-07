@@ -1,5 +1,5 @@
 == Operating modes
-Infinispan Server, like WildFly, can be booted in two different modes: standalone and domain.
+{brandname} Server, like WildFly, can be booted in two different modes: standalone and domain.
 
 === Standalone mode
 For simple configurations, standalone mode is the easiest to start with.
@@ -27,27 +27,27 @@ Each "Host" box in the above diagram represents a physical or virtual host. A ph
 
 ===== Host Controller
 When the +domain.sh+ or +domain.bat+ script is run on a host, a process known as a Host Controller is launched.
-The Host Controller is solely concerned with server management; it does not itself handle Infinispan server workloads.
-The Host Controller is responsible for starting and stopping the individual Infinispan server processes that run on its host, and interacts with the Domain Controller to help manage them.
+The Host Controller is solely concerned with server management; it does not itself handle {brandname} server workloads.
+The Host Controller is responsible for starting and stopping the individual {brandname} server processes that run on its host, and interacts with the Domain Controller to help manage them.
 
-Each Host Controller by default reads its configuration from the domain/configuration/host.xml file located in the Infinispan Server installation on its host's filesystem.
+Each Host Controller by default reads its configuration from the domain/configuration/host.xml file located in the {brandname} Server installation on its host's filesystem.
 The host.xml file contains configuration information that is specific to the particular host.
 Primarily:
 
-* the listing of the names of the actual Infinispan Server instances that are meant to run off of this installation.
+* the listing of the names of the actual {brandname} Server instances that are meant to run off of this installation.
 * configuration of how the Host Controller is to contact the Domain Controller to register itself and access the domain configuration. This may either be configuration of how to find and contact a remote Domain Controller, or a configuration telling the Host Controller to itself act as the Domain Controller.
 * configuration of items that are specific to the local physical installation. For example, named interface definitions declared in domain.xml (see below) can be mapped to an actual machine-specific IP address in host.xml. Abstract path names in domain.xml can be mapped to actual filesystem paths in host.xml.
 
 ==== Domain Controller
 One Host Controller instance is configured to act as the central management point for the entire domain, i.e. to be the Domain Controller.
-The primary responsibility of the Domain Controller is to maintain the domain's central management policy, to ensure all Host Controllers are aware of its current contents, and to assist the Host Controllers in ensuring any running Infinispan server instances are configured in accordance with this policy.
-This central management policy is stored by default in the domain/configuration/domain.xml file in the Infinispan Server installation on Domain Controller's host's filesystem.
+The primary responsibility of the Domain Controller is to maintain the domain's central management policy, to ensure all Host Controllers are aware of its current contents, and to assist the Host Controllers in ensuring any running {brandname} server instances are configured in accordance with this policy.
+This central management policy is stored by default in the domain/configuration/domain.xml file in the {brandname} Server installation on Domain Controller's host's filesystem.
 
 A +domain.xml+ file must be located in the +domain/configuration+ directory of an installation that's meant to run the Domain Controller.
 It does not need to be present in installations that are not meant to run a Domain Controller; i.e. those whose Host Controller is configured to contact a remote Domain Controller.
 The presence of a +domain.xml+ file on such a server does no harm.
 
-The +domain.xml+ file includes, among other things, the configuration of the various "profiles" that Infinispan Server instances in the domain can be configured to run.
+The +domain.xml+ file includes, among other things, the configuration of the various "profiles" that {brandname} Server instances in the domain can be configured to run.
 A profile configuration includes the detailed configuration of the various subsystems that comprise that profile (e.g. Cache Containers and Caches, Endpoints, Security Realms, DataSources, etc).
 The domain configuration also includes the definition of groups of sockets that those subsystems may open. The domain configuration also includes the definition of "server groups".
 
@@ -57,10 +57,10 @@ In a managed domain each application server instance is a member of a server gro
 Even if the group only has a single server, the server is still a member of a group.
 It is the responsibility of the Domain Controller and the Host Controllers to ensure that all servers in a server group have a consistent configuration.
 They should all be configured with the same profile and they should have the same deployment content deployed.
-To keep things simple, ensure that all the nodes that you want to belong to an Infinispan cluster are configured as servers of one server group.
+To keep things simple, ensure that all the nodes that you want to belong to an {brandname} cluster are configured as servers of one server group.
 
-The domain can have multiple server groups, i.e. multiple Infinispan clusters.
-Different server groups can be configured with different profiles and deployments; for example in a domain with different Infinispan Server clusters ﻿providing different services.
+The domain can have multiple server groups, i.e. multiple {brandname} clusters.
+Different server groups can be configured with different profiles and deployments; for example in a domain with different {brandname} Server clusters ﻿providing different services.
 Different server groups can also run the same profile and have the same deployments.
 
 An example server group definition is as follows:
@@ -87,7 +87,7 @@ In addition, the following optional elements are available:
 * jvm -- default jvm settings for all servers in the group. The Host Controller will merge these settings with any provided in host.xml to derive the settings to use to launch the server's JVM. See JVM settings for further details.
 
 ==== Server
-Each "Server" in the above diagram represents an actual Infinispan Server node.
+Each "Server" in the above diagram represents an actual {brandname} Server node.
 The server runs in a separate JVM process from the Host Controller.
 The Host Controller is responsible for launching that process.
 In a managed domain the end user cannot directly launch a server process from the command line.

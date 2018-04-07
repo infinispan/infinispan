@@ -1,6 +1,6 @@
 === Scripting
 
-Scripting is a feature of Infinispan Server which allows invoking server-side scripts from remote clients.
+Scripting is a feature of {brandname} Server which allows invoking server-side scripts from remote clients.
 Scripting leverages the JDK's javax.script ScriptEngines, therefore allowing the use of any JVM languages which offer one.
 By default, the JDK comes with Nashorn, a ScriptEngine capable of running JavaScript.
 
@@ -51,7 +51,7 @@ retrieve, store and work with parameters.
 Since the execution mode is a characteristic of the script, nothing special needs to be done on the client to invoke scripts in different modes.
 
 ==== Script bindings
-The script engine within Infinispan exposes several internal objects as bindings in the scope of the script execution.
+The script engine within {brandname} exposes several internal objects as bindings in the scope of the script execution.
 These are:
 
 * cache: the cache against which the script is being executed

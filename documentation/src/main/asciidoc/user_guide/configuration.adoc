@@ -1,19 +1,19 @@
 ===  Configuration
 
-Infinispan offers both declarative and programmatic configuration.
+{brandname} offers both declarative and programmatic configuration.
 
 ====  Configuring caches declaratively
 
-Declarative configuration comes in a form of XML document that adheres to a provided Infinispan configuration XML
+Declarative configuration comes in a form of XML document that adheres to a provided {brandname} configuration XML
 link:http://www.infinispan.org/schemas/infinispan-config-{infinispanversion}.xsd[schema].
 
-Every aspect of Infinispan that can be configured declaratively can also be configured programmatically.
+Every aspect of {brandname} that can be configured declaratively can also be configured programmatically.
 In fact, declarative configuration, behind the scenes, invokes the programmatic configuration API as the XML configuration file is being processed.
 One can even use a combination of these approaches.
 For example, you can read static XML configuration files and at runtime programmatically tune that same configuration.
 Or you can use a certain static configuration defined in XML as a starting point or template for defining additional configurations in runtime.
 
-There are two main configuration abstractions in Infinispan: `global` and `cache`.
+There are two main configuration abstractions in {brandname}: `global` and `cache`.
 
 .Global configuration
 Global configuration defines global settings shared among all cache instances created by a single link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html[EmbeddedCacheManager].
@@ -25,14 +25,14 @@ You can specify as many named cache configurations as you need. One of these cac
 which is the cache returned by the `CacheManager.getCache()` API, whereas other named caches are retrieved via the `CacheManager.getCache(String name)` API.
 
 Whenever they are specified, named caches inherit settings from the default cache while additional behavior can be specified or overridden.
-Infinispan also provides a very flexible inheritance mechanism, where you can define a hierarchy of configuration templates,
+{brandname} also provides a very flexible inheritance mechanism, where you can define a hierarchy of configuration templates,
 allowing multiple caches to share the same settings, or overriding specific parameters as necessary.
 
 NOTE: Embedded and Server configuration use different schemas, but we strive to maintain them as compatible as possible so that you
 can easily migrate between the two.
 
 
-One of the major goals of Infinispan is to aim for zero configuration.
+One of the major goals of {brandname} is to aim for zero configuration.
 A simple XML configuration file containing nothing more than a single infinispan element is enough to get you started.
 The configuration file listed below provides sensible defaults and is perfectly valid.
 
@@ -47,8 +47,8 @@ The configuration file listed below provides sensible defaults and is perfectly 
 However, that would only give you the most basic, local mode, non-clustered cache manager with no caches.
 Non-basic configurations are very likely to use customized global and default cache elements.
 
-Declarative configuration is the most common approach to configuring Infinispan cache instances.
-In order to read XML configuration files one would typically construct an instance of DefaultCacheManager by pointing to an XML file containing Infinispan configuration.
+Declarative configuration is the most common approach to configuring {brandname} cache instances.
+In order to read XML configuration files one would typically construct an instance of DefaultCacheManager by pointing to an XML file containing {brandname} configuration.
 Once the configuration file is read you can obtain reference to the default cache instance.
 
 [source,java]
@@ -70,7 +70,7 @@ Cache someNamedCache = manager.getCache("someNamedCache");
 The name of the default cache is defined in the `<cache-container>` element of the XML configuration file, and additional
 caches can be configured using the `<local-cache>`,`<distributed-cache>`,`<invalidation-cache>` or `<replicated-cache>` elements.
 
-The following example shows the simplest possible configuration for each of the cache types supported by Infinispan:
+The following example shows the simplest possible configuration for each of the cache types supported by {brandname}:
 
 [source,xml]
 ----
@@ -89,7 +89,7 @@ The following example shows the simplest possible configuration for each of the 
 
 ===== Cache configuration templates
 
-As mentioned above, Infinispan supports the notion of _configuration templates_. These are full or partial configuration
+As mentioned above, {brandname} supports the notion of _configuration templates_. These are full or partial configuration
 declarations which can be shared among multiple caches or as the basis for more complex configurations.
 
 The following example shows how a configuration named `local-template` is used to define a cache named `local`.
@@ -172,11 +172,11 @@ NOTE: If a cache name matches multiple wildcards, i.e. it is ambiguous, an excep
 ===== Declarative configuration reference
 
 For more details on the declarative configuration schema, refer to the link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs[configuration reference].
-If you are using XML editing tools for configuration writing you can use the provided Infinispan link:http://infinispan.org/schemas/infinispan-config-{infinispanversion}.xsd[schema] to assist you.
+If you are using XML editing tools for configuration writing you can use the provided {brandname} link:http://infinispan.org/schemas/infinispan-config-{infinispanversion}.xsd[schema] to assist you.
 
 ====  Configuring caches programmatically
-Programmatic Infinispan configuration is centered around the CacheManager and ConfigurationBuilder API.
-Although every single aspect of Infinispan configuration could be set programmatically, the most usual approach is to create a starting point in a form of XML configuration file and then in runtime, if needed, programmatically tune a specific configuration to suit the use case best.
+Programmatic {brandname} configuration is centered around the CacheManager and ConfigurationBuilder API.
+Although every single aspect of {brandname} configuration could be set programmatically, the most usual approach is to create a starting point in a form of XML configuration file and then in runtime, if needed, programmatically tune a specific configuration to suit the use case best.
 
 [source,java]
 ----
@@ -239,7 +239,7 @@ This approach can be used for both the global and the cache level configuration.
 GlobalConfiguration objects are constructed using GlobalConfigurationBuilder while Configuration objects are built using ConfigurationBuilder.
 Let's look at some examples on configuring both global and cache level options with this API:
 
-One of the most commonly configured global option is the transport layer, where you indicate how an Infinispan node will discover the others:
+One of the most commonly configured global option is the transport layer, where you indicate how an {brandname} node will discover the others:
 
 [source,java]
 ----
@@ -280,7 +280,7 @@ GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
 
 ----
 
-Some of the Infinispan features are powered by a group of the thread pool executors which can also be tweaked at this global level. For example:
+Some of the {brandname} features are powered by a group of the thread pool executors which can also be tweaked at this global level. For example:
 
 [source,java]
 ----
@@ -319,7 +319,7 @@ Configuration config = new ConfigurationBuilder()
 
 ----
 
-An application might also want to interact with an Infinispan cache within the boundaries of JTA and to do that you need to configure the transaction layer and optionally tweak the locking settings. When interacting with transactional caches, you might want to enable recovery to deal with transactions that finished with an heuristic outcome and if you do that, you will often want to enable JMX management and statistics gathering too:
+An application might also want to interact with an {brandname} cache within the boundaries of JTA and to do that you need to configure the transaction layer and optionally tweak the locking settings. When interacting with transactional caches, you might want to enable recovery to deal with transactions that finished with an heuristic outcome and if you do that, you will often want to enable JMX management and statistics gathering too:
 
 [source,java]
 ----
@@ -336,7 +336,7 @@ Configuration config = new ConfigurationBuilder()
 
 ----
 
-Configuring Infinispan with chained cache stores is simple too:
+Configuring {brandname} with chained cache stores is simple too:
 
 [source,java]
 ----
@@ -378,8 +378,8 @@ Configuration config = new ConfigurationBuilder()
 For information on the individual configuration options, please check the link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/[configuration guide] .
 
 ====  Configuration Migration Tools
-The configuration format of Infinispan has changed since version 6.0 in order to align the embedded schema with the one used
-by the server. For this reason, when upgrading to Infinispan 7.x or later, you should use the configuration converter included in the
+The configuration format of {brandname} has changed since version 6.0 in order to align the embedded schema with the one used
+by the server. For this reason, when upgrading to {brandname} 7.x or later, you should use the configuration converter included in the
 _all_ distribution. Simply invoke it from the command-line passing the old configuration file as the first parameter and the name
 of the converted file as the second parameter.
 
@@ -404,8 +404,8 @@ bin\config-converter.bat oldconfig.xml newconfig.xml
 TIP: If you wish to help write conversion tools from other caching systems, please contact link:https://lists.jboss.org/mailman/listinfo/infinispan-dev[infinispan-dev].
 
 ====  Clustered Configuration
-Infinispan uses link:http://www.jgroups.org[JGroups] for network communications when in clustered mode.
-Infinispan ships with _pre-configured_ JGroups stacks that make it easy for you to jump-start a clustered configuration.
+{brandname} uses link:http://www.jgroups.org[JGroups] for network communications when in clustered mode.
+{brandname} ships with _pre-configured_ JGroups stacks that make it easy for you to jump-start a clustered configuration.
 
 ===== Using an external JGroups file
 If you are configuring your cache programmatically, all you need to do is:
@@ -419,7 +419,7 @@ GlobalConfiguration gc = new GlobalConfigurationBuilder()
 
 ----
 
-and if you happen to use an XML file to configure Infinispan, just use:
+and if you happen to use an XML file to configure {brandname}, just use:
 
 [source,xml]
 ----
@@ -438,10 +438,10 @@ and if you happen to use an XML file to configure Infinispan, just use:
 
 ----
 
-In both cases above, Infinispan looks for _jgroups.xml_ first in your classpath, and then for an absolute path name if not found in the classpath.
+In both cases above, {brandname} looks for _jgroups.xml_ first in your classpath, and then for an absolute path name if not found in the classpath.
 
 ===== Use one of the pre-configured JGroups files
-Infinispan ships with a few different JGroups files (packaged in infinispan-core.jar) which means they will already be on your classpath by default.
+{brandname} ships with a few different JGroups files (packaged in infinispan-core.jar) which means they will already be on your classpath by default.
 All you need to do is specify the file name, e.g., instead of `jgroups.xml` above, specify `/default-configs/default-jgroups-tcp.xml`.
 
 The configurations available are:
@@ -498,5 +498,5 @@ $ java -cp ... -Djgroups.tcp.port=1234 -Djgroups.tcp.address=10.11.12.13
 ===== Further reading
 JGroups also supports more system property overrides, details of which can be found on this page: link:http://www.jgroups.org/manual4/index.html#SystemProperties[SystemProps]
 
-In addition, the JGroups configuration files shipped with Infinispan are intended as a jumping off point to getting something up and running, and working.  More often than not though, you will want to fine-tune your JGroups stack further to extract every ounce of performance from your network equipment.  For this, your next stop should be the JGroups manual which has a link:http://jgroups.org/manual/html/protlist.html[detailed section] on configuring each of the protocols you see in a JGroups configuration file.
+In addition, the JGroups configuration files shipped with {brandname} are intended as a jumping off point to getting something up and running, and working.  More often than not though, you will want to fine-tune your JGroups stack further to extract every ounce of performance from your network equipment.  For this, your next stop should be the JGroups manual which has a link:http://jgroups.org/manual/html/protlist.html[detailed section] on configuring each of the protocols you see in a JGroups configuration file.
 

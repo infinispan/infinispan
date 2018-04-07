@@ -13,7 +13,7 @@ image::images/xdc.png[Cross-site datacenters]
 * there are 3 sites: LON, NYC and SFO.
 
 
-* in each site there is a running Infinispan cluster with a (potentially) different number of physical nodes: 3 nodes in LON, 4 nodes in NYC and 3 nodes in SFO
+* in each site there is a running {brandname} cluster with a (potentially) different number of physical nodes: 3 nodes in LON, 4 nodes in NYC and 3 nodes in SFO
 
 
 * the "users" cache is active in LON, NYC and SFO. Updates on the "users" cache in any of these sites gets replicated to the other sites as well
@@ -41,7 +41,7 @@ The cross-site replication configuration spreads over the following files:
 .  RELAY2 configuration file: RELAY2 has an own configuration file ( link:https://gist.github.com/maniksurtani/8c7238dae7921d2c883e[relay2.xml] )
 
 
-.  the JGroups channel that is used by RELAY2 has its own configuration file (link:https://gist.github.com/maniksurtani/cbc1a297a367b1176feb[jgroups-relay2.xml]) Infinispan XML configuration file
+.  the JGroups channel that is used by RELAY2 has its own configuration file (link:https://gist.github.com/maniksurtani/cbc1a297a367b1176feb[jgroups-relay2.xml]) {brandname} XML configuration file
 
 The local site is defined in the the global configuration section. The local is the site where the node using this configuration file resides (in the example above local site is "LON").
 
@@ -171,7 +171,7 @@ For both transactional and non-transactional caches, the backup calls are perfor
 In the case of non-transactional caches the replication happens during each operation. Given that data is sent in parallel to backups and local caches, it is possible for the operations to succeed locally and fail remotely, or the other way, causing inconsistencies
 
 ==== Transactional caches
-For synchronous transactional caches, Infinispan internally uses a two phase commit protocol: lock acquisition during the 1st phase (prepare) and apply changes during the 2nd phase (commit). For asynchronous caches the two phases are merged, the "apply changes" message being sent asynchronously to the owners of data. This 2PC protocol maps to 2PC received from the JTA transaction manager. For transactional caches, both optimistic and pessimistic, the backup to remote sites happens during the prepare and commit phase only.
+For synchronous transactional caches, {brandname} internally uses a two phase commit protocol: lock acquisition during the 1st phase (prepare) and apply changes during the 2nd phase (commit). For asynchronous caches the two phases are merged, the "apply changes" message being sent asynchronously to the owners of data. This 2PC protocol maps to 2PC received from the JTA transaction manager. For transactional caches, both optimistic and pessimistic, the backup to remote sites happens during the prepare and commit phase only.
 
 ===== Synchronous local cluster with async backup
 In this scenario the backup call happens during local commit phase(2nd phase). That means that if the local prepare fails, no remote data is being sent to the remote backup.
@@ -249,7 +249,7 @@ In order to bring a site back online after being taken offline, one can use the 
 
 === State Transfer between sites
 
-NOTE: This feature is available since Infinispan *7.0.0.Alpha2*
+NOTE: This feature is available since {brandname} *7.0.0.Alpha2*
 
 When a new site is bough back online, it is necessary to re-sync the site with the most recent updates. This feature
 allows state to be transferred from one site to another.

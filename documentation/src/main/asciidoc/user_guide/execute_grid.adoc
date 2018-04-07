@@ -2,8 +2,8 @@
 
 The main benefit of a Cache is the ability to very quickly lookup a value
 by its key, even across machines. In fact this use alone is probably the reason
-many users use Infinispan. However Infinispan can provide many more benefits
-that aren't immediately apparent. Since Infinispan is usually used in
+many users use {brandname}. However {brandname} can provide many more benefits
+that aren't immediately apparent. Since {brandname} is usually used in
 a cluster of machines we also have features available that can help utilize
 the entire cluster for performing the user's desired workload.
 
@@ -121,7 +121,7 @@ circle over a total number of darts shot we will approximate Ca/Sa value. Since
 we know that pi = 4 * Ca/Sa we can easily derive approximate value of pi. The
 more darts we shoot the better approximation we get. In the example below we
 shoot 1 billion darts but instead of "shooting" them serially we parallelize
-work of dart shooting across the entire Infinispan cluster. Note this will
+work of dart shooting across the entire {brandname} cluster. Note this will
 work in a cluster of 1 was well, but will be slower.
 
 

@@ -1,13 +1,13 @@
-= Contributing to Infinispan
-The Infinispan community
+= Contributing to {brandname}
+The {brandname} community
 :toc2:
 :icons: font
 :toclevels: 2
 :numbered:
 
-Feel like contributing to Infinispan?  This guide will help you set up your
+Feel like contributing to {brandname}?  This guide will help you set up your
 environment, walk you through best practices, and help you debug, improve
-and add features to Infinispan.
+and add features to {brandname}.
 
 include::basics.adoc[]
 include::source_control.adoc[]

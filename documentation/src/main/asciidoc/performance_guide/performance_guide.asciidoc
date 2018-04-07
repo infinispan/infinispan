@@ -1,16 +1,16 @@
-= Infinispan {infinispanversion} Performance Guide
-The Infinispan community
+= {brandname} {infinispanversion} Performance Guide
+The {brandname} community
 :toc2:
 :icons: font
 :toclevels: 3
 :numbered:
 :stem:
 
-This guide will give you information and tweaks about tuning Infinispan performance (both server and library mode).
+This guide will give you information and tweaks about tuning {brandname} performance (both server and library mode).
 
 == Capacity planning
 
-Data in Infinispan is either stored as plain Java objects or in a serialized form, depending on operating mode (embedded or server) or on specific configuration options link:../user_guide/user_guide.html#store_as_binary[store-as-binary].
+Data in {brandname} is either stored as plain Java objects or in a serialized form, depending on operating mode (embedded or server) or on specific configuration options link:../user_guide/user_guide.html#store_as_binary[store-as-binary].
 Data size can be estimated using sophisticated tools like  http://openjdk.java.net/projects/code-tools/jol/[Java Object Layout]
 and the total amount of required memory can be roughly estimated using the following formulas:
 
@@ -46,9 +46,9 @@ Where:
 
 Calculated amount of memory should be used for setting `Xmx` and `Xms` parameters.
 
-JVM as well as Infinispan require additional memory for other tasks like searches, allocating network buffers etc.
-It is advised to allocate no more than 50% of memory with living data when using Infinispan solely as a caching data store, and
-no more than 33% of memory with living data when using Infinispan to store and analyze the data using querying, distributed execution or distributed streams.
+JVM as well as {brandname} require additional memory for other tasks like searches, allocating network buffers etc.
+It is advised to allocate no more than 50% of memory with living data when using {brandname} solely as a caching data store, and
+no more than 33% of memory with living data when using {brandname} to store and analyze the data using querying, distributed execution or distributed streams.
 
 When considering large heaps, make sure there's enough CPU to perform garbage collection efficiently.
 
@@ -59,7 +59,7 @@ Below is a list of helpful configuration parameters and a guide how to adjust th
 
 === Memory settings
 
-Adjusting memory size is one of the most crucial step in Infinispan tuning. The most commonly used JVM flags are:
+Adjusting memory size is one of the most crucial step in {brandname} tuning. The most commonly used JVM flags are:
 
 * `-Xms` - Defines the minimum heap size allowed.
 * `-Xmx` - Defines the maximum heap size allowed.
@@ -67,11 +67,11 @@ Adjusting memory size is one of the most crucial step in Infinispan tuning. The 
 * `-XX:NewRatio` - Define the ratio between young and old generations. Should not be used if -Xmn is enabled.
 
 Using `Xms` equal to `Xmx` will prevent JVM from dynamically sizing memory and might decrease GC pauses caused by resizing. 
-It is a good practice to specify `Xmn` parameter. This guaranteed proper behavior during load peak (in such case Infinispan generates lots of small, short living objects).
+It is a good practice to specify `Xmn` parameter. This guaranteed proper behavior during load peak (in such case {brandname} generates lots of small, short living objects).
 
 === Garbage collection
 
-The main goal is to minimize the amount of time when JVM is paused. Having said that, CMS is a suggested GC for Infinispan applications.
+The main goal is to minimize the amount of time when JVM is paused. Having said that, CMS is a suggested GC for {brandname} applications.
 
 The most frequently used JVM flags are:
 
@@ -116,7 +116,7 @@ In most of the cases we suggest using CMS. However when using the latest JVM, G1
 
 == Network configuration
 
-Infinispan uses TCP/IP for sending packets over the network (for both cluster communication when using TCP stack or when communication with Hot Rod clients)
+{brandname} uses TCP/IP for sending packets over the network (for both cluster communication when using TCP stack or when communication with Hot Rod clients)
 
 In order to achieve the best results, it is recommended to increase TCP send and receive window size (refer to you OS manual for instructions).
 The recommended values are:
@@ -174,7 +174,7 @@ cb.unsafe().unreliableReturnValues(true);
 
 === Use `Externalizer` for marshalling
 
-Infinispan uses JBoss Marshalling to transfer objects over the wire. The most efficient way to marshall user data is to provide an AdvancedExternalizer.
+{brandname} uses JBoss Marshalling to transfer objects over the wire. The most efficient way to marshall user data is to provide an AdvancedExternalizer.
 This solutions prevents JBoss Marshalling from sending class name over the network and allows to save some bandwidth:
 
 [source,java]
@@ -251,7 +251,7 @@ If your strings are mostly ASCII, convert them to `UTF-8` and store them as `byt
 
 === Use simple cache for local caches
 
-When you don't need the full feature set of caches, you can set local cache to "simple" mode and achieve non-trivial speedup while still using Infinispan API.
+When you don't need the full feature set of caches, you can set local cache to "simple" mode and achieve non-trivial speedup while still using {brandname} API.
 
 This is an example comparison of the difference, randomly reading/writing into cache with 2048 entries as executed on 2x8-core Intel(R) Xeon(R) CPU E5-2640 v3 @ 2.60GHz:
 
@@ -264,7 +264,7 @@ This is an example comparison of the difference, randomly reading/writing into c
 | CHM          | 60,592,770 ± 924,368 | 23,533,141 ± 98,632 | 1,369,521,754 ± 4,919,753 | 75,839,121 ± 3,319,835
 |===
 
-The CHM shows comparison for ConcurrentHashMap from JSR-166 with pluggable equality/hashCode function, which is used as the underlying storage in Infinispan.
+The CHM shows comparison for ConcurrentHashMap from JSR-166 with pluggable equality/hashCode function, which is used as the underlying storage in {brandname}.
 
 Even though we use http://openjdk.java.net/projects/code-tools/jmh/[JMH] to prevent some common pitfals of microbenchmarking, consider these results only aproximative. Your mileage may vary.
 

@@ -1,10 +1,10 @@
-==  Downloading and installing Infinispan
+==  Downloading and installing {brandname}
 
-To run Infinispan, you'll need
+To run {brandname}, you'll need
 
 * A Java 1.8 JDK
-* Maven 3.2+, if you wish to use the quickstart examples or create a new project using Infinispan link:../getting_started/getting_started.html#maven_archetypes[archetype] 
-* the Infinispan link:http://infinispan.org/download/[distribution zip], if you wish to use Infinispan in server mode, or want to use the jars in an ant project
+* Maven 3.2+, if you wish to use the quickstart examples or create a new project using {brandname} link:../getting_started/getting_started.html#maven_archetypes[archetype]
+* the {brandname} link:http://infinispan.org/download/[distribution zip], if you wish to use {brandname} in server mode, or want to use the jars in an ant project
 
 TIP: If you already have any of these pieces of software, there is no need to install them again!
 
@@ -21,10 +21,10 @@ You can check which version of Maven you have installed (if any) by running mvn 
 
 TIP: You can also deploy the examples using your favorite IDE. We provide instructions for using Eclipse only.
 
-=== Infinispan
-Finally, download Infinispan from the Infinispan link:http://www.infinispan.org/download[downloads] page.
+=== {brandname}
+Finally, download {brandname} from the {brandname} link:http://www.infinispan.org/download[downloads] page.
 
-==== Getting Infinispan from Maven
+==== Getting {brandname} from Maven
 Add to your pom:
 
 <dependency>
@@ -33,8 +33,8 @@ Add to your pom:
 	<version>8.2.0.Final</version>
 </dependency>
 
-==== Installing Infinispan inside Apache Karaf
-The Infinispan jars contain the required OSGi manifest headers and can be used
+==== Installing {brandname} inside Apache Karaf
+The {brandname} jars contain the required OSGi manifest headers and can be used
 inside OSGi runtime environments as OSGi bundles. In addition to them you will
 need to install the required 3rd party dependencies. You can install them
 one by one if you wish but to make things easier for you we are providing Apache
@@ -75,7 +75,7 @@ which will install all the features defined in that repository:
 
  karaf@root()> feature:repo-add -i mvn:org.infinispan/infinispan-core/${version}/xml/features
 
-This should get you started using Infinispan in library mode. To get additional
+This should get you started using {brandname} in library mode. To get additional
 functionality just install the corresponding features. For example to use the
 LevelDB cachestore install:
 
@@ -86,7 +86,7 @@ using the format:
 
  mvn:<groupId>/<artifactId>/<version>/xml/features
 
-To use Infinispan in client/server mode install the Hot Rod Client feature:
+To use {brandname} in client/server mode install the Hot Rod Client feature:
 
  karaf@root()> feature:repo-add -i mvn:org.infinispan/infinispan-client-hotrod/${version}/xml/features
 

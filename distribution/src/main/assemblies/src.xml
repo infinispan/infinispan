@@ -13,7 +13,7 @@
     </formats>
 
     <includeBaseDirectory>true</includeBaseDirectory>
-    <baseDirectory>infinispan-${project.version}-src</baseDirectory>
+    <baseDirectory>${infinispan.brand.prefix}-${project.version}-src</baseDirectory>
 
     <fileSets>
         <fileSet>

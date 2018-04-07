@@ -1,7 +1,7 @@
 == Multimap Cache
 
-Infinispan Multimap Cache is a new distributed and clustered collection type introduced in Infinispan 9.2.
-MutimapCache is a type of Infinispan Cache that maps keys to values in which each key can contain multiple values.
+{brandname} Multimap Cache is a new distributed and clustered collection type introduced in {brandname} 9.2.
+MutimapCache is a type of {brandname} Cache that maps keys to values in which each key can contain multiple values.
 
 === Installation and configuration
 

@@ -1,12 +1,12 @@
-= Getting Started with Infinispan {infinispanversion}
-The Infinispan community
+= Getting Started with {brandname} {infinispanversion}
+The {brandname} community
 :toc2:
 :icons: font
 :toclevels: 2
 :numbered:
 
 
-This is a guide to getting started with Infinispan.
+This is a guide to getting started with {brandname}.
 It is meant to be read alongside the more complete link:../user_guide/user_guide.html[User Guide],
 and as a supplement to the link:http://infinispan.org/tutorials[Tutorials] that have been made available.
 

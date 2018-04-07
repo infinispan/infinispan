@@ -1,14 +1,14 @@
-== Extending Infinispan
-Infinispan can be extended to provide the ability for an end user to add
+== Extending {brandname}
+{brandname} can be extended to provide the ability for an end user to add
 additional configurations, operations and components outside of the scope of the ones normally provided
-by Infinispan.
+by {brandname}.
 
 === Custom Commands
-Infinispan makes use of a link:http://en.wikipedia.org/wiki/Command_pattern[command/visitor pattern] to
+{brandname} makes use of a link:http://en.wikipedia.org/wiki/Command_pattern[command/visitor pattern] to
 implement the various top-level methods you see on the public-facing API.
 This is explained in further detail in the <<arch:overview,Architectural Overview>> section below.
 While the core commands - and their corresponding visitors - are hard-coded as
-a part of Infinispan's core module, module authors can extend and enhance Infinispan
+a part of {brandname}'s core module, module authors can extend and enhance {brandname}
 by creating new custom commands.
 
 As a module author (such as link:https://github.com/infinispan/infinispan/tree/master/query[infinispan-query], etc.) you can define your own commands.
@@ -32,21 +32,21 @@ Here is an example of an `META-INF/services/org.infinispan.commands.module.Modul
 org.infinispan.query.QueryModuleCommandExtensions
 ----
 
-For a full, working example of a sample module that makes use of custom commands and visitors, check out link:https://github.com/infinispan/infinispan-sample-module[Infinispan Sample Module] .
+For a full, working example of a sample module that makes use of custom commands and visitors, check out link:https://github.com/infinispan/infinispan-sample-module[{brandname} Sample Module] .
 
 ==== Preassigned Custom Command Id Ranges
-This is the list of `Command` identifiers that are used by Infinispan based modules or frameworks.
-Infinispan users should avoid using ids within these ranges. (RANGES to be finalised yet!)
+This is the list of `Command` identifiers that are used by {brandname} based modules or frameworks.
+{brandname} users should avoid using ids within these ranges. (RANGES to be finalised yet!)
 Being this a single byte, ranges can't be too large.
 
 |===============
-|Infinispan Query:|100 - 119
+|{brandname} Query:|100 - 119
 |Hibernate Search:|120 - 139
 |Hot Rod Server:  |140 - 141
 |===============
 
 === Extending the configuration builders and parsers
-If your custom module requires configuration, it is possible to enhance Infinispan's configuration builders and
+If your custom module requires configuration, it is possible to enhance {brandname}'s configuration builders and
 parsers. Look at the link:https://github.com/infinispan/infinispan/blob/master/core/src/test/java/org/infinispan/configuration/module[custom module tests]
 for a detail example on how to implement this.
 

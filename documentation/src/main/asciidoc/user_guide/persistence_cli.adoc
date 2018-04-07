@@ -1,12 +1,12 @@
 === Command-Line Interface cache loader
 The Command-Line Interface (CLI) cache loader is a cache loader implementation
-that retrieves data from another Infinispan node using the CLI. The node to
+that retrieves data from another {brandname} node using the CLI. The node to
 which the CLI connects to could be a standalone node, or could be a node that
 it's part of a cluster. This cache loader is read-only, so it will only be
 used to retrieve data, and hence, won't be used when persisting data.
 
 The CLI cache loader is configured with a connection URL pointing to the
-Infinispan node to which connect to. Here is an example:
+{brandname} node to which connect to. Here is an example:
 
 NOTE: Details on the format of the URL and how to make sure a node can
 receive invocations via the CLI can be found in the

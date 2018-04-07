@@ -1,5 +1,5 @@
-= Infinispan {infinispanversion} Server Guide
-The Infinispan community
+= {brandname} {infinispanversion} Server Guide
+The {brandname} community
 :toc2:
 :icons: font
 :toclevels: 3
@@ -13,7 +13,7 @@ include::security.adoc[]
 
 == Health monitoring
 
-Infinispan server has special endpoints for monitoring cluster health. The API is exposed via:
+{brandname} server has special endpoints for monitoring cluster health. The API is exposed via:
 
 * Programmatically (using `embeddedCacheManager.getHealth()`)
 * JMX
@@ -22,7 +22,7 @@ Infinispan server has special endpoints for monitoring cluster health. The API i
 
 === Accessing Health API using JMX
 
-At first you need to connect to the Infinispan Server using JMX (use JConsole or other tool for this).
+At first you need to connect to the {brandname} Server using JMX (use JConsole or other tool for this).
 Next, navigate to object name `jboss.datagrid-infinispan:type=CacheManager,name="clustered",component=CacheContainerHealth`.
 
 === Accessing Health API using CLI
@@ -50,7 +50,7 @@ $ ispn-cli.sh -c "/subsystem=datagrid-infinispan/cache-container=clustered/healt
             "2016-08-10 11:54:15,210 INFO  [org.infinispan.server.endpoint] (MSC service thread 1-6) DGENDPT10002: REST mapped to /rest",
             "2016-08-10 11:54:15,306 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0060: Http management interface listening on http://127.0.0.1:9990/management",
             "2016-08-10 11:54:15,307 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0051: Admin console listening on http://127.0.0.1:9990",
-            "2016-08-10 11:54:15,307 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0025: Infinispan Server 9.0.0-SNAPSHOT (WildFly Core 2.2.0.CR9) started in 8681ms - Started 196 of 237 services (121 services are lazy, passive or on-demand)"
+            "2016-08-10 11:54:15,307 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0025: {brandname} Server 9.0.0-SNAPSHOT (WildFly Core 2.2.0.CR9) started in 8681ms - Started 196 of 237 services (121 services are lazy, passive or on-demand)"
         ],
         "number-of-cpus" => 8,
         "number-of-nodes" => 1,
@@ -98,7 +98,7 @@ Date: Wed, 10 Aug 2016 10:39:15 GMT
         "2016-08-10 11:54:15,210 INFO  [org.infinispan.server.endpoint] (MSC service thread 1-6) DGENDPT10002: REST mapped to /rest",
         "2016-08-10 11:54:15,306 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0060: Http management interface listening on http://127.0.0.1:9990/management",
         "2016-08-10 11:54:15,307 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0051: Admin console listening on http://127.0.0.1:9990",
-        "2016-08-10 11:54:15,307 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0025: Infinispan Server 9.0.0-SNAPSHOT (WildFly Core 2.2.0.CR9) started in 8681ms - Started 196 of 237 services (121 services are lazy, passive or on-demand)"
+        "2016-08-10 11:54:15,307 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0025: {brandname} Server 9.0.0-SNAPSHOT (WildFly Core 2.2.0.CR9) started in 8681ms - Started 196 of 237 services (121 services are lazy, passive or on-demand)"
     ],
     "number-of-cpus" : 8,
     "number-of-nodes" : 1,

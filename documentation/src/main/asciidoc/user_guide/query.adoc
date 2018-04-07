@@ -2,40 +2,40 @@
 
 === Overview
 
-Infinispan supports indexing and searching of Java Pojo(s) or objects encoded via link:https://developers.google.com/protocol-buffers/[Protocol Buffers]
+{brandname} supports indexing and searching of Java Pojo(s) or objects encoded via link:https://developers.google.com/protocol-buffers/[Protocol Buffers]
 stored in the grid using powerful search APIs which complement its main Map-like API.
 
-Querying is possible both in <<query.library,library>> and <<query.remote,client/server mode>> (for Java, C#, Node.js and other clients), and Infinispan can index data
+Querying is possible both in <<query.library,library>> and <<query.remote,client/server mode>> (for Java, C#, Node.js and other clients), and {brandname} can index data
 using link:http://lucene.apache.org/[Apache Lucene], offering an efficient link:https://en.wikipedia.org/wiki/Full-text_search[full-text]
 capable search engine in order to cover a wide range of data retrieval use cases.
 
-Indexing configuration relies on a schema definition, and for that Infinispan can use annotated Java classes when in library mode,
-and protobuf schemas for remote clients written in other languages. By standardizing on protobuf, Infinispan allows full interoperability
+Indexing configuration relies on a schema definition, and for that {brandname} can use annotated Java classes when in library mode,
+and protobuf schemas for remote clients written in other languages. By standardizing on protobuf, {brandname} allows full interoperability
 between Java and non-Java clients.
 
-Apart from indexed queries, Infinispan can run queries over non-indexed data (<<query.indexless, indexless queries>>) and over partially indexed data (<<query.hybrid,hybrid queries>>).
+Apart from indexed queries, {brandname} can run queries over non-indexed data (<<query.indexless, indexless queries>>) and over partially indexed data (<<query.hybrid,hybrid queries>>).
 
-In terms of Search APIs, Infinispan has its own query language called _<<query.ickle,Ickle>>_, which is a subset of JP-QL providing extensions for full-text
-querying. The <<query.dsl,Infinispan Query DSL>> can be used for both embedded and remote java clients when full-text is not required; for Java embedded clients
-Infinispan offers the <<query.hibernatesearch,Hibernate Search Query API>> which supports running Lucene queries in the grid, apart from advanced search capabilities
+In terms of Search APIs, {brandname} has its own query language called _<<query.ickle,Ickle>>_, which is a subset of JP-QL providing extensions for full-text
+querying. The <<query.dsl,{brandname} Query DSL>> can be used for both embedded and remote java clients when full-text is not required; for Java embedded clients
+{brandname} offers the <<query.hibernatesearch,Hibernate Search Query API>> which supports running Lucene queries in the grid, apart from advanced search capabilities
 like Faceted and Spatial search.
 
-Finally, Infinispan has support for <<query.continuous,Continuous Queries>>, which works in a reverse manner to the other APIs: instead of creating, executing a query
+Finally, {brandname} has support for <<query.continuous,Continuous Queries>>, which works in a reverse manner to the other APIs: instead of creating, executing a query
 and obtain results, it allows a client to register queries that will be evaluated continuously as data in the cluster changes, generating notifications
 whenever the changed data matches the queries.
 
 === Embedded Querying [[query.library]]
 
-Embedded querying is available when Infinispan is used as a library. No protobuf mapping is required, and both indexing and searching
+Embedded querying is available when {brandname} is used as a library. No protobuf mapping is required, and both indexing and searching
 are done on top of Java objects. When in library mode, it is possible to run Lucene queries directly and use all the available <<query.apis,Query APIs>>,
 and it also allows flexible indexing configurations to keep latency to a minimal.
 
 ====  Quick example
 
-We're going to store _Book_ instances in an Infinispan cache called "books". _Book_ instances will be indexed, so we enable indexing for the cache,
-letting Infinispan <<query.autoconfig,configure the indexing automatically>>:
+We're going to store _Book_ instances in an {brandname} cache called "books". _Book_ instances will be indexed, so we enable indexing for the cache,
+letting {brandname} <<query.autoconfig,configure the indexing automatically>>:
 
-Infinispan configuration:
+{brandname} configuration:
 
 [source,xml]
 .infinispan.xml
@@ -96,7 +96,7 @@ public class Author {
 
 ----
 
-Now assuming we stored several _Book_ instances in our Infinispan _Cache_ , we can search them for any matching field as in the following example.
+Now assuming we stored several _Book_ instances in our {brandname} _Cache_ , we can search them for any matching field as in the following example.
 
 Using a Lucene Query:
 
@@ -150,7 +150,7 @@ for (Object book : objectList) {
 Apart from _list()_ you have the option for streaming results, or use pagination.
 
 
-For searches that do not require Lucene or full-text capabilities and are mostly about aggregation and exact matches, we can use the Infinispan Query DSL API:
+For searches that do not require Lucene or full-text capabilities and are mostly about aggregation and exact matches, we can use the {brandname} Query DSL API:
 
 [source,java]
 ----
@@ -189,7 +189,7 @@ List<Book> list = q.list();
 
 ==== Indexing
 
-Indexing in Infinispan happens on a per-cache basis and by default a cache is not indexed. Enabling indexing is not mandatory but queries using an index will
+Indexing in {brandname} happens on a per-cache basis and by default a cache is not indexed. Enabling indexing is not mandatory but queries using an index will
 have a vastly superior performance. On the other hand, enabling indexing can impact negatively the write throughput of a cluster, so make sure to check the <<query.performance, query performance guide>> for some strategies to minimize this impact depending on the cache type and use case.
 
 ===== Configuration
@@ -247,7 +247,7 @@ cacheCfg.indexing()
 
 ----
 
-Infinispan creates an index for each entity existent in a cache, and it allows to configure those indexes independently.
+{brandname} creates an index for each entity existent in a cache, and it allows to configure those indexes independently.
 For a class annotated with `@Indexed`, the index name is the fully qualified class name, unless overridden with the
 `name` argument in the annotation.
 
@@ -287,7 +287,7 @@ public class Airplane {
 
 ====== Specifying indexed Entities
 
-Infinispan can automatically recognize and manage indexes for different entity types in a cache. Future versions of Infinispan will remove this capability so it's recommended to
+{brandname} can automatically recognize and manage indexes for different entity types in a cache. Future versions of {brandname} will remove this capability so it's recommended to
 declare upfront which types are going to be indexed (list them by their fully qualified class name). This can be done via xml:
 
 [source,xml]
@@ -326,14 +326,14 @@ The entity classes must be located in the referenced module, which can be either
 an automatic dependency of your Cache, so its eventual redeployment will cause the cache to be restarted.
 
 NOTE: Only for server, if you fail to follow the requirement of using 'extended' class names and use a plain class name
-its resolution will fail due to missing class because the wrong ClassLoader is being used (the Infinispan's internal
+its resolution will fail due to missing class because the wrong ClassLoader is being used (the {brandname}'s internal
 class path is being used).
 
 
 ===== Index mode [[query.index-mode]]
 
-An Infinispan node typically receives data from two sources: local and remote. Local translates to clients manipulating data using the map API in the same JVM;
-remote data comes from other Infinispan nodes during replication or rebalancing.
+An {brandname} node typically receives data from two sources: local and remote. Local translates to clients manipulating data using the map API in the same JVM;
+remote data comes from other {brandname} nodes during replication or rebalancing.
 
 The index mode configuration defines, from a node in the cluster point of view, which data gets indexed.
 
@@ -346,10 +346,10 @@ Possible values:
 
 ===== Index Managers [[query.index-manager]]
 
-Index managers are central components in Infinispan Querying responsible for the indexing configuration, distribution and internal lifecycle of several query components such as Lucene's
+Index managers are central components in {brandname} Querying responsible for the indexing configuration, distribution and internal lifecycle of several query components such as Lucene's
 _IndexReader_ and _IndexWriter_. Each Index Manager is associated with a _Directory Provider_, which defines the physical storage of the index.
 
-Regarding index distribution, Infinispan can be configured with shared or non-shared indexes.
+Regarding index distribution, {brandname} can be configured with shared or non-shared indexes.
 
 ===== Shared indexes [[query.shared-index]]
 
@@ -357,17 +357,17 @@ A shared index is a single, distributed, cluster-wide index for a certain cache.
 queries to all members and aggregate the results. The downside is that Lucene does not allow more than a single process writing to the index at the same time, and the coordination of lock acquisitions needs to be done by a proper shared index capable index manager.
 In any case, having a single write lock cluster-wise can lead to some degree of contention under heavy writing.
 
-Infinispan supports shared indexes leveraging the <<integrations.adoc#integrations:directory-provider,Infinispan Directory Provider>>, which stores indexes in a separate set of caches. Two index managers are available
-to use shared indexes: InfinispanIndexManager and AffinityIndexManager.
+{brandname} supports shared indexes leveraging the <<integrations.adoc#integrations:directory-provider,{brandname} Directory Provider>>, which stores indexes in a separate set of caches. Two index managers are available
+to use shared indexes: {brandname}IndexManager and AffinityIndexManager.
 
 ====== Effect of the index mode
 
 Shared indexes should not use the `ALL` index mode since it'd lead to redundant indexing: since there is a single index cluster wide, the entry would get indexed when inserted via Cache API, and another time
-when Infinispan replicates it to another node. The `ALL` mode is usually associates with <<query.non-shared-index>> in order to create full index replicas on each node.
+when {brandname} replicates it to another node. The `ALL` mode is usually associates with <<query.non-shared-index>> in order to create full index replicas on each node.
 
-====== InfinispanIndexManager
+====== {brandname}IndexManager
 
-This index manager uses the <<integrations.adoc#integrations:directory-provider,Infinispan Directory Provider>>, and is suitable for creating shared indexes. Index mode should be set to `LOCAL` in this configuration.
+This index manager uses the <<integrations.adoc#integrations:directory-provider,{brandname} Directory Provider>>, and is suitable for creating shared indexes. Index mode should be set to `LOCAL` in this configuration.
 
 Configuration:
 
@@ -376,7 +376,7 @@ Configuration:
 <distributed-cache name="default" >
     <indexing index="LOCAL">
         <property name="default.indexmanager">
-            org.infinispan.query.indexmanager.InfinispanIndexManager
+            org.infinispan.query.indexmanager.{brandname}IndexManager
         </property>
         <!-- optional: tailor each index cache -->
         <property name="default.locking_cachename">LuceneIndexesLocking_custom</property>
@@ -415,16 +415,16 @@ small in size.
 The _LuceneIndexesData_ cache is where most of the index is located: it is much bigger then the other two but should be smaller than the data in the cache itself, thanks to Lucene's
 efficient storing techniques.
 
-It's not necessary to redefine the configuration of those 3 cases, Infinispan will pick sensible defaults.
+It's not necessary to redefine the configuration of those 3 cases, {brandname} will pick sensible defaults.
 Reasons re-define them would be performance tuning for a specific scenario, or for example to make them persistent by configuring a cache store.
 
-In order to avoid index corruption when two or more nodes of the cluster try to write to the index at the same time, the _InfinispanIndexManager_ internally
+In order to avoid index corruption when two or more nodes of the cluster try to write to the index at the same time, the _{brandname}IndexManager_ internally
 elects a master in the cluster (which is the JGroups coordinator) and forwards all indexing works to this master.
 
 ====== AffinityIndexManager [[query.affinity-index-manager]]
 
-The AffinityIndexManager is an *experimental* index manager used for shared indexes that also stores indexes using the <<integrations.adoc#integrations:directory-provider,Infinispan Directory Provider>>.
-Unlike the InfinispanIndexManager, it does not have a single node (master) that handles all the indexing cluster wide, but rather splits the index using multiple shards, each shard being responsible for indexing data associated with one or more Infinispan segments.
+The AffinityIndexManager is an *experimental* index manager used for shared indexes that also stores indexes using the <<integrations.adoc#integrations:directory-provider,{brandname} Directory Provider>>.
+Unlike the {brandname}IndexManager, it does not have a single node (master) that handles all the indexing cluster wide, but rather splits the index using multiple shards, each shard being responsible for indexing data associated with one or more {brandname} segments.
 For an in-depth description of the inner workings, please see the link:https://github.com/infinispan/infinispan/wiki/Index-affinity-proposal[design doc].
 
 The PRIMARY_OWNER index mode is required, together with a special kind of `KeyPartitioner`.
@@ -462,7 +462,7 @@ cacheCfg.indexing()
 
 ----
 
-The `AffinityIndexManager` by default will have as many shards as Infinispan segments, but this value is configurable as seen in the example above.
+The `AffinityIndexManager` by default will have as many shards as {brandname} segments, but this value is configurable as seen in the example above.
 
 The number of shards affects directly the query performance and writing throughput: generally speaking, a high number of shards offers better write throughput but
 has an adverse effect on query performance.
@@ -478,8 +478,8 @@ Since each node might hold a partial index, it may be necessary to <<query.clust
 can add latency. If the cache is REPL, though, the broadcast is not necessary: each node can hold a full local copy of the index and queries runs at optimal speed
 taking advantage of a local index.
 
-Infinispan has two index managers suitable for non-shared indexes: `directory-based` and `near-real-time`. Storage wise, non-shared indexes can be located
-in ram, filesystem, or Infinispan local caches.
+{brandname} has two index managers suitable for non-shared indexes: `directory-based` and `near-real-time`. Storage wise, non-shared indexes can be located
+in ram, filesystem, or {brandname} local caches.
 
 ====== Effect of the index mode
 
@@ -517,7 +517,7 @@ Configuration:
 </replicated-cache>
 ----
 
-Infinispan will create a different folder under `default.indexBase` for each entity (index) present in the cache.
+{brandname} will create a different folder under `default.indexBase` for each entity (index) present in the cache.
 
 [small]*Ram storage*
 
@@ -535,10 +535,10 @@ is needed. Configuration:
 </replicated-cache>
 ----
 
-[small]*Infinispan storage*
+[small]*{brandname} storage*
 
-Infinispan storage makes use of the <<integrations:lucene-directory, Infinispan Lucene directory>> that saves the indexes to a set of caches; those caches can be configured like any other Infinispan cache, for example by adding a cache store to have indexes persisted elsewhere apart from memory.
-In order to use Infinispan storage with a non-shared index, it's necessary to use LOCAL caches for the indexes:
+{brandname} storage makes use of the <<integrations:lucene-directory, {brandname} Lucene directory>> that saves the indexes to a set of caches; those caches can be configured like any other {brandname} cache, for example by adding a cache store to have indexes persisted elsewhere apart from memory.
+In order to use {brandname} storage with a non-shared index, it's necessary to use LOCAL caches for the indexes:
 
 [source,xml]
 ----
@@ -597,8 +597,8 @@ Example with filesystem:
 
 ===== External indexes
 
-Apart from having shared and non-shared indexes managed by Infinispan itself, it is possible to offload indexing to a third party search engine: currently
-Infinispan supports Elasticsearch as a external index storage.
+Apart from having shared and non-shared indexes managed by {brandname} itself, it is possible to offload indexing to a third party search engine: currently
+{brandname} supports Elasticsearch as a external index storage.
 
 ====== Elasticsearch IndexManager (experimental)
 
@@ -617,7 +617,7 @@ Configuration:
 
 ----
 
-The index mode should be set to `LOCAL`, since Infinispan considers Elasticsearch as a single shared index.
+The index mode should be set to `LOCAL`, since {brandname} considers Elasticsearch as a single shared index.
 More information about Elasticsearch integration, including the full description of the configuration properties can be found at the link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#elasticsearch-integration[Hibernate Search manual].
 
 
@@ -658,9 +658,9 @@ The auto config properties for distributed caches are:
 [options="header",cols="1,3,10"]
 |==============================================================================
 | Property name | value | description
-| default.directory_provider | infinispan | Indexes stored in Infinispan. More details at link:http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#infinispan-directories[Hibernate Search documentation]
+| default.directory_provider | infinispan | Indexes stored in {brandname}. More details at link:http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#infinispan-directories[Hibernate Search documentation]
 | default.exclusive_index_use | true | indexing operation in exclusive mode, allowing Hibernate Search to optimize writes
-| default.indexmanager | org.infinispan.query.indexmanager.InfinispanIndexManager | Delegates index writing to a single node in the Infinispan cluster
+| default.indexmanager | org.infinispan.query.indexmanager.{brandname}IndexManager | Delegates index writing to a single node in the {brandname} cluster
 | default.reader.strategy | shared | Reuse index reader across several queries, avoiding reopening it
 |==============================================================================
 
@@ -692,15 +692,15 @@ TODO
 
 ===== Mapping Entities
 
-Infinispan relies on the rich API of link:http://hibernate.org/search/[Hibernate Search] in order to define fine grained configuration for indexing at entity level.
+{brandname} relies on the rich API of link:http://hibernate.org/search/[Hibernate Search] in order to define fine grained configuration for indexing at entity level.
 This configuration includes which fields are annotated, which analyzers should be used, how to map nested objects and so on.
 Detailed documentation is available at link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#search-mapping[the Hibernate Search manual].
 
 ====== @DocumentId
-Unlike Hibernate Search, using _@DocumentId_ to mark a field as identifier does not apply to Infinispan values; in Infinispan the identifier for all _@Indexed_ objects is the key used to store the value. You can still customize how the key is indexed using a combination of _@Transformable_ , custom types and custom _FieldBridge_ implementations.
+Unlike Hibernate Search, using _@DocumentId_ to mark a field as identifier does not apply to {brandname} values; in {brandname} the identifier for all _@Indexed_ objects is the key used to store the value. You can still customize how the key is indexed using a combination of _@Transformable_ , custom types and custom _FieldBridge_ implementations.
 
 ====== @Transformable keys
-The key for each value needs to be indexed as well, and the key instance must be transformed in a _String_. Infinispan includes some default transformation routines to encode common primitives, but to use a custom key you must provide an implementation of _org.infinispan.query.Transformer_ .
+The key for each value needs to be indexed as well, and the key instance must be transformed in a _String_. {brandname} includes some default transformation routines to encode common primitives, but to use a custom key you must provide an implementation of _org.infinispan.query.Transformer_ .
 
 [small]*Registering a Transformer via annotations*
 
@@ -796,9 +796,9 @@ assert cq.getResultSize() == 1;
 
 ==== Querying APIs [[query.apis]]
 
-Infinispan allows to query using Lucene queries directly and its own query language called Ickle, a subset of JP-QL with full-text extensions.
+{brandname} allows to query using Lucene queries directly and its own query language called Ickle, a subset of JP-QL with full-text extensions.
 
-In terms of DSL, Infinispan exposes the Hibernate Search DSL (which produces Lucene queries) and has its own DSL which internally generates an Ickle
+In terms of DSL, {brandname} exposes the Hibernate Search DSL (which produces Lucene queries) and has its own DSL which internally generates an Ickle
 query.
 
 Finally, when using Lucene or Hibernate Search Query API, it is possible to query a single node or to broadcast a query to multiple nodes combining the results.
@@ -852,7 +852,7 @@ For a detailed description of the query capabilities of this DSL, see the releva
 
 ====== Faceted Search
 
-Infinispan support link:https://en.wikipedia.org/wiki/Faceted_search[Faceted Searches] by using the Hibernate Search `FacetManager`:
+{brandname} support link:https://en.wikipedia.org/wiki/Faceted_search[Faceted Searches] by using the Hibernate Search `FacetManager`:
 
 
 [source,java]
@@ -906,7 +906,7 @@ For more info about Faceted Search, see link:http://docs.jboss.org/hibernate/sta
 
 ====== Spatial Queries
 
-Infinispan also supports link:https://en.wikipedia.org/wiki/Spatial_query[Spatial Queries], allowing to combining full-text with restrictions based on distances, geometries or geographic coordinates.
+{brandname} also supports link:https://en.wikipedia.org/wiki/Spatial_query[Spatial Queries], allowing to combining full-text with restrictions based on distances, geometries or geographic coordinates.
 
 Example, we start by using the `@Spatial` annotation in our entity that will be searched, together with `@Latitude` and `@Longitude`:
 
@@ -965,7 +965,7 @@ It is suitable for use in conjunction with <<query.non-shared-index,non-shared i
 IndexedQueryMode.FETCH will execute the query in the caller. If all the indexes for the cluster wide data are available locally, performance will be optimal, otherwise this query mode
 may involve fetching indexes data from remote nodes.
 
-The IndexedQueryMode is supported for Lucene Queries and Ickle String queries at the moment (no Infinispan Query DSL).
+The IndexedQueryMode is supported for Lucene Queries and Ickle String queries at the moment (no {brandname} Query DSL).
 
 Example:
 
@@ -978,9 +978,9 @@ List<Person> result = broadcastQuery.list();
 
 ----
 
-===== Infinispan Query DSL [[query.dsl]]
+===== {brandname} Query DSL [[query.dsl]]
 
-Starting with 6.0 Infinispan provides its own query DSL, independent of Lucene and Hibernate Search.
+Starting with 6.0 {brandname} provides its own query DSL, independent of Lucene and Hibernate Search.
 Decoupling the query API from the underlying query and indexing mechanism makes it possible to introduce new alternative
 engines in the future, besides Lucene, and still being able to use the same uniform query API.
 The current implementation of indexing and searching is still based on
@@ -991,7 +991,7 @@ query objects and also has the advantage of being available to link:#querying_vi
 But before delving into further details, let's examine first a simple example of writing a query for the _Book_ entity
 from link:#simple_example[previous example].
 
-.Query example using Infinispan's query DSL
+.Query example using {brandname}'s query DSL
 [source,java]
 ----
 import org.infinispan.query.dsl.*;
@@ -1046,7 +1046,7 @@ correlated sub-queries, that is not currently available.
 ----
 // a single query criterion
 QueryBuilder qb = ...
-qb.having("title").eq("Infinispan Data Grid Platform");
+qb.having("title").eq("{brandname} Data Grid Platform");
 ----
 
 ._FilterConditionEndContext_ exposes the following filtering operators:
@@ -1088,7 +1088,7 @@ Query q1 = qb1.build(); // consequently, this query matches all Book instances r
 // Maybe the author intended to connect two conditions with a boolean operator,
 // but this does NOT actually happen here.
 QueryBuilder qb2 = ...
-qb2.having("title").like("%Infinispan%");
+qb2.having("title").like("%{brandname}%");
 qb2.having("description").like("%clustering%");   // will throw java.lang.IllegalStateException: Sentence already started. Cannot use 'having(..)' again.
 Query q2 = qb2.build();
 ----
@@ -1117,10 +1117,10 @@ operator still has higher priority than `or` even though `or` was invoked first.
 
 [source,java]
 ----
-// match all books that have the word "Infinispan" in their title
+// match all books that have the word "{brandname}" in their title
 // or have an author named "Manik" and their description contains the word "clustering"
 Query query = queryFactory.from(Book.class)
-  .having("title").like("%Infinispan%")
+  .having("title").like("%{brandname}%")
   .or().having("author.name").eq("Manik")
   .and().having("description").like("%clustering%")
   .toBuilder().build();
@@ -1131,9 +1131,9 @@ only to the next simple attribute condition.
 
 [source,java]
 ----
-// match all books that do not have the word "Infinispan" in their title and are authored by "Manik"
+// match all books that do not have the word "{brandname}" in their title and are authored by "Manik"
 Query query = queryFactory.from(Book.class)
-  .not().having("title").like("%Infinispan%")
+  .not().having("title").like("%{brandname}%")
   .and().having("author.name").eq("Manik")
   .toBuilder().build();
 ----
@@ -1146,10 +1146,10 @@ subsequent complex condition created with the same query factory.
 [source,java]
 ----
 // match all books that have an author named "Manik" and their title contains
-// the word "Infinispan" or their description contains the word "clustering"
+// the word "{brandname}" or their description contains the word "clustering"
 Query query = queryFactory.from(Book.class)
   .having("author.name").eq("Manik");
-  .and(queryFactory.having("title").like("%Infinispan%")
+  .and(queryFactory.having("title").like("%{brandname}%")
           .or().having("description").like("%clustering%"))
   .toBuilder().build();
 ----
@@ -1165,12 +1165,12 @@ TODO document what needs to be configured for an attribute to be available for p
 
 [source,java]
 ----
-// match all books that have the word "Infinispan" in their title or description
+// match all books that have the word "{brandname}" in their title or description
 // and return only their title and publication year
 Query query = queryFactory.from(Book.class)
   .select("title", "publicationYear")
-  .having("title").like("%Infinispan%")
-  .or().having("description").like("%Infinispan%"))
+  .having("title").like("%{brandname}%")
+  .or().having("description").like("%{brandname}%"))
   .toBuilder().build();
 ----
 
@@ -1185,13 +1185,13 @@ TODO document what needs to be configured for an attribute to be available for s
 
 [source,java]
 ----
-// match all books that have the word "Infinispan" in their title or description
+// match all books that have the word "{brandname}" in their title or description
 // and return them sorted by the publication year and title
 Query query = queryFactory.from(Book.class)
   .orderBy("publicationYear", SortOrder.DESC)
   .orderBy("title", SortOrder.ASC)
-  .having("title").like("%Infinispan%")
-  .or().having("description").like("%Infinispan%"))
+  .having("title").like("%{brandname}%")
+  .or().having("description").like("%{brandname}%"))
   .toBuilder().build();
 ----
 
@@ -1221,7 +1221,7 @@ TODO Does pagination make sense if no stable sort criteria is defined? Luckily w
 
 ====== Grouping and Aggregation
 
-Infinispan has the ability to group query results according to a set of grouping fields and construct aggregations of
+{brandname} has the ability to group query results according to a set of grouping fields and construct aggregations of
 the results from each group by applying an aggregation function to the set of values that fall into each group. Grouping
 and aggregation can only be applied to projection queries. The supported aggregations are: avg, sum, count, max, min.
 The set of grouping fields is specified with the _groupBy(field)_ method, which can be invoked multiple times. The order
@@ -1485,13 +1485,13 @@ of new matching events from the cache it listens to.
 
 === Remote Querying [[query.remote]]
 
-Apart from supporting indexing and searching of Java entities to embedded clients, Infinispan introduced support for remote,
+Apart from supporting indexing and searching of Java entities to embedded clients, {brandname} introduced support for remote,
 language neutral, querying.
 
 This leap required two major changes:
 
 * Since non-JVM clients cannot benefit from directly using link:http://lucene.apache.org/[Apache Lucene]'s Java
-API, Infinispan defines its own new link:#infinispan_s_query_dsl[query language], based on an internal DSL that is easily
+API, {brandname} defines its own new link:#infinispan_s_query_dsl[query language], based on an internal DSL that is easily
 implementable in all languages for which we currently have an implementation of the Hot Rod client.
 * In order to enable indexing, the entities put in the cache by clients can no longer be opaque binary blobs understood
 solely by the client. Their structure has to be known to both server and client, so a common way of
@@ -1634,7 +1634,7 @@ TODO
 ==== Indexing of Protobuf encoded entries
 After configuring the client as described in the previous section you can start configuring indexing for your caches on
 the server side. Activating indexing and the various indexing specific configurations is identical to embedded mode and
-is detailed in the <<query:configuration,Querying Infinispan>> chapter.
+is detailed in the <<query:configuration,Querying {brandname}>> chapter.
 
 There is however an extra configuration step involved. While in embedded mode the indexing metadata is obtained via Java
 reflection by analyzing the presence of various Hibernate Search annotations on the entry's class, this is obviously not
@@ -1668,12 +1668,12 @@ book1.setTitle("Hibernate in Action");
 remoteCache.put(1, book1);
 
 Book book2 = new Book();
-book2.setTile("Infinispan Data Grid Platform");
+book2.setTile("{brandname} Data Grid Platform");
 remoteCache.put(2, book2);
 
 QueryFactory qf = Search.getQueryFactory(remoteCache);
 Query query = qf.from(Book.class)
-            .having("title").like("%Infinispan%").toBuilder()
+            .having("title").like("%{brandname}%").toBuilder()
             .build();
 
 List<Book> list = query.list(); // Voila! We have our book back from the cache!
@@ -1697,23 +1697,23 @@ org.hibernate.search.stat.Statistics statistics = searchManager.getStatistics();
 
 TIP: This data is also available via JMX through the link:http://docs.jboss.org/hibernate/search/4.4/reference/en-US/html/search-monitoring.html#d0e7624[Hibernate Search StatisticsInfoMBean]
 registered under the name `org.infinispan:type=Query,manager="{name-of-cache-manager}",cache="{name-of-cache}",component=Statistics`.
-Please note this MBean is always registered by Infinispan but the statistics are collected only if
+Please note this MBean is always registered by {brandname} but the statistics are collected only if
 link:#enabling_jmx_statistics[statistics collection is enabled] at cache level.
 
 WARNING: Hibernate Search has its own configuration properties `hibernate.search.jmx_enabled` and `hibernate.search.generate_statistics`
 for JMX statistics as explained link:https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#search-monitoring[here].
-Using them with Infinispan Query is forbidden as it will only lead to duplicated MBeans and unpredictable results.
+Using them with {brandname} Query is forbidden as it will only lead to duplicated MBeans and unpredictable results.
 
 === Performance Tuning [[query.performance]]
 
 ==== Batch writing in SYNC mode
 
-By default, the <<query.index-manager, Index Managers>> work in sync mode, meaning when data is written to Infinispan, it will perform the indexing operations synchronously.
+By default, the <<query.index-manager, Index Managers>> work in sync mode, meaning when data is written to {brandname}, it will perform the indexing operations synchronously.
 This synchronicity guarantees indexes are always consistent with the data (and thus visible in searches), but can slowdown write operations since it will also perform a commit to the index.
 Committing is an extremely expensive operation in Lucene, and for that reason, multiple writes from different nodes can be automatically batched into a single commit to reduce
 the impact.
 
-So, when doing data loads to Infinispan with index enabled, try to use multiple threads to take advantage of this batching.
+So, when doing data loads to {brandname} with index enabled, try to use multiple threads to take advantage of this batching.
 
 If using multiple threads does not result in the required performance, an alternative is to load data with indexing temporarily disabled and run
  a <<query.massindexer,re-indexing>> operation afterwards. This can be done writing data with the `SKIP_INDEXING` flag:
@@ -1736,7 +1736,7 @@ Configuration:
 <distributed-cache name="default">
     <indexing index="LOCAL">
         <property name="default.indexmanager">
-              org.infinispan.query.indexmanager.InfinispanIndexManager
+              org.infinispan.query.indexmanager.{brandname}IndexManager
         </property>
         <!-- Index data in async mode -->
         <property name="default.worker.execution">async</property>
@@ -1751,7 +1751,7 @@ Configuration:
 ==== Index reader async strategy
 
 Lucene internally works with snapshots of the index: once an _IndexReader_ is opened, it will only see the index changes up to the point it was opened;
-further index changes will not be visible until the _IndexReader_ is refreshed. The Index Managers used in Infinispan by default will check the
+further index changes will not be visible until the _IndexReader_ is refreshed. The Index Managers used in {brandname} by default will check the
 freshness of the index readers before every query and refresh them if necessary.
 
 It is possible to tune this strategy to relax this freshness checking to a pre-configured interval by using the `reader.strategy` configuration set as `async`:
