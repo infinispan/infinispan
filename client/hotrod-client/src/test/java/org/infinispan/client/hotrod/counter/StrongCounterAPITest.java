@@ -41,6 +41,7 @@ public class StrongCounterAPITest extends BaseCounterAPITest<StrongCounter> impl
       strategy.testBoundaries(method);
    }
 
+   @Test(groups = "unstable", description = "ISPN-9053")
    @Override
    public void testListenerWithBounds(Method method) throws InterruptedException {
       strategy.testListenerWithBounds(method);
@@ -66,9 +67,28 @@ public class StrongCounterAPITest extends BaseCounterAPITest<StrongCounter> impl
       strategy.testRemove(method);
    }
 
+   @Test(groups = "unstable", description = "ISPN-9053")
    @Override
    public void testListenerAddAndRemove(Method method) throws InterruptedException {
       strategy.testListenerAddAndRemove(method);
+   }
+
+   @Test(groups = "unstable", description = "ISPN-9053")
+   @Override
+   public void testExceptionInListener(Method method) throws InterruptedException {
+      super.testExceptionInListener(method);
+   }
+
+   @Test(groups = "unstable", description = "ISPN-9053")
+   @Override
+   public void testConcurrentListenerAddAndRemove(Method method) throws InterruptedException {
+      super.testConcurrentListenerAddAndRemove(method);
+   }
+
+   @Test(groups = "unstable", description = "ISPN-9053")
+   @Override
+   public void testListenerFailover(Method method) throws Exception {
+      super.testListenerFailover(method);
    }
 
    @Override

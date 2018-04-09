@@ -8,6 +8,8 @@ import static org.testng.AssertJUnit.fail;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
@@ -75,6 +77,13 @@ public class BoundedCounterTest extends StrongCounterTest {
       counter.reset();
       assertEquals(0, counter.compareAndSwap(1, 3));
       assertEquals(0, counter.compareAndSwap(1, -3));
+   }
+
+   @Test(groups = "unstable", description = "ISPN-8786")
+   @Override
+   public void testCompareAndSetConcurrent(Method method)
+         throws ExecutionException, InterruptedException, TimeoutException {
+      super.testCompareAndSetConcurrent(method);
    }
 
    @Override
