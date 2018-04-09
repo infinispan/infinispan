@@ -55,6 +55,12 @@
             <artifactId>wildfly-feature-pack</artifactId>
             <type>pom</type>
             <version>${version.org.wildfly}</version>
+            <exclusions>
+               <exclusion>
+                  <groupId>org.infinispan</groupId>
+                  <artifactId>*</artifactId>
+               </exclusion>
+            </exclusions>
          </dependency>
 
          <dependency>
@@ -62,6 +68,12 @@
             <artifactId>wildfly-feature-pack</artifactId>
             <type>zip</type>
             <version>${version.org.wildfly}</version>
+            <exclusions>
+               <exclusion>
+                  <groupId>org.infinispan</groupId>
+                  <artifactId>*</artifactId>
+               </exclusion>
+            </exclusions>
          </dependency>
 
          <dependency>

@@ -1,5 +1,6 @@
 package org.infinispan.server.jgroups.security;
 
+import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_MD5;
 import static org.wildfly.security.sasl.util.SaslMechanismInformation.Names.DIGEST_MD5;
 import static org.wildfly.security.sasl.util.SaslMechanismInformation.Names.EXTERNAL;
 import static org.wildfly.security.sasl.util.SaslMechanismInformation.Names.GSSAPI;
@@ -16,6 +17,7 @@ import java.util.Map;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 
@@ -27,6 +29,8 @@ import org.jboss.as.domain.management.AuthorizingCallbackHandler;
 import org.jboss.as.domain.management.RealmConfigurationConstants;
 import org.jboss.as.domain.management.SecurityRealm;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
+import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
 import org.wildfly.security.sasl.WildFlySasl;
 
 /**
@@ -74,18 +78,26 @@ public class RealmAuthorizationCallbackHandler implements CallbackHandler {
         // pass the SaslServerFactory impl to JGroups we must do it here instead.
         ArrayList<Callback> list = new ArrayList<>(Arrays.asList(callbacks));
         Iterator<Callback> it = list.iterator();
+        CredentialCallback cb = null;
         while (it.hasNext()) {
             Callback callback = it.next();
             if (callback instanceof AvailableRealmsCallback) {
                 ((AvailableRealmsCallback) callback).setRealmNames(realmList);
                 it.remove();
+            } else if (callback instanceof CredentialCallback) {
+                cb = (CredentialCallback) callback;
             }
         }
 
         // If the only callback was AvailableRealmsCallback, we must not pass it to the AuthorizingCallbackHandler
         if (!list.isEmpty()) {
-            AuthorizingCallbackHandler cbh = getMechCallbackHandler();
-            cbh.handle(callbacks);
+            if (cb != null && cb.getAlgorithm().equals(ALGORITHM_DIGEST_MD5)) {
+                // It's necessary to add the NameCallback with the CredentialCallback, otherwise a UserNotFoundException is thrown
+                DigestPasswordAlgorithmSpec spec = (DigestPasswordAlgorithmSpec) cb.getParameterSpec();
+                list.add(new NameCallback("User", spec.getUsername()));
+                callbacks = list.toArray(new Callback[list.size()]);
+            }
+            getMechCallbackHandler().handle(callbacks);
         }
     }
 
