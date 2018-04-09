@@ -73,9 +73,4 @@ class WebSocketSubsystemAdd extends ProtocolServiceSubsystemAdd {
    protected void populateModel(ModelNode source, ModelNode target) throws OperationFailedException {
       populate(source, target);
    }
-
-   @Override
-   protected boolean requiresRuntimeVerification() {
-      return false;
-   }
 }

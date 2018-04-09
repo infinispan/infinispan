@@ -18,6 +18,11 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
+import static org.infinispan.server.endpoint.subsystem.ModelKeys.HOTROD_CONNECTOR;
+import static org.infinispan.server.endpoint.subsystem.ModelKeys.MEMCACHED_CONNECTOR;
+import static org.infinispan.server.endpoint.subsystem.ModelKeys.REST_CONNECTOR;
+import static org.infinispan.server.endpoint.subsystem.ModelKeys.ROUTER_CONNECTOR;
+
 import org.infinispan.server.endpoint.Constants;
 import org.infinispan.server.endpoint.deployments.ConverterFactoryExtensionProcessor;
 import org.infinispan.server.endpoint.deployments.FilterConverterFactoryExtensionProcessor;
@@ -36,11 +41,6 @@ import org.jboss.as.server.deployment.Phase;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceName;
-
-import static org.infinispan.server.endpoint.subsystem.ModelKeys.HOTROD_CONNECTOR;
-import static org.infinispan.server.endpoint.subsystem.ModelKeys.MEMCACHED_CONNECTOR;
-import static org.infinispan.server.endpoint.subsystem.ModelKeys.REST_CONNECTOR;
-import static org.infinispan.server.endpoint.subsystem.ModelKeys.ROUTER_CONNECTOR;
 
 
 /**
@@ -67,11 +67,6 @@ class EndpointSubsystemAdd extends AbstractAddStepHandler {
     @Override
     protected void populateModel(ModelNode source, ModelNode target) throws OperationFailedException {
         populate(source, target);
-    }
-
-    @Override
-    protected boolean requiresRuntimeVerification() {
-        return false;
     }
 
     @Override
