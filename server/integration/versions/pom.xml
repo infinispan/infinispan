@@ -44,7 +44,6 @@
       <version.h2.database>1.3.173</version.h2.database>
       <version.jest>2.0.4</version.jest>
       <version.gson>2.6.2</version.gson>
-      <version.jboss.aesh>0.66.13</version.jboss.aesh>
       <!-- Jolokia and Prometheus support -->
       <version.agent-bond>1.0.2</version.agent-bond>
    </properties>
@@ -132,13 +131,6 @@
             <artifactId>wildfly-cli</artifactId>
             <version>${version.org.wildfly.core}</version>
             <scope>compile</scope>
-         </dependency>
-
-         <dependency>
-            <groupId>org.jboss.aesh</groupId>
-            <artifactId>aesh</artifactId>
-            <version>${version.jboss.aesh}</version>
-            <scope>test</scope>
          </dependency>
 
          <dependency>
