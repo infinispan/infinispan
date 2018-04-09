@@ -223,7 +223,7 @@ public class TestClusterCacheStatus {
       updateActualMembers(asList(actualMembers));
    }
 
-   private void updateActualMembers(List<Address> actualMembers) {
+   public void updateActualMembers(List<Address> actualMembers) {
       assertTrue(topology.getMembers().containsAll(actualMembers));
       topology = new CacheTopology(topology.getTopologyId() + 1, topology.getRebalanceId() + 1,
                                    topology.getCurrentCH(), topology.getPendingCH(), topology.getUnionCH(),
