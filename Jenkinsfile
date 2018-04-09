@@ -81,10 +81,23 @@ pipeline {
             // Clean
             sh 'git clean -fdx -e "*.hprof" || echo "git clean failed, exit code $?"'
         }
+
         changed {
             script {
               echo "post build status: changed"
               changed = true
+            }
+        }
+
+        unstable {
+            echo "post build status: unstable"
+            script {
+                echo "Build result notify policy is: ${params.BUILD_RESULT_NOTIFY}"
+                if (params.BUILD_RESULT_NOTIFY == 'EMAIL') {
+                    echo 'Sending notify'
+                    emailext to: '${DEFAULT_RECIPIENTS}', subject: '${DEFAULT_SUBJECT}',
+                    body: '${DEFAULT_CONTENT}'
+                }
             }
         }
 
@@ -99,6 +112,7 @@ pipeline {
                 }
             }
         }
+
         success {
             echo "post build status: success"
             script {
