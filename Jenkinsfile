@@ -126,6 +126,11 @@ pipeline {
                         body: '${DEFAULT_CONTENT}'
                     }
                 }
+                if (!env.BRANCH_NAME.startsWith('PR-')) {
+                    configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
+                        sh "$MAVEN_HOME/bin/mvn deploy:deploy -B -V -e -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true -Dansi.strip -DskipTests=true"
+                    }
+                }
             }
         }
     }
