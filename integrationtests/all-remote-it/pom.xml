@@ -10,6 +10,7 @@
    </parent>
 
    <properties>
+      <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
       <testNGListener />
    </properties>
 

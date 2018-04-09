@@ -301,10 +301,10 @@
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
       <version.org.wildfly.arquillian>1.0.2.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.build-tools>1.2.6.Final</version.org.wildfly.build-tools>
-      <version.org.wildfly.core>3.0.10.Final</version.org.wildfly.core>
+      <version.org.wildfly.core>4.0.0.Final</version.org.wildfly.core>
       <version.org.wildfly.maven-plugin>1.2.1.Final</version.org.wildfly.maven-plugin>
       <version.owasp-dependency-check-plugin>3.1.1</version.owasp-dependency-check-plugin>
-      <version.org.wildfly>11.0.0.Final</version.org.wildfly>
+      <version.org.wildfly>12.0.0.Final</version.org.wildfly>
       <version.pax.exam>4.11.0</version.pax.exam>
       <version.pax.url>2.5.2</version.pax.url>
       <version.postgresql.driver>9.3-1101-jdbc41</version.postgresql.driver>
