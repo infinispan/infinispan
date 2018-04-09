@@ -183,9 +183,4 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
    private Boolean extractBool(ModelNode node, String property) {
       return node != null && node.isDefined() && node.hasDefined(property) && node.get(property).asBoolean();
    }
-
-   @Override
-   protected boolean requiresRuntimeVerification() {
-      return false;
-   }
 }

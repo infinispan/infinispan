@@ -192,9 +192,4 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
          }
       }
    }
-
-   @Override
-   protected boolean requiresRuntimeVerification() {
-      return false;
-   }
 }
