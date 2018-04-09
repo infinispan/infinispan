@@ -127,6 +127,7 @@ public class StrongCounterTest extends AbstractCounterTest<StrongTestCounter> {
       }
    }
 
+   @Test(groups = "unstable", description = "ISPN-8786")
    public void testCompareAndSetConcurrent(Method method)
          throws ExecutionException, InterruptedException, TimeoutException {
       //local mode will have 8 concurrent thread, cluster mode will have 8 concurrent threads (4 nodes, 2 threads per node)
