@@ -106,14 +106,16 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       latestStatusResponseViewId = transport.getViewId();
    }
 
-   // Need to stop before the JGroupsTransport
-   @Stop(priority = 9)
+   // Need to stop after ClusterTopologyManagerImpl and before the JGroupsTransport
+   @Stop(priority = 110)
    public void stop() {
       if (trace) {
          log.tracef("Stopping LocalTopologyManager on %s", transport.getAddress());
       }
-      persistentUUIDManager.removePersistentAddressMapping(persistentUUID);
       running = false;
+      for (LocalCacheStatus cache : runningCaches.values()) {
+         cache.getTopologyUpdatesExecutor().shutdownNow();
+      }
       withinThreadExecutor.shutdown();
    }
 
@@ -697,8 +699,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       if (transport.isCoordinator()) {
          asyncTransportExecutor.execute(() -> {
             if (trace) log.tracef("Attempting to execute command on self: %s", command);
-            gcr.wireDependencies(command);
             try {
+               gcr.wireDependencies(command);
                command.invoke();
             } catch (Throwable t) {
                log.errorf(t, "Failed to execute ReplicableCommand %s on coordinator async: %s", command, t.getMessage());

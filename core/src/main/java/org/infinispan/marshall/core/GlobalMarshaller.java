@@ -145,7 +145,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
    }
 
    @Override
-   @Stop(priority = 11) // Stop after transport to avoid send/receive and marshaller not being ready
+   @Stop(priority = 130) // Stop after transport to avoid send/receive and marshaller not being ready
    public void stop() {
       internalExts = null;
       reverseInternalExts = null;
