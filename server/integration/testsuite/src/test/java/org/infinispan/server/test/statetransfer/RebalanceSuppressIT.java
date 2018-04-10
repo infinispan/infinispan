@@ -1,4 +1,4 @@
-package org.infinispan.server.test.jmx.suppress.statetransfer;
+package org.infinispan.server.test.statetransfer;
 
 import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
 import static org.infinispan.server.test.util.ITestUtils.SERVER2_MGMT_PORT;
@@ -32,15 +32,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Abstact class for testing state transfer suppress functionality
+ * Tests that really rebalance does/doesn't take place when switched on/off in config.
  *
  * @author <a href="mailto:amanukya@redhat.com">Anna Manukyan</a>
  * @author <a href="mailto:vchepeli@redhat.com">Vitalii Chepeliuk</a>
  */
 @RunWith(Arquillian.class)
-public class StateTransferSuppressIT {
+public class RebalanceSuppressIT {
 
-    private static final Logger log = Logger.getLogger(StateTransferSuppressIT.class);
+    private static final Logger log = Logger.getLogger(RebalanceSuppressIT.class);
 
     /* container names */
     protected static final String CONTAINER1 = "suppress-state-transfer-1";
@@ -239,7 +239,6 @@ public class StateTransferSuppressIT {
     }
 
     private void checkRpcManagerStatistics(String[] expectedPendingViews, final String expectedCommitedView, MBeanServerConnectionProvider... providers) throws Exception {
-        // on windows, everything is slow and the view might not be yet updated, so we sleep a little
         for (final MBeanServerConnectionProvider provider : providers) {
             if (expectedCommitedView != null) {
                 eventually(new ITestUtils.Condition() {
