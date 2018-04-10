@@ -53,6 +53,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.jmx.JmxUtil;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -681,6 +682,7 @@ public class JGroupsTransport implements Transport {
                                               .collect(Collectors.toList()));
    }
 
+   @Stop(priority = 120)
    @Override
    public void stop() {
       running = false;
