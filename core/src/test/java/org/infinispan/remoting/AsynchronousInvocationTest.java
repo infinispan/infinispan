@@ -11,13 +11,14 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.AbstractExecutorService;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.util.EnumUtil;
@@ -30,11 +31,14 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
+import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.stream.impl.StreamRequestCommand;
+import org.infinispan.stream.impl.TerminalOperation;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.ByteString;
@@ -67,8 +71,8 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    private ReplicableCommand blockingSingleRpcCommand;
    private ReplicableCommand nonBlockingSingleRpcCommand;
 
-   private static ReplicableCommand mockReplicableCommand(boolean blocking) throws Throwable {
-      ReplicableCommand mock = mock(ReplicableCommand.class);
+   private static <C extends ReplicableCommand> C mockCommand(Class<C> commandClass, boolean blocking) throws Throwable {
+      C mock = mock(commandClass);
       when(mock.canBlock()).thenReturn(blocking);
       doReturn(null).when(mock).invokeAsync();
       return mock;
@@ -96,17 +100,18 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
 
       commandsFactory = extractCommandsFactory(cache);
 
-      ReplicableCommand nonBlockingReplicableCommand = mockReplicableCommand(false);
-      ReplicableCommand blockingReplicableCommand = mockReplicableCommand(true);
-
       //populate commands
-      blockingCacheRpcCommand = new StreamRequestCommand<>(cacheName);
+      blockingCacheRpcCommand = new StreamRequestCommand<>(cacheName, null, null, false,
+                                                           StreamRequestCommand.Type.TERMINAL, null, null, null, false,
+                                                           false, mock(TerminalOperation.class));
       nonBlockingCacheRpcCommand = new ClusteredGetCommand("key", cacheName, EnumUtil.EMPTY_BIT_SET);
       blockingNonCacheRpcCommand = new CacheTopologyControlCommand(null, CacheTopologyControlCommand.Type.POLICY_GET_STATUS, null, 0);
       //the GetKeyValueCommand is not replicated, but I only need a command that returns false in canBlock()
       nonBlockingNonCacheRpcCommand = new ClusteredGetCommand("key", cacheName, EnumUtil.EMPTY_BIT_SET);
-      blockingSingleRpcCommand = new SingleRpcCommand(cacheName, blockingReplicableCommand);
-      nonBlockingSingleRpcCommand = new SingleRpcCommand(cacheName, nonBlockingReplicableCommand);
+      VisitableCommand blockingVisitableCommand = mockCommand(VisitableCommand.class, true);
+      blockingSingleRpcCommand = new SingleRpcCommand(cacheName, blockingVisitableCommand);
+      VisitableCommand nonBlockingVisitableCommand = mockCommand(VisitableCommand.class, false);
+      nonBlockingSingleRpcCommand = new SingleRpcCommand(cacheName, nonBlockingVisitableCommand);
    }
 
    @AfterClass
@@ -147,14 +152,14 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       log.debugf("Testing " + command.getClass().getCanonicalName());
       commandsFactory.initializeReplicableCommand(command, true);
       executorService.reset();
-      CountDownLatchResponse response = new CountDownLatchResponse();
+      CompletableFutureResponse response = new CompletableFutureResponse();
       invocationHandler.handleFromCluster(address, command, response, DeliverOrder.NONE);
       response.await(30, TimeUnit.SECONDS);
       Assert.assertEquals(executorService.hasExecutedCommand, expected,
                           "Command " + command.getClass() + " dispatched wrongly.");
 
       executorService.reset();
-      response = new CountDownLatchResponse();
+      response = new CompletableFutureResponse();
       invocationHandler.handleFromCluster(address, command, response, DeliverOrder.PER_SENDER);
       response.await(30, TimeUnit.SECONDS);
       Assert.assertFalse(executorService.hasExecutedCommand, "Command " + command.getClass() + " dispatched wrongly.");
@@ -200,21 +205,20 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       }
    }
 
-   private static class CountDownLatchResponse implements Reply {
+   private static class CompletableFutureResponse implements Reply {
 
-      private final CountDownLatch countDownLatch;
+      private final CompletableFuture<Response> responseFuture = new CompletableFuture<>();
 
-      private CountDownLatchResponse() {
-         countDownLatch = new CountDownLatch(1);
-      }
-
-      public boolean await(long time, TimeUnit unit) throws InterruptedException {
-         return countDownLatch.await(time, unit);
+      public void await(long time, TimeUnit unit) throws Exception {
+         Response response = responseFuture.get(time, unit);
+         if (response instanceof ExceptionResponse) {
+            throw new TestException(((ExceptionResponse) response).getException());
+         }
       }
 
       @Override
       public void reply(Response response) {
-         countDownLatch.countDown();
+         responseFuture.complete(response);
       }
    }
 }

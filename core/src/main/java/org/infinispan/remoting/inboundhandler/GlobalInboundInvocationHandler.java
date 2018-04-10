@@ -168,18 +168,21 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
 
       CompletableFuture<Object> future = command.invokeAsync();
       if (preserveOrder) {
-         future.join();
+         Object retVal = future.join();
+         sendResponse(reply, retVal);
       } else {
-         future.whenComplete((retVal, throwable) -> {
-            Response response;
-            if (retVal == null || retVal instanceof Response) {
-               response = (Response) retVal;
-            } else {
-               response = SuccessfulResponse.create(retVal);
-            }
-            reply.reply(response);
-         });
+         future.whenComplete((retVal, throwable) -> sendResponse(reply, retVal));
       }
+   }
+
+   private void sendResponse(Reply reply, Object retVal) {
+      Response response;
+      if (retVal == null || retVal instanceof Response) {
+         response = (Response) retVal;
+      } else {
+         response = SuccessfulResponse.create(retVal);
+      }
+      reply.reply(response);
    }
 
 }
