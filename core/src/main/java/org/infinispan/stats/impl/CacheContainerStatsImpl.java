@@ -74,9 +74,9 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       return getStatisticsEnabled();
    }
 
-   @ManagedAttribute(description = "Cache container total average number of nanoseconds for all read operation in this cache container",
+   @ManagedAttribute(description = "Cache container total average number of milliseconds for all read operation in this cache container",
          displayName = "Cache container total average read time",
-         units = Units.NANOSECONDS,
+         units = Units.MILLISECONDS,
          displayType = DisplayType.SUMMARY)
    @Override
    public long getAverageReadTime() {
@@ -103,9 +103,9 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       return totalAverageReadTime;
    }
 
-   @ManagedAttribute(description = "Cache container total average number of nanoseconds for all remove operation in this cache container",
+   @ManagedAttribute(description = "Cache container total average number of milliseconds for all remove operation in this cache container",
          displayName = "Cache container total average remove time",
-         units = Units.NANOSECONDS,
+         units = Units.MILLISECONDS,
          displayType = DisplayType.SUMMARY)
    @Override
    public long getAverageRemoveTime() {
@@ -141,9 +141,9 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       return totalAverageRemoveTime;
    }
 
-   @ManagedAttribute(description = "Cache container average number of nanoseconds for all write operation in this cache container",
+   @ManagedAttribute(description = "Cache container average number of milliseconds for all write operation in this cache container",
          displayName = "Cache container average write time",
-         units = Units.NANOSECONDS,
+         units = Units.MILLISECONDS,
          displayType = DisplayType.SUMMARY)
    @Override
    public long getAverageWriteTime() {

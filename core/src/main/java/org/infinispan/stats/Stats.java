@@ -81,17 +81,17 @@ public interface Stats {
    long getEvictions();
 
    /**
-    * @return Average number of nanoseconds for a cache get on the cache
+    * @return Average number of milliseconds for a cache get on the cache
     */
    long getAverageReadTime();
 
    /**
-    * @return Average number of nanoseconds for a cache put on the cache
+    * @return Average number of milliseconds for a cache put on the cache
     */
    long getAverageWriteTime();
 
    /**
-    * @return Average number of nanoseconds for a cache put on the cache
+    * @return Average number of milliseconds for a cache put on the cache
     */
    long getAverageRemoveTime();
 
