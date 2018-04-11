@@ -10,7 +10,8 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "client.hotrod.xsite.SiteManualSwitchTest")
+@Test(groups = "unstable", testName = "client.hotrod.xsite.SiteManualSwitchTest",
+   description = "Disabled for random failure, tracked by ISPN-9064")
 public class SiteManualSwitchTest extends AbstractHotRodSiteFailoverTest {
 
    @Override
