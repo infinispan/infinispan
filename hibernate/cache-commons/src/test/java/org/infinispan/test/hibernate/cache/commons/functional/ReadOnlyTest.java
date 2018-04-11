@@ -41,7 +41,7 @@ public class ReadOnlyTest extends SingleNodeTest {
 		Statistics stats = sessionFactory().getStatistics();
 		stats.clear();
 		InfinispanBaseRegion region = TEST_SESSION_ACCESS.getRegion(sessionFactory(), Item.class.getName() + ".items");
-		assertEquals( 0, region.getCache().size() );
+		assertEquals(0, region.getElementCountInMemory());
 	}
 
 	@Test

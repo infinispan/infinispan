@@ -9,11 +9,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.hibernate.cache.commons.util.Tombstone;
 
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.hibernate.testing.TestForIssue;
-import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.junit.Test;
 
@@ -320,7 +320,7 @@ public class TombstoneTest extends AbstractNonInvalidationTest {
    }
 
    private Future<?> blockedPutFromLoad(CyclicBarrier putFromLoadBarrier) throws InterruptedException, BrokenBarrierException, TimeoutException {
-      BlockingInterceptor blockingInterceptor = new BlockingInterceptor(putFromLoadBarrier, PutKeyValueCommand.class, false, true);
+      BlockingInterceptor blockingInterceptor = new BlockingInterceptor(putFromLoadBarrier, ReadWriteKeyCommand.class, false, true);
       entityCache.getAsyncInterceptorChain().addInterceptor(blockingInterceptor, 0);
       cleanup.add(() -> entityCache.removeInterceptor(BlockingInterceptor.class));
       // the putFromLoad should be blocked in the interceptor

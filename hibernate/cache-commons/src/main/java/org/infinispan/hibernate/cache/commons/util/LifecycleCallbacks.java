@@ -26,7 +26,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
 		externalizerMap.put( Externalizers.TOMBSTONE_UPDATE, new TombstoneUpdate.Externalizer() );
 		externalizerMap.put( Externalizers.FUTURE_UPDATE, new FutureUpdate.Externalizer() );
 		externalizerMap.put( Externalizers.VERSIONED_ENTRY, new VersionedEntry.Externalizer() );
-		externalizerMap.put( Externalizers.EXCLUDE_EMPTY_EXTRACT_VALUE, new VersionedEntry.ExcludeEmptyExtractValueExternalizer() );
+		externalizerMap.put( Externalizers.EXCLUDE_EMPTY_VERSIONED_ENTRY, new VersionedEntry.ExcludeEmptyVersionedEntryExternalizer() );
       externalizerMap.put( Externalizers.FILTER_NULL_VALUE_CONVERTER, new FilterNullValueConverter.Externalizer() );
 	}
 

@@ -95,7 +95,12 @@ public interface Param<P> {
     */
    @Experimental
    enum LockingMode implements Param<LockingMode> {
-      LOCK, SKIP;
+      LOCK,
+      SKIP,
+      /**
+       * The operation fails when it is not possible to acquire the lock without waiting.
+       */
+      TRY_LOCK;
 
       public static final int ID = ParamIds.LOCKING_MODE_ID;
       private static final LockingMode[] CACHED_VALUES = values();
@@ -206,4 +211,40 @@ public interface Param<P> {
       public static boolean isSkip(Params params) {
          return params.<StatisticsMode>get(ID).get() == SKIP;
       }
-   }}
+   }
+
+   @Experimental
+   enum ReplicationMode implements Param<ReplicationMode> {
+      /**
+       * Command is completed when all owners are updated.
+       */
+      SYNC,
+      /**
+       * Invoking node does not know when the owners are updated nor if the command fails.
+       */
+      ASYNC;
+
+
+      public static final int ID = ParamIds.REPLICATION_MODE_ID;
+      public static final ReplicationMode[] CACHED_VALUES = values();
+
+      @Override
+      public int id() {
+         return ID;
+      }
+
+      @Override
+      public ReplicationMode get() {
+         return this;
+      }
+
+      public static ReplicationMode defaultValue() {
+         return SYNC;
+      }
+
+      public static ReplicationMode valueOf(int ordinal) {
+         return CACHED_VALUES[ordinal];
+      }
+
+   }
+}

@@ -6,6 +6,8 @@
  */
 package org.infinispan.hibernate.cache.v51.impl;
 
+import org.infinispan.context.Flag;
+import org.infinispan.functional.MetaParam;
 import org.infinispan.hibernate.cache.v51.InfinispanRegionFactory;
 import org.infinispan.hibernate.cache.commons.access.AccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.LockingInterceptor;
@@ -13,14 +15,10 @@ import org.infinispan.hibernate.cache.commons.access.NonStrictAccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.NonTxInvalidationCacheAccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
 import org.infinispan.hibernate.cache.commons.access.TombstoneAccessDelegate;
-import org.infinispan.hibernate.cache.commons.access.TombstoneCallInterceptor;
 import org.infinispan.hibernate.cache.commons.access.TxInvalidationCacheAccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.UnorderedDistributionInterceptor;
 import org.infinispan.hibernate.cache.commons.access.UnorderedReplicationLogic;
-import org.infinispan.hibernate.cache.commons.access.VersionedCallInterceptor;
 import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
-import org.infinispan.hibernate.cache.commons.util.Caches;
-import org.infinispan.hibernate.cache.commons.util.FutureUpdate;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.commons.util.Tombstone;
 import org.infinispan.hibernate.cache.commons.util.VersionedEntry;
@@ -31,19 +29,15 @@ import org.hibernate.cache.spi.TransactionalDataRegion;
 import org.hibernate.cache.spi.access.AccessType;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.expiration.impl.ClusterExpirationManager;
 import org.infinispan.expiration.impl.ExpirationManagerImpl;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
-import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 
@@ -52,6 +46,7 @@ import javax.transaction.TransactionManager;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * Support for Inifinispan {@link org.hibernate.cache.spi.TransactionalDataRegion} implementors.
@@ -66,6 +61,8 @@ public abstract class BaseTransactionalDataRegion
 	private final CacheDataDescription metadata;
 	private final CacheKeysFactory cacheKeysFactory;
 	private final boolean requiresTransaction;
+	private final MetaParam.MetaLifespan expiringMetaParam;
+	private final AdvancedCache<Object, Object> localCache;
 
 	private long tombstoneExpiration;
 	private PutFromLoadValidator validator;
@@ -87,11 +84,12 @@ public abstract class BaseTransactionalDataRegion
 	 * @param cacheKeysFactory factory for cache keys
 	 */
 	public BaseTransactionalDataRegion(
-			AdvancedCache cache, String name, TransactionManager transactionManager,
-			CacheDataDescription metadata, InfinispanRegionFactory factory, CacheKeysFactory cacheKeysFactory) {
+         AdvancedCache cache, String name, TransactionManager transactionManager,
+         CacheDataDescription metadata, InfinispanRegionFactory factory, CacheKeysFactory cacheKeysFactory) {
 		super( cache, name, transactionManager, factory);
 		this.metadata = metadata;
 		this.cacheKeysFactory = cacheKeysFactory;
+		localCache = cache.withFlags(Flag.CACHE_MODE_LOCAL);
 
 		Configuration configuration = cache.getCacheConfiguration();
 		requiresTransaction = configuration.transaction().transactionMode().isTransactional()
@@ -100,6 +98,7 @@ public abstract class BaseTransactionalDataRegion
 		if (!isRegionAccessStrategyEnabled()) {
 			strategy = Strategy.NONE;
 		}
+		expiringMetaParam = new MetaParam.MetaLifespan(tombstoneExpiration);
 	}
 
 	/**
@@ -133,10 +132,9 @@ public abstract class BaseTransactionalDataRegion
 			return new NonStrictAccessDelegate(this, getCacheDataDescription().getVersionComparator());
 		}
 		if (cacheMode.isDistributed() || cacheMode.isReplicated()) {
-			prepareForTombstones();
+			prepareForTombstones(cacheMode);
 			return new TombstoneAccessDelegate(this);
-		}
-		else {
+		} else {
 			prepareForValidation();
 			if (cache.getCacheConfiguration().transaction().transactionMode().isTransactional()) {
 				return new TxInvalidationCacheAccessDelegate(this, validator);
@@ -147,7 +145,7 @@ public abstract class BaseTransactionalDataRegion
 		}
 	}
 
-	protected void prepareForValidation() {
+	private void prepareForValidation() {
 		if (strategy != null) {
 			assert strategy == Strategy.VALIDATION;
 			return;
@@ -156,31 +154,19 @@ public abstract class BaseTransactionalDataRegion
 		strategy = Strategy.VALIDATION;
 	}
 
-	protected void prepareForVersionedEntries(CacheMode cacheMode) {
+	private void prepareForVersionedEntries(CacheMode cacheMode) {
 		if (strategy != null) {
 			assert strategy == Strategy.VERSIONED_ENTRIES;
 			return;
 		}
 
-		replaceCommonInterceptors();
-		replaceExpirationManager();
-
-      VersionedCallInterceptor versionedCallInterceptor = new VersionedCallInterceptor(this);
-      ComponentRegistry compReg = cache.getComponentRegistry();
-      compReg.registerComponent(versionedCallInterceptor, VersionedCallInterceptor.class);
-      AsyncInterceptorChain interceptorChain = cache.getAsyncInterceptorChain();
-      interceptorChain.addInterceptorBefore(versionedCallInterceptor, CallInterceptor.class);
-
-      if (cacheMode.isClustered()) {
-         UnorderedReplicationLogic replLogic = new UnorderedReplicationLogic();
-         compReg.registerComponent( replLogic, ClusteringDependentLogic.class );
-         compReg.rewire();
-      }
+		prepareCommon(cacheMode);
+		filter = VersionedEntry.EXCLUDE_EMPTY_VERSIONED_ENTRY;
 
 		strategy = Strategy.VERSIONED_ENTRIES;
 	}
 
-	private void prepareForTombstones() {
+	private void prepareForTombstones(CacheMode cacheMode) {
 		if (strategy != null) {
 			assert strategy == Strategy.TOMBSTONES;
 			return;
@@ -190,59 +176,45 @@ public abstract class BaseTransactionalDataRegion
 			log.evictionWithTombstones();
 		}
 
-		replaceCommonInterceptors();
-		replaceExpirationManager();
-
-		TombstoneCallInterceptor tombstoneCallInterceptor = new TombstoneCallInterceptor(this);
-      ComponentRegistry compReg = cache.getComponentRegistry();
-      compReg.registerComponent( tombstoneCallInterceptor, TombstoneCallInterceptor.class);
-      AsyncInterceptorChain interceptorChain = cache.getAsyncInterceptorChain();
-      interceptorChain.addInterceptorBefore(tombstoneCallInterceptor, CallInterceptor.class);
-
-      UnorderedReplicationLogic replLogic = new UnorderedReplicationLogic();
-      compReg.registerComponent( replLogic, ClusteringDependentLogic.class );
-      compReg.rewire();
+		prepareCommon(cacheMode);
+		filter = Tombstone.EXCLUDE_TOMBSTONES;
 
 		strategy = Strategy.TOMBSTONES;
 	}
 
-	private void replaceCommonInterceptors() {
-		CacheMode cacheMode = cache.getCacheConfiguration().clustering().cacheMode();
-		if (!cacheMode.isReplicated() && !cacheMode.isDistributed()) {
-			return;
+	private void prepareCommon(CacheMode cacheMode) {
+		ComponentRegistry registry = cache.getComponentRegistry();
+		if (cacheMode.isReplicated() || cacheMode.isDistributed()) {
+			AsyncInterceptorChain chain = cache.getAsyncInterceptorChain();
+
+			LockingInterceptor lockingInterceptor = new LockingInterceptor();
+			registry.registerComponent(lockingInterceptor, LockingInterceptor.class);
+			if (!chain.addInterceptorBefore(lockingInterceptor, NonTransactionalLockingInterceptor.class)) {
+				throw new IllegalStateException("Misconfigured cache, interceptor chain is " + chain);
+			}
+			chain.removeInterceptor(NonTransactionalLockingInterceptor.class);
+
+			UnorderedDistributionInterceptor distributionInterceptor = new UnorderedDistributionInterceptor();
+			registry.registerComponent(distributionInterceptor, UnorderedDistributionInterceptor.class);
+			if (!chain.addInterceptorBefore(distributionInterceptor, NonTxDistributionInterceptor.class) &&
+					!chain.addInterceptorBefore( distributionInterceptor, TriangleDistributionInterceptor.class)) {
+				throw new IllegalStateException("Misconfigured cache, interceptor chain is " + chain);
+			}
+
+			chain.removeInterceptor(NonTxDistributionInterceptor.class);
+			chain.removeInterceptor(TriangleDistributionInterceptor.class);
 		}
 
-      AsyncInterceptorChain chain = cache.getAsyncInterceptorChain();
-
-		LockingInterceptor lockingInterceptor = new LockingInterceptor();
-		cache.getComponentRegistry().registerComponent(lockingInterceptor, LockingInterceptor.class);
-		if (!chain.addInterceptorBefore(lockingInterceptor, NonTransactionalLockingInterceptor.class)) {
-			throw new IllegalStateException("Misconfigured cache, interceptor chain is " + chain);
-		}
-		cache.removeInterceptor(NonTransactionalLockingInterceptor.class);
-
-		UnorderedDistributionInterceptor distributionInterceptor = new UnorderedDistributionInterceptor();
-		cache.getComponentRegistry().registerComponent(distributionInterceptor, UnorderedDistributionInterceptor.class);
-      if (!chain.addInterceptorBefore(distributionInterceptor, NonTxDistributionInterceptor.class) &&
-               !chain.addInterceptorBefore( distributionInterceptor, TriangleDistributionInterceptor.class)) {
-         throw new IllegalStateException("Misconfigured cache, interceptor chain is " + chain);
-      }
-
-      cache.removeInterceptor(NonTxDistributionInterceptor.class);
-      cache.removeInterceptor(TriangleDistributionInterceptor.class);
-	}
-
-	private void replaceExpirationManager() {
 		// ClusteredExpirationManager sends RemoteExpirationCommands to remote nodes which causes
 		// undesired overhead. When get() triggers a RemoteExpirationCommand executed in async executor
 		// this locks the entry for the duration of RPC, and putFromLoad with ZERO_LOCK_ACQUISITION_TIMEOUT
 		// fails as it finds the entry being blocked.
-		ExpirationManager expirationManager = cache.getComponentRegistry().getComponent(ExpirationManager.class);
+		ExpirationManager expirationManager = registry.getComponent(ExpirationManager.class);
 		if ((expirationManager instanceof ClusterExpirationManager)) {
 			// re-registering component does not stop the old one
 			((ClusterExpirationManager) expirationManager).stop();
-			cache.getComponentRegistry().registerComponent(new ExpirationManagerImpl<>(), ExpirationManager.class);
-			cache.getComponentRegistry().rewire();
+			registry.registerComponent(new ExpirationManagerImpl<>(), ExpirationManager.class);
+			registry.rewire();
 		}
 		else if (expirationManager instanceof ExpirationManagerImpl) {
 			// do nothing
@@ -250,10 +222,23 @@ public abstract class BaseTransactionalDataRegion
 		else {
 			throw new IllegalStateException("Expected clustered expiration manager, found " + expirationManager);
 		}
+
+		registry.registerComponent(this, InfinispanDataRegion.class);
+
+		if (cacheMode.isClustered()) {
+			UnorderedReplicationLogic replLogic = new UnorderedReplicationLogic();
+			registry.registerComponent( replLogic, ClusteringDependentLogic.class );
+			registry.rewire();
+		}
 	}
 
 	public long getTombstoneExpiration() {
 		return tombstoneExpiration;
+	}
+
+	@Override
+	public MetaParam.MetaLifespan getExpiringMetaParam() {
+		return expiringMetaParam;
 	}
 
 	@Override
@@ -267,95 +252,40 @@ public abstract class BaseTransactionalDataRegion
 				super.runInvalidation(inTransaction);
 				return;
 			case TOMBSTONES:
-				removeEntries(inTransaction, Tombstone.EXCLUDE_TOMBSTONES);
+				removeEntries(inTransaction, entry -> localCache.remove(entry.getKey(), entry.getValue()));
 				return;
 			case VERSIONED_ENTRIES:
-				removeEntries(inTransaction, VersionedEntry.EXCLUDE_EMPTY_EXTRACT_VALUE);
+				// no need to use this as a function - simply override all
+				VersionedEntry evict = new VersionedEntry(nextTimestamp());
+				removeEntries(inTransaction, entry ->
+						localCache.put(entry.getKey(), evict, getTombstoneExpiration(), TimeUnit.MILLISECONDS));
 				return;
 		}
 	}
 
-	private void removeEntries(boolean inTransaction, KeyValueFilter filter) {
+	private void removeEntries(boolean inTransaction, Consumer<Map.Entry<Object, Object>> remover) {
 		// If the transaction is required, we simply need it -> will create our own
 		boolean startedTx = false;
 		if ( !inTransaction && requiresTransaction) {
 			try {
 				tm.begin();
 				startedTx = true;
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
 		}
 		// We can never use cache.clear() since tombstones must be kept.
 		try {
-			AdvancedCache localCache = Caches.localCache(cache);
-			CloseableIterator<CacheEntry> it = Caches.entrySet(localCache, Tombstone.EXCLUDE_TOMBSTONES).iterator();
-			long now = nextTimestamp();
-			try {
-				while (it.hasNext()) {
-					// Cannot use it.next(); it.remove() due to ISPN-5653
-					CacheEntry entry = it.next();
-					switch (strategy) {
-						case TOMBSTONES:
-							localCache.remove(entry.getKey(), entry.getValue());
-							break;
-						case VERSIONED_ENTRIES:
-							localCache.put(entry.getKey(), new VersionedEntry(null, null, now), tombstoneExpiration, TimeUnit.MILLISECONDS);
-							break;
-					}
-				}
-			}
-			finally {
-				it.close();
-			}
-		}
-		finally {
+			localCache.entrySet().stream().filter(filter).forEach(remover);
+		} finally {
 			if (startedTx) {
 				try {
 					tm.commit();
-				}
-				catch (Exception e) {
+				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}
 			}
 		}
-	}
-
-	@Override
-	public Map toMap() {
-		if (strategy == null) {
-			throw new IllegalStateException("Strategy was not set");
-		}
-		switch (strategy) {
-			case NONE:
-			case VALIDATION:
-				return super.toMap();
-			case TOMBSTONES:
-				return Caches.entrySet(Caches.localCache(cache), Tombstone.EXCLUDE_TOMBSTONES).toMap();
-			case VERSIONED_ENTRIES:
-				return Caches.entrySet(Caches.localCache(cache), VersionedEntry.EXCLUDE_EMPTY_EXTRACT_VALUE, VersionedEntry.EXCLUDE_EMPTY_EXTRACT_VALUE).toMap();
-			default:
-				throw new IllegalStateException(strategy.toString());
-		}
-	}
-
-	@Override
-	public boolean contains(Object key) {
-		if (!checkValid()) {
-			return false;
-		}
-		Object value = cache.get(key);
-		if (value instanceof Tombstone) {
-			return false;
-		}
-		if (value instanceof FutureUpdate) {
-			return ((FutureUpdate) value).getValue() != null;
-		}
-		if (value instanceof VersionedEntry) {
-			return ((VersionedEntry) value).getValue() != null;
-		}
-		return value != null;
 	}
 
 	@Override

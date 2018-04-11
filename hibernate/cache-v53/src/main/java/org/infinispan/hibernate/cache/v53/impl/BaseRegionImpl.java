@@ -7,6 +7,9 @@
 package org.infinispan.hibernate.cache.v53.impl;
 
 
+import java.util.Map;
+import java.util.function.Predicate;
+
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.ExtendedStatisticsSupport;
 import org.hibernate.cache.spi.Region;
@@ -30,13 +33,14 @@ abstract class BaseRegionImpl implements Region, InfinispanBaseRegion, ExtendedS
 
    private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( BaseRegionImpl.class );
 
-   protected final String name;
-   protected final AdvancedCache cache;
-   protected final AdvancedCache localAndSkipLoadCache;
-   protected final InfinispanRegionFactory factory;
+   private final String name;
+   private final AdvancedCache localAndSkipLoadCache;
+   final AdvancedCache cache;
+   final InfinispanRegionFactory factory;
 
-   protected volatile long lastRegionInvalidation = Long.MIN_VALUE;
-   protected int invalidations = 0;
+   private volatile long lastRegionInvalidation = Long.MIN_VALUE;
+   private int invalidations = 0;
+   Predicate<Map.Entry<Object, Object>> filter;
 
    /**
     * Base region constructor.
@@ -45,7 +49,7 @@ abstract class BaseRegionImpl implements Region, InfinispanBaseRegion, ExtendedS
     * @param name of the region
     * @param factory for this region
     */
-   public BaseRegionImpl(AdvancedCache cache, String name, InfinispanRegionFactory factory) {
+   BaseRegionImpl(AdvancedCache cache, String name, InfinispanRegionFactory factory) {
       this.cache = cache;
       this.name = name;
       this.factory = factory;
@@ -132,7 +136,11 @@ abstract class BaseRegionImpl implements Region, InfinispanBaseRegion, ExtendedS
 
    @Override
    public long getElementCountInMemory() {
-      return localAndSkipLoadCache.size();
+      if (filter == null) {
+         return localAndSkipLoadCache.size();
+      } else {
+         return localAndSkipLoadCache.entrySet().stream().filter(filter).count();
+      }
    }
 
    @Override

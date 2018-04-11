@@ -63,7 +63,7 @@ public class ExpectingInterceptor extends BaseCustomAsyncInterceptor {
    }
 
    private void assertCondition(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) throws Throwable {
-      boolean succeeded = throwable == null;
+      boolean succeeded = throwable == null && rCommand.isSuccessful();
       log.tracef("After command(successful=%s) %s", succeeded, rCommand);
       List<Runnable> toExecute = new ArrayList<>();
       synchronized (ExpectingInterceptor.this) {

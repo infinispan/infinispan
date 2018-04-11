@@ -24,4 +24,6 @@ public interface InfinispanBaseRegion extends TimeSource {
    boolean checkValid();
 
    void destroy();
+
+   long getElementCountInMemory();
 }

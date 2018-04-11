@@ -27,7 +27,7 @@ public class Externalizers {
 	public final static int FUTURE_UPDATE = 1204;
 	public final static int VALUE_EXTRACTOR = 1205;
 	public final static int VERSIONED_ENTRY = 1206;
-	public final static int EXCLUDE_EMPTY_EXTRACT_VALUE = 1207;
+	public final static int EXCLUDE_EMPTY_VERSIONED_ENTRY = 1207;
    public final static int FILTER_NULL_VALUE_CONVERTER = 1208;
    public final static int NULL_VALUE = 1209;
 

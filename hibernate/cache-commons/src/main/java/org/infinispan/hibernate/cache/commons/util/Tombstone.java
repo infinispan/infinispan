@@ -6,31 +6,34 @@
  */
 package org.infinispan.hibernate.cache.commons.util;
 
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.metadata.Metadata;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.functional.EntryView;
+import org.infinispan.functional.MetaParam;
+import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * This is used both as the storage in entry, and for efficiency also directly in the cache.put() commands.
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public class Tombstone {
-   private static final Log log = LogFactory.getLog(Tombstone.class);
-
+public class Tombstone implements Function<EntryView.ReadWriteEntryView<Object, Object>, Void>, InjectableComponent {
 	public static final ExcludeTombstonesFilter EXCLUDE_TOMBSTONES = new ExcludeTombstonesFilter();
 
 	// the format of data is repeated (timestamp, UUID.LSB, UUID.MSB)
 	private final long[] data;
+	private transient InfinispanDataRegion region;
 
 	public Tombstone(UUID uuid, long timestamp) {
 		this.data = new long[] { timestamp, uuid.getLeastSignificantBits(), uuid.getMostSignificantBits() };
@@ -160,6 +163,23 @@ public class Tombstone {
 		return data.length / 3;
 	}
 
+	@Override
+	public Void apply(EntryView.ReadWriteEntryView<Object, Object> view) {
+		Object storedValue = view.find().orElse(null);
+		MetaParam.MetaLifespan expiringMetaParam = region.getExpiringMetaParam();
+		if (storedValue instanceof Tombstone) {
+			view.set(((Tombstone) storedValue).merge(this), expiringMetaParam);
+		} else {
+			view.set(this, expiringMetaParam);
+		}
+		return null;
+	}
+
+	@Override
+	public void inject(ComponentRegistry registry) {
+		region = registry.getComponent(InfinispanDataRegion.class);
+	}
+
 	public static class Externalizer implements AdvancedExternalizer<Tombstone> {
 		@Override
 		public Set<Class<? extends Tombstone>> getTypeClasses() {
@@ -190,14 +210,12 @@ public class Tombstone {
 		}
 	}
 
-	public static class ExcludeTombstonesFilter implements KeyValueFilter {
+	public static class ExcludeTombstonesFilter implements Predicate<Map.Entry<Object, Object>> {
 		private ExcludeTombstonesFilter() {}
 
 		@Override
-		public boolean accept(Object key, Object value, Metadata metadata) {
-         boolean isTombstone = value instanceof Tombstone;
-         log.tracef("Is {key=%s,value=%s} tombstone? %b", key, value, isTombstone);
-         return !isTombstone;
+		public boolean test(Map.Entry<Object, Object> entry) {
+			return !(entry.getValue() instanceof Tombstone);
 		}
 	}
 

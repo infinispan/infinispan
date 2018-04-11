@@ -14,7 +14,9 @@ import java.util.concurrent.TimeUnit;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.infinispan.commons.test.categories.Smoke;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.hibernate.criterion.Restrictions;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Citizen;
@@ -82,7 +84,8 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 		MyListener remoteListener = new MyListener( "remote" );
 		remoteNaturalIdCache.addListener(remoteListener);
 
-		SessionFactory localFactory = sessionFactory();
+		SessionFactoryImplementor localFactory = sessionFactory();
+		InfinispanBaseRegion localNaturalIdRegion = TEST_SESSION_ACCESS.getRegion(localFactory, Citizen.class.getName() + "##NaturalId");
 		SessionFactory remoteFactory = secondNodeEnvironment().getSessionFactory();
 
 		try {
@@ -131,10 +134,7 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 			deleteCitizenWithCriteria(remoteFactory);
 			assertTrue(localUpdate.await(2, TimeUnit.SECONDS));
 
-			Set localKeys = localNaturalIdCache.keySet();
-			assertEquals(1, localKeys.size());
-			// Only key left is the one for the citizen *not* in France
-			localKeys.toString().contains("000");
+			assertEquals(1, localNaturalIdRegion.getElementCountInMemory());
 		}
 		catch (Exception e) {
 			log.error("Error", e);
