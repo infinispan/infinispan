@@ -31,6 +31,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ProcessorInfo;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -620,7 +621,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          transport.invokeRemotely(null, command, ResponseMode.ASYNCHRONOUS, timeout, null,
                                   deliverOrder, distributed);
       } catch (Exception e) {
-         throw new CacheException("Failed to broadcast asynchronous command: " + command, e);
+         throw Util.rewrapAsCacheException(e);
       }
    }
 

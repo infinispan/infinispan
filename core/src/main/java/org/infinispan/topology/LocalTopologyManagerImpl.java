@@ -12,6 +12,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.Version;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
@@ -472,6 +473,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       cacheStatus.getTopologyUpdatesExecutor().execute(() -> {
          try {
             doHandleRebalance(viewId, cacheStatus, cacheTopology, cacheName, sender);
+         } catch (IllegalLifecycleStateException e) {
+            // Ignore errors when the cache is shutting down
          } catch (Throwable t) {
             log.rebalanceStartError(cacheName, t);
          }
