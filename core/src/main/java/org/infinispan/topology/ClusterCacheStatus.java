@@ -17,6 +17,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.conflict.ConflictManagerFactory;
@@ -637,6 +638,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          // and continue any in-progress rebalance without resetting the cache topology.
 
          availabilityStrategy.onPartitionMerge(this, statusResponses);
+      } catch (IllegalLifecycleStateException e) {
+         // Retrieving the conflict manager fails during shutdown, because internalGetCache checks the manager status
+         // Remote invocations also fail if the transport is stopped before recovery finishes
       } catch (Exception e) {
          log.failedToRecoverCacheState(cacheName, e);
       }

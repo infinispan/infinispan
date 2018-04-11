@@ -146,8 +146,10 @@ public class InboundTransferTask {
                completionFuture.completeExceptionally(e);
             }
          } catch (Exception e) {
-            log.failedToRequestSegments(cacheName, source, segmentsCopy, e);
-            completionFuture.completeExceptionally(e);
+            if (!isCancelled) {
+               log.failedToRequestSegments(cacheName, source, segmentsCopy, e);
+               completionFuture.completeExceptionally(e);
+            }
          }
       }
       return completionFuture;

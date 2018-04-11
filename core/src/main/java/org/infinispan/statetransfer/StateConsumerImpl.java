@@ -994,12 +994,17 @@ public class StateConsumerImpl implements StateConsumer {
 
       if (!keysToRemove.isEmpty()) {
          try {
-            InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateCommand(EnumUtil.bitSetOf(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToRemove.toArray());
+            InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateCommand(
+               EnumUtil.bitSetOf(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToRemove.toArray());
             InvocationContext ctx = icf.createNonTxInvocationContext();
             ctx.setLockOwner(invalidateCmd.getKeyLockOwner());
             interceptorChain.invoke(ctx, invalidateCmd);
 
-            if (trace) log.tracef("Removed %d keys, data container now has %d keys", keysToRemove.size(), dataContainer.sizeIncludingExpired());
+            if (trace) log.tracef("Removed %d keys, data container now has %d keys", keysToRemove.size(),
+                                  dataContainer.sizeIncludingExpired());
+         } catch (IllegalLifecycleStateException e) {
+            // Ignore shutdown-related errors, because InvocationContextInterceptor starts rejecting commands
+            // before any component is stopped
          } catch (CacheException e) {
             log.failedToInvalidateKeys(e);
          }
