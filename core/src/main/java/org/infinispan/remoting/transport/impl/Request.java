@@ -1,10 +1,10 @@
-package org.infinispan.remoting.transport;
+package org.infinispan.remoting.transport.impl;
 
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.util.Experimental;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * A remote command invocation request.
@@ -12,7 +12,6 @@ import org.infinispan.remoting.responses.Response;
  * @author Dan Berindei
  * @since 9.1
  */
-@Experimental
 public interface Request<T> extends CompletionStage<T> {
    long NO_REQUEST_ID = 0;
 
@@ -28,8 +27,10 @@ public interface Request<T> extends CompletionStage<T> {
 
    /**
     * Called when the node received a new cluster view.
+    *
+    * @return {@code true} if any of the request targets is not in the view.
     */
-   void onNewView(Set<Address> members);
+   boolean onNewView(Set<Address> members);
 
    /**
     * Complete the request with an exception and release its resources.

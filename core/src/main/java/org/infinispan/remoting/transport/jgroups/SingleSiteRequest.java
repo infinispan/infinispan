@@ -33,8 +33,9 @@ public class SingleSiteRequest<T> extends AbstractRequest<T> {
    }
 
    @Override
-   public void onNewView(Set<Address> members) {
+   public boolean onNewView(Set<Address> members) {
       // Ignore cluster views.
+      return false;
    }
 
    private void receiveResponse(Address sender, Response response) {
