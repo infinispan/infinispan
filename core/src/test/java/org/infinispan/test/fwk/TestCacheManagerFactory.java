@@ -353,7 +353,7 @@ public class TestCacheManagerFactory {
       org.infinispan.configuration.global.GlobalConfiguration gc = builder.build();
       if (gc.transport().transport() != null) { //this is local
          String testName = TestResourceTracker.getCurrentTestName();
-         String nextCacheName = TestResourceTracker.getNextNodeName();
+         String nextNodeName = TestResourceTracker.getNextNodeName();
 
          // Remove any configuration file that might have been set.
          builder.transport().removeProperty(JGroupsTransport.CONFIGURATION_FILE);
@@ -361,7 +361,7 @@ public class TestCacheManagerFactory {
          builder
                .transport()
                .addProperty(JGroupsTransport.CONFIGURATION_STRING, getJGroupsConfig(testName, flags))
-               .nodeName(nextCacheName);
+               .nodeName(nextNodeName);
       }
    }
 
@@ -398,6 +398,7 @@ public class TestCacheManagerFactory {
    }
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gc, ConfigurationBuilder c) {
+      gc.transport().nodeName(TestResourceTracker.getNextNodeName());
       GlobalConfiguration globalConfiguration = gc.build();
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(globalConfiguration, c.build(globalConfiguration), start);
       TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
