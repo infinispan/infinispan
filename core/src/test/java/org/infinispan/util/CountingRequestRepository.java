@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Request;
+import org.infinispan.remoting.transport.impl.Request;
 import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;

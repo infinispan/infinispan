@@ -6,7 +6,6 @@ import java.util.function.Consumer;
 
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Request;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
