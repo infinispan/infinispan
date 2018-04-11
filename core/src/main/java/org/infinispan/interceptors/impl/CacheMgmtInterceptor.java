@@ -538,9 +538,9 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedAttribute(
-         description = "Average number of nanoseconds for a read operation on the cache",
+         description = "Average number of milliseconds for a read operation on the cache",
          displayName = "Average read time",
-         units = Units.NANOSECONDS,
+         units = Units.MILLISECONDS,
          displayType = DisplayType.SUMMARY
    )
    @SuppressWarnings("unused")
@@ -548,13 +548,14 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       long total = counters.get(StripeB.hitsFieldUpdater) + counters.get(StripeB.missesFieldUpdater);
       if (total == 0)
          return 0;
-      return (counters.get(StripeB.hitTimesFieldUpdater) + counters.get(StripeB.missTimesFieldUpdater)) / total;
+      total = (counters.get(StripeB.hitTimesFieldUpdater) + counters.get(StripeB.missTimesFieldUpdater)) / total;
+      return TimeUnit.NANOSECONDS.toMillis(total);
    }
 
    @ManagedAttribute(
-         description = "Average number of nanoseconds for a write operation in the cache",
+         description = "Average number of milliseconds for a write operation in the cache",
          displayName = "Average write time",
-         units = Units.NANOSECONDS,
+         units = Units.MILLISECONDS,
          displayType = DisplayType.SUMMARY
    )
    @SuppressWarnings("unused")
@@ -562,13 +563,13 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       long sum = counters.get(StripeB.storesFieldUpdater);
       if (sum == 0)
          return 0;
-      return (counters.get(StripeB.storeTimesFieldUpdater)) / sum;
+      return TimeUnit.NANOSECONDS.toMillis(counters.get(StripeB.storeTimesFieldUpdater) / sum);
    }
 
    @ManagedAttribute(
-         description = "Average number of nanoseconds for a remove operation in the cache",
+         description = "Average number of milliseconds for a remove operation in the cache",
          displayName = "Average remove time",
-         units = Units.NANOSECONDS,
+         units = Units.MILLISECONDS,
          displayType = DisplayType.SUMMARY
    )
    @SuppressWarnings("unused")
@@ -576,7 +577,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       long removes = getRemoveHits();
       if (removes == 0)
          return 0;
-      return (counters.get(StripeB.removeTimesFieldUpdater)) / removes;
+      return TimeUnit.NANOSECONDS.toMillis(counters.get(StripeB.removeTimesFieldUpdater) / removes);
    }
 
    @ManagedAttribute(

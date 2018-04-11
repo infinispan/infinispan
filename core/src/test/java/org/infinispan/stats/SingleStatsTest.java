@@ -101,9 +101,9 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
       refreshStats();
       assertEquals(TOTAL_ENTRIES + 1, stats.getTotalNumberOfEntries());
 
-      assertTrue(stats.getAverageReadTime() > 0);
-      assertTrue(stats.getAverageRemoveTime() > 0);
-      assertTrue(stats.getAverageWriteTime() > 0);
+      assertTrue(stats.getAverageReadTime() >= 0);
+      assertTrue(stats.getAverageRemoveTime() >= 0);
+      assertTrue(stats.getAverageWriteTime() >= 0);
       if (storageType == StorageType.OFF_HEAP) {
          assertTrue(stats.getOffHeapMemoryUsed() > 0);
       }
