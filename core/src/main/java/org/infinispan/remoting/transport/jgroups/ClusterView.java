@@ -65,6 +65,10 @@ public class ClusterView {
       return isCoordinator;
    }
 
+   boolean contains(Address address) {
+      return getMembersSet().contains(address);
+   }
+
    @Override
    public String toString() {
       return coordinator + "|" + viewId + members;

@@ -7,6 +7,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.remoting.transport.impl.Request;
 import org.infinispan.remoting.transport.impl.RequestRepository;
 
 /**

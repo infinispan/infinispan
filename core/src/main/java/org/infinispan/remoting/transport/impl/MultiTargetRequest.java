@@ -107,20 +107,22 @@ public class MultiTargetRequest<T> extends AbstractRequest<T> {
    }
 
    @Override
-   public void onNewView(Set<Address> members) {
+   public boolean onNewView(Set<Address> members) {
+      boolean targetRemoved = false;
       try {
          boolean isDone = false;
          T result = null;
          synchronized (responseCollector) {
             if (missingResponses <= 0) {
                // The request is completed, must not modify ResponseObject.
-               return;
+               return false;
             }
             for (int i = 0; i < targets.length; i++) {
                Address target = targets[i];
                if (target != null && !members.contains(target)) {
                   targets[i] = null;
                   missingResponses--;
+                  targetRemoved = true;
                   if (trace) log.tracef("Target %s of request %d left the cluster view", target, requestId);
                   result = responseCollector.addResponse(target, CacheNotFoundResponse.INSTANCE);
                   if (result != null) {
@@ -144,6 +146,7 @@ public class MultiTargetRequest<T> extends AbstractRequest<T> {
       } catch (Throwable t) {
          completeExceptionally(t);
       }
+      return targetRemoved;
    }
 
    @Override

@@ -70,7 +70,7 @@ import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.impl.FilterMapResponseCollector;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.impl.MultiTargetRequest;
-import org.infinispan.remoting.transport.Request;
+import org.infinispan.remoting.transport.impl.Request;
 import org.infinispan.remoting.transport.impl.PassthroughSingleResponseCollector;
 import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.remoting.transport.ResponseCollector;
@@ -256,7 +256,7 @@ public class JGroupsTransport implements Transport {
          return;
       }
       logCommand(command, destination);
-      sendCommand(destination, command, Request.NO_REQUEST_ID, deliverOrder, isRsvpCommand(command), true);
+      sendCommand(destination, command, Request.NO_REQUEST_ID, deliverOrder, isRsvpCommand(command), true, true);
    }
 
    @Override
@@ -266,7 +266,7 @@ public class JGroupsTransport implements Transport {
          sendCommandToAll(command, Request.NO_REQUEST_ID, deliverOrder, false);
       } else {
          logCommand(command, targets);
-         sendCommand(targets, command, Request.NO_REQUEST_ID, deliverOrder, false);
+         sendCommand(targets, command, Request.NO_REQUEST_ID, deliverOrder, false, true);
       }
    }
 
@@ -297,8 +297,7 @@ public class JGroupsTransport implements Transport {
          commands.forEach(
                (a, command) -> {
                   logCommand(command, a);
-                  sendCommand(a, command, Request.NO_REQUEST_ID, deliverOrder, isRsvpCommand(command),
-                              true);
+                  sendCommand(a, command, Request.NO_REQUEST_ID, deliverOrder, isRsvpCommand(command), true, true);
                });
          return Collections.emptyMap();
       }
@@ -323,7 +322,7 @@ public class JGroupsTransport implements Transport {
             addRequest(request);
 
             try {
-               sendCommand(recipient, command, request.getRequestId(), DeliverOrder.NONE, rsvp, false);
+               sendCommand(recipient, command, request.getRequestId(), DeliverOrder.NONE, rsvp, false, false);
                if (timeout > 0) {
                   request.setTimeout(timeoutExecutor, timeout, TimeUnit.MILLISECONDS);
                }
@@ -333,7 +332,7 @@ public class JGroupsTransport implements Transport {
             }
             syncBackupCalls.put(xsb, request);
          } else {
-            sendCommand(recipient, command, Request.NO_REQUEST_ID, DeliverOrder.PER_SENDER, false, false);
+            sendCommand(recipient, command, Request.NO_REQUEST_ID, DeliverOrder.PER_SENDER, false, false, false);
          }
       }
       return new JGroupsBackupResponse(syncBackupCalls, timeService);
@@ -814,7 +813,8 @@ public class JGroupsTransport implements Transport {
       logRequest(requestId, command, target);
       SingleTargetRequest<T> request = new SingleTargetRequest<>(collector, requestId, requests, target);
       addRequest(request);
-      sendCommand(target, command, requestId, deliverOrder, isRsvpCommand(command), true);
+      boolean checkView = request.onNewView(clusterView.getMembersSet());
+      sendCommand(target, command, requestId, deliverOrder, isRsvpCommand(command), true, checkView);
       if (timeout > 0) {
          request.setTimeout(timeoutExecutor, timeout, unit);
       }
@@ -835,7 +835,8 @@ public class JGroupsTransport implements Transport {
             new MultiTargetRequest<>(collector, requestId, requests, targets, excludedTarget);
       try {
          addRequest(request);
-         sendCommand(targets, command, requestId, deliverOrder, isRsvpCommand(command));
+         boolean checkView = request.onNewView(clusterView.getMembersSet());
+         sendCommand(targets, command, requestId, deliverOrder, isRsvpCommand(command), checkView);
       } catch (Throwable t) {
          request.cancel(true);
          throw t;
@@ -856,6 +857,7 @@ public class JGroupsTransport implements Transport {
             new MultiTargetRequest<>(collector, requestId, requests, clusterView.getMembers(), excludedTarget);
       try {
          addRequest(request);
+         request.onNewView(clusterView.getMembersSet());
          sendCommandToAll(command, requestId, deliverOrder, isRsvpCommand(command));
       } catch (Throwable t) {
          request.cancel(true);
@@ -878,6 +880,7 @@ public class JGroupsTransport implements Transport {
                                    timeout, unit, this);
       try {
          addRequest(request);
+         request.onNewView(clusterView.getMembersSet());
          request.sendNextMessage();
       } catch (Throwable t) {
          request.cancel(true);
@@ -897,12 +900,13 @@ public class JGroupsTransport implements Transport {
       MultiTargetRequest<T> request =
             new MultiTargetRequest<>(collector, requestId, requests, targets, excludedTarget);
       addRequest(request);
+      boolean checkView = request.onNewView(clusterView.getMembersSet());
       try {
          for (Address target : targets) {
             ReplicableCommand command = commandGenerator.apply(target);
             boolean rsvp = isRsvpCommand(command);
             logRequest(requestId, command, target);
-            sendCommand(target, command, requestId, deliverOrder, rsvp, true);
+            sendCommand(target, command, requestId, deliverOrder, rsvp, true, checkView);
          }
       } catch (Throwable t) {
          request.cancel(true);
@@ -918,7 +922,6 @@ public class JGroupsTransport implements Transport {
    private void addRequest(AbstractRequest<?> request) {
       try {
          requests.addRequest(request);
-         request.onNewView(clusterView.getMembersSet());
       } catch (Throwable t) {
          // Removes the request and the scheduled task, if necessary
          request.cancel(true);
@@ -927,7 +930,10 @@ public class JGroupsTransport implements Transport {
    }
 
    void sendCommand(Address target, ReplicableCommand command, long requestId, DeliverOrder deliverOrder,
-                    boolean rsvp, boolean noRelay) {
+                    boolean rsvp, boolean noRelay, boolean checkView) {
+      if (checkView && !clusterView.contains(target))
+         return;
+
       Message message = new Message(toJGroupsAddress(target));
       marshallRequest(message, command, requestId);
       setMessageFlags(message, deliverOrder, rsvp, noRelay);
@@ -1036,10 +1042,10 @@ public class JGroupsTransport implements Transport {
          sendCommandToAll(command, Request.NO_REQUEST_ID, deliverOrder, rsvp);
       } else if (singleTarget != null) {
          logCommand(command, singleTarget);
-         sendCommand(singleTarget, command, Request.NO_REQUEST_ID, deliverOrder, rsvp, true);
+         sendCommand(singleTarget, command, Request.NO_REQUEST_ID, deliverOrder, rsvp, true, true);
       } else {
          logCommand(command, recipients);
-         sendCommand(recipients, command, Request.NO_REQUEST_ID, deliverOrder, rsvp);
+         sendCommand(recipients, command, Request.NO_REQUEST_ID, deliverOrder, rsvp, true);
       }
       return EMPTY_RESPONSES_FUTURE;
    }
@@ -1140,7 +1146,7 @@ public class JGroupsTransport implements Transport {
     * Doesn't send the command to itself unless {@code deliverOrder == TOTAL}.
     */
    private void sendCommand(Collection<Address> targets, ReplicableCommand command, long requestId,
-                            DeliverOrder deliverOrder, boolean rsvp) {
+                            DeliverOrder deliverOrder, boolean rsvp, boolean checkView) {
       Objects.requireNonNull(targets);
       Message message = new Message();
       marshallRequest(message, command, requestId);
@@ -1150,19 +1156,24 @@ public class JGroupsTransport implements Transport {
          message.dest(new AnycastAddress(toJGroupsAddressList(targets)));
          send(message);
       } else {
-         Iterator<Address> it = targets.iterator();
-         sendSkippingSelf(message, it.next());
-         for (; it.hasNext(); ) {
-            Message copy = message.copy(true);
-            sendSkippingSelf(copy, it.next());
-         }
-      }
-   }
+         Message copy = message;
+         for (Iterator<Address> it = targets.iterator(); it.hasNext(); ) {
+            Address address = it.next();
 
-   private void sendSkippingSelf(Message message, Address address) {
-      if (!address.equals(getAddress())) {
-         message.dest(toJGroupsAddress(address));
-         send(message);
+            if (checkView && !clusterView.contains(address))
+               continue;
+
+            if (address.equals(getAddress()))
+               continue;
+
+            copy.dest(toJGroupsAddress(address));
+            send(copy);
+
+            // Send a different Message instance to each target
+            if (it.hasNext()) {
+               copy = copy.copy(true);
+            }
+         }
       }
    }
 
