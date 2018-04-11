@@ -117,7 +117,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 				.getSecondLevelCacheStatistics( Customer.class.getName() );
 		assertEquals( 1, customerSlcs.getPutCount() );
 		assertEquals( 1, customerSlcs.getElementCountInMemory() );
-		assertEquals( 1, TEST_SESSION_ACCESS.getRegion(sessionFactory(), Customer.class.getName()).getCache().size());
+		assertEquals( 1, TEST_SESSION_ACCESS.getRegion(sessionFactory(), Customer.class.getName()).getElementCountInMemory());
 
 		log.infof( "Add contact to customer {0}", customerId );
 		String contactsRegionName = Customer.class.getName() + ".contacts";
@@ -126,7 +126,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 				.getSecondLevelCacheStatistics(contactsRegionName);
 		assertEquals( 1, contactsCollectionSlcs.getPutCount() );
 		assertEquals( 1, contactsCollectionSlcs.getElementCountInMemory() );
-		assertEquals( 1, TEST_SESSION_ACCESS.getRegion(sessionFactory(), contactsRegionName).getCache().size() );
+		assertEquals( 1, TEST_SESSION_ACCESS.getRegion(sessionFactory(), contactsRegionName).getElementCountInMemory());
 
 		final Contact contact = addContact( customerId );
 		assertNotNull( "contact returned by addContact is null", contact );

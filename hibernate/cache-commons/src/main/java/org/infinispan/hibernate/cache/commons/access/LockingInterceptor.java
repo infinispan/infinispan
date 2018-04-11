@@ -10,9 +10,11 @@ import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.Ownership;
 import org.infinispan.interceptors.InvocationFinallyFunction;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockPromise;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -51,6 +53,11 @@ public class LockingInterceptor extends NonTransactionalLockingInterceptor {
    protected final InvocationFinallyFunction invokeNextAndUnlock = (rCtx, rCommand, rv, throwable) -> {
       if (throwable != null) {
          lockManager.unlockAll(rCtx);
+         DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
+         if (throwable instanceof TimeoutException && dataWriteCommand.hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT)) {
+            dataWriteCommand.fail();
+            return null;
+         }
          throw throwable;
       } else {
          return invokeNextAndHandle(rCtx, rCommand, unlockAllReturnCheckCompletableFutureHandler);

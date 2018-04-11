@@ -7,8 +7,13 @@
 package org.infinispan.hibernate.cache.commons.access;
 
 import java.util.Comparator;
+import java.util.concurrent.CompletableFuture;
 
 import org.hibernate.cache.CacheException;
+import org.infinispan.functional.FunctionalMap;
+import org.infinispan.functional.Param;
+import org.infinispan.functional.impl.FunctionalMapImpl;
+import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
 import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.hibernate.cache.commons.util.Caches;
@@ -19,7 +24,6 @@ import org.hibernate.cache.spi.entry.CacheEntry;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.context.Flag;
 
 /**
  * Access delegate that relaxes the consistency a bit: stale reads are prohibited only after the transaction
@@ -35,17 +39,18 @@ public class NonStrictAccessDelegate implements AccessDelegate {
 
 	private final InfinispanDataRegion region;
 	private final AdvancedCache cache;
-	private final AdvancedCache writeCache;
-	private final AdvancedCache putFromLoadCache;
+	private final FunctionalMap.ReadWriteMap<Object, Object> writeMap;
+	private final FunctionalMap.ReadWriteMap<Object, Object> putFromLoadMap;
 	private final Comparator versionComparator;
 
 
 	public NonStrictAccessDelegate(InfinispanDataRegion region, Comparator versionComparator) {
 		this.region = region;
 		this.cache = region.getCache();
-		this.writeCache = Caches.ignoreReturnValuesCache(cache);
+		FunctionalMapImpl fmap = FunctionalMapImpl.create(cache).withParams(Param.PersistenceMode.SKIP_LOAD);
+		this.writeMap = ReadWriteMapImpl.create(fmap);
 		// Note that correct behaviour of local and async writes depends on LockingInterceptor (see there for details)
-		this.putFromLoadCache = writeCache.withFlags( Flag.ZERO_LOCK_ACQUISITION_TIMEOUT, Flag.FAIL_SILENTLY, Flag.FORCE_ASYNCHRONOUS );
+		this.putFromLoadMap = ReadWriteMapImpl.create(fmap).withParams(Param.LockingMode.TRY_LOCK, Param.ReplicationMode.ASYNC);
 		Configuration configuration = cache.getCacheConfiguration();
 		if (configuration.clustering().cacheMode().isInvalidation()) {
 			throw new IllegalArgumentException("Nonstrict-read-write mode cannot use invalidation.");
@@ -110,7 +115,8 @@ public class NonStrictAccessDelegate implements AccessDelegate {
 		// when it is present in the container. TombstoneCallInterceptor will deal with this.
 		// Even if value is instanceof CacheEntry, we have to wrap it in VersionedEntry and add transaction timestamp.
 		// Otherwise, old eviction record wouldn't be overwritten.
-		putFromLoadCache.put(key, new VersionedEntry(value, version, txTimestamp));
+		CompletableFuture<Void> future = putFromLoadMap.eval(key, new VersionedEntry(value, version, txTimestamp));
+		assert future.isDone(); // async try-locking should be done immediately
 		return true;
 	}
 
@@ -132,7 +138,7 @@ public class NonStrictAccessDelegate implements AccessDelegate {
 		// the remove could be discarded and we would end up with stale record
 		// See VersionedTest#testCollectionUpdate for such situation
       TransactionCoordinatorAccess transactionCoordinator = SESSION_ACCESS.getTransactionCoordinator(session);
-		RemovalSynchronization sync = new RemovalSynchronization(transactionCoordinator, writeCache, false, region, key);
+		RemovalSynchronization sync = new RemovalSynchronization(transactionCoordinator, writeMap, false, region, key);
 		transactionCoordinator.registerLocalSynchronization(sync);
 	}
 
@@ -149,7 +155,7 @@ public class NonStrictAccessDelegate implements AccessDelegate {
 
 	@Override
 	public void evict(Object key) throws CacheException {
-		writeCache.put(key, new VersionedEntry(null, null, region.nextTimestamp()));
+		writeMap.eval(key, new VersionedEntry(region.nextTimestamp())).join();
 	}
 
 	@Override
@@ -169,13 +175,17 @@ public class NonStrictAccessDelegate implements AccessDelegate {
 
 	@Override
 	public boolean afterInsert(Object session, Object key, Object value, Object version) {
-		writeCache.put(key, getVersioned(value, version, SESSION_ACCESS.getTimestamp(session)));
+		assert value != null;
+		assert version != null;
+		writeMap.eval(key, new VersionedEntry(value, version, SESSION_ACCESS.getTimestamp(session))).join();
 		return true;
 	}
 
 	@Override
 	public boolean afterUpdate(Object session, Object key, Object value, Object currentVersion, Object previousVersion, SoftLock lock) {
-		writeCache.put(key, getVersioned(value, currentVersion, SESSION_ACCESS.getTimestamp(session)));
+		assert value != null;
+		assert currentVersion != null;
+		writeMap.eval(key, new VersionedEntry(value, currentVersion, SESSION_ACCESS.getTimestamp(session))).join();
 		return true;
 	}
 
@@ -189,9 +199,4 @@ public class NonStrictAccessDelegate implements AccessDelegate {
 		return null;
 	}
 
-	protected Object getVersioned(Object value, Object version, long timestamp) {
-		assert value != null;
-		assert version != null;
-		return new VersionedEntry(value, version, timestamp);
-	}
 }

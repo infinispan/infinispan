@@ -8,6 +8,8 @@ package org.infinispan.hibernate.cache.commons.access;
 
 import java.util.List;
 
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
@@ -25,15 +27,13 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Since the data handled in {@link TombstoneCallInterceptor} or {@link VersionedCallInterceptor}
- * does not rely on the order how these are applied (the updates are commutative), this interceptor
- * simply sends any command to all other owners without ordering them through primary owner.
+ * Since the applied functions do not rely on the order how these are applied (the updates are commutative),
+ * this interceptor simply sends any command to all other owners without ordering them through primary owner.
  * Note that {@link LockingInterceptor} is required in the stack as locking on backup is not guaranteed
  * by primary owner.
  */
 public class UnorderedDistributionInterceptor extends NonTxDistributionInterceptor {
 	private static Log log = LogFactory.getLog(UnorderedDistributionInterceptor.class);
-	private static final boolean trace = log.isTraceEnabled();
 
 	@Inject private DistributionManager distributionManager;
 	private boolean isReplicated;
@@ -44,7 +44,16 @@ public class UnorderedDistributionInterceptor extends NonTxDistributionIntercept
 	}
 
 	@Override
-	public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+	public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
+		return handleDataWriteCommand(ctx, command);
+	}
+
+	@Override
+	public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) {
+		return handleDataWriteCommand(ctx, command);
+	}
+
+	private Object handleDataWriteCommand(InvocationContext ctx, DataWriteCommand command) {
 		if (command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
 			// for state-transfer related writes
 			return invokeNext(ctx, command);

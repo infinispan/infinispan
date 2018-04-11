@@ -18,6 +18,7 @@ import org.hibernate.Session;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.spi.MetadataImplementor;
 import org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.hibernate.cache.commons.util.EndInvalidationCommand;
 import org.infinispan.hibernate.cache.commons.util.FutureUpdate;
@@ -51,7 +52,6 @@ import org.infinispan.test.hibernate.cache.commons.tm.XaConnectionProvider;
 import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
 import org.infinispan.test.hibernate.cache.commons.util.TxUtil;
 import org.infinispan.AdvancedCache;
-import org.infinispan.commands.write.PutKeyValueCommand;
 import org.junit.After;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
@@ -224,18 +224,18 @@ public abstract class AbstractFunctionalTest extends BaseNonConfigCoreFunctional
 	}
 
 	protected CountDownLatch expectAfterUpdate(AdvancedCache cache, int numUpdates) {
-		return expectPutWithValue(cache, value -> value instanceof FutureUpdate, numUpdates);
+		return expectReadWriteKeyCommand(cache, FutureUpdate.class::isInstance, numUpdates);
 	}
 
 	protected CountDownLatch expectEvict(AdvancedCache cache, int numUpdates) {
-		return expectPutWithValue(cache, value -> value instanceof TombstoneUpdate && ((TombstoneUpdate) value).getValue() == null, numUpdates);
+		return expectReadWriteKeyCommand(cache, f -> f instanceof TombstoneUpdate && ((TombstoneUpdate) f).getValue() == null, numUpdates);
 	}
 
-	protected CountDownLatch expectPutWithValue(AdvancedCache cache, Predicate<Object> valuePredicate, int numUpdates) {
+	protected CountDownLatch expectReadWriteKeyCommand(AdvancedCache cache, Predicate<Object> valuePredicate, int numUpdates) {
 		if (!cacheMode.isInvalidation()) {
 			CountDownLatch latch = new CountDownLatch(numUpdates);
 			ExpectingInterceptor.get(cache)
-				.when((ctx, cmd) -> cmd instanceof PutKeyValueCommand && valuePredicate.test(((PutKeyValueCommand) cmd).getValue()))
+				.when((ctx, cmd) -> cmd instanceof ReadWriteKeyCommand && valuePredicate.test(((ReadWriteKeyCommand) cmd).getFunction()))
 				.countDown(latch);
 			cleanup.add(() -> ExpectingInterceptor.cleanup(cache));
 			return latch;

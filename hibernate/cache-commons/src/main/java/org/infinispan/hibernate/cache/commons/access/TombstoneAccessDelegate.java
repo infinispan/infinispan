@@ -6,11 +6,16 @@
  */
 package org.infinispan.hibernate.cache.commons.access;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.hibernate.cache.CacheException;
+import org.infinispan.functional.FunctionalMap;
+import org.infinispan.functional.Param;
+import org.infinispan.functional.impl.FunctionalMapImpl;
+import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
 import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.hibernate.cache.commons.util.Caches;
-import org.infinispan.hibernate.cache.commons.util.FutureUpdate;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.commons.util.Tombstone;
 import org.infinispan.hibernate.cache.commons.util.TombstoneUpdate;
@@ -18,7 +23,6 @@ import org.hibernate.cache.spi.access.SoftLock;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.context.Flag;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -29,19 +33,20 @@ public class TombstoneAccessDelegate implements AccessDelegate {
 
 	protected final InfinispanDataRegion region;
 	protected final AdvancedCache cache;
-	protected final AdvancedCache writeCache;
-	protected final AdvancedCache asyncWriteCache;
-	protected final AdvancedCache putFromLoadCache;
-	protected final boolean requiresTransaction;
+	private final FunctionalMap.ReadWriteMap<Object, Object> writeMap;
+	private final FunctionalMap.ReadWriteMap<Object, Object> asyncWriteMap;
+	private final boolean requiresTransaction;
+	private final FunctionalMap.ReadWriteMap<Object, Object> putFromLoadMap;
 
-   public TombstoneAccessDelegate(InfinispanDataRegion region) {
+	public TombstoneAccessDelegate(InfinispanDataRegion region) {
 		this.region = region;
 		this.cache = region.getCache();
-		this.writeCache = Caches.ignoreReturnValuesCache(cache);
+		FunctionalMapImpl<Object, Object> fmap = FunctionalMapImpl.create(cache).withParams(Param.PersistenceMode.SKIP_LOAD);
+		writeMap = ReadWriteMapImpl.create(fmap);
 		// Note that correct behaviour of local and async writes depends on LockingInterceptor (see there for details)
-		this.asyncWriteCache = writeCache.withFlags(Flag.FORCE_ASYNCHRONOUS);
-		this.putFromLoadCache = asyncWriteCache.withFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT, Flag.FAIL_SILENTLY);
-		Configuration configuration = cache.getCacheConfiguration();
+		asyncWriteMap = ReadWriteMapImpl.create(fmap).withParams(Param.ReplicationMode.ASYNC);
+		putFromLoadMap = ReadWriteMapImpl.create(fmap).withParams(Param.LockingMode.TRY_LOCK, Param.ReplicationMode.ASYNC);
+		Configuration configuration = this.cache.getCacheConfiguration();
 		if (configuration.clustering().cacheMode().isInvalidation()) {
 			throw new IllegalArgumentException("For tombstone-based caching, invalidation cache is not allowed.");
 		}
@@ -60,11 +65,7 @@ public class TombstoneAccessDelegate implements AccessDelegate {
 		Object value = cache.get(key);
 		if (value instanceof Tombstone) {
 			return null;
-		}
-		else if (value instanceof FutureUpdate) {
-			return ((FutureUpdate) value).getValue();
-		}
-		else {
+		} else {
 			return value;
 		}
 	}
@@ -98,7 +99,8 @@ public class TombstoneAccessDelegate implements AccessDelegate {
 		}
 		// we can't use putForExternalRead since the PFER flag means that entry is not wrapped into context
 		// when it is present in the container. TombstoneCallInterceptor will deal with this.
-		putFromLoadCache.put(key, new TombstoneUpdate(SESSION_ACCESS.getTimestamp(session), value));
+		CompletableFuture<Void> future = putFromLoadMap.eval(key, new TombstoneUpdate<>(SESSION_ACCESS.getTimestamp(session), value));
+		assert future.isDone(); // async try-locking should be done immediately
 		return true;
 	}
 
@@ -122,12 +124,12 @@ public class TombstoneAccessDelegate implements AccessDelegate {
 	protected void write(Object session, Object key, Object value) {
       TransactionCoordinatorAccess tc = SESSION_ACCESS.getTransactionCoordinator(session);
       long timestamp = SESSION_ACCESS.getTimestamp(session);
-      FutureUpdateSynchronization sync = new FutureUpdateSynchronization(tc, asyncWriteCache, requiresTransaction, key, value, region, timestamp);
+      FutureUpdateSynchronization sync = new FutureUpdateSynchronization(tc, asyncWriteMap, requiresTransaction, key, value, region, timestamp);
 		// The update will be invalidating all putFromLoads for the duration of expiration or until removed by the synchronization
 		Tombstone tombstone = new Tombstone(sync.getUuid(), region.nextTimestamp() + region.getTombstoneExpiration());
 		// The outcome of this operation is actually defined in TombstoneCallInterceptor
 		// Metadata in PKVC are cleared and set in the interceptor, too
-		writeCache.put(key, tombstone);
+		writeMap.eval(key, tombstone).join();
       tc.registerLocalSynchronization(sync);
 	}
 
@@ -144,7 +146,7 @@ public class TombstoneAccessDelegate implements AccessDelegate {
 
 	@Override
 	public void evict(Object key) throws CacheException {
-		writeCache.put(key, new TombstoneUpdate<>(region.nextTimestamp(), null));
+		writeMap.eval(key, new TombstoneUpdate<>(region.nextTimestamp(), null)).join();
 	}
 
 	@Override

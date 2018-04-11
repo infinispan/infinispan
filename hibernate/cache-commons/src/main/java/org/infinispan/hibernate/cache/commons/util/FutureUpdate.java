@@ -6,7 +6,11 @@
  */
 package org.infinispan.hibernate.cache.commons.util;
 
+import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.functional.EntryView;
+import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -14,6 +18,7 @@ import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 
 /**
  * Request to update the tombstone, coming from insert/update/remove operation.
@@ -22,10 +27,11 @@ import java.util.UUID;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public class FutureUpdate {
+public class FutureUpdate implements Function<EntryView.ReadWriteEntryView<Object, Object>, Void>, InjectableComponent {
 	private final UUID uuid;
 	private final long timestamp;
 	private final Object value;
+	private transient InfinispanDataRegion region;
 
 	public FutureUpdate(UUID uuid, long timestamp, Object value) {
 		this.uuid = uuid;
@@ -53,6 +59,32 @@ public class FutureUpdate {
 
 	public long getTimestamp() {
 		return timestamp;
+	}
+
+	@Override
+	public Void apply(EntryView.ReadWriteEntryView<Object, Object> view) {
+		Object storedValue = view.find().orElse(null);
+		if (storedValue instanceof Tombstone) {
+			// Note that the update has to keep tombstone even if the transaction was unsuccessful;
+			// before write we have removed the value and we have to protect the entry against stale putFromLoads
+			Tombstone tombstone = (Tombstone) storedValue;
+			Object result = tombstone.applyUpdate(uuid, timestamp, this.value);
+			if (result instanceof Tombstone) {
+				view.set(result, region.getExpiringMetaParam());
+			} else {
+				view.set(result);
+			}
+		}
+		// Else: this is an async future update, and it's timestamp may be vastly outdated
+		// We need to first execute the async update and then local one, because if we're on the primary
+		// owner the local future update would fail the async one.
+		// TODO: There is some discrepancy with TombstoneUpdate handling which does not fail the update
+		return null;
+	}
+
+	@Override
+	public void inject(ComponentRegistry registry) {
+		region = registry.getComponent(InfinispanDataRegion.class);
 	}
 
 	public static class Externalizer implements AdvancedExternalizer<FutureUpdate> {

@@ -10,6 +10,7 @@ import org.infinispan.functional.Param;
 import org.infinispan.functional.Param.ExecutionMode;
 import org.infinispan.functional.Param.LockingMode;
 import org.infinispan.functional.Param.PersistenceMode;
+import org.infinispan.functional.Param.ReplicationMode;
 import org.infinispan.functional.Param.StatisticsMode;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.context.impl.FlagBitSets;
@@ -31,7 +32,8 @@ import org.infinispan.context.impl.FlagBitSets;
 public final class Params {
 
    private static final Param<?>[] DEFAULTS = new Param<?>[]{
-      PersistenceMode.defaultValue(), LockingMode.defaultValue(), ExecutionMode.defaultValue(), StatisticsMode.defaultValue()
+         PersistenceMode.defaultValue(), LockingMode.defaultValue(), ExecutionMode.defaultValue(),
+         StatisticsMode.defaultValue(), ReplicationMode.defaultValue()
    };
    // TODO: as Params are immutable and there's only limited number of them,
    // there could be a table with all the possible combinations and we
@@ -62,6 +64,12 @@ public final class Params {
       List<Param<?>> paramsToAdd = Arrays.asList(ps);
       Param<?>[] paramsAll = Arrays.copyOf(params, params.length);
       paramsToAdd.forEach(p -> paramsAll[p.id()] = p);
+      return new Params(paramsAll);
+   }
+
+   public Params add(Param<?> p) {
+      Param<?>[] paramsAll = Arrays.copyOf(params, params.length);
+      paramsAll[p.id()] = p;
       return new Params(paramsAll);
    }
 
@@ -103,10 +111,9 @@ public final class Params {
       LockingMode lockingMode = (LockingMode) params[LockingMode.ID].get();
       ExecutionMode executionMode = (ExecutionMode) params[ExecutionMode.ID].get();
       StatisticsMode statisticsMode = (StatisticsMode) params[StatisticsMode.ID].get();
+      ReplicationMode replicationMode = (ReplicationMode) params[ReplicationMode.ID].get();
       long flagsBitSet = 0;
       switch (persistenceMode) {
-         case LOAD_PERSIST:
-            break;
          case SKIP_PERSIST:
             flagsBitSet |= FlagBitSets.SKIP_CACHE_STORE;
             break;
@@ -117,34 +124,67 @@ public final class Params {
             flagsBitSet |= FlagBitSets.SKIP_CACHE_LOAD | FlagBitSets.SKIP_CACHE_STORE;
             break;
       }
-      if (lockingMode == LockingMode.SKIP) flagsBitSet |= FlagBitSets.SKIP_LOCKING;
-      if (executionMode == ExecutionMode.LOCAL) flagsBitSet |= FlagBitSets.CACHE_MODE_LOCAL;
-      else if (executionMode == ExecutionMode.LOCAL_SITE) flagsBitSet |= FlagBitSets.SKIP_XSITE_BACKUP;
-      if (statisticsMode == StatisticsMode.SKIP) flagsBitSet |= FlagBitSets.SKIP_STATISTICS;
+      switch (lockingMode) {
+         case SKIP:
+            flagsBitSet |= FlagBitSets.SKIP_LOCKING;
+            break;
+         case TRY_LOCK:
+            flagsBitSet |= FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT;
+            break;
+      }
+      switch (executionMode) {
+         case LOCAL:
+            flagsBitSet |= FlagBitSets.CACHE_MODE_LOCAL;
+            break;
+         case LOCAL_SITE:
+            flagsBitSet |= FlagBitSets.SKIP_XSITE_BACKUP;
+            break;
+      }
+      if (statisticsMode == StatisticsMode.SKIP) {
+         flagsBitSet |= FlagBitSets.SKIP_STATISTICS;
+      }
+      switch (replicationMode) {
+         case SYNC:
+            flagsBitSet |= FlagBitSets.FORCE_SYNCHRONOUS;
+            break;
+         case ASYNC:
+            flagsBitSet |= FlagBitSets.FORCE_ASYNCHRONOUS;
+            break;
+      }
       return flagsBitSet;
    }
 
    public static Params fromFlagsBitSet(long flagsBitSet) {
-      Params params = create();
+      if (flagsBitSet == 0) {
+         return DEFAULT_INSTANCE;
+      }
+      Param<?>[] paramsAll = Arrays.copyOf(DEFAULTS, DEFAULTS.length);
       if ((flagsBitSet & (FlagBitSets.SKIP_CACHE_LOAD | FlagBitSets.SKIP_CACHE_STORE)) != 0) {
-         params = params.addAll(PersistenceMode.SKIP);
+         paramsAll[PersistenceMode.ID] = PersistenceMode.SKIP;
       } else if ((flagsBitSet & FlagBitSets.SKIP_CACHE_STORE) != 0) {
-         params = params.addAll(PersistenceMode.SKIP_PERSIST);
+         paramsAll[PersistenceMode.ID] = PersistenceMode.SKIP_PERSIST;
       } else if ((flagsBitSet & FlagBitSets.SKIP_CACHE_LOAD) != 0) {
-         params = params.addAll(PersistenceMode.SKIP_LOAD);
+         paramsAll[PersistenceMode.ID] = PersistenceMode.SKIP_LOAD;
       }
       if ((flagsBitSet & FlagBitSets.SKIP_LOCKING) != 0) {
-         params = params.addAll(LockingMode.SKIP);
+         paramsAll[LockingMode.ID] = LockingMode.SKIP;
+      } else if ((flagsBitSet & FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT) != 0) {
+         paramsAll[LockingMode.ID] = LockingMode.TRY_LOCK;
       }
       if ((flagsBitSet & FlagBitSets.CACHE_MODE_LOCAL) != 0) {
-         params = params.addAll(ExecutionMode.LOCAL);
+         paramsAll[ExecutionMode.ID] = ExecutionMode.LOCAL;
       } else if ((flagsBitSet & FlagBitSets.SKIP_XSITE_BACKUP) != 0) {
-         params = params.addAll(ExecutionMode.LOCAL_SITE);
+         paramsAll[ExecutionMode.ID] = ExecutionMode.LOCAL_SITE;
       }
       if ((flagsBitSet & FlagBitSets.SKIP_STATISTICS) != 0) {
-         params = params.addAll(StatisticsMode.SKIP);
+         paramsAll[StatisticsMode.ID] = StatisticsMode.SKIP;
       }
-      return params;
+      if ((flagsBitSet & FlagBitSets.FORCE_ASYNCHRONOUS) != 0) {
+         paramsAll[ReplicationMode.ID] = ReplicationMode.ASYNC;
+      } else if ((flagsBitSet & FlagBitSets.FORCE_SYNCHRONOUS) != 0) {
+         paramsAll[ReplicationMode.ID] = ReplicationMode.SYNC;
+      }
+      return new Params(paramsAll);
    }
 
    public static Params create() {
@@ -165,9 +205,10 @@ public final class Params {
    static {
       // make sure that bit-set marshalling will work
       if (PersistenceMode.values().length > 4) throw new IllegalStateException();
-      if (LockingMode.values().length > 2) throw new IllegalStateException();
+      if (LockingMode.values().length > 4) throw new IllegalStateException();
       if (ExecutionMode.values().length > 4) throw new IllegalStateException();
       if (StatisticsMode.values().length > 2) throw new IllegalStateException();
+      if (ReplicationMode.values().length > 2) throw new IllegalStateException();
    }
 
    public static void writeObject(ObjectOutput output, Params params) throws IOException {
@@ -175,23 +216,27 @@ public final class Params {
       LockingMode lockingMode = (LockingMode) params.get(LockingMode.ID).get();
       ExecutionMode executionMode = (ExecutionMode) params.get(ExecutionMode.ID).get();
       StatisticsMode statisticsMode = (StatisticsMode) params.get(StatisticsMode.ID).get();
+      ReplicationMode replicationMode = (ReplicationMode) params.get(ReplicationMode.ID).get();
       int paramBits = persistenceMode.ordinal()
             | (lockingMode.ordinal() << 2)
-            | (executionMode.ordinal() << 3)
-            | (statisticsMode.ordinal() << 5);
+            | (executionMode.ordinal() << 4)
+            | (statisticsMode.ordinal() << 6)
+            | (replicationMode.ordinal() << 7);
       output.writeByte(paramBits);
    }
 
-   public static Params readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public static Params readObject(ObjectInput input) throws IOException {
       int paramBits = input.readByte();
       PersistenceMode persistenceMode = PersistenceMode.valueOf(paramBits & 3);
-      LockingMode lockingMode = LockingMode.valueOf((paramBits >>> 2) & 1);
-      ExecutionMode executionMode = ExecutionMode.valueOf((paramBits >>> 3) & 3);
-      StatisticsMode statisticsMode = StatisticsMode.valueOf((paramBits >>> 5) & 1);
+      LockingMode lockingMode = LockingMode.valueOf((paramBits >>> 2) & 3);
+      ExecutionMode executionMode = ExecutionMode.valueOf((paramBits >>> 4) & 3);
+      StatisticsMode statisticsMode = StatisticsMode.valueOf((paramBits >>> 6) & 1);
+      ReplicationMode replicationMode = ReplicationMode.valueOf((paramBits >>> 7) & 1);
       if (persistenceMode == PersistenceMode.defaultValue()
             && lockingMode == LockingMode.defaultValue()
             && executionMode == ExecutionMode.defaultValue()
-            && statisticsMode == StatisticsMode.defaultValue()) {
+            && statisticsMode == StatisticsMode.defaultValue()
+            && replicationMode == ReplicationMode.defaultValue()) {
          return DEFAULT_INSTANCE;
       } else {
          Param[] params = Arrays.copyOf(DEFAULTS, DEFAULTS.length);
@@ -199,6 +244,7 @@ public final class Params {
          params[LockingMode.ID] = lockingMode;
          params[ExecutionMode.ID] = executionMode;
          params[StatisticsMode.ID] = statisticsMode;
+         params[ReplicationMode.ID] = replicationMode;
          return new Params(params);
       }
    }

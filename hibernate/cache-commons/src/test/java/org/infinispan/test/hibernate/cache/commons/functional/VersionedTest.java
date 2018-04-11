@@ -16,11 +16,13 @@ import javax.transaction.Synchronization;
 import org.hibernate.PessimisticLockException;
 import org.hibernate.Session;
 import org.hibernate.StaleStateException;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.hibernate.cache.commons.access.SessionAccess;
-import org.infinispan.hibernate.cache.commons.access.VersionedCallInterceptor;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.hibernate.cache.commons.util.VersionedEntry;
 
+import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.OtherItem;
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -28,9 +30,7 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.junit.Test;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.util.ByRef;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 
 import static org.junit.Assert.assertEquals;
@@ -278,7 +278,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
       CollectionUpdateTestInterceptor collectionUpdateTestInterceptor = new CollectionUpdateTestInterceptor(putFromLoadLatch);
       AnotherCollectionUpdateTestInterceptor anotherInterceptor = new AnotherCollectionUpdateTestInterceptor(putFromLoadLatch, committing);
       AsyncInterceptorChain interceptorChain = collectionCache.getAsyncInterceptorChain();
-      interceptorChain.addInterceptorBefore( collectionUpdateTestInterceptor, VersionedCallInterceptor.class );
+      interceptorChain.addInterceptorBefore( collectionUpdateTestInterceptor, CallInterceptor.class );
       interceptorChain.addInterceptor(anotherInterceptor, 0);
 
       TIME_SERVICE.advance(1);
@@ -317,14 +317,14 @@ public class VersionedTest extends AbstractNonInvalidationTest {
       }
 
       @Override
-      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         if (command.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT)) {
+      public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+         if (command.hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT)) {
             if (firstPutFromLoad.compareAndSet(true, false)) {
                updateLatch.countDown();
                putFromLoadLatch.await();
             }
          }
-         return super.visitPutKeyValueCommand(ctx, command);
+         return super.visitReadWriteKeyCommand(ctx, command);
       }
    }
 
@@ -338,11 +338,11 @@ public class VersionedTest extends AbstractNonInvalidationTest {
       }
 
       @Override
-      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         if (committing.get() && !command.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT)) {
+      public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+         if (committing.get() && !command.hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT)) {
             putFromLoadLatch.countDown();
          }
-         return super.visitPutKeyValueCommand(ctx, command);
+         return super.visitReadWriteKeyCommand(ctx, command);
       }
    }
 

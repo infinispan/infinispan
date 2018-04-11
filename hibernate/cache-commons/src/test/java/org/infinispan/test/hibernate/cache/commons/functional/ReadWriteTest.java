@@ -98,7 +98,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 			assertEquals( item.getName(), loadedWithCachedCollection.getName() );
 			assertEquals( item.getItems().size(), loadedWithCachedCollection.getItems().size() );
 			assertEquals( 1, cStats.getHitCount() );
-			assertEquals( 1, TEST_SESSION_ACCESS.getRegion(sessionFactory(), itemsRegionName).getCache().size() );
+			assertEquals( 1, TEST_SESSION_ACCESS.getRegion(sessionFactory(), itemsRegionName).getElementCountInMemory());
 			Item itemElement = loadedWithCachedCollection.getItems().iterator().next();
 			itemElement.setOwner( null );
 			loadedWithCachedCollection.getItems().clear();
@@ -688,7 +688,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 	}
 
 	private int getNumberOfItems() {
-		return TEST_SESSION_ACCESS.getRegion(sessionFactory(), Item.class.getName()).getCache().size();
+		return (int) TEST_SESSION_ACCESS.getRegion(sessionFactory(), Item.class.getName()).getElementCountInMemory();
 	}
 
 	private CacheEntry getEntry(String regionName, Long key) {

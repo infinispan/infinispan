@@ -8,13 +8,12 @@ package org.infinispan.hibernate.cache.commons.access;
 
 import java.util.UUID;
 
+import org.infinispan.functional.FunctionalMap;
 import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
 import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.hibernate.cache.commons.util.FutureUpdate;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.commons.util.InvocationAfterCompletion;
-
-import org.infinispan.AdvancedCache;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -27,13 +26,13 @@ public class FutureUpdateSynchronization extends InvocationAfterCompletion {
 	private final Object value;
 	private final InfinispanDataRegion region;
 	private final long sessionTimestamp;
-	private final AdvancedCache cache;
+	private final FunctionalMap.ReadWriteMap<Object, Object> rwMap;
 
-	public FutureUpdateSynchronization(TransactionCoordinatorAccess tc, AdvancedCache cache, boolean requiresTransaction,
+	public FutureUpdateSynchronization(TransactionCoordinatorAccess tc, FunctionalMap.ReadWriteMap<Object, Object> rwMap, boolean requiresTransaction,
 												  Object key, Object value, InfinispanDataRegion region, long sessionTimestamp) {
 
 		super(tc, requiresTransaction);
-		this.cache = cache;
+		this.rwMap = rwMap;
 		this.key = key;
 		this.value = value;
 		this.region = region;
@@ -56,7 +55,11 @@ public class FutureUpdateSynchronization extends InvocationAfterCompletion {
 		FutureUpdate futureUpdate = new FutureUpdate(uuid, region.nextTimestamp(), success ? this.value : null);
 		for (;;) {
 			try {
-				cache.put(key, futureUpdate);
+				// We expect that when the transaction completes further reads from cache will return the updated value.
+				// UnorderedDistributionInterceptor makes sure that the update is executed on the node first, and here
+				// we're waiting for the local update. The remote update does not concern us - the cache is async and
+				// we won't wait for that.
+				rwMap.eval(key, futureUpdate).join();
 				return;
 			}
 			catch (Exception e) {

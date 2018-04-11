@@ -8,11 +8,15 @@ package org.infinispan.hibernate.cache.v51.impl;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.hibernate.cache.CacheException;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.hibernate.cache.v51.InfinispanRegionFactory;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.commons.util.Caches;
@@ -37,13 +41,14 @@ public abstract class BaseRegion implements Region, InfinispanBaseRegion {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( BaseRegion.class );
 
 	protected final String name;
-	protected final AdvancedCache cache;
-	protected final AdvancedCache localAndSkipLoadCache;
+	protected final AdvancedCache<Object, Object> cache;
+	protected final AdvancedCache<Object, Object> localAndSkipLoadCache;
 	protected final TransactionManager tm;
 	protected final InfinispanRegionFactory factory;
 
 	protected volatile long lastRegionInvalidation = Long.MIN_VALUE;
 	protected int invalidations = 0;
+	protected Predicate<Map.Entry<Object, Object>> filter;
 
 	/**
     * Base region constructor.
@@ -72,7 +77,11 @@ public abstract class BaseRegion implements Region, InfinispanBaseRegion {
 	@Override
 	public long getElementCountInMemory() {
 		if ( checkValid() ) {
-			return localAndSkipLoadCache.size();
+			if (filter == null) {
+				return localAndSkipLoadCache.size();
+			} else {
+				return localAndSkipLoadCache.entrySet().stream().filter(filter).count();
+			}
 		}
 
 		return 0;
@@ -112,7 +121,12 @@ public abstract class BaseRegion implements Region, InfinispanBaseRegion {
 	@Override
 	public Map toMap() {
 		if ( checkValid() ) {
-			return cache;
+			if (filter == null) {
+				return cache;
+			} else {
+				return cache.withFlags(Flag.CACHE_MODE_LOCAL).entrySet().stream()
+						.filter(filter).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+			}
 		}
 
 		return Collections.EMPTY_MAP;
@@ -125,10 +139,17 @@ public abstract class BaseRegion implements Region, InfinispanBaseRegion {
 
 	@Override
 	public boolean contains(Object key) {
-		return checkValid() && cache.containsKey( key );
+		if (!checkValid()) {
+			return false;
+		} else if (filter == null) {
+			return cache.containsKey(key);
+		} else {
+			CacheEntry<Object, Object> entry = cache.getCacheEntry(key);
+			return entry != null && filter.test(entry);
+		}
 	}
 
-   /**
+	/**
     * Checks if the region is valid for operations such as storing new data
     * in the region, or retrieving data from the region.
     *
@@ -138,7 +159,7 @@ public abstract class BaseRegion implements Region, InfinispanBaseRegion {
 		return lastRegionInvalidation != Long.MAX_VALUE;
 	}
 
-	/**
+   /**
 	 * Tell the TransactionManager to suspend any ongoing transaction.
 	 *
 	 * @return the transaction that was suspended, or <code>null</code> if
