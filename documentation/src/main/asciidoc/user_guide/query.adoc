@@ -1002,7 +1002,7 @@ QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
 // create a query for all the books that have a title which contains the word "engine":
 org.infinispan.query.dsl.Query query = qf.from(Book.class)
       .having("title").like("%engine%")
-      .toBuilder().build();
+      .build();
 
 // get the results:
 List<Book> list = query.list();
@@ -1103,7 +1103,7 @@ is a valid query:
 // match all books that have an author named "Manik"
 Query query = queryFactory.from(Book.class)
       .having("author.name").eq("Manik")
-      .toBuilder().build();
+      .build();
 ----
 
 Each part of the attribute path must refer to an existing indexed attribute in the corresponding entity or embedded
@@ -1123,7 +1123,7 @@ Query query = queryFactory.from(Book.class)
   .having("title").like("%Infinispan%")
   .or().having("author.name").eq("Manik")
   .and().having("description").like("%clustering%")
-  .toBuilder().build();
+  .build();
 ----
 
 Boolean negation is achieved with the `not` operator, which has highest precedence among logical operators and applies
@@ -1135,7 +1135,7 @@ only to the next simple attribute condition.
 Query query = queryFactory.from(Book.class)
   .not().having("title").like("%Infinispan%")
   .and().having("author.name").eq("Manik")
-  .toBuilder().build();
+  .build();
 ----
 
 ====== Nested conditions
@@ -1148,10 +1148,10 @@ subsequent complex condition created with the same query factory.
 // match all books that have an author named "Manik" and their title contains
 // the word "Infinispan" or their description contains the word "clustering"
 Query query = queryFactory.from(Book.class)
-  .having("author.name").eq("Manik");
+  .having("author.name").eq("Manik")
   .and(queryFactory.having("title").like("%Infinispan%")
           .or().having("description").like("%clustering%"))
-  .toBuilder().build();
+  .build();
 ----
 
 ====== Projections
@@ -1171,7 +1171,7 @@ Query query = queryFactory.from(Book.class)
   .select("title", "publicationYear")
   .having("title").like("%Infinispan%")
   .or().having("description").like("%Infinispan%"))
-  .toBuilder().build();
+  .build();
 ----
 
 ====== Sorting
@@ -1192,7 +1192,7 @@ Query query = queryFactory.from(Book.class)
   .orderBy("title", SortOrder.ASC)
   .having("title").like("%Infinispan%")
   .or().having("description").like("%Infinispan%"))
-  .toBuilder().build();
+  .build();
 ----
 
 ====== Pagination
@@ -1208,10 +1208,10 @@ conjunction with setting the _startOffset_ in order to achieve pagination of the
 Query query = queryFactory.from(Book.class)
   .orderBy("publicationYear", SortOrder.DESC)
   .orderBy("title", SortOrder.ASC)
-  .setStartOffset(20)
+  .startOffset(20)
   .maxResults(10)
   .having("title").like("%clustering%")
-  .toBuilder().build();
+  .build();
 ----
 
 NOTE: Even if the results being fetched are limited to _maxResults_ you can still find the total number of matching
@@ -1237,7 +1237,6 @@ Example: Grouping Books by author and counting them.
 Query query = queryFactory.from(Book.class)
     .select(Expression.property("author"), Expression.count("title"))
     .having("title").like("%engine%")
-    .toBuilder()
     .groupBy("author")
     .build();
 ----
@@ -1309,7 +1308,7 @@ Query query = queryFactory.from(Book.class)
     .having("author").eq(Expression.param("authorName"))
     .and()
     .having("publicationYear").eq(Expression.param("publicationYear"))
-    .toBuilder().build();
+    .build();
 
 // Set actual parameter values
 query.setParameter("authorName", "Doe");
@@ -1537,7 +1536,7 @@ ContinuousQuery<Integer, Person> continuousQuery = Search.getContinuousQuery(cac
 QueryFactory queryFactory = Search.getQueryFactory(cache);
 Query query = queryFactory.from(Person.class)
     .having("age").lt(21)
-    .toBuilder().build();
+    .build();
 
 final Map<Integer, Person> matches = new ConcurrentHashMap<Integer, Person>();
 
