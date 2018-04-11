@@ -94,7 +94,7 @@ The available configuration stores are:
 - `MANAGED`: this is only supported in server deployments, and will store +PERMANENT+ caches in the server model.
 - `CUSTOM`: a custom configuration store.
 
-See .link:{javadocroot}/org/infinispan/configuration/global/GlobalStateConfigurationBuilder.html#
+See link:{javadocroot}/org/infinispan/configuration/global/GlobalStateConfigurationBuilder.html#configurationStorage-org.infinispan.globalstate.ConfigurationStorage-[GlobalStateConfigurationBuilder#configurationStorage()]
 for details.
 
 === Clustering Information
