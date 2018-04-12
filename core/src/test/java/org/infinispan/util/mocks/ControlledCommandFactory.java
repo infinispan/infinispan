@@ -49,6 +49,8 @@ import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.commands.remote.expiration.RetrieveLastAccessCommand;
+import org.infinispan.commands.remote.expiration.UpdateLastAccessCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
@@ -196,6 +198,21 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, Long lifespan) {
       return actual.buildRemoveExpiredCommand(key, value, lifespan);
+   }
+
+   @Override
+   public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value) {
+      return actual.buildRemoveExpiredCommand(key, value);
+   }
+
+   @Override
+   public RetrieveLastAccessCommand buildRetrieveLastAccessCommand(Object key, Object value) {
+      return actual.buildRetrieveLastAccessCommand(key, value);
+   }
+
+   @Override
+   public UpdateLastAccessCommand buildUpdateLastAccessCommand(Object key, long accessTime) {
+      return actual.buildUpdateLastAccessCommand(key, accessTime);
    }
 
    @Override

@@ -775,14 +775,37 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * <p>
     * This command will only remove the value if the value and lifespan also match if provided.
     * <p>
+    * This method will suspend any ongoing transaction and start a new one just for the invocation of this command. It
+    * is automatically committed or rolled back after the command completes, either successfully or via an exception.
+    * <p>
     * NOTE: This method may be removed at any point including in a minor release and is not supported for external
     * usage.
     *
     * @param key      the key that is expiring
     * @param value    the value that mapped to the given.  Null means it will match any value
     * @param lifespan the lifespan that should match.  If null is provided it will match any lifespan value
+    * @return if the entry was removed
     */
-   void removeExpired(K key, V value, Long lifespan);
+   CompletableFuture<Void> removeLifespanExpired(K key, V value, Long lifespan);
+
+   /**
+    * Attempts to remove the entry for the given key, when it has expired due to max idle. This command first locks
+    * the key and then verifies that the entry has expired via maxIdle across all nodes. If it has this will then
+    * remove the given key.
+    * <p>
+    * This method returns a boolean when it has determined if the entry has expired. This is useful for when a backup
+    * node invokes this command for a get that found the entry expired. This way the node can return back to the caller
+    * much faster when the entry is not expired.
+    * <p>
+    * This method will suspend any ongoing transaction and start a new one just for the invocation of this command. It
+    * is automatically committed or rolled back after the command completes, either successfully or via an exception.
+    * <p>
+    * NOTE: This method may be removed at any point including in a minor release and is not supported for external
+    * usage.
+    * @param key the key that expired via max idle for the given entry
+    * @return if the entry was removed
+    */
+   CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value);
 
    /**
     * Performs any cache operations using the specified pair of {@link Encoder}.

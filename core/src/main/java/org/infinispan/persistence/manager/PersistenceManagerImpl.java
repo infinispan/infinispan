@@ -406,9 +406,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   ((AdvancedCacheExpirationWriter)writer).purge(persistenceExecutor, advancedListener);
                } else if (writer instanceof AdvancedCacheWriter) {
                   //noinspection unchecked
-                  ((AdvancedCacheWriter)writer).purge(persistenceExecutor, key -> {
-                     expirationManager.handleInStoreExpiration(key);
-                  });
+                  ((AdvancedCacheWriter)writer).purge(persistenceExecutor, advancedListener);
                }
             };
             nonTxWriters.forEach(purgeWriter);

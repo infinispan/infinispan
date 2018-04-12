@@ -26,9 +26,11 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
+import org.infinispan.commands.remote.expiration.UpdateLastAccessCommand;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ArrayCollector;
@@ -40,11 +42,11 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionInfo;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.RemoteValueRetrievedListener;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InvocationSuccessFunction;
@@ -64,6 +66,7 @@ import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.statetransfer.AllOwnersLostException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -83,9 +86,10 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    private static final boolean trace = log.isTraceEnabled();
    private static final Object LOST_PLACEHOLDER = new Object();
 
-   @Inject protected DistributionManager dm;
    @Inject protected RemoteValueRetrievedListener rvrl;
    @Inject protected KeyPartitioner keyPartitioner;
+   @Inject protected TimeService timeService;
+   @Inject protected ExpirationManager<Object, Object> expirationManager;
 
    protected boolean isL1Enabled;
    protected boolean isReplicated;
@@ -122,7 +126,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          //don't go remote if we are an owner.
          return invokeNext(ctx, command);
       }
-      Address primaryOwner = dm.getCacheTopology().getDistribution(command.getGroupName()).primary();
+      Address primaryOwner = distributionManager.getCacheTopology().getDistribution(command.getGroupName()).primary();
       CompletionStage<ValidResponse> future = rpcManager.invokeCommand(primaryOwner, command,
                                                                        SingleResponseCollector.validOnly(),
                                                                        rpcManager.getSyncRpcOptions());
@@ -280,37 +284,22 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
    }
 
-   private Object invokeRemotely(InvocationContext ctx, DataWriteCommand command, Address primaryOwner) {
-      if (trace) log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
-      boolean isSyncForwarding = isSynchronous(command) || command.isReturnValueExpected();
-
-      if (!isSyncForwarding) {
-         rpcManager.sendTo(primaryOwner, command, DeliverOrder.PER_SENDER);
-         return null;
+   protected LocalizedCacheTopology checkTopologyId(TopologyAffectedCommand command) {
+      LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
+      int currentTopologyId = cacheTopology.getTopologyId();
+      int cmdTopology = command.getTopologyId();
+      if (command instanceof FlagAffectedCommand && ((((FlagAffectedCommand) command).hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.CACHE_MODE_LOCAL)))) {
+         getLog().tracef("Skipping topology check for command %s", command);
+         return cacheTopology;
       }
-      CompletionStage<ValidResponse> remoteInvocation;
-      try {
-         remoteInvocation = rpcManager.invokeCommand(primaryOwner, command, SingleResponseCollector.validOnly(),
-                                                     rpcManager.getSyncRpcOptions());
-      } catch (Throwable t) {
-         command.setValueMatcher(command.getValueMatcher().matcherForRetry());
-         throw t;
+      if (cmdTopology >= 0 && currentTopologyId != cmdTopology) {
+         throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
+               cmdTopology + ", got " + currentTopologyId);
       }
-      return asyncValue(remoteInvocation).andHandle(ctx, command, (rCtx, rCommand, rv, t) -> {
-         DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
-         dataWriteCommand.setValueMatcher(dataWriteCommand.getValueMatcher().matcherForRetry());
-         CompletableFutures.rethrowException(t);
-
-         Response response = ((Response) rv);
-         if (!response.isSuccessful()) {
-            dataWriteCommand.fail();
-            // FIXME A response cannot be successful and not valid
-         } else if (!(response instanceof ValidResponse)) {
-            throw unexpected(response);
-         }
-         // We expect only successful/unsuccessful responses, not unsure
-         return ((ValidResponse) response).getResponseValue();
-      });
+      if (trace) {
+         getLog().tracef("Current topology %d, command topology %d", currentTopologyId, cmdTopology);
+      }
+      return cacheTopology;
    }
 
    private Object primaryReturnHandler(InvocationContext ctx, VisitableCommand visitableCommand, Object localResult) {
@@ -873,22 +862,37 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return responseValue;
    }
 
-   protected LocalizedCacheTopology checkTopologyId(TopologyAffectedCommand command) {
-      LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
-      int currentTopologyId = cacheTopology.getTopologyId();
-      int cmdTopology = command.getTopologyId();
-      if (command instanceof FlagAffectedCommand && ((((FlagAffectedCommand) command).hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.CACHE_MODE_LOCAL)))) {
-         log.tracef("Skipping topology check for command %s", command);
-         return cacheTopology;
+   protected Object invokeRemotely(InvocationContext ctx, DataWriteCommand command, Address primaryOwner) {
+      if (trace) getLog().tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
+      boolean isSyncForwarding = isSynchronous(command) || command.isReturnValueExpected();
+
+      if (!isSyncForwarding) {
+         rpcManager.sendTo(primaryOwner, command, DeliverOrder.PER_SENDER);
+         return null;
       }
-      if (cmdTopology >= 0 && currentTopologyId != cmdTopology) {
-         throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
-            cmdTopology + ", got " + currentTopologyId);
+      CompletionStage<ValidResponse> remoteInvocation;
+      try {
+         remoteInvocation = rpcManager.invokeCommand(primaryOwner, command, SingleResponseCollector.validOnly(),
+               rpcManager.getSyncRpcOptions());
+      } catch (Throwable t) {
+         command.setValueMatcher(command.getValueMatcher().matcherForRetry());
+         throw t;
       }
-      if (trace) {
-         log.tracef("Current topology %d, command topology %d", currentTopologyId, cmdTopology);
-      }
-      return cacheTopology;
+      return asyncValue(remoteInvocation).andHandle(ctx, command, (rCtx, rCommand, rv, t) -> {
+         DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
+         dataWriteCommand.setValueMatcher(dataWriteCommand.getValueMatcher().matcherForRetry());
+         CompletableFutures.rethrowException(t);
+
+         Response response = ((Response) rv);
+         if (!response.isSuccessful()) {
+            dataWriteCommand.fail();
+            // FIXME A response cannot be successful and not valid
+         } else if (!(response instanceof ValidResponse)) {
+            throw unexpected(response);
+         }
+         // We expect only successful/unsuccessful responses, not unsure
+         return ((ValidResponse) response).getResponseValue();
+      });
    }
 
    /**
@@ -939,4 +943,87 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
    }
 
+   @Override
+   public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) throws Throwable {
+      // Lifespan expiration just behaves like a remove command
+      if (!command.isMaxIdle()) {
+         return visitRemoveCommand(ctx, command);
+      }
+
+      Object key = command.getKey();
+      CacheEntry entry = ctx.lookupEntry(key);
+
+      if (isLocalModeForced(command)) {
+         if (entry == null) {
+            entryFactory.wrapExternalEntry(ctx, key, null, false, true);
+         }
+         return invokeNext(ctx, command);
+      }
+
+      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      DistributionInfo info = cacheTopology.getDistribution(key);
+      if (entry == null) {
+         if (info.isPrimary()) {
+            throw new IllegalStateException("Primary owner in writeCH should always be an owner in readCH as well.");
+         } else if (ctx.isOriginLocal()) {
+            // Primary has to handle max idle removal
+            return invokeRemotely(ctx, command, info.primary());
+         } else {
+            throw new IllegalStateException("Non primary owner recipient of remote remove expired command.");
+         }
+      } else {
+         if (info.isPrimary()) {
+            // We don't pass the value for performance as we already have the lock obtained for this key - so it can't
+            // change from its current value
+            CompletableFuture<Long> completableFuture = expirationManager.retrieveLastAccess(key, null);
+
+            return asyncValue(completableFuture).thenApply(ctx, command, (rCtx, rCommand, max) -> {
+               if (max != null) {
+                  // Make sure to fail the command for other interceptors
+                  command.fail();
+                  if (trace) {
+                     log.tracef("Received %s as the latest last access time for key %s", max, key);
+                  }
+                  long longMax = ((Long) max);
+                  if (longMax == -1) {
+                     // If it was -1 that means it has been written to, so in this case just assume it expired, but
+                     // was overwritten by a concurrent write
+                     return Boolean.TRUE;
+                  } else {
+                     // If it wasn't -1 it has to be > 0 so send that update
+                     UpdateLastAccessCommand ulac = cf.buildUpdateLastAccessCommand(key, longMax);
+                     ulac.setTopologyId(rpcManager.getTopologyId());
+                     CompletionStage<?> updateState = rpcManager.invokeCommand(info.readOwners(), ulac,
+                           MapResponseCollector.ignoreLeavers(info.writeOwners().size()), rpcManager.getSyncRpcOptions());
+                     ulac.inject(dataContainer);
+                     // We update locally as well
+                     ulac.invokeAsync();
+                     return asyncValue(updateState).thenApply(rCtx, rCommand, (rCtx2, rCommand2, ignore) -> Boolean.FALSE);
+                  }
+               } else {
+                  if (trace) {
+                     log.tracef("No node has a non expired max idle time for key %s, proceeding to remove entry", key);
+                  }
+                  RemoveExpiredCommand realRemoveCommand;
+                  if (!ctx.isOriginLocal()) {
+                     // Have to build a new command since the command id points to the originating node - causes
+                     // issues with triangle since it needs to know the originating node to respond to
+                     realRemoveCommand = cf.buildRemoveExpiredCommand(key, command.getValue());
+                     realRemoveCommand.setTopologyId(rpcManager.getTopologyId());
+                  } else {
+                     realRemoveCommand = command;
+                  }
+
+                  return makeStage(visitRemoveCommand(ctx, realRemoveCommand)).thenApply(rCtx, rCommand,
+                        (rCtx2, rCommand2, ignore) -> Boolean.TRUE);
+               }
+            });
+         } else if (ctx.isOriginLocal()) {
+            // Primary has to handle max idle removal
+            return invokeRemotely(ctx, command, info.primary());
+         } else {
+            return invokeNext(ctx, command);
+         }
+      }
+   }
 }

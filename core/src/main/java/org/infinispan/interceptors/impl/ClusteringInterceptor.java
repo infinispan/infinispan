@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
@@ -31,6 +32,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
    @Inject protected LockManager lockManager;
    @Inject protected DataContainer dataContainer;
    @Inject protected StateTransferManager stateTransferManager;
+   @Inject protected DistributionManager distributionManager;
 
    protected static Response getSingleResponse(Map<Address, Response> responseMap) {
       Iterator<Response> it = responseMap.values().iterator();

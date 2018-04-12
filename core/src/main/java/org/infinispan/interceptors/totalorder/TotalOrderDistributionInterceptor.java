@@ -73,7 +73,7 @@ public class TotalOrderDistributionInterceptor extends TxDistributionInterceptor
    @Override
    protected LocalizedCacheTopology checkTopologyId(TopologyAffectedCommand command) {
       // TODO Remove this and catch OutdatedTopologyException in TotalOrderStateTransferInterceptor
-      LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
+      LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
       int currentTopologyId = cacheTopology.getTopologyId();
       int cmdTopology = command.getTopologyId();
       if (trace) {

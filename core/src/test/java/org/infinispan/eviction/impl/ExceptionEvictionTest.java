@@ -40,6 +40,7 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.TimeService;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -404,24 +405,87 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
       }
    }
 
-   /**
-    * This tests to verify that when an entry is expired and removed from the data container that it properly updates
-    * the current count
-    */
-   public void testOnEntryExpiration() {
-      cache(0).put(0, 0, 10, TimeUnit.SECONDS);
+   @DataProvider(name = "expiration")
+   public Object[][] expirationParams() {
+      return new Object[][] {
+            { true, true },
+            { true, false },
+            { false, true },
+            { false, false }
+      };
+   }
 
+   @Test(dataProvider = "expiration")
+   public void testEntryExpirationOverwritten(boolean maxIdle, boolean readInTx) throws Exception {
+      Object expiringKey = 0;
+      if (maxIdle) {
+         cache(0).put(expiringKey, 0, -1, null, 10, TimeUnit.SECONDS);
+      } else {
+         cache(0).put(expiringKey, 0, 10, TimeUnit.SECONDS);
+      }
+      // Note that i starts at 1 so this adds SIZE - 1 entries
       for (int i = 1; i < SIZE; ++i) {
          cache(0).put(i, i);
       }
 
       timeService.advance(TimeUnit.SECONDS.toMillis(11));
 
-      // This should eventually expire all entries
-      assertNull(cache(0).get(0));
+      if (readInTx) {
+         TestingUtil.withTx(cache(0).getAdvancedCache().getTransactionManager(), () -> {
+            // This should eventually expire all entries
+            assertNull(cache(0).get(expiringKey));
+            return null;
+         });
+      } else {
+         // Make sure that it is updated outside of tx as well
+         assertNull(cache(0).get(expiringKey));
+      }
+
+      // We overwrite the existing key - which should work
+      cache(0).put(expiringKey, 0);
+
+      // This should fail now as we are back to full again
+      try {
+         cache(0).put(-1, -1);
+         fail("Should have thrown an exception!");
+      } catch (Throwable t) {
+         Exceptions.assertException(ContainerFullException.class, getMostNestedSuppressedThrowable(t));
+      }
+   }
+
+   /**
+    * This tests to verify that when an entry is expired and removed from the data container that it properly updates
+    * the current count
+    */
+   @Test(dataProvider = "expiration")
+   public void testEntryExpiration(boolean maxIdle, boolean readInTx) throws Exception {
+      Object expiringKey = 0;
+      if (maxIdle) {
+         cache(0).put(expiringKey, 0, -1, null, 10, TimeUnit.SECONDS);
+      } else {
+         cache(0).put(expiringKey, 0, 10, TimeUnit.SECONDS);
+      }
+      // Note that i starts at 1 so this adds SIZE - 1 entries
+      for (int i = 1; i < SIZE; ++i) {
+         cache(0).put(i, i);
+      }
+
+      timeService.advance(TimeUnit.SECONDS.toMillis(11));
+
+      if (readInTx) {
+         TestingUtil.withTx(cache(0).getAdvancedCache().getTransactionManager(), () -> {
+            // This should eventually expire all entries
+            assertNull(cache(0).get(expiringKey));
+            return null;
+         });
+      } else {
+         // Make sure that it is updated outside of tx as well
+         assertNull(cache(0).get(expiringKey));
+      }
 
       // Off heap doesn't expire entries on access yet ISPN-8380
-      if (storageType == StorageType.OFF_HEAP) {
+      // Also max idle in a transaction don't remove entries until reaper runs
+      if (storageType == StorageType.OFF_HEAP || maxIdle) {
          for (Cache cache : caches()) {
             ExpirationManager em = TestingUtil.extractComponent(cache, ExpirationManager.class);
             em.processExpiration();
@@ -431,7 +495,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
       // Entry should be completely removed at some point - note that expired entries, that haven't been removed, still
       // count against counts
       for (Cache cache : caches()) {
-         eventually(() -> cache.getAdvancedCache().getDataContainer().peek(0) == null);
+         eventually(() -> cache.getAdvancedCache().getDataContainer().peek(expiringKey) == null);
       }
 
       // This insert should work now

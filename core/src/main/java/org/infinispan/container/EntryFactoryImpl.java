@@ -112,6 +112,35 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    @Override
+   public void wrapEntryForExpired(InvocationContext ctx, Object key, boolean isOwner) {
+      CacheEntry contextEntry = getFromContext(ctx, key);
+      if (contextEntry instanceof MVCCEntry) {
+         // Nothing to do, already wrapped.
+      } else if (contextEntry != null) {
+         // Already in the context as an InternalCacheEntry
+         // Need to wrap it in a MVCCEntry.
+         MVCCEntry mvccEntry = createWrappedEntry(key, contextEntry);
+         ctx.putLookedUpEntry(key, mvccEntry);
+         if (trace)
+            log.tracef("Updated context entry %s -> %s", contextEntry, mvccEntry);
+      } else {
+         // Not in the context yet.
+         CacheEntry cacheEntry = innerGetFromContainer(key, true, true);
+         if (cacheEntry == null) {
+            cacheEntry = NullCacheEntry.getInstance();
+         }
+         MVCCEntry mvccEntry = createWrappedEntry(key, cacheEntry);
+         if (cacheEntry.isNull()) {
+            mvccEntry.setCreated(true);
+         }
+         mvccEntry.setRead();
+         ctx.putLookedUpEntry(key, mvccEntry);
+         if (trace)
+            log.tracef("Updated context entry %s -> %s", contextEntry, mvccEntry);
+      }
+   }
+
+   @Override
    public void wrapExternalEntry(InvocationContext ctx, Object key, CacheEntry externalEntry, boolean isRead, boolean isWrite) {
       // For a write operation, the entry is always already wrapped. For a read operation, the entry may be
       // in the context as an InternalCacheEntry, as null, or missing altogether.
@@ -167,7 +196,7 @@ public class EntryFactoryImpl implements EntryFactory {
 
    private CacheEntry getFromContainer(Object key, boolean isOwner, boolean writeOperation) {
       if (isOwner) {
-         final InternalCacheEntry ice = innerGetFromContainer(key, writeOperation);
+         final InternalCacheEntry ice = innerGetFromContainer(key, writeOperation, false);
          if (trace)
             log.tracef("Retrieved from container %s", ice);
          if (ice == null) {
@@ -175,7 +204,7 @@ public class EntryFactoryImpl implements EntryFactory {
          }
          return ice;
       } else if (isL1Enabled) {
-         final InternalCacheEntry ice = innerGetFromContainer(key, writeOperation);
+         final InternalCacheEntry ice = innerGetFromContainer(key, writeOperation, false);
          if (trace)
             log.tracef("Retrieved from container %s", ice);
          if (ice == null || !ice.isL1Entry()) return null;
@@ -196,13 +225,13 @@ public class EntryFactoryImpl implements EntryFactory {
       }
    }
 
-   private InternalCacheEntry innerGetFromContainer(Object key, boolean writeOperation) {
+   private InternalCacheEntry innerGetFromContainer(Object key, boolean writeOperation, boolean returnExpired) {
       InternalCacheEntry ice;
       // Write operations should not cause expiration events to occur, because we will most likely overwrite the
       // value anyways - also required for remove expired to not cause infinite loop
       if (writeOperation) {
          ice = container.peek(key);
-         if (ice != null && ice.canExpire()) {
+         if (ice != null && !returnExpired && ice.canExpire()) {
             long wallClockTime = timeService.wallClockTime();
             if (ice.isExpired(wallClockTime)) {
                ice = null;

@@ -436,8 +436,13 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
-   public void removeExpired(K key, V value, Long lifespan) {
-      cache.removeExpired(key, value, lifespan);
+   public CompletableFuture<Void> removeLifespanExpired(K key, V value, Long lifespan) {
+      return cache.removeLifespanExpired(key, value, lifespan);
+   }
+
+   @Override
+   public CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value) {
+      return cache.removeMaxIdleExpired(key, value);
    }
 
    @Override

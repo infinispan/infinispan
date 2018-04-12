@@ -77,7 +77,7 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
 
    @Override
    protected LocalizedCacheTopology checkTopologyId(TopologyAffectedCommand command) {
-      LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
+      LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
       int currentTopologyId = cacheTopology.getTopologyId();
       int cmdTopology = command.getTopologyId();
       if (trace) {

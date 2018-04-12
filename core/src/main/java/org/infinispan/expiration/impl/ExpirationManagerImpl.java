@@ -1,6 +1,7 @@
 package org.infinispan.expiration.impl;
 
 import java.util.Iterator;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -22,6 +23,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -91,7 +93,7 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
                  purgeCandidates.hasNext();) {
                InternalCacheEntry<K, V> e = purgeCandidates.next();
                if (e.isExpired(currentTimeMillis)) {
-                  handleInMemoryExpiration(e, currentTimeMillis);
+                  entryExpiredInMemory(e, currentTimeMillis);
                }
             }
             if (trace) {
@@ -114,7 +116,10 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
    }
 
    @Override
-   public void handleInMemoryExpiration(InternalCacheEntry<K, V> entry, long currentTime) {
+   public CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime) {
+      // We ignore the return from this method. It is possible for the entry to no longer be expired, but this means
+      // it was updated by another thread. In that case it is a completely valid value for it to be expired then not.
+      // So for this we just tell them it was expired.
       dataContainer.compute(entry.getKey(), ((k, oldEntry, factory) -> {
          if (oldEntry != null) {
             synchronized (oldEntry) {
@@ -127,6 +132,13 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
          }
          return null;
       }));
+      return CompletableFutures.completedTrue();
+   }
+
+   @Override
+   public CompletableFuture<Boolean> entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry, long currentTime) {
+      // Local we just remove the entry as we see them
+      return entryExpiredInMemory(entry, currentTime);
    }
 
    @Override
@@ -189,6 +201,24 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
    private void deleteFromStores(K key) {
       // We have to delete from shared stores as well to make sure there are not multiple expiration events
       persistenceManager.deleteFromAllStores(key, PersistenceManager.AccessMode.BOTH);
+   }
+
+   protected Long localLastAccess(Object key, Object value) {
+      InternalCacheEntry ice = dataContainer.peek(key);
+      if (ice != null && (value == null || value.equals(ice.getValue())) &&
+            !ice.isExpired(timeService.wallClockTime())) {
+         return ice.getLastUsed();
+      }
+      return null;
+   }
+
+   @Override
+   public CompletableFuture<Long> retrieveLastAccess(Object key, Object value) {
+      Long lastAccess = localLastAccess(key, value);
+      if (lastAccess != null) {
+         return CompletableFuture.completedFuture(lastAccess);
+      }
+      return CompletableFutures.completedNull();
    }
 
    @Override

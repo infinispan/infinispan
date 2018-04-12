@@ -389,7 +389,9 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
 
       if (distributionInfo.isPrimary()) {
          assert context.lookupEntry(command.getKey()) != null;
-         return context.isOriginLocal() ?
+         // Not only if the context is local, but also if the command id is local (this occurs with newly created
+         // commands in response to a remote request (ie. RemoveExpiredCommannd)
+         return context.isOriginLocal() || command.getCommandInvocationId().getAddress().equals(localAddress) ?
                localPrimaryOwnerWrite(context, command, distributionInfo, backupBuilder) :
                remotePrimaryOwnerWrite(context, command, distributionInfo, backupBuilder);
       } else if (distributionInfo.isWriteBackup()) {

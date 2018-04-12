@@ -477,8 +477,13 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    @Override
-   public void removeExpired(K key, V value, Long lifespan) {
-      super.removeExpired(keyToStorage(key), valueToStorage(value), lifespan);
+   public CompletableFuture<Void> removeLifespanExpired(K key, V value, Long lifespan) {
+      return super.removeLifespanExpired(keyToStorage(key), valueToStorage(value), lifespan);
+   }
+
+   @Override
+   public CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value) {
+      return super.removeMaxIdleExpired(keyToStorage(key), valueToStorage(value));
    }
 
    @Override

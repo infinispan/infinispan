@@ -26,6 +26,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.CoreImmutables;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.mockito.Mockito;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -54,7 +55,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       TestingUtil.inject(internalEntryFactory, timeService);
       ActivationManager activationManager = mock(ActivationManager.class);
       doNothing().when(activationManager).onUpdate(Mockito.any(), Mockito.anyBoolean());
-      TestingUtil.inject(dc, internalEntryFactory, activationManager, timeService, mock(ExpirationManager.class));
+      ExpirationManager expirationManager = mock(ExpirationManager.class);
+      Mockito.when(expirationManager.entryExpiredInMemory(Mockito.any(), Mockito.anyLong())).thenReturn(CompletableFutures.completedTrue());
+      Mockito.when(expirationManager.entryExpiredInMemoryFromIteration(Mockito.any(), Mockito.anyLong())).thenReturn(CompletableFutures.completedTrue());
+      TestingUtil.inject(dc, internalEntryFactory, activationManager, timeService, expirationManager);
       return dc;
    }
 

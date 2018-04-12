@@ -41,6 +41,8 @@ import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.commands.remote.expiration.RetrieveLastAccessCommand;
+import org.infinispan.commands.remote.expiration.UpdateLastAccessCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
@@ -153,13 +155,36 @@ public interface CommandsFactory {
    InvalidateCommand buildInvalidateFromL1Command(Address origin, long flagsBitSet, Collection<Object> keys);
 
    /**
-    * Builds an expired remove command that is used to remove only a specific expired entry
+    * Builds an expired remove command that is used to remove only a specific entry when it expires via lifespan
     * @param key the key of the expired entry
     * @param value the value of the entry when it was expired
     * @param lifespan the lifespan that expired from the command
     * @return a RemovedExpiredCommand
     */
    RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, Long lifespan);
+
+   /**
+    * Builds an expired remove command that is used to remove only a specific entry when it expires via maxIdle
+    * @param key the key of the expired entry
+    * @param value the value of the entry when it was expired
+    * @return a RemovedExpiredCommand
+    */
+   RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value);
+
+   /**
+    * Builds a retrieve max idle command that is used to get the last access time for a given key.
+    * @param key the key of the entry to get the last access time of
+    * @return a RetrieveLastAccessCommand
+    */
+   RetrieveLastAccessCommand buildRetrieveLastAccessCommand(Object key, Object value);
+
+   /**
+    * Builds an update last access command that is used to update the last access time for a given key.
+    * @param key the key of the entry to update the last access time of
+    * @param accessTime the time to set the access time to
+    * @return a UpdateLastAccessCommand
+    */
+   UpdateLastAccessCommand buildUpdateLastAccessCommand(Object key, long accessTime);
 
    /**
     * Builds a ReplaceCommand

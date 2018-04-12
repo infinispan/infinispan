@@ -30,6 +30,7 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
+import org.infinispan.commands.remote.expiration.UpdateLastAccessCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -41,6 +42,7 @@ import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
@@ -133,6 +135,29 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      return handleTxWriteCommand(ctx, command, command.getKey());
+   }
+
+   @Override
+   public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) throws Throwable {
+      if (ctx.isOriginLocal() && command.isMaxIdle()) {
+         Object key = command.getKey();
+         CompletableFuture<Long> completableFuture = expirationManager.retrieveLastAccess(key, null);
+         return asyncValue(completableFuture).thenApply(ctx, command, (rCtx, rCommand, max) -> {
+            if (max == null) {
+               // If there was no max value just remove the entry as normal
+               return handleTxWriteCommand(ctx, command, command.getKey());
+            }
+            // If max was returned update our time with it, so we don't query again
+            UpdateLastAccessCommand ulac = cf.buildUpdateLastAccessCommand(key, (long) max);
+            ulac.inject(dataContainer);
+            // This command doesn't block
+            ulac.invokeAsync().join();
+            // Make sure to notify other interceptors the command failed
+            command.fail();
+            return Boolean.FALSE;
+         });
+      }
       return handleTxWriteCommand(ctx, command, command.getKey());
    }
 

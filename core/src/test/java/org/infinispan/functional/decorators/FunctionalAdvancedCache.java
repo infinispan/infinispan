@@ -534,8 +534,13 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
-   public void removeExpired(K key, V value, Long lifespan) {
-      // TODO: Customise this generated block
+   public CompletableFuture<Void> removeLifespanExpired(K key, V value, Long lifespan) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value) {
+      throw new UnsupportedOperationException();
    }
 
    @Override

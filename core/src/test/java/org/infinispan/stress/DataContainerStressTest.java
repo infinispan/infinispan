@@ -2,6 +2,7 @@ package org.infinispan.stress;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
@@ -154,6 +155,11 @@ public class DataContainerStressTest {
                  @Override
                  public void handleInStoreExpiration(MarshalledEntry marshalledEntry) {
 
+                 }
+
+                 @Override
+                 public CompletableFuture<Long> retrieveLastAccess(Object key, Object value) {
+                    return null;
                  }
 
                  @Override

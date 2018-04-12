@@ -1,11 +1,14 @@
 package org.infinispan.expiration;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.configuration.cache.ExpirationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 import net.jcip.annotations.ThreadSafe;
 
@@ -40,8 +43,43 @@ public interface ExpirationManager<K, V> {
     * preserve atomicity.
     * @param entry entry that is now expired
     * @param currentTime the current time in milliseconds
+    * @deprecated  since 9.3 Please use {@link #entryExpiredInMemory(InternalCacheEntry, long)} instead as it is
+    * possible that an entry may not be removed even though it was expired here
     */
-   void handleInMemoryExpiration(InternalCacheEntry<K, V> entry, long currentTime);
+   @Deprecated
+   default void handleInMemoryExpiration(InternalCacheEntry<K, V> entry, long currentTime) {
+      throw new UnsupportedOperationException("Should invoke entryExpiredInMemory instead!");
+   }
+
+   /**
+    * This should be invoked passing in an entry that is now expired.  This method may attempt to lock this key to
+    * preserve atomicity. This method should be invoked when an entry was read via get but found to be expired.
+    * <p>
+    * This method returns <b>true</b> if the entry was removed due to expiration or <b>false</b> if the entry was
+    * not removed due to expiration
+    * @param entry the entry that has expired
+    * @param currentTime the current time when it expired
+    * @return if this entry actually expired or not
+    */
+   default CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime) {
+      handleInMemoryExpiration(entry, currentTime);
+      return CompletableFutures.completedTrue();
+   }
+
+   /**
+    * This method is very similar to {@link #entryExpiredInMemory(InternalCacheEntry, long)} except that it does the
+    * bare minimum when an entry expired to guarantee if the entry is valid or not. This is important to reduce time
+    * spent per entry when iterating. This method may not actually remove the entry and may just return immediately
+    * if it is safe to do so.
+    * @param entry the entry that has expired
+    * @param currentTime the current time when it expired
+    * @return if this entry actually expired or not
+    */
+   default CompletableFuture<Boolean> entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry,
+         long currentTime) {
+      handleInMemoryExpiration(entry, currentTime);
+      return CompletableFutures.completedTrue();
+   }
 
    /**
     * This is to be invoked when a store entry expires.  This method may attempt to lock this key to preserve atomicity.
@@ -61,15 +99,30 @@ public interface ExpirationManager<K, V> {
    void handleInStoreExpiration(MarshalledEntry<K, V> marshalledEntry);
 
    /**
+    * Retrieves the last access time for the given key in the cache.
+    * If the entry is not in the cache or it is expired it will return null.
+    * If the entry is present but cannot expire via max idle, it will return -1
+    * If the entry is present and can expire via max idle but hasn't it will return a number > 0
+    * @param key the key to retrieve the access time for
+    * @param value the value to match if desired (this can be null)
+    * @return the last access time if available
+    */
+   CompletableFuture<Long> retrieveLastAccess(Object key, Object value);
+
+   /**
     * This is to be invoked with a when a write is known to occur to prevent expiration from happening.  This way we
     * won't have a swarm of remote calls required.
     * @param key the key to use
+    * @deprecated since 9.3 There is no reason for this method and is implementation specific
     */
+   @Deprecated
    void registerWriteIncoming(K key);
 
    /**
     * This should always be invoked after registering write but after performing any operations required.
     * @param key the key to use
+    * @deprecated since 9.3 There is no reason for this method and is implementation specific
     */
+   @Deprecated
    void unregisterWrite(K key);
 }
