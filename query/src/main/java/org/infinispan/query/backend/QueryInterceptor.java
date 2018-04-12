@@ -444,17 +444,18 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       Object newValue = extractValue(storedNewValue);
       boolean skipIndexCleanup = command != null && command.hasAnyFlag(FlagBitSets.SKIP_INDEX_CLEANUP);
       if (!skipIndexCleanup) {
-         if (oldValue == UNKNOWN && shouldModifyIndexes(command, ctx, storedKey)) {
-            removeFromIndexes(transactionContext, key);
-         } else if (updateKnownTypesIfNeeded(oldValue) &&
-               (newValue == null && oldValue != null || shouldRemove(newValue, oldValue)) &&
-               shouldModifyIndexes(command,ctx, storedKey)) {
+         if (oldValue == UNKNOWN) {
+            if (shouldModifyIndexes(command, ctx, storedKey)) {
+               removeFromIndexes(transactionContext, key);
+            }
+         } else if (updateKnownTypesIfNeeded(oldValue) && (newValue == null || shouldRemove(newValue, oldValue))
+               && shouldModifyIndexes(command, ctx, storedKey)) {
             removeFromIndexes(oldValue, key, transactionContext);
          } else if (trace) {
             log.tracef("Index cleanup not needed for %s -> %s", oldValue, newValue);
          }
       } else if (trace) {
-        log.tracef("Skipped index cleanup for command %s", command);
+         log.tracef("Skipped index cleanup for command %s", command);
       }
       if (updateKnownTypesIfNeeded(newValue)) {
          if (shouldModifyIndexes(command, ctx, storedKey)) {
