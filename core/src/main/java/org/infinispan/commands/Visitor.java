@@ -32,6 +32,7 @@ import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -60,6 +61,10 @@ public interface Visitor {
    Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable;
 
    Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable;
+
+   default Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) throws Throwable {
+      return visitRemoveCommand(ctx, command);
+   }
 
    @Deprecated
    default Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {

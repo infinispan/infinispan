@@ -646,9 +646,15 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public void removeExpired(K key, V value, Long lifespan) {
+   public CompletableFuture<Void> removeLifespanExpired(K key, V value, Long lifespan) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
-      delegate.removeExpired(key, value, lifespan);
+      return delegate.removeLifespanExpired(key, value, lifespan);
+   }
+
+   @Override
+   public CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.removeMaxIdleExpired(key, value);
    }
 
    @Override

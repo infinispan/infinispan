@@ -2,30 +2,30 @@ package org.infinispan.expiration.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
 
+import java.util.Arrays;
 import java.util.Iterator;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.InvalidTransactionException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
-import org.infinispan.commons.CacheException;
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.remote.expiration.RetrieveLastAccessCommand;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.distribution.DistributionInfo;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.remoting.responses.ValidResponse;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollectors;
+import org.infinispan.remoting.transport.ValidResponseCollector;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -50,21 +50,18 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    private static final Log log = LogFactory.getLog(ClusterExpirationManager.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
-   private ExecutorService asyncExecutor;
-   @Inject private AdvancedCache<K, V> cache;
-   private boolean needTransaction;
+   private static final int MAX_ASYNC_EXPIRATIONS = 5;
 
-   public ExecutorService getAsyncExecutor() {
-      return asyncExecutor;
-   }
+   @Inject protected AdvancedCache<K, V> cache;
+   @Inject protected CommandsFactory cf;
+   @Inject protected RpcManager rpcManager;
+   @Inject protected DistributionManager distributionManager;
 
    @Override
    public void start() {
       super.start();
       // Data container entries are retrieved directly, so we don't need to worry about an encodings
       this.cache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache();
-      needTransaction = configuration.transaction().transactionMode().isTransactional();
    }
 
    @Override
@@ -76,6 +73,9 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                log.trace("Purging data container of expired entries");
                start = timeService.time();
             }
+            int offset = 0;
+            // We limit it so there is only so many async expiration removals done at the same time
+            CompletableFuture[] futures = new CompletableFuture[MAX_ASYNC_EXPIRATIONS];
             long currentTimeMillis = timeService.wallClockTime();
             for (Iterator<InternalCacheEntry<K, V>> purgeCandidates = dataContainer.iteratorIncludingExpired();
                  purgeCandidates.hasNext();) {
@@ -86,18 +86,24 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                   boolean expiredTransient;
                   V value;
                   long lifespan;
+                  long maxIdle;
                   synchronized (e) {
                      value = e.getValue();
                      lifespan = e.getLifespan();
+                     maxIdle = e.getMaxIdle();
                      expiredMortal = ExpiryHelper.isExpiredMortal(lifespan, e.getCreated(), currentTimeMillis);
-                     expiredTransient = ExpiryHelper.isExpiredTransient(e.getMaxIdle(), e.getLastUsed(), currentTimeMillis);
+                     expiredTransient = ExpiryHelper.isExpiredTransient(maxIdle, e.getLastUsed(), currentTimeMillis);
                   }
                   if (expiredMortal) {
-                     handleLifespanExpireEntry(e.getKey(), value, lifespan, true);
+                     offset = addAndWaitIfFull(handleLifespanExpireEntry(e.getKey(), value, lifespan), futures, offset);
                   } else if (expiredTransient) {
-                     super.handleInMemoryExpiration(e, currentTimeMillis);
+                     offset = addAndWaitIfFull(actualRemoveMaxIdleExpireEntry(e.getKey(), value, maxIdle), futures, offset);
                   }
                }
+            }
+            if (offset != 0) {
+               // Make sure that all of the futures are complete before returning
+               CompletableFuture.allOf(Arrays.copyOf(futures, offset)).join();
             }
             if (trace) {
                log.tracef("Purging data container completed in %s",
@@ -113,55 +119,68 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       }
    }
 
-   void handleLifespanExpireEntry(K key, V value, long lifespan, boolean sync) {
+   private int addAndWaitIfFull(CompletableFuture future, CompletableFuture[] futures, int offset) {
+      futures[offset++] = future;
+      if (offset == futures.length) {
+         // Wait for them to complete
+         CompletableFuture.allOf(futures).join();
+         Arrays.fill(futures, null);
+         offset = 0;
+      }
+      return offset;
+   }
+
+   CompletableFuture<Void> handleLifespanExpireEntry(K key, V value, long lifespan) {
       // The most used case will be a miss so no extra read before
       if (expiring.putIfAbsent(key, key) == null) {
          if (trace) {
             log.tracef("Submitting expiration removal for key %s which had lifespan of %s", toStr(key), lifespan);
          }
-         Runnable runnable = () -> {
-            try {
-               removeExpired(key, value, lifespan);
-            } finally {
-               expiring.remove(key);
-            }
-         };
-         if (sync) {
-            runnable.run();
-         } else {
-            asyncExecutor.submit(runnable);
-         }
+         CompletableFuture<Void> future = cache.removeLifespanExpired(key, value, lifespan);
+         return future.whenComplete((v, t) -> expiring.remove(key, key));
       }
+      return CompletableFutures.completedNull();
    }
 
-   private void removeExpired(K key, V value, Long lifespan) {
-      if (needTransaction) {
-         TransactionManager tm = cache.getTransactionManager();
-         try {
-            Transaction tx = tm.suspend();
-            try {
-               tm.begin();
-               cache.removeExpired(key, value, lifespan);
-            } catch (NotSupportedException | SystemException e) {
-               tm.rollback();
-               throw e;
-            } finally {
-               tm.commit();
-            }
-            if (tx != null) {
-               tm.resume(tx);
-            }
-         } catch (RollbackException | NotSupportedException | SystemException | HeuristicMixedException |
-               HeuristicRollbackException | InvalidTransactionException e) {
-            throw new CacheException(e);
+   // Method invoked when an entry is found to be expired via get
+   CompletableFuture<Boolean> handleMaxIdleExpireEntry(K key, V value, long maxIdle) {
+      return actualRemoveMaxIdleExpireEntry(key, value, maxIdle);
+   }
+
+   // Method invoked when entry should be attempted to be removed via max idle
+   CompletableFuture<Boolean> actualRemoveMaxIdleExpireEntry(K key, V value, long maxIdle) {
+      CompletableFuture<Boolean> completableFuture = new CompletableFuture<>();
+      Object expiringObject = expiring.putIfAbsent(key, completableFuture);
+      if (expiringObject == null) {
+         if (trace) {
+            log.tracef("Submitting expiration removal for key %s which had maxIdle of %s", toStr(key), maxIdle);
          }
+         completableFuture.whenComplete((b, t) -> expiring.remove(key, completableFuture));
+         try {
+            CompletableFuture<Boolean> expired = cache.removeMaxIdleExpired(key, value);
+            expired.whenComplete((b, t) -> {
+               if (t != null) {
+                  completableFuture.completeExceptionally(t);
+               } else {
+                  completableFuture.complete(b);
+               }
+            });
+            return completableFuture;
+         } catch (Throwable t) {
+            completableFuture.completeExceptionally(t);
+            throw t;
+         }
+      } else if (expiringObject instanceof CompletableFuture) {
+         // This means there was another thread that found it had expired via max idle
+         return (CompletableFuture<Boolean>) expiringObject;
       } else {
-         cache.removeExpired(key, value, lifespan);
+         // If it wasn't a CompletableFuture we had a lifespan removal occurring so it will be removed for sure
+         return CompletableFutures.completedTrue();
       }
    }
 
    @Override
-   public void handleInMemoryExpiration(InternalCacheEntry<K, V> entry, long currentTime) {
+   public CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime) {
       // We need to synchronize on the entry since {@link InternalCacheEntry} locks the entry when doing an update
       // so we can see both the new value and the metadata
       boolean expiredMortal;
@@ -173,9 +192,30 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          expiredMortal = ExpiryHelper.isExpiredMortal(lifespan, entry.getCreated(), currentTime);
       }
       if (expiredMortal) {
-         handleLifespanExpireEntry(entry.getKey(), value, lifespan, false);
+         handleLifespanExpireEntry(entry.getKey(), value, lifespan);
+         // We don't want to block the user while the remove expired is happening for lifespan
+         return CompletableFutures.completedTrue();
       } else {
-         super.handleInMemoryExpiration(entry, currentTime);
+         // This means it expired transiently - this will block user until we confirm the entry is okay
+         return handleMaxIdleExpireEntry(entry.getKey(), value, entry.getMaxIdle());
+      }
+   }
+
+   @Override
+   public CompletableFuture<Boolean> entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry, long currentTime) {
+      // We need to synchronize on the entry since {@link InternalCacheEntry} locks the entry when doing an update
+      // so we can see both the new value and the metadata
+      boolean expiredTransient;
+      synchronized (entry) {
+         expiredTransient = ExpiryHelper.isExpiredTransient(entry.getMaxIdle(), entry.getLastUsed(), currentTime);
+      }
+      if (expiredTransient) {
+         // Max idle expiration - we just return it (otherwise we would have to incur remote overhead)
+         // This entry will be removed on next get or reaper running
+         return CompletableFutures.completedFalse();
+      } else {
+         // Lifespan was expired - but we don't want to take the hit of causing an expire command to be fired
+         return CompletableFutures.completedTrue();
       }
    }
 
@@ -185,9 +225,9 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          // Unfortunately stores don't pull the entry so we can't tell exactly why it expired and thus we have to remove
          // the entire value.  Unfortunately this could cause a concurrent write to be undone
          try {
-            removeExpired(key, null, null);
+            cache.removeLifespanExpired(key, null, null).join();
          } finally {
-            expiring.remove(key);
+            expiring.remove(key, key);
          }
       }
    }
@@ -198,10 +238,64 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       if (expiring.putIfAbsent(key, key) == null) {
          try {
             InternalMetadata metadata = marshalledEntry.getMetadata();
-            removeExpired(key, marshalledEntry.getValue(), metadata.lifespan() == -1 ? null : metadata.lifespan());
+            cache.removeLifespanExpired(key, marshalledEntry.getValue(), metadata.lifespan() == -1 ? null : metadata.lifespan())
+                  .join();
          } finally {
-            expiring.remove(key);
+            expiring.remove(key, key);
          }
+      }
+   }
+
+   @Override
+   public CompletableFuture<Long> retrieveLastAccess(Object key, Object value) {
+      Long access = localLastAccess(key, value);
+
+      LocalizedCacheTopology topology = distributionManager.getCacheTopology();
+      DistributionInfo info = topology.getDistribution(key);
+
+      if (trace) {
+         log.tracef("Asking all read owners %s for key: %s - for latest access time", info.readOwners(), key);
+      }
+
+      // Need to gather last access times
+      RetrieveLastAccessCommand rlac = cf.buildRetrieveLastAccessCommand(key, value);
+      rlac.setTopologyId(rpcManager.getTopologyId());
+
+      // In scattered cache read owners will only contain primary
+      return rpcManager.invokeCommand(info.readOwners(), rlac, new MaxResponseCollector<>(access),
+            rpcManager.getSyncRpcOptions()).toCompletableFuture();
+   }
+
+   static class MaxResponseCollector<T extends Comparable<T>> extends ValidResponseCollector<T> {
+      T highest;
+
+      MaxResponseCollector(T highest) {
+         this.highest = highest;
+      }
+
+      @Override
+      public T finish() {
+         return highest;
+      }
+
+      @Override
+      protected T addValidResponse(Address sender, ValidResponse response) {
+         T value = (T) response.getResponseValue();
+         if (value != null && (highest == null || highest.compareTo(value) < 0)) {
+            highest = value;
+         }
+         return null;
+      }
+
+      @Override
+      protected T addTargetNotFound(Address sender) {
+         // We don't care about a node leaving
+         return null;
+      }
+
+      @Override
+      protected T addException(Address sender, Exception exception) {
+         throw ResponseCollectors.wrapRemoteException(sender, exception);
       }
    }
 }

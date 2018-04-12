@@ -46,6 +46,8 @@ import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.commands.remote.expiration.RetrieveLastAccessCommand;
+import org.infinispan.commands.remote.expiration.UpdateLastAccessCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
@@ -139,6 +141,7 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -199,6 +202,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
    @Inject private VersionGenerator versionGenerator;
    @Inject private KeyPartitioner keyPartitioner;
+   @Inject private TimeService timeService;
 
    private ByteString cacheName;
    private boolean transactional;
@@ -247,8 +251,24 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, Long lifespan) {
-      return new RemoveExpiredCommand(key, value, lifespan, notifier, generateUUID(transactional),
+      return new RemoveExpiredCommand(key, value, lifespan, false, notifier, generateUUID(transactional),
             versionGenerator.nonExistingVersion());
+   }
+
+   @Override
+   public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value) {
+      return new RemoveExpiredCommand(key, value, null, true, notifier, generateUUID(transactional),
+            versionGenerator.nonExistingVersion());
+   }
+
+   @Override
+   public RetrieveLastAccessCommand buildRetrieveLastAccessCommand(Object key, Object value) {
+      return new RetrieveLastAccessCommand(cacheName, key, value);
+   }
+
+   @Override
+   public UpdateLastAccessCommand buildUpdateLastAccessCommand(Object key, long accessTime) {
+      return new UpdateLastAccessCommand(cacheName, key, accessTime);
    }
 
    @Override
@@ -508,6 +528,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case RemoveExpiredCommand.COMMAND_ID:
             RemoveExpiredCommand removeExpiredCommand = (RemoveExpiredCommand) c;
             removeExpiredCommand.init(notifier, versionGenerator.nonExistingVersion());
+            break;
+         case RetrieveLastAccessCommand.COMMAND_ID:
+            RetrieveLastAccessCommand retrieveLastAccessCommand = (RetrieveLastAccessCommand) c;
+            retrieveLastAccessCommand.inject(dataContainer, timeService);
+            break;
+         case UpdateLastAccessCommand.COMMAND_ID:
+            UpdateLastAccessCommand updateLastAccessCommand = (UpdateLastAccessCommand) c;
+            updateLastAccessCommand.inject(dataContainer);
             break;
          case BackupAckCommand.COMMAND_ID:
             BackupAckCommand command = (BackupAckCommand) c;

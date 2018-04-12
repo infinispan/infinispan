@@ -53,6 +53,10 @@ public class VersionedRepeatableReadEntry extends RepeatableReadEntry implements
             prevVersion = getCurrentEntryVersion(container, persistenceManager, ctx, versionGenerator, timeService);
          }
       }
+      // If it is expired then it is possible the previous version doesn't exist - because entry didn't exist)
+      if (isExpired() && prevVersion == versionGenerator.nonExistingVersion()) {
+         return true;
+      }
       // ISPN-7170: With total-order protocol, a command may skip loading the entry from persistence layer, and keep
       // the entry would have non-existing version. Then TotalOrderVersionedEntryWrappingInterceptor would
       // increase the version and store the entry during commit phase, potentially overwriting newer version.

@@ -462,8 +462,17 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public void removeExpired(K key, V value, Long lifespan) {
+   public CompletableFuture<Void> removeLifespanExpired(K key, V value, Long lifespan) {
       checkExpiration(getDataContainer().get(key), timeService.wallClockTime());
+      return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value) {
+      if (checkExpiration(getDataContainer().get(key), timeService.wallClockTime())) {
+         return CompletableFutures.completedTrue();
+      }
+      return CompletableFutures.completedFalse();
    }
 
    @Override

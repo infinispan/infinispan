@@ -8,6 +8,7 @@ import java.io.ObjectOutput;
 import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.Visitor;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
@@ -29,6 +30,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
    public static final int COMMAND_ID = 58;
    private static final Log log = LogFactory.getLog(RemoveExpiredCommand.class);
 
+   private boolean maxIdle;
    private Long lifespan;
    private IncrementableEntryVersion nonExistentVersion;
 
@@ -37,13 +39,19 @@ public class RemoveExpiredCommand extends RemoveCommand {
       this.valueMatcher = ValueMatcher.MATCH_EXPECTED_OR_NULL;
    }
 
-   public RemoveExpiredCommand(Object key, Object value, Long lifespan, CacheNotifier notifier,
+   public RemoveExpiredCommand(Object key, Object value, Long lifespan, boolean maxIdle, CacheNotifier notifier,
                                CommandInvocationId commandInvocationId, IncrementableEntryVersion nonExistentVersion) {
       //valueEquivalence can be null because this command never compares values.
       super(key, value, notifier, EnumUtil.EMPTY_BIT_SET, commandInvocationId);
       this.lifespan = lifespan;
+      this.maxIdle = maxIdle;
       this.valueMatcher = ValueMatcher.MATCH_EXPECTED_OR_NULL;
       this.nonExistentVersion = nonExistentVersion;
+   }
+
+   @Override
+   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
+      return visitor.visitRemoveExpiredCommand(ctx, this);
    }
 
    /**
@@ -97,8 +105,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
    }
 
    @Override
-   public void notify(InvocationContext ctx, Object removedValue, Metadata removedMetadata,
-                      boolean isPre) {
+   public void notify(InvocationContext ctx, Object removedValue, Metadata removedMetadata, boolean isPre) {
       if (!isPre) {
          notifier.notifyCacheEntryExpired(key, value, removedMetadata, ctx);
       }
@@ -115,6 +122,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
               "key=" + toStr(key) +
               ", value=" + toStr(value) +
               ", lifespan=" + lifespan +
+              ", maxIde=" + maxIdle +
               '}';
    }
 
@@ -129,6 +137,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
       } else {
          output.writeBoolean(false);
       }
+      output.writeBoolean(maxIdle);
    }
 
    @Override
@@ -142,6 +151,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
       } else {
          lifespan = null;
       }
+      maxIdle = input.readBoolean();
    }
 
    @Override
@@ -150,18 +160,26 @@ public class RemoveExpiredCommand extends RemoveCommand {
       if (o == null || getClass() != o.getClass()) return false;
       if (!super.equals(o)) return false;
       RemoveExpiredCommand that = (RemoveExpiredCommand) o;
-      return Objects.equals(lifespan, that.lifespan);
+      return maxIdle == that.maxIdle && Objects.equals(lifespan, that.lifespan);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(super.hashCode(), lifespan);
+      return Objects.hash(super.hashCode(), lifespan, maxIdle);
    }
 
    @Override
    public long getFlagsBitSet() {
       // Override the flags
       return FlagBitSets.SKIP_CACHE_LOAD;
+   }
+
+   /**
+    * Whether this remove expired was fired because of max idle
+    * @return if this command is max idle based expiration
+    */
+   public boolean isMaxIdle() {
+      return maxIdle;
    }
 
    public void init(CacheNotifier notifier, IncrementableEntryVersion nonExistentVersion) {

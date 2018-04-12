@@ -108,6 +108,17 @@ public interface EntryFactory {
    void wrapEntryForWriting(InvocationContext ctx, Object key, boolean isOwner, boolean isRead);
 
    /**
+    * Insert an entry that exists in the data container into the context, even if it is expired
+    *
+    * Doesn't do anything if the key was already wrapped
+    * @param ctx current
+    * @param ctx current invocation context
+    * @param key key to look up and wrap
+    * @param isOwner true if this node is current owner in readCH (or we ignore CH)
+    */
+   void wrapEntryForExpired(InvocationContext ctx, Object key, boolean isOwner);
+
+   /**
     * Insert an external entry (e.g. loaded from a cache loader or from a remote node) into the context.
     *
     * @param ctx current invocation context

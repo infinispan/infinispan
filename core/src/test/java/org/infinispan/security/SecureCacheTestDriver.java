@@ -710,8 +710,13 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testRemoveExpired_Object_Object_Long(SecureCache<String, String> cache) {
-      cache.getAdvancedCache().removeExpired("a", "a", null);
+   public void testRemoveLifespanExpired_Object_Object_Long(SecureCache<String, String> cache) {
+      cache.getAdvancedCache().removeLifespanExpired("a", "a", null);
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testRemoveMaxIdleExpired_Object_Object(SecureCache<String, String> cache) {
+      cache.getAdvancedCache().removeMaxIdleExpired("a", "a");
    }
 
    @TestCachePermission(value = AuthorizationPermission.LIFECYCLE, needsSecurityManager = true)

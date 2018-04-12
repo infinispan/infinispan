@@ -174,8 +174,9 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
       EvictionStrategy strategy = attributes.attribute(EVICTION_STRATEGY).get();
       if (!strategy.isEnabled()) {
          if (size > 0) {
-            evictionStrategy(EvictionStrategy.REMOVE);
-            log.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overridden to %s", size, strategy);
+            EvictionStrategy newStrategy = EvictionStrategy.REMOVE;
+            evictionStrategy(newStrategy);
+            log.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overridden to %s", size, newStrategy);
          } else if (getBuilder().persistence().passivation() && strategy != EvictionStrategy.MANUAL &&
                !getBuilder().template()) {
             log.passivationWithoutEviction();

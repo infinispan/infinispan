@@ -176,6 +176,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private boolean transactional;
    private boolean batchingEnabled;
    private final ContextBuilder contextBuilder = this::getInvocationContextWithImplicitTransaction;
+   private final ContextBuilder expiredContextBuilder = i -> this.getInvocationContextWithImplicitTransaction(i, true);
    private final ContextBuilder pferContextBuilder = this::putForExternalReadContext;
 
    public CacheImpl(String name) {
@@ -629,10 +630,31 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public void removeExpired(K key, V value, Long lifespan) {
+   public CompletableFuture<Void> removeLifespanExpired(K key, V value, Long lifespan) {
       RemoveExpiredCommand command = commandsFactory.buildRemoveExpiredCommand(key, value, lifespan);
-      // Send an expired remove command to everyone
-      executeCommandAndCommitIfNeeded(contextBuilder, command, 1);
+      // Remove expired returns a boolean - just ignore it, the caller just needs to know that the expired
+      // entry is removed when this completes
+      CompletableFuture<Boolean> completableFuture = performRemoveExpiredCommand(command);
+      return completableFuture.thenApply(b -> null);
+   }
+
+   @Override
+   public CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value) {
+      RemoveExpiredCommand command = commandsFactory.buildRemoveExpiredCommand(key, value);
+      return performRemoveExpiredCommand(command);
+   }
+
+   private CompletableFuture<Boolean> performRemoveExpiredCommand(RemoveExpiredCommand command) {
+      Transaction ongoingTransaction = null;
+      try {
+         ongoingTransaction = suspendOngoingTransactionIfExists();
+         return executeCommandAndCommitIfNeededAsync(expiredContextBuilder, command, 1);
+      } catch (Exception e) {
+         if (log.isDebugEnabled()) log.debug("Caught exception while doing removeExpired()", e);
+         return CompletableFutures.completedExceptionFuture(e);
+      } finally {
+         resumePreviousOngoingTransaction(ongoingTransaction, true, "Had problems trying to resume a transaction after removeExpired()");
+      }
    }
 
    @Override
@@ -912,15 +934,28 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    /**
-    * If this is a transactional cache and autoCommit is set to true then starts a transaction if this is not a
-    * transactional call.
+    * Creates an invocation context with an implicit transaction if it is required. An implicit transaction is created
+    * if there is no current transaction and autoCommit is enabled.
+    * @param keyCount how many keys are expected to be changed
+    * @return the invocation context
     */
    InvocationContext getInvocationContextWithImplicitTransaction(int keyCount) {
+      return getInvocationContextWithImplicitTransaction(keyCount, false);
+   }
+
+   /**
+    * Same as {@link #getInvocationContextWithImplicitTransaction(int)} except if <b>forceCreateTransaction</b>
+    * is true then autoCommit doesn't have to be enabled to start a new transaction.
+    * @param keyCount how many keys are expected to be changed
+    * @param forceCreateTransaction if true then a transaction is always started if there wasn't one
+    * @return the invocation context
+    */
+   InvocationContext getInvocationContextWithImplicitTransaction(int keyCount, boolean forceCreateTransaction) {
       InvocationContext invocationContext;
       boolean txInjected = false;
       if (transactional) {
          Transaction transaction = getOngoingTransaction(true);
-         if (transaction == null && config.transaction().autoCommit()) {
+         if (transaction == null && (forceCreateTransaction || config.transaction().autoCommit())) {
             transaction = tryBegin();
             txInjected = true;
          }

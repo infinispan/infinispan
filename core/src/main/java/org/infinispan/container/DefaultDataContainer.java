@@ -198,8 +198,9 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       if (e != null && e.canExpire()) {
          long currentTimeMillis = timeService.wallClockTime();
          if (e.isExpired(currentTimeMillis)) {
-            expirationManager.handleInMemoryExpiration(e, currentTimeMillis);
-            e = null;
+            if (expirationManager.entryExpiredInMemory(e, currentTimeMillis).join() == Boolean.TRUE) {
+               e = null;
+            }
          } else {
             e.touch(currentTimeMillis);
          }
@@ -244,8 +245,9 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       if (ice != null && ice.canExpire()) {
          long currentTimeMillis = timeService.wallClockTime();
          if (ice.isExpired(currentTimeMillis)) {
-            expirationManager.handleInMemoryExpiration(ice, currentTimeMillis);
-            ice = null;
+            if (expirationManager.entryExpiredInMemory(ice, currentTimeMillis).join() == Boolean.TRUE) {
+               ice = null;
+            }
          }
       }
       return ice != null;
@@ -435,13 +437,14 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
                   now = timeService.wallClockTime();
                   initializedTime = true;
                }
-               if (!entry.isExpired(now)) {
+               // If the entry isn't expired or the manager says it isn't expired then we can remove it
+               // Manager says it isn't expired usually for something like maxIdle when another node accessed it
+               if (!entry.isExpired(now) ||
+                     expirationManager.entryExpiredInMemoryFromIteration(entry, now).join() == Boolean.FALSE) {
                   if (trace) {
                      log.tracef("Return next entry %s", entry);
                   }
                   return entry;
-               } else if (trace) {
-                  log.tracef("%s is expired", entry);
                }
             }
          }
@@ -515,7 +518,10 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
                   now = timeService.wallClockTime();
                   initializedTime = true;
                }
-               if (entryToUse.isExpired(now)) {
+               // If the entry isn't expired or the manager says it isn't expired then we can remove it
+               // Manager says it isn't expired usually for something like maxIdle when another node accessed it
+               if (entryToUse.isExpired(now) &&
+                     expirationManager.entryExpiredInMemoryFromIteration(entryToUse, now).join() == Boolean.TRUE) {
                   entryToUse = null;
                }
             }
@@ -542,7 +548,8 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
                   now = timeService.wallClockTime();
                   initializedTime = true;
                }
-               if (currentEntry.isExpired(now)) {
+               if (currentEntry.isExpired(now) &&
+                     expirationManager.entryExpiredInMemoryFromIteration(currentEntry, now).join() == Boolean.TRUE) {
                   continue;
                }
             }

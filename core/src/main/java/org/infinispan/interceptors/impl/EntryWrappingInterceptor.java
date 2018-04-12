@@ -41,6 +41,7 @@ import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configurations;
@@ -350,6 +351,12 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Override
    public final Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       wrapEntryIfNeeded(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) throws Throwable {
+      entryFactory.wrapEntryForExpired(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
    }
 

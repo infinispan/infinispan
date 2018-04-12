@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
  */
 public class CompletableFutures {
 
+   private static final CompletableFuture<Boolean> completedTrueFuture = CompletableFuture.completedFuture(Boolean.TRUE);
+   private static final CompletableFuture<Boolean> completedFalseFuture = CompletableFuture.completedFuture(Boolean.FALSE);
    private static final CompletableFuture completedEmptyMapFuture = CompletableFuture.completedFuture(Collections.emptyMap());
    private static final CompletableFuture completedNullFuture = CompletableFuture.completedFuture(null);
    private static final long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
@@ -32,6 +34,14 @@ public class CompletableFutures {
    @SuppressWarnings("unchecked")
    public static <T> CompletableFuture<T> completedNull() {
       return completedNullFuture;
+   }
+
+   public static CompletableFuture<Boolean> completedTrue() {
+      return completedTrueFuture;
+   }
+
+   public static CompletableFuture<Boolean> completedFalse() {
+      return completedFalseFuture;
    }
 
    public static <T> CompletableFuture<List<T>> sequence(List<CompletableFuture<T>> futures) {

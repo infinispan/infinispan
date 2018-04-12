@@ -105,7 +105,11 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
    public void entryExpired(CacheEntryExpiredEvent event) {
       // If this is null it means it was from the store, so we don't care about that
       if (event.getValue() != null) {
-         increaseSize(- calculator.calculateSize(event.getKey(), event.getValue(), event.getMetadata()));
+         Object key = event.getKey();
+         if (isTrace) {
+            log.tracef("Key %s found to have expired", key);
+         }
+         increaseSize(- calculator.calculateSize(key, event.getValue(), event.getMetadata()));
       }
    }
 
@@ -174,23 +178,29 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
                InternalCacheEntry containerEntry = container.peek(key);
                Object value = containerEntry != null ? containerEntry.getValue() : null;
                if (value != null) {
+                  if (isTrace) {
+                     log.tracef("Key %s was removed", key);
+                  }
                   changeAmount -= calculator.calculateSize(key, value, entry.getMetadata());
                }
             } else {
+               // We check the container directly - this is to handle entries that are expired as the command
+               // won't think it replaced a value
+               InternalCacheEntry containerEntry = container.peek(key);
+               if (isTrace) {
+                  log.tracef("Key %s was put into cache, replacing existing %s", key, containerEntry != null);
+               }
                // Create and replace both add for the new value
                changeAmount += calculator.calculateSize(key, entry.getValue(), entry.getMetadata());
-               if (!entry.isCreated()) {
-                  // Need to subtract old value here
-                  InternalCacheEntry containerEntry = container.peek(key);
-                  if (containerEntry != null) {
-                     changeAmount -= calculator.calculateSize(key, containerEntry.getValue(), containerEntry.getMetadata());
-                  }
+               // Need to subtract old value here
+               if (containerEntry != null) {
+                  changeAmount -= calculator.calculateSize(key, containerEntry.getValue(), containerEntry.getMetadata());
                }
             }
          }
       }
 
-      if (!increaseSize(changeAmount)) {
+      if (changeAmount != 0 && !increaseSize(changeAmount)) {
          throw log.containerFull(maxSize);
       }
 

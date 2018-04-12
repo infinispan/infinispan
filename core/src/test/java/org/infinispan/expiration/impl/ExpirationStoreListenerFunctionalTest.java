@@ -41,8 +41,13 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
 
    @Override
    public void testSimpleExpirationMaxIdle() throws Exception {
-      super.testSimpleExpirationMaxIdle();
+      for (int i = 0; i < SIZE; i++) {
+         cache.put("key-" + i, "value-" + i,-1, null, 1, TimeUnit.MILLISECONDS);
+      }
+      timeService.advance(2);
+      // We have to process expiration for store and max idle
       manager.processExpiration();
+      assertEquals(0, cache.size());
       assertExpiredEvents(SIZE);
    }
 

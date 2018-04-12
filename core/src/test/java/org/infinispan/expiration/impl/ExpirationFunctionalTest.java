@@ -137,11 +137,10 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
    }
 
    public void testExpiredEntriesCleared() {
-      for (int i = 0; i < 2; i++) {
-         cache.put("key-" + i, "value-" + i,-1, null, i, TimeUnit.MILLISECONDS);
-      }
+      cache.put("key-" + 0, "value-" + 1, -1, null, 0, TimeUnit.MILLISECONDS);
+      cache.put("key-" + 1, "value-" + 1, -1, null, 1, TimeUnit.MILLISECONDS);
 
-      // This should expire approximately half of the entries
+      // This should expire 1 of the entries
       timeService.advance(1);
 
       cache.clear();
