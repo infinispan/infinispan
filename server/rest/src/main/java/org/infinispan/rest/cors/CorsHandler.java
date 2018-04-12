@@ -118,7 +118,7 @@ public class CorsHandler extends ChannelDuplexHandler {
 
    private boolean setOrigin(final HttpResponse response) {
       final String origin = request.headers().get(HttpHeaderNames.ORIGIN);
-      if (origin != null) {
+      if (origin != null && config != null) {
          if (NULL_ORIGIN.equals(origin) && config.isNullOriginAllowed()) {
             setNullOrigin(response);
             return true;
