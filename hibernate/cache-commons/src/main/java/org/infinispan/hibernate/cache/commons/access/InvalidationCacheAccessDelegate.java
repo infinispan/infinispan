@@ -21,7 +21,7 @@ import org.infinispan.AdvancedCache;
  */
 public abstract class InvalidationCacheAccessDelegate implements AccessDelegate {
 	protected static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( InvalidationCacheAccessDelegate.class );
-	protected static final boolean TRACE_ENABLED = log.isTraceEnabled();
+	protected static final boolean trace = log.isTraceEnabled();
 	protected final AdvancedCache cache;
 	protected final InfinispanDataRegion region;
 	protected final PutFromLoadValidator putValidator;
@@ -87,7 +87,7 @@ public abstract class InvalidationCacheAccessDelegate implements AccessDelegate 
 	public boolean putFromLoad(Object session, Object key, Object value, long txTimestamp, Object version, boolean minimalPutOverride)
 			throws CacheException {
 		if ( !region.checkValid() ) {
-			if ( TRACE_ENABLED ) {
+			if (trace) {
 				log.tracef( "Region %s not valid", region.getName() );
 			}
 			return false;
@@ -104,7 +104,7 @@ public abstract class InvalidationCacheAccessDelegate implements AccessDelegate 
 
 		PutFromLoadValidator.Lock lock = putValidator.acquirePutFromLoadLock(session, key, txTimestamp);
 		if ( lock == null) {
-			if ( TRACE_ENABLED ) {
+			if (trace) {
 				log.tracef( "Put from load lock not acquired for key %s", key );
 			}
 			return false;
