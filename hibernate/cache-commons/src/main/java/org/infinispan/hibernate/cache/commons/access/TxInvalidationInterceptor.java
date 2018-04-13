@@ -11,12 +11,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -32,9 +33,12 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.InvocationFinallyFunction;
+import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.VoidResponseCollector;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -56,11 +60,11 @@ public class TxInvalidationInterceptor extends BaseInvalidationInterceptor {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( TxInvalidationInterceptor.class );
    private static final Log ispnLog = LogFactory.getLog(TxInvalidationInterceptor.class);
 
-   private final InvocationFinallyFunction broadcastClearIfNotLocal = this::broadcastClearIfNotLocal;
-   private final InvocationFinallyFunction broadcastInvalidateForPrepare = this::broadcastInvalidateForPrepare;
+   private final InvocationSuccessFunction broadcastClearIfNotLocal = this::broadcastClearIfNotLocal;
+   private final InvocationSuccessFunction broadcastInvalidateForPrepare = this::broadcastInvalidateForPrepare;
 
    @Override
-	public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+	public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
 		if ( !isPutForExternalRead( command ) ) {
 			return handleInvalidate( ctx, command, command.getKey() );
 		}
@@ -68,42 +72,48 @@ public class TxInvalidationInterceptor extends BaseInvalidationInterceptor {
 	}
 
 	@Override
-	public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+	public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) {
 		return handleInvalidate( ctx, command, command.getKey() );
 	}
 
 	@Override
-	public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+	public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) {
 		return handleInvalidate( ctx, command, command.getKey() );
 	}
 
 	@Override
-	public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return invokeNextAndHandle( ctx, command, broadcastClearIfNotLocal);
+	public Object visitClearCommand(InvocationContext ctx, ClearCommand command) {
+      return invokeNextThenApply(ctx, command, broadcastClearIfNotLocal);
 	}
 
-   private Object broadcastClearIfNotLocal(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t) throws Throwable {
+   private Object broadcastClearIfNotLocal(InvocationContext rCtx, VisitableCommand rCommand, Object rv) {
       FlagAffectedCommand flagCmd = (FlagAffectedCommand) rCommand;
       if ( !isLocalModeForced( flagCmd ) ) {
          // just broadcast the clear command - this is simplest!
          if ( rCtx.isOriginLocal() ) {
-            rpcManager.invokeRemotely( getMembers(), rCommand, isSynchronous(flagCmd) ? syncRpcOptions : asyncRpcOptions );
+				((TopologyAffectedCommand) rCommand).setTopologyId(rpcManager.getTopologyId());
+         	if (isSynchronous(flagCmd)) {
+					// the result value will be ignored, we don't need to propagate rv
+            	return asyncValue(rpcManager.invokeCommandOnAll(rCommand, VoidResponseCollector.ignoreLeavers(), syncRpcOptions));
+				} else {
+            	rpcManager.sendToAll(rCommand, DeliverOrder.NONE);
+				}
          }
       }
       return rv;
    }
 
    @Override
-	public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+	public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
 		return handleInvalidate( ctx, command, command.getMap().keySet().toArray() );
 	}
 
 	@Override
-	public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      return invokeNextAndHandle( ctx, command, broadcastInvalidateForPrepare);
+	public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
+      return invokeNextThenApply(ctx, command, broadcastInvalidateForPrepare);
 	}
 
-   private Object broadcastInvalidateForPrepare(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t) throws Throwable {
+   private Object broadcastInvalidateForPrepare(InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable {
       log.tracef( "Entering InvalidationInterceptor's prepare phase.  Ctx flags are empty" );
       // fetch the modifications before the transaction is committed (and thus removed from the txTable)
       TxInvocationContext txCtx = (TxInvocationContext) rCtx;
@@ -114,8 +124,13 @@ public class TxInvalidationInterceptor extends BaseInvalidationInterceptor {
 
          PrepareCommand prepareCmd = (PrepareCommand) rCommand;
          List<WriteCommand> mods = Arrays.asList( prepareCmd.getModifications() );
-         broadcastInvalidateForPrepare( mods, txCtx );
-      }
+			CompletionStage<Void> completion = broadcastInvalidateForPrepare(mods, txCtx);
+			if (completion != null) {
+				return asyncValue(completion);
+			} else {
+				return rv;
+			}
+		}
       else {
          log.tracef( "Nothing to invalidate - no modifications in the transaction." );
       }
@@ -123,37 +138,45 @@ public class TxInvalidationInterceptor extends BaseInvalidationInterceptor {
    }
 
    @Override
-	public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+	public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) {
 		Object retVal = invokeNext( ctx, command );
 		if ( ctx.isOriginLocal() ) {
 			//unlock will happen async as it is a best effort
 			boolean sync = !command.isUnlock();
 			List<Address> members = getMembers();
 			( (LocalTxInvocationContext) ctx ).remoteLocksAcquired(members);
-			rpcManager.invokeRemotely(members, command, sync ? syncRpcOptions : asyncRpcOptions );
+			command.setTopologyId(rpcManager.getTopologyId());
+			if (sync) {
+				return asyncValue(rpcManager.invokeCommandOnAll(command, VoidResponseCollector.ignoreLeavers(), syncRpcOptions));
+			} else {
+				rpcManager.sendToAll(command, DeliverOrder.NONE);
+			}
 		}
 		return retVal;
 	}
 
-	private Object handleInvalidate(InvocationContext ctx, WriteCommand command, Object... keys) throws Throwable {
-      return invokeNextAndHandle( ctx, command, (rCtx, rCommand, rv, throwable) -> {
+	private Object handleInvalidate(InvocationContext ctx, WriteCommand command, Object... keys) {
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          WriteCommand writeCmd = (WriteCommand) rCommand;
-         if ( writeCmd.isSuccessful() && !rCtx.isInTxScope() ) {
-            if ( keys != null && keys.length != 0 ) {
-               if ( !isLocalModeForced( writeCmd ) ) {
-                  invalidateAcrossCluster( isSynchronous( writeCmd ), keys, rCtx );
-               }
-            }
-         }
-         return rv;
-      } );
+			if (!writeCmd.isSuccessful() || rCtx.isInTxScope()) {
+				return rv;
+			}
+			if (keys == null || keys.length == 0) {
+				return rv;
+			}
+			if (isLocalModeForced( writeCmd )) {
+				return rv;
+			}
+			CompletionStage<Void> completion = invalidateAcrossCluster(isSynchronous(writeCmd), keys, rCtx);
+			return completion != null ? asyncValue(completion) : rv;
+		} );
 	}
 
-	private void broadcastInvalidateForPrepare(List<WriteCommand> modifications, InvocationContext ctx) throws Throwable {
+	private CompletionStage<Void> broadcastInvalidateForPrepare(List<WriteCommand> modifications, InvocationContext ctx) throws Throwable {
 		// A prepare does not carry flags, so skip checking whether is local or not
 		if ( ctx.isInTxScope() ) {
 			if ( modifications.isEmpty() ) {
-				return;
+				return null;
 			}
 
 			InvalidationFilterVisitor filterVisitor = new InvalidationFilterVisitor( modifications.size() );
@@ -167,19 +190,20 @@ public class TxInvalidationInterceptor extends BaseInvalidationInterceptor {
 			}
 			else {
 				try {
-					invalidateAcrossCluster( defaultSynchronous, filterVisitor.result.toArray(), ctx );
-				}
-				catch (Throwable t) {
+					CompletionStage<Void> completion = invalidateAcrossCluster(defaultSynchronous, filterVisitor.result.toArray(), ctx);
+					if (completion != null) {
+						return completion.exceptionally(t -> {
+							log.unableToRollbackInvalidationsDuringPrepare( t );
+							throw CompletableFutures.asCompletionException(t);
+						});
+					}
+				} catch (Throwable t) {
 					log.unableToRollbackInvalidationsDuringPrepare( t );
-					if ( t instanceof RuntimeException ) {
-						throw t;
-					}
-					else {
-						throw new RuntimeException( "Unable to broadcast invalidation messages", t );
-					}
+					throw t;
 				}
 			}
 		}
+		return null;
 	}
 
    @Override
@@ -194,7 +218,7 @@ public class TxInvalidationInterceptor extends BaseInvalidationInterceptor {
 		public boolean containsLocalModeFlag = false;
 
 		public InvalidationFilterVisitor(int maxSetSize) {
-			result = new HashSet<Object>( maxSetSize );
+			result = new HashSet<>( maxSetSize );
 		}
 
 		private void processCommand(FlagAffectedCommand command) {
@@ -202,7 +226,7 @@ public class TxInvalidationInterceptor extends BaseInvalidationInterceptor {
 		}
 
 		@Override
-		public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+		public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
 			processCommand( command );
 			containsPutForExternalRead =
 					containsPutForExternalRead || ( command.getFlags() != null && command.getFlags().contains( Flag.PUT_FOR_EXTERNAL_READ ) );
@@ -211,21 +235,21 @@ public class TxInvalidationInterceptor extends BaseInvalidationInterceptor {
 		}
 
 		@Override
-		public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+		public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) {
 			processCommand( command );
 			result.add( command.getKey() );
 			return null;
 		}
 
 		@Override
-		public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+		public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
 			processCommand( command );
 			result.addAll( command.getAffectedKeys() );
 			return null;
 		}
 	}
 
-	private void invalidateAcrossCluster(boolean synchronous, Object[] keys, InvocationContext ctx) throws Throwable {
+	private CompletionStage<Void> invalidateAcrossCluster(boolean synchronous, Object[] keys, InvocationContext ctx) {
 		// increment invalidations counter if statistics maintained
 		incrementInvalidations();
 		final InvalidateCommand invalidateCommand = commandsFactory.buildInvalidateCommand( EnumUtil.EMPTY_BIT_SET, keys );
@@ -233,7 +257,7 @@ public class TxInvalidationInterceptor extends BaseInvalidationInterceptor {
 			log.debug( "Cache [" + rpcManager.getAddress() + "] replicating " + invalidateCommand );
 		}
 
-		ReplicableCommand command = invalidateCommand;
+		TopologyAffectedCommand command = invalidateCommand;
 		if ( ctx.isInTxScope() ) {
 			TxInvocationContext txCtx = (TxInvocationContext) ctx;
 			// A Prepare command containing the invalidation command in its 'modifications' list is sent to the remote nodes
@@ -243,6 +267,12 @@ public class TxInvalidationInterceptor extends BaseInvalidationInterceptor {
 			// but this does not impact consistency and the speed benefit is worth it.
 			command = commandsFactory.buildPrepareCommand( txCtx.getGlobalTransaction(), Collections.<WriteCommand>singletonList( invalidateCommand ), true );
 		}
-		rpcManager.invokeRemotely( getMembers(), command, synchronous ? syncRpcOptions : asyncRpcOptions );
+		command.setTopologyId(rpcManager.getTopologyId());
+		if (synchronous) {
+			return rpcManager.invokeCommandOnAll(command, VoidResponseCollector.ignoreLeavers(), syncRpcOptions);
+		} else {
+			rpcManager.sendToAll(command, DeliverOrder.NONE);
+		}
+		return null;
 	}
 }
