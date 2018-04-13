@@ -69,7 +69,11 @@ public abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
       return killClient(hotRodClient);
    }
 
+   protected byte protocolVersion() {
+      return 21;
+   }
+
    protected HotRodClient connectClient() {
-      return new HotRodClient("127.0.0.1", hotRodServer.getPort(), cacheName, 60, (byte) 21);
+      return new HotRodClient("127.0.0.1", hotRodServer.getPort(), cacheName, 60, protocolVersion());
    }
 }

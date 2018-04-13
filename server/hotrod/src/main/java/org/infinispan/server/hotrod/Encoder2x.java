@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.CloseableIterator;
@@ -59,7 +60,7 @@ class Encoder2x implements VersionedEncoder {
       CacheTopology cacheTopology;
 
       if (CounterModuleLifecycle.COUNTER_CACHE_NAME.equals(cacheName)) {
-         cacheTopology = getCounterCacheTopology(addressCache.getCacheManager());
+         cacheTopology = getCounterCacheTopology(server.getCacheManager());
          newTopology = getTopologyResponse(r, addressCache, CacheMode.DIST_SYNC, cacheTopology);
          compatibilityEnabled = false;
       } else {
@@ -101,10 +102,10 @@ class Encoder2x implements VersionedEncoder {
    }
 
    private CacheTopology getCounterCacheTopology(EmbeddedCacheManager cacheManager) {
-      return cacheManager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME).getAdvancedCache()
-            .getComponentRegistry()
-            .getStateTransferManager()
-            .getCacheTopology();
+      AdvancedCache<?,?> cache = cacheManager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME).getAdvancedCache();
+      return cache.getCacheConfiguration().clustering().cacheMode().isClustered() ?
+            cache.getComponentRegistry().getStateTransferManager().getCacheTopology() :
+            null; //local cache
    }
 
    private void writeHeaderNoTopology(ByteBuf buffer, long messageId, HotRodOperation operation) {
