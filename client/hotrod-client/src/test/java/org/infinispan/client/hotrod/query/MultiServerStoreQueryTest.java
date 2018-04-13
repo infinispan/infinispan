@@ -38,7 +38,7 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
    private static final String LUCENE_METADATA_CACHE = "LuceneIndexesMetadata_news";
    private static final String LUCENE_DATA_CACHE = "LuceneIndexesData_news";
 
-   private RemoteCache<String, Object> userCache;
+   private RemoteCache<Object, Object> userCache;
 
    public Configuration getLockCacheConfig() {
       return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false).build();
@@ -95,6 +95,7 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       String protoFile = protoSchemaBuilder.fileName("news.proto")
             .addClass(News.class)
+            .addClass(NewsKey.class)
             .build(serializationContext);
 
       //initialize server-side serialization context
@@ -118,9 +119,60 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
       userCache.put(news.getId(), news);
 
       Object testNews = userCache.get("testnews");
-      assertEquals(testNews, news);
+      assertEquals(news, testNews);
    }
 
+   public void testNonPrimitiveKey() {
+      NewsKey newsKey1 = new NewsKey();
+      newsKey1.setArticle("articleKey1");
+
+      NewsKey newsKey2 = new NewsKey();
+      newsKey2.setArticle("articleKey2");
+
+      News news1 = new News();
+      news1.setId("test-news-1");
+      news1.setTimestamp(0);
+
+      News news2 = new News();
+      news2.setId("test-news-2");
+      news2.setTimestamp(0);
+
+      userCache.put(newsKey1, news1);
+      userCache.put(newsKey2, news2);
+
+      assertEquals(news1, userCache.get(newsKey1));
+      assertEquals(news2, userCache.get(newsKey2));
+   }
+
+}
+
+class NewsKey {
+   private String article;
+
+   NewsKey() {
+   }
+
+   @ProtoField(number = 1, required = true)
+   public void setArticle(String article) {
+      this.article = article;
+   }
+
+   public String getArticle() {
+      return article;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      NewsKey newsKey = (NewsKey) o;
+      return Objects.equals(article, newsKey.article);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(article);
+   }
 }
 
 @ProtoDoc("@Indexed")
