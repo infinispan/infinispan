@@ -119,7 +119,7 @@ public interface InfinispanMessageLogger extends BasicLogger {
 	CacheException cannotGetCurrentTx(@Cause SystemException e);
 
 	@Message(value = "Failed to invalidate pending putFromLoad calls for key %s from region %s", id = 25024)
-	CacheException failedInvalidatePendingPut(Object key, ByteString regionName);
+	CacheException failedInvalidatePendingPut(Object key, String regionName);
 
 	@LogMessage(level = ERROR)
 	@Message(value = "Failed to invalidate pending putFromLoad calls for region %s", id = 25025)

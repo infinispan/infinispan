@@ -76,7 +76,7 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 
 		GlobalTransaction globalTransaction = txCtx.getGlobalTransaction();
 		if (!putFromLoadValidator.beginInvalidatingKey(globalTransaction, key)) {
-			log.failedInvalidatePendingPut(key, cacheName);
+			throw log.failedInvalidatePendingPut(key, cacheName.toString());
 		}
 	}
 
