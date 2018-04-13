@@ -39,14 +39,12 @@ public abstract class BaseInvalidationInterceptor extends BaseRpcInterceptor imp
 	protected ByteString cacheName;
 	protected boolean statisticsEnabled;
 	protected RpcOptions syncRpcOptions;
-	protected RpcOptions asyncRpcOptions;
 
 	@Start
 	private void start() {
 		this.cacheName = ByteString.fromString(cache.getName());
 		this.setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
 		syncRpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
-		asyncRpcOptions = rpcManager.getDefaultRpcOptions(false);
 	}
 
 	@ManagedOperation(

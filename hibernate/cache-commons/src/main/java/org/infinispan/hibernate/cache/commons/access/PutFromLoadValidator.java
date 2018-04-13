@@ -209,7 +209,7 @@ public class PutFromLoadValidator {
 			cache.getComponentRegistry().registerComponent(nonTxPutFromLoadInterceptor, NonTxPutFromLoadInterceptor.class);
          chain.addInterceptor(nonTxPutFromLoadInterceptor, entryWrappingPosition);
 
-			NonTxInvalidationInterceptor nonTxInvalidationInterceptor = new NonTxInvalidationInterceptor(validator, nonTxPutFromLoadInterceptor);
+			NonTxInvalidationInterceptor nonTxInvalidationInterceptor = new NonTxInvalidationInterceptor();
 			cache.getComponentRegistry().registerComponent(nonTxInvalidationInterceptor, NonTxInvalidationInterceptor.class);
 			chain.replaceInterceptor(nonTxInvalidationInterceptor, InvalidationInterceptor.class);
 
