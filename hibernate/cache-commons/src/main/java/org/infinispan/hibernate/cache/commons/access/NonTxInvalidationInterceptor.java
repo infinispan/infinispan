@@ -6,8 +6,7 @@
  */
 package org.infinispan.hibernate.cache.commons.access;
 
-import org.hibernate.engine.spi.SessionImplementor;
-import org.infinispan.commands.write.AbstractDataWriteCommand;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.hibernate.cache.commons.util.CacheCommandInitializer;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.commands.VisitableCommand;
@@ -19,12 +18,14 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.InvocationFinallyFunction;
+import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.impl.InvalidationInterceptor;
 import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -41,98 +42,57 @@ import org.infinispan.util.logging.LogFactory;
  */
 @MBean(objectName = "Invalidation", description = "Component responsible for invalidating entries on remote caches when entries are written to locally.")
 public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
-	private final static SessionAccess SESSION_ACCESS = SessionAccess.findSessionAccess();
-
-	private final PutFromLoadValidator putFromLoadValidator;
-	private final NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor;
-
 	@Inject private CacheCommandInitializer commandInitializer;
+	@Inject private CacheNotifier cacheNotifier;
 
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationInterceptor.class);
    private static final Log ispnLog = LogFactory.getLog(NonTxInvalidationInterceptor.class);
 
-	public NonTxInvalidationInterceptor(PutFromLoadValidator putFromLoadValidator, NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor) {
-		this.putFromLoadValidator = putFromLoadValidator;
-		this.nonTxPutFromLoadInterceptor = nonTxPutFromLoadInterceptor;
+   private final InvocationSuccessFunction handleWriteReturn = this::handleWriteReturn;
+	private final InvocationSuccessFunction handleEvictReturn = this::handleEvictReturn;
+
+	@Override
+	public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
+		assert command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ);
+		return invokeNext(ctx, command);
 	}
 
 	@Override
-	public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-		if (command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
-			return invokeNext(ctx, command);
-		}
-		else {
-			assert ctx.isOriginLocal();
-			boolean isTransactional = registerRemoteInvalidation(command, (SessionInvocationContext) ctx);
-			if (!isTransactional) {
-				throw new IllegalStateException("Put executed without transaction!");
-			}
-			if (!putFromLoadValidator.beginInvalidatingWithPFER(command.getKeyLockOwner(), command.getKey(), command.getValue())) {
-				log.failedInvalidatePendingPut(command.getKey(), cacheName);
-			}
-         RemoveCommand removeCommand = commandsFactory.buildRemoveCommand(command.getKey(), null,
-					command.getSegment(), command.getFlagsBitSet());
-         return invokeNextAndHandle( ctx, removeCommand, new InvalidateAndReturnFunction(isTransactional, command.getKeyLockOwner()) );
-		}
-	}
-
-	@Override
-	public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+	public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) {
 		throw new UnsupportedOperationException("Unexpected replace");
 	}
 
 	@Override
-	public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-		boolean isTransactional = false;
-		if (ctx instanceof SessionInvocationContext) {
-			isTransactional = registerRemoteInvalidation(command, (SessionInvocationContext) ctx);
-			assert isTransactional;
-			if (!putFromLoadValidator.beginInvalidatingKey(command.getKeyLockOwner(), command.getKey())) {
-				log.failedInvalidatePendingPut(command.getKey(), cacheName);
-			}
-		} else {
-			log.trace("This is an eviction, not invalidating anything");
-		}
-      return invokeNextAndHandle( ctx, command, new InvalidateAndReturnFunction(isTransactional, command.getKeyLockOwner()) );
-	}
-
-	private boolean registerRemoteInvalidation(AbstractDataWriteCommand command, SessionInvocationContext sctx) {
-		SessionAccess.TransactionCoordinatorAccess transactionCoordinator = SESSION_ACCESS.getTransactionCoordinator(sctx.getSession());
-		if (transactionCoordinator != null) {
-			if (trace) {
-				log.tracef("Registering synchronization on transaction in %s, cache %s: %s", lockOwnerToString(sctx.getSession()), cache.getName(), command.getKey());
-			}
-			InvalidationSynchronization sync = new InvalidationSynchronization(nonTxPutFromLoadInterceptor, command.getKey(), command.getKeyLockOwner());
-			transactionCoordinator.registerLocalSynchronization(sync);
-			return true;
-		}
-		// evict() command is not executed in session context
-		return false;
-	}
-
-	private static String lockOwnerToString(Object lockOwner) {
-		return lockOwner instanceof SessionImplementor ? "Session#" + lockOwner.hashCode() : lockOwner.toString();
+	public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) {
+		// This is how we differentiate write/remove and evict; remove sends BeginInvalidateComand while evict just InvalidateCommand
+		boolean isEvict = !command.hasAnyFlag(FlagBitSets.FORCE_WRITE_LOCK);
+      return invokeNextThenApply(ctx, command, isEvict ? handleEvictReturn : handleWriteReturn);
 	}
 
 	@Override
-	public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+	public Object visitClearCommand(InvocationContext ctx, ClearCommand command) {
 		Object retval = invokeNext(ctx, command);
 		if (!isLocalModeForced(command)) {
 			// just broadcast the clear command - this is simplest!
 			if (ctx.isOriginLocal()) {
-				rpcManager.invokeRemotely(getMembers(), command, isSynchronous(command) ? syncRpcOptions : asyncRpcOptions);
+				command.setTopologyId(rpcManager.getTopologyId());
+				if (isSynchronous(command)) {
+					return asyncValue(rpcManager.invokeCommandOnAll(command, VoidResponseCollector.ignoreLeavers(), syncRpcOptions));
+				} else {
+					rpcManager.sendToAll(command, DeliverOrder.NONE);
+				}
 			}
 		}
 		return retval;
 	}
 
 	@Override
-	public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+	public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
 		throw new UnsupportedOperationException("Unexpected putAll");
 	}
 
-	private <T extends WriteCommand & RemoteLockCommand> void invalidateAcrossCluster(
-			T command, boolean isTransactional, Object key, Object keyLockOwner) throws Throwable {
+	private <T extends WriteCommand & RemoteLockCommand> Object invalidateAcrossCluster(
+			T command, boolean isTransactional, Object key, Object keyLockOwner) {
 		// increment invalidations counter if statistics maintained
 		incrementInvalidations();
 		InvalidateCommand invalidateCommand;
@@ -144,12 +104,18 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 			else {
             invalidateCommand = commandsFactory.buildInvalidateCommand(EnumUtil.EMPTY_BIT_SET, new Object[] {key });
 			}
+			invalidateCommand.setTopologyId(rpcManager.getTopologyId());
 			if (log.isDebugEnabled()) {
 				log.debug("Cache [" + rpcManager.getAddress() + "] replicating " + invalidateCommand);
 			}
 
-			rpcManager.invokeRemotely(getMembers(), invalidateCommand, isSynchronous(command) ? syncRpcOptions : asyncRpcOptions);
+			if (isSynchronous(command)) {
+				return asyncValue(rpcManager.invokeCommandOnAll(invalidateCommand, VoidResponseCollector.ignoreLeavers(), syncRpcOptions));
+			} else {
+				rpcManager.sendToAll(invalidateCommand, DeliverOrder.NONE);
+			}
 		}
+		return null;
 	}
 
    @Override
@@ -157,26 +123,20 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
       return ispnLog;
    }
 
-   class InvalidateAndReturnFunction implements InvocationFinallyFunction {
+   private Object handleWriteReturn(InvocationContext ctx, VisitableCommand command, Object rv) {
+		RemoveCommand removeCmd = (RemoveCommand) command;
+		if ( removeCmd.isSuccessful()) {
+			return invalidateAcrossCluster(removeCmd, true, removeCmd.getKey(), removeCmd.getKeyLockOwner());
+		}
+		return null;
+	}
 
-      final boolean isTransactional;
-      final Object keyLockOwner;
-
-      InvalidateAndReturnFunction(boolean isTransactional, Object keyLockOwner) {
-         this.isTransactional = isTransactional;
-         this.keyLockOwner = keyLockOwner;
-      }
-
-      @Override
-      public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable)
-            throws Throwable {
-         RemoveCommand removeCmd = (RemoveCommand) rCommand;
-         if ( removeCmd.isSuccessful()) {
-            invalidateAcrossCluster(removeCmd, isTransactional, removeCmd.getKey(), keyLockOwner);
-         }
-         return rv;
-      }
-
-   }
+	private Object handleEvictReturn(InvocationContext ctx, VisitableCommand command, Object rv) {
+		RemoveCommand removeCmd = (RemoveCommand) command;
+		if ( removeCmd.isSuccessful()) {
+			return invalidateAcrossCluster(removeCmd, false, removeCmd.getKey(), removeCmd.getKeyLockOwner());
+		}
+		return null;
+	}
 
 }
