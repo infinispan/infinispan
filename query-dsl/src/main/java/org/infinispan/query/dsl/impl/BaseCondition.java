@@ -30,6 +30,7 @@ abstract class BaseCondition implements FilterConditionContextQueryBuilder, Visi
       this.queryFactory = queryFactory;
    }
 
+   @SuppressWarnings("deprecation")
    @Override
    public QueryBuilder toBuilder() {
       return getQueryBuilder();
