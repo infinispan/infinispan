@@ -14,17 +14,10 @@ import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.ByteString;
-
-import java.util.List;
 
 /**
  * Non-transactional counterpart of {@link TxPutFromLoadInterceptor}.
@@ -41,22 +34,14 @@ public class NonTxPutFromLoadInterceptor extends BaseCustomAsyncInterceptor {
 
 	@Inject private CacheCommandInitializer commandInitializer;
 	@Inject private RpcManager rpcManager;
-	@Inject private StateTransferManager stateTransferManager;
-
-	private RpcOptions asyncUnordered;
 
 	public NonTxPutFromLoadInterceptor(PutFromLoadValidator putFromLoadValidator, ByteString cacheName) {
 		this.putFromLoadValidator = putFromLoadValidator;
 		this.cacheName = cacheName;
 	}
 
-	@Start
-	public void start() {
-		asyncUnordered = rpcManager.getRpcOptionsBuilder(ResponseMode.ASYNCHRONOUS, DeliverOrder.NONE).build();
-	}
-
 	@Override
-	public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
+	public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) {
 		if (!ctx.isOriginLocal() && command instanceof BeginInvalidationCommand) {
 			for (Object key : command.getKeys()) {
 				putFromLoadValidator.beginInvalidatingKey(((BeginInvalidationCommand) command).getLockOwner(), key);
@@ -73,7 +58,6 @@ public class NonTxPutFromLoadInterceptor extends BaseCustomAsyncInterceptor {
 
 		EndInvalidationCommand endInvalidationCommand = commandInitializer.buildEndInvalidationCommand(
 				cacheName, new Object[] { key }, lockOwner);
-		List<Address> members = stateTransferManager.getCacheTopology().getMembers();
-		rpcManager.invokeRemotely(members, endInvalidationCommand, asyncUnordered);
+		rpcManager.sendToAll(endInvalidationCommand, DeliverOrder.NONE);
 	}
 }

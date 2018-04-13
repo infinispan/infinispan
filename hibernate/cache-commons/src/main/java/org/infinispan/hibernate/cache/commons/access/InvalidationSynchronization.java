@@ -22,6 +22,7 @@ public class InvalidationSynchronization implements javax.transaction.Synchroniz
 	private final Object key;
 
 	public InvalidationSynchronization(NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor, Object key, Object lockOwner) {
+		assert lockOwner != null;
 		this.nonTxPutFromLoadInterceptor = nonTxPutFromLoadInterceptor;
 		this.key = key;
 		this.lockOwner = lockOwner;
