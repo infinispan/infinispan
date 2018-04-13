@@ -330,7 +330,9 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     * Remove entries from all indexes by key
     */
    void removeFromIndexes(TransactionContext transactionContext, Object key) {
-      Stream<IndexedTypeIdentifier> typeIdentifiers = getKnownClasses().stream().map(PojoIndexedTypeIdentifier::new);
+      Stream<IndexedTypeIdentifier> typeIdentifiers = getKnownClasses().stream()
+            .filter(searchFactoryHandler::hasIndex)
+            .map(PojoIndexedTypeIdentifier::new);
       Set<Work> deleteWorks = typeIdentifiers
             .map(e -> searchWorkCreator.createEntityWork(keyToString(key), e, WorkType.DELETE))
             .collect(Collectors.toSet());
