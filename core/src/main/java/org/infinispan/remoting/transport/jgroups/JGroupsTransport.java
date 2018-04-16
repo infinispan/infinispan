@@ -271,6 +271,7 @@ public class JGroupsTransport implements Transport {
    }
 
    @Override
+   @Deprecated
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> commands, ResponseMode mode,
                                                 long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder,
                                                 boolean anycast)
@@ -813,8 +814,10 @@ public class JGroupsTransport implements Transport {
       logRequest(requestId, command, target);
       SingleTargetRequest<T> request = new SingleTargetRequest<>(collector, requestId, requests, target);
       addRequest(request);
-      boolean checkView = request.onNewView(clusterView.getMembersSet());
-      sendCommand(target, command, requestId, deliverOrder, isRsvpCommand(command), true, checkView);
+      boolean invalidTarget = request.onNewView(clusterView.getMembersSet());
+      if (!invalidTarget) {
+         sendCommand(target, command, requestId, deliverOrder, isRsvpCommand(command), true, false);
+      }
       if (timeout > 0) {
          request.setTimeout(timeoutExecutor, timeout, unit);
       }
