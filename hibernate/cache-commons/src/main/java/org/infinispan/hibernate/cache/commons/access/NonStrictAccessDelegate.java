@@ -37,9 +37,9 @@ public class NonStrictAccessDelegate implements AccessDelegate {
 	private static final boolean trace = log.isTraceEnabled();
    private static final SessionAccess SESSION_ACCESS = SessionAccess.findSessionAccess();
 
-	private final InfinispanDataRegion region;
+	protected final InfinispanDataRegion region;
 	private final AdvancedCache cache;
-	private final FunctionalMap.ReadWriteMap<Object, Object> writeMap;
+	protected final FunctionalMap.ReadWriteMap<Object, Object> writeMap;
 	private final FunctionalMap.ReadWriteMap<Object, Object> putFromLoadMap;
 	private final Comparator versionComparator;
 
@@ -138,7 +138,7 @@ public class NonStrictAccessDelegate implements AccessDelegate {
 		// the remove could be discarded and we would end up with stale record
 		// See VersionedTest#testCollectionUpdate for such situation
       TransactionCoordinatorAccess transactionCoordinator = SESSION_ACCESS.getTransactionCoordinator(session);
-		RemovalSynchronization sync = new RemovalSynchronization(transactionCoordinator, writeMap, false, region, key);
+		RemovalSynchronization sync = new RemovalSynchronization(transactionCoordinator, writeMap, region, key);
 		transactionCoordinator.registerLocalSynchronization(sync);
 	}
 

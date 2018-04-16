@@ -8,6 +8,7 @@ import org.kohsuke.MetaInfServices;
 
 import javax.transaction.Synchronization;
 
+// Unlike its's counterparts in v51 and main module this shouldn't be used in production anymore
 @MetaInfServices(SessionAccess.class)
 public final class SessionAccessImpl implements SessionAccess {
 

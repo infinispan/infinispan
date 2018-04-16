@@ -6,6 +6,7 @@ import org.hibernate.boot.internal.SessionFactoryBuilderImpl;
 import org.hibernate.boot.internal.SessionFactoryOptionsImpl;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.cache.internal.CacheDataDescriptionImpl;
+import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.internal.util.compare.ComparableComparator;
 import org.hibernate.service.ServiceRegistry;
@@ -98,6 +99,11 @@ class TestRegionFactoryImpl implements TestRegionFactory {
       String prefix = delegate.getSettings().getCacheRegionPrefix();
       if (prefix != null && !prefix.isEmpty()) regionName = prefix + '.' + regionName;
       return (InfinispanBaseRegion) delegate.buildQueryResultsRegion(regionName, null);
+   }
+
+   @Override
+   public RegionFactory unwrap() {
+      return delegate;
    }
 
    @Override

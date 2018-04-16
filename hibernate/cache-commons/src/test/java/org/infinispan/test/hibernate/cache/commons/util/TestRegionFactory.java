@@ -2,6 +2,7 @@ package org.infinispan.test.hibernate.cache.commons.util;
 
 import java.util.Properties;
 
+import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.service.ServiceRegistry;
 import org.infinispan.configuration.cache.Configuration;
@@ -41,4 +42,6 @@ public interface TestRegionFactory extends TimeSource {
    InfinispanBaseRegion buildTimestampsRegion(String regionName);
 
    InfinispanBaseRegion buildQueryResultsRegion(String regionName);
+
+   RegionFactory unwrap();
 }

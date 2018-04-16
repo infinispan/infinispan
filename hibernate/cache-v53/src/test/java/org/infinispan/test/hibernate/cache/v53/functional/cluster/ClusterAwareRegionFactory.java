@@ -13,12 +13,14 @@ import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.cfg.spi.DomainDataRegionBuildingContext;
 import org.hibernate.cache.cfg.spi.DomainDataRegionConfig;
+import org.hibernate.cache.spi.CacheTransactionSynchronization;
 import org.hibernate.cache.spi.DomainDataRegion;
 import org.hibernate.cache.spi.QueryResultsRegion;
 import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.TimestampsRegion;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.infinispan.hibernate.cache.v53.InfinispanRegionFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.hibernate.cache.commons.functional.cluster.ClusterAware;
@@ -97,5 +99,15 @@ public class ClusterAwareRegionFactory implements RegionFactory {
 
    public long nextTimestamp() {
       return delegate.nextTimestamp();
+   }
+
+   @Override
+   public CacheTransactionSynchronization createTransactionContext(SharedSessionContractImplementor session) {
+      return delegate.createTransactionContext(session);
+   }
+
+   @Override
+   public long getTimeout() {
+      return delegate.getTimeout();
    }
 }

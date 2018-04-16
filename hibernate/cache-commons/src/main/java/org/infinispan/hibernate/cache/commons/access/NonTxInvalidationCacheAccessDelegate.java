@@ -30,11 +30,11 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
    // that this is not an eviction and should result in BeginInvalidateCommand
    private static final long REMOVE_FLAGS = FlagBitSets.IGNORE_RETURN_VALUES | FlagBitSets.FORCE_WRITE_LOCK;
 
-   private final AsyncInterceptorChain invoker;
+   protected final AsyncInterceptorChain invoker;
 	private final CommandsFactory commandsFactory;
    private final KeyPartitioner keyPartitioner;
 	private final InvocationContextFactory contextFactory;
-	private final NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor;
+	protected final NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor;
 
 	public NonTxInvalidationCacheAccessDelegate(InfinispanDataRegion region, PutFromLoadValidator validator) {
 		super(region, validator);
@@ -52,20 +52,7 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 		if ( !region.checkValid() ) {
 			return false;
 		}
-
-		// We need to be invalidating even for regular writes; if we were not and the write was followed by eviction
-		// (or any other invalidation), naked put that was started after the eviction ended but before this insert
-		// ended could insert the stale entry into the cache (since the entry was removed by eviction).
-		RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, keyPartitioner.getSegment(key), REMOVE_FLAGS);
-		registerRemoteInvalidation(command, session);
-		if (!putValidator.beginInvalidatingWithPFER(command.getKeyLockOwner(), key, value)) {
-			throw log.failedInvalidatePendingPut(key, region.getName());
-		}
-		InvocationContext ctx = contextFactory.createSingleKeyNonTxInvocationContext();
-		ctx.setLockOwner(command.getKeyLockOwner());
-		// NonTxInvalidationInterceptor will call beginInvalidatingWithPFER and change this to a removal because
-		// we must publish the new value only after invalidation ends.
-		invoker.invoke(ctx, command);
+		write(session, key, value);
 		return true;
 	}
 
@@ -76,20 +63,7 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 		// We update whether or not the region is valid. Other nodes
 		// may have already restored the region so they need to
 		// be informed of the change.
-
-		// We need to be invalidating even for regular writes; if we were not and the write was followed by eviction
-		// (or any other invalidation), naked put that was started after the eviction ended but before this update
-		// ended could insert the stale entry into the cache (since the entry was removed by eviction).
-		RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, keyPartitioner.getSegment(key), REMOVE_FLAGS);
-		registerRemoteInvalidation(command, session);
-		if (!putValidator.beginInvalidatingWithPFER(command.getKeyLockOwner(), key, value)) {
-			throw log.failedInvalidatePendingPut(key, region.getName());
-		}
-		InvocationContext ctx = contextFactory.createSingleKeyNonTxInvocationContext();
-		ctx.setLockOwner(command.getKeyLockOwner());
-		// NonTxInvalidationInterceptor will call beginInvalidatingWithPFER and change this to a removal because
-		// we must publish the new value only after invalidation ends.
-		invoker.invoke(ctx, command);
+		write(session, key, value);
 		return true;
 	}
 
@@ -98,13 +72,24 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 		// We update whether or not the region is valid. Other nodes
 		// may have already restored the region so they need to
 		// be informed of the change.
+		write(session, key, null);
+	}
+
+	private void write(Object session, Object key, Object value) {
+		// We need to be invalidating even for regular writes; if we were not and the write was followed by eviction
+		// (or any other invalidation), naked put that was started after the eviction ended but before this insert/update
+		// ended could insert the stale entry into the cache (since the entry was removed by eviction).
 		RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, keyPartitioner.getSegment(key), REMOVE_FLAGS);
 		registerRemoteInvalidation(command, session);
-		if (!putValidator.beginInvalidatingKey(command.getKeyLockOwner(), key)) {
-         throw log.failedInvalidatePendingPut(key, region.getName());
+		if (!putValidator.beginInvalidatingWithPFER(command.getKeyLockOwner(), key, value)) {
+			throw log.failedInvalidatePendingPut(key, region.getName());
 		}
 		InvocationContext ctx = contextFactory.createSingleKeyNonTxInvocationContext();
 		ctx.setLockOwner(command.getKeyLockOwner());
+		invoke(session, ctx, command);
+	}
+
+	protected void invoke(Object session, InvocationContext ctx, RemoveCommand command) {
 		invoker.invoke(ctx, command);
 	}
 
@@ -133,7 +118,7 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 		}
 	}
 
-	private void registerRemoteInvalidation(AbstractDataWriteCommand command, Object session) {
+	protected void registerRemoteInvalidation(AbstractDataWriteCommand command, Object session) {
 		SessionAccess.TransactionCoordinatorAccess transactionCoordinator = SESSION_ACCESS.getTransactionCoordinator(session);
 		if (transactionCoordinator == null) {
 			return;

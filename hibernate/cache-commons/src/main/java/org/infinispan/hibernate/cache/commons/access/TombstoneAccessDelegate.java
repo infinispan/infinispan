@@ -28,13 +28,13 @@ import org.infinispan.configuration.cache.Configuration;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class TombstoneAccessDelegate implements AccessDelegate {
-	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( TombstoneAccessDelegate.class );
+	protected static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( TombstoneAccessDelegate.class );
    private static final SessionAccess SESSION_ACCESS = SessionAccess.findSessionAccess();
 
 	protected final InfinispanDataRegion region;
 	protected final AdvancedCache cache;
-	private final FunctionalMap.ReadWriteMap<Object, Object> writeMap;
-	private final FunctionalMap.ReadWriteMap<Object, Object> asyncWriteMap;
+	protected final FunctionalMap.ReadWriteMap<Object, Object> writeMap;
+	protected final FunctionalMap.ReadWriteMap<Object, Object> asyncWriteMap;
 	private final boolean requiresTransaction;
 	private final FunctionalMap.ReadWriteMap<Object, Object> putFromLoadMap;
 

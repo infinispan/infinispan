@@ -8,6 +8,7 @@ import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CollectionRegion;
 import org.hibernate.cache.spi.EntityRegion;
 import org.hibernate.cache.spi.GeneralDataRegion;
+import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
 import org.hibernate.cache.spi.access.RegionAccessStrategy;
@@ -51,7 +52,7 @@ public final class TestSessionAccessImpl implements TestSessionAccess {
    }
 
    @Override
-   public Object mockSession(Class<? extends JtaPlatform> jtaPlatform, ControlledTimeService timeService) {
+   public Object mockSession(Class<? extends JtaPlatform> jtaPlatform, ControlledTimeService timeService, RegionFactory regionFactory) {
       SessionMock session = mock(SessionMock.class);
       when(session.isClosed()).thenReturn(false);
       when(session.getTimestamp()).thenReturn(timeService.wallClockTime());

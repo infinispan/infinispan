@@ -181,7 +181,7 @@ public abstract class AbstractRegionAccessStrategyTest<S>
 
 		Thread node1 = new Thread(() -> {
 				try {
-               Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+               Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
                putFromLoadLatches[0] = withTx(localEnvironment, session, () -> {
 						assertNull(testLocalAccessStrategy.get(session, KEY, SESSION_ACCESS.getTimestamp(session)));
 
@@ -211,7 +211,7 @@ public abstract class AbstractRegionAccessStrategyTest<S>
 
 		Thread node2 = new Thread(() -> {
 				try {
-               Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+               Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, remoteEnvironment.getRegionFactory());
                putFromLoadLatches[1] = withTx(remoteEnvironment, session, () -> {
 
 						assertNull(testRemoteAccessStrategy.get(session, KEY, SESSION_ACCESS.getTimestamp(session)));
@@ -255,9 +255,9 @@ public abstract class AbstractRegionAccessStrategyTest<S>
       // At least one of the put from load latch should have completed
       assertPutFromLoadLatches(putFromLoadLatches);
 
-      Object s1 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s1 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
 		assertEquals( isRemoval ? null : VALUE2, testLocalAccessStrategy.get(s1, KEY, SESSION_ACCESS.getTimestamp(s1)));
-      Object s2 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s2 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, remoteEnvironment.getRegionFactory());
 		Object remoteValue = testRemoteAccessStrategy.get(s2, KEY, SESSION_ACCESS.getTimestamp(s2));
 		if (isUsingInvalidation() || isRemoval) {
 			// invalidation command invalidates pending put
@@ -382,14 +382,14 @@ public abstract class AbstractRegionAccessStrategyTest<S>
 		CountDownLatch localPutFromLoadLatch = expectRemotePutFromLoad(remoteRegion.getCache(), localRegion.getCache(), KEY);
 		CountDownLatch remotePutFromLoadLatch = expectRemotePutFromLoad(localRegion.getCache(), remoteRegion.getCache(), KEY);
 
-      Object s1 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s1 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
 		assertNull("local is clean", testLocalAccessStrategy.get(s1, KEY, SESSION_ACCESS.getTimestamp(s1)));
-      Object s2 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s2 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, remoteEnvironment.getRegionFactory());
 		assertNull("remote is clean", testRemoteAccessStrategy.get(s2, KEY, SESSION_ACCESS.getTimestamp(s2)));
 
-      Object s3 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s3 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
 		testLocalAccessStrategy.putFromLoad(s3, KEY, VALUE1, SESSION_ACCESS.getTimestamp(s3), VALUE1.version);
-      Object s5 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s5 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, remoteEnvironment.getRegionFactory());
 		testRemoteAccessStrategy.putFromLoad(s5, KEY, VALUE1, SESSION_ACCESS.getTimestamp(s5), VALUE1.version);
 
 		// putFromLoad is applied on local node synchronously, but if there's a concurrent update
@@ -398,15 +398,15 @@ public abstract class AbstractRegionAccessStrategyTest<S>
 		assertTrue(localPutFromLoadLatch.await(1, TimeUnit.SECONDS));
 		assertTrue(remotePutFromLoadLatch.await(1, TimeUnit.SECONDS));
 
-      Object s4 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s4 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
 		assertEquals(VALUE1, testLocalAccessStrategy.get(s4, KEY, SESSION_ACCESS.getTimestamp(s4)));
-      Object s6 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s6 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, remoteEnvironment.getRegionFactory());
 		assertEquals(VALUE1, testRemoteAccessStrategy.get(s6, KEY, SESSION_ACCESS.getTimestamp(s6)));
 
       CountDownLatch endInvalidationLatch = createEndInvalidationLatch(evict, KEY);
       CountDownLatch endRemoveLatch = createRemoveLatch(evict, KEY);
 
-      Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
 		withTx(localEnvironment, session, () -> {
 			if (evict) {
 				testLocalAccessStrategy.evict(KEY);
@@ -417,9 +417,9 @@ public abstract class AbstractRegionAccessStrategyTest<S>
 			return null;
 		});
 
-      Object s7 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s7 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
 		assertNull(testLocalAccessStrategy.get(s7, KEY, SESSION_ACCESS.getTimestamp(s7)));
-      Object s8 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s8 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, remoteEnvironment.getRegionFactory());
 		assertNull(testRemoteAccessStrategy.get(s8, KEY, SESSION_ACCESS.getTimestamp(s8)));
 
       assertTrue(endInvalidationLatch.await(1, TimeUnit.SECONDS));
@@ -480,19 +480,19 @@ public abstract class AbstractRegionAccessStrategyTest<S>
 		final Object KEY = generateNextKey();
 		assertEquals(0, localRegion.getElementCountInMemory());
 		assertEquals(0, remoteRegion.getElementCountInMemory());
-      Object s1 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s1 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
 		assertNull("local is clean", testLocalAccessStrategy.get(s1, KEY, SESSION_ACCESS.getTimestamp(s1)));
-      Object s2 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s2 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, remoteEnvironment.getRegionFactory());
 		assertNull("remote is clean", testRemoteAccessStrategy.get(s2, KEY, SESSION_ACCESS.getTimestamp(s2)));
 
 		CountDownLatch localPutFromLoadLatch = expectRemotePutFromLoad(remoteRegion.getCache(), localRegion.getCache(), KEY);
 		CountDownLatch remotePutFromLoadLatch = expectRemotePutFromLoad(localRegion.getCache(), remoteRegion.getCache(), KEY);
 
-      Object s3 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
-      log.infof("Call local putFromLoad strategy get for key=%s", KEY);
+      Object s3 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
+      log.infof("Call putFromLoad strategy get for key=%s", KEY);
 		testLocalAccessStrategy.putFromLoad(s3, KEY, VALUE1, SESSION_ACCESS.getTimestamp(s3), VALUE1.version);
-      Object s5 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
-      log.infof("Call remote putFromLoad strategy get for key=%s", KEY);
+      Object s5 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, remoteEnvironment.getRegionFactory());
+		log.infof("Call remote putFromLoad strategy get for key=%s", KEY);
 		testRemoteAccessStrategy.putFromLoad(s5, KEY, VALUE1, SESSION_ACCESS.getTimestamp(s5), VALUE2.version);
 
 		// putFromLoad is applied on local node synchronously, but if there's a concurrent update
@@ -501,15 +501,15 @@ public abstract class AbstractRegionAccessStrategyTest<S>
 		assertTrue(localPutFromLoadLatch.await(1, TimeUnit.SECONDS));
 		assertTrue(remotePutFromLoadLatch.await(1, TimeUnit.SECONDS));
 
-      Object s4 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
-      Object s6 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s4 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
+      Object s6 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, remoteEnvironment.getRegionFactory());
       log.infof("Call local strategy get for key=%s", KEY);
 		assertEquals(VALUE1, testLocalAccessStrategy.get(s4, KEY, SESSION_ACCESS.getTimestamp(s4)));
 		assertEquals(VALUE1, testRemoteAccessStrategy.get(s6, KEY, SESSION_ACCESS.getTimestamp(s6)));
 
       CountDownLatch endInvalidationLatch = createEndInvalidationLatch(evict, KEY);
 
-		Object removeSession = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+		Object removeSession = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
 		withTx(localEnvironment, removeSession, () -> {
 			if (evict) {
 				testLocalAccessStrategy.evictAll();
@@ -520,11 +520,11 @@ public abstract class AbstractRegionAccessStrategyTest<S>
 			}
 			return null;
 		});
-      Object s7 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s7 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
 		assertNull(testLocalAccessStrategy.get(s7, KEY, SESSION_ACCESS.getTimestamp(s7)));
 		assertEquals(0, localRegion.getElementCountInMemory());
 
-      Object s8 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s8 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, remoteEnvironment.getRegionFactory());
 		assertNull(testRemoteAccessStrategy.get(s8, KEY, SESSION_ACCESS.getTimestamp(s8)));
 		assertEquals(0, remoteRegion.getElementCountInMemory());
 
@@ -535,10 +535,10 @@ public abstract class AbstractRegionAccessStrategyTest<S>
 		CountDownLatch lastPutFromLoadLatch = expectRemotePutFromLoad(remoteRegion.getCache(), localRegion.getCache(), KEY);
 
 		// Test whether the get above messes up the optimistic version
-      Object s9 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s9 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, remoteEnvironment.getRegionFactory());
       log.infof("Call remote strategy putFromLoad for key=%s and value=%s", KEY, VALUE1);
 		assertTrue(testRemoteAccessStrategy.putFromLoad(s9, KEY, VALUE1, SESSION_ACCESS.getTimestamp(s9), 1));
-      Object s10 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s10 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, remoteEnvironment.getRegionFactory());
       log.infof("Call remote strategy get for key=%s", KEY);
 		assertEquals(VALUE1, testRemoteAccessStrategy.get(s10, KEY, SESSION_ACCESS.getTimestamp(s10)));
       // Wait for change to be applied in local, otherwise the count might not be correct
@@ -546,9 +546,9 @@ public abstract class AbstractRegionAccessStrategyTest<S>
 		assertEquals(1, remoteRegion.getElementCountInMemory());
 
 
-      Object s11 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s11 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
 		assertEquals((isUsingInvalidation() ? null : VALUE1), testLocalAccessStrategy.get(s11, KEY, SESSION_ACCESS.getTimestamp(s11)));
-      Object s12 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+      Object s12 = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, remoteEnvironment.getRegionFactory());
 		assertEquals(VALUE1, testRemoteAccessStrategy.get(s12, KEY, SESSION_ACCESS.getTimestamp(s12)));
 	}
 
