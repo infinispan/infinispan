@@ -227,25 +227,25 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
       Cache<Object, String> cache2 = cache(2, CACHE_NAME);
 
-      // Add an extra node so that when we remove 1 it means not all the values will be on 1 node
-      addClusterEnabledCacheManager(builderUsed).defineConfiguration(CACHE_NAME, builderUsed.build());
-      cache(3, CACHE_NAME);
-
-      // put a lot of entries in cache0, so that when a node goes down it will lose some
+      // We put some entries into cache1, which will be shut down below. The batch size is only 2 so we won't be able
+      // to get them all in 1 remote call - this way we can block until we know we touch the data container, so at least
+      // the second request will give us an issue
       Map<Object, String> values = new HashMap<>();
-      for (int i = 0; i < 501; ++i) {
-         MagicKey key = new MagicKey(cache0);
-         cache1.put(key, key.toString());
-         values.put(key, key.toString());
-      }
+      values.put(new MagicKey(cache0), "ignore");
+      values.put(new MagicKey(cache1), "ignore");
+      values.put(new MagicKey(cache1), "ignore");
+      values.put(new MagicKey(cache1), "ignore");
+      cache1.putAll(values);
+
 
       CheckPoint checkPoint = new CheckPoint();
       checkPoint.triggerForever("post_iterator_released");
-      waitUntilDataContainerWillBeIteratedOn(cache0, checkPoint);
+      waitUntilDataContainerWillBeIteratedOn(cache1, checkPoint);
 
       final BlockingQueue<Map.Entry<Object, String>> returnQueue = new LinkedBlockingQueue<>();
       Future<Void> future = fork(() -> {
-         Iterator<Map.Entry<Object, String>> iter = cache2.entrySet().stream().iterator();
+         // Put batch size to a lower number just to make sure it doesn't retrieve them all in 1 go
+         Iterator<Map.Entry<Object, String>> iter = cache2.entrySet().stream().distributedBatchSize(2).iterator();
          while (iter.hasNext()) {
             Map.Entry<Object, String> entry = iter.next();
             returnQueue.add(entry);

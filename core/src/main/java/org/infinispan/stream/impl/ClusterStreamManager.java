@@ -55,11 +55,6 @@ public interface ClusterStreamManager<Original, K> {
        * @param segments The segments that were requested but are now local
        */
       void onSegmentsLost(Set<Integer> segments);
-
-      /**
-       * Called when a an owner of a segment is not available in the provided {@link ConsistentHash}
-       */
-      void requestFutureTopology();
    }
 
    /**
