@@ -19,7 +19,6 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.api.continuous.ContinuousQueryListener;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.ContinuousQueryResult;
 
 /**
@@ -67,8 +66,7 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
     * @param query    the query to be used for determining the matching set
     */
    public <C> void addContinuousQueryListener(Query query, ContinuousQueryListener<K, C> listener) {
-      BaseQuery baseQuery = (BaseQuery) query;
-      addContinuousQueryListener(baseQuery.getQueryString(), baseQuery.getParameters(), listener);
+      addContinuousQueryListener(query.getQueryString(), query.getParameters(), listener);
    }
 
    public void removeContinuousQueryListener(ContinuousQueryListener<K, ?> listener) {

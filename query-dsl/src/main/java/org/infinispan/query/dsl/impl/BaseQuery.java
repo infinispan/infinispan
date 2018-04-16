@@ -66,10 +66,11 @@ public abstract class BaseQuery implements Query {
    }
 
    /**
-    * Returns the query string.
+    * Returns the Ickle query string.
     *
-    * @return the query string
+    * @return the Ickle query string
     */
+   @Override
    public String getQueryString() {
       return queryString;
    }

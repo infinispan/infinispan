@@ -28,6 +28,11 @@ class DummyQuery implements Query {
    }
 
    @Override
+   public String getQueryString() {
+      return null;
+   }
+
+   @Override
    public <T> List<T> list() {
       return Collections.emptyList();
    }
