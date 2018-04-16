@@ -20,8 +20,8 @@ public class RemovalSynchronization extends InvocationAfterCompletion {
 	private final Object key;
 	private final FunctionalMap.ReadWriteMap<Object, Object> rwMap;
 
-	public RemovalSynchronization(TransactionCoordinatorAccess tc, FunctionalMap.ReadWriteMap<Object, Object> rwMap, boolean requiresTransaction, InfinispanDataRegion region, Object key) {
-		super(tc, requiresTransaction);
+	public RemovalSynchronization(TransactionCoordinatorAccess tc, FunctionalMap.ReadWriteMap<Object, Object> rwMap, InfinispanDataRegion region, Object key) {
+		super(tc, false);
 		this.rwMap = rwMap;
 		this.region = region;
 		this.key = key;

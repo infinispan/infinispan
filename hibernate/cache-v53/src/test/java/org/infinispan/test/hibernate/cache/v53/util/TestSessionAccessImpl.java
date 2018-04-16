@@ -8,6 +8,7 @@ import org.hibernate.cache.CacheException;
 import org.hibernate.cache.cfg.spi.DomainDataCachingConfig;
 import org.hibernate.cache.spi.CacheImplementor;
 import org.hibernate.cache.spi.DirectAccessRegion;
+import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.CachedDomainDataAccess;
 import org.hibernate.cache.spi.access.EntityDataAccess;
@@ -35,6 +36,7 @@ import org.hibernate.resource.transaction.spi.TransactionCoordinatorOwner;
 import org.hibernate.service.ServiceRegistry;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.v53.impl.DomainDataRegionImpl;
+import org.infinispan.hibernate.cache.v53.impl.Sync;
 import org.infinispan.test.hibernate.cache.commons.util.BatchModeJtaPlatform;
 import org.infinispan.test.hibernate.cache.commons.util.JdbcResourceTransactionMock;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
@@ -50,6 +52,9 @@ import java.util.stream.Collectors;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import javax.transaction.Status;
+import javax.transaction.Synchronization;
+
 @MetaInfServices(TestSessionAccess.class)
 public class TestSessionAccessImpl implements TestSessionAccess {
 
@@ -59,16 +64,18 @@ public class TestSessionAccessImpl implements TestSessionAccess {
    }
 
    @Override
-   public Object mockSession(Class<? extends JtaPlatform> jtaPlatform, ControlledTimeService timeService) {
+   public Object mockSession(Class<? extends JtaPlatform> jtaPlatform, ControlledTimeService timeService, RegionFactory regionFactory) {
       SessionMock session = mock(SessionMock.class);
       when(session.isClosed()).thenReturn(false);
       when(session.isOpen()).thenReturn(true);
       when(session.getTransactionStartTimestamp()).thenReturn(timeService.wallClockTime());
+      TransactionCoordinator txCoord;
       if (jtaPlatform == BatchModeJtaPlatform.class) {
-         BatchModeTransactionCoordinator txCoord = new BatchModeTransactionCoordinator();
+         BatchModeTransactionCoordinator batchModeTxCoord = new BatchModeTransactionCoordinator();
+         txCoord = batchModeTxCoord;
          when(session.getTransactionCoordinator()).thenReturn(txCoord);
          when(session.beginTransaction()).then(invocation -> {
-            Transaction tx = txCoord.newTransaction();
+            Transaction tx = batchModeTxCoord.newTransaction();
             tx.begin();
             return tx;
          });
@@ -103,7 +110,7 @@ public class TestSessionAccessImpl implements TestSessionAccess {
          when(txOwner.getResourceLocalTransaction()).thenReturn(new JdbcResourceTransactionMock());
          when(txOwner.getJdbcSessionOwner()).thenReturn(jdbcSessionOwner);
          when(txOwner.isActive()).thenReturn(true);
-         TransactionCoordinator txCoord = JdbcResourceLocalTransactionCoordinatorBuilderImpl.INSTANCE
+         txCoord = JdbcResourceLocalTransactionCoordinatorBuilderImpl.INSTANCE
             .buildTransactionCoordinator(txOwner, null);
          when(session.getTransactionCoordinator()).thenReturn(txCoord);
          when(session.beginTransaction()).then(invocation -> {
@@ -114,6 +121,15 @@ public class TestSessionAccessImpl implements TestSessionAccess {
       } else {
          throw new IllegalStateException("Unknown JtaPlatform: " + jtaPlatform);
       }
+      Sync sync = new Sync(regionFactory);
+      TestSynchronization synchronization = new TestSynchronization(sync);
+      when(session.getCacheTransactionSynchronization()).thenAnswer(invocation -> {
+         if (!synchronization.registered) {
+            txCoord.getLocalSynchronizations().registerSynchronization(synchronization);
+            synchronization.registered = true;
+         }
+         return sync;
+      });
       return session;
    }
 
@@ -335,4 +351,22 @@ public class TestSessionAccessImpl implements TestSessionAccess {
       }
    }
 
+   private static class TestSynchronization implements Synchronization {
+      private final Sync sync;
+      private boolean registered;
+
+      public TestSynchronization(Sync sync) {
+         this.sync = sync;
+      }
+
+      @Override
+      public void beforeCompletion() {
+         sync.transactionCompleting();
+      }
+
+      @Override
+      public void afterCompletion(int status) {
+         sync.transactionCompleted(status == Status.STATUS_COMMITTING || status == Status.STATUS_COMMITTED);
+      }
+   }
 }

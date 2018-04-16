@@ -6,6 +6,8 @@
  */
 package org.infinispan.hibernate.cache.commons.access;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.hibernate.cache.commons.util.CacheCommandInitializer;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
@@ -23,7 +25,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.impl.InvalidationInterceptor;
 import org.infinispan.jmx.annotations.MBean;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
@@ -43,7 +44,6 @@ import org.infinispan.util.logging.LogFactory;
 @MBean(objectName = "Invalidation", description = "Component responsible for invalidating entries on remote caches when entries are written to locally.")
 public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 	@Inject private CacheCommandInitializer commandInitializer;
-	@Inject private CacheNotifier cacheNotifier;
 
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationInterceptor.class);
    private static final Log ispnLog = LogFactory.getLog(NonTxInvalidationInterceptor.class);
@@ -91,7 +91,7 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 		throw new UnsupportedOperationException("Unexpected putAll");
 	}
 
-	private <T extends WriteCommand & RemoteLockCommand> Object invalidateAcrossCluster(
+	private <T extends WriteCommand & RemoteLockCommand> CompletableFuture<?> invalidateAcrossCluster(
 			T command, boolean isTransactional, Object key, Object keyLockOwner) {
 		// increment invalidations counter if statistics maintained
 		incrementInvalidations();
@@ -110,7 +110,8 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 			}
 
 			if (isSynchronous(command)) {
-				return asyncValue(rpcManager.invokeCommandOnAll(invalidateCommand, VoidResponseCollector.ignoreLeavers(), syncRpcOptions));
+				return rpcManager.invokeCommandOnAll(invalidateCommand, VoidResponseCollector.ignoreLeavers(), syncRpcOptions)
+                  .toCompletableFuture();
 			} else {
 				rpcManager.sendToAll(invalidateCommand, DeliverOrder.NONE);
 			}

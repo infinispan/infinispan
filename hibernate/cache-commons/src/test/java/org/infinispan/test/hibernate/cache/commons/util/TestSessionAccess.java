@@ -2,6 +2,7 @@ package org.infinispan.test.hibernate.cache.commons.util;
 
 import org.hibernate.Transaction;
 import org.hibernate.cache.CacheException;
+import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
@@ -17,7 +18,7 @@ public interface TestSessionAccess {
 
    Object mockSessionImplementor();
 
-   Object mockSession(Class<? extends JtaPlatform> jtaPlatform, ControlledTimeService timeService);
+   Object mockSession(Class<? extends JtaPlatform> jtaPlatform, ControlledTimeService timeService, RegionFactory regionFactory);
 
    Transaction beginTransaction(Object session);
 
