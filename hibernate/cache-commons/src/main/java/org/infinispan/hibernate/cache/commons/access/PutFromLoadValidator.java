@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.hibernate.engine.spi.SessionImplementor;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.hibernate.cache.commons.TimeSource;
 import org.infinispan.hibernate.cache.commons.util.CacheCommandInitializer;
@@ -32,6 +33,7 @@ import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.InvalidationInterceptor;
+import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.ByteString;
 
@@ -213,6 +215,9 @@ public class PutFromLoadValidator {
 			cache.getComponentRegistry().registerComponent(nonTxInvalidationInterceptor, NonTxInvalidationInterceptor.class);
 			chain.replaceInterceptor(nonTxInvalidationInterceptor, InvalidationInterceptor.class);
 
+			LockingInterceptor lockingInterceptor = new LockingInterceptor();
+			cache.getComponentRegistry().registerComponent(lockingInterceptor, LockingInterceptor.class);
+			chain.replaceInterceptor(lockingInterceptor, NonTransactionalLockingInterceptor.class);
 		}
 		log.debugf("New interceptor chain is: ", cache.getAsyncInterceptorChain());
 
@@ -227,26 +232,29 @@ public class PutFromLoadValidator {
 	 * @param cache
 	 */
 	public static PutFromLoadValidator removeFromCache(AdvancedCache cache) {
-		cache.removeInterceptor(TxPutFromLoadInterceptor.class);
-		cache.removeInterceptor(NonTxPutFromLoadInterceptor.class);
       AsyncInterceptorChain chain = cache.getAsyncInterceptorChain();
-      for (Object i : chain.getInterceptors()) {
-			if (i instanceof NonTxInvalidationInterceptor) {
-				InvalidationInterceptor invalidationInterceptor = new InvalidationInterceptor();
-				cache.getComponentRegistry().registerComponent(invalidationInterceptor, InvalidationInterceptor.class);
-            chain.addInterceptorBefore(invalidationInterceptor, NonTxInvalidationInterceptor.class);
-				cache.removeInterceptor(NonTxInvalidationInterceptor.class);
-				break;
-			}
-			else if (i instanceof TxInvalidationInterceptor) {
-				InvalidationInterceptor invalidationInterceptor = new InvalidationInterceptor();
-				cache.getComponentRegistry().registerComponent(invalidationInterceptor, InvalidationInterceptor.class);
-            chain.addInterceptorBefore(invalidationInterceptor, TxInvalidationInterceptor.class);
-				cache.removeInterceptor(TxInvalidationInterceptor.class);
-				break;
-			}
-		}
-		CacheCommandInitializer cci = cache.getComponentRegistry().getComponent(CacheCommandInitializer.class);
+      ComponentRegistry cr = cache.getComponentRegistry();
+
+		chain.removeInterceptor(TxPutFromLoadInterceptor.class);
+		chain.removeInterceptor(NonTxPutFromLoadInterceptor.class);
+
+      chain.getInterceptors().stream()
+            .filter(BaseInvalidationInterceptor.class::isInstance).findFirst().map(AsyncInterceptor::getClass)
+            .ifPresent(invalidationClass -> {
+               InvalidationInterceptor invalidationInterceptor = new InvalidationInterceptor();
+               cr.registerComponent(invalidationInterceptor, InvalidationInterceptor.class);
+               chain.replaceInterceptor(invalidationInterceptor, invalidationClass);
+            });
+
+      chain.getInterceptors().stream()
+            .filter(LockingInterceptor.class::isInstance).findFirst().map(AsyncInterceptor::getClass)
+            .ifPresent(invalidationClass -> {
+               NonTransactionalLockingInterceptor lockingInterceptor = new NonTransactionalLockingInterceptor();
+               cr.registerComponent(lockingInterceptor, NonTransactionalLockingInterceptor.class);
+               chain.replaceInterceptor(lockingInterceptor, LockingInterceptor.class);
+            });
+
+		CacheCommandInitializer cci = cr.getComponent(CacheCommandInitializer.class);
 		return cci.removePutFromLoadValidator(cache.getName());
 	}
 

@@ -32,7 +32,6 @@ import org.hibernate.cache.spi.DomainDataRegion;
 import org.hibernate.cache.spi.QueryResultsRegion;
 import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.SecondLevelCacheLogger;
-import org.hibernate.cache.spi.StandardCacheTransactionSynchronization;
 import org.hibernate.cache.spi.TimestampsRegion;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.support.RegionNameQualifier;
@@ -62,6 +61,7 @@ import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.v53.impl.DomainDataRegionImpl;
 import org.infinispan.hibernate.cache.v53.impl.QueryResultsRegionImpl;
 import org.infinispan.hibernate.cache.v53.impl.ClusteredTimestampsRegionImpl;
+import org.infinispan.hibernate.cache.v53.impl.Sync;
 import org.infinispan.hibernate.cache.v53.impl.TimestampsRegionImpl;
 import org.infinispan.hibernate.cache.spi.EmbeddedCacheManagerProvider;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -202,8 +202,7 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
 
    @Override
    public CacheTransactionSynchronization createTransactionContext(SharedSessionContractImplementor session) {
-      // TODO: we will use another synchronization soon...
-      return new StandardCacheTransactionSynchronization(this);
+      return new Sync(this);
    }
 
    @Override

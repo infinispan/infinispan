@@ -28,12 +28,13 @@ import java.util.function.Predicate;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public class Tombstone implements Function<EntryView.ReadWriteEntryView<Object, Object>, Void>, InjectableComponent {
+public class Tombstone implements Function<EntryView.ReadWriteEntryView<Object, Object>, Void>, InjectableComponent, CompletableFunction {
 	public static final ExcludeTombstonesFilter EXCLUDE_TOMBSTONES = new ExcludeTombstonesFilter();
 
 	// the format of data is repeated (timestamp, UUID.LSB, UUID.MSB)
 	private final long[] data;
 	private transient InfinispanDataRegion region;
+	private transient boolean complete;
 
 	public Tombstone(UUID uuid, long timestamp) {
 		this.data = new long[] { timestamp, uuid.getLeastSignificantBits(), uuid.getMostSignificantBits() };
@@ -178,6 +179,16 @@ public class Tombstone implements Function<EntryView.ReadWriteEntryView<Object, 
 	@Override
 	public void inject(ComponentRegistry registry) {
 		region = registry.getComponent(InfinispanDataRegion.class);
+	}
+
+	@Override
+	public boolean isComplete() {
+		return complete;
+	}
+
+	@Override
+	public void markComplete() {
+		complete = true;
 	}
 
 	public static class Externalizer implements AdvancedExternalizer<Tombstone> {

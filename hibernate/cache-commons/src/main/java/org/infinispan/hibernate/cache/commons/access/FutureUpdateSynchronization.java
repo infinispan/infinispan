@@ -8,6 +8,7 @@ package org.infinispan.hibernate.cache.commons.access;
 
 import java.util.UUID;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
 import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
@@ -21,7 +22,7 @@ import org.infinispan.hibernate.cache.commons.util.InvocationAfterCompletion;
 public class FutureUpdateSynchronization extends InvocationAfterCompletion {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( FutureUpdateSynchronization.class );
 
-	private final UUID uuid = UUID.randomUUID();
+	private final UUID uuid = Util.threadLocalRandomUUID();
 	private final Object key;
 	private final Object value;
 	private final InfinispanDataRegion region;

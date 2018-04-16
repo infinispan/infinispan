@@ -7,11 +7,15 @@
 package org.infinispan.hibernate.cache.commons.access;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
+import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.Ownership;
+import org.infinispan.hibernate.cache.commons.util.CompletableFunction;
 import org.infinispan.interceptors.InvocationFinallyFunction;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -42,6 +46,17 @@ public class LockingInterceptor extends NonTransactionalLockingInterceptor {
          throw throwable;
 
       if (rv instanceof CompletableFuture) {
+         // See CompletableFunction javadoc for explanation
+         if (rCommand instanceof ReadWriteKeyCommand) {
+            Function function = ((ReadWriteKeyCommand) rCommand).getFunction();
+            if (function instanceof CompletableFunction) {
+               ((CompletableFunction) function).markComplete();
+            }
+         }
+         // Similar to CompletableFunction above, signals that the command has been applied for non-functional commands
+         FlagAffectedCommand flagCmd = (FlagAffectedCommand) rCommand;
+         flagCmd.setFlagsBitSet(flagCmd.getFlagsBitSet() & ~FlagBitSets.FORCE_WRITE_LOCK);
+
          // The future is produced in UnorderedDistributionInterceptor.
          // We need the EWI to commit the entry & unlock before the remote call completes
          // but here we wait for the other nodes, without blocking concurrent updates.

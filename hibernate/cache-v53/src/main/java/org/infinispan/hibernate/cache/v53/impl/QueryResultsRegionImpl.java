@@ -2,6 +2,7 @@ package org.infinispan.hibernate.cache.v53.impl;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -9,23 +10,14 @@ import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.QueryResultsRegion;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.infinispan.AdvancedCache;
-import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.context.Flag;
-import org.infinispan.hibernate.cache.commons.access.SessionAccess;
 import org.infinispan.hibernate.cache.commons.util.Caches;
-import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
-import org.infinispan.hibernate.cache.commons.util.InvocationAfterCompletion;
 import org.infinispan.hibernate.cache.v53.InfinispanRegionFactory;
-import org.infinispan.transaction.TransactionMode;
 
 public final class QueryResultsRegionImpl extends BaseRegionImpl implements QueryResultsRegion {
-   private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( QueryResultsRegionImpl.class );
-   private static final SessionAccess SESSION_ACCESS = SessionAccess.findSessionAccess();
-
-   private final AdvancedCache putCache;
-   private final AdvancedCache getCache;
+   private final AdvancedCache<Object, Object> putCache;
+   private final AdvancedCache<Object, Object> getCache;
    private final ConcurrentMap<Object, Map> transactionContext = new ConcurrentHashMap<>();
-   private final boolean putCacheRequiresTransaction;
 
    /**
     * Query region constructor
@@ -44,16 +36,6 @@ public final class QueryResultsRegionImpl extends BaseRegionImpl implements Quer
             Caches.failSilentWriteCache( cache );
 
       this.getCache = Caches.failSilentReadCache( cache );
-
-      TransactionConfiguration transactionConfiguration = putCache.getCacheConfiguration().transaction();
-      boolean transactional = transactionConfiguration.transactionMode() != TransactionMode.NON_TRANSACTIONAL;
-      this.putCacheRequiresTransaction = transactional && !transactionConfiguration.autoCommit();
-      // Since we execute the query update explicitly form transaction synchronization, the putCache does not need
-      // to be transactional anymore (it had to be in the past to prevent revealing uncommitted changes).
-      if (transactional) {
-         log.useNonTransactionalQueryCache();
-      }
-
    }
 
    @Override
@@ -96,38 +78,34 @@ public final class QueryResultsRegionImpl extends BaseRegionImpl implements Quer
       // ISPN-5356 tracks that. This is because if the transaction continued the
       // value could be committed on backup owners, including the failed operation,
       // and the result would not be consistent.
-      SessionAccess.TransactionCoordinatorAccess tc = SESSION_ACCESS.getTransactionCoordinator(session);
-      if (tc != null && tc.isJoined()) {
-         tc.registerLocalSynchronization(new QueryResultsRegionImpl.PostTransactionQueryUpdate(tc, session, key, value));
+      Sync sync = (Sync) session.getCacheTransactionSynchronization();
+      if (sync != null) {
+         sync.registerAfterCommit(new PostTransactionQueryUpdate(session, key, value));
          // no need to synchronize as the transaction will be accessed by only one thread
-         transactionContext.computeIfAbsent(session, k -> new HashMap()).put(key, value);
+         transactionContext.computeIfAbsent(session, k -> new HashMap<>()).put(key, value);
       } else {
          putCache.put(key, value);
       }
    }
 
-   private class PostTransactionQueryUpdate extends InvocationAfterCompletion {
+   private class PostTransactionQueryUpdate implements Invocation {
       private final Object session;
       private final Object key;
       private final Object value;
 
-      PostTransactionQueryUpdate(SessionAccess.TransactionCoordinatorAccess tc, Object session, Object key, Object value) {
-         super(tc, putCacheRequiresTransaction);
+      PostTransactionQueryUpdate(Object session, Object key, Object value) {
          this.session = session;
          this.key = key;
          this.value = value;
       }
 
       @Override
-      public void afterCompletion(int status) {
+      public CompletableFuture<Object> invoke(boolean success) {
          transactionContext.remove(session);
-         super.afterCompletion(status);
-      }
-
-      @Override
-      protected void invoke(boolean success) {
          if (success) {
-            putCache.put(key, value);
+            return putCache.putAsync(key, value);
+         } else {
+            return null;
          }
       }
    }
