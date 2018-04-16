@@ -14,6 +14,11 @@ import java.util.List;
 public interface Query extends PaginationContext<Query>, ParameterContext<Query> {
 
    /**
+    * Returns the Ickle query string.
+    */
+   String getQueryString();
+
+   /**
     * Returns the results of a search as a list.
     *
     * @return list of objects that were found from the search.

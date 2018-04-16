@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod.filter;
 import java.util.Map;
 
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.impl.BaseQuery;
 
 /**
  * @author gustavonalle
@@ -39,7 +38,6 @@ public final class Filters {
    }
 
    public static Object[] makeFactoryParams(Query query) {
-      BaseQuery baseQuery = (BaseQuery) query;
-      return makeFactoryParams(baseQuery.getQueryString(), baseQuery.getParameters());
+      return makeFactoryParams(query.getQueryString(), query.getParameters());
    }
 }

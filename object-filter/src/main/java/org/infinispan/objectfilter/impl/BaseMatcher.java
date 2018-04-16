@@ -19,7 +19,6 @@ import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.impl.BaseQuery;
 import org.jboss.logging.Logger;
 
 /**
@@ -123,7 +122,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    @Override
    public ObjectFilter getObjectFilter(Query query) {
-      return getObjectFilter(((BaseQuery) query).getQueryString(), null);
+      return getObjectFilter(query.getQueryString(), null);
    }
 
    @Override
@@ -168,8 +167,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    @Override
    public FilterSubscription registerFilter(Query query, FilterCallback callback, boolean isDeltaFilter, Object... eventType) {
-      BaseQuery baseQuery = (BaseQuery) query;
-      return registerFilter(baseQuery.getQueryString(), baseQuery.getParameters(), callback, isDeltaFilter, eventType);
+      return registerFilter(query.getQueryString(), query.getParameters(), callback, isDeltaFilter, eventType);
    }
 
    @Override

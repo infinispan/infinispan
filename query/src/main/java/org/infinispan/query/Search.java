@@ -15,7 +15,6 @@ import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryEngine;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
 import org.infinispan.query.dsl.embedded.impl.IckleCacheEventFilterConverter;
 import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
-import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.impl.SearchManagerImpl;
 import org.infinispan.query.logging.Log;
 import org.infinispan.security.AuthorizationManager;
@@ -45,8 +44,7 @@ public final class Search {
    }
 
    public static <K, V> CacheEventFilterConverter<K, V, ObjectFilter.FilterResult> makeFilter(Query query) {
-      BaseQuery baseQuery = (BaseQuery) query;
-      return makeFilter(baseQuery.getQueryString(), baseQuery.getParameters());
+      return makeFilter(query.getQueryString(), query.getParameters());
    }
 
    public static QueryFactory getQueryFactory(Cache<?, ?> cache) {
