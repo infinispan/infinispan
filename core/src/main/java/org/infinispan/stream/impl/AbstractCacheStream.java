@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.PrimitiveIterator;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -315,27 +316,27 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
                   throw new CacheException(e);
                }
             }
-
-            if (!remoteResults.lostSegments.isEmpty()) {
-               segmentsToProcess = SmallIntSet.from(remoteResults.lostSegments);
-               remoteResults.lostSegments.clear();
-               getLog().tracef("Found %s lost segments for identifier %s", segmentsToProcess, id);
-               if (remoteResults.requiresNextTopology) {
-                  try {
-                     stateTransferLock.waitForTopology(cacheTopology.getTopologyId(), timeout, timeoutUnit);
-                  } catch (InterruptedException | java.util.concurrent.TimeoutException e) {
-                     throw new CacheException(e);
-                  }
-               }
-            } else {
-               // If we didn't lose any segments we don't need to process anymore
-               if (segmentsToProcess != null) {
-                  segmentsToProcess = null;
-               }
-               getLog().tracef("Finished rehash aware operation for id %s", id);
-            }
          } finally {
             csm.forgetOperation(id);
+         }
+         if (!remoteResults.lostSegments.isEmpty()) {
+            segmentsToProcess = SmallIntSet.from(remoteResults.lostSegments);
+            remoteResults.lostSegments.clear();
+            getLog().tracef("Found %s lost segments for identifier %s", segmentsToProcess, id);
+            try {
+               int nextTopology = cacheTopology.getTopologyId() + 1;
+               getLog().tracef("Waiting for topology %d to continue stream operation with segments %s", nextTopology,
+                     segmentsToProcess);
+               stateTransferLock.topologyFuture(nextTopology).get(timeout, timeoutUnit);
+            } catch (InterruptedException | ExecutionException | java.util.concurrent.TimeoutException e) {
+               throw new CacheException(e);
+            }
+         } else {
+            // If we didn't lose any segments we don't need to process anymore
+            if (segmentsToProcess != null) {
+               segmentsToProcess = null;
+            }
+            getLog().tracef("Finished rehash aware operation for id %s", id);
          }
       } while (segmentsToProcess != null && !segmentsToProcess.isEmpty());
 
@@ -398,24 +399,24 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
                   throw new CacheException(e);
                }
             }
-            if (!results.lostSegments.isEmpty()) {
-               segmentsToProcess = SmallIntSet.from(results.lostSegments);
-               results.lostSegments.clear();
-               getLog().tracef("Found %s lost segments for identifier %s", segmentsToProcess, id);
-               if (results.requiresNextTopology) {
-                  try {
-                     stateTransferLock.waitForTopology(cacheTopology.getTopologyId() + 1, timeout, timeoutUnit);
-                     results.requiresNextTopology = false;
-                  } catch (InterruptedException | java.util.concurrent.TimeoutException e) {
-                     throw new CacheException(e);
-                  }
-               }
-            } else {
-               getLog().tracef("Finished rehash aware operation for id %s", id);
-               complete.set(true);
-            }
          } finally {
             csm.forgetOperation(id);
+         }
+         if (!results.lostSegments.isEmpty()) {
+            segmentsToProcess = SmallIntSet.from(results.lostSegments);
+            results.lostSegments.clear();
+            getLog().tracef("Found %s lost segments for identifier %s", segmentsToProcess, id);
+            try {
+               int nextTopology = cacheTopology.getTopologyId() + 1;
+               getLog().tracef("Waiting for topology %d to continue key tracking operation with segments %s", nextTopology,
+                     segmentsToProcess);
+               stateTransferLock.topologyFuture(nextTopology).get(timeout, timeoutUnit);
+            } catch (InterruptedException | ExecutionException | java.util.concurrent.TimeoutException e) {
+               throw new CacheException(e);
+            }
+         } else {
+            getLog().tracef("Finished rehash aware operation for id %s", id);
+            complete.set(true);
          }
       } while (!complete.get());
    }
@@ -476,7 +477,6 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
            KeyTrackingTerminalOperation.IntermediateCollector<Collection<K>> {
       final KeyPartitioner keyPartitioner;
       final Set<Integer> lostSegments = new ConcurrentHashSet<>();
-      boolean requiresNextTopology;
 
       final AtomicReferenceArray<Set<K>> referenceArray;
 
@@ -527,11 +527,6 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       }
 
       @Override
-      public void requestFutureTopology() {
-        requiresNextTopology = true;
-      }
-
-      @Override
       public void sendDataResonse(Collection<K> response) {
          onIntermediateResult(null, response);
       }
@@ -541,7 +536,6 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       private final BinaryOperator<R> binaryOperator;
       private final Set<Integer> lostSegments = new ConcurrentHashSet<>();
       R currentValue;
-      boolean requiresNextTopology;
 
       ResultsAccumulator(BinaryOperator<R> binaryOperator) {
          this.binaryOperator = binaryOperator;
@@ -572,11 +566,6 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
          for (Integer segment : segments) {
             lostSegments.add(segment);
          }
-      }
-
-      @Override
-      public void requestFutureTopology() {
-         requiresNextTopology = true;
       }
    }
 

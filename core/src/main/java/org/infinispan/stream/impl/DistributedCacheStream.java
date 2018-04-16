@@ -18,8 +18,10 @@ import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -45,6 +47,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.util.AbstractIterator;
@@ -55,6 +58,7 @@ import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.RangeSet;
 import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
@@ -430,8 +434,8 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
       log.tracef("Distributed iterator invoked with rehash: %s", rehashAware);
       if (!rehashAware) {
          // Non rehash doesn't care about lost segments or completed ones
-         CloseableIterator<R> closeableIterator = nonRehashRemoteIterator(segmentsToFilter, null,
-               IdentityPublisherDecorator.getInstance(), intermediateOperations);
+         CloseableIterator<R> closeableIterator = nonRehashRemoteIterator(dm.getReadConsistentHash(), segmentsToFilter,
+               null, IdentityPublisherDecorator.getInstance(), intermediateOperations);
          onClose(closeableIterator::close);
          return closeableIterator;
       } else {
@@ -461,6 +465,7 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
       private final Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedHandler;
 
       private CloseableIterator<S> currentIterator;
+      private LocalizedCacheTopology cacheTopology;
 
       private RehashIterator(Iterable<IntermediateOperation> intermediateOperations) {
          this.intermediateOperations = intermediateOperations;
@@ -511,30 +516,45 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
 
       @Override
       protected S getNext() {
-         do {
-            if (currentIterator == null) {
-               log.tracef("Creating rehash iterator for segments %s", segmentsToUse);
-               currentIterator = nonRehashRemoteIterator(segmentsToUse, receivedKeys::get,
-                     publisherDecorator(completedHandler, lostSegments -> {
-                     }, k -> {
-                        // Every time a key is retrieved from iterator we add it to the keys received
-                        // Then when we retry we exclude those keys to keep out duplicates
-                        Set<Object> set = receivedKeys.get(keyPartitioner.getSegment(k));
-                        if (set != null) {
-                           set.add(k);
-                        }
-                     }), intermediateOperations);
-
+         while (true){
+            CloseableIterator<S> iterator = currentIterator;
+            if (iterator != null && iterator.hasNext()) {
+               return iterator.next();
             }
-            if (currentIterator.hasNext()) {
-               return currentIterator.next();
-            } else {
-               // Force new iterator once we have exhausted this one (if we have segments left)
-               currentIterator = null;
-            }
-         } while (!segmentsToUse.isEmpty());
 
-         return null;
+            // Either we don't have an iterator or the current iterator is exhausted
+            if (segmentsToUse.isEmpty()) {
+               // No more segments to spawn new iterators
+               return null;
+            }
+
+            // An iterator completes all segments, unless we either had a node leave (SuspectException)
+            // or a new node came up and data rehashed away from the node we requested from.
+            // In either case we need to wait for a new topology before spawning a new iterator.
+            if (iterator != null) {
+               try {
+                  int nextTopology = cacheTopology.getTopologyId() + 1;
+                  log.tracef("Waiting for topology %d to continue iterator operation with segments %s", nextTopology,
+                        segmentsToUse);
+                  stateTransferLock.topologyFuture(nextTopology).get(timeout, timeoutUnit);
+               } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                  throw new CacheException(e);
+               }
+            }
+
+            cacheTopology = dm.getCacheTopology();
+            log.tracef("Creating non-rehash iterator for segments %s using topology id: %d", segmentsToUse, cacheTopology.getTopologyId());
+            currentIterator = nonRehashRemoteIterator(cacheTopology.getReadConsistentHash(), segmentsToUse,
+                  receivedKeys::get, publisherDecorator(completedHandler, lostSegments -> {
+                  }, k -> {
+                     // Every time a key is retrieved from iterator we add it to the keys received
+                     // Then when we retry we exclude those keys to keep out duplicates
+                     Set<Object> set = receivedKeys.get(keyPartitioner.getSegment(k));
+                     if (set != null) {
+                        set.add(k);
+                     }
+                  }), intermediateOperations);
+         }
       }
 
       PublisherDecorator<S> publisherDecorator(Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments,
@@ -601,10 +621,9 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
       return Flowable.fromIterable(() -> innerStream.iterator());
    }
 
-   <S> CloseableIterator<S> nonRehashRemoteIterator(IntSet segmentsToFilter, IntFunction<Set<Object>> keysToExclude,
-         PublisherDecorator<S> publisherFunction, Iterable<IntermediateOperation> intermediateOperations) {
-      ConsistentHash ch = dm.getReadConsistentHash();
-
+   <S> CloseableIterator<S> nonRehashRemoteIterator(ConsistentHash ch, IntSet segmentsToFilter,
+         IntFunction<Set<Object>> keysToExclude, PublisherDecorator<S> publisherFunction,
+         Iterable<IntermediateOperation> intermediateOperations) {
       boolean stayLocal;
 
       Publisher<S> localPublisher;

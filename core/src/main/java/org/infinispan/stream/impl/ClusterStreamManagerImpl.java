@@ -308,7 +308,6 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
          Address owner = ch.locatePrimaryOwnerForSegment(segment);
          if (owner == null) {
             callback.onSegmentsLost(Collections.singleton(segment));
-            callback.requestFutureTopology();
          } else if (!owner.equals(localAddress)) {
             targets.computeIfAbsent(owner, t -> new SmallIntSet()).add(segment);
          }
