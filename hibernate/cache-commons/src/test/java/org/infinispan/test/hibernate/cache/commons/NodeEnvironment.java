@@ -12,6 +12,7 @@ import java.util.Map;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 
+import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
@@ -116,5 +117,9 @@ public class NodeEnvironment {
             }
          }
       }
+   }
+
+   public RegionFactory getRegionFactory() {
+      return regionFactory.unwrap();
    }
 }

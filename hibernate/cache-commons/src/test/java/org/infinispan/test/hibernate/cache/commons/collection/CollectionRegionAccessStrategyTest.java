@@ -106,14 +106,14 @@ public class CollectionRegionAccessStrategyTest extends
 
 		final String KEY = "k1";
 		Future<Void> pferFuture = executorService.submit(() -> {
-         Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+         Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
 			delegate.putFromLoad(session, KEY, "v1", SESSION_ACCESS.getTimestamp(session), null);
 			return null;
 		});
 
 		Future<Void> removeFuture = executorService.submit(() -> {
 			removeLatch.await();
-         Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
+         Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE, localEnvironment.getRegionFactory());
 			withTx(localEnvironment, session, () -> {
 				delegate.remove(session, KEY);
 				return null;

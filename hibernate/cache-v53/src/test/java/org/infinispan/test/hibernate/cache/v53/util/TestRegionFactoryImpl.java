@@ -11,6 +11,7 @@ import org.hibernate.boot.internal.MetadataBuilderImpl;
 import org.hibernate.boot.internal.SessionFactoryOptionsBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.cache.cfg.internal.DomainDataRegionConfigImpl;
+import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.Property;
@@ -123,6 +124,11 @@ class TestRegionFactoryImpl implements TestRegionFactory {
    @Override
    public InfinispanBaseRegion buildQueryResultsRegion(String regionName) {
       return (InfinispanBaseRegion) delegate.buildQueryResultsRegion(regionName, null);
+   }
+
+   @Override
+   public RegionFactory unwrap() {
+      return delegate;
    }
 
    @Override

@@ -88,7 +88,7 @@ public interface InfinispanMessageLogger extends BasicLogger {
 
 	@LogMessage(level = ERROR)
 	@Message(value = "Failure updating cache in afterCompletion, will retry", id = 25015)
-	void failureInAfterCompletion(@Cause Exception e);
+	void failureInAfterCompletion(@Cause Throwable e);
 
 	@LogMessage(level = ERROR)
 	@Message(value = "Failed to end invalidating pending putFromLoad calls for key %s from region %s; the key won't be cached until invalidation expires.", id = 25016)
@@ -158,4 +158,12 @@ public interface InfinispanMessageLogger extends BasicLogger {
 	@LogMessage(level = WARN)
 	@Message(value = "Configuration for unqualified region name '%s' is defined but the cache will use qualified name '%s'", id = 25034)
 	void configurationWithUnqualifiedName(String unqualifiedRegionName, String cacheName);
+
+	@LogMessage(level = ERROR)
+	@Message(value = "Operation #%d scheduled to complete before transaction completion failed", id = 25035)
+	void failureBeforeTransactionCompletion(int index, @Cause Exception e);
+
+	@LogMessage(level = ERROR)
+	@Message(value = "Operation #%d scheduled after transaction completion failed (transaction successful? %s)", id = 25036)
+	void failureAfterTransactionCompletion(int index, boolean successful, @Cause Exception e);
 }
