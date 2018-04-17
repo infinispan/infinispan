@@ -2,6 +2,10 @@ package org.infinispan.commons.util;
 
 import java.util.Collection;
 import java.util.PrimitiveIterator;
+import java.util.Spliterator;
+import java.util.function.Consumer;
+import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
 
 /**
@@ -125,6 +129,26 @@ public class ImmutableIntSet implements IntSet {
    @Override
    public IntStream intStream() {
       return set.intStream();
+   }
+
+   @Override
+   public void forEach(IntConsumer action) {
+      set.forEach(action);
+   }
+
+   @Override
+   public void forEach(Consumer<? super Integer> action) {
+      set.forEach(action);
+   }
+
+   @Override
+   public Spliterator.OfInt intSpliterator() {
+      return set.intSpliterator();
+   }
+
+   @Override
+   public boolean removeIf(IntPredicate filter) {
+      throw new UnsupportedOperationException();
    }
 
    private class ImmutableIterator implements PrimitiveIterator.OfInt {

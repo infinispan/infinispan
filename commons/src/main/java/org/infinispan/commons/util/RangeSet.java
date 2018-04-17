@@ -4,6 +4,10 @@ import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.PrimitiveIterator;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.function.Consumer;
+import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
 
 /**
@@ -174,6 +178,31 @@ public class RangeSet implements IntSet {
    }
 
    @Override
+   public void forEach(IntConsumer action) {
+      for (int i = 0; i < size; ++i) {
+         action.accept(i);
+      }
+   }
+
+   @Override
+   public void forEach(Consumer<? super Integer> action) {
+      for (int i = 0; i < size; ++i) {
+         // Has cost of auto boxing, oh well
+         action.accept(i);
+      }
+   }
+
+   @Override
+   public Spliterator.OfInt intSpliterator() {
+      return new RangeSetSpliterator(size);
+   }
+
+   @Override
+   public boolean removeIf(IntPredicate filter) {
+      throw new UnsupportedOperationException("RangeSet is immutable");
+   }
+
+   @Override
    public int hashCode() {
       return size;
    }
@@ -181,6 +210,55 @@ public class RangeSet implements IntSet {
    @Override
    public String toString() {
       return "RangeSet(" + size + ")";
+   }
+
+   private static class RangeSetSpliterator implements Spliterator.OfInt {
+      private int next;
+      private final int size;
+
+      public RangeSetSpliterator(int size) {
+         this.next = 0;
+         this.size = size;
+      }
+
+      public RangeSetSpliterator(int next, int size) {
+         this.next = next;
+         this.size = size;
+      }
+
+      @Override
+      public OfInt trySplit() {
+         int lo = next, mid = (lo + size) >>> 1;
+         return (lo >= mid)
+               ? null
+               : new RangeSetSpliterator(lo, next = mid);
+      }
+
+      @Override
+      public void forEachRemaining(IntConsumer action) {
+         for (; next < size; ++next) {
+            action.accept(next);
+         }
+      }
+
+      @Override
+      public long estimateSize() {
+         return size - next;
+      }
+
+      @Override
+      public int characteristics() {
+         return SIZED | SUBSIZED | DISTINCT | SORTED | ORDERED | NONNULL | IMMUTABLE;
+      }
+
+      @Override
+      public boolean tryAdvance(IntConsumer action) {
+         if (next < size) {
+            action.accept(next++);
+            return true;
+         }
+         return false;
+      }
    }
 
    private static class RangeSetIterator implements PrimitiveIterator.OfInt {
