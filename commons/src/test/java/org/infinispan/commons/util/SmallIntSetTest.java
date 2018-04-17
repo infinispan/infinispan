@@ -5,11 +5,15 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
 import java.util.PrimitiveIterator;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 /**
  * @author wburns
@@ -387,5 +391,110 @@ public class SmallIntSetTest {
 
       assertEquals(sis, hashSet);
       assertEquals(hashSet, sis);
+   }
+
+   @Test
+   public void forEachPrimitive() {
+      SmallIntSet sis = new SmallIntSet();
+      sis.add(1);
+      sis.add(4);
+      sis.add(7);
+
+      Set<Integer> results = new HashSet<>();
+
+      sis.forEach((IntConsumer) results::add);
+
+      assertEquals(3, results.size());
+      assertTrue(results.contains(1));
+      assertTrue(results.contains(4));
+      assertTrue(results.contains(7));
+   }
+
+   @Test
+   public void forEachObject() {
+      SmallIntSet sis = new SmallIntSet();
+      sis.add(1);
+      sis.add(4);
+      sis.add(7);
+
+      Set<Integer> results = new HashSet<>();
+
+      sis.forEach((Consumer<? super Integer>) results::add);
+
+      assertEquals(3, results.size());
+      assertTrue(results.contains(1));
+      assertTrue(results.contains(4));
+      assertTrue(results.contains(7));
+   }
+
+   @Test
+   public void removeIfPrimitive() {
+      SmallIntSet sis = new SmallIntSet();
+      sis.add(1);
+      sis.add(4);
+      sis.add(7);
+
+      assertFalse(sis.removeIf((int i) -> i / 10 > 0));
+      assertEquals(3, sis.size());
+      assertTrue(sis.removeIf((int i) -> i > 3));
+      assertEquals(1, sis.size());
+      assertTrue(sis.contains(1));
+   }
+
+   @Test
+   public void removeIfObject() {
+      SmallIntSet sis = new SmallIntSet();
+      sis.add(1);
+      sis.add(4);
+      sis.add(7);
+
+      assertFalse(sis.removeIf((Integer i) -> i / 10 > 0));
+      assertEquals(3, sis.size());
+      assertTrue(sis.removeIf((Integer i) -> i > 3));
+      assertEquals(1, sis.size());
+      assertTrue(sis.contains(1));
+   }
+
+   @Test
+   public void intSpliteratorForEachRemaining() {
+      SmallIntSet sis = new SmallIntSet();
+      sis.add(1);
+      sis.add(4);
+      sis.add(7);
+
+      Set<Integer> results = new HashSet<>();
+
+      sis.intSpliterator().forEachRemaining((IntConsumer) results::add);
+
+      assertEquals(3, results.size());
+      assertTrue(results.contains(1));
+      assertTrue(results.contains(4));
+      assertTrue(results.contains(7));
+   }
+
+   @Test
+   public void intSpliteratorSplitTryAdvance() {
+      SmallIntSet sis = new SmallIntSet();
+      sis.add(1);
+      sis.add(4);
+      sis.add(7);
+
+      Set<Integer> results = new HashSet<>();
+
+      Spliterator.OfInt spliterator = sis.intSpliterator();
+      Spliterator.OfInt split = spliterator.trySplit();
+
+      assertNotNull(split);
+
+      IntConsumer consumer = results::add;
+
+      while (spliterator.tryAdvance(consumer)) { }
+
+      while (split.tryAdvance(consumer)) { }
+
+      assertEquals(3, results.size());
+      assertTrue(results.contains(1));
+      assertTrue(results.contains(4));
+      assertTrue(results.contains(7));
    }
 }

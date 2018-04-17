@@ -3,11 +3,15 @@ package org.infinispan.commons.util;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
 import java.util.PrimitiveIterator;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 import org.junit.Test;
 
@@ -278,5 +282,86 @@ public class RangeSetTest {
 
       assertEquals(rs, hashSet);
       assertEquals(hashSet, rs);
+   }
+
+   @Test
+   public void forEachPrimitive() {
+      IntSet rs = new RangeSet(4);
+
+      Set<Integer> results = new HashSet<>();
+
+      rs.forEach((IntConsumer) results::add);
+
+      assertEquals(4, results.size());
+      assertTrue(results.contains(0));
+      assertTrue(results.contains(1));
+      assertTrue(results.contains(2));
+      assertTrue(results.contains(3));
+   }
+
+   @Test
+   public void forEachObject() {
+      IntSet rs = new RangeSet(4);
+
+      Set<Integer> results = new HashSet<>();
+
+      rs.forEach((Consumer<? super Integer>) results::add);
+
+      assertEquals(4, results.size());
+      assertTrue(results.contains(0));
+      assertTrue(results.contains(1));
+      assertTrue(results.contains(2));
+      assertTrue(results.contains(3));
+   }
+
+   @Test(expected = UnsupportedOperationException.class)
+   public void removeIfPrimitive() {
+      RangeSet rs = new RangeSet(4);
+      rs.removeIf((int i) -> i == 3);
+   }
+
+   @Test(expected = UnsupportedOperationException.class)
+   public void removeIfObject() {
+      RangeSet rs = new RangeSet(4);
+      rs.removeIf((Integer i) -> i == 3);
+   }
+
+   @Test
+   public void intSpliteratorForEachRemaining() {
+      IntSet rs = new RangeSet(4);
+
+      Set<Integer> results = new HashSet<>();
+
+      rs.intSpliterator().forEachRemaining((IntConsumer) results::add);
+
+      assertEquals(4, results.size());
+      assertTrue(results.contains(0));
+      assertTrue(results.contains(1));
+      assertTrue(results.contains(2));
+      assertTrue(results.contains(3));
+   }
+
+   @Test
+   public void intSpliteratorSplitTryAdvance() {
+      IntSet rs = new RangeSet(4);
+
+      Set<Integer> results = new HashSet<>();
+
+      Spliterator.OfInt spliterator = rs.intSpliterator();
+      Spliterator.OfInt split = spliterator.trySplit();
+
+      assertNotNull(split);
+
+      IntConsumer consumer = results::add;
+
+      while (spliterator.tryAdvance(consumer)) { }
+
+      while (split.tryAdvance(consumer)) { }
+
+      assertEquals(4, results.size());
+      assertTrue(results.contains(0));
+      assertTrue(results.contains(1));
+      assertTrue(results.contains(2));
+      assertTrue(results.contains(3));
    }
 }

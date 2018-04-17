@@ -1,7 +1,13 @@
 package org.infinispan.commons.util;
 
+import java.util.Iterator;
+import java.util.Objects;
 import java.util.PrimitiveIterator;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
 
 /**
@@ -78,4 +84,95 @@ public interface IntSet extends Set<Integer> {
     * @return the stream
     */
    IntStream intStream();
+
+   /**
+    * Performs the given action for each int of the {@code IntSet}
+    * until all elements have been processed or the action throws an
+    * exception.  Unless otherwise specified by the implementing class,
+    * actions are performed in the order of iteration (if an iteration order
+    * is specified).  Exceptions thrown by the action are relayed to the
+    * caller.
+    *
+    * @implSpec
+    * <p>The default implementation behaves as if:
+    * <pre>{@code
+    *     PrimitiveIterator.OfInt iterator = iterator();
+    *     while (iterator.hasNext()) {
+    *        action.accept(iterator.nextInt());
+    *     }
+    * }</pre>
+    *
+    * @param action The action to be performed for each element
+    * @throws NullPointerException if the specified action is null
+    * @since 9.3
+    */
+   default void forEach(IntConsumer action) {
+      Objects.requireNonNull(action);
+      PrimitiveIterator.OfInt iterator = iterator();
+      while (iterator.hasNext()) {
+         action.accept(iterator.nextInt());
+      }
+   }
+
+   /**
+    * Creates a {@code Spliterator.OfInt} over the ints in this set.
+    *
+    * <p>The {@code Spliterator.OfInt} reports {@link Spliterator#DISTINCT}.
+    * Implementations should document the reporting of additional
+    * characteristic values.
+    *
+    * @implSpec
+    * The default implementation creates a
+    * <em><a href="Spliterator.html#binding">late-binding</a></em> spliterator
+    * from the set's {@code Iterator}.  The spliterator inherits the
+    * <em>fail-fast</em> properties of the set's iterator.
+    * <p>
+    * The created {@code Spliterator.OfInt} additionally reports
+    * {@link Spliterator#SIZED}.
+    *
+    * @implNote
+    * The created {@code Spliterator.OfInt} additionally reports
+    * {@link Spliterator#SUBSIZED}.
+    *
+    * @return a {@code Spliterator.OfInt} over the ints in this set
+    * @since 9.3
+    */
+   default Spliterator.OfInt intSpliterator() {
+      return Spliterators.spliterator(iterator(), size(), Spliterator.DISTINCT);
+   }
+
+   /**
+    * Removes all of the ints of this set that satisfy the given
+    * predicate.  Errors or runtime exceptions thrown during iteration or by
+    * the predicate are relayed to the caller.
+    *
+    * @implSpec
+    * The default implementation traverses all elements of the collection using
+    * its {@link #iterator}.  Each matching element is removed using
+    * {@link Iterator#remove()}.  If the collection's iterator does not
+    * support removal then an {@code UnsupportedOperationException} will be
+    * thrown on the first matching element.
+    *
+    * @param filter a predicate which returns {@code true} for ints to be
+    *        removed
+    * @return {@code true} if any ints were removed
+    * @throws NullPointerException if the specified filter is null
+    * @throws UnsupportedOperationException if elements cannot be removed
+    *         from this collection.  Implementations may throw this exception if a
+    *         matching element cannot be removed or if, in general, removal is not
+    *         supported.
+    * @since 9.3
+    */
+   default boolean removeIf(IntPredicate filter) {
+      Objects.requireNonNull(filter);
+      boolean removed = false;
+      PrimitiveIterator.OfInt iterator = iterator();
+      while (iterator.hasNext()) {
+         if (filter.test(iterator.nextInt())) {
+            iterator.remove();
+            removed = true;
+         }
+      }
+      return removed;
+   }
 }

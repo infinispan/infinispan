@@ -8,7 +8,10 @@ import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.PrimitiveIterator;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.function.Consumer;
 import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
 
 import org.infinispan.commons.io.UnsignedNumeric;
@@ -101,7 +104,7 @@ public class SmallIntSet implements IntSet {
          this.bitSet.or(bitSet);
       } else {
          this.bitSet = new BitSet();
-         set.iterator().forEachRemaining((IntConsumer) bitSet::set);
+         set.forEach((IntConsumer) bitSet::set);
       }
    }
 
@@ -378,6 +381,39 @@ public class SmallIntSet implements IntSet {
    @Override
    public IntStream intStream() {
       return bitSet.stream();
+   }
+
+   @Override
+   public void forEach(IntConsumer action) {
+      for (int i = bitSet.nextSetBit(0); i >= 0; i = bitSet.nextSetBit(i + 1)) {
+         action.accept(i);
+      }
+   }
+
+   @Override
+   public void forEach(Consumer<? super Integer> action) {
+      for (int i = bitSet.nextSetBit(0); i >= 0; i = bitSet.nextSetBit(i + 1)) {
+         // Has cost of auto boxing, oh well
+         action.accept(i);
+      }
+   }
+
+   @Override
+   public Spliterator.OfInt intSpliterator() {
+      // We just invoke default method as ints can be sparse in BitSet
+      return IntSet.super.intSpliterator();
+   }
+
+   @Override
+   public boolean removeIf(IntPredicate filter) {
+      boolean removed = false;
+      for (int i = bitSet.nextSetBit(0); i >= 0; i = bitSet.nextSetBit(i + 1)) {
+         if (filter.test(i)) {
+            bitSet.clear(i);
+            removed = true;
+         }
+      }
+      return removed;
    }
 
    @Override
