@@ -1,12 +1,6 @@
 package org.infinispan.query.remote.impl.indexing;
 
-import java.io.IOException;
-
-import org.apache.lucene.document.Document;
-import org.hibernate.search.bridge.LuceneOptions;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.WrappedMessage;
@@ -16,27 +10,27 @@ import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.query.remote.impl.logging.Log;
 
 /**
+ * Protostream tag handler for {@code org.infinispan.protostream.WrappedMessage} protobuf type defined in
+ * message-wrapping.proto. This handler extracts the embedded value or message but does not parse the message, it just
+ * discovers its type.
+ *
  * @author anistor@redhat.com
  * @since 6.0
  */
-final class WrappedMessageTagHandler implements TagHandler {
+class WrappedMessageTagHandler implements TagHandler {
 
-   private static final Log log = LogFactory.getLog(WrappedMessageTagHandler.class, Log.class);
+   protected static final Log log = LogFactory.getLog(WrappedMessageTagHandler.class, Log.class);
 
-   private final ProtobufValueWrapper valueWrapper;
-   private final Document document;
-   private final LuceneOptions luceneOptions;
-   private final SerializationContext serCtx;
+   protected final ProtobufValueWrapper valueWrapper;
+   protected final SerializationContext serCtx;
 
-   private Descriptor messageDescriptor;
-   private byte[] bytes;
-   private Number numericValue;
-   private String stringValue;
+   protected Descriptor messageDescriptor;
+   protected byte[] bytes;          // message bytes
+   protected Number numericValue;
+   protected String stringValue;
 
-   WrappedMessageTagHandler(ProtobufValueWrapper valueWrapper, Document document, LuceneOptions luceneOptions, SerializationContext serCtx) {
+   WrappedMessageTagHandler(ProtobufValueWrapper valueWrapper, SerializationContext serCtx) {
       this.valueWrapper = valueWrapper;
-      this.document = document;
-      this.luceneOptions = luceneOptions;
       this.serCtx = serCtx;
    }
 
@@ -96,29 +90,12 @@ final class WrappedMessageTagHandler implements TagHandler {
    @Override
    public void onEnd() {
       if (bytes != null) {
-         // it's a message, not a primitive value
+         // it's a message, not a primitive value; we must have a type now
          if (messageDescriptor == null) {
             throw new IllegalStateException("Type name or type id is missing");
          }
 
-         IndexingMetadata indexingMetadata = messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
-         // if the message definition is not annotated at all we consider all fields indexed and stored (but not analyzed), just to be backwards compatible
-         if (indexingMetadata == null && IndexingMetadata.isLegacyIndexingEnabled(messageDescriptor) || indexingMetadata != null && indexingMetadata.isIndexed()) {
-            if (indexingMetadata == null) {
-               log.legacyIndexingIsDeprecated(messageDescriptor.getFullName(), messageDescriptor.getFileDescriptor().getName());
-            }
-            valueWrapper.setMessageDescriptor(messageDescriptor);
-            try {
-               ProtobufParser.INSTANCE.parse(new IndexingTagHandler(messageDescriptor, document), messageDescriptor, bytes);
-            } catch (IOException e) {
-               throw new CacheException(e);
-            }
-         }
-      } else if (numericValue != null) {
-         //todo [anistor] how do we index a scalar value?
-         luceneOptions.addNumericFieldToDocument("theValue", numericValue, document);
-      } else if (stringValue != null) {
-         luceneOptions.addFieldToDocument("theValue", stringValue, document);
+         valueWrapper.setMessageDescriptor(messageDescriptor);
       }
    }
 }

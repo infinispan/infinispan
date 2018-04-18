@@ -10,11 +10,11 @@ import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
  *
  * @since 9.1
  */
-public class ProtostreamWrapper implements Wrapper {
+public class ProtobufWrapper implements Wrapper {
 
-   public static final ProtostreamWrapper INSTANCE = new ProtostreamWrapper();
+   public static final ProtobufWrapper INSTANCE = new ProtobufWrapper();
 
-   private ProtostreamWrapper() {
+   private ProtobufWrapper() {
    }
 
    @Override
@@ -33,20 +33,19 @@ public class ProtostreamWrapper implements Wrapper {
       if (target instanceof ProtobufValueWrapper) {
          return ((ProtobufValueWrapper) target).getBinary();
       }
-      if(target instanceof WrappedByteArray) {
-         return WrappedByteArray.class.cast(target).getBytes();
+      if (target instanceof WrappedByteArray) {
+         return ((WrappedByteArray) target).getBytes();
       }
       return target;
    }
 
    @Override
    public byte id() {
-      return WrapperIds.PROTOSTREAM_WRAPPER;
+      return WrapperIds.PROTOBUF_WRAPPER;
    }
 
    @Override
    public boolean isFilterable() {
       return true;
    }
-
 }

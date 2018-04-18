@@ -48,7 +48,7 @@ class ProtobufRemoteQueryManager implements RemoteQueryManager {
       boolean isIndexed = cr.getComponent(Configuration.class).indexing().index().isEnabled();
       if (isIndexed) {
          DataConversion valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
-         valueDataConversion.overrideWrapper(ProtostreamWrapper.class, cr);
+         valueDataConversion.overrideWrapper(ProtobufWrapper.class, cr);
       }
       this.queryEngine = new RemoteQueryEngine(cache, isIndexed);
       this.keyEncoder = cache.getKeyDataConversion().getEncoder();

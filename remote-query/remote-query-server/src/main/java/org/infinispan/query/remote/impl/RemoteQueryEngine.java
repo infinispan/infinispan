@@ -33,7 +33,7 @@ import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 final class RemoteQueryEngine extends BaseRemoteQueryEngine {
 
    RemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed) {
-      super(isIndexed ? cache.withWrapping(ByteArrayWrapper.class, ProtostreamWrapper.class) : cache,
+      super(isIndexed ? cache.withWrapping(ByteArrayWrapper.class, ProtobufWrapper.class) : cache,
             isIndexed, ProtobufMatcher.class, new ProtobufFieldBridgeAndAnalyzerProvider());
    }
 

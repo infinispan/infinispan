@@ -31,10 +31,10 @@ public final class ProtobufValueWrapper implements WrappedBytes {
    // The protobuf encoded payload
    private final byte[] binary;
 
-   private int hashCode = 0;
+   private transient int hashCode = 0;
 
    // The Descriptor of the message (if it's a Message and not a primitive value). Transient field!
-   private Descriptor messageDescriptor;
+   private transient Descriptor messageDescriptor;
 
    public ProtobufValueWrapper(byte[] binary) {
       if (binary == null) {

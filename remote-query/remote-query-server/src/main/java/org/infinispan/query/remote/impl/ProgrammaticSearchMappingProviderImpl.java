@@ -34,6 +34,7 @@ public final class ProgrammaticSearchMappingProviderImpl implements Programmatic
       searchMapping.entity(ProtobufValueWrapper.class)
             .indexed()
             .indexName(cache.getName() + INDEX_NAME_SUFFIX)
+            .interceptor(ProtobufValueWrapperIndexingInterceptor.class)
             .analyzerDiscriminator(ProtobufValueWrapperAnalyzerDiscriminator.class)
             .classBridgeInstance(new ProtobufValueWrapperFieldBridge(cache))
             .norms(Norms.NO)
