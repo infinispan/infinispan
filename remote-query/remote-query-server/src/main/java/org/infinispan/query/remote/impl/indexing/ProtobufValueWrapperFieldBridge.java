@@ -61,7 +61,7 @@ public final class ProtobufValueWrapperFieldBridge implements FieldBridge {
       }
 
       try {
-         ProtobufParser.INSTANCE.parse(new WrappedMessageTagHandler(valueWrapper, document, luceneOptions, serializationContext), wrapperDescriptor, valueWrapper.getBinary());
+         ProtobufParser.INSTANCE.parse(new IndexingWrappedMessageTagHandler(valueWrapper, serializationContext, document, luceneOptions), wrapperDescriptor, valueWrapper.getBinary());
       } catch (IOException e) {
          throw new CacheException(e);
       }

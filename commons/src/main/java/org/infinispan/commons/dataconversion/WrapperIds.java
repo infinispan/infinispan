@@ -6,6 +6,6 @@ package org.infinispan.commons.dataconversion;
 public interface WrapperIds {
 
    byte BYTE_ARRAY_WRAPPER = 1;
-   byte PROTOSTREAM_WRAPPER = 2;
+   byte PROTOBUF_WRAPPER = 2;
    byte IDENTITY_WRAPPER = 3;
 }

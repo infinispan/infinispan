@@ -91,7 +91,7 @@ public class WrappedByteArray implements WrappedBytes {
             '}';
    }
 
-   public static class Externalizer extends AbstractExternalizer<WrappedByteArray> {
+   public static final class Externalizer extends AbstractExternalizer<WrappedByteArray> {
 
       @Override
       public Set<Class<? extends WrappedByteArray>> getTypeClasses() {
