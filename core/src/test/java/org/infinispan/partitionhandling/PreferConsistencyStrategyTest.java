@@ -35,7 +35,7 @@ public class PreferConsistencyStrategyTest {
 
       preferConsistencyStrategy = new PreferConsistencyStrategy(eventLogManager, persistentUUIDManager, null);
       status = new ClusterCacheStatus(cacheManager, "does-not-matter", preferConsistencyStrategy, RebalanceType.FOUR_PHASE, topologyManager,
-            null, Optional.empty(), persistentUUIDManager, false);
+                                      null, persistentUUIDManager, eventLogManager, Optional.empty(), false);
    }
 
    public void testAvoidingNullPointerExceptionWhenUpdatingPartitionWithNullTopology() {

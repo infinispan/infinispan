@@ -248,10 +248,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          log.rebalanceError(cacheName, node, topologyId, throwable);
       }
 
-      CLUSTER.rebalanceCompleted(cacheName, node, topologyId);
-      eventLogManager.getEventLogger().context(cacheName).scope(node.toString()).info(EventLogCategory.CLUSTER, MESSAGES.rebalancePhaseConfirmed(node, topologyId));
-
-
       ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
       if (cacheStatus == null) {
          log.debugf("Ignoring rebalance confirmation from %s " +
@@ -431,7 +427,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          Optional<ScopedPersistentState> persistedState = globalStateManager.flatMap(gsm -> gsm.readScopedState(cacheName));
          return new ClusterCacheStatus(cacheManager, cacheName, availabilityStrategy, RebalanceType.from(cacheMode),
                this, transport,
-               persistedState, persistentUUIDManager, resolveConflictsOnMerge);
+                                       persistentUUIDManager, eventLogManager, persistedState, resolveConflictsOnMerge);
       });
    }
 
@@ -444,8 +440,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Override
    public void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed) {
-      CLUSTER.startRebalance(cacheName, cacheTopology);
-      eventLogManager.getEventLogger().context(cacheName).scope(transport.getAddress()).info(EventLogCategory.CLUSTER, MESSAGES.rebalanceStarted(cacheTopology.getTopologyId()));
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), cacheTopology, null,
             viewId);
@@ -631,8 +625,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Override
    public void broadcastTopologyUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode, boolean totalOrder, boolean distributed) {
-      log.debugf("Updating cluster-wide current topology for cache %s, topology = %s, availability mode = %s",
-            cacheName, cacheTopology, availabilityMode);
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.CH_UPDATE, transport.getAddress(), cacheTopology,
             availabilityMode, viewId);
@@ -641,7 +633,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Override
    public void broadcastStableTopologyUpdate(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed) {
-      log.debugf("Updating cluster-wide stable topology for cache %s, topology = %s", cacheName, cacheTopology);
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.STABLE_TOPOLOGY_UPDATE, transport.getAddress(), cacheTopology,
             null, viewId);
@@ -740,12 +731,13 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       @Merged
       @ViewChanged
       public void handleViewChange(final ViewChangedEvent e) {
-         // Need to recover existing caches asynchronously (in case we just became the coordinator).
-         // Cannot use the async notification thread pool, by default it only has 1 thread.
-         viewHandlingExecutor.execute(() -> handleClusterView(e.isMergeView(), e.getViewId()));
          EventLogger eventLogger = eventLogManager.getEventLogger().scope(e.getLocalAddress());
          logNodeJoined(eventLogger, e.getNewMembers(), e.getOldMembers());
          logNodeLeft(eventLogger, e.getNewMembers(), e.getOldMembers());
+
+         // Need to recover existing caches asynchronously (in case we just became the coordinator).
+         // Cannot use the async notification thread pool, by default it only has 1 thread.
+         viewHandlingExecutor.execute(() -> handleClusterView(e.isMergeView(), e.getViewId()));
       }
    }
 

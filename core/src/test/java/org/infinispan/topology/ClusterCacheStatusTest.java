@@ -57,7 +57,8 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
          new PreferAvailabilityStrategy(eventLogManager, persistentUUIDManager,
                                         ClusterTopologyManagerImpl::distLostDataCheck);
       status = new ClusterCacheStatus(cacheManager, CACHE_NAME, availabilityStrategy, RebalanceType.FOUR_PHASE,
-                                      topologyManager, transport, Optional.empty(), persistentUUIDManager, false);
+                                      topologyManager, transport, persistentUUIDManager, eventLogManager,
+                                      Optional.empty(), false);
    }
 
    @AfterMethod(alwaysRun = true)

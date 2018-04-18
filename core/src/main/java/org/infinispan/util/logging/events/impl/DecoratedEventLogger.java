@@ -37,6 +37,7 @@ public class DecoratedEventLogger implements EventLogger {
       scope.ifPresent(s -> sb.append(MESSAGES.eventLogScope(s)));
       who.ifPresent(w -> sb.append(MESSAGES.eventLogWho(w)));
       // We don't include detail in this implementation
+      sb.append(' ');
       sb.append(message);
       delegate.log(level, category, sb.toString());
    }

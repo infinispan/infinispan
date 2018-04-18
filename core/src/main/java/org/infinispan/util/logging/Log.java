@@ -43,6 +43,7 @@ import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.interceptors.impl.ContainerFullException;
 import org.infinispan.jmx.JmxDomainConflictException;
 import org.infinispan.partitionhandling.AvailabilityException;
+import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.SingletonCacheWriter;
 import org.infinispan.remoting.RemoteException;
@@ -1122,9 +1123,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Rebalancing suspended", id = 309)
    void rebalancingSuspended();
 
-   @LogMessage(level = INFO)
-   @Message(value = "Starting cluster-wide rebalance for cache %s, topology %s", id = 310)
-   void startRebalance(String cacheName, CacheTopology cacheTopology);
+   @LogMessage(level = DEBUG)
+   @Message(value = "Starting new rebalance phase for cache %s, topology %s", id = 310)
+   void startingRebalancePhase(String cacheName, CacheTopology cacheTopology);
 
    // Messages between 312 and 320 have been moved to the org.infinispan.util.logging.events.Messages class
 
@@ -1155,8 +1156,8 @@ public interface Log extends BasicLogger {
    CacheConfigurationException unsupportedConfiguration(String element, String namespaceUri);
 
    @LogMessage(level = DEBUG)
-   @Message(value = "Finished local rebalance for cache %s on node %s, topology id = %d", id = 328)
-   void rebalanceCompleted(String cacheName, Address node, int topologyId);
+   @Message(value = "Rebalance phase %s confirmed for cache %s on node %s, topology id = %d", id = 328)
+   void rebalancePhaseConfirmedOnNode(CacheTopology.Phase phase, String cacheName, Address node, int topologyId);
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to read rebalancing status from coordinator %s", id = 329)
@@ -1182,9 +1183,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Two-phase commit can only be used with synchronous backup strategy.", id = 335)
    CacheConfigurationException twoPhaseCommitAsyncBackup();
 
-   @LogMessage(level = INFO)
-   @Message(value = "Finished cluster-wide rebalance for cache %s, topology id = %d", id = 336)
-   void clusterWideRebalanceCompleted(String cacheName, int topologyId);
+   @LogMessage(level = DEBUG)
+   @Message(value = "Finished rebalance for cache %s, topology %s", id = 336)
+   void finishedRebalance(String cacheName, CacheTopology topology);
 
    @Message(value = "The 'site' must be specified!", id = 337)
    CacheConfigurationException backupMissingSite();
@@ -1765,4 +1766,36 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Ignoring cache topology from %s during merge: %s", id = 517)
    void ignoringCacheTopology(Collection<Address> sender, CacheTopology topology);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Updating topology for cache %s, topology %s, availability mode %s", id = 518)
+   void updatingTopology(String cacheName, CacheTopology currentTopology, AvailabilityMode availabilityMode);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Updating stable topology for cache %s, topology %s", id = 519)
+   void updatingStableTopology(String cacheName, CacheTopology currentTopology);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Updating availability mode for cache %s from %s to %s, topology %s", id = 520)
+   void updatingAvailabilityMode(String cacheName, AvailabilityMode oldMode, AvailabilityMode newMode, CacheTopology topology);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Cache %s recovered after merge with topology = %s, availability mode %s", id = 521)
+   void cacheRecoveredAfterMerge(String cacheName, CacheTopology currentTopology, AvailabilityMode availabilityMode);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Conflict resolution starting for cache %s with topology %s", id = 522)
+   void startingConflictResolution(String cacheName, CacheTopology currentTopology);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Conflict resolution finished for cache %s with topology %s", id = 523)
+   void finishedConflictResolution(String cacheName, CacheTopology currentTopology);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Conflict resolution failed for cache %s with topology %s", id = 524)
+   void failedConflictResolution(String cacheName, CacheTopology currentTopology, @Cause Throwable t);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Conflict resolution cancelled for cache %s with topology %s", id = 525)
+   void cancelledConflictResolution(String cacheName, CacheTopology currentTopology);
 }

@@ -20,17 +20,26 @@ import org.jboss.logging.annotations.MessageBundle;
 public interface Messages {
    Messages MESSAGES = getBundle(Messages.class);
 
+   @Message(value = "[Context=%s]")
+   String eventLogContext(String ctx);
+
+   @Message(value = "[User=%s]")
+   String eventLogWho(String who);
+
+   @Message(value = "[Scope=%s]")
+   String eventLogScope(String scope);
+
    @Message(value = "Node %s joined the cluster", id = 100000)
    String nodeJoined(Address joiner);
 
    @Message(value = "Node %s left the cluster", id = 100001)
    String nodeLeft(Address leaver);
 
-   @Message(value = "Started rebalance with topology id %d", id = 100002)
-   String rebalanceStarted(int topologyId);
+   @Message(value = "Starting rebalance with members %s, phase %s, topology id %d", id = 100002)
+   String cacheRebalanceStart(Collection<Address> members, CacheTopology.Phase phase, int topologyId);
 
-   @Message(value = "Node %s finished rebalance phase with topology id %d", id = 100003)
-   String rebalancePhaseConfirmed(Address node, int topologyId);
+//   @Message(value = "Node %s finished rebalance phase %s with topology id %d", id = 100003)
+//   String rebalancePhaseConfirmedOnNode(Address node, CacheTopology.Phase phase, int topologyId);
 
    @Message(value = "Lost data because of graceful leaver %s", id = 312)
    String lostDataBecauseOfGracefulLeaver(Address leaver);
@@ -59,15 +68,6 @@ public interface Messages {
    @Message(value = "After merge (or coordinator change), cache still hasn't recovered a majority of members and must stay in degraded mode. Current members are %s, lost members are %s, stable members are %s", id = 320)
    String keepingDegradedModeAfterMergeMinorityPartition(Collection<Address> currentMembers, Collection<Address> lostMembers, Collection<Address> stableMembers);
 
-   @Message(value = "[Context=%s]")
-   String eventLogContext(String ctx);
-
-   @Message(value = "[User=%s]")
-   String eventLogWho(String who);
-
-   @Message(value = "[Scope=%s]")
-   String eventLogScope(String scope);
-
    @Message(value = "After merge (or coordinator change), the coordinator failed to recover cluster. Cluster members are %s.", id = 100004)
    String clusterRecoveryFailed(Collection<Address> members);
 
@@ -76,4 +76,31 @@ public interface Messages {
 
    @Message(value = "Site '%s' is offline.", id = 100006)
    String siteOffline(String siteName);
+
+   @Message(value = "After merge (or coordinator change), recovered members %s with topology id %d", id = 100007)
+   String cacheRecoveredAfterMerge(Collection<Address> members, int topologyId);
+
+   @Message(value = "Updating cache members list %s, topology id %d", id = 100008)
+   String cacheMembersUpdated(Collection<Address> members, int topologyId);
+
+   @Message(value = "Advancing to rebalance phase %s, topology id %d", id = 100009)
+   String cacheRebalancePhaseChange(CacheTopology.Phase phase, int topologyId);
+
+   @Message(value = "Finished rebalance with members %s, topology id %s", id = 100010)
+   String rebalanceFinished(Collection<Address> members, int topologyId);
+
+   @Message(value = "Entering availability mode %s, topology id %s", id = 100011)
+   String cacheAvailabilityModeChange(AvailabilityMode availabilityMode, int topologyId);
+
+   @Message(value = "Starting conflict resolution with members %s, topology id %d", id = 100012)
+   String conflictResolutionStarting(Collection<Address> members, int topologyId);
+
+   @Message(value = "Finished conflict resolution with members %s, topology id %d", id = 100013)
+   String conflictResolutionFinished(Collection<Address> members, int topologyId);
+
+   @Message(value = "Failed conflict resolution with members %s, topology id %d: %s", id = 100014)
+   String conflictResolutionFailed(Collection<Address> members, int topologyId, String errorMessage);
+
+   @Message(value = "Cancelled conflict resolution with members %s, topology id %s", id = 100015)
+   String conflictResolutionCancelled(Collection<Address> members, int topologyId);
 }
