@@ -3,15 +3,11 @@ package org.infinispan.client.hotrod.impl.protocol;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 
-import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
-import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableIteratorMapper;
 
 import io.netty.buffer.ByteBuf;
 
@@ -38,14 +34,5 @@ public class Codec26 extends Codec25 {
          listenerInterests = (byte) (listenerInterests | 0x08);
 
       ByteBufUtil.writeVInt(buf, listenerInterests);
-   }
-
-   @Override
-   public <K> CloseableIterator<K> keyIterator(RemoteCache<K, ?> remoteCache, OperationsFactory operationsFactory,
-         int batchSize) {
-      return new CloseableIteratorMapper<>(remoteCache.retrieveEntries(
-            // Use the ToEmptyBytesKeyValueFilterConverter to remove value payload
-            "org.infinispan.server.hotrod.HotRodServer$ToEmptyBytesKeyValueFilterConverter", batchSize),
-            e -> (K) e.getKey());
    }
 }
