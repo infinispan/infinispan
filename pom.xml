@@ -62,12 +62,12 @@
    </ciManagement>
    <distributionManagement>
       <repository>
-         <id>jboss-releases-repository</id>
+         <id>${jboss.releases.repo.id}</id>
          <name>JBoss Release Repository</name>
          <url>${jboss.releases.repo.url}</url>
       </repository>
       <snapshotRepository>
-         <id>jboss-snapshots-repository</id>
+         <id>${jboss.snapshots.repo.id}</id>
          <name>JBoss Snapshot Repository</name>
          <url>${jboss.snapshots.repo.url}</url>
       </snapshotRepository>
@@ -182,8 +182,19 @@
       <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
       <infinispan.test.parallel.threads>8</infinispan.test.parallel.threads>
-      <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
+      <jboss.releases.repo.id>jboss-releases-repository</jboss.releases.repo.id>
+      <jboss.releases.nexus.url>https://repository.jboss.org/nexus</jboss.releases.nexus.url>
+      <jboss.releases.repo.url>${jboss.releases.nexus.url}/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
+      <jboss.snapshots.repo.id>jboss-snapshots-repository</jboss.snapshots.repo.id>
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
+      <skipArtifactUpload>false</skipArtifactUpload>
+      <upload.username>infinispan</upload.username>
+      <upload.host>filemgmt.jboss.org</upload.host>
+      <upload.downloadsDir>${upload.username}@${upload.host}:/downloads_htdocs/infinispan/${infinispan.base.version}</upload.downloadsDir>
+      <upload.docsPath>/docs_htdocs/infinispan/${infinispan.base.version}</upload.docsPath>
+      <upload.docsDir>${upload.username}@${upload.host}:${upload.docsPath}</upload.docsDir>
+      <upload.keyFile>${env.HOME}/.ssh/ispn_release</upload.keyFile>
+      <upload.schemaDir>${upload.username}@${upload.host}:/schema_htdocs/infinispan</upload.schemaDir>
       <junitListener>org.infinispan.commons.test.JUnitTestListener</junitListener>
       <m2e.apt.activation>jdt_apt</m2e.apt.activation>
       <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
@@ -1248,6 +1259,35 @@
                <version>2.8.1</version>
             </plugin>
             <plugin>
+               <artifactId>maven-scm-plugin</artifactId>
+               <version>1.9.5</version>
+               <configuration>
+                  <tag>${project.version}</tag>
+               </configuration>
+            </plugin>
+            <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>versions-maven-plugin</artifactId>
+               <version>2.5</version>
+               <configuration>
+                  <generateBackupPoms>false</generateBackupPoms>
+                  <processAllModules>true</processAllModules>
+               </configuration>
+            </plugin>
+            <plugin>
+               <groupId>org.sonatype.plugins</groupId>
+               <artifactId>nexus-staging-maven-plugin</artifactId>
+               <version>1.6.8</version>
+               <configuration>
+                  <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                  <stagingDescription>${infinispan.brand.name} ${project.version} release</stagingDescription>
+                  <nexusUrl>${jboss.releases.nexus.url}</nexusUrl>
+                  <serverId>${jboss.releases.repo.id}</serverId>
+                  <stagingProfileId>2161b7b8da0080</stagingProfileId>
+                  <stagingRepositoryId>${stagingRepositoryId}</stagingRepositoryId>
+               </configuration>
+            </plugin>
+            <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-antrun-plugin</artifactId>
                <version>${version.maven.antrun}</version>
@@ -1255,6 +1295,11 @@
                   <dependency>
                      <groupId>org.apache.ant</groupId>
                      <artifactId>ant</artifactId>
+                     <version>${version.ant}</version>
+                  </dependency>
+                  <dependency>
+                     <groupId>org.apache.ant</groupId>
+                     <artifactId>ant-jsch</artifactId>
                      <version>${version.ant}</version>
                   </dependency>
                   <dependency>
@@ -1272,7 +1317,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-assembly-plugin</artifactId>
-               <version>3.0.0</version>
+               <version>3.1.0</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -1321,7 +1366,7 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-pmd-plugin</artifactId>
                <!-- See also reporting plugins -->
-               <version>3.8</version>
+               <version>3.9</version>
                <configuration>
                   <minimumTokens>100</minimumTokens>
                   <targetJdk>${version.java}</targetJdk>
@@ -1492,7 +1537,7 @@
                            <version>[${version.java},)</version>
                         </requireJavaVersion>
                         <requireMavenVersion>
-                           <version>[3.1.1,)</version>
+                           <version>[3.2.1,)</version>
                         </requireMavenVersion>
                      </rules>
                   </configuration>
@@ -1714,9 +1759,11 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-release-plugin</artifactId>
-            <version>2.2.2</version>
+            <version>2.5.3</version>
+            <configuration>
+               <autoVersionSubmodules>true</autoVersionSubmodules>
+            </configuration>
          </plugin>
-
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
@@ -1760,17 +1807,9 @@
                <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
             </configuration>
          </plugin>
-
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <dependencies>
-               <dependency>
-                  <groupId>org.apache.ant</groupId>
-                  <artifactId>ant</artifactId>
-                  <version>${version.ant}</version>
-               </dependency>
-            </dependencies>
             <executions>
                <execution>
                   <id>generate-blueprint</id>
@@ -1794,23 +1833,25 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <extensions>true</extensions>
+         </plugin>
       </plugins>
    </build>
    <reporting>
       <plugins>
-
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-pmd-plugin</artifactId>
-
-            <version>2.7.1</version>
+            <version>3.9.0</version>
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-report-plugin</artifactId>
             <version>${version.maven.surefire}</version>
          </plugin>
-
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>findbugs-maven-plugin</artifactId>
@@ -2001,6 +2042,8 @@
          </modules>
          <properties>
             <skipTests>true</skipTests>
+            <dependencies.excludeArtifactIds>infinispan-embedded,infinispan-embedded-query,infinispan-remote</dependencies.excludeArtifactIds>
+            <dependencies.excludeGroupIds>org.infinispan,org.jgroups,org.jboss.marshalling,org.jboss.logging,net.jcip,org.kohsuke.metainf-services</dependencies.excludeGroupIds>
          </properties>
          <build>
             <plugins>
@@ -2018,12 +2061,8 @@
                            <skip>${module.skipCopyDependencies}</skip>
                            <includeScope>runtime</includeScope>
                            <excludeScope>test</excludeScope>
-                           <excludeArtifactIds>
-                              infinispan-embedded,infinispan-embedded-query,infinispan-remote
-                           </excludeArtifactIds>
-                           <excludeGroupIds>
-                              org.infinispan,org.jgroups,org.jboss.marshalling,org.jboss.logging,net.jcip
-                           </excludeGroupIds>
+                           <excludeArtifactIds>${dependencies.excludeArtifactIds}</excludeArtifactIds>
+                           <excludeGroupIds>${dependencies.excludeGroupIds}</excludeGroupIds>
                            <prefix>$ISPN_HOME/lib</prefix>
                            <outputFile>${project.build.directory}/runtime-classpath.txt</outputFile>
                            <silent>true</silent>
@@ -2039,10 +2078,34 @@
                            <skip>${module.skipCopyDependencies}</skip>
                            <includeScope>runtime</includeScope>
                            <excludeScope>test</excludeScope>
-                           <excludeGroupIds>
-                              org.infinispan,org.jgroups,org.jboss.marshalling,org.jboss.logging,net.jcip
-                           </excludeGroupIds>
+                           <excludeGroupIds>${dependencies.excludeGroupIds}</excludeGroupIds>
                            <silent>true</silent>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>upload-schemas</id>
+                        <phase>deploy</phase>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                        <configuration>
+                           <skip>${skipArtifactUpload}</skip>
+                           <target>
+                              <available file="${project.build.outputDirectory}/schema" type="dir" property="hasSchema"/>
+
+                              <echo message="Uploading Schema files to ${upload.schemaDir}" if:set="hasSchema" xmlns:if="ant:if"/>
+                              <scp todir="${upload.schemaDir}" keyfile="${upload.keyFile}" verbose="true" compressed="true" if:set="hasSchema" xmlns:if="ant:if">
+                                 <fileset dir="${project.build.outputDirectory}/schema">
+                                    <include name="*-${infinispan.core.schema.version}.xsd" />
+                                 </fileset>
+                              </scp>
+                           </target>
                         </configuration>
                      </execution>
                   </executions>
@@ -2426,14 +2489,11 @@
                         </goals>
                         <configuration>
                            <target>
-                              <ac:if xmlns:ac="antlib:net.sf.antcontrib">
-                                 <ac:available file="${project.build.directory}/classes" type="dir"/>
-                                 <ac:then>
-                                    <echo>Copying test classes to jacoco folder.</echo>
-                                    <copydir dest="${jacoco.reportPath}/classes"
-                                             src="${project.build.directory}/classes"/>
-                                 </ac:then>
-                              </ac:if>
+                                 <available file="${project.build.directory}/classes" type="dir" property="hasClasses"/>
+                                 <echo message="Copying test classes to jacoco folder" if:set="hasClasses" xmlns:if="ant:if"/>
+                                 <copydir dest="${jacoco.reportPath}/classes"
+                                          src="${project.build.directory}/classes"
+                                          if:set="hasClasses" xmlns:if="ant:if"/>
                            </target>
                         </configuration>
                      </execution>

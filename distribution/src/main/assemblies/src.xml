@@ -3,17 +3,16 @@
    This package will build a ZIP the root of the source tree and all subdirectories.  Essentially a snapshot of the
    subversion checkout.
 -->
-<assembly
-        xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
     <id>src</id>
     <formats>
         <format>zip</format>
     </formats>
 
     <includeBaseDirectory>true</includeBaseDirectory>
-    <baseDirectory>${infinispan.brand.prefix}-${project.version}-src</baseDirectory>
+    <baseDirectory>${infinispan.brand.prefix}-${infinispan.brand.version}-src</baseDirectory>
 
     <fileSets>
         <fileSet>

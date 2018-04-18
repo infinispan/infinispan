@@ -35,15 +35,21 @@ public class XSDoc {
          this.name = name;
          this.doc = doc;
          String versionedNamespace = getDocumentNamespace(doc);
-         int versionSeparator = versionedNamespace.lastIndexOf(':');
-         namespace = versionedNamespace.substring(0, versionSeparator);
-         String[] versionParts = versionedNamespace.substring(versionSeparator + 1).split("\\.");
-         major = Integer.parseInt(versionParts[0]);
-         minor = Integer.parseInt(versionParts[1]);
+         if (versionedNamespace.startsWith("urn:")) {
+            int versionSeparator = versionedNamespace.lastIndexOf(':');
+            namespace = versionedNamespace.substring(0, versionSeparator);
+            String[] versionParts = versionedNamespace.substring(versionSeparator + 1).split("\\.");
+            major = Integer.parseInt(versionParts[0]);
+            minor = Integer.parseInt(versionParts[1]);
+         } else {
+            namespace = versionedNamespace;
+            major = 0;
+            minor = 0;
+         }
       }
 
       public boolean since(Schema schema) {
-         return (schema ==null) || (this.major > schema.major) || ((this.major == schema.major) && (this.minor >= schema.minor));
+         return (schema == null) || (this.major > schema.major) || ((this.major == schema.major) && (this.minor >= schema.minor));
       }
    }
 

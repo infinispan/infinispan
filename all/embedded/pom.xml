@@ -15,6 +15,7 @@
    <description>Infinispan Embedded All-in-One module</description>
 
    <properties>
+      <module.skipDownloadLicenses>false</module.skipDownloadLicenses>
       <intermediary_jar_name>intermediary-${project.build.finalName}</intermediary_jar_name>
       <intermediary_jar_path>${project.build.directory}/${intermediary_jar_name}.jar</intermediary_jar_path>
    </properties>
@@ -452,5 +453,37 @@
          </plugin>
       </plugins>
    </build>
+
+   <profiles>
+      <profile>
+         <id>distribution</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.wildfly.maven.plugins</groupId>
+                  <artifactId>licenses-plugin</artifactId>
+                  <version>1.0.0</version>
+                  <executions>
+                     <execution>
+                        <id>update-licenses-xml</id>
+                        <goals>
+                           <goal>insert-versions</goal>
+                        </goals>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                           <sortByGroupIdAndArtifactId>true</sortByGroupIdAndArtifactId>
+                           <licensesOutputFile>${project.build.directory}/licenses.xml</licensesOutputFile>
+                           <excludedGroups>org.kohsuke|org.apache.karaf.features|org.osgi</excludedGroups>
+                           <excludedArtifacts>jboss-logging-processor|jdeparser|jcip-annotations|jboss-logging-annotations|c3p0</excludedArtifacts>
+                           <excludedScopes>system,test,runtime</excludedScopes>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+   </profiles>
 
 </project>

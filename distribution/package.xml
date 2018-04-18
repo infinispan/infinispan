@@ -1,7 +1,7 @@
 <project name="infinispan-packaging" basedir="." default="package" xmlns:if="ant:if">
    <property name="root.dir" value=".." />
    <property name="dist.dir" value="${project.build.directory}/distribution" />
-   <property name="base.output.dir" value="${dist.dir}/${infinispan.brand.prefix}-${project.version}" />
+   <property name="base.output.dir" value="${dist.dir}/${infinispan.brand.prefix}-${infinispan.brand.version}" />
    <property name="dollar" value="$"/>
    <filterset id="brandfilter" begintoken="${dollar}{" endtoken="}">
       <filter token="infinispan.brand.name" value="${infinispan.brand.name}" />
@@ -65,9 +65,6 @@
          <base-distribution-lib-remote dir="${output.dir}" />
          <base-distribution-common-files dir="${output.dir}" type="remote" />
          <base-distribution-javadocs dir="${output.dir}" type="remote" />
-         <delete dir="${output.dir}/docs-embedded" />
-         <delete dir="${output.dir}/docs-remote" />
-         <delete dir="${output.dir}/docs-all" />
          <delete dir="${output.dir}/bin" />
          <delete dir="${output.dir}/configs" />
          <delete file="${output.dir}/README-GUI-Demo.txt" />
@@ -93,9 +90,6 @@
          <base-distribution-schema dir="@{dir}" />
          <base-distribution-javadocs dir="@{dir}" type="@{javadocs}"/>
          <base-distribution-configdocs dir="@{dir}" />
-         <delete dir="@{dir}/docs-embedded" />
-         <delete dir="@{dir}/docs-remote" />
-         <delete dir="@{dir}/docs-all" />
       </sequential>
    </macrodef>
 
@@ -106,6 +100,10 @@
          <copy todir="@{dir}/docs/licenses">
            <fileset dir="target/docs/licenses" />
          </copy>
+         <xslt in="target/docs/licenses/licenses.xml" style="src/main/resources/template/licenses.xsl" out="@{dir}/docs/licenses/licenses.html">
+            <param name="product" expression="${infinispan.brand.name}" type="STRING"/>
+            <param name="version" expression="${infinispan.brand.version}" type="STRING"/>
+         </xslt>
       </sequential>
    </macrodef>
 
@@ -150,13 +148,6 @@
       <attribute name="dir" />
       <attribute name="type" default="embedded" />
       <sequential>
-         <mkdir dir="@{dir}/docs" />
-         <copy todir="@{dir}/docs">
-            <fileset dir="src/main/release/common/docs-@{type}">
-               <include name="**" />
-            </fileset>
-            <filterset refid="brandfilter"/>
-         </copy>
          <unjar src="${org.infinispan:infinispan-javadoc-@{type}:jar:javadoc}" dest="@{dir}/docs/api" />
       </sequential>
    </macrodef>
