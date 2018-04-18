@@ -17,6 +17,9 @@ for a detailed description of the different merge policies.
 We have reverted the stat changes introduced in 9.1, so average values for read, write and removals are once again returned
 as milliseconds.
 
+=== Event log changes
+Several new event log messages have been added, and one message has been removed (ISPN100013).
+
 == Upgrading from 9.0 to 9.1
 
 === Kubernetes Ping changes
