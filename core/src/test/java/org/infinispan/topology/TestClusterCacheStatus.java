@@ -135,8 +135,7 @@ public class TestClusterCacheStatus {
 
    public void startConflictResolution(ConsistentHash conflictCH, List<Address> mergeMembers) {
       topology = new CacheTopology(topology.getTopologyId() + 1, topology.getRebalanceId() + 1,
-                                   readConsistentHash(), conflictCH, conflictCH,
-                                   CacheTopology.Phase.CONFLICT_RESOLUTION, mergeMembers,
+                                   conflictCH, null, CacheTopology.Phase.CONFLICT_RESOLUTION, mergeMembers,
                                    persistentUUIDs(mergeMembers));
    }
 

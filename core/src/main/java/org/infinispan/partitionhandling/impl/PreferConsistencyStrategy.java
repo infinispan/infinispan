@@ -220,13 +220,13 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
             ConsistentHash preferredHash = readConsistentHash(mergedTopology, joinInfo.getConsistentHashFactory());
             ConsistentHash conflictHash = context.calculateConflictHash(preferredHash, distinctHashes, expectedMembers);
 
-            mergedTopology = new CacheTopology(++maxTopologyId, maxRebalanceId + 1,
-                                               preferredHash,
-                                               conflictHash, conflictHash, CacheTopology.Phase.CONFLICT_RESOLUTION,
-                                               actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
+            mergedTopology = new CacheTopology(++maxTopologyId, maxRebalanceId + 1, conflictHash, null,
+                  CacheTopology.Phase.CONFLICT_RESOLUTION, actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
 
             // Update the currentTopology and try to resolve conflicts
-            context.updateTopologiesAfterMerge(mergedTopology, null, mergedAvailabilityMode, true);
+            context.updateTopologiesAfterMerge(mergedTopology, maxStableTopology, mergedAvailabilityMode);
+            context.queueConflictResolution(mergedTopology, new HashSet<>(preferredHash.getMembers()));
+            return;
          }
          // There's no pendingCH, therefore the topology is in stable phase
          mergedTopology = new CacheTopology(maxTopologyId + 1, mergedTopology.getRebalanceId(),
@@ -235,7 +235,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
                                             persistentUUIDManager.mapAddresses(actualMembers));
       }
 
-      context.updateTopologiesAfterMerge(mergedTopology, maxStableTopology, mergedAvailabilityMode, false);
+      context.updateTopologiesAfterMerge(mergedTopology, maxStableTopology, mergedAvailabilityMode);
 
       // It shouldn't be possible to recover from unavailable mode without user action
       if (newAvailabilityMode == AvailabilityMode.DEGRADED_MODE) {
@@ -248,7 +248,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
    }
 
    private AvailabilityMode computeAvailabilityAfterMerge(AvailabilityStrategyContext context,
-         CacheTopology maxStableTopology, List<Address> newMembers) {
+                                                          CacheTopology maxStableTopology, List<Address> newMembers) {
       if (maxStableTopology != null) {
          List<Address> stableMembers = maxStableTopology.getMembers();
          List<Address> lostMembers = new ArrayList<>(stableMembers);

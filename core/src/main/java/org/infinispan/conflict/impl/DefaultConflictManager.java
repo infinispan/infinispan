@@ -47,6 +47,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -94,12 +95,14 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    private Address localAddress;
    private long conflictTimeout;
    private EntryMergePolicy<K, V> entryMergePolicy;
+   private LimitedExecutor resolutionExecutor;
    private final AtomicBoolean streamInProgress = new AtomicBoolean();
    private final Map<K, VersionRequest> versionRequestMap = new HashMap<>();
    private final Queue<VersionRequest> retryQueue = new ConcurrentLinkedQueue<>();
    private volatile LocalizedCacheTopology installedTopology;
    private volatile boolean running = false;
    private volatile ReplicaSpliterator conflictSpliterator;
+   private volatile CompletableFuture<Void> conflictFuture;
 
    @Start
    public void start() {
@@ -112,6 +115,9 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
       // TODO make this an explicit configuration param in PartitionHandlingConfiguration
       this.conflictTimeout = cache.getCacheConfiguration().clustering().stateTransfer().timeout();
+
+      // Limit the number of concurrent tasks to ensure that internal CR operations can never overlap
+      this.resolutionExecutor = new LimitedExecutor("ConflictManager-", stateTransferExecutor, 1);
       this.running = true;
       if (trace) log.tracef("Cache %s starting %s. isRunning=%s", cacheName, getClass().getSimpleName(), !running);
    }
@@ -193,8 +199,10 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    }
 
    private Stream<Map<Address, CacheEntry<K, V>>> getConflicts(LocalizedCacheTopology topology) {
-      if (topology.getPhase() != CacheTopology.Phase.CONFLICT_RESOLUTION && stateConsumer.isStateTransferInProgress())
+      if (topology.getPhase() != CacheTopology.Phase.CONFLICT_RESOLUTION && stateConsumer.isStateTransferInProgress()) {
+         if (trace) log.tracef("getConflictsStateTransferInProgress isStateTransferInProgress=%s, topology=%s", stateConsumer.isStateTransferInProgress(), topology);
          throw log.getConflictsStateTransferInProgress(cacheName);
+      }
 
       if (!streamInProgress.compareAndSet(false, true))
          throw log.getConflictsAlreadyInProgress();
@@ -225,13 +233,13 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    @Override
    public void resolveConflicts(EntryMergePolicy<K, V> mergePolicy) {
       checkIsRunning();
-      doResolveConflicts(installedTopology, mergePolicy, true);
+      doResolveConflicts(installedTopology, mergePolicy, null);
    }
 
    @Override
-   public void resolveConflicts(CacheTopology topology) {
+   public CompletableFuture<Void> resolveConflicts(CacheTopology topology, Set<Address> preferredNodes) {
       if (!running)
-         return;
+         return CompletableFuture.completedFuture(null);
 
       LocalizedCacheTopology localizedTopology;
       if (topology instanceof LocalizedCacheTopology) {
@@ -239,16 +247,30 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       } else {
          localizedTopology = distributionManager.createLocalizedCacheTopology(topology);
       }
-      try {
-         doResolveConflicts(localizedTopology, entryMergePolicy, false);
-      } catch (CacheException e) {
-         log.errorf("Cache %s encountered exception whilst trying to resolve conflicts on merge: %s", cacheName, e.getCause());
+      conflictFuture = CompletableFuture.runAsync(() -> doResolveConflicts(localizedTopology, entryMergePolicy, preferredNodes), resolutionExecutor);
+      return conflictFuture.whenComplete((Void, t) -> {
+         if (t != null) {
+            log.errorf("Cache %s encountered exception whilst trying to resolve conflicts on merge: %s", cacheName, t);
+            if (conflictSpliterator != null) {
+               conflictSpliterator.stop();
+               conflictSpliterator = null;
+            }
+         }
+      });
+   }
+
+   @Override
+   public void cancelConflictResolution() {
+      if (conflictFuture != null && !conflictFuture.isDone()) {
+         if (trace) log.tracef("Cache %s cancelling conflict resolution future", cacheName);
+         conflictFuture.cancel(true);
       }
    }
 
    private void doResolveConflicts(final LocalizedCacheTopology topology, final EntryMergePolicy<K, V> mergePolicy,
-                                   final boolean userCall) {
-      final Set<Address> preferredPartition = new HashSet<>(topology.getCurrentCH().getMembers());
+                                   final Set<Address> preferredNodes) {
+      boolean userCall = preferredNodes == null;
+      final Set<Address> preferredPartition = userCall ? new HashSet<>(topology.getCurrentCH().getMembers()) : preferredNodes;
       final AdvancedCache<K, V> cache = this.cache.withFlags(userCall ? userMergeFlags : autoMergeFlags);
 
       if (trace)
@@ -479,8 +501,9 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
       void stop() {
          if (trace) log.tracef("Cache %s stop() called on ReplicaSpliterator. Current segment %s", cacheName, nextSegment);
-         if (segmentRequestFuture != null)
+         if (segmentRequestFuture != null && !segmentRequestFuture.isDone())
             segmentRequestFuture.cancel(true);
+         streamInProgress.set(false);
       }
 
       void handleException(Exception e) {

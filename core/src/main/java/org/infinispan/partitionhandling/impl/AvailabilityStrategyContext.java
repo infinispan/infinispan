@@ -91,7 +91,7 @@ public interface AvailabilityStrategyContext {
     * Does not install the current topology on the cache members.
     */
    void updateTopologiesAfterMerge(CacheTopology currentTopology, CacheTopology stableTopology,
-         AvailabilityMode availabilityMode, boolean resolveConflicts);
+         AvailabilityMode availabilityMode);
 
    /**
     * @return true if {@link PartitionHandlingConfiguration#mergePolicy()} != null
@@ -105,4 +105,22 @@ public interface AvailabilityStrategyContext {
     * @return the hash to be utilised as a pending CH during Phase.CONFLICT_RESOLUTION
     */
    ConsistentHash calculateConflictHash(ConsistentHash preferredHash, Set<ConsistentHash> distinctHashes, List<Address> actualMembers);
+
+   /**
+    * Initiates conflict resolution using the conflictTopology, which should have already been broadcast via
+    * {@link this#updateTopologiesAfterMerge(CacheTopology, CacheTopology, AvailabilityMode)}
+    *
+    * @param conflictTopology the topology to use during conflict resolution
+    * @param preferredNodes the addresses that belong to the preferred partition as determined by the {@link AvailabilityStrategy}
+    */
+   void queueConflictResolution(CacheTopology conflictTopology, Set<Address> preferredNodes);
+
+   /**
+    * If CR is in progress, then this method cancels the current CR and starts a new CR phase with an updated topology
+    * based upon newMembers and the previously queued CR topology
+    *
+    * @param newMembers the latest members of the current view
+    * @return true if conflict resolution was restarted due to the newMembers
+    */
+   boolean restartConflictResolution(List<Address> newMembers);
 }
