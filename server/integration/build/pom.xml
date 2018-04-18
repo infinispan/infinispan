@@ -59,13 +59,24 @@
                 <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>server-provisioning</id>
+                        <id>server-provisioning-fat</id>
                         <goals>
                             <goal>build</goal>
                         </goals>
                         <phase>compile</phase>
                         <configuration>
-                            <config-file>server-provisioning.xml</config-file>
+                            <config-file>server-provisioning-fat.xml</config-file>
+                            <buildName>${project.build.directory}/distribution</buildName>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>server-provisioning-thin</id>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <config-file>server-provisioning-thin.xml</config-file>
                         </configuration>
                     </execution>
                 </executions>
