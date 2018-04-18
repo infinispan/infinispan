@@ -22,7 +22,7 @@
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
   -->
 
-<module xmlns="urn:jboss:module:1.3" name="org.jboss.as.domain-http-error-context" slot="ispn">
+<module xmlns="urn:jboss:module:1.5" name="org.jboss.as.domain-http-error-context" slot="ispn">
 
     <resources>
         <resource-root path="dir" />
