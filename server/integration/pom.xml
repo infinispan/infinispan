@@ -25,7 +25,6 @@
       <module>endpoint</module>
       <module>cli</module>
       <module>feature-pack</module>
-      <module>licenses</module>
       <module>build</module>
    </modules>
 
@@ -49,42 +48,6 @@
             <module>build</module>
             <module>testsuite</module>
          </modules>
-      </profile>
-      <profile>
-         <id>distribution</id>
-         <activation>
-            <activeByDefault>false</activeByDefault>
-         </activation>
-         <properties>
-            <skipTests>true</skipTests>
-         </properties>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-assembly-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>assemble</id>
-                        <phase>package</phase>
-                        <goals>
-                           <goal>single</goal>
-                        </goals>
-                     </execution>
-                  </executions>
-                  <configuration>
-                     <descriptors>
-                        <descriptor>${project.basedir}/src/main/assemblies/bin.xml</descriptor>
-                        <descriptor>${project.basedir}/src/main/assemblies/source.xml</descriptor>
-                     </descriptors>
-                     <finalName>${product.name}-${product.version}</finalName>
-                     <outputDirectory>${project.build.directory}/distribution</outputDirectory>
-                     <workDirectory>${project.build.directory}/assembly/work</workDirectory>
-                     <attach>true</attach>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
       </profile>
    </profiles>
 </project>

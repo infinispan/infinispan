@@ -1,0 +1,87 @@
+#!/usr/bin/env groovy
+
+pipeline {
+    agent {
+        label 'slave-group-release'
+    }
+
+    parameters {
+        string(defaultValue: '0.0.0.Qualifier', description: 'Release version', name: 'version')
+    }
+
+    options {
+        timeout(time: 3, unit: 'HOURS')
+    }
+
+    stages {
+        stage('Prepare') {
+            steps {
+                script {
+                    env.MAVEN_HOME = tool('Maven')
+                    env.MAVEN_OPTS = "-Xmx800m -XX:+HeapDumpOnOutOfMemoryError"
+                    env.JAVA_HOME = tool('Oracle JDK 8')
+                }
+
+                sh returnStdout: true, script: 'cleanup.sh'
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Version') {
+            steps {
+                sh "$MAVEN_HOME/bin/mvn -B -V versions:set -DnewVersion=${version}"
+            }
+        }
+
+        stage('Create Staging repository') {
+            steps {
+                // Create a staging repository on Nexus
+                script {
+                    STAGING_REPO_ID = sh(returnStdout: true, script: "$MAVEN_HOME/bin/mvn -B -V org.sonatype.plugins:nexus-staging-maven-plugin:rc-open -pl .|grep \"Opened \"|cut -f3 -d' '").trim()
+                }
+                echo "Staging repository: $STAGING_REPO_ID"
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh "$MAVEN_HOME/bin/mvn -B -V -Pdistribution -DskipTests clean deploy -DstagingRepositoryId=$STAGING_REPO_ID"
+            }
+        }
+
+        stage('Close Staging repository') {
+            steps {
+                // This ensures that Nexus validates the repository for correctness
+                sh "$MAVEN_HOME/bin/mvn -B -V org.sonatype.plugins:nexus-staging-maven-plugin:rc-close -pl . -DstagingRepositoryId=$STAGING_REPO_ID"
+            }
+        }
+
+        stage('Tag') {
+            steps {
+                // Only tag once everything is good
+                sh "$MAVEN_HOME/bin/mvn -B -V scm:tag"
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean
+            sh 'git clean -fdx -e "*.hprof" || echo "git clean failed, exit code $?"'
+        }
+        failure {
+            echo "post build status: failure"
+            emailext to: '${DEFAULT_RECIPIENTS}', subject: '${DEFAULT_SUBJECT}', body: '${DEFAULT_CONTENT}'
+        }
+
+        success {
+            echo "post build status: success"
+            emailext to: '${DEFAULT_RECIPIENTS}', subject: '${DEFAULT_SUBJECT}', body: '${DEFAULT_CONTENT}'
+        }
+    }
+}

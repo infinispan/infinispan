@@ -16,6 +16,8 @@
 
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <jboss.releases.nexus.url>https://repository.jboss.org/nexus</jboss.releases.nexus.url>
+      <jboss.releases.repo.id>jboss-releases-repository</jboss.releases.repo.id>
    </properties>
 
    <dependencies>
@@ -32,6 +34,23 @@
          </exclusions>
       </dependency>
    </dependencies>
+
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <version>1.6.8</version>
+            <configuration>
+               <autoReleaseAfterClose>false</autoReleaseAfterClose>
+               <nexusUrl>${jboss.releases.nexus.url}</nexusUrl>
+               <serverId>${jboss.releases.repo.id}</serverId>
+               <stagingProfileId>2161b7b8da0080</stagingProfileId>
+               <stagingRepositoryId>${stagingRepositoryId}</stagingRepositoryId>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
 
    <profiles>
       <profile>

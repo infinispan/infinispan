@@ -265,7 +265,7 @@
                      <stylesheetfile>${basedir}/src/main/javadoc/stylesheet.css</stylesheetfile>
                      <subpackages>org.infinispan</subpackages>
                      <additionalparam>-Xdoclint:none</additionalparam>
-                     
+
                      <additionalDependencies>
                         <additionalDependency>
                            <groupId>javax.enterprise</groupId>
@@ -334,4 +334,43 @@
          </plugin>
       </plugins>
    </build>
+
+   <profiles>
+      <profile>
+         <id>distribution</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>upload</id>
+                        <phase>deploy</phase>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                        <configuration>
+                           <skip>${skipArtifactUpload}</skip>
+                           <target>
+                              <echo message="Uploading JavaDocs"/>
+                              <exec dir="${project.build.directory}" executable="rsync">
+                                 <arg value="-rvm"/>
+                                 <arg line="--protocol=29"/>
+                                 <arg line="-e &quot;ssh -i ${upload.keyFile}&quot;"/>
+                                 <arg value="apidocs"/>
+                                 <arg value="${upload.docsDir}"/>
+                              </exec>
+                              <scp todir="${upload.docsDir}/apidocs" keyfile="${upload.keyFile}" verbose="true" compressed="true">
+                                 <fileset dir="${project.build.directory}/apidocs"/>
+                              </scp>
+                           </target>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
 </project>

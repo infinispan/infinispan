@@ -178,51 +178,9 @@
                   <configuration>
                      <sortByGroupIdAndArtifactId>true</sortByGroupIdAndArtifactId>
                      <licensesOutputFile>${project.build.directory}/docs/licenses/licenses.xml</licensesOutputFile>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <!-- Generate license file -->
-         <!-- Create HTML (parameters: product, version) -->
-         <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>xml-maven-plugin</artifactId>
-            <version>1.0.1</version>
-            <inherited>false</inherited>
-            <executions>
-               <execution>
-                  <id>generate-licenses-html</id>
-                  <goals>
-                     <goal>transform</goal>
-                  </goals>
-                  <phase>prepare-package</phase>
-                  <configuration>
-                     <transformationSets>
-                        <transformationSet>
-                           <dir>${project.build.directory}/docs/licenses</dir>
-                           <includes>
-                              <include>licenses.xml</include>
-                           </includes>
-                           <stylesheet>${project.basedir}/src/main/resources/template/licenses.xsl</stylesheet>
-                           <outputDir>${project.build.directory}/docs/licenses</outputDir>
-                           <fileMappers>
-                              <fileMapper
-                                      implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
-                                 <targetExtension>.html</targetExtension>
-                              </fileMapper>
-                           </fileMappers>
-                           <parameters>
-                              <parameter>
-                                 <name>product</name>
-                                 <value>${project.name}</value>
-                              </parameter>
-                              <parameter>
-                                 <name>version</name>
-                                 <value>${project.version}</value>
-                              </parameter>
-                           </parameters>
-                        </transformationSet>
-                     </transformationSets>
+                     <excludedGroups>org.kohsuke</excludedGroups>
+                     <excludedArtifacts>jboss-logging-processor|jdeparser|jcip-annotations|jboss-logging-annotations</excludedArtifacts>
+                     <excludedScopes>system,test,runtime</excludedScopes>
                   </configuration>
                </execution>
             </executions>
@@ -247,7 +205,7 @@
                               <!-- make sure core comes first -->
                               <include name="core/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
                               <include name="persistence/*/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
-                              <include name="spring/spring/src/main/resources/org/infinispan/spring/config/*-${infinispan.core.schema.version}.xsd" />
+                              <include name="spring/spring4/spring4-common/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
                            </fileset>
                         </path>
                         <pathconvert pathsep=" " property="xsd.fileset" refid="xsd.fileset.path" />
@@ -274,7 +232,7 @@
                         <property name="plugin_classpath" refid="maven.plugin.classpath" />
                         <echo message="Base dir: ${basedir}" />
                         <path id="xsd.fileset.path">
-                           <fileset casesensitive="yes" dir="${basedir}/../server/integration/build/target/infinispan-server-${project.version}/docs/schema">
+                           <fileset casesensitive="yes" dir="${basedir}/../server/integration/build/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}/docs/schema">
                               <include name="*.xsd" />
                            </fileset>
                         </path>
@@ -303,6 +261,43 @@
                      </target>
                   </configuration>
                </execution>
+               <execution>
+                  <id>upload-distributions</id>
+                  <phase>deploy</phase>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${skipArtifactUpload}</skip>
+                     <target>
+                        <echo message="Uploading Distributions to ${upload.downloadsDir}"/>
+                        <exec dir="${project.build.directory}/distribution" executable="rsync">
+                           <arg value="-rvm"/>
+                           <arg line="--protocol=29"/>
+                           <arg line="-e &quot;ssh -i ${upload.keyFile}&quot;"/>
+                           <arg line="--include='*.zip'"/>
+                           <arg line="--exclude='*'"/>
+                           <arg value="."/>
+                           <arg value="${upload.downloadsDir}"/>
+                        </exec>
+                        <echo message="Uploading Schema docs to ${upload.docsDir}"/>
+                        <exec dir="${project.build.directory}/site" executable="rsync">
+                           <arg value="-rvm"/>
+                           <arg line="--protocol=29"/>
+                           <arg line="-e &quot;ssh -i ${upload.keyFile}&quot;"/>
+                           <arg value="configdocs"/>
+                           <arg value="${upload.docsDir}"/>
+                        </exec>
+                        <exec dir="${project.build.directory}/site" executable="rsync">
+                           <arg value="-rvm"/>
+                           <arg line="--protocol=29"/>
+                           <arg line="-e &quot;ssh -i ${upload.keyFile}&quot;"/>
+                           <arg value="serverconfigdocs"/>
+                           <arg value="${upload.docsDir}"/>
+                        </exec>
+                     </target>
+                  </configuration>
+               </execution>
             </executions>
             <dependencies>
                <dependency>
@@ -322,19 +317,34 @@
                   <goals>
                      <goal>single</goal>
                   </goals>
+                  <configuration>
+                     <descriptors>
+                        <descriptor>src/main/assemblies/minimal.xml</descriptor>
+                        <descriptor>src/main/assemblies/all.xml</descriptor>
+                        <descriptor>src/main/assemblies/remote.xml</descriptor>
+                        <descriptor>src/main/assemblies/src.xml</descriptor>
+                     </descriptors>
+                     <finalName>${infinispan.brand.prefix}-${infinispan.brand.version}</finalName>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>assemble-server</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>single</goal>
+                  </goals>
+                  <configuration>
+                     <descriptors>
+                        <descriptor>src/main/assemblies/server.xml</descriptor>
+                     </descriptors>
+                     <finalName>${infinispan.brand.prefix}-server-${infinispan.brand.version}</finalName>
+                     <appendAssemblyId>false</appendAssemblyId>
+                  </configuration>
                </execution>
             </executions>
             <configuration>
-               <descriptors>
-                  <descriptor>src/main/assemblies/minimal.xml</descriptor>
-                  <descriptor>src/main/assemblies/all.xml</descriptor>
-                  <descriptor>src/main/assemblies/remote.xml</descriptor>
-                  <descriptor>src/main/assemblies/src.xml</descriptor>
-               </descriptors>
-               <finalName>infinispan-${project.version}</finalName>
-               <outputDirectory>${buildDirectory}/distribution</outputDirectory>
-               <workDirectory>${buildDirectory}/assembly/work</workDirectory>
-
+               <outputDirectory>${project.build.directory}/distribution</outputDirectory>
+               <workDirectory>${project.build.directory}/assembly/work</workDirectory>
                <!-- Do not attach ZIP files to the Maven repository -->
                <attach>false</attach>
             </configuration>
