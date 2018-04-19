@@ -24,6 +24,7 @@ import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedExecutorService;
@@ -53,7 +54,7 @@ public class HotRodTargetMigrator implements TargetMigrator {
 
    @Override
    public long synchronizeData(final Cache<Object, Object> cache) throws CacheException {
-      return synchronizeData(cache, DEFAULT_READ_BATCH_SIZE, Runtime.getRuntime().availableProcessors());
+      return synchronizeData(cache, DEFAULT_READ_BATCH_SIZE, ProcessorInfo.availableProcessors());
    }
 
    @Override

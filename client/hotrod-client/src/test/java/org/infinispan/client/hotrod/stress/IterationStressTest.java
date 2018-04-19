@@ -4,6 +4,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -28,7 +29,7 @@ public class IterationStressTest extends SingleHotRodServerTest {
 
     private static final int NUM_ENTRIES = 500_000;
     private static final String SERVER_HOST = "serverHost";
-    public static final int THREADS = Runtime.getRuntime().availableProcessors();
+    public static final int THREADS = ProcessorInfo.availableProcessors();
 
     private RemoteCache<Object, Object> remoteCache;
 

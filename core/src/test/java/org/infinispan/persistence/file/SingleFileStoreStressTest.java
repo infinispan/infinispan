@@ -22,6 +22,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -432,7 +433,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       @Override
       public Object call() throws Exception {
-         final int NUM_PROCESS_THREADS = Runtime.getRuntime().availableProcessors();
+         final int NUM_PROCESS_THREADS = ProcessorInfo.availableProcessors();
 
          File file = new File(location, CACHE_NAME + ".dat");
          assertTrue(file.exists());
@@ -464,7 +465,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       @Override
       public Object call() throws Exception {
-         final int NUM_PROCESS_THREADS = Runtime.getRuntime().availableProcessors();
+         final int NUM_PROCESS_THREADS = ProcessorInfo.availableProcessors();
 
          File file = new File(location, CACHE_NAME + ".dat");
          assertTrue(file.exists());

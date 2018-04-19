@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -89,7 +90,7 @@ public class IndexManagerPerfTest extends BaseAffinityTest {
             .collect(Collectors.toList()));
       nodes.forEach(Node::addToCluster);
       waitForClusterToForm();
-      addDataToCluster(getNumEntries(), Runtime.getRuntime().availableProcessors() * 2);
+      addDataToCluster(getNumEntries(), ProcessorInfo.availableProcessors() * 2);
       warmup();
 
       summarizeQueryOnlyTest(runTests());

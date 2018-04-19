@@ -12,7 +12,7 @@ import org.infinispan.test.fwk.TransportFlags;
  * ISPN-8925 This test creates several caches and then initiates a split-brain followed by a merge. The purpose of this
  * test is to ensure that when many caches exist, it's still possible for conflict resolution and the rebalance to proceed.
  * Previously the executor in the ClusterTopologyManagerImpl would be blocked indefinitely if the number of caches was
- * >= Runtime.getRuntime().availableProcessors() / 2 + 1
+ * >= ProcessorInfo.availableProcessors() / 2 + 1
  *
  * @author Ryan Emerson
  */

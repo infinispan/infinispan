@@ -22,6 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationDefinition;
@@ -79,7 +80,7 @@ public class CacheResource extends SimpleResourceDefinition implements Restartab
    static final SimpleAttributeDefinition WRITE_THREADS =
            new SimpleAttributeDefinitionBuilder(ModelKeys.WRITE_THREADS, ModelType.INT, true)
                    .setAllowExpression(false)
-                   .setDefaultValue(new ModelNode().set(Runtime.getRuntime().availableProcessors()))
+                   .setDefaultValue(new ModelNode().set(ProcessorInfo.availableProcessors()))
                    .build();
 
     // operations

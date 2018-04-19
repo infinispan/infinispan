@@ -12,6 +12,7 @@ import org.codehaus.jackson.annotate.JsonTypeInfo;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -45,7 +46,7 @@ public class CLInterfaceTargetMigrator implements TargetMigrator {
 
    @Override
    public long synchronizeData(final Cache<Object, Object> cache) throws CacheException {
-      return synchronizeData(cache, 0, Runtime.getRuntime().availableProcessors());
+      return synchronizeData(cache, 0, ProcessorInfo.availableProcessors());
    }
 
    @Override

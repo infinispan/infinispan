@@ -1,12 +1,13 @@
 package org.infinispan.health.impl;
 
+import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.health.HostInfo;
 
 public class HostInfoImpl implements HostInfo {
 
     @Override
     public int getNumberOfCpus() {
-        return Runtime.getRuntime().availableProcessors();
+        return ProcessorInfo.availableProcessors();
     }
 
     @Override

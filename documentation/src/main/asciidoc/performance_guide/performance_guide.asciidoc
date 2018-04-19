@@ -66,7 +66,7 @@ Adjusting memory size is one of the most crucial step in {brandname} tuning. The
 * `-Xmn` - Defines the minimum and maximum value for the young generation.
 * `-XX:NewRatio` - Define the ratio between young and old generations. Should not be used if -Xmn is enabled.
 
-Using `Xms` equal to `Xmx` will prevent JVM from dynamically sizing memory and might decrease GC pauses caused by resizing. 
+Using `Xms` equal to `Xmx` will prevent JVM from dynamically sizing memory and might decrease GC pauses caused by resizing.
 It is a good practice to specify `Xmn` parameter. This guaranteed proper behavior during load peak (in such case {brandname} generates lots of small, short living objects).
 
 === Garbage collection
@@ -123,6 +123,15 @@ The recommended values are:
 
 * send window size - 640 KB
 * receive window size - 25 MB
+
+== Number of threads
+
+Infinispan tunes its thread pools according to the available CPU cores. Under Linux this
+will also take into consideration taskset / CGroup quotas. It is possible to override the
+detected value by specifying the system property ``infinispan.activeprocessorcount``.
+
+NOTE: Java 10 and later can limit the number of active processor using the VM flag
+``-XX:ActiveProcessorCount=xx``.
 
 == Number of threads (Server mode only)
 

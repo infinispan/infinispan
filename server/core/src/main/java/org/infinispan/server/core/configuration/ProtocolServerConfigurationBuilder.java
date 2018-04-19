@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.server.core.admin.AdminOperationsHandler;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -21,7 +22,7 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    protected int sendBufSize = 0;
    protected final SslConfigurationBuilder<T, S> ssl;
    protected boolean tcpNoDelay = true;
-   protected int workerThreads = 2 * Runtime.getRuntime().availableProcessors();
+   protected int workerThreads = 2 * ProcessorInfo.availableProcessors();
    protected Set<String> ignoredCaches = Collections.EMPTY_SET;
    protected boolean startTransport = true;
    protected AdminOperationsHandler adminOperationsHandler;

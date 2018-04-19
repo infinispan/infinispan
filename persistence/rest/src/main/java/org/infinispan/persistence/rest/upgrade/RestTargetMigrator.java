@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.persistence.PersistenceUtil;
@@ -33,7 +34,7 @@ public class RestTargetMigrator implements TargetMigrator {
 
    @Override
    public long synchronizeData(final Cache<Object, Object> cache) throws CacheException {
-      return synchronizeData(cache, 0, Runtime.getRuntime().availableProcessors());
+      return synchronizeData(cache, 0, ProcessorInfo.availableProcessors());
 
    }
 
