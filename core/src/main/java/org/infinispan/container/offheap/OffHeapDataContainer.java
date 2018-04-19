@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
+import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -75,14 +76,14 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    }
 
    public OffHeapDataContainer(int desiredSize) {
-      lockCount = nextPowerOfTwo(Runtime.getRuntime().availableProcessors()) << 1;
+      lockCount = nextPowerOfTwo(ProcessorInfo.availableProcessors()) << 1;
       memoryAddressCount = getActualAddressCount(desiredSize, lockCount);
       // Unfortunately desired size directly correlates to lock size
       locks = new StripedLock(lockCount);
    }
 
    public static int getActualAddressCount(int desiredSize) {
-      return getActualAddressCount(desiredSize, nextPowerOfTwo(Runtime.getRuntime().availableProcessors()) << 1);
+      return getActualAddressCount(desiredSize, nextPowerOfTwo(ProcessorInfo.availableProcessors()) << 1);
    }
 
    private static int getActualAddressCount(int desiredSize, int lockCount) {

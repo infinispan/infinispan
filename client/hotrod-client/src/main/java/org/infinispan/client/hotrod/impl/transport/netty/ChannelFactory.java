@@ -45,6 +45,7 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.util.ProcessorInfo;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -103,7 +104,7 @@ public class ChannelFactory {
          this.failedServerNotifier = failedServerNotifier;
          int asyncThreads = maxAsyncThreads(executorService, configuration);
          // static field with default is private in MultithreadEventLoopGroup
-         int eventLoopThreads = SecurityActions.getIntProperty("io.netty.eventLoopThreads", Runtime.getRuntime().availableProcessors() * 2);
+         int eventLoopThreads = SecurityActions.getIntProperty("io.netty.eventLoopThreads", ProcessorInfo.availableProcessors() * 2);
          // Note that each event loop opens a selector which counts
          int maxExecutors = Math.min(asyncThreads, eventLoopThreads);
          this.eventLoopGroup = TransportHelper.createEventLoopGroup(maxExecutors, executorService);

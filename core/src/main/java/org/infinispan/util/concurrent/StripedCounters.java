@@ -3,6 +3,8 @@ package org.infinispan.util.concurrent;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.function.Supplier;
 
+import org.infinispan.commons.util.ProcessorInfo;
+
 /**
  * Duplicates a set of counters in a set of stripes, so that multiple threads can increment those counters without too
  * much contention.
@@ -16,7 +18,7 @@ import java.util.function.Supplier;
  * @since 9.0
  */
 public class StripedCounters<T> {
-   private static final int STRIPE_COUNT = (int) (Long.highestOneBit(Runtime.getRuntime().availableProcessors()) << 1);
+   private static final int STRIPE_COUNT = (int) (Long.highestOneBit(ProcessorInfo.availableProcessors()) << 1);
    private static final int STRIPE_MASK = STRIPE_COUNT - 1;
 
    private T[] stripes;

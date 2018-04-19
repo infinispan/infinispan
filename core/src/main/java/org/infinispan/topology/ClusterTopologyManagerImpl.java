@@ -30,6 +30,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -498,7 +499,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
       globalRebalancingEnabled = recoveredRebalancingStatus;
       // Compute the new consistent hashes on separate threads
-      int maxThreads = Runtime.getRuntime().availableProcessors() / 2 + 1;
+      int maxThreads = ProcessorInfo.availableProcessors() / 2 + 1;
       CountDownLatch latch = new CountDownLatch(responsesByCache.size());
       LimitedExecutor cs = new LimitedExecutor("Merge-" + newViewId, stateTransferExecutor, maxThreads);
       for (final Map.Entry<String, Map<Address, CacheStatusResponse>> e : responsesByCache.entrySet()) {
