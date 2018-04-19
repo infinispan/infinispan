@@ -2744,7 +2744,7 @@
     <dependency>
       <groupId>org.infinispan.protostream</groupId>
       <artifactId>protostream</artifactId>
-      <version>4.0.0.Final</version>
+      <version>4.2.0.Final</version>
       <licenses>
         <license>
           <name>Apache Software License, Version 2.0</name>
