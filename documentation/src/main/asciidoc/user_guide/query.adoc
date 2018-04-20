@@ -358,7 +358,7 @@ queries to all members and aggregate the results. The downside is that Lucene do
 In any case, having a single write lock cluster-wise can lead to some degree of contention under heavy writing.
 
 {brandname} supports shared indexes leveraging the <<integrations.adoc#integrations:directory-provider,{brandname} Directory Provider>>, which stores indexes in a separate set of caches. Two index managers are available
-to use shared indexes: {brandname}IndexManager and AffinityIndexManager.
+to use shared indexes: InfinispanIndexManager and AffinityIndexManager.
 
 ====== Effect of the index mode
 
@@ -418,13 +418,13 @@ efficient storing techniques.
 It's not necessary to redefine the configuration of those 3 cases, {brandname} will pick sensible defaults.
 Reasons re-define them would be performance tuning for a specific scenario, or for example to make them persistent by configuring a cache store.
 
-In order to avoid index corruption when two or more nodes of the cluster try to write to the index at the same time, the _{brandname}IndexManager_ internally
+In order to avoid index corruption when two or more nodes of the cluster try to write to the index at the same time, the _InfinispanIndexManager_ internally
 elects a master in the cluster (which is the JGroups coordinator) and forwards all indexing works to this master.
 
 ====== AffinityIndexManager [[query.affinity-index-manager]]
 
 The AffinityIndexManager is an *experimental* index manager used for shared indexes that also stores indexes using the <<integrations.adoc#integrations:directory-provider,{brandname} Directory Provider>>.
-Unlike the {brandname}IndexManager, it does not have a single node (master) that handles all the indexing cluster wide, but rather splits the index using multiple shards, each shard being responsible for indexing data associated with one or more {brandname} segments.
+Unlike the InfinispanIndexManager, it does not have a single node (master) that handles all the indexing cluster wide, but rather splits the index using multiple shards, each shard being responsible for indexing data associated with one or more {brandname} segments.
 For an in-depth description of the inner workings, please see the link:https://github.com/infinispan/infinispan/wiki/Index-affinity-proposal[design doc].
 
 The PRIMARY_OWNER index mode is required, together with a special kind of `KeyPartitioner`.
@@ -999,7 +999,7 @@ import org.infinispan.query.dsl.*;
 // get the DSL query factory from the cache, to be used for constructing the Query object:
 QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
 
-// create a query for all the books that have a title which contains the word "engine":
+// create a query for all the books that have a title which contains "engine":
 org.infinispan.query.dsl.Query query = qf.from(Book.class)
       .having("title").like("%engine%")
       .toBuilder().build();
@@ -1046,7 +1046,7 @@ correlated sub-queries, that is not currently available.
 ----
 // a single query criterion
 QueryBuilder qb = ...
-qb.having("title").eq("{brandname} Data Grid Platform");
+qb.having("title").eq("Hibernate Search in Action");
 ----
 
 ._FilterConditionEndContext_ exposes the following filtering operators:
@@ -1088,7 +1088,7 @@ Query q1 = qb1.build(); // consequently, this query matches all Book instances r
 // Maybe the author intended to connect two conditions with a boolean operator,
 // but this does NOT actually happen here.
 QueryBuilder qb2 = ...
-qb2.having("title").like("%{brandname}%");
+qb2.having("title").like("%Data Grid%");
 qb2.having("description").like("%clustering%");   // will throw java.lang.IllegalStateException: Sentence already started. Cannot use 'having(..)' again.
 Query q2 = qb2.build();
 ----
@@ -1117,10 +1117,10 @@ operator still has higher priority than `or` even though `or` was invoked first.
 
 [source,java]
 ----
-// match all books that have the word "{brandname}" in their title
-// or have an author named "Manik" and their description contains the word "clustering"
+// match all books that have "Data Grid" in their title
+// or have an author named "Manik" and their description contains "clustering"
 Query query = queryFactory.from(Book.class)
-  .having("title").like("%{brandname}%")
+  .having("title").like("%Data Grid%")
   .or().having("author.name").eq("Manik")
   .and().having("description").like("%clustering%")
   .toBuilder().build();
@@ -1131,9 +1131,9 @@ only to the next simple attribute condition.
 
 [source,java]
 ----
-// match all books that do not have the word "{brandname}" in their title and are authored by "Manik"
+// match all books that do not have "Data Grid" in their title and are authored by "Manik"
 Query query = queryFactory.from(Book.class)
-  .not().having("title").like("%{brandname}%")
+  .not().having("title").like("%Data Grid%")
   .and().having("author.name").eq("Manik")
   .toBuilder().build();
 ----
@@ -1146,10 +1146,10 @@ subsequent complex condition created with the same query factory.
 [source,java]
 ----
 // match all books that have an author named "Manik" and their title contains
-// the word "{brandname}" or their description contains the word "clustering"
+// "Data Grid" or their description contains "clustering"
 Query query = queryFactory.from(Book.class)
   .having("author.name").eq("Manik");
-  .and(queryFactory.having("title").like("%{brandname}%")
+  .and(queryFactory.having("title").like("%Data Grid%")
           .or().having("description").like("%clustering%"))
   .toBuilder().build();
 ----
@@ -1165,12 +1165,12 @@ TODO document what needs to be configured for an attribute to be available for p
 
 [source,java]
 ----
-// match all books that have the word "{brandname}" in their title or description
+// match all books that have "Data Grid" in their title or description
 // and return only their title and publication year
 Query query = queryFactory.from(Book.class)
   .select("title", "publicationYear")
-  .having("title").like("%{brandname}%")
-  .or().having("description").like("%{brandname}%"))
+  .having("title").like("%Data Grid%")
+  .or().having("description").like("%Data Grid%"))
   .toBuilder().build();
 ----
 
@@ -1185,13 +1185,13 @@ TODO document what needs to be configured for an attribute to be available for s
 
 [source,java]
 ----
-// match all books that have the word "{brandname}" in their title or description
+// match all books that have "Data Grid" in their title or description
 // and return them sorted by the publication year and title
 Query query = queryFactory.from(Book.class)
   .orderBy("publicationYear", SortOrder.DESC)
   .orderBy("title", SortOrder.ASC)
-  .having("title").like("%{brandname}%")
-  .or().having("description").like("%{brandname}%"))
+  .having("title").like("%Data Grid%")
+  .or().having("description").like("%Data Grid%"))
   .toBuilder().build();
 ----
 
@@ -1202,7 +1202,7 @@ conjunction with setting the _startOffset_ in order to achieve pagination of the
 
 [source,java]
 ----
-// match all books that have the word "clustering" in their title
+// match all books that have "clustering" in their title
 // sorted by publication year and title
 // and return 3'rd page of 10 results
 Query query = queryFactory.from(Book.class)
@@ -1668,12 +1668,12 @@ book1.setTitle("Hibernate in Action");
 remoteCache.put(1, book1);
 
 Book book2 = new Book();
-book2.setTile("{brandname} Data Grid Platform");
+book2.setTile("Hibernate Search in Action");
 remoteCache.put(2, book2);
 
 QueryFactory qf = Search.getQueryFactory(remoteCache);
 Query query = qf.from(Book.class)
-            .having("title").like("%{brandname}%").toBuilder()
+            .having("title").like("%Hibernate Search%").toBuilder()
             .build();
 
 List<Book> list = query.list(); // Voila! We have our book back from the cache!
@@ -1736,7 +1736,7 @@ Configuration:
 <distributed-cache name="default">
     <indexing index="LOCAL">
         <property name="default.indexmanager">
-              org.infinispan.query.indexmanager.{brandname}IndexManager
+              org.infinispan.query.indexmanager.InfinispanIndexManager
         </property>
         <!-- Index data in async mode -->
         <property name="default.worker.execution">async</property>
