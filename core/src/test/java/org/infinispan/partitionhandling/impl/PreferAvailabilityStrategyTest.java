@@ -361,23 +361,22 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
       when(context.getCacheName()).thenReturn(CACHE_NAME);
       when(context.resolveConflictsOnMerge()).thenReturn(conflicts.resolve());
       if (conflicts.resolve()) {
-         when(context.calculateConflictHash(cacheA.readConsistentHash(),
+         when(context.calculateConflictHash(cacheC.readConsistentHash(),
                                             setOf(cacheA.readConsistentHash(), cacheC.readConsistentHash())))
-            .thenReturn(conflictResolutionConsistentHash(cacheA, cacheC));
+            .thenReturn(conflictResolutionConsistentHash(cacheC, cacheA));
       }
 
       strategy.onPartitionMerge(context, statusResponses);
 
-      TestClusterCacheStatus expectedCache = cacheA.copy();
-      expectedCache.updateActualMembers(mergeMembers);
+      TestClusterCacheStatus expectedCache = cacheC.copy();
       if (conflicts.resolve()) {
-         expectedCache.startConflictResolution(conflictResolutionConsistentHash(cacheA, cacheC), A, C);
+         expectedCache.startConflictResolution(conflictResolutionConsistentHash(cacheC, cacheA), A, C);
       }
       expectedCache.incrementIdsIfNeeded(cacheC);
       verify(context).updateTopologiesAfterMerge(expectedCache.topology(), expectedCache.stableTopology(), null,
                                                  conflicts.resolve());
       if (!conflicts.resolve()) {
-         verify(context).updateCurrentTopology(mergeMembers);
+         verify(context).updateCurrentTopology(singletonList(C));
       }
       verify(context).queueRebalance(mergeMembers);
       verifyNoMoreInteractions(context);
