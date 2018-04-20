@@ -21,7 +21,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 import static org.testng.AssertJUnit.assertFalse;
 
-@Test(groups = "functional", testName = "partitionhandling.DelayedAvailabilityUpdateTest")
+@Test(groups = "functional", testName = "partitionhandling.ScatteredDelayedAvailabilityUpdateTest")
 public class ScatteredDelayedAvailabilityUpdateTest extends DelayedAvailabilityUpdateTest {
    {
       cacheMode = CacheMode.SCATTERED_SYNC;
@@ -33,6 +33,42 @@ public class ScatteredDelayedAvailabilityUpdateTest extends DelayedAvailabilityU
             new ScatteredDelayedAvailabilityUpdateTest().biasAcquisition(BiasAcquisition.NEVER),
             new ScatteredDelayedAvailabilityUpdateTest().biasAcquisition(BiasAcquisition.ON_WRITE)
       };
+   }
+
+   @Test(groups = "unstable", description = "ISPN-8524")
+   @Override
+   public void testDelayedAvailabilityUpdate0() throws Exception {
+      super.testDelayedAvailabilityUpdate0();
+   }
+
+   @Test(groups = "unstable", description = "ISPN-8524")
+   @Override
+   public void testDelayedAvailabilityUpdate1() throws Exception {
+      super.testDelayedAvailabilityUpdate1();
+   }
+
+   @Test(groups = "unstable", description = "ISPN-8524")
+   @Override
+   public void testDelayedAvailabilityUpdate2() throws Exception {
+      super.testDelayedAvailabilityUpdate2();
+   }
+
+   @Test(groups = "unstable", description = "ISPN-8524")
+   @Override
+   public void testDelayedAvailabilityUpdate3() throws Exception {
+      super.testDelayedAvailabilityUpdate3();
+   }
+
+   @Test(groups = "unstable", description = "ISPN-8524")
+   @Override
+   public void testDelayedAvailabilityUpdate4() throws Exception {
+      super.testDelayedAvailabilityUpdate4();
+   }
+
+   @Test(groups = "unstable", description = "ISPN-8524")
+   @Override
+   public void testDelayedAvailabilityUpdate5() throws Exception {
+      super.testDelayedAvailabilityUpdate5();
    }
 
    @Override
