@@ -75,7 +75,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       context.queueRebalance(newMembers);
    }
 
-   protected void checkForLostData(String cacheName, CacheTopology stableTopology, List<Address> newMembers) {
+   private void checkForLostData(String cacheName, CacheTopology stableTopology, List<Address> newMembers) {
       List<Address> stableMembers = stableTopology.getMembers();
       List<Address> lostMembers = new ArrayList<>(stableMembers);
       lostMembers.removeAll(newMembers);
@@ -150,13 +150,11 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       int mergeRebalanceId = 0;
       for (Partition p : partitions) {
          CacheTopology topology = p.topology;
-         if (topology != null) {
-            if (mergeTopologyId <= topology.getTopologyId()) {
-               mergeTopologyId = topology.getTopologyId() + 1;
-            }
-            if (mergeRebalanceId <= topology.getRebalanceId()) {
-               mergeRebalanceId = topology.getRebalanceId() + 1;
-            }
+         if (mergeTopologyId <= topology.getTopologyId()) {
+            mergeTopologyId = topology.getTopologyId() + 1;
+         }
+         if (mergeRebalanceId <= topology.getRebalanceId()) {
+            mergeRebalanceId = topology.getRebalanceId() + 1;
          }
       }
 
@@ -228,7 +226,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       for (Partition p : partitions) {
          // TODO Investigate comparing the number of segments owned by the senders +
          // the number of the number of segments for partition(senders includes owner) agrees
-         if (p.isPreferable(preferredPartition)) {
+         if (!p.isConflictResolutionOnly() && p.isPreferable(preferredPartition)) {
             preferredPartition = p;
          }
       }
@@ -317,6 +315,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
                   if (trace)
                      log.tracef("Cache %s partition of %s overlaps with partition of %s but possibly holds extra entries",
                                 cacheName, p.senders, referencePartition.senders);
+                  p.setConflictResolutionOnly();
                }
             }
             if (fold) {
@@ -345,6 +344,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       final ConsistentHash readCH;
       final List<Address> actualMembers;
       final List<Address> senders = new ArrayList<>();
+      private boolean conflictResolutionOnly;
 
       Partition(Address sender, CacheTopology topology, CacheTopology stableTopology, ConsistentHash readCH) {
          this.topology = topology;
@@ -369,6 +369,14 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
             return true;
          }
          return false;
+      }
+
+      boolean isConflictResolutionOnly() {
+         return conflictResolutionOnly;
+      }
+
+      void setConflictResolutionOnly() {
+         conflictResolutionOnly = true;
       }
    }
 }

@@ -92,6 +92,9 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
       partition(0).merge(partition(1));
       eventuallyExpectCompleteTopology(client, initialTopology + 7);
       // Check that we got the number of topology updates to NO_REBALANCE right
+      // T+2: NO_REBALANCE in partition [B] before merge
+      // T+3: CONFLICT_RESOLUTION, preferred CH: owners = (1) [test-NodeA-22368: 256+0]
+      // T+4:READ_OLD (rebalance starts), T+5:READ_ALL, T+6:READ_NEW, T+7: NO_REBALANCE
       LocalizedCacheTopology newTopology = advancedCache(0).getDistributionManager().getCacheTopology();
       assertEquals(CacheTopology.Phase.NO_REBALANCE, newTopology.getPhase());
       assertEquals(initialTopology + 7, newTopology.getTopologyId());
@@ -110,11 +113,12 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
       eventuallyExpectPartialTopology(client, initialTopology + 1);
 
       partition(0).merge(partition(1));
-      eventuallyExpectCompleteTopology(client, initialTopology + 3);
+      eventuallyExpectCompleteTopology(client, initialTopology + 6);
       // Check that we got the number of topology updates to NO_REBALANCE right
+      // T+2: CONFLICT_RESOLUTION, preferred CH: owners = (1) [test-NodeA-22368: 256+0]
+      // T+3:READ_OLD (rebalance starts), T+4:READ_ALL, T+5:READ_NEW, T+6: NO_REBALANCE
       LocalizedCacheTopology newTopology = advancedCache(0).getDistributionManager().getCacheTopology();
       assertEquals(CacheTopology.Phase.NO_REBALANCE, newTopology.getPhase());
-      assertEquals(initialTopology + 3, newTopology.getTopologyId());
    }
 
 
