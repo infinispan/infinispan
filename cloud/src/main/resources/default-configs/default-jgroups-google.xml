@@ -22,11 +22,12 @@
            max_interval="30000" 
    />
    <FD_SOCK />
-   <FD_ALL timeout="60000" 
-           interval="15000" 
-           timeout_check_interval="5000" 
+   <!-- Suspect node `timeout` to `timeout + timeout_check_interval` millis after the last heartbeat -->
+   <FD_ALL timeout="10000"
+           interval="2000"
+           timeout_check_interval="1000"
    />
-   <VERIFY_SUSPECT timeout="5000" />
+   <VERIFY_SUSPECT timeout="1000"/>
    <pbcast.NAKACK2 use_mcast_xmit="false"
                    xmit_interval="100"
                    xmit_table_num_rows="50"

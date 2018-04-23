@@ -76,7 +76,7 @@ public class XSiteFileParsingTest extends SingleCacheManagerTest {
             .useTwoPhaseCommit(false).enabled(true);
       assertTrue(dcc.sites().allBackups().contains(nyc.create()));
       BackupConfigurationBuilder sfo = new BackupConfigurationBuilder(null).site("SFO").strategy(BackupStrategy.ASYNC)
-            .backupFailurePolicy(BackupFailurePolicy.WARN).failurePolicyClass(null).replicationTimeout(10000)
+            .backupFailurePolicy(BackupFailurePolicy.WARN).failurePolicyClass(null).replicationTimeout(15000)
             .useTwoPhaseCommit(false).enabled(true);
       assertTrue(dcc.sites().allBackups().contains(sfo.create()));
    }

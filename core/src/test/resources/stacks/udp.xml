@@ -26,7 +26,11 @@
 
    <MERGE3 min_interval="1000" max_interval="5000"/>
    <FD_SOCK sock_conn_timeout="3000"/>
-   <FD_ALL interval="1000" timeout="4000" timeout_check_interval="1000"/>
+   <!-- Suspect node `timeout` to `timeout + timeout_check_interval` millis after the last heartbeat -->
+   <FD_ALL timeout="3000"
+           interval="1000"
+           timeout_check_interval="1000"
+   />
    <VERIFY_SUSPECT timeout="1000"/>
 
    <pbcast.NAKACK2

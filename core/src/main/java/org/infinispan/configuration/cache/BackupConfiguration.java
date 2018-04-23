@@ -11,7 +11,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 public class BackupConfiguration {
    public static final AttributeDefinition<String> SITE = AttributeDefinition.builder("site", null, String.class).immutable().build();
    public static final AttributeDefinition<BackupConfiguration.BackupStrategy> STRATEGY = AttributeDefinition.builder("strategy", BackupConfiguration.BackupStrategy.ASYNC).immutable().build();
-   public static final AttributeDefinition<Long> REPLICATION_TIMEOUT = AttributeDefinition.builder("replicationTimeout", 10000l).xmlName("timeout").build();
+   public static final AttributeDefinition<Long> REPLICATION_TIMEOUT = AttributeDefinition.builder("replicationTimeout", 15000L).xmlName("timeout").build();
    public static final AttributeDefinition<BackupFailurePolicy> FAILURE_POLICY = AttributeDefinition.builder("backupFailurePolicy", BackupFailurePolicy.WARN).xmlName("failure-policy").build();
    public static final AttributeDefinition<String> FAILURE_POLICY_CLASS = AttributeDefinition.builder("failurePolicyClass", null, String.class).immutable().build();
    public static final AttributeDefinition<Boolean> USE_TWO_PHASE_COMMIT = AttributeDefinition.builder("useTwoPhaseCommit", false).immutable().xmlName("two-phase-commit").build();
