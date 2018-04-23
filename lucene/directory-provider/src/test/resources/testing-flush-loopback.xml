@@ -11,7 +11,11 @@
 
 	<MERGE3 max_interval="30000" min_interval="1000"/>
 	<FD_SOCK bind_addr="127.0.0.1" />
-	<FD_ALL />
+   <!-- Suspect node `timeout` to `timeout + timeout_check_interval` millis after the last heartbeat -->
+   <FD_ALL timeout="10000"
+           interval="2000"
+           timeout_check_interval="1000"
+   />
 	<VERIFY_SUSPECT timeout="500" bind_addr="127.0.0.1" />
 	<pbcast.NAKACK2
 			use_mcast_xmit="false"

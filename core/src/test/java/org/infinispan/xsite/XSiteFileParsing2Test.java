@@ -61,10 +61,10 @@ public class XSiteFileParsing2Test extends SingleCacheManagerTest {
             .backupFailurePolicy(BackupFailurePolicy.IGNORE).failurePolicyClass(null).replicationTimeout(12003)
             .useTwoPhaseCommit(false).enabled(true).create();
       BackupConfiguration sfo = new BackupConfigurationBuilder(null).site("SFO").strategy(BackupStrategy.ASYNC)
-            .backupFailurePolicy(BackupFailurePolicy.WARN).failurePolicyClass(null).replicationTimeout(10000)
+            .backupFailurePolicy(BackupFailurePolicy.WARN).failurePolicyClass(null).replicationTimeout(15000)
             .useTwoPhaseCommit(false).enabled(true).create();
       BackupConfiguration lon = new BackupConfigurationBuilder(null).site("LON").strategy(BackupStrategy.SYNC)
-            .backupFailurePolicy(BackupFailurePolicy.WARN).failurePolicyClass(null).replicationTimeout(10000)
+            .backupFailurePolicy(BackupFailurePolicy.WARN).failurePolicyClass(null).replicationTimeout(15000)
             .useTwoPhaseCommit(false).enabled(false).create();
       assertTrue(dcc.sites().allBackups().contains(nyc));
       assertTrue(dcc.sites().allBackups().contains(sfo));
