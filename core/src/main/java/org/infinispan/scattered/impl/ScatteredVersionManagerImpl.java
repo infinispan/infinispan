@@ -16,7 +16,9 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
@@ -52,16 +54,11 @@ import org.infinispan.util.logging.LogFactory;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K> {
-
-   private static final AtomicReferenceFieldUpdater<ScatteredVersionManagerImpl, ConcurrentMap> scheduledKeysSwapper
-      = AtomicReferenceFieldUpdater.newUpdater(ScatteredVersionManagerImpl.class, ConcurrentMap.class, "scheduledKeys");
-   private static final AtomicReferenceFieldUpdater<ScatteredVersionManagerImpl, ConcurrentMap> removedKeysSwapper
-      = AtomicReferenceFieldUpdater.newUpdater(ScatteredVersionManagerImpl.class, ConcurrentMap.class, "removedKeys");
    private static final AtomicIntegerFieldUpdater<ScatteredVersionManagerImpl> topologyIdUpdater
          = AtomicIntegerFieldUpdater.newUpdater(ScatteredVersionManagerImpl.class, "topologyId");
 
-   private static final Log log = LogFactory.getLog(ScatteredVersionManagerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   protected static final Log log = LogFactory.getLog(ScatteredVersionManagerImpl.class);
+   protected static final boolean trace = log.isTraceEnabled();
 
    @Inject private Configuration configuration;
    @Inject private ComponentRegistry componentRegistry;
@@ -84,8 +81,10 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    private AtomicLongArray segmentVersions;
    // holds the topologies in which this node has become the owner of given segment
    private AtomicIntegerArray ownerTopologyIds;
-   private volatile ConcurrentMap<K, InvalidationInfo> scheduledKeys;
-   private volatile ConcurrentMap<K, InvalidationInfo> removedKeys;
+   private ReadWriteLock scheduledKeysLock = new ReentrantReadWriteLock();
+   private ConcurrentMap<K, InvalidationInfo> scheduledKeys;
+   private ReadWriteLock removedKeysLock = new ReentrantReadWriteLock();
+   private ConcurrentMap<K, InvalidationInfo> removedKeys;
 
    private volatile boolean transferringValues = false;
    private volatile int valuesTopology = -1;
@@ -177,30 +176,32 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
 
    @Override
    public void scheduleKeyInvalidation(K key, EntryVersion version, boolean removal) {
-      ConcurrentMap<K, InvalidationInfo> scheduledKeys;
-      do {
-         scheduledKeys = this.scheduledKeys;
-         InvalidationInfo ii = new InvalidationInfo((SimpleClusteredVersion) version, removal);
-         // under race conditions the key is inserted twice but that does not matter too much
+      InvalidationInfo ii = new InvalidationInfo((SimpleClusteredVersion) version, removal);
+      boolean needsSend;
+      Lock readLock = scheduledKeysLock.readLock();
+      readLock.lock();
+      try {
          scheduledKeys.compute(key, (k, old) -> old == null ? ii :
-            ii.version > old.version || (ii.removal && ii.version == old.version) ? ii : old);
-      } while (scheduledKeys != this.scheduledKeys);
-      if (scheduledKeys.size() > invalidationBatchSize) {
-         tryRegularInvalidations(scheduledKeys, false);
+               ii.version > old.version || (ii.removal && ii.version == old.version) ? ii : old);
+         needsSend = scheduledKeys.size() >= invalidationBatchSize;
+      } finally {
+         readLock.unlock();
+      }
+      if (needsSend) {
+         tryRegularInvalidations(false);
       }
    }
 
+   // testing only
    protected boolean startFlush() {
-      ConcurrentMap<K, InvalidationInfo> scheduledKeys = this.scheduledKeys;
       if (!scheduledKeys.isEmpty()) {
-         tryRegularInvalidations(scheduledKeys, true);
+         tryRegularInvalidations(true);
          return true;
       } else {
          // when there are some invalidations, removed invalidations are triggered automatically
          // but here we have to start it manually
-         ConcurrentMap<K, InvalidationInfo> removedKeys = this.removedKeys;
          if (!removedKeys.isEmpty()) {
-            tryRemovedInvalidations(removedKeys);
+            tryRemovedInvalidations();
             return true;
          } else {
             return false;
@@ -394,10 +395,15 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
       return Arrays.asList(array);
    }
 
-   private void tryRegularInvalidations(ConcurrentMap<K, InvalidationInfo> scheduledKeys, boolean force) {
-      if (!scheduledKeysSwapper.compareAndSet(this, scheduledKeys, new ConcurrentHashMap<>(invalidationBatchSize))) {
-         // ignore if there are two concurrent updates
-         return;
+   private void tryRegularInvalidations(boolean force) {
+      ConcurrentMap<K, InvalidationInfo> scheduledKeys;
+      Lock writeLock = scheduledKeysLock.writeLock();
+      writeLock.lock();
+      try {
+         scheduledKeys = this.scheduledKeys;
+         this.scheduledKeys = new ConcurrentHashMap<>(invalidationBatchSize);
+      } finally {
+         writeLock.unlock();
       }
       executorService.execute(() -> {
          // we'll invalidate all keys in one run
@@ -416,14 +422,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
             if (isRemoved[i] = entry.getValue().removal) { // intentional assignment
                numRemoved++;
             }
-            if (++i > numKeys) {
-               // concurrent modification?
-               numKeys = scheduledKeys.size();
-               keys = Arrays.copyOf(keys, numKeys);
-               topologyIds = Arrays.copyOf(topologyIds, numKeys);
-               versions = Arrays.copyOf(versions, numKeys);
-               isRemoved = Arrays.copyOf(isRemoved, numKeys);
-            }
+            ++i;
          }
          InvalidateVersionsCommand command = commandsFactory.buildInvalidateVersionsCommand(-1, keys, topologyIds, versions, false);
          sendRegularInvalidations(command, keys, topologyIds, versions, numRemoved, isRemoved, force);
@@ -445,9 +444,10 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    }
 
    protected void regularInvalidationFinished(Object[] keys, int[] topologyIds, long[] versions, boolean[] isRemoved, boolean force) {
-      ConcurrentMap<K, InvalidationInfo> removedKeys;
-      do {
-         removedKeys = this.removedKeys;
+      boolean needsSend;
+      Lock readLock = removedKeysLock.readLock();
+      readLock.lock();
+      try {
          for (int i = 0; i < isRemoved.length; ++i) {
             if (isRemoved[i]) {
                int topologyId = topologyIds[i];
@@ -462,36 +462,39 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
                });
             }
          }
-      } while (removedKeys != this.removedKeys);
-      if (removedKeys.size() > invalidationBatchSize || (force && !removedKeys.isEmpty())) {
-         tryRemovedInvalidations(removedKeys);
+         needsSend = removedKeys.size() > invalidationBatchSize || (force && !removedKeys.isEmpty());
+      } finally {
+         readLock.unlock();
+      }
+      if (needsSend) {
+         tryRemovedInvalidations();
       }
    }
 
-   private void tryRemovedInvalidations(ConcurrentMap<K, InvalidationInfo> removedKeys) {
-      if (removedKeysSwapper.compareAndSet(this, removedKeys, new ConcurrentHashMap<>(invalidationBatchSize))) {
-         final ConcurrentMap<K, InvalidationInfo> rk = removedKeys;
-         executorService.execute(() -> {
-            int numKeys = rk.size();
-            Object[] keys = new Object[numKeys];
-            int[] topologyIds = new int[numKeys];
-            long[] versions = new long[numKeys];
-            int i = 0;
-            for (Map.Entry<K, InvalidationInfo> entry : rk.entrySet()) {
-               keys[i] = entry.getKey();
-               topologyIds[i] = entry.getValue().topologyId;
-               versions[i] = entry.getValue().version;
-               if (++i > numKeys) {
-                  numKeys = rk.size();
-                  keys = Arrays.copyOf(keys, numKeys);
-                  topologyIds = Arrays.copyOf(topologyIds, numKeys);
-                  versions = Arrays.copyOf(versions, numKeys);
-               }
-            }
-            InvalidateVersionsCommand removeCommand = commandsFactory.buildInvalidateVersionsCommand(-1, keys, topologyIds, versions, true);
-            sendRemoveInvalidations(removeCommand);
-         });
+   private void tryRemovedInvalidations() {
+      final ConcurrentMap<K, InvalidationInfo> removedKeys;
+      Lock writeLock = removedKeysLock.writeLock();
+      writeLock.lock();
+      try {
+         removedKeys = this.removedKeys;
+         this.removedKeys = new ConcurrentHashMap<>(invalidationBatchSize);
+      } finally {
+         writeLock.unlock();
       }
+      executorService.execute(() -> {
+         int numKeys = removedKeys.size();
+         Object[] keys = new Object[numKeys];
+         int[] topologyIds = new int[numKeys];
+         long[] versions = new long[numKeys];
+         int i = 0;
+         for (Map.Entry<K, InvalidationInfo> entry : removedKeys.entrySet()) {
+            keys[i] = entry.getKey();
+            topologyIds[i] = entry.getValue().topologyId;
+            versions[i] = entry.getValue().version;
+         }
+         InvalidateVersionsCommand removeCommand = commandsFactory.buildInvalidateVersionsCommand(-1, keys, topologyIds, versions, true);
+         sendRemoveInvalidations(removeCommand);
+      });
    }
 
    private void sendRemoveInvalidations(InvalidateVersionsCommand removeCommand) {
@@ -516,8 +519,20 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
 
    @Override
    public void clearInvalidations() {
-      scheduledKeysSwapper.set(this, new ConcurrentHashMap<>(invalidationBatchSize));
-      removedKeysSwapper.set(this, new ConcurrentHashMap<>(invalidationBatchSize));
+      Lock writeLock1 = scheduledKeysLock.writeLock();
+      writeLock1.lock();
+      try {
+         scheduledKeys = new ConcurrentHashMap<>(invalidationBatchSize);
+      } finally {
+         writeLock1.unlock();
+      }
+      Lock writeLock2 = removedKeysLock.writeLock();
+      writeLock2.lock();
+      try {
+         removedKeys = new ConcurrentHashMap<>(invalidationBatchSize);
+      } finally {
+         writeLock2.unlock();
+      }
    }
 
    private static class InvalidationInfo {

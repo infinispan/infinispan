@@ -28,8 +28,16 @@ public class ControlledScatteredVersionManager<K> extends ScatteredVersionManage
       for (;;) {
          boolean done = true;
          for (int i = 0; i < svms.length; ++i) {
-            if (regularCounters[i] >= svms[i].regularCounter.get()) done = false;
-            if (expectRemoval && removeCounters[i] >= svms[i].removeCounter.get()) done = false;
+            int svmRegularCounters = svms[i].regularCounter.get();
+            int svmRemoveCounters = svms[i].removeCounter.get();
+            if (regularCounters[i] >= svmRegularCounters) {
+               log.tracef("SVM %d had %d regular invalidations, now has %d", i, regularCounters[i], svmRegularCounters);
+               done = false;
+            }
+            if (expectRemoval && removeCounters[i] >= svmRemoveCounters) {
+               log.tracef("SVM %d had %d remove invalidations, now has %d", i, removeCounters[i], svmRemoveCounters);
+               done = false;
+            }
          }
          if (done) break;
          LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
