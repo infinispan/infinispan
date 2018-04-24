@@ -1,4 +1,4 @@
-package org.infinispan.tools.doclet.jmx;
+package org.infinispan.doclets.jmx;
 
 import java.util.LinkedList;
 import java.util.List;

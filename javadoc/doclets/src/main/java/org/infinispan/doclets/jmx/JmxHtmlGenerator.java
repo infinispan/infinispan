@@ -1,8 +1,8 @@
-package org.infinispan.tools.doclet.jmx;
+package org.infinispan.doclets.jmx;
 
 import java.util.List;
 
-import org.infinispan.tools.doclet.html.HtmlGenerator;
+import org.infinispan.doclets.html.HtmlGenerator;
 
 public class JmxHtmlGenerator extends HtmlGenerator {
    List<MBeanComponent> components;

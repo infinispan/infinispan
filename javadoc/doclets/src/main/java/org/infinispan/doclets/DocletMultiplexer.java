@@ -1,8 +1,9 @@
-package org.infinispan.tools.doclet;
+package org.infinispan.doclets;
 
 import java.lang.reflect.Method;
 
-import org.infinispan.tools.doclet.jmx.JmxDoclet;
+import org.infinispan.doclets.api.PublicAPIDoclet;
+import org.infinispan.doclets.jmx.JmxDoclet;
 
 import com.sun.javadoc.DocErrorReporter;
 import com.sun.javadoc.LanguageVersion;

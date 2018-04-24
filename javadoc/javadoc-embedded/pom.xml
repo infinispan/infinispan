@@ -180,7 +180,7 @@
                      <goal>jar</goal>
                   </goals>
                   <configuration>
-                     <doclet>org.infinispan.tools.doclet.DocletMultiplexer</doclet>
+                     <doclet>org.infinispan.doclets.DocletMultiplexer</doclet>
                      <docletArtifact>
                         <groupId>org.infinispan</groupId>
                         <artifactId>infinispan-tools</artifactId>
@@ -252,7 +252,7 @@
                      <stylesheetfile>${basedir}/src/main/javadoc/stylesheet.css</stylesheetfile>
                      <subpackages>org.infinispan</subpackages>
                      <additionalparam>-Xdoclint:none</additionalparam>
-                     
+
                      <additionalDependencies>
                         <additionalDependency>
                            <groupId>javax.enterprise</groupId>
@@ -308,7 +308,7 @@
             <dependencies>
                <dependency>
                   <groupId>org.infinispan</groupId>
-                  <artifactId>infinispan-tools</artifactId>
+                  <artifactId>infinispan-doclets</artifactId>
                   <version>${project.version}</version>
                </dependency>
             </dependencies>

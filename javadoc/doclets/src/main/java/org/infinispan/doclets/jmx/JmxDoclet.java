@@ -1,4 +1,4 @@
-package org.infinispan.tools.doclet.jmx;
+package org.infinispan.doclets.jmx;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,7 +10,7 @@ import java.util.List;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.tools.doclet.html.HtmlGenerator;
+import org.infinispan.doclets.html.HtmlGenerator;
 
 import com.sun.javadoc.AnnotationDesc;
 import com.sun.javadoc.AnnotationTypeDoc;
@@ -21,7 +21,7 @@ import com.sun.javadoc.LanguageVersion;
 import com.sun.javadoc.MethodDoc;
 import com.sun.javadoc.Parameter;
 import com.sun.javadoc.RootDoc;
-import com.sun.tools.doclets.standard.Standard;
+import com.sun.tools.doclets.formats.html.HtmlDoclet;
 import com.sun.tools.javadoc.Main;
 
 /**
@@ -71,7 +71,7 @@ public class JmxDoclet {
    }
 
    public static int optionLength(String option) {
-      return Standard.optionLength(option);
+      return HtmlDoclet.optionLength(option);
    }
 
    public static boolean validOptions(String options[][], DocErrorReporter reporter) {
@@ -89,7 +89,7 @@ public class JmxDoclet {
          else if (option[0].equals("-doctitle"))
             title = option[1];
       }
-      return Standard.validOptions(options, reporter);
+      return HtmlDoclet.validOptions(options, reporter);
    }
 
    private static String jmxTitle() {

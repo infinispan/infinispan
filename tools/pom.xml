@@ -145,6 +145,12 @@
                </instructions>
             </configuration>
          </plugin>
+         <plugin>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <configuration>
+               <skip>${module.skipSupportModuleDeployment}</skip>
+            </configuration>
+         </plugin>
       </plugins>
    </build>
 </project>

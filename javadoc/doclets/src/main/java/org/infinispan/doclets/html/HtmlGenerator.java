@@ -1,4 +1,4 @@
-package org.infinispan.tools.doclet.html;
+package org.infinispan.doclets.html;
 
 import java.io.FileOutputStream;
 import java.io.IOException;

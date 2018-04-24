@@ -58,10 +58,10 @@
                      <goal>jar</goal>
                   </goals>
                   <configuration>
-                     <doclet>org.infinispan.tools.doclet.DocletMultiplexer</doclet>
+                     <doclet>org.infinispan.doclets.DocletMultiplexer</doclet>
                      <docletArtifact>
                         <groupId>org.infinispan</groupId>
-                        <artifactId>infinispan-tools</artifactId>
+                        <artifactId>infinispan-doclets</artifactId>
                         <version>${project.version}</version>
                      </docletArtifact>
                      <doctitle>${infinispan.brand.name} ${infinispan.base.version} Remote API</doctitle>
