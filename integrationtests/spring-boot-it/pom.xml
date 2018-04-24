@@ -102,6 +102,11 @@
             <scope>test</scope>
             <version>${overridden.version.mockito}</version>
         </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <profiles>

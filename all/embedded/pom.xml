@@ -341,6 +341,7 @@
                            !infinispan.*,
                            !io.netty.internal.tcnative.*,
                            !org.conscrypt.*,
+                           !javax.annotation.*,
                            !javax.cache.*,
                            !javax.enterprise.*,
                            !javax.inject.*,
