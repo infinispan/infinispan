@@ -223,6 +223,7 @@
       <version.hibernate.javax.persistence>1.0.0.Final</version.hibernate.javax.persistence>
       <version.hibernate.search>5.9.0.Final</version.hibernate.search>
       <version.hikaricp>2.4.6</version.hikaricp>
+      <version.javax.activation>1.1.1</version.javax.activation>
       <version.javax.cache>1.0.0</version.javax.cache>
       <version.jboss.logging>3.3.1.Final</version.jboss.logging>
       <version.jboss.marshalling>2.0.2.Final</version.jboss.marshalling>
@@ -277,6 +278,7 @@
       <version.javax.cache>1.1.0</version.javax.cache>
       <version.javax.cache.cache-tests>${version.javax.cache}</version.javax.cache.cache-tests>
       <version.javax.servlet>2.5</version.javax.servlet>
+      <version.jaxb>2.3.0</version.jaxb>
       <version.jboss.common.core>2.2.16.GA</version.jboss.common.core>
       <version.jboss.jboss-transaction-spi>7.6.0.Final</version.jboss.jboss-transaction-spi>
       <version.jboss.logging.processor>1.2.1.Final</version.jboss.logging.processor>
@@ -549,6 +551,12 @@
             <version>${version.javassist}</version>
          </dependency>
          <dependency>
+            <groupId>javax.activation</groupId>
+            <artifactId>activation</artifactId>
+            <scope>test</scope>
+            <version>${version.javax.activation}</version>
+         </dependency>
+         <dependency>
             <groupId>javax.cache</groupId>
             <artifactId>cache-tests</artifactId>
             <version>${version.javax.cache.cache-tests}</version>
@@ -649,6 +657,11 @@
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
             <version>${version.jackson}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>${version.jaxb}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
@@ -1498,6 +1511,16 @@
                      <groupId>org.apache.maven.wagon</groupId>
                      <artifactId>wagon-http-lightweight</artifactId>
                      <version>2.8</version>
+                  </dependency>
+                  <dependency>
+                     <groupId>javax.activation</groupId>
+                     <artifactId>activation</artifactId>
+                     <version>1.1.1</version>
+                  </dependency>
+                  <dependency>
+                     <groupId>org.glassfish.jaxb</groupId>
+                     <artifactId>jaxb-runtime</artifactId>
+                     <version>${version.jaxb}</version>
                   </dependency>
                </dependencies>
             </plugin>

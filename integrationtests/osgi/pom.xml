@@ -14,15 +14,6 @@
    <packaging>bundle</packaging>
    <description>Integration tests for Infinispan running in OSGi/Karaf</description>
 
-   <profiles>
-      <profile>
-         <id>smoke</id>
-         <properties>
-            <skipOSGiTests>true</skipOSGiTests>
-         </properties>
-      </profile>
-   </profiles>
-
    <dependencies>
       <dependency>
          <groupId>org.apache.logging.log4j</groupId>
@@ -369,4 +360,24 @@
          </plugin>
       </plugins>
    </build>
+
+   <profiles>
+      <profile>
+         <id>smoke</id>
+         <properties>
+            <skipOSGiTests>true</skipOSGiTests>
+         </properties>
+      </profile>
+      <profile>
+         <id>jigsaw</id>
+         <activation>
+            <jdk>[9,)</jdk>
+         </activation>
+         <properties>
+            <!-- Until Karaf/Pax Exam work in JDK 10+ -->
+            <skipOSGiTests>true</skipOSGiTests>
+         </properties>
+      </profile>
+   </profiles>
 </project>
+
