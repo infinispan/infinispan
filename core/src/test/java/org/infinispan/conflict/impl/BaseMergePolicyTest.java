@@ -39,21 +39,24 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
    protected Object valueAfterMerge;
    protected PartitionDescriptor p0;
    protected PartitionDescriptor p1;
-   protected int numberOfOwners;
    protected String description;
 
    protected BaseMergePolicyTest() {
       this.partitionHandling = PartitionHandling.ALLOW_READ_WRITES;
-      this.numberOfOwners = 2;
       this.valueAfterMerge = "DURING SPLIT";
    }
 
    protected BaseMergePolicyTest(CacheMode cacheMode, String description, int[] partition1, int[] partition2) {
-      this(cacheMode, description, null, partition1, partition2);
+      this(cacheMode, 2, description, null, partition1, partition2);
    }
 
    protected BaseMergePolicyTest(CacheMode cacheMode, String description, AvailabilityMode availabilityMode,
                        int[] partition1, int[] partition2) {
+      this(cacheMode, 2, description, availabilityMode, partition1, partition2);
+   }
+
+   protected BaseMergePolicyTest(CacheMode cacheMode, int numOwners, String description, AvailabilityMode availabilityMode,
+                                 int[] partition1, int[] partition2) {
       this();
       this.cacheMode = cacheMode;
       this.description = description;
@@ -61,8 +64,11 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       p1 = new PartitionDescriptor(availabilityMode, partition2);
       numMembersInCluster = p0.getNodes().length + p1.getNodes().length;
 
-      if (cacheMode == CacheMode.REPL_SYNC)
+      if (cacheMode == CacheMode.REPL_SYNC) {
          numberOfOwners = numMembersInCluster;
+      } else {
+         this.numberOfOwners = numOwners;
+      }
    }
 
    @Override
@@ -77,7 +83,7 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
 
 
    protected void beforeSplit() {
-      conflictKey = new MagicKey(cache(p0.node(0)), cache(p1.node(0)));
+      conflictKey = numberOfOwners > 1 ? new MagicKey(cache(p0.node(0)), cache(p1.node(0))) : new MagicKey(cache(p0.node(0)));
       cache(p0.node(0)).put(conflictKey, "BEFORE SPLIT");
    }
 
