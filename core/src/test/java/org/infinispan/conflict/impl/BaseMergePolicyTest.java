@@ -97,7 +97,7 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       TestingUtil.waitForNoRebalance(getPartitionCaches(p1));
    }
 
-   protected void performMerge() {
+   protected void performMerge() throws Exception {
       partition(0).merge(partition(1));
    }
 
@@ -120,7 +120,7 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       assertEquals(0, cm.getConflicts().count());
    }
 
-   public void testPartitionMergePolicy() {
+   public void testPartitionMergePolicy() throws Exception {
       if (trace) log.tracef("beforeSplit()");
       beforeSplit();
 
