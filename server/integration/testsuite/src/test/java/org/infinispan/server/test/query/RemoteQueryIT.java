@@ -165,11 +165,6 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
         assertEquals("Tom", projections[1]);
     }
 
-    @Test
-    public void testReindexing()  {
-        remoteCacheManager.administration().reindexCache(remoteCache.getName());
-    }
-
     private User createUser1() {
         User user = new User();
         user.setId(1);
