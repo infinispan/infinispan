@@ -6,6 +6,7 @@ import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.server.test.category.Queries;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
@@ -29,5 +30,10 @@ public class RemoteQueryIspnDirIT extends RemoteQueryIT {
    @Override
    protected RemoteInfinispanServer getServer() {
       return server;
+   }
+
+   @Test
+   public void testReindexing()  {
+      remoteCacheManager.administration().reindexCache(remoteCache.getName());
    }
 }
