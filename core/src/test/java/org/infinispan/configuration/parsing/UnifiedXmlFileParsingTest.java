@@ -136,7 +136,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       ph = cm.getCacheConfiguration("repl").clustering().partitionHandling();
       assertFalse(ph.enabled());
       assertEquals(PartitionHandling.ALLOW_READ_WRITES, ph.whenSplit());
-      assertEquals(MergePolicy.PREFERRED_ALWAYS, ph.mergePolicy());
+      assertEquals(MergePolicy.NONE, ph.mergePolicy());
    }
 
    private static void configurationCheck90(EmbeddedCacheManager cm) {
