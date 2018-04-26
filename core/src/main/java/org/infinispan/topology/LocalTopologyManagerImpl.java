@@ -310,11 +310,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             return false;
          }
 
-         CacheTopologyHandler handler = cacheStatus.getHandler();
-         resetLocalTopologyBeforeRebalance(cacheName, cacheTopology, existingTopology, handler);
-
          if (!updateCacheTopology(cacheName, cacheTopology, viewId, sender, cacheStatus))
             return false;
+
+         CacheTopologyHandler handler = cacheStatus.getHandler();
+         resetLocalTopologyBeforeRebalance(cacheName, cacheTopology, existingTopology, handler);
 
          ConsistentHash currentCH = cacheTopology.getCurrentCH();
          ConsistentHash pendingCH = cacheTopology.getPendingCH();
@@ -414,7 +414,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             return;
 
          // We only need a reset if we missed a topology update
-         if (newCacheTopology.getTopologyId() == oldCacheTopology.getTopologyId() + 1)
+         if (newCacheTopology.getTopologyId() <= oldCacheTopology.getTopologyId() + 1)
             return;
 
          // We have missed a topology update, and that topology might have removed some of our segments.
