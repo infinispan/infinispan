@@ -572,7 +572,6 @@
                --add-opens=java.base/java.time=ALL-UNNAMED
                --add-opens=java.base/java.nio=ALL-UNNAMED
                --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED
-               --add-modules=java.xml.bind
                --add-opens=java.security.sasl/com.sun.security.sasl=ALL-UNNAMED
                --add-opens=java.base/java.text=ALL-UNNAMED
                --add-opens=java.desktop/java.awt.font=ALL-UNNAMED
@@ -595,10 +594,6 @@
                      <configuration>
                         <!-- fork is needed so compiler args can be used -->
                         <fork>true</fork>
-                        <compilerArgs>
-                           <arg>-J--add-modules</arg>
-                           <arg>-Jjava.xml.ws.annotation</arg>
-                        </compilerArgs>
                      </configuration>
                   </plugin>
                </plugins>

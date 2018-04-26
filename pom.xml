@@ -230,7 +230,7 @@
       <version.jgroups>4.0.11.Final</version.jgroups>
       <version.jta>1.0.1.Final</version.jta>
       <version.lucene>5.5.5</version.lucene>
-      <version.maven-compiler-plugin>3.6.1</version.maven-compiler-plugin>
+      <version.maven-compiler-plugin>3.7.0</version.maven-compiler-plugin>
       <version.maven.source>3.0.1</version.maven.source>
       <version.osgi>4.3.1</version.osgi>
       <version.protostream>4.2.0.Final</version.protostream>
@@ -1193,6 +1193,12 @@
          <groupId>org.jboss.logging</groupId>
          <artifactId>jboss-logging-processor</artifactId>
          <version>${version.jboss.logging.processor}</version>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>javax.annotation</groupId>
+         <artifactId>javax.annotation-api</artifactId>
+         <version>1.3.1</version>
          <scope>provided</scope>
       </dependency>
       <dependency>
@@ -2185,14 +2191,6 @@
                   <plugin>
                      <groupId>org.apache.maven.plugins</groupId>
                      <artifactId>maven-compiler-plugin</artifactId>
-                     <configuration>
-                        <!-- fork is needed so compiler args can be used -->
-                        <fork>true</fork>
-                        <compilerArgs>
-                           <arg>-J--add-modules</arg>
-                           <arg>-Jjava.xml.ws.annotation</arg>
-                        </compilerArgs>
-                     </configuration>
                   </plugin>
                </plugins>
             </pluginManagement>
