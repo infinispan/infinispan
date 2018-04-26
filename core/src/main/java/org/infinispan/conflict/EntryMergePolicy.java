@@ -19,10 +19,11 @@ public interface EntryMergePolicy<K, V> {
     * In the event of a partition merge, we define the preferred partition as the partition whom's coordinator is coordinating
     * the current merge.
     *
-    * @param preferredEntry During a partition merge, the preferred entry is the entry that belongs to the preferred partition.
-    *                       If multiple entries exist in the preferred partition, then the preferred entry is the primary
-    *                       owner in the preferred partition. If no entry exists in the preferred partition, then the
-    *                       preferredEntry is null.
+    * @param preferredEntry During a partition merge, the preferredEntry is the primary replica of a CacheEntry stored
+    *                       in the partition that contains the most nodes or if partitions are equal the one with the
+    *                       largest topologyId. In the event of overlapping partitions, i.e. a node A is present in the
+    *                       topology of both partitions {A}, {A,B,C}, we pick {A} as the preferred partition as it will
+    *                       have the higher topologId because the other partition's topology is behind.
     *
     *                       During a non-merge call to {@link ConflictManager#resolveConflicts()}, the preferredEntry is
     *                       simply the primary owner of an entry
