@@ -230,7 +230,7 @@
       <version.jgroups>4.0.11.Final</version.jgroups>
       <version.jta>1.0.1.Final</version.jta>
       <version.lucene>5.5.5</version.lucene>
-      <version.maven-compiler-plugin>3.7.0</version.maven-compiler-plugin>
+      <version.maven-compiler-plugin>3.7.0-jboss-1</version.maven-compiler-plugin> <!-- MCOMPILER-320 -->
       <version.maven.source>3.0.1</version.maven.source>
       <version.osgi>4.3.1</version.osgi>
       <version.protostream>4.2.0.Final</version.protostream>
@@ -306,7 +306,7 @@
       <version.maven.jar>3.0.2</version.maven.jar>
       <version.maven.plugin>3.5</version.maven.plugin>
       <version.maven.remote.resource>1.1</version.maven.remote.resource>
-      <version.maven.shade>2.4.3</version.maven.shade>
+      <version.maven.shade>3.1.1</version.maven.shade>
       <version.maven.surefire>2.21.0</version.maven.surefire>
       <version.mc4j>1.2.6</version.mc4j>
       <version.metainf-services>1.7</version.metainf-services>
@@ -2169,7 +2169,6 @@
                --add-opens=java.base/java.time=ALL-UNNAMED
                --add-opens=java.base/java.nio=ALL-UNNAMED
                --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED
-               --add-modules=java.xml.bind
                --add-exports=java.security.sasl/com.sun.security.sasl=ALL-UNNAMED
                --add-opens=java.base/java.text=ALL-UNNAMED
                --add-opens=java.desktop/java.awt.font=ALL-UNNAMED
