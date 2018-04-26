@@ -9,7 +9,7 @@
    </parent>
 
    <artifactId>infinispan-commons</artifactId>
-   <packaging>bundle</packaging>
+   <packaging>jar</packaging>
    <name>Infinispan Commons</name>
    <description>Infinispan Commons</description>
 
@@ -102,28 +102,6 @@
             </configuration>
          </plugin>
          <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.commons.*;version=${project.version};-split-package:=error,
-                     ${project.groupId}.counter.*;version=${project.version};-split-package:=error,
-                     ${project.groupId}.multimap.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-                  <!-- Relax the versioning rule for osgi packages as a specific version is provided by the container and
-                       it might not match the one used to build. -->
-                  <Import-Package><![CDATA[
-                  !sun.misc,
-                  *
-                  ]]>
-                  </Import-Package>
-                  <!-- Required for loading client classes. -->
-                  <DynamicImport-Package>*</DynamicImport-Package>
-               </instructions>
-            </configuration>
-         </plugin>
-         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
@@ -179,6 +157,65 @@
             </executions>
          </plugin>
          <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <extensions>false</extensions>
+            <configuration>
+               <instructions>
+                  <Bundle-DocURL>http://www.infinispan.org/</Bundle-DocURL>
+                  <!-- Required for loading client classes. -->
+                  <DynamicImport-Package>*</DynamicImport-Package>
+                  <Export-Package>
+                     ${project.groupId}.commons.*;version=${project.version};-split-package:=error,
+                     ${project.groupId}.counter.*;version=${project.version};-split-package:=error,
+                     ${project.groupId}.multimap.*;version=${project.version};-split-package:=error
+                  </Export-Package>
+                  <!-- Relax the versioning rule for osgi packages as a specific version is provided by the container and
+                       it might not match the one used to build. -->
+                  <Import-Package><![CDATA[
+                  !sun.misc,
+                  !sun.reflect,
+                  *
+                  ]]>
+                  </Import-Package>
+                  <_consumer-policy>${bnd.consumer.policy}</_consumer-policy>
+                  <_provider-policy>${bnd.provider.policy}</_provider-policy>
+                  <Include-Resource>{maven-resources}</Include-Resource>
+                  <Implementation-Build-Commit-Id>${buildNumber}</Implementation-Build-Commit-Id>
+                  <Implementation-Build-Branch>${scmBranch}</Implementation-Build-Branch>
+               </instructions>
+            </configuration>
+            <executions>
+               <execution>
+                  <id>versions</id>
+                  <phase>validate</phase>
+                  <goals>
+                     <goal>cleanVersions</goal>
+                  </goals>
+                  <configuration>
+                     <versions>
+                        <infinispan.osgi.version.clean>${project.version}</infinispan.osgi.version.clean>
+                     </versions>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>bundle-manifest</id>
+                  <phase>prepare-package</phase>
+                  <goals>
+                     <goal>manifest</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+               <archive>
+                  <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+               </archive>
+            </configuration>
+         </plugin>
+         <plugin>
             <groupId>org.apache.karaf.tooling</groupId>
             <artifactId>karaf-maven-plugin</artifactId>
             <configuration>
@@ -191,6 +228,93 @@
    </build>
 
    <profiles>
+      <profile>
+         <id>java10</id>
+         <activation>
+            <jdk>[10,)</jdk>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-dependency-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>jdk-misc</id>
+                        <phase>process-sources</phase>
+                        <goals>
+                           <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                           <!-- Download org.jboss:jdk-misc to the target directory -->
+                           <artifactItems>
+                              <artifactItem>
+                                 <groupId>org.jboss</groupId>
+                                 <artifactId>jdk-misc</artifactId>
+                                 <version>2.Final</version>
+                                 <type>jar</type>
+                                 <overWrite>true</overWrite>
+                                 <outputDirectory>${project.build.directory}</outputDirectory>
+                                 <destFileName>jdk-misc.jar</destFileName>
+                              </artifactItem>
+                           </artifactItems>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-compiler-plugin</artifactId>
+                  <configuration>
+                     <compilerArgument combine.children="append">-XDignore.symbol.file</compilerArgument>
+                     <!-- Forking is necessary to allow for the compiler args to be picked up. -->
+                     <fork combine.children="append">true</fork>
+                     <source>1.8</source>
+                     <target>1.8</target>
+                     <!-- Include a skeleton implementations of some classes removed in JDK10+ -->
+                     <additionalClasspathElements>
+                        <additionalClasspathElement>${project.build.directory}/jdk-misc.jar</additionalClasspathElement>
+                     </additionalClasspathElements>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <id>java10-compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                           <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                           <release>9</release>
+                           <compileSourceRoots>${project.basedir}/src/main/java10</compileSourceRoots>
+                           <outputDirectory>${project.build.directory}/classes/META-INF/versions/10</outputDirectory>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <!-- Put the newer classes at the beginning of the classpath -->
+                     <classesDirectory>${project.build.directory}/classes/META-INF/versions/10</classesDirectory>
+                     <!-- Put the base classes next on the classpath -->
+                     <additionalClasspathElements>
+                         <additionalClasspathElement>${project.build.outputDirectory}</additionalClasspathElement>
+                     </additionalClasspathElements>
+                  </configuration>
+               </plugin>
+               <plugin>
+                  <artifactId>maven-jar-plugin</artifactId>
+                  <configuration>
+                     <archive>
+                        <manifestEntries>
+                           <Multi-Release>true</Multi-Release>
+                        </manifestEntries>
+                     </archive>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
       <profile>
          <id>smoke</id>
          <build>

@@ -12,7 +12,7 @@ import java.util.Stack;
 
 import javax.security.auth.Subject;
 
-import sun.reflect.Reflection;
+import org.infinispan.commons.jdkspecific.CallerId;
 
 /**
  * Security. A simple class to implement caller privileges without a security manager and a
@@ -26,43 +26,11 @@ import sun.reflect.Reflection;
  * @author Tristan Tarrant
  * @since 7.0
  */
-@SuppressWarnings({ "restriction", "deprecation" })
 public final class Security {
-   private static final boolean hasGetCallerClass;
-   private static final int callerOffset;
-   private static final LocalSecurityManager SECURITY_MANAGER;
 
-   static {
-      boolean result = false;
-      int offset = 0;
-      try {
-         result = Reflection.getCallerClass(1) == Security.class || Reflection.getCallerClass(2) == Security.class;
-         offset = Reflection.getCallerClass(1) == Reflection.class ? 2 : 1;
-      } catch (Throwable ignored) {
-      }
-      hasGetCallerClass = result;
-      callerOffset = offset;
-      if (!hasGetCallerClass) {
-         SECURITY_MANAGER = new LocalSecurityManager();
-      } else {
-         SECURITY_MANAGER = null;
-      }
-   }
+   private static final ThreadLocal<Boolean> PRIVILEGED = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
-   private static class LocalSecurityManager extends SecurityManager {
-      public Class<?>[] getClasses() {
-          return this.getClassContext();
-      }
-  }
-
-   private static final ThreadLocal<Boolean> PRIVILEGED = new ThreadLocal<Boolean>() {
-      @Override
-      protected Boolean initialValue() {
-         return Boolean.FALSE;
-      }
-   };
-
-   private static final ThreadLocal<Stack<Subject>> SUBJECT = new ThreadLocal<Stack<Subject>>();
+   private static final ThreadLocal<Stack<Subject>> SUBJECT = new ThreadLocal<>();
 
    private static boolean isTrustedClass(Class<?> klass) {
       // TODO: implement a better way
@@ -70,7 +38,7 @@ public final class Security {
    }
 
    public static <T> T doPrivileged(PrivilegedAction<T> action) {
-      if (!isPrivileged() && isTrustedClass(getCallerClass(2))) {
+      if (!isPrivileged() && isTrustedClass(CallerId.getCallerClass(3))) {
          try {
             PRIVILEGED.set(true);
             return action.run();
@@ -83,7 +51,7 @@ public final class Security {
    }
 
    public static <T> T doPrivileged(PrivilegedExceptionAction<T> action) throws PrivilegedActionException {
-      if (!isPrivileged() && isTrustedClass(getCallerClass(2))) {
+      if (!isPrivileged() && isTrustedClass(CallerId.getCallerClass(3))) {
          try {
             PRIVILEGED.set(true);
             return action.run();
@@ -110,7 +78,7 @@ public final class Security {
    public static <T> T doAs(final Subject subject, final java.security.PrivilegedAction<T> action) {
       Stack<Subject> stack = SUBJECT.get();
       if (stack == null) {
-         stack = new Stack<Subject>();
+         stack = new Stack<>();
          SUBJECT.set(stack);
       }
       stack.push(subject);
@@ -135,7 +103,7 @@ public final class Security {
          throws java.security.PrivilegedActionException {
       Stack<Subject> stack = SUBJECT.get();
       if (stack == null) {
-         stack = new Stack<Subject>();
+         stack = new Stack<>();
          SUBJECT.set(stack);
       }
       stack.push(subject);
@@ -192,13 +160,5 @@ public final class Security {
          }
       }
       return null;
-   }
-
-   static Class<?> getCallerClass(int n) {
-      if (hasGetCallerClass) {
-         return Reflection.getCallerClass(n + callerOffset);
-      } else {
-         return SECURITY_MANAGER.getClasses()[n + callerOffset];
-      }
    }
 }
