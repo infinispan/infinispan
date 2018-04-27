@@ -17,7 +17,7 @@ import static org.infinispan.tools.store.migrator.Element.TARGET;
 import static org.infinispan.tools.store.migrator.Element.TIMESTAMP;
 import static org.infinispan.tools.store.migrator.Element.TYPE;
 import static org.infinispan.tools.store.migrator.Element.USERNAME;
-import static org.infinispan.tools.store.migrator.MarshallerType.CURRENT;
+import static org.infinispan.tools.store.migrator.marshaller.MarshallerType.CURRENT;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
@@ -46,7 +46,7 @@ import org.testng.annotations.Test;
 /**
  * ISPN-7850: A test to ensure that Serializers are loaded correctly and a StackOverflowError does not occur.
  */
-@Test(testName = "tools.Test", groups = "functional")
+@Test(testName = "org.infinispan.tools.store.migrator.MigratorSerializerTest", groups = "functional")
 public class MigratorSerializerTest {
 
    private static final String DB_URL = "jdbc:h2:mem:%s;DB_CLOSE_DELAY=-1";
@@ -66,7 +66,7 @@ public class MigratorSerializerTest {
    private StoreMigrator migrator;
 
    @BeforeMethod(alwaysRun = true)
-   public void setUp() throws Exception {
+   public void setUp() {
       Configuration config = createDatabaseConfig(true);
       EmbeddedCacheManager cacheManager = new DefaultCacheManager(GLOBAL_CONFIG, config);
       Cache<Object, Object> cache = cacheManager.getCache(this.getClass().getName());

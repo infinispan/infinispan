@@ -31,13 +31,17 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
 import org.infinispan.test.data.Person;
+import org.infinispan.tools.store.migrator.jdbc.JdbcConfigurationUtil;
 import org.infinispan.tools.store.migrator.marshaller.LegacyVersionAwareMarshaller;
+import org.infinispan.tools.store.migrator.marshaller.MarshallerType;
+import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -63,8 +67,8 @@ public class MigratorConfigurationTest {
       properties.put(propKey(SOURCE, MARSHALLER, TYPE), MarshallerType.CUSTOM.toString());
       properties.put(propKey(SOURCE, MARSHALLER, CLASS), GenericJBossMarshaller.class.getName());
 
-      MigratorConfiguration config = new MigratorConfiguration(true, properties);
-      StreamingMarshaller marshaller = config.getMarshaller();
+      StoreProperties props = new StoreProperties(SOURCE, properties);
+      StreamingMarshaller marshaller = SerializationConfigUtil.getMarshaller(props);
       assert marshaller != null;
       assert marshaller instanceof GenericJBossMarshaller;
    }
@@ -75,8 +79,8 @@ public class MigratorConfigurationTest {
       properties.put(propKey(SOURCE, MARSHALLER, TYPE), MarshallerType.LEGACY.toString());
       properties.put(propKey(SOURCE, MARSHALLER, EXTERNALIZERS), externalizers);
 
-      MigratorConfiguration config = new MigratorConfiguration(true, properties);
-      StreamingMarshaller marshaller = config.getMarshaller();
+      StoreProperties props = new StoreProperties(SOURCE, properties);
+      StreamingMarshaller marshaller = SerializationConfigUtil.getMarshaller(props);
       assert marshaller != null;
       assert marshaller instanceof LegacyVersionAwareMarshaller;
 
@@ -93,8 +97,8 @@ public class MigratorConfigurationTest {
       properties.put(propKey(SOURCE, MARSHALLER, TYPE), MarshallerType.CURRENT.toString());
       properties.put(propKey(SOURCE, MARSHALLER, EXTERNALIZERS), externalizers);
 
-      MigratorConfiguration config = new MigratorConfiguration(true, properties);
-      StreamingMarshaller marshaller = config.getMarshaller();
+      StoreProperties props = new StoreProperties(SOURCE, properties);
+      StreamingMarshaller marshaller = SerializationConfigUtil.getMarshaller(props);
       assert marshaller != null;
       assert marshaller instanceof GlobalMarshaller;
       byte[] bytes = marshaller.objectToByteBuffer(new Person(Person.class.getName()));
@@ -105,7 +109,7 @@ public class MigratorConfigurationTest {
       assert externalizerWriteCount.get() == 1;
    }
 
-   public void testDbPropertiesLoaded() throws Exception {
+   public void testDbPropertiesLoaded() {
       Properties properties = createBaseProperties();
       properties.putAll(createBaseProperties(TARGET));
       Element[] storeTypes = new Element[] {SOURCE, TARGET};
@@ -117,8 +121,10 @@ public class MigratorConfigurationTest {
       }
 
       for (Element storeType : storeTypes) {
-         MigratorConfiguration migratorConfig = new MigratorConfiguration(storeType == SOURCE, properties);
-         JdbcStringBasedStoreConfigurationBuilder builder = migratorConfig.getJdbcConfigBuilder();
+         StoreProperties props = new StoreProperties(storeType, properties);
+         JdbcStringBasedStoreConfigurationBuilder builder = new ConfigurationBuilder().persistence()
+               .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
+         builder = JdbcConfigurationUtil.configureStore(props, builder);
          Configuration cacheConfig = builder.build();
          JdbcStringBasedStoreConfiguration config = (JdbcStringBasedStoreConfiguration) cacheConfig.persistence().stores().get(0);
          assert config.dbMajorVersion() == 1;
@@ -170,7 +176,7 @@ public class MigratorConfigurationTest {
       }
 
       @Override
-      public Person readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public Person readObject(ObjectInput input) throws IOException {
          externalizerReadCount.incrementAndGet();
          Person person = new Person();
          person.setName(MarshallUtil.unmarshallString(input));

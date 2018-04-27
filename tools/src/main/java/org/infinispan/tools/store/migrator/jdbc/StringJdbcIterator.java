@@ -1,4 +1,4 @@
-package org.infinispan.tools.store.migrator;
+package org.infinispan.tools.store.migrator.jdbc;
 
 import java.io.IOException;
 import java.io.InputStream;

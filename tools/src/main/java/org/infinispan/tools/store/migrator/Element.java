@@ -1,12 +1,10 @@
 package org.infinispan.tools.store.migrator;
 
-import java.util.Properties;
-
 /**
  * @author Ryan Emerson
  * @since 9.0
  */
-enum Element {
+public enum Element {
 
    BATCH("batch"),
    BINARY("binary"),
@@ -47,14 +45,5 @@ enum Element {
    @Override
    public String toString() {
       return name;
-   }
-
-   static String property(Properties properties, Element... elements) {
-      StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < elements.length; i++) {
-         sb.append(elements[i].toString());
-         if (i != elements.length - 1) sb.append(".");
-      }
-      return properties.getProperty(sb.toString());
    }
 }
