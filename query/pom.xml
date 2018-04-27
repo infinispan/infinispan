@@ -173,36 +173,9 @@
       <plugins>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>copy-agent</id>
-                  <phase>process-test-classes</phase>
-                  <goals>
-                     <goal>copy</goal>
-                  </goals>
-                  <configuration>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>org.jboss.byteman</groupId>
-                           <artifactId>byteman</artifactId>
-                           <outputDirectory>${project.build.directory}/agents</outputDirectory>
-                           <destFileName>byteman.jar</destFileName>
-                        </artifactItem>
-                     </artifactItems>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-               <argLine>-javaagent:${project.build.directory}/agents/byteman.jar=port:9091,boot:${project.build.directory}/agents/byteman.jar
-                  ${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
-               <systemPropertyVariables>
-                  <org.jboss.byteman.contrib.bmunit.agent.inhibit>true</org.jboss.byteman.contrib.bmunit.agent.inhibit>
-               </systemPropertyVariables>
+               <argLine>${forkJvmArgs} ${testjvm.jigsawArgs} -Djdk.attach.allowAttachSelf=true</argLine>
                <disableXmlReport>false</disableXmlReport>
             </configuration>
          </plugin>

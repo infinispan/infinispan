@@ -84,11 +84,6 @@
         </dependency>
         <dependency>
             <groupId>org.jboss.byteman</groupId>
-            <artifactId>byteman</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.byteman</groupId>
             <artifactId>byteman-bmunit</artifactId>
             <scope>test</scope>
         </dependency>
@@ -140,13 +135,12 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration combine.self="override">
-                    <argLine>-javaagent:${project.build.directory}/agents/byteman.jar=port:9091,boot:${project.build.directory}/agents/byteman.jar ${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
+                    <argLine>${forkJvmArgs} ${testjvm.jigsawArgs} -Djdk.attach.allowAttachSelf=true</argLine>
                     <groups combine.self="override">${defaultJUnitGroups}</groups>
                     <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
                     <systemPropertyVariables>
                         <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                         <build.directory>${project.build.directory}</build.directory>
-                        <org.jboss.byteman.contrib.bmunit.agent.inhibit>true</org.jboss.byteman.contrib.bmunit.agent.inhibit>
                     </systemPropertyVariables>
                     <trimStackTrace>false</trimStackTrace>
                 </configuration>

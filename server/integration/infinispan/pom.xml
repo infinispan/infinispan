@@ -252,7 +252,7 @@
                         <build.directory>${project.build.directory}</build.directory>
                     </systemPropertyVariables>
                     <trimStackTrace>false</trimStackTrace>
-                    <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
+                    <argLine>${forkJvmArgs} ${testjvm.jigsawArgs} -Djdk.attach.allowAttachSelf=true</argLine>
                 </configuration>
                 <dependencies>
                     <dependency>
