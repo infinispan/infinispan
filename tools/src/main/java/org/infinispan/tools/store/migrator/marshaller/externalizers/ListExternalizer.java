@@ -1,4 +1,4 @@
-package org.infinispan.tools.jdbc.migrator.marshaller.externalizers;
+package org.infinispan.tools.store.migrator.marshaller.externalizers;
 
 import java.io.IOException;
 import java.io.ObjectInput;

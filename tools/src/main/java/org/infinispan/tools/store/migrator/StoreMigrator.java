@@ -1,7 +1,4 @@
-package org.infinispan.tools.jdbc.migrator;
-
-import static org.infinispan.tools.jdbc.migrator.Element.BATCH;
-import static org.infinispan.tools.jdbc.migrator.Element.SIZE;
+package org.infinispan.tools.store.migrator;
 
 import java.io.FileReader;
 import java.util.Properties;
@@ -23,18 +20,18 @@ import org.infinispan.marshall.core.MarshalledEntry;
  * @author Ryan Emerson
  * @since 9.0
  */
-public class JDBCMigrator {
+public class StoreMigrator {
 
    private static final int DEFAULT_BATCH_SIZE = 1000;
    private final String defaultCacheName = this.getClass().getName();
    private final Properties properties;
 
-   JDBCMigrator(Properties properties) {
+   StoreMigrator(Properties properties) {
       this.properties = properties;
    }
 
    void run() throws Exception {
-      String batchSizeProp = properties.getProperty(BATCH + "." + SIZE);
+      String batchSizeProp = properties.getProperty(Element.BATCH + "." + Element.SIZE);
       int batchLimit = batchSizeProp != null ? new Integer(batchSizeProp) : DEFAULT_BATCH_SIZE;
 
       try (JdbcStoreReader sourceReader = initAndGetSourceReader()) {
@@ -79,11 +76,11 @@ public class JDBCMigrator {
 
    public static void main(String[] args) throws Exception {
       if (args.length != 1) {
-         System.err.println("Usage: JDBCMigrator migrator.properties");
+         System.err.println("Usage: StoreMigrator migrator.properties");
          System.exit(1);
       }
       Properties properties = new Properties();
       properties.load(new FileReader(args[0]));
-      new JDBCMigrator(properties).run();
+      new StoreMigrator(properties).run();
    }
 }

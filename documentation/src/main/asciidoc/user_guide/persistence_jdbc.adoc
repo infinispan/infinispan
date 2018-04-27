@@ -129,14 +129,14 @@ NOTE: If you're connecting to an Apache Derby database, make sure you set dataCo
 The JDBC Mixed and Binary stores, available in previous versions of {brandname} have been removed due to the poor performance associated with storing entries in buckets.
 Storing entries in buckets is non-optimal as each read/write to the store requires an existing bucket for a given hash to be retrieved,
 deserialised, updated, serialised and then re-inserted back into the db. To assist users, we have created a migration tool
-`JDBCMigrator.java`, that reads data from an existing Mixed/Binary store and then stores it in a string keyed table via the
+`StoreMigrator.java`, that reads data from an existing Mixed/Binary store and then stores it in a string keyed table via the
 <<_JDBC_String_based_Cache_Store, JdbcStringBasedStore>>.
 
 NOTE: New versions might make changes to the persistent storage format. Refer to the link:../upgrading/upgrading.html[upgrading guide]
 to see if you need to use the JDBC Migrator.
 
 ===== Usage
-The JDBC migrator `org.infinispan.tools.jdbc.migrator.JDBCMigrator` takes a single argument, the path to a
+The`StoreMigrator` takes a single argument, the path to a
 `.properties` file which must contain the configuration properties for both the source and target stores. An example
 properties file containing all applicable configuration options can be found
 link:https://github.com/infinispan/infinispan/blob/master/tools/src/main/resources/migrator.properties[here].
@@ -181,7 +181,7 @@ is presented below:
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>org.infinispan.tools.jdbc.migrator.JDBCMigrator</mainClass>
+                    <mainClass>StoreMigrator</mainClass>
                     <arguments>
                         <argument><!-- PATH TO YOUR MIGRATOR.PROPERTIES FILE --></argument>
                     </arguments>

@@ -1,4 +1,4 @@
-package org.infinispan.tools.jdbc.migrator.marshaller;
+package org.infinispan.tools.store.migrator.marshaller;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -34,12 +34,12 @@ import org.infinispan.marshall.exts.EnumSetExternalizer;
 import org.infinispan.marshall.exts.MapExternalizer;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
-import org.infinispan.tools.jdbc.migrator.marshaller.externalizers.ArrayExternalizers;
-import org.infinispan.tools.jdbc.migrator.marshaller.externalizers.ImmutableListCopyExternalizer;
-import org.infinispan.tools.jdbc.migrator.marshaller.externalizers.LegacyIds;
-import org.infinispan.tools.jdbc.migrator.marshaller.externalizers.ListExternalizer;
-import org.infinispan.tools.jdbc.migrator.marshaller.externalizers.SetExternalizer;
-import org.infinispan.tools.jdbc.migrator.marshaller.externalizers.SingletonListExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.externalizers.ArrayExternalizers;
+import org.infinispan.tools.store.migrator.marshaller.externalizers.ImmutableListCopyExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.externalizers.LegacyIds;
+import org.infinispan.tools.store.migrator.marshaller.externalizers.ListExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.externalizers.SetExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.externalizers.SingletonListExternalizer;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
