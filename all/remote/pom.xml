@@ -313,7 +313,7 @@
                   <configuration>
                      <artifacts>
                         <artifact>
-                           <file>target/classes/features.xml</file>
+                           <file>${project.build.outputDirectory}/features.xml</file>
                            <type>xml</type>
                            <classifier>features</classifier>
                         </artifact>
@@ -330,8 +330,7 @@
                      <skipAttach>${skipCreateSourcesJar}</skipAttach>
                      <artifacts>
                         <artifact>
-                           <!-- maven-shade-plugin 2.4.3 doesn't use finalName for the sources jar, 3.0.0 does -->
-                           <file>target/${project.build.finalName}-shaded-sources.jar</file>
+                           <file>${project.build.directory}/${intermediary_jar_name}-sources.jar</file>
                            <type>jar</type>
                            <classifier>sources</classifier>
                         </artifact>

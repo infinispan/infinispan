@@ -301,7 +301,7 @@
       <version.maven.antlr3>3.5.2</version.maven.antlr3>
       <version.maven.antrun>1.8</version.maven.antrun>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>
-      <version.maven.bundle>2.4.0</version.maven.bundle>
+      <version.maven.bundle>3.5.0</version.maven.bundle>
       <version.maven.invoker>1.8</version.maven.invoker>
       <version.maven.jar>3.0.2</version.maven.jar>
       <version.maven.plugin>3.5</version.maven.plugin>
