@@ -1,4 +1,4 @@
-package org.infinispan.tools.jdbc.migrator;
+package org.infinispan.tools.store.migrator;
 
 /**
  * @author Ryan Emerson

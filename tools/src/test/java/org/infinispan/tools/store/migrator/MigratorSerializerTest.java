@@ -1,23 +1,23 @@
-package org.infinispan.tools.jdbc.migrator;
+package org.infinispan.tools.store.migrator;
 
-import static org.infinispan.tools.jdbc.migrator.Element.CACHE_NAME;
-import static org.infinispan.tools.jdbc.migrator.Element.CONNECTION_POOL;
-import static org.infinispan.tools.jdbc.migrator.Element.CONNECTION_URL;
-import static org.infinispan.tools.jdbc.migrator.Element.DATA;
-import static org.infinispan.tools.jdbc.migrator.Element.DIALECT;
-import static org.infinispan.tools.jdbc.migrator.Element.DRIVER_CLASS;
-import static org.infinispan.tools.jdbc.migrator.Element.ID;
-import static org.infinispan.tools.jdbc.migrator.Element.MARSHALLER;
-import static org.infinispan.tools.jdbc.migrator.Element.NAME;
-import static org.infinispan.tools.jdbc.migrator.Element.SOURCE;
-import static org.infinispan.tools.jdbc.migrator.Element.STRING;
-import static org.infinispan.tools.jdbc.migrator.Element.TABLE;
-import static org.infinispan.tools.jdbc.migrator.Element.TABLE_NAME_PREFIX;
-import static org.infinispan.tools.jdbc.migrator.Element.TARGET;
-import static org.infinispan.tools.jdbc.migrator.Element.TIMESTAMP;
-import static org.infinispan.tools.jdbc.migrator.Element.TYPE;
-import static org.infinispan.tools.jdbc.migrator.Element.USERNAME;
-import static org.infinispan.tools.jdbc.migrator.MarshallerType.CURRENT;
+import static org.infinispan.tools.store.migrator.Element.CACHE_NAME;
+import static org.infinispan.tools.store.migrator.Element.CONNECTION_POOL;
+import static org.infinispan.tools.store.migrator.Element.CONNECTION_URL;
+import static org.infinispan.tools.store.migrator.Element.DATA;
+import static org.infinispan.tools.store.migrator.Element.DIALECT;
+import static org.infinispan.tools.store.migrator.Element.DRIVER_CLASS;
+import static org.infinispan.tools.store.migrator.Element.ID;
+import static org.infinispan.tools.store.migrator.Element.MARSHALLER;
+import static org.infinispan.tools.store.migrator.Element.NAME;
+import static org.infinispan.tools.store.migrator.Element.SOURCE;
+import static org.infinispan.tools.store.migrator.Element.STRING;
+import static org.infinispan.tools.store.migrator.Element.TABLE;
+import static org.infinispan.tools.store.migrator.Element.TABLE_NAME_PREFIX;
+import static org.infinispan.tools.store.migrator.Element.TARGET;
+import static org.infinispan.tools.store.migrator.Element.TIMESTAMP;
+import static org.infinispan.tools.store.migrator.Element.TYPE;
+import static org.infinispan.tools.store.migrator.Element.USERNAME;
+import static org.infinispan.tools.store.migrator.MarshallerType.CURRENT;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
@@ -63,7 +63,7 @@ public class MigratorSerializerTest {
 
    private static final GlobalConfiguration GLOBAL_CONFIG = new GlobalConfigurationBuilder().build();
 
-   private JDBCMigrator migrator;
+   private StoreMigrator migrator;
 
    @BeforeMethod(alwaysRun = true)
    public void setUp() throws Exception {
@@ -75,7 +75,7 @@ public class MigratorSerializerTest {
       Properties props = new Properties();
       createDatabaseConfigProperties(props, true);
       createDatabaseConfigProperties(props, false);
-      migrator = new JDBCMigrator(props);
+      migrator = new StoreMigrator(props);
    }
 
    public void testSerializerLoaded() throws Exception {

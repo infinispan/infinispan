@@ -1,32 +1,4 @@
-package org.infinispan.tools.jdbc.migrator;
-
-import static org.infinispan.tools.jdbc.migrator.Element.BINARY;
-import static org.infinispan.tools.jdbc.migrator.Element.CACHE_NAME;
-import static org.infinispan.tools.jdbc.migrator.Element.CLASS;
-import static org.infinispan.tools.jdbc.migrator.Element.CONNECTION_POOL;
-import static org.infinispan.tools.jdbc.migrator.Element.CONNECTION_URL;
-import static org.infinispan.tools.jdbc.migrator.Element.DATA;
-import static org.infinispan.tools.jdbc.migrator.Element.DB;
-import static org.infinispan.tools.jdbc.migrator.Element.DIALECT;
-import static org.infinispan.tools.jdbc.migrator.Element.DISABLE_INDEXING;
-import static org.infinispan.tools.jdbc.migrator.Element.DISABLE_UPSERT;
-import static org.infinispan.tools.jdbc.migrator.Element.DRIVER_CLASS;
-import static org.infinispan.tools.jdbc.migrator.Element.EXTERNALIZERS;
-import static org.infinispan.tools.jdbc.migrator.Element.ID;
-import static org.infinispan.tools.jdbc.migrator.Element.KEY_TO_STRING_MAPPER;
-import static org.infinispan.tools.jdbc.migrator.Element.MAJOR_VERSION;
-import static org.infinispan.tools.jdbc.migrator.Element.MARSHALLER;
-import static org.infinispan.tools.jdbc.migrator.Element.MINOR_VERSION;
-import static org.infinispan.tools.jdbc.migrator.Element.NAME;
-import static org.infinispan.tools.jdbc.migrator.Element.PASSWORD;
-import static org.infinispan.tools.jdbc.migrator.Element.SOURCE;
-import static org.infinispan.tools.jdbc.migrator.Element.STRING;
-import static org.infinispan.tools.jdbc.migrator.Element.TABLE;
-import static org.infinispan.tools.jdbc.migrator.Element.TABLE_NAME_PREFIX;
-import static org.infinispan.tools.jdbc.migrator.Element.TARGET;
-import static org.infinispan.tools.jdbc.migrator.Element.TIMESTAMP;
-import static org.infinispan.tools.jdbc.migrator.Element.TYPE;
-import static org.infinispan.tools.jdbc.migrator.Element.USERNAME;
+package org.infinispan.tools.store.migrator;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,7 +22,7 @@ import org.infinispan.persistence.jdbc.table.management.DbMetaData;
 import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
-import org.infinispan.tools.jdbc.migrator.marshaller.LegacyVersionAwareMarshaller;
+import org.infinispan.tools.store.migrator.marshaller.LegacyVersionAwareMarshaller;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 
@@ -77,12 +49,12 @@ class MigratorConfiguration {
    MigratorConfiguration(boolean sourceStore, Properties properties) {
       this.properties = properties;
       this.sourceStore = sourceStore;
-      this.orientation = sourceStore ? SOURCE : TARGET;
+      this.orientation = sourceStore ? Element.SOURCE : Element.TARGET;
       this.classLoader = MigratorConfiguration.class.getClassLoader();
 
-      requiredProps(propKey(CACHE_NAME), propKey(TYPE));
-      this.cacheName = property(CACHE_NAME);
-      this.storeType = StoreType.valueOf(property(TYPE).toUpperCase());
+      requiredProps(propKey(Element.CACHE_NAME), propKey(Element.TYPE));
+      this.cacheName = property(Element.CACHE_NAME);
+      this.storeType = StoreType.valueOf(property(Element.TYPE).toUpperCase());
       initStoreConfig();
    }
 
@@ -104,16 +76,16 @@ class MigratorConfiguration {
       marshaller = createMarshaller();
       if (sourceStore) {
          if (storeType == StoreType.MIXED || storeType == StoreType.STRING) {
-            stringTable = createTableConfig(STRING, builder);
+            stringTable = createTableConfig(Element.STRING, builder);
             key2StringMapper = createTwoWayMapper();
          }
 
          if (storeType == StoreType.MIXED || storeType == StoreType.BINARY)
-            binaryTable = createTableConfig(BINARY, builder);
+            binaryTable = createTableConfig(Element.BINARY, builder);
       } else {
          key2StringMapper = createTwoWayMapper();
          builder.key2StringMapper(key2StringMapper.getClass());
-         stringTable = createTableConfig(STRING, builder);
+         stringTable = createTableConfig(Element.STRING, builder);
          builder.transaction()
                .transactionMode(TransactionMode.TRANSACTIONAL)
                .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
@@ -123,29 +95,29 @@ class MigratorConfiguration {
    }
 
    private DbMetaData createDbMeta(JdbcStringBasedStoreConfigurationBuilder builder) {
-      requiredProps(propKey(DIALECT));
+      requiredProps(propKey(Element.DIALECT));
       String prop;
-      DatabaseType type = DatabaseType.valueOf(property(DIALECT).toUpperCase());
+      DatabaseType type = DatabaseType.valueOf(property(Element.DIALECT).toUpperCase());
       builder.dialect(type);
 
       Integer major = null;
-      if ((prop = property(DB, MAJOR_VERSION)) != null) {
+      if ((prop = property(Element.DB, Element.MAJOR_VERSION)) != null) {
          major = new Integer(prop);
          builder.dbMajorVersion(major);
       }
 
       Integer minor = null;
-      if ((prop = property(DB, MINOR_VERSION)) != null) {
+      if ((prop = property(Element.DB, Element.MINOR_VERSION)) != null) {
          minor = new Integer(prop);
          builder.dbMinorVersion(minor);
       }
 
-      String disableUpsert = property(DB, DISABLE_UPSERT);
+      String disableUpsert = property(Element.DB, Element.DISABLE_UPSERT);
       boolean upsert = Boolean.parseBoolean(disableUpsert);
       if (upsert)
          builder.addProperty(TableManagerFactory.UPSERT_DISABLED, disableUpsert);
 
-      String disableIndexing = property(DB, DISABLE_INDEXING);
+      String disableIndexing = property(Element.DB, Element.DISABLE_INDEXING);
       boolean indexing = Boolean.parseBoolean(disableIndexing);
       if (indexing)
          builder.addProperty(TableManagerFactory.INDEXING_DISABLED, disableIndexing);
@@ -154,31 +126,31 @@ class MigratorConfiguration {
    }
 
    private TableManipulationConfiguration createTableConfig(Element tableType, JdbcStringBasedStoreConfigurationBuilder storeBuilder) {
-      boolean createOnStart = orientation == TARGET;
+      boolean createOnStart = orientation == Element.TARGET;
       return storeBuilder.table()
             .createOnStart(createOnStart)
-            .tableNamePrefix(property(TABLE, tableType, TABLE_NAME_PREFIX))
-            .idColumnName(property(TABLE, tableType, ID, NAME))
-            .idColumnType(property(TABLE, tableType, ID, TYPE))
-            .dataColumnName(property(TABLE, tableType, DATA, NAME))
-            .dataColumnType(property(TABLE, tableType, DATA, TYPE))
-            .timestampColumnName(property(TABLE, tableType, TIMESTAMP, NAME))
-            .timestampColumnType(property(TABLE, tableType, TIMESTAMP, TYPE))
+            .tableNamePrefix(property(Element.TABLE, tableType, Element.TABLE_NAME_PREFIX))
+            .idColumnName(property(Element.TABLE, tableType, Element.ID, Element.NAME))
+            .idColumnType(property(Element.TABLE, tableType, Element.ID, Element.TYPE))
+            .dataColumnName(property(Element.TABLE, tableType, Element.DATA, Element.NAME))
+            .dataColumnType(property(Element.TABLE, tableType, Element.DATA, Element.TYPE))
+            .timestampColumnName(property(Element.TABLE, tableType, Element.TIMESTAMP, Element.NAME))
+            .timestampColumnType(property(Element.TABLE, tableType, Element.TIMESTAMP, Element.TYPE))
             .create();
    }
 
    private PooledConnectionFactoryConfiguration createConnectionConfig(JdbcStringBasedStoreConfigurationBuilder storeBuilder) {
-      requiredProps(propKey(CONNECTION_POOL, CONNECTION_URL), propKey(CONNECTION_POOL, DRIVER_CLASS));
+      requiredProps(propKey(Element.CONNECTION_POOL, Element.CONNECTION_URL), propKey(Element.CONNECTION_POOL, Element.DRIVER_CLASS));
       return storeBuilder.connectionPool()
-            .connectionUrl(property(CONNECTION_POOL, CONNECTION_URL))
-            .driverClass(property(CONNECTION_POOL, DRIVER_CLASS))
-            .username(property(CONNECTION_POOL, USERNAME))
-            .password(property(CONNECTION_POOL, PASSWORD))
+            .connectionUrl(property(Element.CONNECTION_POOL, Element.CONNECTION_URL))
+            .driverClass(property(Element.CONNECTION_POOL, Element.DRIVER_CLASS))
+            .username(property(Element.CONNECTION_POOL, Element.USERNAME))
+            .password(property(Element.CONNECTION_POOL, Element.PASSWORD))
             .create();
    }
 
    private TwoWayKey2StringMapper createTwoWayMapper() {
-      String mapperClass = property(KEY_TO_STRING_MAPPER);
+      String mapperClass = property(Element.KEY_TO_STRING_MAPPER);
       if (mapperClass != null) {
          ClassLoader classLoader = MigratorConfiguration.class.getClassLoader();
          try {
@@ -193,14 +165,14 @@ class MigratorConfiguration {
 
    private StreamingMarshaller createMarshaller() {
       MarshallerType marshallerType = MarshallerType.CURRENT;
-      String marshallerTypeProp = property(MARSHALLER, TYPE);
+      String marshallerTypeProp = property(Element.MARSHALLER, Element.TYPE);
       if (marshallerTypeProp != null)
-         marshallerType = MarshallerType.valueOf(property(MARSHALLER, TYPE).toUpperCase());
+         marshallerType = MarshallerType.valueOf(property(Element.MARSHALLER, Element.TYPE).toUpperCase());
 
       switch (marshallerType) {
          case CURRENT:
             externalizerMap = getExternalizersFromProps();
-            if (orientation == TARGET)
+            if (orientation == Element.TARGET)
                return null;
 
             GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder()
@@ -210,10 +182,10 @@ class MigratorConfiguration {
             EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig.build(), new ConfigurationBuilder().build());
             return manager.getCache().getAdvancedCache().getComponentRegistry().getComponent(StreamingMarshaller.class);
          case CUSTOM:
-            String marshallerClass = property(MARSHALLER, CLASS);
+            String marshallerClass = property(Element.MARSHALLER, Element.CLASS);
             if (marshallerClass == null)
                throw new CacheConfigurationException(
-                     String.format("The property %s.%s must be set if a custom marshaller type is specified", MARSHALLER, CLASS));
+                     String.format("The property %s.%s must be set if a custom marshaller type is specified", Element.MARSHALLER, Element.CLASS));
 
             try {
                return (StreamingMarshaller) Util.loadClass(marshallerClass, classLoader).newInstance();
@@ -222,7 +194,7 @@ class MigratorConfiguration {
                      marshallerClass, orientation), e);
             }
          case LEGACY:
-            if (orientation != SOURCE)
+            if (orientation != Element.SOURCE)
                throw new CacheConfigurationException("The legacy marshaller can only be specified for source stores.");
             return new LegacyVersionAwareMarshaller(getExternalizersFromProps());
          default:
@@ -233,7 +205,7 @@ class MigratorConfiguration {
    // Expects externalizer string to be a comma-separated list of "<id>:<class>"
    private Map<Integer, AdvancedExternalizer<?>> getExternalizersFromProps() {
       Map<Integer, AdvancedExternalizer<?>> map = new HashMap<>();
-      String externalizers = property(MARSHALLER, EXTERNALIZERS);
+      String externalizers = property(Element.MARSHALLER, Element.EXTERNALIZERS);
       if (externalizers != null) {
          for (String ext : externalizers.split(",")) {
             String[] extArray = ext.split(":");

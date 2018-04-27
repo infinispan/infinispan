@@ -1,4 +1,4 @@
-package org.infinispan.tools.jdbc.migrator.marshaller;
+package org.infinispan.tools.store.migrator.marshaller;
 
 import static org.testng.Assert.assertEquals;
 

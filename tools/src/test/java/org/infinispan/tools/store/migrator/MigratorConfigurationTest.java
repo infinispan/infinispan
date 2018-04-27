@@ -1,22 +1,22 @@
-package org.infinispan.tools.jdbc.migrator;
+package org.infinispan.tools.store.migrator;
 
-import static org.infinispan.tools.jdbc.migrator.Element.CACHE_NAME;
-import static org.infinispan.tools.jdbc.migrator.Element.CLASS;
-import static org.infinispan.tools.jdbc.migrator.Element.CONNECTION_POOL;
-import static org.infinispan.tools.jdbc.migrator.Element.CONNECTION_URL;
-import static org.infinispan.tools.jdbc.migrator.Element.DB;
-import static org.infinispan.tools.jdbc.migrator.Element.DIALECT;
-import static org.infinispan.tools.jdbc.migrator.Element.DISABLE_INDEXING;
-import static org.infinispan.tools.jdbc.migrator.Element.DISABLE_UPSERT;
-import static org.infinispan.tools.jdbc.migrator.Element.DRIVER_CLASS;
-import static org.infinispan.tools.jdbc.migrator.Element.EXTERNALIZERS;
-import static org.infinispan.tools.jdbc.migrator.Element.MAJOR_VERSION;
-import static org.infinispan.tools.jdbc.migrator.Element.MARSHALLER;
-import static org.infinispan.tools.jdbc.migrator.Element.MINOR_VERSION;
-import static org.infinispan.tools.jdbc.migrator.Element.SOURCE;
-import static org.infinispan.tools.jdbc.migrator.Element.TARGET;
-import static org.infinispan.tools.jdbc.migrator.Element.TYPE;
-import static org.infinispan.tools.jdbc.migrator.StoreType.MIXED;
+import static org.infinispan.tools.store.migrator.Element.CACHE_NAME;
+import static org.infinispan.tools.store.migrator.Element.CLASS;
+import static org.infinispan.tools.store.migrator.Element.CONNECTION_POOL;
+import static org.infinispan.tools.store.migrator.Element.CONNECTION_URL;
+import static org.infinispan.tools.store.migrator.Element.DB;
+import static org.infinispan.tools.store.migrator.Element.DIALECT;
+import static org.infinispan.tools.store.migrator.Element.DISABLE_INDEXING;
+import static org.infinispan.tools.store.migrator.Element.DISABLE_UPSERT;
+import static org.infinispan.tools.store.migrator.Element.DRIVER_CLASS;
+import static org.infinispan.tools.store.migrator.Element.EXTERNALIZERS;
+import static org.infinispan.tools.store.migrator.Element.MAJOR_VERSION;
+import static org.infinispan.tools.store.migrator.Element.MARSHALLER;
+import static org.infinispan.tools.store.migrator.Element.MINOR_VERSION;
+import static org.infinispan.tools.store.migrator.Element.SOURCE;
+import static org.infinispan.tools.store.migrator.Element.TARGET;
+import static org.infinispan.tools.store.migrator.Element.TYPE;
+import static org.infinispan.tools.store.migrator.StoreType.MIXED;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -37,7 +37,7 @@ import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigu
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
 import org.infinispan.test.data.Person;
-import org.infinispan.tools.jdbc.migrator.marshaller.LegacyVersionAwareMarshaller;
+import org.infinispan.tools.store.migrator.marshaller.LegacyVersionAwareMarshaller;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
