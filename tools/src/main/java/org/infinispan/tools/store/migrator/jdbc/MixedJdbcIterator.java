@@ -1,4 +1,4 @@
-package org.infinispan.tools.store.migrator;
+package org.infinispan.tools.store.migrator.jdbc;
 
 import java.util.Iterator;
 
@@ -35,7 +35,7 @@ class MixedJdbcIterator implements Iterator<MarshalledEntry>, AutoCloseable {
    }
 
    @Override
-   public void close() throws Exception {
+   public void close() {
       binaryIt.close();
       stringIt.close();
    }

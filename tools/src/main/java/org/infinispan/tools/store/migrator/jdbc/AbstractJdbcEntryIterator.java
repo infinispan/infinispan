@@ -1,4 +1,4 @@
-package org.infinispan.tools.store.migrator;
+package org.infinispan.tools.store.migrator.jdbc;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
