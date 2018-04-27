@@ -10,7 +10,7 @@ import java.util.Comparator;
 
 import org.hibernate.cache.CacheException;
 import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
-import org.infinispan.hibernate.cache.commons.impl.BaseTransactionalDataRegion;
+import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.commons.util.VersionedEntry;
@@ -33,14 +33,14 @@ public class NonStrictAccessDelegate implements AccessDelegate {
 	private static final boolean trace = log.isTraceEnabled();
    private static final SessionAccess SESSION_ACCESS = SessionAccess.findSessionAccess();
 
-	private final BaseTransactionalDataRegion region;
+	private final InfinispanDataRegion region;
 	private final AdvancedCache cache;
 	private final AdvancedCache writeCache;
 	private final AdvancedCache putFromLoadCache;
 	private final Comparator versionComparator;
 
 
-	public NonStrictAccessDelegate(BaseTransactionalDataRegion region) {
+	public NonStrictAccessDelegate(InfinispanDataRegion region, Comparator versionComparator) {
 		this.region = region;
 		this.cache = region.getCache();
 		this.writeCache = Caches.ignoreReturnValuesCache(cache);
@@ -53,7 +53,7 @@ public class NonStrictAccessDelegate implements AccessDelegate {
 		if (configuration.transaction().transactionMode().isTransactional()) {
 			throw new IllegalArgumentException("Currently transactional caches are not supported.");
 		}
-		this.versionComparator = region.getCacheDataDescription().getVersionComparator();
+		this.versionComparator = versionComparator;
 		if (versionComparator == null) {
 			throw new IllegalArgumentException("This strategy requires versioned entities/collections but region " + region.getName() + " contains non-versioned data!");
 		}

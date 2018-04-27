@@ -11,13 +11,13 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.hibernate.PessimisticLockException;
-import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
-import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
+import org.infinispan.hibernate.cache.spi.InfinispanProperties;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 
 import org.hibernate.testing.TestForIssue;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
-import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.junit.Test;
 
 import org.infinispan.AdvancedCache;
@@ -47,7 +47,7 @@ public class InvalidationTest extends SingleNodeTest {
    @Override
    protected void addSettings(Map settings) {
       super.addSettings(settings);
-      settings.put(TestInfinispanRegionFactory.PENDING_PUTS_SIMPLE, false);
+      settings.put(TestRegionFactory.PENDING_PUTS_SIMPLE, false);
    }
 
    @Test
@@ -151,10 +151,10 @@ public class InvalidationTest extends SingleNodeTest {
    }
 
    protected AdvancedCache getPendingPutsCache(Class<Item> entityClazz) {
-      BaseRegion region = (BaseRegion) sessionFactory().getSecondLevelCacheRegion( entityClazz.getName() );
+      InfinispanBaseRegion region = TEST_SESSION_ACCESS.getRegion(sessionFactory(), entityClazz.getName());
       AdvancedCache entityCache = region.getCache();
-      return (AdvancedCache) entityCache.getCacheManager().getCache(
-            entityCache.getName() + "-" + InfinispanRegionFactory.DEF_PENDING_PUTS_RESOURCE).getAdvancedCache();
+      return entityCache.getCacheManager().getCache(
+            entityCache.getName() + "-" + InfinispanProperties.DEF_PENDING_PUTS_RESOURCE).getAdvancedCache();
    }
 
    protected static void arriveAndAwait(Phaser phaser, int timeout) throws TimeoutException, InterruptedException {

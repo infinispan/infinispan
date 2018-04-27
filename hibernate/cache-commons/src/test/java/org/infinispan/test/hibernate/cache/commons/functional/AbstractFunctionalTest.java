@@ -17,13 +17,13 @@ import java.util.function.Predicate;
 import org.hibernate.Session;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.spi.MetadataImplementor;
+import org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.hibernate.cache.commons.util.EndInvalidationCommand;
 import org.infinispan.hibernate.cache.commons.util.FutureUpdate;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.commons.util.TombstoneUpdate;
 import org.hibernate.cache.internal.SimpleCacheKeysFactory;
-import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Environment;
@@ -36,11 +36,12 @@ import org.hibernate.mapping.RootClass;
 import org.hibernate.mapping.SimpleValue;
 import org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLocalTransactionCoordinatorBuilderImpl;
 import org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoordinatorBuilderImpl;
-import org.hibernate.resource.transaction.TransactionCoordinatorBuilder;
 
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.test.hibernate.cache.commons.util.ExpectingInterceptor;
 import org.hibernate.testing.BeforeClassOnce;
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
@@ -48,7 +49,6 @@ import org.hibernate.testing.junit4.CustomParameterized;
 import org.infinispan.test.hibernate.cache.commons.tm.JtaPlatformImpl;
 import org.infinispan.test.hibernate.cache.commons.tm.XaConnectionProvider;
 import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
-import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TxUtil;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -65,15 +65,15 @@ import org.infinispan.configuration.cache.CacheMode;
  */
 @RunWith(CustomParameterized.class)
 public abstract class AbstractFunctionalTest extends BaseNonConfigCoreFunctionalTestCase {
-	protected static final Object[] TRANSACTIONAL = new Object[]{"transactional", JtaPlatformImpl.class, JtaTransactionCoordinatorBuilderImpl.class, XaConnectionProvider.class, AccessType.TRANSACTIONAL, true, CacheMode.INVALIDATION_SYNC, false };
-	protected static final Object[] READ_WRITE_INVALIDATION = new Object[]{"read-write", null, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_WRITE, false, CacheMode.INVALIDATION_SYNC, false };
-	protected static final Object[] READ_ONLY_INVALIDATION = new Object[]{"read-only", null, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_ONLY, false, CacheMode.INVALIDATION_SYNC, false };
-	protected static final Object[] READ_WRITE_REPLICATED = new Object[]{"read-write", null, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_WRITE, false, CacheMode.REPL_SYNC, false };
-	protected static final Object[] READ_ONLY_REPLICATED = new Object[]{"read-only", null, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_ONLY, false, CacheMode.REPL_SYNC, false };
-	protected static final Object[] READ_WRITE_DISTRIBUTED = new Object[]{"read-write", null, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_WRITE, false, CacheMode.DIST_SYNC, false };
-	protected static final Object[] READ_ONLY_DISTRIBUTED = new Object[]{"read-only", null, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_ONLY, false, CacheMode.DIST_SYNC, false };
-	protected static final Object[] NONSTRICT_REPLICATED = new Object[]{"nonstrict", null, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.NONSTRICT_READ_WRITE, false, CacheMode.REPL_SYNC, true };
-	protected static final Object[] NONSTRICT_DISTRIBUTED = new Object[]{"nonstrict", null, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.NONSTRICT_READ_WRITE, false, CacheMode.DIST_SYNC, true };
+	protected static final Object[] TRANSACTIONAL = new Object[]{"transactional", JtaPlatformImpl.class, JtaTransactionCoordinatorBuilderImpl.class, XaConnectionProvider.class, AccessType.TRANSACTIONAL, CacheMode.INVALIDATION_SYNC, false };
+	protected static final Object[] READ_WRITE_INVALIDATION = new Object[]{"read-write", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_WRITE, CacheMode.INVALIDATION_SYNC, false };
+	protected static final Object[] READ_ONLY_INVALIDATION = new Object[]{"read-only", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_ONLY, CacheMode.INVALIDATION_SYNC, false };
+	protected static final Object[] READ_WRITE_REPLICATED = new Object[]{"read-write", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_WRITE, CacheMode.REPL_SYNC, false };
+	protected static final Object[] READ_ONLY_REPLICATED = new Object[]{"read-only", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_ONLY, CacheMode.REPL_SYNC, false };
+	protected static final Object[] READ_WRITE_DISTRIBUTED = new Object[]{"read-write", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_WRITE, CacheMode.DIST_SYNC, false };
+	protected static final Object[] READ_ONLY_DISTRIBUTED = new Object[]{"read-only", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.READ_ONLY, CacheMode.DIST_SYNC, false };
+	protected static final Object[] NONSTRICT_REPLICATED = new Object[]{"nonstrict", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.NONSTRICT_READ_WRITE, CacheMode.REPL_SYNC, true };
+	protected static final Object[] NONSTRICT_DISTRIBUTED = new Object[]{"nonstrict", NoJtaPlatform.class, JdbcResourceLocalTransactionCoordinatorBuilderImpl.class, null, AccessType.NONSTRICT_READ_WRITE, CacheMode.DIST_SYNC, true };
 
 	// We need to use @ClassRule here since in @BeforeClassOnce startUp we're preparing the session factory,
 	// constructing CacheManager along - and there we check that the test has the name already set
@@ -87,7 +87,7 @@ public abstract class AbstractFunctionalTest extends BaseNonConfigCoreFunctional
 	public Class<? extends JtaPlatform> jtaPlatformClass;
 
 	@Parameterized.Parameter(value = 2)
-	public Class<? extends TransactionCoordinatorBuilder> transactionCoordinatorBuilderClass;
+	public Class<?> transactionCoordinatorBuilderClass;
 
 	@Parameterized.Parameter(value = 3)
 	public Class<? extends ConnectionProvider> connectionProviderClass;
@@ -96,19 +96,16 @@ public abstract class AbstractFunctionalTest extends BaseNonConfigCoreFunctional
 	public AccessType accessType;
 
 	@Parameterized.Parameter(value = 5)
-	public boolean useTransactionalCache;
-
-	@Parameterized.Parameter(value = 6)
 	public CacheMode cacheMode;
 
-	@Parameterized.Parameter(value = 7)
+	@Parameterized.Parameter(value = 6)
 	public boolean addVersions;
 
 	protected boolean useJta;
 	protected List<Runnable> cleanup = new ArrayList<>();
 
 	@CustomParameterized.Order(0)
-	@Parameterized.Parameters(name = "{0}, {6}")
+	@Parameterized.Parameters(name = "{0}, {5}")
 	public abstract List<Object[]> getParameters();
 
 	public List<Object[]> getParameters(boolean tx, boolean rw, boolean ro, boolean nonstrict) {
@@ -135,7 +132,12 @@ public abstract class AbstractFunctionalTest extends BaseNonConfigCoreFunctional
 
 	@BeforeClassOnce
 	public void setUseJta() {
-		useJta = jtaPlatformClass != null;
+		useJta = jtaPlatformClass != NoJtaPlatform.class;
+	}
+
+	@Override
+	protected void prepareTest() throws Exception {
+		infinispanTestIdentifier.joinContext();
 	}
 
 	@After
@@ -193,10 +195,6 @@ public abstract class AbstractFunctionalTest extends BaseNonConfigCoreFunctional
 		return accessType.getExternalName();
 	}
 
-	protected Class<? extends RegionFactory> getRegionFactoryClass() {
-		return TestInfinispanRegionFactory.class;
-	}
-
 	protected boolean getUseQueryCache() {
 		return true;
 	}
@@ -209,14 +207,12 @@ public abstract class AbstractFunctionalTest extends BaseNonConfigCoreFunctional
 		settings.put( Environment.USE_SECOND_LEVEL_CACHE, "true" );
 		settings.put( Environment.GENERATE_STATISTICS, "true" );
 		settings.put( Environment.USE_QUERY_CACHE, String.valueOf( getUseQueryCache() ) );
-		settings.put( Environment.CACHE_REGION_FACTORY, getRegionFactoryClass().getName() );
+		settings.put( Environment.CACHE_REGION_FACTORY, TestRegionFactoryProvider.load().getRegionFactoryClass().getName() );
 		settings.put( Environment.CACHE_KEYS_FACTORY, SimpleCacheKeysFactory.SHORT_NAME );
-		settings.put( TestInfinispanRegionFactory.TRANSACTIONAL, useTransactionalCache );
-		settings.put( TestInfinispanRegionFactory.CACHE_MODE, cacheMode);
+		settings.put( TestRegionFactory.TRANSACTIONAL, useTransactionalCache() );
+		settings.put( TestRegionFactory.CACHE_MODE, cacheMode);
 
-		if ( jtaPlatformClass != null ) {
-			settings.put( AvailableSettings.JTA_PLATFORM, jtaPlatformClass.getName() );
-		}
+		settings.put( AvailableSettings.JTA_PLATFORM, jtaPlatformClass.getName() );
 		settings.put( Environment.TRANSACTION_COORDINATOR_STRATEGY, transactionCoordinatorBuilderClass.getName() );
 		if ( connectionProviderClass != null) {
 			settings.put(Environment.CONNECTION_PROVIDER, connectionProviderClass.getName());
@@ -258,7 +254,11 @@ public abstract class AbstractFunctionalTest extends BaseNonConfigCoreFunctional
       wrapInboundInvocationHandler(cache, handler -> ((ExpectingInboundInvocationHandler) handler).delegate);
    }
 
-   private static final class ExpectingInboundInvocationHandler implements PerCacheInboundInvocationHandler {
+	protected boolean useTransactionalCache() {
+		return TestRegionFactoryProvider.load().supportTransactionalCaches() && accessType == AccessType.TRANSACTIONAL;
+	}
+
+	private static final class ExpectingInboundInvocationHandler implements PerCacheInboundInvocationHandler {
 
       private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider
             .getLog(ExpectingInboundInvocationHandler.class);

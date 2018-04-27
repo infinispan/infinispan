@@ -6,33 +6,25 @@
  */
 package org.infinispan.test.hibernate.cache.commons;
 
-import static org.infinispan.hibernate.cache.commons.InfinispanRegionFactory.DEF_PENDING_PUTS_RESOURCE;
-import static org.infinispan.hibernate.cache.commons.InfinispanRegionFactory.DEF_TIMESTAMPS_RESOURCE;
-import static org.infinispan.hibernate.cache.commons.InfinispanRegionFactory.DataType;
-import static org.infinispan.hibernate.cache.commons.InfinispanRegionFactory.INFINISPAN_CONFIG_RESOURCE_PROP;
-import static org.infinispan.hibernate.cache.commons.InfinispanRegionFactory.TIMESTAMPS_CACHE_RESOURCE_PROP;
+import static org.infinispan.hibernate.cache.spi.InfinispanProperties.DEF_INFINISPAN_CONFIG_RESOURCE;
+import static org.infinispan.hibernate.cache.spi.InfinispanProperties.DEF_PENDING_PUTS_RESOURCE;
+import static org.infinispan.hibernate.cache.spi.InfinispanProperties.DEF_TIMESTAMPS_RESOURCE;
+import static org.infinispan.hibernate.cache.spi.InfinispanProperties.INFINISPAN_CONFIG_RESOURCE_PROP;
+import static org.infinispan.hibernate.cache.spi.InfinispanProperties.TIMESTAMPS_CACHE_RESOURCE_PROP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.io.InputStream;
 import java.util.Properties;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
-import javax.transaction.TransactionManager;
-
-import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.CacheException;
-import org.hibernate.cache.internal.CacheDataDescriptionImpl;
-import org.hibernate.cache.spi.CacheDataDescription;
+import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cfg.Environment;
-import org.hibernate.engine.transaction.jta.platform.internal.AbstractJtaPlatform;
-import org.hibernate.engine.transaction.jta.platform.internal.JBossStandAloneJtaPlatform;
-import org.hibernate.service.ServiceRegistry;
-import org.hibernate.testing.ServiceRegistryBuilder;
+import org.hibernate.testing.boot.ServiceRegistryTestingImpl;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.cache.CacheMode;
@@ -43,16 +35,15 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.eviction.EvictionType;
-import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
-import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
-import org.infinispan.hibernate.cache.commons.query.QueryResultsRegionImpl;
-import org.infinispan.hibernate.cache.commons.timestamp.TimestampsRegionImpl;
-import org.infinispan.hibernate.cache.commons.tm.HibernateTransactionManagerLookup;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
+import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
 import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.transaction.TransactionMode;
 import org.junit.Rule;
 import org.junit.Test;
@@ -64,9 +55,6 @@ import org.junit.Test;
  * @since 3.5
  */
 public class InfinispanRegionFactoryTestCase  {
-	private static final CacheDataDescription MUTABLE_NON_VERSIONED = new CacheDataDescriptionImpl(true, false, null, null);
-	private static final CacheDataDescription IMMUTABLE_NON_VERSIONED = new CacheDataDescriptionImpl(false, false, null, null);
-
 	@Rule
 	public InfinispanTestingSetup infinispanTestIdentifier = new InfinispanTestingSetup();
 
@@ -89,7 +77,7 @@ public class InfinispanRegionFactoryTestCase  {
 		p.setProperty("hibernate.cache.infinispan.query.expiration.wake_up_interval", "3000");
 		p.setProperty("hibernate.cache.infinispan.query.memory.size", "10000");
 
-		TestInfinispanRegionFactory factory = createRegionFactory(p);
+		TestRegionFactory factory = createRegionFactory(p);
 
 		try {
 			assertEquals("person-cache", factory.getBaseConfiguration(person));
@@ -105,8 +93,8 @@ public class InfinispanRegionFactoryTestCase  {
 			assertEquals(120000, addressesOverride.expiration().lifespan());
 			assertEquals(60000, addressesOverride.expiration().maxIdle());
 
-			assertEquals("my-query-cache", factory.getBaseConfiguration(DataType.QUERY));
-			Configuration queryOverride = factory.getConfigurationOverride(DataType.QUERY);
+			assertEquals("my-query-cache", factory.getBaseConfiguration(InfinispanProperties.QUERY));
+			Configuration queryOverride = factory.getConfigurationOverride(InfinispanProperties.QUERY);
 			assertEquals(EvictionType.COUNT, queryOverride.memory().evictionType());
 			assertEquals(10000, queryOverride.memory().size());
 			assertEquals(3000, queryOverride.expiration().wakeUpInterval());
@@ -144,7 +132,7 @@ public class InfinispanRegionFactoryTestCase  {
 		p.setProperty("hibernate.cache.infinispan.collection.memory.eviction.type", "MEMORY");
 		p.setProperty("hibernate.cache.infinispan.collection.expiration.wake_up_interval", "3500");
 		p.setProperty("hibernate.cache.infinispan.collection.memory.size", "25000");
-		TestInfinispanRegionFactory factory = createRegionFactory(p);
+		TestRegionFactory factory = createRegionFactory(p);
 		try {
 			EmbeddedCacheManager manager = factory.getCacheManager();
 			assertFalse(manager.getCacheManagerConfiguration().globalJmxStatistics().enabled());
@@ -156,7 +144,7 @@ public class InfinispanRegionFactoryTestCase  {
 			assertNull(factory.getBaseConfiguration(parts));
 			AdvancedCache cache;
 
-			BaseRegion region = (BaseRegion) factory.buildEntityRegion(person, p, MUTABLE_NON_VERSIONED);
+         InfinispanBaseRegion region = factory.buildEntityRegion(person, AccessType.TRANSACTIONAL);
 			assertTrue(isDefinedCache(factory, person));
 			cache = region.getCache();
 			Configuration cacheCfg = cache.getCacheConfiguration();
@@ -167,7 +155,7 @@ public class InfinispanRegionFactoryTestCase  {
 			assertEquals(30000, cacheCfg.expiration().maxIdle());
 			assertFalse(cacheCfg.jmxStatistics().enabled());
 
-			region = (BaseRegion) factory.buildEntityRegion(address, p, MUTABLE_NON_VERSIONED);
+         region = factory.buildEntityRegion(address, AccessType.TRANSACTIONAL);
 			assertTrue(isDefinedCache(factory, person));
 			cache = region.getCache();
 			cacheCfg = cache.getCacheConfiguration();
@@ -176,7 +164,7 @@ public class InfinispanRegionFactoryTestCase  {
 			assertEquals(20000, cacheCfg.memory().size());
 			assertFalse(cacheCfg.jmxStatistics().enabled());
 
-			region = (BaseRegion) factory.buildEntityRegion(car, p, MUTABLE_NON_VERSIONED);
+         region = factory.buildEntityRegion(car, AccessType.TRANSACTIONAL);
 			assertTrue(isDefinedCache(factory, person));
 			cache = region.getCache();
 			cacheCfg = cache.getCacheConfiguration();
@@ -185,8 +173,7 @@ public class InfinispanRegionFactoryTestCase  {
 			assertEquals(20000, cacheCfg.memory().size());
 			assertFalse(cacheCfg.jmxStatistics().enabled());
 
-         BaseRegion collectionRegion = (BaseRegion)
-					factory.buildCollectionRegion(addresses, p, MUTABLE_NON_VERSIONED);
+			InfinispanBaseRegion collectionRegion = factory.buildCollectionRegion(addresses, AccessType.TRANSACTIONAL);
 			assertTrue(isDefinedCache(factory, person));
 
 			cache = collectionRegion .getCache();
@@ -198,7 +185,7 @@ public class InfinispanRegionFactoryTestCase  {
 			assertEquals(35000, cacheCfg.expiration().maxIdle());
 			assertFalse(cacheCfg.jmxStatistics().enabled());
 
-			collectionRegion = (BaseRegion) factory.buildCollectionRegion(parts, p, MUTABLE_NON_VERSIONED);
+			collectionRegion = factory.buildCollectionRegion(parts, AccessType.TRANSACTIONAL);
 			assertTrue(isDefinedCache(factory, addresses));
 			cache = collectionRegion.getCache();
 			cacheCfg = cache.getCacheConfiguration();
@@ -207,7 +194,7 @@ public class InfinispanRegionFactoryTestCase  {
 			assertEquals(25000, cacheCfg.memory().size());
 			assertFalse(cacheCfg.jmxStatistics().enabled());
 
-			collectionRegion = (BaseRegion) factory.buildCollectionRegion(parts, p, MUTABLE_NON_VERSIONED);
+			collectionRegion = factory.buildCollectionRegion(parts, AccessType.TRANSACTIONAL);
 			assertTrue(isDefinedCache(factory, addresses));
 			cache = collectionRegion.getCache();
 			cacheCfg = cache.getCacheConfiguration();
@@ -232,10 +219,10 @@ public class InfinispanRegionFactoryTestCase  {
 		p.setProperty("hibernate.cache.infinispan.collection.memory.eviction.type", "MEMORY");
 		p.setProperty("hibernate.cache.infinispan.collection.memory.size", "35000");
 		p.setProperty("hibernate.cache.infinispan.collection.expiration.wake_up_interval", "3500");
-		TestInfinispanRegionFactory factory = createRegionFactory(p);
+		TestRegionFactory factory = createRegionFactory(p);
 		try {
 			factory.getCacheManager();
-         BaseRegion region = (BaseRegion) factory.buildEntityRegion(address, p, MUTABLE_NON_VERSIONED);
+			InfinispanBaseRegion region = factory.buildEntityRegion(address, AccessType.TRANSACTIONAL);
 			assertNull(factory.getBaseConfiguration(address));
 			cache = region.getCache();
 			Configuration cacheCfg = cache.getCacheConfiguration();
@@ -244,8 +231,8 @@ public class InfinispanRegionFactoryTestCase  {
 			assertEquals(30000, cacheCfg.memory().size());
 			// Max idle value comes from base XML configuration
 			assertEquals(100000, cacheCfg.expiration().maxIdle());
-         BaseRegion collectionRegion = (BaseRegion)
-					factory.buildCollectionRegion(personAddressses, p, MUTABLE_NON_VERSIONED);
+
+			InfinispanBaseRegion collectionRegion = factory.buildCollectionRegion(personAddressses, AccessType.TRANSACTIONAL);
 			assertNull(factory.getBaseConfiguration(personAddressses));
 			cache = collectionRegion.getCache();
 			cacheCfg = cache.getCacheConfiguration();
@@ -269,11 +256,11 @@ public class InfinispanRegionFactoryTestCase  {
 		p.setProperty("hibernate.cache.infinispan.entity.memory.eviction.type", "FIFO");
 		p.setProperty("hibernate.cache.infinispan.entity.memory.size", "10000");
 		p.setProperty("hibernate.cache.infinispan.entity.expiration.wake_up_interval", "3000");
-		TestInfinispanRegionFactory factory = createRegionFactory(p);
+		TestRegionFactory factory = createRegionFactory(p);
 		try {
 			factory.getCacheManager();
 			assertFalse( isDefinedCache(factory, person ) );
-         BaseRegion region = (BaseRegion) factory.buildEntityRegion( person, p, MUTABLE_NON_VERSIONED );
+			InfinispanBaseRegion region = factory.buildEntityRegion(person, AccessType.TRANSACTIONAL);
 			assertTrue( isDefinedCache(factory, person ) );
 			AdvancedCache cache = region.getCache();
 			Configuration cacheCfg = cache.getCacheConfiguration();
@@ -291,10 +278,10 @@ public class InfinispanRegionFactoryTestCase  {
 	public void testBuildImmutableEntityRegion() {
 		AdvancedCache cache;
 		Properties p = new Properties();
-		TestInfinispanRegionFactory factory = createRegionFactory(p);
+		TestRegionFactory factory = createRegionFactory(p);
 		try {
 			factory.getCacheManager();
-         BaseRegion region = (BaseRegion) factory.buildEntityRegion("com.acme.Address", p, IMMUTABLE_NON_VERSIONED);
+			InfinispanBaseRegion region = factory.buildEntityRegion("com.acme.Address", AccessType.TRANSACTIONAL);
 			assertNull( factory.getBaseConfiguration( "com.acme.Address" ) );
 			cache = region.getCache();
 			Configuration cacheCfg = cache.getCacheConfiguration();
@@ -304,20 +291,20 @@ public class InfinispanRegionFactoryTestCase  {
 		}
 	}
 
-	@Test(expected = CacheException.class)
+	@Test
 	public void testTimestampValidation() {
 		final String timestamps = "org.hibernate.cache.spi.UpdateTimestampsCache";
 		Properties p = createProperties();
-      InputStream configStream = FileLookupFactory.newInstance().lookupFile(InfinispanRegionFactory.DEF_INFINISPAN_CONFIG_RESOURCE, getClass().getClassLoader());
+      InputStream configStream = FileLookupFactory.newInstance().lookupFile(DEF_INFINISPAN_CONFIG_RESOURCE, getClass().getClassLoader());
       ConfigurationBuilderHolder cbh = new ParserRegistry().parse(configStream);
       ConfigurationBuilder builder = cbh.getNamedConfigurationBuilders().get( DEF_TIMESTAMPS_RESOURCE );
 		builder.clustering().cacheMode(CacheMode.INVALIDATION_SYNC);
       DefaultCacheManager manager = new DefaultCacheManager(cbh, true);
 		try {
-			InfinispanRegionFactory factory = createRegionFactory( manager, p, null );
-			factory.start( CacheTestUtil.sfOptionsForStart(), p );
-			TimestampsRegionImpl region = (TimestampsRegionImpl) factory.buildTimestampsRegion( timestamps, p );
-			fail( "Should have failed saying that invalidation is not allowed for timestamp caches." );
+			TestRegionFactory factory = createRegionFactory(manager, p, null);
+			factory.start(ServiceRegistryTestingImpl.forUnitTesting(), p);
+			// Should have failed saying that invalidation is not allowed for timestamp caches.
+			Exceptions.expectException(CacheException.class, () -> factory.buildTimestampsRegion(timestamps));
 		} finally {
 			TestingUtil.killCacheManagers( manager );
 		}
@@ -327,10 +314,10 @@ public class InfinispanRegionFactoryTestCase  {
 	public void testBuildDefaultTimestampsRegion() {
 		final String timestamps = "org.hibernate.cache.spi.UpdateTimestampsCache";
 		Properties p = createProperties();
-		InfinispanRegionFactory factory = createRegionFactory(p);
+		TestRegionFactory factory = createRegionFactory(p);
 		try {
 			assertTrue(isDefinedCache(factory, DEF_TIMESTAMPS_RESOURCE));
-			TimestampsRegionImpl region = (TimestampsRegionImpl) factory.buildTimestampsRegion(timestamps, p);
+			InfinispanBaseRegion region = factory.buildTimestampsRegion(timestamps);
 			AdvancedCache cache = region.getCache();
 			assertEquals(timestamps, cache.getName());
 			Configuration cacheCfg = cache.getCacheConfiguration();
@@ -341,7 +328,7 @@ public class InfinispanRegionFactoryTestCase  {
 		}
 	}
 
-	protected boolean isDefinedCache(InfinispanRegionFactory factory, String cacheName) {
+	protected boolean isDefinedCache(TestRegionFactory factory, String cacheName) {
 		return factory.getCacheManager().getCacheConfiguration(cacheName) != null;
 	}
 
@@ -351,15 +338,15 @@ public class InfinispanRegionFactoryTestCase  {
 		final String unrecommendedTimestamps = "unrecommended-timestamps";
 		Properties p = createProperties();
 		p.setProperty( TIMESTAMPS_CACHE_RESOURCE_PROP, unrecommendedTimestamps);
-		TestInfinispanRegionFactory factory = createRegionFactory(p, (f, m) -> {
+		TestRegionFactory factory = createRegionFactory(p, m -> {
 			ConfigurationBuilder builder = new ConfigurationBuilder();
 			builder.clustering().stateTransfer().fetchInMemoryState(true);
 			builder.clustering().cacheMode( CacheMode.REPL_SYNC );
 			m.defineConfiguration(unrecommendedTimestamps, builder.build() );
 		});
 		try {
-			assertEquals(unrecommendedTimestamps, factory.getBaseConfiguration(DataType.TIMESTAMPS));
-			TimestampsRegionImpl region = (TimestampsRegionImpl) factory.buildTimestampsRegion(timestamps, p);
+			assertEquals(unrecommendedTimestamps, factory.getBaseConfiguration(InfinispanProperties.TIMESTAMPS));
+			InfinispanBaseRegion region = factory.buildTimestampsRegion(timestamps);
 			AdvancedCache cache = region.getCache();
 			Configuration cacheCfg = cache.getCacheConfiguration();
 			assertEquals(CacheMode.REPL_SYNC, cacheCfg.clustering().cacheMode());
@@ -376,12 +363,12 @@ public class InfinispanRegionFactoryTestCase  {
 		final String myTimestampsCache = "mytimestamps-cache";
 		Properties p = createProperties();
 		p.setProperty(TIMESTAMPS_CACHE_RESOURCE_PROP, myTimestampsCache);
-		InfinispanRegionFactory factory = createRegionFactory(p, (f, m) -> {
+		TestRegionFactory factory = createRegionFactory(p, m -> {
 			ClusteringConfigurationBuilder builder = new ConfigurationBuilder().clustering().cacheMode(CacheMode.LOCAL);
 			m.defineConfiguration(myTimestampsCache, builder.build());
 		});
 		try {
-			TimestampsRegionImpl region = (TimestampsRegionImpl) factory.buildTimestampsRegion(timestamps, p);
+			InfinispanBaseRegion region = factory.buildTimestampsRegion(timestamps);
 			assertTrue(isDefinedCache(factory, timestamps));
 			// default timestamps cache is async replicated
 			assertEquals(CacheMode.LOCAL, region.getCache().getCacheConfiguration().clustering().cacheMode());
@@ -390,7 +377,7 @@ public class InfinispanRegionFactoryTestCase  {
 		}
 	}
 
-	@Test(expected = CacheException.class)
+	@Test
 	public void testBuildTimestampsRegionWithFifoEvictionOverride() {
 		final String timestamps = "org.hibernate.cache.spi.UpdateTimestampsCache";
 		final String myTimestampsCache = "mytimestamps-cache";
@@ -399,12 +386,11 @@ public class InfinispanRegionFactoryTestCase  {
 		p.setProperty("hibernate.cache.infinispan.timestamps.memory.eviction.type", "FIFO");
 		p.setProperty("hibernate.cache.infinispan.timestamps.memory.size", "10000");
 		p.setProperty("hibernate.cache.infinispan.timestamps.expiration.wake_up_interval", "3000");
-		InfinispanRegionFactory factory = null;
+		TestRegionFactory factory = createRegionFactory(p);
 		try {
-			factory = createRegionFactory(p);
-			factory.buildTimestampsRegion(timestamps, p);
+			Exceptions.expectException(CacheException.class, () -> factory.buildTimestampsRegion(timestamps));
 		} finally {
-			if (factory != null) factory.stop();
+			factory.stop();
 		}
 	}
 
@@ -416,9 +402,9 @@ public class InfinispanRegionFactoryTestCase  {
 		p.setProperty("hibernate.cache.infinispan.timestamps.cfg", timestampsNoEviction);
 		p.setProperty("hibernate.cache.infinispan.timestamps.memory.size", "0");
 		p.setProperty("hibernate.cache.infinispan.timestamps.expiration.wake_up_interval", "3000");
-		InfinispanRegionFactory factory = createRegionFactory(p);
+		TestRegionFactory factory = createRegionFactory(p);
 		try {
-			TimestampsRegionImpl region = (TimestampsRegionImpl) factory.buildTimestampsRegion( timestamps, p );
+			InfinispanBaseRegion region = factory.buildTimestampsRegion(timestamps);
 			assertTrue( isDefinedCache(factory, timestamps) );
 			assertEquals(3000, region.getCache().getCacheConfiguration().expiration().wakeUpInterval());
 		} finally {
@@ -430,10 +416,10 @@ public class InfinispanRegionFactoryTestCase  {
 	public void testBuildQueryRegion() {
 		final String query = "org.hibernate.cache.internal.StandardQueryCache";
 		Properties p = createProperties();
-		InfinispanRegionFactory factory = createRegionFactory(p);
+		TestRegionFactory factory = createRegionFactory(p);
 		try {
 			assertTrue(isDefinedCache(factory, "local-query"));
-			QueryResultsRegionImpl region = (QueryResultsRegionImpl) factory.buildQueryResultsRegion(query, p);
+			InfinispanBaseRegion region = factory.buildQueryResultsRegion(query);
 			AdvancedCache cache = region.getCache();
 			Configuration cacheCfg = cache.getCacheConfiguration();
 			assertEquals( CacheMode.LOCAL, cacheCfg.clustering().cacheMode() );
@@ -451,10 +437,10 @@ public class InfinispanRegionFactoryTestCase  {
 		p.setProperty("hibernate.cache.infinispan.myquery.memory.eviction.type", "MEMORY");
 		p.setProperty("hibernate.cache.infinispan.myquery.expiration.wake_up_interval", "2222");
 		p.setProperty("hibernate.cache.infinispan.myquery.memory.size", "11111");
-		TestInfinispanRegionFactory factory = createRegionFactory(p);
+		TestRegionFactory factory = createRegionFactory(p);
 		try {
 			assertTrue(isDefinedCache(factory, "local-query"));
-			QueryResultsRegionImpl region = (QueryResultsRegionImpl) factory.buildQueryResultsRegion(queryRegionName, p);
+			InfinispanBaseRegion region = factory.buildQueryResultsRegion(queryRegionName);
 			assertNotNull(factory.getBaseConfiguration(queryRegionName));
 			assertTrue(isDefinedCache(factory, queryRegionName));
 			AdvancedCache cache = region.getCache();
@@ -477,32 +463,29 @@ public class InfinispanRegionFactoryTestCase  {
 		p.setProperty("hibernate.cache.infinispan.entity.memory.eviction.type", "FIFO");
 		p.setProperty("hibernate.cache.infinispan.entity.expiration.wake_up_interval", "3000");
 		p.setProperty("hibernate.cache.infinispan.entity.memory.size", "10000");
-		InfinispanRegionFactory factory = createRegionFactory(p);
+		TestRegionFactory factory = createRegionFactory(p);
 		try {
 			EmbeddedCacheManager manager = factory.getCacheManager();
 			assertTrue(manager.getCacheManagerConfiguration().globalJmxStatistics().enabled());
-         BaseRegion region = (BaseRegion) factory.buildEntityRegion("com.acme.Address", p, MUTABLE_NON_VERSIONED);
+			InfinispanBaseRegion region = factory.buildEntityRegion("com.acme.Address", AccessType.TRANSACTIONAL);
 			AdvancedCache cache = region.getCache();
 			assertTrue(cache.getCacheConfiguration().jmxStatistics().enabled());
 
-			region = (BaseRegion) factory.buildEntityRegion("com.acme.Person", p, MUTABLE_NON_VERSIONED);
+			region = factory.buildEntityRegion("com.acme.Person", AccessType.TRANSACTIONAL);
 			cache = region.getCache();
 			assertTrue(cache.getCacheConfiguration().jmxStatistics().enabled());
 
 			final String query = "org.hibernate.cache.internal.StandardQueryCache";
-			QueryResultsRegionImpl queryRegion = (QueryResultsRegionImpl)
-					factory.buildQueryResultsRegion(query, p);
+			InfinispanBaseRegion queryRegion = factory.buildQueryResultsRegion(query);
 			cache = queryRegion.getCache();
 			assertTrue(cache.getCacheConfiguration().jmxStatistics().enabled());
 
 			final String timestamps = "org.hibernate.cache.spi.UpdateTimestampsCache";
-			TimestampsRegionImpl timestampsRegion = (TimestampsRegionImpl)
-					factory.buildTimestampsRegion(timestamps, p);
+			InfinispanBaseRegion timestampsRegion = factory.buildTimestampsRegion(timestamps);
 			cache = timestampsRegion.getCache();
 			assertTrue(cache.getCacheConfiguration().jmxStatistics().enabled());
 
-         BaseRegion collectionRegion = (BaseRegion)
-					factory.buildCollectionRegion("com.acme.Person.addresses", p, MUTABLE_NON_VERSIONED);
+			InfinispanBaseRegion collectionRegion = factory.buildCollectionRegion("com.acme.Person.addresses", AccessType.TRANSACTIONAL);
 			cache = collectionRegion.getCache();
 			assertTrue(cache.getCacheConfiguration().jmxStatistics().enabled());
 		} finally {
@@ -520,29 +503,27 @@ public class InfinispanRegionFactoryTestCase  {
 		p.setProperty("hibernate.cache.infinispan.entity.memory.eviction.type", "FIFO");
 		p.setProperty("hibernate.cache.infinispan.entity.expiration.wake_up_interval", "3000");
 		p.setProperty("hibernate.cache.infinispan.entity.memory.size", "10000");
-		InfinispanRegionFactory factory = createRegionFactory(p);
+		TestRegionFactory factory = createRegionFactory(p);
 		try {
-         BaseRegion region = (BaseRegion) factory.buildEntityRegion("com.acme.Address", p, MUTABLE_NON_VERSIONED);
+			InfinispanBaseRegion region = factory.buildEntityRegion("com.acme.Address", AccessType.TRANSACTIONAL);
 			AdvancedCache cache = region.getCache();
 			assertFalse( cache.getCacheConfiguration().jmxStatistics().enabled() );
 
-			region = (BaseRegion) factory.buildEntityRegion("com.acme.Person", p, MUTABLE_NON_VERSIONED);
+			region = factory.buildEntityRegion("com.acme.Person", AccessType.TRANSACTIONAL);
 			cache = region.getCache();
 			assertFalse( cache.getCacheConfiguration().jmxStatistics().enabled() );
 
 			final String query = "org.hibernate.cache.internal.StandardQueryCache";
-			QueryResultsRegionImpl queryRegion = (QueryResultsRegionImpl) factory.buildQueryResultsRegion(query, p);
+			InfinispanBaseRegion queryRegion = factory.buildQueryResultsRegion(query);
 			cache = queryRegion.getCache();
 			assertFalse( cache.getCacheConfiguration().jmxStatistics().enabled() );
 
 			final String timestamps = "org.hibernate.cache.spi.UpdateTimestampsCache";
-			TimestampsRegionImpl timestampsRegion = (TimestampsRegionImpl)
-					factory.buildTimestampsRegion(timestamps, p);
+			InfinispanBaseRegion timestampsRegion = factory.buildTimestampsRegion(timestamps);
 			cache = timestampsRegion.getCache();
 			assertFalse( cache.getCacheConfiguration().jmxStatistics().enabled() );
 
-         BaseRegion collectionRegion = (BaseRegion)
-					factory.buildCollectionRegion("com.acme.Person.addresses", p, MUTABLE_NON_VERSIONED);
+			InfinispanBaseRegion collectionRegion = factory.buildCollectionRegion("com.acme.Person.addresses", AccessType.TRANSACTIONAL);
 			cache = collectionRegion.getCache();
 			assertFalse( cache.getCacheConfiguration().jmxStatistics().enabled() );
 		} finally {
@@ -553,7 +534,7 @@ public class InfinispanRegionFactoryTestCase  {
 	@Test
 	public void testDefaultPendingPutsCache() {
 		Properties p = createProperties();
-		InfinispanRegionFactory factory = createRegionFactory(p);
+		TestRegionFactory factory = createRegionFactory(p);
 		try {
 			Configuration ppConfig = factory.getCacheManager().getCacheConfiguration(DEF_PENDING_PUTS_RESOURCE);
 
@@ -573,7 +554,7 @@ public class InfinispanRegionFactoryTestCase  {
 	public void testCustomPendingPutsCache() {
 		Properties p = createProperties();
 		p.setProperty(INFINISPAN_CONFIG_RESOURCE_PROP, "alternative-infinispan-configs.xml");
-		InfinispanRegionFactory factory = createRegionFactory(p);
+		TestRegionFactory factory = createRegionFactory(p);
 		try {
 			Configuration ppConfig = factory.getCacheManager().getCacheConfiguration(DEF_PENDING_PUTS_RESOURCE);
 			assertEquals(120000, ppConfig.expiration().maxIdle());
@@ -582,19 +563,25 @@ public class InfinispanRegionFactoryTestCase  {
 		}
 	}
 
-	private TestInfinispanRegionFactory createRegionFactory(Properties p) {
+	private TestRegionFactory createRegionFactory(Properties p) {
 		return createRegionFactory(null, p, null);
 	}
 
-	private TestInfinispanRegionFactory createRegionFactory(Properties p,
-		   BiConsumer<TestInfinispanRegionFactory, EmbeddedCacheManager> hook) {
+	private TestRegionFactory createRegionFactory(Properties p,
+		   Consumer<EmbeddedCacheManager> hook) {
 		return createRegionFactory(null, p, hook);
 	}
 
-	private TestInfinispanRegionFactory createRegionFactory(final EmbeddedCacheManager manager, Properties p,
-		   BiConsumer<TestInfinispanRegionFactory, EmbeddedCacheManager> hook) {
-		final TestInfinispanRegionFactory factory = new TestInfinispanRegionFactory(manager, hook);
-		factory.start( CacheTestUtil.sfOptionsForStart(), p );
+	private TestRegionFactory createRegionFactory(final EmbeddedCacheManager manager, Properties p,
+		   Consumer<EmbeddedCacheManager> hook) {
+		if (manager != null) {
+			p.put(TestRegionFactory.MANAGER, manager);
+		}
+		if (hook != null) {
+			p.put(TestRegionFactory.AFTER_MANAGER_CREATED, hook);
+		}
+		final TestRegionFactory factory = TestRegionFactoryProvider.load().create(p);
+		factory.start(ServiceRegistryTestingImpl.forUnitTesting(), p);
 		return factory;
 	}
 
@@ -607,64 +594,5 @@ public class InfinispanRegionFactoryTestCase  {
 			properties.put( INFINISPAN_CONFIG_RESOURCE_PROP, cfgFileName );
 		}
 		return properties;
-	}
-
-	private static class TestInfinispanRegionFactory extends org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory {
-		private final EmbeddedCacheManager providedManager;
-		private final BiConsumer<TestInfinispanRegionFactory, EmbeddedCacheManager> afterCacheManagerCreated;
-
-		public TestInfinispanRegionFactory(EmbeddedCacheManager providedManager,
-													  BiConsumer<TestInfinispanRegionFactory, EmbeddedCacheManager> afterCacheManagerCreated) {
-			super(new Properties());
-			this.providedManager = providedManager;
-			this.afterCacheManagerCreated = afterCacheManagerCreated;
-		}
-
-		@Override
-      protected org.infinispan.transaction.lookup.TransactionManagerLookup createTransactionManagerLookup(SessionFactoryOptions settings, Properties properties) {
-         return new HibernateTransactionManagerLookup(null, null) {
-            @Override
-            public TransactionManager getTransactionManager() throws Exception {
-               AbstractJtaPlatform jta = new JBossStandAloneJtaPlatform();
-               jta.injectServices(ServiceRegistryBuilder.buildServiceRegistry());
-               return jta.getTransactionManager();
-            }
-         };
-      }
-
-		@Override
-      protected EmbeddedCacheManager createCacheManager(Properties properties, ServiceRegistry serviceRegistry) throws CacheException {
-         EmbeddedCacheManager m;
-			if (providedManager != null)
-				m = providedManager;
-			else
-				m = super.createCacheManager(properties, serviceRegistry);
-			// since data type cache configuration templates are defined when cache manager is created,
-			// we have to use hooks and set the configuration before the whole factory starts
-			if (afterCacheManagerCreated != null) {
-				afterCacheManagerCreated.accept(this, m);
-			}
-			return m;
-		}
-
-		/* Used for testing */
-      public String getBaseConfiguration(String regionName) {
-         return baseConfigurations.get(regionName);
-      }
-
-		/* Used for testing */
-      public String getBaseConfiguration(DataType dataType) {
-         return baseConfigurations.get(dataType.key);
-      }
-
-		/* Used for testing */
-      public Configuration getConfigurationOverride(String regionName) {
-         return configOverrides.get(regionName).build(false);
-      }
-
-		/* Used for testing */
-      public Configuration getConfigurationOverride(DataType dataType) {
-         return configOverrides.get(dataType.key).build(false);
-      }
 	}
 }

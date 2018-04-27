@@ -9,7 +9,7 @@ package org.infinispan.hibernate.cache.commons.access;
 import java.util.UUID;
 
 import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
-import org.infinispan.hibernate.cache.commons.impl.BaseTransactionalDataRegion;
+import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.hibernate.cache.commons.util.FutureUpdate;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.commons.util.InvocationAfterCompletion;
@@ -25,12 +25,12 @@ public class FutureUpdateSynchronization extends InvocationAfterCompletion {
 	private final UUID uuid = UUID.randomUUID();
 	private final Object key;
 	private final Object value;
-	private final BaseTransactionalDataRegion region;
+	private final InfinispanDataRegion region;
 	private final long sessionTimestamp;
 	private final AdvancedCache cache;
 
 	public FutureUpdateSynchronization(TransactionCoordinatorAccess tc, AdvancedCache cache, boolean requiresTransaction,
-			Object key, Object value, BaseTransactionalDataRegion region, long sessionTimestamp) {
+												  Object key, Object value, InfinispanDataRegion region, long sessionTimestamp) {
 
 		super(tc, requiresTransaction);
 		this.cache = cache;

@@ -7,10 +7,9 @@ import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.persister.entity.EntityPersister;
 import org.infinispan.hibernate.cache.commons.access.AccessDelegate;
+import org.infinispan.hibernate.cache.v51.access.AbstractAccess;
 
-public class ReadOnlyAccess
-   extends org.infinispan.hibernate.cache.commons.naturalid.ReadOnlyAccess
-   implements NaturalIdRegionAccessStrategy {
+public class ReadOnlyAccess extends AbstractAccess implements NaturalIdRegionAccessStrategy {
 
    private final NaturalIdRegionImpl region;
 
@@ -83,5 +82,4 @@ public class ReadOnlyAccess
    public NaturalIdRegion getRegion() {
       return region;
    }
-
 }

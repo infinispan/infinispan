@@ -20,19 +20,17 @@ import javax.persistence.PessimisticLockException;
 
 import org.hibernate.StaleStateException;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.infinispan.hibernate.cache.commons.InfinispanRegionFactory;
-import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
-import org.hibernate.cache.spi.Region;
 
 import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
-import org.infinispan.test.hibernate.cache.commons.util.TestInfinispanRegionFactory;
-import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.util.ControlledTimeService;
 import org.junit.After;
 import org.junit.Before;
@@ -51,14 +49,13 @@ import static org.junit.Assert.assertTrue;
 public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
    protected static final int WAIT_TIMEOUT = 2000;
    protected static final ControlledTimeService TIME_SERVICE = new ControlledTimeService();
-   protected static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
 
    protected long TIMEOUT;
    protected ExecutorService executor;
    protected static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(MethodHandles.lookup().lookupClass());
    protected AdvancedCache entityCache;
    protected long itemId;
-   protected Region region;
+   protected InfinispanBaseRegion region;
    protected long timeout;
    protected final List<Runnable> cleanup = new ArrayList<>();
 
@@ -94,17 +91,18 @@ public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
    @Override
    protected void startUp() {
       super.startUp();
-      InfinispanRegionFactory regionFactory = (InfinispanRegionFactory) sessionFactory().getSettings().getRegionFactory();
+      TestRegionFactory regionFactory = TestRegionFactoryProvider.load().wrap(sessionFactory().getSettings().getRegionFactory());
       TIMEOUT = regionFactory.getPendingPutsCacheConfiguration().expiration().maxIdle();
-      region = sessionFactory().getSecondLevelCacheRegion(Item.class.getName());
-      entityCache = ((BaseRegion) region).getCache();
+      region = TEST_SESSION_ACCESS.getRegion(sessionFactory(), Item.class.getName());
+      entityCache = region.getCache();
    }
 
    @Before
    public void insertAndClearCache() throws Exception {
-      region = sessionFactory().getSecondLevelCacheRegion(Item.class.getName());
-      entityCache = ((BaseRegion) region).getCache();
-      timeout = ((BaseRegion) region).getRegionFactory().getPendingPutsCacheConfiguration().expiration().maxIdle();
+      region = TEST_SESSION_ACCESS.getRegion(sessionFactory(), Item.class.getName());
+      entityCache = region.getCache();
+      timeout = TestRegionFactoryProvider.load().findRegionFactory(sessionFactory().getCache())
+            .getPendingPutsCacheConfiguration().expiration().maxIdle();
       Item item = new Item("my item", "Original item");
       withTxSession(s -> s.persist(item));
       entityCache.clear();
@@ -208,7 +206,7 @@ public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
    @Override
    protected void addSettings(Map settings) {
       super.addSettings(settings);
-      settings.put(TestInfinispanRegionFactory.TIME_SERVICE, TIME_SERVICE);
+      settings.put(TestRegionFactory.TIME_SERVICE, TIME_SERVICE);
    }
 
    protected void assertEmptyCache() {

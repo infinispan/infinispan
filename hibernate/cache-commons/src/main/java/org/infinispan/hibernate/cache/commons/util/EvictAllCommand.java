@@ -9,10 +9,9 @@ package org.infinispan.hibernate.cache.commons.util;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
-
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.util.ByteString;
 
 /**
@@ -23,7 +22,7 @@ import org.infinispan.util.ByteString;
  */
 public class EvictAllCommand extends BaseRpcCommand {
 
-	private final BaseRegion region;
+	private final InfinispanBaseRegion region;
 
    /**
     * Evict all command constructor.
@@ -31,7 +30,7 @@ public class EvictAllCommand extends BaseRpcCommand {
     * @param regionName name of the region to evict
     * @param region to evict
     */
-	public EvictAllCommand(ByteString regionName, BaseRegion region) {
+	public EvictAllCommand(ByteString regionName, InfinispanBaseRegion region) {
 		// region name and cache names are the same...
 		super( regionName );
 		this.region = region;
