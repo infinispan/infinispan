@@ -17,7 +17,6 @@ import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.server.core.security.simple.SimpleUserPrincipal;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestResourceTracker;
-import org.mockito.internal.stubbing.answers.ThrowsExceptionClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
@@ -52,7 +51,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
    @Test
    public void shouldAuthenticateWhenProvidingProperCredentials() throws Exception {
       //given
-      SecurityDomain securityDomainMock = mock(SecurityDomain.class, new ThrowsExceptionClass(SecurityException.class));
+      SecurityDomain securityDomainMock = mock(SecurityDomain.class);
       SimpleUserPrincipal userPrincipal = new SimpleUserPrincipal("test");
       doReturn(userPrincipal).when(securityDomainMock).authenticate(eq("test"), eq("test"));
 

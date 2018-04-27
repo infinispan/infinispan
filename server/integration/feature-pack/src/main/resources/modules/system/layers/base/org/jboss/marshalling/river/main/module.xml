@@ -7,5 +7,6 @@
 
     <dependencies>
         <module name="org.jboss.modules"/>
+        <module name="sun.jdk" />
     </dependencies>
 </module>
