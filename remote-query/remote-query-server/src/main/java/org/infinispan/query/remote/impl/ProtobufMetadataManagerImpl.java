@@ -8,13 +8,19 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import javax.management.MBeanException;
 import javax.management.ObjectName;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.configuration.cache.BackupConfiguration;
+import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -35,6 +41,7 @@ import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.MarshallerRegistration;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
+import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.InternalCacheRegistry.Flag;
 import org.infinispan.security.AuthorizationPermission;
@@ -50,6 +57,8 @@ import org.infinispan.util.concurrent.IsolationLevel;
 @MBean(objectName = ProtobufMetadataManagerConstants.OBJECT_NAME,
       description = "Component that acts as a manager and container for Protocol Buffers message type definitions in the scope of a CacheManger.")
 public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManager {
+
+   private static final Log log = LogFactory.getLog(ProtobufMetadataManagerImpl.class, Log.class);
 
    private volatile Cache<String, String> protobufSchemaCache;
 
@@ -120,6 +129,31 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
          globalConfiguration.security().authorization().roles().put(SCHEMA_MANAGER_ROLE, new CacheRoleImpl(SCHEMA_MANAGER_ROLE, AuthorizationPermission.ALL));
          cfg.security().authorization().enable().role(SCHEMA_MANAGER_ROLE);
       }
+
+      cfg = addMetadataSiteBackups(cfg, cacheManager);
+
+      return cfg;
+   }
+
+   private ConfigurationBuilder addMetadataSiteBackups(
+         ConfigurationBuilder cfg, EmbeddedCacheManager cacheManager) {
+      final List<String> allCacheNames = new ArrayList<>(cacheManager.getCacheConfigurationNames());
+      allCacheNames.add(BasicCacheContainer.DEFAULT_CACHE_NAME);
+
+      allCacheNames.stream()
+         .map(cacheManager::getCacheConfiguration)
+         .flatMap(c -> c.sites().enabledBackups().stream())
+         .map(BackupConfiguration::site)
+         .forEach(siteName -> {
+            log.debugf("Added backup site '%s' for protobuf metadata cache", siteName);
+            cfg.sites()
+               .addBackup()
+               .site(siteName)
+               .strategy(BackupConfiguration.BackupStrategy.SYNC)
+               .replicationTimeout(120_000)
+               .backupFailurePolicy(BackupFailurePolicy.FAIL);
+         });
+
       return cfg;
    }
 
