@@ -20,6 +20,7 @@ import org.infinispan.globalstate.ScopeFilter;
 import org.infinispan.globalstate.ScopedState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -39,10 +40,12 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    private Cache<ScopedState, Object> stateCache;
    private ParserRegistry parserRegistry;
    private LocalConfigurationStorage localConfigurationManager;
+   private LocalTopologyManager localTopologyManager;
 
    @Inject
-   public void inject(GlobalConfiguration globalConfiguration, EmbeddedCacheManager cacheManager) {
+   public void inject(GlobalConfiguration globalConfiguration, EmbeddedCacheManager cacheManager, LocalTopologyManager ltm) {
       this.cacheManager = cacheManager;
+      this.localTopologyManager = ltm;
       switch(globalConfiguration.globalState().configurationStorage()) {
          case IMMUTABLE:
             this.localConfigurationManager = new ImmutableLocalConfigurationStorage();
@@ -163,6 +166,11 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    public void removeCache(String name, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       ScopedState cacheScopedState = new ScopedState(CACHE_SCOPE, name);
       if (getStateCache().containsKey(cacheScopedState)) {
+         try {
+            localTopologyManager.setCacheRebalancingEnabled(name, false);
+         } catch (Exception e) {
+            // Ignore
+         }
          getStateCache().remove(cacheScopedState);
       } else {
          localConfigurationManager.removeCache(name, flags);

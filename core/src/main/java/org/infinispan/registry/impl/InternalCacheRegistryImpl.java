@@ -54,7 +54,7 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
          // TODO: choose a merge policy
          builder.clustering()
                .cacheMode(CacheMode.REPL_SYNC)
-               .sync().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
+               .sync().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(true);
       }
       if (flags.contains(Flag.PERSISTENT) && globalConfiguration.globalState().enabled()) {
          builder.persistence().addSingleFileStore().location(globalConfiguration.globalState().persistentLocation()).purgeOnStartup(false).preload(true).fetchPersistentState(true);
