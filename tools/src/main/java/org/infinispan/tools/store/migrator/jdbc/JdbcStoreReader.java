@@ -58,11 +58,11 @@ public class JdbcStoreReader implements StoreIterator {
 
    public Iterator<MarshalledEntry> iterator() {
       switch (props.storeType()) {
-         case BINARY:
+         case JDBC_BINARY:
             return new BinaryJdbcIterator(connectionFactory, getTableManager(true), marshaller);
-         case STRING:
+         case JDBC_STRING:
             return new StringJdbcIterator(connectionFactory, getTableManager(false), marshaller, getTwoWayMapper());
-         case MIXED:
+         case JDBC_MIXED:
             return new MixedJdbcIterator(connectionFactory, getTableManager(true), getTableManager(false),
                   marshaller, getTwoWayMapper());
          default:
@@ -78,7 +78,7 @@ public class JdbcStoreReader implements StoreIterator {
    }
 
    private TableManipulationConfiguration createBinaryTableConfig() {
-      if (props.storeType() == StoreType.STRING)
+      if (props.storeType() == StoreType.JDBC_STRING)
          return null;
 
       JdbcStringBasedStoreConfigurationBuilder builder = new ConfigurationBuilder().persistence()

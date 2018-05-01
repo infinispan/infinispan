@@ -1,5 +1,7 @@
 package org.infinispan.tools.store.migrator;
 
+import static org.infinispan.tools.store.migrator.Element.COMPRESSION;
+import static org.infinispan.tools.store.migrator.Element.LOCATION;
 import static org.infinispan.tools.store.migrator.Element.TARGET;
 import static org.infinispan.tools.store.migrator.Element.TYPE;
 
@@ -14,30 +16,36 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
+import org.infinispan.persistence.rocksdb.configuration.CompressionType;
+import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.infinispan.tools.store.migrator.jdbc.JdbcConfigurationUtil;
 import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 
-class TargetCacheFactory {
+class TargetStoreFactory {
 
    private static final String DEFAULT_CACHE_NAME = StoreMigrator.class.getName();
 
-   static AdvancedCache get(Properties properties) {
+   static EmbeddedCacheManager getCacheManager(Properties properties) {
       StoreProperties props = new StoreProperties(TARGET, properties);
-
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
       globalBuilder.defaultCacheName(DEFAULT_CACHE_NAME);
       SerializationConfigUtil.configureSerialization(props, globalBuilder.serialization());
       GlobalConfiguration globalConfig = globalBuilder.build();
+      return new DefaultCacheManager(globalConfig, new ConfigurationBuilder().build());
+   }
+
+   static AdvancedCache getTargetCache(EmbeddedCacheManager manager, Properties properties) {
+      StoreProperties props = new StoreProperties(TARGET, properties);
 
       ConfigurationBuilder configBuilder = new ConfigurationBuilder();
-      configBuilder.persistence().addStore(getInitializedStoreBuilder(props));
-      configBuilder.transaction()
+      configBuilder.persistence().addStore(getInitializedStoreBuilder(props)).purgeOnStartup(true);
+      configBuilder.invocationBatching().transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
-      DefaultCacheManager manager = new DefaultCacheManager(globalConfig, new ConfigurationBuilder().build());
 
       String cacheName = props.cacheName();
       manager.defineConfiguration(cacheName, configBuilder.build());
@@ -48,11 +56,21 @@ class TargetCacheFactory {
       PersistenceConfigurationBuilder persistenceBuilder = new ConfigurationBuilder().persistence();
       StoreType storeType = StoreType.valueOf(props.get(TYPE).toUpperCase());
       switch (storeType) {
-         case BINARY:
-         case MIXED:
+         case LEVELDB:
+         case JDBC_BINARY:
+         case JDBC_MIXED:
             throw new CacheConfigurationException(String.format("%s cannot be a target store as it no longer exists", storeType));
-         case STRING:
+         case JDBC_STRING:
             return JdbcConfigurationUtil.configureStore(props, new JdbcStringBasedStoreConfigurationBuilder(persistenceBuilder));
+         case ROCKSDB:
+            props.required(LOCATION);
+            String location = props.get(LOCATION);
+            RocksDBStoreConfigurationBuilder builder = new RocksDBStoreConfigurationBuilder(persistenceBuilder);
+            builder.location(location).expiredLocation(location + "-expired-");
+            String compressionType = props.get(COMPRESSION);
+            if (compressionType != null)
+               builder.compressionType(CompressionType.valueOf(compressionType.toUpperCase()));
+            return builder;
          default:
             throw new CacheConfigurationException(String.format("Unknown store type '%s'", storeType));
       }

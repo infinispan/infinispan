@@ -10,6 +10,7 @@ import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntry;
 
 /**
@@ -18,19 +19,21 @@ import org.infinispan.marshall.core.MarshalledEntry;
  */
 public class StoreMigrator {
 
-   private static final int DEFAULT_BATCH_SIZE = 1000;
+   private static final int DEFAULT_BATCH_SIZE = 1;
    private final Properties properties;
 
-   StoreMigrator(Properties properties) {
+   public StoreMigrator(Properties properties) {
       this.properties = properties;
    }
 
-   void run() throws Exception {
+   public void run() throws Exception {
       String batchSizeProp = properties.getProperty(BATCH + "." + SIZE);
       int batchLimit = batchSizeProp != null ? new Integer(batchSizeProp) : DEFAULT_BATCH_SIZE;
 
-      try (StoreIterator sourceReader = StoreIteratorFactory.get(properties)) {
-         AdvancedCache targetCache = TargetCacheFactory.get(properties);
+      try (EmbeddedCacheManager manager = TargetStoreFactory.getCacheManager(properties);
+           StoreIterator sourceReader = StoreIteratorFactory.get(properties)) {
+
+         AdvancedCache targetCache = TargetStoreFactory.getTargetCache(manager, properties);
          // Txs used so that writes to the DB are batched. Migrator will always operate locally Tx overhead should be negligible
          TransactionManager tm = targetCache.getTransactionManager();
          int txBatchSize = 0;

@@ -16,7 +16,8 @@ import static org.infinispan.tools.store.migrator.Element.MINOR_VERSION;
 import static org.infinispan.tools.store.migrator.Element.SOURCE;
 import static org.infinispan.tools.store.migrator.Element.TARGET;
 import static org.infinispan.tools.store.migrator.Element.TYPE;
-import static org.infinispan.tools.store.migrator.StoreType.MIXED;
+import static org.infinispan.tools.store.migrator.StoreType.JDBC_MIXED;
+import static org.infinispan.tools.store.migrator.TestUtil.propKey;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -142,20 +143,11 @@ public class MigratorConfigurationTest {
    private Properties createBaseProperties(Element orientation) {
       Properties properties = new Properties();
       properties.put(propKey(orientation, CACHE_NAME), DEFAULT_CACHE_NAME);
-      properties.put(propKey(orientation, TYPE), MIXED.toString());
+      properties.put(propKey(orientation, TYPE), JDBC_MIXED.toString());
       properties.put(propKey(orientation, DIALECT), DatabaseType.H2.toString());
       properties.put(propKey(orientation, CONNECTION_POOL, CONNECTION_URL), "jdbc:postgresql:postgres");
       properties.put(propKey(orientation, CONNECTION_POOL, DRIVER_CLASS), "org.postgresql.Driver");
       return properties;
-   }
-
-   private String propKey(Element... elements) {
-      StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < elements.length; i++) {
-         sb.append(elements[i].toString());
-         if (i != elements.length - 1) sb.append(".");
-      }
-      return sb.toString();
    }
 
    public static class PersonExternalizer implements AdvancedExternalizer<Person> {

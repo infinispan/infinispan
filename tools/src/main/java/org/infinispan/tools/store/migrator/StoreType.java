@@ -5,7 +5,9 @@ package org.infinispan.tools.store.migrator;
  * @since 9.0
  */
 public enum StoreType {
-   STRING,
-   BINARY,
-   MIXED
+   JDBC_BINARY,
+   JDBC_MIXED,
+   JDBC_STRING,
+   LEVELDB,
+   ROCKSDB
 }

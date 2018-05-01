@@ -17,6 +17,7 @@ import static org.infinispan.tools.store.migrator.Element.TARGET;
 import static org.infinispan.tools.store.migrator.Element.TIMESTAMP;
 import static org.infinispan.tools.store.migrator.Element.TYPE;
 import static org.infinispan.tools.store.migrator.Element.USERNAME;
+import static org.infinispan.tools.store.migrator.StoreType.JDBC_STRING;
 import static org.infinispan.tools.store.migrator.marshaller.MarshallerType.CURRENT;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -110,7 +111,7 @@ public class MigratorSerializerTest {
 
    private void createDatabaseConfigProperties(Properties props, boolean source) {
       Element type = source ? SOURCE : TARGET;
-      props.put(propKey(type, TYPE), STRING.toString());
+      props.put(propKey(type, TYPE), JDBC_STRING.toString());
       props.put(propKey(type, CACHE_NAME), this.getClass().getName());
       props.put(propKey(type, MARSHALLER), CURRENT);
       props.put(propKey(type, DIALECT), DB_DIALECT.toString());
