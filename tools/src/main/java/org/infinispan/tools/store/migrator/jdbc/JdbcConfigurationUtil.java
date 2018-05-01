@@ -44,14 +44,14 @@ public class JdbcConfigurationUtil {
    public static JdbcStringBasedStoreConfigurationBuilder configureStore(StoreProperties props, JdbcStringBasedStoreConfigurationBuilder builder) {
       StoreType type = props.storeType();
       configureDbMeta(props, builder);
-      if (type == StoreType.MIXED || type == StoreType.STRING) {
+      if (type == StoreType.JDBC_MIXED || type == StoreType.JDBC_STRING) {
          createTableConfig(props, STRING, builder);
          String mapper = props.get(KEY_TO_STRING_MAPPER);
          if (mapper != null)
             builder.key2StringMapper(props.get(KEY_TO_STRING_MAPPER));
       }
 
-      if (type == StoreType.MIXED || type == StoreType.BINARY) {
+      if (type == StoreType.JDBC_MIXED || type == StoreType.JDBC_BINARY) {
          createTableConfig(props, BINARY, builder);
       }
       createConnectionConfig(props, builder);

@@ -15,10 +15,10 @@ public class StoreProperties{
    private final StoreType storeType;
    private final String cacheName;
 
-   StoreProperties(Element root, Properties properties) {
+   public StoreProperties(Element root, Properties properties) {
       this.root = root;
       this.properties = properties;
-      required(TYPE);
+      validate();
       this.storeType = StoreType.valueOf(get(TYPE).toUpperCase());
       this.cacheName = get(CACHE_NAME);
    }
@@ -61,9 +61,14 @@ public class StoreProperties{
    public void required(Element... required) {
       for (Element prop : required) {
          if (properties.get(key(prop)) == null) {
-            String msg = String.format("The property %s must be specified.", prop);
+            String msg = String.format("The property '%s' must be specified.", key(prop));
             throw new CacheConfigurationException(msg);
          }
       }
+   }
+
+   private void validate() {
+      required(TYPE);
+      required(CACHE_NAME);
    }
 }

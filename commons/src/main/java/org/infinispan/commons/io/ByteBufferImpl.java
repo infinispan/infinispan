@@ -22,6 +22,10 @@ public class ByteBufferImpl implements ByteBuffer {
    private final int offset;
    private final int length;
 
+   public ByteBufferImpl(byte[] buf) {
+      this(buf, 0, buf.length);
+   }
+
    public ByteBufferImpl(byte[] buf, int offset, int length) {
       if (buf == null)
          throw new IllegalArgumentException("Null buff not allowed!");
