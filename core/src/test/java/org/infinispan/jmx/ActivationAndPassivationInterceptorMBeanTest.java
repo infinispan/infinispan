@@ -58,7 +58,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
                .passivation(true)
                .addStore(DummyInMemoryStoreConfigurationBuilder.class);
 
-      // Do not initiliaze this in instance declaration since a different
+      // Do not initialize this in instance declaration since a different
       // thread will be used when running from maven, breaking the thread local
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
 
@@ -74,6 +74,11 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
    @AfterMethod
    public void resetStats() throws Exception {
       threadMBeanServer.invoke(activationInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
+      threadMBeanServer.invoke(passivationInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
+   }
+
+   public void passivateAll() throws Exception {
+      threadMBeanServer.invoke(passivationInterceptorObjName, "passivateAll", new Object[0], new String[0]);
    }
 
    public void testDisableStatistics() throws Exception {
@@ -145,6 +150,15 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertPassivationCount(2);
       cache.evict("not_existing_key");
       assertPassivationCount(2);
+   }
+
+   public void testPassivateAll(Method m) throws Exception {
+      assertPassivationCount(0);
+      for (int i = 0; i < 10; i++) {
+         cache.put(k(m, i), v(m, i));
+      }
+      passivateAll();
+      assertPassivationCount(9);
    }
 
    private void assertActivationCount(int activationCount) throws Exception {
