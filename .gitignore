@@ -41,6 +41,7 @@ ObjectStore
 *.idx
 # Persisted metadata
 *.dat
+!tools/src/test/resources/singlefilestore/reader-test.dat
 # OS X generated file
 .DS_Store
 # Checkstlye in Eclipse

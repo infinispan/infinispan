@@ -11,6 +11,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -71,6 +72,9 @@ class TargetStoreFactory {
             if (compressionType != null)
                builder.compressionType(CompressionType.valueOf(compressionType.toUpperCase()));
             return builder;
+         case SINGLE_FILE_STORE:
+            props.required(LOCATION);
+            return new SingleFileStoreConfigurationBuilder(persistenceBuilder).location(props.get(LOCATION));
          default:
             throw new CacheConfigurationException(String.format("Unknown store type '%s'", storeType));
       }

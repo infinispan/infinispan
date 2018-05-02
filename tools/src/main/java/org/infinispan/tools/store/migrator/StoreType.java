@@ -9,5 +9,6 @@ public enum StoreType {
    JDBC_MIXED,
    JDBC_STRING,
    LEVELDB,
-   ROCKSDB
+   ROCKSDB,
+   SINGLE_FILE_STORE
 }
