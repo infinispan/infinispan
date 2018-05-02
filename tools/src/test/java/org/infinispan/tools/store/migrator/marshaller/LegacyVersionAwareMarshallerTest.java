@@ -60,9 +60,12 @@ public class ByteOutputGenerator {
    public static void main(String[] args) throws Exception {
       GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
             .serialization().addAdvancedExternalizer(new TestObjectExternalizer()).build();
-      Configuration config = new ConfigurationBuilder().persistence()
-            .addStore(LevelDBStoreConfigurationBuilder.class)
-            .build();
+
+      PersistenceConfigurationBuilder pb = new ConfigurationBuilder().persistence();
+      pb.addStore(LevelDBStoreConfigurationBuilder.class);
+      pb.addStore(SingleFileStoreConfigurationBuilder.class);
+      Configuration config = pb.build();
+
       EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig, config);
       ComponentRegistry registry = manager.getCache().getAdvancedCache().getComponentRegistry();
       StreamingMarshaller marshaller = registry.getCacheMarshaller();
