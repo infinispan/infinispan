@@ -15,8 +15,8 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
-import org.infinispan.distribution.group.impl.PartitionerConsistentHash;
 import org.infinispan.distribution.group.impl.GroupingPartitioner;
+import org.infinispan.distribution.group.impl.PartitionerConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
 import org.infinispan.util.KeyValuePair;
@@ -55,7 +55,7 @@ public abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x {
          return;
       }
 
-      AdvancedCache<byte[], byte[]> cache = server.getCacheInstance(r.cacheName, server.getCacheManager(), false, true);
+      AdvancedCache<byte[], byte[]> cache = server.getCacheInstance(null, r.cacheName, server.getCacheManager(), false, true);
 
       // This is not quite correct, as the ownership of segments on the 1.0/1.1 clients is not exactly
       // the same as on the server. But the difference appears only for (numSegment*numOwners/MAX_INT)

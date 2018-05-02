@@ -15,7 +15,7 @@ public class SizeOperation extends RetryOnFailureOperation<Integer> {
 
    protected SizeOperation(Codec codec, ChannelFactory channelFactory,
                            byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(SIZE_REQUEST, SIZE_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg);
+      super(SIZE_REQUEST, SIZE_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null);
    }
 
    @Override

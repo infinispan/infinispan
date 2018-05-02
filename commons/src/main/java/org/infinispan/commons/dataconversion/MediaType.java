@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -188,6 +189,10 @@ public final class MediaType {
       return typeSubtype;
    }
 
+   public MediaType withoutParameters() {
+      return new MediaType(type, subType);
+   }
+
    public double getWeight() {
       return weight;
    }
@@ -225,6 +230,14 @@ public final class MediaType {
 
    public Optional<String> getParameter(String name) {
       return Optional.ofNullable(params.get(name));
+   }
+
+   public Map<String, String> getParameters() {
+      return Collections.unmodifiableMap(params);
+   }
+
+   public MediaType withParameters(Map<String, String> parameters) {
+      return new MediaType(this.type, this.subType, parameters);
    }
 
    private static String validate(String token) {

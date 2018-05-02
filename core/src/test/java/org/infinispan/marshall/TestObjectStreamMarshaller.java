@@ -6,6 +6,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -92,5 +93,10 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller implements St
 
    @Override
    public void start() {
+   }
+
+   @Override
+   public MediaType mediaType() {
+      return marshaller.mediaType();
    }
 }

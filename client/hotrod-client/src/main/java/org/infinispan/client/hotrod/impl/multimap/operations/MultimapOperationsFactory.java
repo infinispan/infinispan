@@ -57,10 +57,10 @@ public class MultimapOperationsFactory {
    }
 
    public <K> PutKeyValueMultimapOperation newPutKeyValueOperation(K key, byte[] keyBytes, byte[] value,
-                                                                         long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+                                                                   long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       return new PutKeyValueMultimapOperation(
             codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
-            cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+            cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, null);
    }
 
    public <K> RemoveKeyMultimapOperation newRemoveKeyOperation(K key, byte[] keyBytes) {

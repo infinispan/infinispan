@@ -4,6 +4,7 @@ import java.net.SocketAddress;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -26,8 +27,8 @@ public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T>
    protected final byte[] keyBytes;
 
    protected AbstractKeyOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory,
-                                  Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(requestCode, responseCode, codec, channelFactory, cacheName, topologyId, flags, cfg);
+                                  Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg, DataFormat dataFormat) {
+      super(requestCode, responseCode, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat);
       this.key = key;
       this.keyBytes = keyBytes;
    }

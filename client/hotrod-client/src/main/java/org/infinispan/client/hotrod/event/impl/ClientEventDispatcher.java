@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
@@ -129,6 +130,10 @@ public class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
          for (ClientListenerInvocation callback : callbacks)
             callback.invoke(ClientEvents.mkCachefailoverEvent());
       }
+   }
+
+   protected DataFormat getDataFormat() {
+      return op.getDataFormat();
    }
 
    static final class ClientListenerInvocation {

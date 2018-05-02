@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
@@ -44,8 +45,8 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
    private String currentClusterName;
 
    protected RetryOnFailureOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory,
-                                     byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(requestCode, responseCode, codec, flags, cfg, cacheName, topologyId, channelFactory);
+                                     byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg, DataFormat dataFormat) {
+      super(requestCode, responseCode, codec, flags, cfg, cacheName, topologyId, channelFactory, dataFormat);
    }
 
    @Override

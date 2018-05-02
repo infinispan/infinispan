@@ -2,6 +2,7 @@ package org.infinispan.commons.marshall;
 
 import java.io.IOException;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 
 import net.jcip.annotations.ThreadSafe;
@@ -99,5 +100,10 @@ public interface Marshaller {
     * @throws NullPointerException if o is null
     */
    BufferSizePredictor getBufferSizePredictor(Object o);
+
+   /**
+    * @return the {@link MediaType} associated with the content produced by the marshaller
+    */
+   MediaType mediaType();
 
 }

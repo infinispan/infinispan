@@ -1,5 +1,7 @@
 package org.infinispan.rest.search;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.IOException;
 
 import org.codehaus.jackson.JsonGenerator;
@@ -11,7 +13,7 @@ import org.codehaus.jackson.map.SerializerProvider;
 /**
  * @since 9.2
  */
-public class HitSerializer extends JsonSerializer<String> {
+public class HitSerializer extends JsonSerializer<Object> {
 
    private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -20,9 +22,9 @@ public class HitSerializer extends JsonSerializer<String> {
    }
 
    @Override
-   public void serialize(String string, JsonGenerator gen, SerializerProvider provider) throws IOException {
-      Object json = objectMapper.readValue(string, Object.class);
-      gen.writeObject(json);
+   public void serialize(Object value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+      String rawJson = value instanceof String ? value.toString() : new String((byte[]) value, UTF_8);
+      gen.writeObject(objectMapper.readValue(rawJson, Object.class));
    }
 
 }

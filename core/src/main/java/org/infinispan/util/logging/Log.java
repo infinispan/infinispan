@@ -1690,8 +1690,8 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Invalid text format: '%s'", id = 493)
 //   EncodingException invalidTextFormat(Object content);
 
-//   @Message(value = "Invalid binary format: '%s'", id = 494)
-//   EncodingException invalidBinaryFormat(Object content);
+   @Message(value = "Invalid binary format: '%s'", id = 494)
+   EncodingException invalidBinaryFormat(Object content);
 
    @Message(value = "Error transcoding content", id = 495)
    EncodingException errorTranscoding(@Cause Throwable cause);
@@ -1798,4 +1798,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = DEBUG)
    @Message(value = "Conflict resolution cancelled for cache %s with topology %s", id = 525)
    void cancelledConflictResolution(String cacheName, CacheTopology currentTopology);
+
+   @Message(value = "Deserialization of class '%s' is not allowed", id = 526)
+   CacheException errorDeserializing(Class<?> rawClass);
 }

@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.MetadataValueImpl;
@@ -32,8 +33,8 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
 
    public GetWithMetadataOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes,
                                    byte[] cacheName, AtomicInteger topologyId, int flags,
-                                   Configuration cfg) {
-      super(GET_WITH_METADATA, GET_WITH_METADATA_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
+                                   Configuration cfg, DataFormat dataFormat) {
+      super(GET_WITH_METADATA, GET_WITH_METADATA_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, dataFormat);
    }
 
    @Override
@@ -65,7 +66,7 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
       if (trace) {
          log.tracef("Received version: %d", version);
       }
-      V value = codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller());
+      V value = dataFormat.valueToObj(ByteBufUtil.readArray(buf), status, cfg.serialWhitelist());
       complete(new MetadataValueImpl<V>(creation, lifespan, lastUsed, maxIdle, version, value));
    }
 }

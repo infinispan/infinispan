@@ -78,9 +78,9 @@ public final class StandardConversions {
     * @return String representation of the text content.
     * @throws EncodingException if the source cannot be interpreted as plain text.
     */
-   public static Object convertTextToObject(Object source, MediaType sourceType) {
+   public static String convertTextToObject(Object source, MediaType sourceType) {
       if (source == null) return null;
-      if (source instanceof String) return source;
+      if (source instanceof String) return source.toString();
       if (source instanceof byte[]) {
          byte[] bytesSource = (byte[]) source;
          return new String(bytesSource, sourceType.getCharset());

@@ -25,7 +25,7 @@ import io.netty.channel.Channel;
 public class SizeMultimapOperation extends RetryOnFailureOperation<Long> {
 
    protected SizeMultimapOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(SIZE_MULTIMAP_REQUEST, SIZE_MULTIMAP_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg);
+      super(SIZE_MULTIMAP_REQUEST, SIZE_MULTIMAP_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null);
    }
 
    @Override

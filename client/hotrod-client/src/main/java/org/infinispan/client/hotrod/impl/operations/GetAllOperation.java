@@ -6,11 +6,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -30,8 +31,8 @@ public class GetAllOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
 
    public GetAllOperation(Codec codec, ChannelFactory channelFactory,
                           Set<byte[]> keys, byte[] cacheName, AtomicInteger topologyId,
-                          int flags, Configuration cfg) {
-      super(GET_ALL_REQUEST, GET_ALL_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg);
+                          int flags, Configuration cfg, DataFormat dataFormat) {
+      super(GET_ALL_REQUEST, GET_ALL_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat);
       this.keys = keys;
    }
 
@@ -75,8 +76,8 @@ public class GetAllOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
          decoder.checkpoint();
       }
       while (result.size() < size) {
-         K key = codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller());
-         V value = codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller());
+         K key = dataFormat.keyToObj(ByteBufUtil.readArray(buf), status, cfg.serialWhitelist());
+         V value = dataFormat.valueToObj(ByteBufUtil.readArray(buf), status, cfg.serialWhitelist());
          result.put(key, value);
          decoder.checkpoint();
       }

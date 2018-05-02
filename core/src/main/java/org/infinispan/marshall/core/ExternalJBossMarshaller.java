@@ -6,6 +6,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.MarshallableTypeHints;
@@ -119,6 +120,11 @@ final class ExternalJBossMarshaller implements StreamingMarshaller {
    @Override
    public BufferSizePredictor getBufferSizePredictor(Object o) {
       throw new UnsupportedOperationException("No longer in use");
+   }
+
+   @Override
+   public MediaType mediaType() {
+      return MediaType.APPLICATION_JBOSS_MARSHALLING;
    }
 
    static final class JBossByteOutput extends OutputStream implements ByteOutput {

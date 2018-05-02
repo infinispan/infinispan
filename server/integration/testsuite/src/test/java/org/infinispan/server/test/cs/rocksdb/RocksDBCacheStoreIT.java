@@ -1,5 +1,6 @@
 package org.infinispan.server.test.cs.rocksdb;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -14,6 +15,7 @@ import org.infinispan.arquillian.model.RemoteInfinispanCacheManager;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.logging.Log;
@@ -134,6 +136,11 @@ public class RocksDBCacheStoreIT {
         @Override
         public boolean isMarshallable(Object o) {
             return o instanceof String;
+        }
+
+        @Override
+        public MediaType mediaType() {
+            return APPLICATION_OCTET_STREAM;
         }
 
         @Override

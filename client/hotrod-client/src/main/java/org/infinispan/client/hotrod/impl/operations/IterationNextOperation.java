@@ -8,18 +8,17 @@ import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.MetadataValueImpl;
 import org.infinispan.client.hotrod.impl.iteration.KeyTracker;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.client.hotrod.marshall.MarshallerUtil;
-import org.infinispan.commons.marshall.Marshaller;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -44,8 +43,8 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
 
    protected IterationNextOperation(Codec codec, int flags, Configuration cfg, byte[] cacheName,
                                     AtomicInteger topologyId, byte[] iterationId, Channel channel,
-                                    ChannelFactory channelFactory, KeyTracker segmentKeyTracker) {
-      super(ITERATION_NEXT_REQUEST, ITERATION_NEXT_RESPONSE, codec, flags, cfg, cacheName, topologyId, channelFactory);
+                                    ChannelFactory channelFactory, KeyTracker segmentKeyTracker, DataFormat dataFormat) {
+      super(ITERATION_NEXT_REQUEST, ITERATION_NEXT_RESPONSE, codec, flags, cfg, cacheName, topologyId, channelFactory, dataFormat);
       this.iterationId = iterationId;
       this.channel = channel;
       this.segmentKeyTracker = segmentKeyTracker;
@@ -99,18 +98,19 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
          if (projectionsSize > 1) {
             Object[] projections = new Object[projectionsSize];
             for (int j = 0; j < projectionsSize; j++) {
-               projections[j] = unmarshall(ByteBufUtil.readArray(buf), status);
+               projections[j] = unmarshallValue(ByteBufUtil.readArray(buf), status);
             }
             value = projections;
          } else {
-            value = unmarshall(ByteBufUtil.readArray(buf), status);
+            value = unmarshallValue(ByteBufUtil.readArray(buf), status);
          }
          if (meta == 1) {
             value = new MetadataValueImpl<>(creation, lifespan, lastUsed, maxIdle, version, value);
          }
 
          if (segmentKeyTracker.track(key, status, cfg.serialWhitelist())) {
-            entries.add(new SimpleEntry<>(unmarshall(key, status), (E) value));
+            Object unmarshallKey = dataFormat.keyToObj(key, status, cfg.serialWhitelist());
+            entries.add(new SimpleEntry<>(unmarshallKey, (E) value));
          } else {
             untrackedEntries++;
          }
@@ -123,8 +123,7 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
       complete(new IterationNextResponse(status, entries, entriesSize > 0));
    }
 
-   private Object unmarshall(byte[] bytes, short status) {
-      Marshaller marshaller = channelFactory.getMarshaller();
-      return MarshallerUtil.bytes2obj(marshaller, bytes, status, cfg.serialWhitelist());
+   private Object unmarshallValue(byte[] bytes, short status) {
+      return dataFormat.valueToObj(bytes, status, cfg.serialWhitelist());
    }
 }

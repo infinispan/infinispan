@@ -1,7 +1,12 @@
 package org.infinispan.server.test.client.hotrod;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.server.test.util.ITestUtils.isLocalMode;
 import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -27,8 +32,10 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
@@ -42,6 +49,7 @@ import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
@@ -818,7 +826,7 @@ public abstract class AbstractRemoteCacheIT {
 
     @Test
     public void testGetProtocolVersion() throws Exception {
-       assertEquals("HotRod client, protocol version: 2.8", remoteCache.getProtocolVersion());
+       assertEquals("HotRod client, protocol version: " + ProtocolVersion.DEFAULT_PROTOCOL_VERSION, remoteCache.getProtocolVersion());
     }
 
     @Test
@@ -1074,6 +1082,43 @@ public abstract class AbstractRemoteCacheIT {
         } finally {
             remoteCache.removeClientListener(eventListener);
         }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testDataConversionsWithDefaultRemoteCache() throws Exception {
+        String key = "key-byte-array-1";
+        byte[] value = {0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x21};  // Hello!
+        String stringValue = new String(value);
+
+        DataFormat writeValueUnmarshalled = DataFormat.builder().valueType(APPLICATION_OCTET_STREAM).build();
+
+        // Avoid marshalling values when writing
+        RemoteCache<String, byte[]> octetStreamCacheValue = this.remoteCache.withDataFormat(writeValueUnmarshalled);
+        octetStreamCacheValue.put(key, value);
+
+        assertArrayEquals(value, octetStreamCacheValue.get(key));
+
+        // Read as UTF
+        Object utfValue = this.remoteCache
+              .withDataFormat(DataFormat.builder().valueType(TEXT_PLAIN).valueMarshaller(new UTF8StringMarshaller()).build())
+              .get(key);
+
+        assertEquals(stringValue, utfValue);
+
+        // Read as XML
+        Object xmlValue = this.remoteCache
+              .withDataFormat(DataFormat.builder().valueType(APPLICATION_XML).valueMarshaller(new UTF8StringMarshaller()).build())
+              .get(key);
+
+        assertEquals("<string>" + stringValue + "</string>", xmlValue);
+
+        // Read as JSON
+        Object jsonValue = this.remoteCache
+              .withDataFormat(DataFormat.builder().valueType(APPLICATION_JSON).valueMarshaller(new UTF8StringMarshaller()).build())
+              .get(key);
+
+        assertEquals("\"Hello!\"", jsonValue);
     }
 
     public static <K> void expectOnlyCreatedEvent(K key, EventLogListener eventListener) {

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
@@ -22,6 +23,7 @@ import com.esotericsoftware.kryo.pool.KryoPool;
 public class KryoMarshaller extends AbstractMarshaller {
 
    private static final List<SerializerRegistryService> serializerServices = new ArrayList<>();
+
    static {
       ServiceLoader.load(SerializerRegistryService.class, KryoMarshaller.class.getClassLoader())
             .forEach(serializerServices::add);
@@ -66,5 +68,10 @@ public class KryoMarshaller extends AbstractMarshaller {
       } catch (Throwable t) {
          return false;
       }
+   }
+
+   @Override
+   public MediaType mediaType() {
+      return MediaType.APPLICATION_KRYO;
    }
 }

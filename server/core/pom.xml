@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
    <parent>
       <groupId>org.infinispan</groupId>
@@ -23,16 +24,16 @@
          <groupId>io.netty</groupId>
          <artifactId>netty-handler</artifactId>
       </dependency>
-      <!-- Workaround for ISPN-8843 -->
-      <dependency>
+       <!-- Workaround for ISPN-8843 -->
+       <dependency>
          <groupId>org.conscrypt</groupId>
          <artifactId>conscrypt-openjdk</artifactId>
          <version>${version.netty-conscrypt-optional}</version>
          <classifier>${os.detected.classifier}</classifier>
          <optional>true</optional>
       </dependency>
-      <!-- Workaround for ISPN-8843 -->
-      <dependency>
+       <!-- Workaround for ISPN-8843 -->
+       <dependency>
          <groupId>io.netty</groupId>
          <artifactId>netty-tcnative</artifactId>
          <version>${version.netty-tcnative-boringssl-static}</version>
@@ -51,6 +52,14 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-tasks</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.codehaus.jackson</groupId>
+         <artifactId>jackson-mapper-asl</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>com.thoughtworks.xstream</groupId>
+         <artifactId>xstream</artifactId>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -76,7 +85,7 @@
 
    <build>
       <!-- Workaround for ISPN-8843 -->
-      <extensions>
+       <extensions>
          <extension>
             <groupId>kr.motd.maven</groupId>
             <artifactId>os-maven-plugin</artifactId>

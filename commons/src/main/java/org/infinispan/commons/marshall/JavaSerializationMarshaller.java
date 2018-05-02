@@ -10,6 +10,7 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 
@@ -45,6 +46,11 @@ public class JavaSerializationMarshaller extends AbstractMarshaller {
    @Override
    public boolean isMarshallable(Object o) throws Exception {
       return o instanceof Serializable;
+   }
+
+   @Override
+   public MediaType mediaType() {
+      return MediaType.APPLICATION_SERIALIZED_OBJECT;
    }
 
 }

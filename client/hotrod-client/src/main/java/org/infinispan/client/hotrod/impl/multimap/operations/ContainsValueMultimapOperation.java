@@ -35,7 +35,7 @@ public class ContainsValueMultimapOperation extends RetryOnFailureOperation<Bool
    protected ContainsValueMultimapOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
                                             AtomicInteger topologyId, int flags, Configuration cfg, byte[] value,
                                             long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      super(CONTAINS_VALUE_MULTIMAP_REQUEST, CONTAINS_VALUE_MULTIMAP_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg);
+      super(CONTAINS_VALUE_MULTIMAP_REQUEST, CONTAINS_VALUE_MULTIMAP_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null);
       this.value = value;
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;

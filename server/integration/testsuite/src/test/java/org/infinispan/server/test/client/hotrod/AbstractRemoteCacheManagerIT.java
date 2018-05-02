@@ -501,7 +501,7 @@ public abstract class AbstractRemoteCacheManagerIT {
 
         Field field = null;
         try {
-            field = RemoteCacheImpl.class.getDeclaredField("marshaller");
+            field = RemoteCacheImpl.class.getDeclaredField("defaultMarshaller");
         } catch (NoSuchFieldException e) {
             throw new Exception("Could not access marshaller field", e);
         }

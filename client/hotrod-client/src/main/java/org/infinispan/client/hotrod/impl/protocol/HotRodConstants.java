@@ -143,23 +143,25 @@ public interface HotRodConstants {
    int NODE_SUSPECTED = 0x87;
    int ILLEGAL_LIFECYCLE_STATE = 0x88;
 
-   @Deprecated
    /**
     * @deprecated use {@link org.infinispan.client.hotrod.configuration.ClientIntelligence#BASIC}
     * instead
     */
-   byte CLIENT_INTELLIGENCE_BASIC = 0x01;
    @Deprecated
+   byte CLIENT_INTELLIGENCE_BASIC = 0x01;
+
    /**
     * @deprecated use {@link org.infinispan.client.hotrod.configuration.ClientIntelligence#TOPOLOGY_AWARE}
     * instead
     */
-   byte CLIENT_INTELLIGENCE_TOPOLOGY_AWARE = 0x02;
    @Deprecated
+   byte CLIENT_INTELLIGENCE_TOPOLOGY_AWARE = 0x02;
+
    /**
     * @deprecated use {@link org.infinispan.client.hotrod.configuration.ClientIntelligence#HASH_DISTRIBUTION_AWARE}
     * instead
     */
+   @Deprecated
    byte CLIENT_INTELLIGENCE_HASH_DISTRIBUTION_AWARE = 0x03;
    Charset HOTROD_STRING_CHARSET = Charset.forName("UTF-8");
 
@@ -173,15 +175,15 @@ public interface HotRodConstants {
 
    static boolean isSuccess(int status) {
       return status == NO_ERROR_STATUS
-         || status == NO_ERROR_STATUS_COMPAT
-         || status == SUCCESS_WITH_PREVIOUS
-         || status == SUCCESS_WITH_PREVIOUS_COMPAT;
+            || status == NO_ERROR_STATUS_COMPAT
+            || status == SUCCESS_WITH_PREVIOUS
+            || status == SUCCESS_WITH_PREVIOUS_COMPAT;
    }
 
    static boolean isNotExecuted(int status) {
       return status == NOT_PUT_REMOVED_REPLACED_STATUS
-         || status == NOT_EXECUTED_WITH_PREVIOUS
-         || status == NOT_EXECUTED_WITH_PREVIOUS_COMPAT;
+            || status == NOT_EXECUTED_WITH_PREVIOUS
+            || status == NOT_EXECUTED_WITH_PREVIOUS_COMPAT;
    }
 
    static boolean isNotExist(int status) {
@@ -190,15 +192,15 @@ public interface HotRodConstants {
 
    static boolean hasPrevious(int status) {
       return status == SUCCESS_WITH_PREVIOUS
-         || status == SUCCESS_WITH_PREVIOUS_COMPAT
-         || status == NOT_EXECUTED_WITH_PREVIOUS
-         || status == NOT_EXECUTED_WITH_PREVIOUS_COMPAT;
+            || status == SUCCESS_WITH_PREVIOUS_COMPAT
+            || status == NOT_EXECUTED_WITH_PREVIOUS
+            || status == NOT_EXECUTED_WITH_PREVIOUS_COMPAT;
    }
 
    static boolean hasCompatibility(short status) {
       return status == NO_ERROR_STATUS_COMPAT
-         || status == SUCCESS_WITH_PREVIOUS_COMPAT
-         || status == NOT_EXECUTED_WITH_PREVIOUS_COMPAT;
+            || status == SUCCESS_WITH_PREVIOUS_COMPAT
+            || status == NOT_EXECUTED_WITH_PREVIOUS_COMPAT;
    }
 
    static boolean isInvalidIteration(short status) {
@@ -208,7 +210,8 @@ public interface HotRodConstants {
    final class Names {
       static final String[] NAMES;
 
-      private Names() {}
+      private Names() {
+      }
 
       static {
          Predicate<Field> filterRequestsResponses =

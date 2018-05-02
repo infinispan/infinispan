@@ -27,7 +27,7 @@ public class StreamingRemoteCacheImpl<K> implements StreamingRemoteCache<K> {
 
    @Override
    public <T extends InputStream & VersionedMetadata> T get(K key) {
-      GetStreamOperation op = cache.operationsFactory.newGetStreamOperation(cache.compatKeyIfNeeded(key), cache.obj2bytes(key, true), 0);
+      GetStreamOperation op = cache.operationsFactory.newGetStreamOperation(cache.compatKeyIfNeeded(key), cache.keyToBytes(key), 0);
       return (T) await(op.execute());
    }
 
@@ -43,7 +43,7 @@ public class StreamingRemoteCacheImpl<K> implements StreamingRemoteCache<K> {
 
    @Override
    public OutputStream put(K key, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      PutStreamOperation op = cache.operationsFactory.newPutStreamOperation(cache.compatKeyIfNeeded(key), cache.obj2bytes(key, true), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      PutStreamOperation op = cache.operationsFactory.newPutStreamOperation(cache.compatKeyIfNeeded(key), cache.keyToBytes(key), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
       return await(op.execute());
    }
 
@@ -59,7 +59,7 @@ public class StreamingRemoteCacheImpl<K> implements StreamingRemoteCache<K> {
 
    @Override
    public OutputStream putIfAbsent(K key, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      PutStreamOperation op = cache.operationsFactory.newPutIfAbsentStreamOperation(cache.compatKeyIfNeeded(key), cache.obj2bytes(key, true), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      PutStreamOperation op = cache.operationsFactory.newPutIfAbsentStreamOperation(cache.compatKeyIfNeeded(key), cache.keyToBytes(key), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
       return await(op.execute());
    }
 
@@ -75,7 +75,7 @@ public class StreamingRemoteCacheImpl<K> implements StreamingRemoteCache<K> {
 
    @Override
    public OutputStream replaceWithVersion(K key, long version, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      PutStreamOperation op = cache.operationsFactory.newPutStreamOperation(cache.compatKeyIfNeeded(key), cache.obj2bytes(key, true), version, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      PutStreamOperation op = cache.operationsFactory.newPutStreamOperation(cache.compatKeyIfNeeded(key), cache.keyToBytes(key), version, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
       return await(op.execute());
    }
 }

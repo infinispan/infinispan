@@ -3,6 +3,7 @@ package org.infinispan.commons.marshall;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 
@@ -28,6 +29,11 @@ public class StringMarshaller extends AbstractMarshaller {
    @Override
    public boolean isMarshallable(Object o) throws Exception {
       return o instanceof String;
+   }
+
+   @Override
+   public MediaType mediaType() {
+      return MediaType.TEXT_PLAIN;
    }
 
 }

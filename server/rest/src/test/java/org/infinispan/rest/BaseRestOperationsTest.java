@@ -1196,8 +1196,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
             .header(HttpHeader.ACCEPT, APPLICATION_XML_TYPE)
             .method(HttpMethod.GET).send();
 
-      ResponseAssertion.assertThat(response).isNotAcceptable();
-      ResponseAssertion.assertThat(response).containsReturnedText("Content cannot be converted to XML");
+      ResponseAssertion.assertThat(response).containsReturnedText("<string>foo</string>");
    }
 
 }

@@ -27,7 +27,7 @@ public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingOper
    protected FaultTolerantPingOperation(Codec codec, ChannelFactory channelFactory,
                                         byte[] cacheName, AtomicInteger topologyId, int flags,
                                         Configuration cfg) {
-      super(PING_REQUEST, PING_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg);
+      super(PING_REQUEST, PING_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null);
    }
 
    @Override

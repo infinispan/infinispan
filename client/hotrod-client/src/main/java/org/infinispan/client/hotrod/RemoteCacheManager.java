@@ -25,6 +25,7 @@ import org.infinispan.client.hotrod.counter.impl.RemoteCounterManager;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
+import org.infinispan.client.hotrod.impl.MarshallerRegistry;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.RemoteCacheManagerAdminImpl;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
@@ -39,6 +40,7 @@ import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
@@ -72,6 +74,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
 
    private volatile boolean started = false;
    private final Map<RemoteCacheKey, RemoteCacheHolder> cacheName2RemoteCache = new HashMap<>();
+   private final MarshallerRegistry marshallerRegistry = new MarshallerRegistry();
    private final AtomicInteger defaultCacheTopologyId = new AtomicInteger(HotRodConstants.DEFAULT_CACHE_TOPOLOGY);
    private Configuration configuration;
    private Codec codec;
@@ -225,6 +228,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
                marshaller = Util.getInstance(clazz);
          }
       }
+      marshallerRegistry.registerMarshaller(marshaller);
+      marshallerRegistry.registerMarshaller(new UTF8StringMarshaller());
 
       codec = CodecFactory.getCodec(configuration.version());
 
@@ -235,7 +240,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
       }
       ExecutorService asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
       channelFactory.start(codec, configuration, defaultCacheTopologyId, marshaller, asyncExecutorService,
-            listenerNotifier, Collections.singletonList(listenerNotifier::failoverListeners));
+            listenerNotifier, Collections.singletonList(listenerNotifier::failoverListeners), marshallerRegistry);
       counterManager.start(channelFactory, codec, configuration, listenerNotifier);
 
       synchronized (cacheName2RemoteCache) {
@@ -259,6 +264,10 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
                if (!isClasspathCorrect)
                   log.warnAboutUberJarDuplicates();
             });
+   }
+
+   public MarshallerRegistry getMarshallerRegistry() {
+      return marshallerRegistry;
    }
 
    /**

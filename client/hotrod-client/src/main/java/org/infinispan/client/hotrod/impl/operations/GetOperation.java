@@ -2,9 +2,11 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
@@ -23,8 +25,8 @@ public class GetOperation<V> extends AbstractKeyOperation<V> {
 
    public GetOperation(Codec codec, ChannelFactory channelFactory,
                        Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags,
-                       Configuration cfg) {
-      super(GET_REQUEST, GET_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
+                       Configuration cfg, DataFormat dataFormat) {
+      super(GET_REQUEST, GET_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, dataFormat);
    }
 
    @Override
@@ -36,7 +38,7 @@ public class GetOperation<V> extends AbstractKeyOperation<V> {
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (!HotRodConstants.isNotExist(status) && HotRodConstants.isSuccess(status)) {
-         complete(codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller()));
+         complete(dataFormat.valueToObj(ByteBufUtil.readArray(buf), status, cfg.serialWhitelist()));
       } else {
          complete(null);
       }

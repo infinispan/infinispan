@@ -7,8 +7,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -25,7 +25,7 @@ public class BulkGetOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
 
    public BulkGetOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicInteger topologyId,
                            int flags, Configuration cfg, int entryCount) {
-      super(BULK_GET_REQUEST, BULK_GET_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg);
+      super(BULK_GET_REQUEST, BULK_GET_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null);
       this.entryCount = entryCount;
    }
 

@@ -10,7 +10,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.counter.impl.HotRodCounterEvent;
@@ -145,7 +147,7 @@ public class Codec10 implements Codec {
    }
 
    @Override
-   public AbstractClientEvent readCacheEvent(ByteBuf buf, Marshaller marshaller, short eventTypeId, List<String> whitelist, SocketAddress serverAddress) {
+   public AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> dataFormatFunction, short eventTypeId, List<String> whitelist, SocketAddress serverAddress) {
       return null;  // No events sent in Hot Rod 1.x protocol
    }
 

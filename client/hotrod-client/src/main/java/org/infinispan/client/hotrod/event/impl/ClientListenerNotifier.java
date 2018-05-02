@@ -13,6 +13,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
@@ -174,6 +175,14 @@ public class ClientListenerNotifier {
          throw log.unexpectedListenerId(Util.printArray(listenerId));
       }
       eventDispatcher.invokeEvent(event);
+   }
+
+   public DataFormat getCacheDataFormat(byte[] listenerId) {
+      ClientEventDispatcher clientEventDispatcher = (ClientEventDispatcher) dispatchers.get(new WrappedByteArray(listenerId));
+      if (clientEventDispatcher == null) {
+         throw log.unexpectedListenerId(Util.printArray(listenerId));
+      }
+      return clientEventDispatcher.getDataFormat();
    }
 
    public Codec codec() {

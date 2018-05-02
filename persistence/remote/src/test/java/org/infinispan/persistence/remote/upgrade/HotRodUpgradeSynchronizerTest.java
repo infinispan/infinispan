@@ -150,7 +150,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
          RemoteCacheImpl spy = spy(remoteCache);
          doAnswer(invocation -> {
             Object[] params = invocation.getArguments();
-            CallbackRemoteIterator<Object> remoteCloseableIterator = new CallbackRemoteIterator<>(spy.getOperationsFactory(), (int) params[1], null, true);
+            CallbackRemoteIterator<Object> remoteCloseableIterator = new CallbackRemoteIterator<>(spy.getOperationsFactory(), (int) params[1], null, true, spy.getDataFormat());
             remoteCloseableIterator.addCallback(callback, key);
             remoteCloseableIterator.start();
             return remoteCloseableIterator;

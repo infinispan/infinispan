@@ -11,6 +11,7 @@ import java.util.function.BiConsumer;
 
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -291,6 +292,11 @@ public class GlobalMarshaller implements StreamingMarshaller {
    @Override
    public BufferSizePredictor getBufferSizePredictor(Object o) {
       return marshallableTypeHints.getBufferSizePredictor(o.getClass());
+   }
+
+   @Override
+   public MediaType mediaType() {
+      return MediaType.APPLICATION_INFINISPAN_MARSHALLED;
    }
 
    @Override

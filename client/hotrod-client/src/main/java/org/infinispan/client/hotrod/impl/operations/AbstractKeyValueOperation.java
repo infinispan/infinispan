@@ -5,6 +5,7 @@ import static org.infinispan.commons.util.Util.printArray;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -35,8 +36,9 @@ public abstract class AbstractKeyValueOperation<T> extends AbstractKeyOperation<
 
    protected AbstractKeyValueOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes, byte[] cacheName,
                                        AtomicInteger topologyId, int flags, Configuration cfg, byte[] value,
-                                       long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      super(requestCode, responseCode, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
+                                       long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit,
+                                       DataFormat dataFormat) {
+      super(requestCode, responseCode, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, dataFormat);
       this.value = value;
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;

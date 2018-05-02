@@ -6,6 +6,7 @@ import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRod
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.operations.AbstractKeyValueOperation;
@@ -30,8 +31,10 @@ public class PutKeyValueMultimapOperation extends AbstractKeyValueOperation<Void
 
    public PutKeyValueMultimapOperation(Codec codec,
                                        ChannelFactory channelFactory,
-                                       Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg, byte[] value, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      super(PUT_MULTIMAP_REQUEST, PUT_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+                                       Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
+                                       int flags, Configuration cfg, byte[] value, long lifespan,
+                                       TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
+      super(PUT_MULTIMAP_REQUEST, PUT_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat);
    }
 
    @Override

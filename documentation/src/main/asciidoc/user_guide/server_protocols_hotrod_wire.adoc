@@ -2645,6 +2645,45 @@ Response Header `Status` possible values:
 * `0x02`: The counter isn't defined.
 * See the <<Response Header>> for error codes.
 
+==== Hot Rod Protocol 2.8
+
+.Infinispan versions
+TIP: This version of the protocol is implemented since Infinispan 9.3
+
+This Hot Rod protocol version adds support for specifying the MediaType of Keys and Values, allowing data
+to be read (and written) in different formats. This information is part of the Header.
+
+The data formats are described using a _MediaType_ object, that is represented as follows:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| type   | 1 byte   | 
++0x00+ = No MediaType supplied +
++0x01+ = Pre-defined MediaType supplied +
++0x02+ = Custom MediaType supplied +
+| id  | vInt       | (Optional) For a pre-defined MediaType (type=0x01), the Id of the MediaType. The currently supported Ids can be found at link:https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/dataconversion/MediaTypeIds.java[MediaTypeIds]
+| customString | string | (Optional) If a custom MediaType is supplied (type=0x02), the custom MediaType of the key, including type and subtype. E.g.: _text/plain_, _application/json_, etc.
+| paramSize | vInt | The size of the parameters for the MediaType
+| paramKey1 | string | (Optional) The first parameter's key
+| paramValue1 | string | (Optional) The first parameter's value
+| ...             | ...    | ...
+| paramKeyN | string | (Optional) The nth parameter's key
+| paramValueN | string | (Optional) The nth parameter's value
+|==============================================================================
+
+ 
+===== Request Header
+
+The request header has the following extra fields:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Type       | Value
+| Key Format  | MediaType   | The MediaType to be used for keys during the operation. It applies to both the keys sent and received.
+| Value Format  | MediaType   | Analogous to Key Format, but applied for the values.
+|==============================================================================
+
 ==== Hot Rod Hash Functions
 {brandname} makes use of a consistent hash function to place nodes on a hash
 wheel, and to place keys of entries on the same wheel to determine where

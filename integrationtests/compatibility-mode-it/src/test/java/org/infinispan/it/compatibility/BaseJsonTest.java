@@ -22,9 +22,11 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.dsl.Query;
@@ -152,6 +154,12 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       CryptoCurrency litecoin = (CryptoCurrency) query.list().iterator().next();
       assertEquals(litecoin.getDescription(), "Litecoin");
       assertTrue(litecoin.getRank() == 4);
+
+      // Read as JSON from the Hot Rod client
+      Object jsonResult = remoteCache.withDataFormat(DataFormat.builder().valueType(MediaType.APPLICATION_JSON).build()).get("LTC");
+
+      JsonNode jsonNode = new ObjectMapper().readTree((byte[]) jsonResult);
+      assertEquals("Litecoin", jsonNode.get("description").asText());
    }
 
    @AfterClass

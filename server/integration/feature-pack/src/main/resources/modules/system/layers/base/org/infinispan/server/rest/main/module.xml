@@ -2,7 +2,7 @@
 
 <module xmlns="urn:jboss:module:1.5" name="org.infinispan.server.rest">
    <properties>
-      <property name="jboss.api" value="private" />
+      <property name="jboss.api" value="private"/>
    </properties>
 
    <resources>
@@ -10,15 +10,10 @@
    </resources>
 
    <dependencies>
-      <module name="com.thoughtworks.xstream" />
       <module name="javax.api" />
       <module name="javax.transaction.api" />
       <module name="javax.ws.rs.api" />
       <module name="org.apache.xerces" services="import" />
-      <module name="org.codehaus.jackson.jackson-core-asl" />
-      <module name="org.codehaus.jackson.jackson-mapper-asl" />
-      <module name="org.codehaus.jackson.jackson-jaxrs" />
-      <module name="org.codehaus.jackson.jackson-xc" />
       <module name="org.infinispan" />
       <module name="org.infinispan.remote-query.server" />
       <module name="org.infinispan.query.dsl" />

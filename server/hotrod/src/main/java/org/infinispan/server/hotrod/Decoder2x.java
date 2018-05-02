@@ -20,12 +20,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.MediaTypeIds;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.Util;
@@ -99,24 +102,119 @@ class Decoder2x implements VersionedDecoder {
          }
          buffer.markReaderIndex();
       }
-      int flag = ExtendedByteBufJava.readMaybeVInt(buffer);
-      if (flag == Integer.MIN_VALUE) {
-         return false;
+      if (header.clientIntel == 0) {
+         int flag = ExtendedByteBufJava.readMaybeVInt(buffer);
+         if (flag == Integer.MIN_VALUE) {
+            return false;
+         }
+         if (buffer.readableBytes() < 2) {
+            buffer.resetReaderIndex();
+            return false;
+         }
+         byte clientIntelligence = buffer.readByte();
+         int topologyId = ExtendedByteBufJava.readMaybeVInt(buffer);
+         if (topologyId == Integer.MIN_VALUE) {
+            return false;
+         }
+         header.flag = flag;
+         header.clientIntel = clientIntelligence;
+         header.topologyId = topologyId;
+         buffer.markReaderIndex();
       }
-      if (buffer.readableBytes() < 2) {
-         buffer.resetReaderIndex();
-         return false;
-      }
-      byte clientIntelligence = buffer.readByte();
-      int topologyId = ExtendedByteBufJava.readMaybeVInt(buffer);
-      if (topologyId == Integer.MIN_VALUE) {
-         return false;
-      }
-      header.flag = flag;
-      header.clientIntel = clientIntelligence;
-      header.topologyId = topologyId;
 
+      if (HotRodVersion.HOTROD_28.isAtLeast(header.version)) {
+         if (header.keyType == null) {
+            if (!readMediaType(buffer, header, m -> header.keyType = m)) {
+               return false;
+            }
+            buffer.markReaderIndex();
+         }
+         if (header.valueType == null) {
+            if (!readMediaType(buffer, header, m -> header.valueType = m)) {
+               return false;
+            }
+            buffer.markReaderIndex();
+         }
+      }
+      return true;
+   }
+
+   private boolean readMediaType(ByteBuf buffer, HotRodHeader header, Consumer<MediaType> consumer) throws RequestParsingException {
+      if (buffer.readableBytes() < 1) {
+         return false;
+      }
+      byte keyMediaTypeDefinition = buffer.readByte();
+      if (keyMediaTypeDefinition == 0) {
+         consumer.accept(MediaType.MATCH_ALL);
+         return true;
+      }
+      if (keyMediaTypeDefinition == 1) {
+         return readPredefinedMediaType(buffer, consumer);
+      } else if (keyMediaTypeDefinition == 2) {
+         return readCustomMediaType(buffer, consumer);
+      } else {
+         throw new RequestParsingException("Unknown MediaType definition: " + keyMediaTypeDefinition, header.version, header.messageId);
+      }
+
+   }
+
+   private boolean readCustomMediaType(ByteBuf buffer, Consumer<MediaType> consumer) {
+      byte[] customMediaTypeBytes = ExtendedByteBufJava.readMaybeRangedBytes(buffer);
+      if (customMediaTypeBytes == null) {
+         return false;
+      }
+      String strCustomMediaType = new String(customMediaTypeBytes, CharsetUtil.UTF_8);
+      Map<String, String> params = new HashMap<>();
+
+      if (!readMediaTypeParams(buffer, params)) {
+         return false;
+      }
+      MediaType customMediaType = MediaType.parse(strCustomMediaType);
+      if(!params.isEmpty()) {
+         customMediaType = customMediaType.withParameters(params);
+      }
+      consumer.accept(customMediaType);
+      return true;
+   }
+
+   private boolean readPredefinedMediaType(ByteBuf buffer, Consumer<MediaType> consumer) {
+      int MediaTypeId = ExtendedByteBufJava.readMaybeVInt(buffer);
+      if (MediaTypeId == Integer.MIN_VALUE) {
+         return false;
+      }
+      String strMediaType = MediaTypeIds.getMediaType((short) MediaTypeId);
+      MediaType mediaType = MediaType.parse(strMediaType);
+      Map<String, String> params = new HashMap<>();
+      if (!readMediaTypeParams(buffer, params)) {
+         return false;
+      }
+      mediaType.withParameters(params);
+      consumer.accept(mediaType);
       buffer.markReaderIndex();
+      return true;
+   }
+
+
+   private boolean readMediaTypeParams(ByteBuf buffer, Map<String, String> params) {
+      int paramsSize = ExtendedByteBufJava.readMaybeVInt(buffer);
+      if (paramsSize == Integer.MIN_VALUE) {
+         return false;
+      }
+      for (int i = 0; i < paramsSize; i++) {
+         byte[] bytesParamName = ExtendedByteBufJava.readMaybeRangedBytes(buffer);
+         if (bytesParamName == null) {
+            return false;
+         }
+         String paramName = new String(bytesParamName, CharsetUtil.UTF_8);
+
+         byte[] bytesParamValue = ExtendedByteBufJava.readMaybeRangedBytes(buffer);
+         if (bytesParamValue == null) {
+            return false;
+         }
+         String paramValue = new String(bytesParamValue, CharsetUtil.UTF_8);
+
+         params.put(paramName, paramValue);
+      }
       return true;
    }
 
@@ -418,7 +516,7 @@ class Decoder2x implements VersionedDecoder {
       }
    }
 
-   private <T extends CounterDecodeContext>  void decodeCounterOperation(ByteBuf buffer, CacheDecodeContext context, List<Object> out, Supplier<T> decodeContextFactory) {
+   private <T extends CounterDecodeContext> void decodeCounterOperation(ByteBuf buffer, CacheDecodeContext context, List<Object> out, Supplier<T> decodeContextFactory) {
       T decodeContext = context.operationContext(decodeContextFactory);
       if (decodeContext.decode(buffer)) {
          out.add(context);
@@ -461,7 +559,7 @@ class Decoder2x implements VersionedDecoder {
    }
 
    private Optional<TransactionWrite> readWriteExpirationAndValue(ByteBuf byteBuf, byte[] key,
-         long version, byte control) {
+                                                                  long version, byte control) {
       return readLifespanAndMaxidle(byteBuf).flatMap(parameters ->
             readMaybeRangedBytes(byteBuf).map(value ->
                   new TransactionWrite(key, version, control, parameters.lifespan, parameters.maxIdle, value)));
@@ -1061,7 +1159,7 @@ class TransactionWrite {
    private final byte control;
 
    TransactionWrite(byte[] key, long versionRead, byte control, CacheDecodeContext.ExpirationParam lifespan,
-         CacheDecodeContext.ExpirationParam maxIdle, byte[] value) {
+                    CacheDecodeContext.ExpirationParam maxIdle, byte[] value) {
       this.key = key;
       this.versionRead = versionRead;
       this.control = control;
