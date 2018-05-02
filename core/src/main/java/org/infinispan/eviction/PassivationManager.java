@@ -29,6 +29,9 @@ public interface PassivationManager extends JmxStatisticsExposer {
    void passivate(InternalCacheEntry entry);
 
    @Stop(priority = 9)
+   @ManagedOperation(
+         description = "Passivate all entries to the CacheStore",
+         displayName = "Passivate all")
    void passivateAll() throws PersistenceException;
 
    /**
