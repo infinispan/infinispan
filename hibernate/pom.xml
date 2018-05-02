@@ -16,7 +16,6 @@
       <module>cache-spi</module>
       <module>cache-commons</module>
       <module>cache-v51</module>
-      <module>cache-v52</module>
       <module>cache-v53</module>
    </modules>
 
