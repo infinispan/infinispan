@@ -3,6 +3,7 @@ package org.infinispan.jcache;
 import static org.infinispan.jcache.util.JCacheTestingUtil.withCachingProvider;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.BufferedInputStream;
@@ -67,6 +68,11 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
       public void addURL(URL url) {
          super.addURL(url);
       }
+
+      @Override
+      public URL getResource(String name) {
+         return super.getResource(name);
+      }
    }
 
    public void testJCacheManagerWithRealJarFileSchema() throws Exception {
@@ -90,12 +96,12 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
          String fullTargetPath = targetPathInJar + existingResourceToAddInJar;
 
          originalClassLoader = Thread.currentThread().getContextClassLoader();
-         MyClassLoader myClassLoader = new MyClassLoader(((URLClassLoader)originalClassLoader).getURLs(), originalClassLoader);
+         MyClassLoader myClassLoader = new MyClassLoader(new URL[]{}, originalClassLoader);
          myClassLoader.addURL(new URI("jar:" + sampleJarWithResourceFile.toURI().toString() + "!/").toURL());
          Thread.currentThread().setContextClassLoader(myClassLoader);
 
          // when
-         URI resourceInsideJarUri = new URI("jar:" + sampleJarWithResourceFile.toURI().toString() + "!/" + fullTargetPath);
+         URI resourceInsideJarUri = new URI("jar:" + sampleJarWithResourceFile.toURI().toString() + "!" + fullTargetPath);
          withCachingProvider(provider -> {
             JCacheManager jCacheManager = new JCacheManager(
                 resourceInsideJarUri,
@@ -104,10 +110,9 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
                 null);
 
             // then
-            assertTrue(null != jCacheManager.getCache("foo"));
+            assertNotNull(jCacheManager.getCache("foo"));
          });
-      }
-      finally {
+      } finally {
          // cleanup
          if (sampleJarWithResourceFile != null && sampleJarWithResourceFile.exists()) {
             sampleJarWithResourceFile.delete();
