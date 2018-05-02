@@ -1,0 +1,125 @@
+=== Store Migrator
+Infinispan 9.0 introduced non-backwards compatible changes to Infinispan's internal marshalling. Consequently, cache stores
+created with prior versions of Infinispan can no longer be read by Infinispan 9.x. Furthermore, some previous store
+implementations, such as the JDBC Mixed and Binary stores, are no longer provided. Therefore, in order to assist users,
+we have created a migration tool `StoreMigrator.java`, that reads data from Infinispan 8.2.x stores and rewrites their
+content using the latest marshalling implementation.
+
+==== Usage
+The`StoreMigrator` takes a single argument, the path to a
+`.properties` file which must contain the configuration properties for both the source and target stores. An example
+properties file containing all applicable configuration options can be found
+link:https://github.com/infinispan/infinispan/blob/master/tools/src/main/resources/migrator.properties[here].
+
+To use the migrator, you need the `infinispan-tools-{infinispanversion}.jar` as well as any dependencies (e.g. JDBC drivers)
+required by your source and target databases on your classpath. An example maven pom, that will execute the migrator
+via `mvn exec:java` is presented below:
+
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.infinispan.example</groupId>
+    <artifactId>jdbc-migrator-example</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-tools</artifactId>
+            <version>9.3.0-SNAPSHOT</version>
+        </dependency>
+
+        <!-- ADD YOUR REQUIRED DEPENDENCIES HERE -->
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>StoreMigrator</mainClass>
+                    <arguments>
+                        <argument><!-- PATH TO YOUR MIGRATOR.PROPERTIES FILE --></argument>
+                    </arguments>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+----
+
+==== Properties
+All migrator properties are configured within the context of a source or target store and so each properties must start
+with either `source.` or `target.`.  All of the properties listed below are applicable to both source and target stores,
+with the exception of `table.binary.*` properties as it is not possible to migrate to a binary table.
+
+The property `*.marshaller.type` denotes whether the marshaller from infinispan 8.2x (LEGACY), 9.x (CURRENT) or a custom
+marshaller should be utilised. Note, that the LEGACY marshaller can only be specified for the source store.
+
+===== Common Properties
+
+[options="header"]
+|===============
+|Property|Description|Example value|Required
+|type | JDBC_STRING \| JDBC_BINARY \| JDBC_MIXED \| LEVELDB \| ROCKSDB \| SINGLE_FILE_STORE \| SOFT_INDEX_FILE_STORE | JDBC_MIXED | TRUE
+|cache_name | The name of the cache associated with the store | persistentMixedCache | TRUE
+|===============
+
+===== JDBC Properties
+[options="header"]
+|===============
+|Property|Description|Example value|Required
+|dialect | The dialect of the underlying database | POSTGRES | TRUE
+|marshaller.type | [LEGACY,CURRENT,CUSTOM] | CURRENT | TRUE
+|marshaller.class | The class of the marshaller if type=CUSTOM | org.example.CustomMarshaller |
+|marshaller.externalizers | A comma-separated list of custom AdvancedExternalizer implementations to load[id]:<Externalizer class> | 25:Externalizer1,org.example.Externalizer2 |
+|connection_pool.connection_url | The JDBC connection url | jdbc:postgresql:postgres | TRUE
+|connection_pool.driver_class | The class of the JDBC driver | org.postrgesql.Driver | TRUE
+|connection_pool.username | Database username | | TRUE
+|connection_pool.password | Database password | | TRUE
+|db.major_version | Database major version | 9 |
+|db.minor_version | Database minor version | 5 |
+|db.disable_upsert | Disable db upsert | false |
+|db.disable_indexing | Prevent table index being created | false |
+|table.`<binary\|string>`.table_name_prefix | Additional prefix for table name | tablePrefix |
+|table.`<binary\|string>`.`<id\|data\|timestamp>`.name | Name of the column | id_column | TRUE
+|table.`<binary\|string>`.`<id\|data\|timestamp>`.type | Type of the column | VARCHAR | TRUE
+|key_to_string_mapper | TwoWayKey2StringMapper Class | `org.infinispan.persistence.keymappers. DefaultTwoWayKey2StringMapper` |
+|===============
+
+===== LevelDB/RocksDB Properties
+[options="header"]
+|===============
+|Property|Description|Example value|Required
+|location | The location of the db directory | /some/example/dir | TRUE
+|compression | The compression type to be used | SNAPPY |
+|===============
+
+===== SingleFileStore Properties
+[options="header"]
+|===============
+|Property|Description|Example value|Required
+|location | The directory containing the store's .dat file | /some/example/dir | TRUE
+|===============
+
+===== SoftIndexFileStore Properties
+[options="header"]
+|===============
+|Property|Description|Example value|Required
+|location | The location of the db directory | /some/example/dir | TRUE
+|index_location | The location of the db's index | /some/example/dir-index | Target Only
+|===============

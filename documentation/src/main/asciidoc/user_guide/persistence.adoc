@@ -265,6 +265,8 @@ include::persistence_jpa.adoc[]
 
 include::persistence_custom.adoc[]
 
+include::persistence_storemigrator.adoc[]
+
 Following sections describe the SPI and also discuss the SPI implementations that {brandname} ships out of the box.
 
 === API
