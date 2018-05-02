@@ -634,22 +634,19 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-      Object returned = super.compute(keyToStorage(key),
-            new BiFunctionMapper(remappingFunction, keyDataConversion, valueDataConversion));
+      Object returned = super.compute(keyToStorage(key), wrapBiFunction(remappingFunction));
       return valueFromStorage(returned);
    }
 
    @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-      Object returned = super.computeIfPresent(keyToStorage(key),
-            new BiFunctionMapper(remappingFunction, keyDataConversion, valueDataConversion));
+      Object returned = super.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction));
       return valueFromStorage(returned);
    }
 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
-      Object ret = super.computeIfAbsent(keyToStorage(key),
-            new FunctionMapper(mappingFunction, keyDataConversion, valueDataConversion));
+      Object ret = super.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction));
       return valueFromStorage(ret);
    }
 
@@ -690,8 +687,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
-      Object returned = super.merge(keyToStorage(key), valueToStorage(value),
-            new BiFunctionMapper(remappingFunction, keyDataConversion, valueDataConversion));
+      Object returned = super.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction));
       return valueFromStorage(returned);
    }
 
@@ -859,5 +855,17 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       EncoderCache<K, V> cache = new EncoderCache<>(otherCache, keyDataConversion, valueDataConversion);
       initState(cache, this);
       return cache;
+   }
+
+   private BiFunctionMapper wrapBiFunction(BiFunction<?, ?, ?> biFunction) {
+      return biFunction == null ?
+            null :
+            new BiFunctionMapper(biFunction, keyDataConversion, valueDataConversion);
+   }
+
+   private FunctionMapper wrapFunction(Function<?,?> function) {
+      return function == null ?
+            null :
+            new FunctionMapper(function, keyDataConversion, valueDataConversion);
    }
 }

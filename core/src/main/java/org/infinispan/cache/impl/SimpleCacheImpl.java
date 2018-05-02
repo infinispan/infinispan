@@ -110,6 +110,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    private final static String NULL_KEYS_NOT_SUPPORTED = "Null keys are not supported!";
    private final static String NULL_VALUES_NOT_SUPPORTED = "Null values are not supported!";
+   private final static String NULL_FUNCTION_NOT_SUPPORTED = "Null functions are not supported!";
    private final static Class<? extends Annotation>[] FIRED_EVENTS = new Class[]{
          CacheEntryCreated.class, CacheEntryRemoved.class, CacheEntryVisited.class,
          CacheEntryModified.class, CacheEntriesEvicted.class, CacheEntryInvalidated.class,
@@ -1243,14 +1244,12 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
-      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
       ByRef<V> newValueRef = new ByRef<>(null);
       return computeIfAbsentInternal(key, mappingFunction, newValueRef, defaultMetadata);
    }
 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
-      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
       ByRef<V> newValueRef = new ByRef<>(null);
       return computeIfAbsentInternal(key, mappingFunction, newValueRef, metadata);
    }
@@ -1260,6 +1259,8 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private V computeIfAbsentInternal(K key, Function<? super K, ? extends V> mappingFunction, ByRef<V> newValueRef, Metadata metadata) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      Objects.requireNonNull(mappingFunction, NULL_FUNCTION_NOT_SUPPORTED);
       boolean hasListeners = this.hasListeners;
       componentRegistry.wireDependencies(mappingFunction);
       InternalCacheEntry<K, V> returnEntry = getDataContainer().compute(key, (k, oldEntry, factory) -> {
@@ -1288,14 +1289,12 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
       CacheEntryChange<K, V> ref = new CacheEntryChange<>();
       return computeIfPresentInternal(key, remappingFunction, ref, defaultMetadata);
    }
 
    @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
-      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
       CacheEntryChange<K, V> ref = new CacheEntryChange<>();
       return computeIfPresentInternal(key, remappingFunction, ref, metadata);
    }
@@ -1305,6 +1304,8 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private V computeIfPresentInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, CacheEntryChange<K, V> ref, Metadata metadata) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      Objects.requireNonNull(remappingFunction, NULL_FUNCTION_NOT_SUPPORTED);
       boolean hasListeners = this.hasListeners;
       componentRegistry.wireDependencies(remappingFunction);
       getDataContainer().compute(key, (k, oldEntry, factory) -> {
@@ -1356,6 +1357,8 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private V computeInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, CacheEntryChange<K, V> ref, Metadata metadata) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      Objects.requireNonNull(remappingFunction, NULL_FUNCTION_NOT_SUPPORTED);
       boolean hasListeners = this.hasListeners;
       componentRegistry.wireDependencies(remappingFunction);
       getDataContainer().compute(key, (k, oldEntry, factory) -> {
@@ -1387,6 +1390,9 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    protected V mergeInternal(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, CacheEntryChange<K, V> ref, Metadata metadata) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      Objects.requireNonNull(value, NULL_VALUES_NOT_SUPPORTED);
+      Objects.requireNonNull(remappingFunction, NULL_FUNCTION_NOT_SUPPORTED);
       boolean hasListeners = this.hasListeners;
       getDataContainer().compute(key, (k, oldEntry, factory) -> {
          V oldValue = getValue(oldEntry);
