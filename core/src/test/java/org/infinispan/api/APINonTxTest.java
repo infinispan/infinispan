@@ -5,9 +5,9 @@ import static org.infinispan.test.TestingUtil.assertNoLocks;
 import static org.infinispan.test.TestingUtil.createMapEntry;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,10 +43,12 @@ import org.infinispan.test.Exceptions;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.impl.InfinispanLock;
 import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableBiFunction;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -59,6 +61,13 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
    protected void configure(ConfigurationBuilder builder) {
 
+   }
+
+   @AfterMethod
+   public void checkForLeakedTransactions() {
+      TransactionTable txTable = TestingUtil.getTransactionTable(cache);
+      assertEquals(0, txTable.getLocalTxCount());
+      assertEquals(0, txTable.getLocalTransactions().size());
    }
 
    @Override
@@ -100,7 +109,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       assertCacheSize(1);
    }
 
-   public void testStopClearsData() throws Exception {
+   public void testStopClearsData() {
       String key = "key", value = "value";
       cache.put(key, value);
       assertEquals(value, cache.get(key));
@@ -487,7 +496,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       assertTrue(expValueEntries.isEmpty(), "Did not see keys " + expValueEntries + " in iterator!");
    }
 
-   public void testSizeAndContents() throws Exception {
+   public void testSizeAndContents() {
       String key = "key", value = "value";
 
       assertCacheIsEmpty();
@@ -560,24 +569,62 @@ public class APINonTxTest extends SingleCacheManagerTest {
       assertFalse(cache.containsKey("X"));
    }
 
-   public void testPutNullKeyParameter() {
-      expectException(NullPointerException.class, () -> cache.put(null, null));
-   }
+   @SuppressWarnings("ConstantConditions")
+   public void testPutNullParameters() {
+      expectException(NullPointerException.class, "Null keys are not supported!", () -> cache.put(null, null));
+      expectException(NullPointerException.class, "Null values are not supported!", () -> cache.put("k", null));
+      expectException(NullPointerException.class, "Null keys are not supported!", () -> cache.put(null, "v"));
 
-   public void testPutNullValueParameter() {
-      expectException(NullPointerException.class, () -> cache.put("hello", null));
+      //put if absent since it shares the same command as put
+      expectException(NullPointerException.class, "Null keys are not supported!", () -> cache.putIfAbsent(null, null));
+      expectException(NullPointerException.class, "Null values are not supported!", () -> cache.putIfAbsent("k", null));
+      expectException(NullPointerException.class, "Null keys are not supported!", () -> cache.putIfAbsent(null, "v"));
    }
 
    @SuppressWarnings("ConstantConditions")
-   public void testReplaceNullKeyParameter() {
+   public void testReplaceNullParameters() {
+      expectException(NullPointerException.class, "Null keys are not supported!", () -> cache.replace(null, null));
       expectException(NullPointerException.class, "Null keys are not supported!", () -> cache.replace(null, "X"));
       expectException(NullPointerException.class, "Null keys are not supported!", () -> cache.replace(null, "X", "Y"));
+      expectException(NullPointerException.class, "Null values are not supported!",
+            () -> cache.replace("hello", null, "X"));
+      expectException(NullPointerException.class, "Null values are not supported!",
+            () -> cache.replace("hello", "X", null));
    }
 
    @SuppressWarnings("ConstantConditions")
-   public void testReplaceNullValueParameter() {
-      expectException(NullPointerException.class, "Null values are not supported!", () -> cache.replace("hello", null, "X"));
-      expectException(NullPointerException.class, "Null values are not supported!", () -> cache.replace("hello", "X", null));
+   public void testRemoveNullParameters() {
+      expectException(NullPointerException.class, "Null keys are not supported!", () -> cache.remove(null));
+      expectException(NullPointerException.class, "Null keys are not supported!", () -> cache.remove(null, "X"));
+      expectException(NullPointerException.class, "Null values are not supported!", () -> cache.remove("k", null));
+      expectException(NullPointerException.class, "Null keys are not supported!", () -> cache.remove(null, null));
+   }
+
+   @SuppressWarnings("ConstantConditions")
+   public void testComputeNullParameters() {
+      expectException(NullPointerException.class, "Null keys are not supported!",
+            () -> cache.compute(null, (o, o2) -> "X"));
+      expectException(NullPointerException.class, "Null functions are not supported!", () -> cache.compute("k", null));
+
+      expectException(NullPointerException.class, "Null keys are not supported!",
+            () -> cache.computeIfAbsent(null, o -> "X"));
+      expectException(NullPointerException.class, "Null functions are not supported!",
+            () -> cache.computeIfAbsent("k", null));
+
+      expectException(NullPointerException.class, "Null keys are not supported!",
+            () -> cache.computeIfPresent(null, (o, o2) -> "X"));
+      expectException(NullPointerException.class, "Null functions are not supported!",
+            () -> cache.computeIfPresent("k", null));
+   }
+
+   @SuppressWarnings("ConstantConditions")
+   public void testMergeNullParameters() {
+      expectException(NullPointerException.class, "Null keys are not supported!",
+            () -> cache.merge(null, "X", (o, o2) -> "Y"));
+      expectException(NullPointerException.class, "Null values are not supported!",
+            () -> cache.merge("k", null, (o, o2) -> "Y"));
+      expectException(NullPointerException.class, "Null functions are not supported!",
+            () -> cache.merge("k", "X", null));
    }
 
    public void testPutIfAbsentLockCleanup() {
@@ -661,8 +708,8 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
       int cacheSizeBeforeNullValueCompute = cache.size();
       Function<Object, String> functionMapsToNull = k -> null;
-      assertNull(cache.computeIfAbsent("kaixo", functionMapsToNull), "with function mapping to null returns null");
-      assertNull(cache.get("kaixo"), "the key does not exist");
+      assertNull("with function mapping to null returns null", cache.computeIfAbsent("kaixo", functionMapsToNull));
+      assertNull("the key does not exist", cache.get("kaixo"));
       assertEquals(cacheSizeBeforeNullValueCompute, cache.size());
 
       RuntimeException computeRaisedException = new RuntimeException("hi there");
@@ -686,12 +733,12 @@ public class APINonTxTest extends SingleCacheManagerTest {
       expectException(RuntimeException.class, "hi there", () -> cache.computeIfPresent("es", mappingToException));
 
       BiFunction<Object, Object, String> mappingForNotPresentKey = (k, v) -> "absent_" + k + ":" + v;
-      assertNull(cache.computeIfPresent("fr", mappingForNotPresentKey), "unexisting key should return null");
-      assertNull(cache.get("fr"), "unexisting key should return null");
+      assertNull("unexisting key should return null", cache.computeIfPresent("fr", mappingForNotPresentKey));
+      assertNull("unexisting key should return null", cache.get("fr"));
 
       BiFunction<Object, Object, String> mappingToNull = (k, v) -> null;
-      assertNull(cache.computeIfPresent("es", mappingToNull), "mapping to null returns null");
-      assertNull(cache.get("es"), "the key is removed");
+      assertNull("mapping to null returns null", cache.computeIfPresent("es", mappingToNull));
+      assertNull("the key is removed", cache.get("es"));
    }
 
    public void testCompute() {
@@ -706,12 +753,12 @@ public class APINonTxTest extends SingleCacheManagerTest {
       assertEquals("absent_fr:null", cache.get("fr"));
 
       BiFunction<Object, Object, String> mappingToNull = (k, v) -> null;
-      assertNull(cache.compute("es", mappingToNull), "mapping to null returns null");
-      assertNull(cache.get("es"), "the key is removed");
+      assertNull("mapping to null returns null", cache.compute("es", mappingToNull));
+      assertNull("the key is removed", cache.get("es"));
 
       int cacheSizeBeforeNullValueCompute = cache.size();
-      assertNull(cache.compute("eus", mappingToNull), "mapping to null returns null");
-      assertNull(cache.get("eus"), "the key does not exist");
+      assertNull("mapping to null returns null", cache.compute("eus", mappingToNull));
+      assertNull("the key does not exist", cache.get("eus"));
       assertEquals(cacheSizeBeforeNullValueCompute, cache.size());
 
       RuntimeException computeRaisedException = new RuntimeException("hi there");
@@ -736,26 +783,6 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
       assertEquals("hello_es:hola", cache.get("es"));
       assertEquals("hello_cz:ahoj", cache.get("cz"));
-   }
-
-   static class FalseEqualsKey {
-      final String name;
-      final int value;
-
-      FalseEqualsKey(String name, int value) {
-         this.name = name;
-         this.value = value;
-      }
-
-      @Override
-      public int hashCode() {
-         return 0;
-      }
-
-      @Override
-      public boolean equals(Object obj) {
-         return false;
-      }
    }
 
    @DataProvider(name = "lockedStreamActuallyLocks")
@@ -877,7 +904,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       cache.getAdvancedCache().lockedStream().forEach((c, e) -> c.getAdvancedCache().lockedStream());
    }
 
-   <R> void assertLockStreamInvokeAll(LockedStream<Object, Object> lockedStream,
+   private <R> void assertLockStreamInvokeAll(LockedStream<Object, Object> lockedStream,
          SerializableBiFunction<Cache<Object, Object>, CacheEntry<Object, Object>, R> biFunction,
          Map<Object, R> expectedResults) {
       Map<Object, R> results = lockedStream.invokeAll(biFunction);
