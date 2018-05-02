@@ -21,10 +21,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -36,6 +36,7 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ServerConfiguration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.impl.MarshallerRegistry;
 import org.infinispan.client.hotrod.impl.TopologyInfo;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
@@ -94,9 +95,12 @@ public class ChannelFactory {
    // updates won't be allowed to apply since they refer to older views.
    private final AtomicInteger topologyAge = new AtomicInteger(0);
 
+   private MarshallerRegistry marshallerRegistry;
+
    public void start(Codec codec, Configuration configuration, AtomicInteger defaultCacheTopologyId,
                      Marshaller marshaller, ExecutorService executorService,
-                     ClientListenerNotifier listenerNotifier, Collection<Consumer<Set<SocketAddress>>> failedServerNotifier) {
+                     ClientListenerNotifier listenerNotifier, Collection<Consumer<Set<SocketAddress>>> failedServerNotifier, MarshallerRegistry marshallerRegistry) {
+      this.marshallerRegistry = marshallerRegistry;
       lock.writeLock().lock();
       try {
          this.marshaller = marshaller;
@@ -153,6 +157,10 @@ public class ChannelFactory {
       // Note: this is quite dangerous, if someone sets different executor factory and does not update this setting
       // we might deadlock
       return new ConfigurationProperties(configuration.asyncExecutorFactory().properties()).getDefaultExecutorFactoryPoolSize();
+   }
+
+   public MarshallerRegistry getMarshallerRegistry() {
+      return marshallerRegistry;
    }
 
    private ChannelPool newPool(SocketAddress address) {

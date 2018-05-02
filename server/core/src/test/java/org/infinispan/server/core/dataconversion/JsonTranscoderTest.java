@@ -1,6 +1,6 @@
-package org.infinispan.rest.dataconversion;
+package org.infinispan.server.core.dataconversion;
 
-import static org.infinispan.rest.JSONConstants.TYPE;
+import static org.infinispan.server.core.dataconversion.JsonTranscoder.TYPE_PROPERTY;
 import static org.testng.Assert.assertEquals;
 
 import org.infinispan.commons.dataconversion.MediaType;
@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
  * @since 9.2
  */
 @Test(groups = "functional", testName = "rest.JsonObjectTranscoderTest")
-public class JsonObjectTranscoderTest extends AbstractTranscoderTest {
+public class JsonTranscoderTest extends AbstractTranscoderTest {
    protected Person dataSrc;
 
    @BeforeClass(alwaysRun = true)
@@ -34,8 +34,8 @@ public class JsonObjectTranscoderTest extends AbstractTranscoderTest {
 
       Object result = transcoder.transcode(dataSrc, personMediaType, jsonMediaType);
 
-      assertEquals(result,
-            String.format("{\"" + TYPE + "\":\"%s\",\"name\":\"%s\",\"address\":{\"" + TYPE + "\":\"%s\",\"street\":null,\"city\":\"%s\",\"zip\":0}}",
+      assertEquals(new String((byte[]) result),
+            String.format("{\"" + TYPE_PROPERTY + "\":\"%s\",\"name\":\"%s\",\"address\":{\"" + TYPE_PROPERTY + "\":\"%s\",\"street\":null,\"city\":\"%s\",\"zip\":0}}",
                   Person.class.getName(),
                   "joe",
                   Address.class.getName(),

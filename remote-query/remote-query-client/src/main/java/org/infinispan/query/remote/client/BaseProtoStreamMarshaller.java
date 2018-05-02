@@ -2,6 +2,7 @@ package org.infinispan.query.remote.client;
 
 import java.io.IOException;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AbstractMarshaller;
@@ -55,5 +56,10 @@ public abstract class BaseProtoStreamMarshaller extends AbstractMarshaller {
    protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException, InterruptedException {
       byte[] bytes = ProtobufUtil.toWrappedByteArray(getSerializationContext(), o);
       return new ByteBufferImpl(bytes, 0, bytes.length);
+   }
+
+   @Override
+   public MediaType mediaType() {
+      return MediaType.APPLICATION_PROTOSTREAM;
    }
 }

@@ -28,7 +28,7 @@ import net.jcip.annotations.Immutable;
 public class ContainsEntryMultimapOperation extends AbstractKeyValueOperation<Boolean> {
 
    public ContainsEntryMultimapOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg, byte[] value) {
-      super(CONTAINS_ENTRY_REQUEST, CONTAINS_ENTRY_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, value,  -1, TimeUnit.MILLISECONDS, -1, TimeUnit.MILLISECONDS);
+      super(CONTAINS_ENTRY_REQUEST, CONTAINS_ENTRY_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, value, -1, TimeUnit.MILLISECONDS, -1, TimeUnit.MILLISECONDS, null);
    }
 
    @Override

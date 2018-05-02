@@ -36,7 +36,7 @@ public final class QueryOperation extends RetryOnFailureOperation<QueryResponse>
 
    public QueryOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicInteger topologyId,
                          int flags, Configuration cfg, RemoteQuery remoteQuery) {
-      super(QUERY_REQUEST, QUERY_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg);
+      super(QUERY_REQUEST, QUERY_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null);
       this.remoteQuery = remoteQuery;
    }
 

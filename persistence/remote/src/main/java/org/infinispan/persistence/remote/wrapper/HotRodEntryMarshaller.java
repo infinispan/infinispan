@@ -3,6 +3,7 @@ package org.infinispan.persistence.remote.wrapper;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.BufferSizePredictor;
@@ -40,12 +41,12 @@ public class HotRodEntryMarshaller implements Marshaller {
 
    @Override
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {
-      return Arrays.copyOfRange(buf, offset, offset+length);
+      return Arrays.copyOfRange(buf, offset, offset + length);
    }
 
    @Override
    public ByteBuffer objectToBuffer(Object o) throws IOException, InterruptedException {
-      byte[] b = (byte[])o;
+      byte[] b = (byte[]) o;
       return byteBufferFactory.newByteBuffer(b, 0, b.length);
    }
 
@@ -59,11 +60,16 @@ public class HotRodEntryMarshaller implements Marshaller {
       return predictor;
    }
 
+   @Override
+   public MediaType mediaType() {
+      return MediaType.APPLICATION_OCTET_STREAM;
+   }
+
    class IdentityBufferSizePredictor implements BufferSizePredictor {
 
       @Override
       public int nextSize(Object obj) {
-         return ((byte[])obj).length;
+         return ((byte[]) obj).length;
       }
 
       @Override

@@ -8,6 +8,7 @@ import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.Set;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
@@ -42,6 +43,7 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
    private final Set<Integer> segments;
    private final int batchSize;
    private final boolean metadata;
+   private final DataFormat dataFormat;
 
    private KeyTracker segmentKeyTracker;
    private Channel channel;
@@ -51,7 +53,7 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
    private Queue<Entry<Object, E>> nextElements = new LinkedList<>();
 
    public RemoteCloseableIterator(OperationsFactory operationsFactory, Marshaller marshaller, String filterConverterFactory,
-                                  byte[][] filterParams, Set<Integer> segments, int batchSize, boolean metadata) {
+                                  byte[][] filterParams, Set<Integer> segments, int batchSize, boolean metadata, DataFormat dataFormat) {
       this.marshaller = marshaller;
       this.filterConverterFactory = filterConverterFactory;
       this.filterParams = filterParams;
@@ -59,10 +61,11 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
       this.batchSize = batchSize;
       this.operationsFactory = operationsFactory;
       this.metadata = metadata;
+      this.dataFormat = dataFormat;
    }
 
-   public RemoteCloseableIterator(OperationsFactory operationsFactory, Marshaller marshaller, int batchSize, Set<Integer> segments, boolean metadata) {
-      this(operationsFactory, marshaller, null, null, segments, batchSize, metadata);
+   public RemoteCloseableIterator(OperationsFactory operationsFactory, Marshaller marshaller, int batchSize, Set<Integer> segments, boolean metadata, DataFormat dataFormat) {
+      this(operationsFactory, marshaller, null, null, segments, batchSize, metadata, dataFormat);
    }
 
    @Override
@@ -110,7 +113,7 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
 
       try {
          while (nextElements.isEmpty() && !endOfIteration) {
-            IterationNextOperation<E> iterationNextOperation = operationsFactory.newIterationNextOperation(iterationId, channel, segmentKeyTracker);
+            IterationNextOperation<E> iterationNextOperation = operationsFactory.newIterationNextOperation(iterationId, channel, segmentKeyTracker, dataFormat);
             IterationNextResponse<E> iterationNextResponse = await(iterationNextOperation.execute());
             if (!iterationNextResponse.hasMore()) {
                endOfIteration = true;
@@ -133,7 +136,7 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
       if (log.isDebugEnabled()) {
          log.debugf("Starting iteration with segments %s", segments);
       }
-      IterationStartOperation iterationStartOperation = operationsFactory.newIterationStartOperation(filterConverterFactory, filterParams, segments, batchSize, metadata);
+      IterationStartOperation iterationStartOperation = operationsFactory.newIterationStartOperation(filterConverterFactory, filterParams, segments, batchSize, metadata, dataFormat);
       IterationStartResponse startResponse = await(iterationStartOperation.execute());
       this.channel = startResponse.getChannel();
       this.iterationId = startResponse.getIterationId();
@@ -146,7 +149,6 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
 
    public void start() {
       IterationStartResponse startResponse = startInternal(segments);
-      this.segmentKeyTracker = KeyTrackerFactory.create(
-              marshaller, startResponse.getSegmentConsistentHash(), startResponse.getTopologyId(), segments);
+      this.segmentKeyTracker = KeyTrackerFactory.create(dataFormat, startResponse.getSegmentConsistentHash(), startResponse.getTopologyId(), segments);
    }
 }

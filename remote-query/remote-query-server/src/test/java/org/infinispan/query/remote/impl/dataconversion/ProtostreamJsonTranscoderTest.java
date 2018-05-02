@@ -1,5 +1,10 @@
 package org.infinispan.query.remote.impl.dataconversion;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
+import java.io.IOException;
+
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ProtobufUtil;
@@ -8,11 +13,6 @@ import org.infinispan.protostream.config.Configuration;
 import org.infinispan.test.dataconversion.AbstractTranscoderTest;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 
 @Test(groups = "functional", testName = "query.remote.impl.ProtostreamJsonTranscoderTest")
@@ -57,7 +57,7 @@ public class ProtostreamJsonTranscoderTest extends AbstractTranscoderTest {
       Object transcodedBack = transcoder.transcode(transcoded, MediaType.APPLICATION_PROTOSTREAM, MediaType.APPLICATION_JSON);
       assertEquals(
             dataSrc.replace(" ", ""),
-            ((String) transcodedBack).replace(" ", "").replace("\n", ""),
+            (new String((byte[]) transcodedBack)).replace(" ", "").replace("\n", ""),
             "Must be the same JSON string"
       );
    }

@@ -6,6 +6,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServ
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHotRodServer;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JBOSS_MARSHALLING;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JBOSS_MARSHALLING_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
@@ -25,10 +26,12 @@ import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.StandardConversions;
+import org.infinispan.commons.marshall.IdentityMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
@@ -45,7 +48,7 @@ import org.testng.annotations.Test;
 
 /**
  * Tests for interoperability between REST and HotRod endpoints without using compatibility mode,
- * but relying on MediaType configuration and HTTP Headers.
+ * but relying on MediaType configuration, HTTP Headers and Hot Rod client DataFormat support.
  *
  * @since 9.2
  */
@@ -92,7 +95,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       hotRodServer = startHotRodServer(cacheManager);
 
-      bytesRemoteCache = createRemoteCacheManager(new NoOpMarshaller()).getCache(BYTES_CACHE_NAME);
+      bytesRemoteCache = createRemoteCacheManager(IdentityMarshaller.INSTANCE).getCache(BYTES_CACHE_NAME);
       defaultMarshalledRemoteCache = createRemoteCacheManager(null).getCache(MARSHALLED_CACHE_NAME);
       stringRemoteCache = createRemoteCacheManager(new UTF8StringMarshaller()).getCache(STRING_CACHE_NAME);
    }
@@ -115,7 +118,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       return builder;
    }
 
-   protected RemoteCacheManager createRemoteCacheManager(Marshaller marshaller) {
+   private RemoteCacheManager createRemoteCacheManager(Marshaller marshaller) {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder =
             new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       builder.addServer().host("localhost").port(hotRodServer.getPort());
@@ -131,31 +134,43 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       // 'application/x-jboss-marshalling' for both K and V.
       String key = "string-1";
       byte[] value = {1, 2, 3};
+      byte[] marshalledValue = new GenericJBossMarshaller().objectToByteBuffer(value);
+
       defaultMarshalledRemoteCache.put(key, value);
       assertEquals(defaultMarshalledRemoteCache.get(key), value);
-
-      // Read via rest the unmarshalled content.
-      Object bytesFromRest = new RestRequest().cache(MARSHALLED_CACHE_NAME)
-            .key(key).accept(APPLICATION_OCTET_STREAM)
-            .read();
-      assertArrayEquals((byte[]) bytesFromRest, value);
 
       // Read via Rest the raw content, as it is stored
       Object rawFromRest = new RestRequest().cache(MARSHALLED_CACHE_NAME)
             .key(key).accept(APPLICATION_JBOSS_MARSHALLING)
             .read();
 
-      assertArrayEquals((byte[]) rawFromRest, new GenericJBossMarshaller().objectToByteBuffer(value));
+      assertArrayEquals((byte[]) rawFromRest, marshalledValue);
 
       // Write via rest raw bytes
       String otherKey = "string-2";
       byte[] otherValue = {0x4, 0x5, 0x6};
+      byte[] otherValueMarshalled = new GenericJBossMarshaller().objectToByteBuffer(otherValue);
+
       new RestRequest().cache(MARSHALLED_CACHE_NAME)
             .key(otherKey).value(otherValue, APPLICATION_OCTET_STREAM)
             .write();
 
       // Read via Hot Rod
       assertEquals(defaultMarshalledRemoteCache.get(otherKey), otherValue);
+
+      // Read via Hot Rod using a String key, and getting the raw value (as it is stored) back
+      DataFormat format = DataFormat.builder()
+            .keyType(TEXT_PLAIN)
+            .valueType(APPLICATION_JBOSS_MARSHALLING).valueMarshaller(IdentityMarshaller.INSTANCE)
+            .build();
+      byte[] rawValue = (byte[]) defaultMarshalledRemoteCache.withDataFormat(format).get(otherKey);
+      assertArrayEquals(otherValueMarshalled, rawValue);
+
+      // Read via Hot Rod using a String key, and getting the original value back
+      DataFormat.builder().keyType(TEXT_PLAIN).build();
+      byte[] result = (byte[]) defaultMarshalledRemoteCache
+            .withDataFormat(DataFormat.builder().keyType(TEXT_PLAIN).build()).get(otherKey);
+      assertArrayEquals(otherValue, result);
    }
 
    @Test
@@ -238,6 +253,13 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       // Read via Hot Rod
       assertEquals(stringRemoteCache.get("key2"), "Testing");
+
+      // Get values as JSON from Hot Rod
+      Object jsonString = stringRemoteCache.withDataFormat(DataFormat.builder()
+            .valueType(APPLICATION_JSON).valueMarshaller(new UTF8StringMarshaller()).build())
+            .get("key");
+      assertEquals("\"Hello World\"", jsonString);
+
    }
 
    @Test
@@ -332,7 +354,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       assertArrayEquals((byte[]) bytesFromRest, value);
    }
 
-   String getEndpoint(String cache) {
+   private String getEndpoint(String cache) {
       return String.format("http://localhost:%s/rest/%s", restServer.getPort(), cache);
    }
 
@@ -384,12 +406,12 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
          return this;
       }
 
-      public RestRequest accept(MediaType valueContentType) {
+      RestRequest accept(MediaType valueContentType) {
          this.accept = valueContentType;
          return this;
       }
 
-      public void write() throws Exception {
+      void write() throws Exception {
          EntityEnclosingMethod post = new PostMethod(getEndpoint(this.cacheName) + "/" + this.key);
          if (this.keyContentType != null) {
             post.addRequestHeader("Key-Content-Type", this.keyContentType);
@@ -406,7 +428,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
          assertEquals(post.getStatusCode(), HttpStatus.SC_OK);
       }
 
-      public Object read() throws IOException {
+      Object read() throws IOException {
          HttpMethod get = new GetMethod(getEndpoint(this.cacheName) + "/" + this.key);
          if (this.accept != null) {
             get.setRequestHeader(ACCEPT, this.accept.toString());

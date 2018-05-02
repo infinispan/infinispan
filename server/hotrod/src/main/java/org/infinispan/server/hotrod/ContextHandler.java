@@ -1,17 +1,14 @@
 package org.infinispan.server.hotrod;
 
-import static java.lang.String.format;
 import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
 
 import java.util.concurrent.Executor;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.multimap.impl.EmbeddedMultimapCache;
-import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.hotrod.logging.Log;
 
@@ -52,48 +49,13 @@ public class ContextHandler extends SimpleChannelInboundHandler {
       taskRequestProcessor = new TaskRequestProcessor(ctx.channel(), executor, server);
    }
 
+
    private void initCache(CacheDecodeContext cdc) throws RequestParsingException {
-      cdc.resource = cache(cdc);
+      cdc.resource = server.cache(cdc);
    }
 
    private void initMultimap(CacheDecodeContext cdc) throws RequestParsingException {
-      cdc.resource = new EmbeddedMultimapCache(cache(cdc));
-   }
-
-   public AdvancedCache<byte[], byte[]> cache(CacheDecodeContext cdc) throws RequestParsingException {
-      String cacheName = cdc.header.cacheName;
-      // Try to avoid calling cacheManager.getCacheNames() if possible, since this creates a lot of unnecessary garbage
-      AdvancedCache<byte[], byte[]> cache = server.getKnownCache(cacheName);
-      if (cache == null) {
-         cache = obtainCache(cdc.header, cacheName);
-      }
-      cache = cdc.decoder.getOptimizedCache(cdc.header, cache, server.getCacheConfiguration(cacheName));
-      if (cdc.subject != null) {
-         cache = cache.withSubject(cdc.subject);
-      }
-      return cache;
-   }
-
-   private AdvancedCache<byte[], byte[]> obtainCache(HotRodHeader header, String cacheName) throws RequestParsingException {
-      AdvancedCache<byte[], byte[]> cache;// Talking to the wrong cache are really request parsing errors
-      // and hence should be treated as client errors
-      InternalCacheRegistry icr = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
-      if (icr.isPrivateCache(cacheName)) {
-         throw new RequestParsingException(
-               format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'", cacheName),
-               header.version, header.messageId);
-      } else if (icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.PROTECTED)) {
-         // We want to make sure the cache access is checked everytime, so don't store it as a "known" cache. More
-         // expensive, but these caches should not be accessed frequently
-         cache = server.getCacheInstance(cacheName, cacheManager, true, false);
-      } else if (!cacheName.isEmpty() && !cacheManager.getCacheNames().contains(cacheName)) {
-         throw new CacheNotFoundException(
-               format("Cache with name '%s' not found amongst the configured caches", cacheName),
-               header.version, header.messageId);
-      } else {
-         cache = server.getCacheInstance(cacheName, cacheManager, true, true);
-      }
-      return cache;
+      cdc.resource = new EmbeddedMultimapCache(server.cache(cdc));
    }
 
    @Override
@@ -146,12 +108,12 @@ public class ContextHandler extends SimpleChannelInboundHandler {
             cacheProcessor.removeIfUnmodified(cdc);
             break;
          case PING:
-            cache(cdc); // we need to throw an exception when this cache is inaccessible
+            server.cache(cdc); // we need to throw an exception when this cache is inaccessible
             writeResponse(ctx.channel(), new EmptyResponse(h.version, h.messageId, h.cacheName,
                   h.clientIntel, HotRodOperation.PING, OperationStatus.Success, h.topologyId));
             break;
          case STATS:
-            writeResponse(ctx.channel(), cdc.decoder.createStatsResponse(cdc, cache(cdc).getStats(), transport));
+            writeResponse(ctx.channel(), cdc.decoder.createStatsResponse(cdc, server.cache(cdc).getStats(), transport));
             break;
          case CLEAR:
             initCache(cdc);

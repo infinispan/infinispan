@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * @since 9.2
  */
-final class MediaTypeIds {
+public final class MediaTypeIds {
 
    private static final Map<String, Short> idByType = new HashMap<>(32);
    private static final Map<Short, String> typeById = new HashMap<>(32);
@@ -46,14 +46,14 @@ final class MediaTypeIds {
       idByType.put(APPLICATION_JBOSS_MARSHALLING_TYPE, (short) 15);
       idByType.put(APPLICATION_INFINISPAN_MARSHALLING_TYPE, (short) 16);
 
-      idByType.entrySet().forEach(e -> typeById.put(e.getValue(), e.getKey()));
+      idByType.forEach((key, value) -> typeById.put(value, key));
    }
 
-   static Short getId(String mediaType) {
+   public static Short getId(String mediaType) {
       return idByType.get(mediaType);
    }
 
-   static String getMediaType(Short id) {
+   public static String getMediaType(Short id) {
       return typeById.get(id);
    }
 

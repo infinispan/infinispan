@@ -95,7 +95,7 @@ public class RetryOnFailureUnitTest {
       private final boolean failOnTransport;
 
       MockOperation(ChannelFactory channelFactory, boolean failOnTransport) {
-         super(ILLEGAL_OP_CODE, ILLEGAL_OP_CODE, null, channelFactory, null, null, 0, new ConfigurationBuilder().build());
+         super(ILLEGAL_OP_CODE, ILLEGAL_OP_CODE, null, channelFactory, null, null, 0, new ConfigurationBuilder().build(), null);
          this.failOnTransport = failOnTransport;
          channelInvocationCount = new AtomicInteger(0);
          executeInvocationCount = new AtomicInteger(0);

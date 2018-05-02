@@ -13,6 +13,7 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.net.URL;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
@@ -104,7 +105,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
 
    @Override
    final public Object objectFromByteBuffer(final byte[] buf, final int offset, final int length) throws IOException,
-           ClassNotFoundException {
+         ClassNotFoundException {
       ByteArrayInputStream is = new ByteArrayInputStream(buf, offset, length);
       ObjectInput unmarshaller = startObjectInput(is, false);
       Object o = null;
@@ -123,7 +124,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
 
       if (trace)
          log.tracef("Start unmarshaller after retrieving marshaller from %s",
-                   isReentrant ? "factory" : "thread local");
+               isReentrant ? "factory" : "thread local");
 
       unmarshaller.start(Marshalling.createByteInput(is));
       return unmarshaller;
@@ -153,7 +154,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
          boolean marshallable = marshallableTypeHints.isMarshallable(clazz);
          if (trace)
             log.tracef("Marshallable type '%s' known and is marshallable=%b",
-               clazz.getName(), marshallable);
+                  clazz.getName(), marshallable);
 
          return marshallable;
       } else {
@@ -180,7 +181,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
 
    @Override
    public void stop() {
-       // Clear class cache
+      // Clear class cache
       marshallableTypeHints.clear();
       marshallerTL.clear();
    }
@@ -276,14 +277,12 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
             //we're above the pool threshold: make a throw-away-after usage Marshaller
             configuration.setBufferSize(512);//reset to default as it might be changed by getMarshaller
             return factory.createUnmarshaller(configuration);
-         }
-         else {
+         } else {
             ExtendedRiverUnmarshaller unMarshaller = reusableUnMarshaller[availableUnMarshallerIndex];
             if (unMarshaller != null) {
                availableUnMarshallerIndex++;
                return unMarshaller;
-            }
-            else {
+            } else {
                configuration.setBufferSize(RIVER_INTERNAL_BUFFER);//reset to default as it might be changed by getMarshaller
                unMarshaller = factory.createUnmarshaller(configuration);
                unMarshaller.setCloseListener(this);
@@ -300,14 +299,12 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
             //setting the buffer as cheap as possible:
             configuration.setBufferSize(estimatedSize);
             return factory.createMarshaller(configuration);
-         }
-         else {
+         } else {
             ExtendedRiverMarshaller marshaller = reusableMarshaller[availableMarshallerIndex];
             if (marshaller != null) {
                availableMarshallerIndex++;
                return marshaller;
-            }
-            else {
+            } else {
                //we're going to pool this one, make sure the buffer size is set to a reasonable value
                //as we might have changed it previously:
                configuration.setBufferSize(RIVER_INTERNAL_BUFFER);
@@ -331,4 +328,8 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
       }
    }
 
+   @Override
+   public MediaType mediaType() {
+      return MediaType.APPLICATION_JBOSS_MARSHALLING;
+   }
 }

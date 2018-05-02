@@ -24,7 +24,8 @@ public final class MarshallerUtil {
 
    private static final Log log = LogFactory.getLog(MarshallerUtil.class, Log.class);
 
-   private MarshallerUtil() {}
+   private MarshallerUtil() {
+   }
 
    @SuppressWarnings("unchecked")
    public static <T> T bytes2obj(Marshaller marshaller, byte[] bytes, short status, List<String> whitelist) {
@@ -69,10 +70,6 @@ public final class MarshallerUtil {
       }
 
       return false;
-   }
-
-   static short getShort(byte[] b, int off) {
-      return (short) ((b[off + 1] & 0xFF) + (b[off] << 8));
    }
 
    public static byte[] obj2bytes(Marshaller marshaller, Object o, boolean isKey, int estimateKeySize, int estimateValueSize) {

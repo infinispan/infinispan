@@ -283,7 +283,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       Wrapper wrp = keyDataConversion != null ? keyDataConversion.getWrapper() : defaultWrapper;
       Encoder enc = keyDataConversion != null ? keyDataConversion.getEncoder() : defaultEncoder;
       Object unwrappedKey = wrp.unwrap(key);
-      return enc.isStorageFormatFilterable() ? (K) unwrappedKey : (K) enc.fromStorage(unwrappedKey);
+      return enc.isStorageFormatFilterable() ? (K) unwrappedKey : (K) keyDataConversion.fromStorage(key);
    }
 
    private V convertValue(DataConversion valueDataConversion, V value) {
@@ -291,7 +291,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       Wrapper wrp = valueDataConversion != null ? valueDataConversion.getWrapper() : defaultWrapper;
       Encoder enc = valueDataConversion != null ? valueDataConversion.getEncoder() : defaultEncoder;
       Object unwrappedValue = wrp.unwrap(value);
-      return enc.isStorageFormatFilterable() ? (V) unwrappedValue : (V) enc.fromStorage(unwrappedValue);
+      return enc.isStorageFormatFilterable() ? (V) unwrappedValue : (V) valueDataConversion.fromStorage(unwrappedValue);
    }
 
    @Override
@@ -785,7 +785,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       boolean foundMethods = false;
       // We use identity for null as this means it was invoked by a non encoder cache
       DataConversion keyConversion = keyDataConversion == null ? DataConversion.IDENTITY_KEY : keyDataConversion;
-      DataConversion valueConversion = valueDataConversion == null ? DataConversion.IDENTITY_VALUE: valueDataConversion;
+      DataConversion valueConversion = valueDataConversion == null ? DataConversion.IDENTITY_VALUE : valueDataConversion;
       if (filter instanceof IndexedFilter) {
          IndexedFilter indexedFilter = (IndexedFilter) filter;
          indexingProvider = findIndexingServiceProvider(indexedFilter);

@@ -8,8 +8,10 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientListener;
@@ -19,7 +21,6 @@ import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.protocol.Codec25;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -105,11 +106,11 @@ public class ClientListenerRetryTest extends MultiHotRodServersTest {
       private final IOException failWith = new IOException("Connection reset by peer");
 
       @Override
-      public AbstractClientEvent readCacheEvent(ByteBuf buf, Marshaller marshaller, short eventTypeId, List<String> whitelist, SocketAddress serverAddress) {
+      public AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> listenerDataFormat, short eventTypeId, List<String> whitelist, SocketAddress serverAddress) {
          if (failure) {
             throw new TransportException(failWith, serverAddress);
          }
-         return super.readCacheEvent(buf, marshaller, eventTypeId, whitelist, serverAddress);
+         return super.readCacheEvent(buf, listenerDataFormat, eventTypeId, whitelist, serverAddress);
       }
 
       private void induceFailure() {

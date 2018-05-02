@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl.operations;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -31,9 +32,9 @@ public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
    public PutIfAbsentOperation(Codec codec, ChannelFactory channelFactory,
                                Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
                                int flags, Configuration cfg, byte[] value, long lifespan,
-                               TimeUnit lifespanTimeUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+                               TimeUnit lifespanTimeUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
       super(PUT_IF_ABSENT_REQUEST, PUT_IF_ABSENT_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, value,
-            lifespan, lifespanTimeUnit, maxIdleTime, maxIdleTimeUnit);
+            lifespan, lifespanTimeUnit, maxIdleTime, maxIdleTimeUnit, dataFormat);
    }
 
    @Override

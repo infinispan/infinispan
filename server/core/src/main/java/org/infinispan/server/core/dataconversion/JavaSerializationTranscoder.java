@@ -1,4 +1,4 @@
-package org.infinispan.rest.dataconversion;
+package org.infinispan.server.core.dataconversion;
 
 import java.io.IOException;
 import java.util.HashSet;

@@ -288,4 +288,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Event should use messageId of previous Add Client Listener operation but id is %d and operation is %s", id = 4080)
    IllegalStateException operationIsNotAddClientListener(long messageId, String operation);
+
+   @Message(value = "The client listener must be configured with useRawData=true when using a custom data format", id = 4081)
+   IncorrectClientListenerException clientListenerMustUseRawDataWithCustomDataFormat();
 }

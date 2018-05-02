@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -22,8 +23,8 @@ import net.jcip.annotations.Immutable;
 public class ContainsKeyOperation extends AbstractKeyOperation<Boolean> {
 
    public ContainsKeyOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes,
-                               byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(CONTAINS_KEY_REQUEST, CONTAINS_KEY_RESPONSE, codec, channelFactory, key, keyBytes,cacheName, topologyId, flags, cfg);
+                               byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg, DataFormat dataFormat) {
+      super(CONTAINS_KEY_REQUEST, CONTAINS_KEY_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, dataFormat);
    }
 
    @Override

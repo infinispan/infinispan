@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.configuration.Configuration;
@@ -12,9 +13,9 @@ import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.ReflectionUtil;
@@ -40,16 +41,16 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
    protected AddClientListenerOperation(Codec codec, ChannelFactory channelFactory,
                                         String cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
                                         ClientListenerNotifier listenerNotifier, Object listener,
-                                        byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
+                                        byte[][] filterFactoryParams, byte[][] converterFactoryParams, DataFormat dataFormat) {
       this(codec, channelFactory, cacheName, topologyId, flags, cfg, generateListenerId(),
-            listenerNotifier, listener, filterFactoryParams, converterFactoryParams);
+            listenerNotifier, listener, filterFactoryParams, converterFactoryParams, dataFormat);
    }
 
    private AddClientListenerOperation(Codec codec, ChannelFactory channelFactory,
                                       String cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
                                       byte[] listenerId, ClientListenerNotifier listenerNotifier, Object listener,
-                                      byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
-      super(ADD_CLIENT_LISTENER_REQUEST, ADD_CLIENT_LISTENER_RESPONSE, codec, channelFactory, RemoteCacheManager.cacheNameBytes(cacheName), topologyId, flags, cfg);
+                                      byte[][] filterFactoryParams, byte[][] converterFactoryParams, DataFormat dataFormat) {
+      super(ADD_CLIENT_LISTENER_REQUEST, ADD_CLIENT_LISTENER_RESPONSE, codec, channelFactory, RemoteCacheManager.cacheNameBytes(cacheName), topologyId, flags, cfg, dataFormat);
       this.listenerId = listenerId;
       this.listenerNotifier = listenerNotifier;
       this.listener = listener;
@@ -60,7 +61,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
 
    public AddClientListenerOperation copy() {
       return new AddClientListenerOperation(codec, channelFactory, cacheNameString, header.topologyId(), flags, cfg,
-            listenerId, listenerNotifier, listener, filterFactoryParams, converterFactoryParams);
+            listenerId, listenerNotifier, listener, filterFactoryParams, converterFactoryParams, dataFormat);
    }
 
    private static byte[] generateListenerId() {
@@ -93,6 +94,14 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
          return;
       }
       ClientListener clientListener = extractClientListener();
+
+      boolean usesRawData = clientListener.useRawData();
+      boolean usesFilter = !(clientListener.converterFactoryName().equals("") && clientListener.filterFactoryName().equals(""));
+      boolean customDataFormat = dataFormat != null && dataFormat.hasCustomFormat();
+
+      if (customDataFormat && usesFilter && !usesRawData) {
+         throw log.clientListenerMustUseRawDataWithCustomDataFormat();
+      }
 
       channel.pipeline().get(HeaderDecoder.class).registerOperation(channel, this);
 
@@ -161,5 +170,9 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
    @Override
    protected void addParams(StringBuilder sb) {
       sb.append("listenerId=").append(Util.printArray(listenerId));
+   }
+
+   public DataFormat getDataFormat() {
+      return dataFormat;
    }
 }

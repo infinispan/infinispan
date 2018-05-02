@@ -22,7 +22,7 @@ public class ClearOperation extends RetryOnFailureOperation<Void> {
 
    public ClearOperation(Codec codec, ChannelFactory channelFactory,
                          byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(CLEAR_REQUEST, CLEAR_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg);
+      super(CLEAR_REQUEST, CLEAR_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null);
    }
 
    @Override

@@ -8,14 +8,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.impl.MarshallerRegistry;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
@@ -47,24 +49,35 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
    protected final Codec codec;
    protected final Configuration cfg;
    protected final ChannelFactory channelFactory;
+   protected final DataFormat dataFormat;
    protected final HeaderParams header;
+   private final MarshallerRegistry marshallerRegistry;
    protected volatile ScheduledFuture<?> timeoutFuture;
 
    private static final byte NO_TX = 0;
    private static final byte XA_TX = 1;
 
-   protected HotRodOperation(short requestCode, short responseCode, Codec codec, int flags, Configuration cfg, byte[] cacheName, AtomicInteger topologyId, ChannelFactory channelFactory) {
+   protected HotRodOperation(short requestCode, short responseCode, Codec codec, int flags, Configuration cfg,
+                             byte[] cacheName, AtomicInteger topologyId, ChannelFactory channelFactory,
+                             DataFormat dataFormat) {
       this.flags = flags;
       this.cfg = cfg;
       this.cacheName = cacheName;
       this.codec = codec;
       this.channelFactory = channelFactory;
+      this.marshallerRegistry = channelFactory.getMarshallerRegistry();
+      this.dataFormat = dataFormat;
       // TODO: we could inline all the header here
       this.header = new HeaderParams(requestCode, responseCode, MSG_ID.getAndIncrement())
             .cacheName(cacheName).flags(flags)
             .clientIntel(cfg.clientIntelligence())
             .topologyId(topologyId).txMarker(NO_TX)
+            .dataFormat(dataFormat)
             .topologyAge(channelFactory.getTopologyAge());
+   }
+
+   protected HotRodOperation(short requestCode, short responseCode, Codec codec, int flags, Configuration cfg, byte[] cacheName, AtomicInteger topologyId, ChannelFactory channelFactory) {
+      this(requestCode, responseCode, codec, flags, cfg, cacheName, topologyId, channelFactory, null);
    }
 
    public abstract CompletableFuture<T> execute();

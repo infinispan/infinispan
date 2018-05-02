@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.protocol;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 
 /**
@@ -20,6 +21,7 @@ public class HeaderParams {
    AtomicInteger topologyId;
    final long messageId;
    int topologyAge;
+   DataFormat dataFormat;
 
    public HeaderParams(short requestCode, short responseCode, long messageId) {
       opCode = requestCode;
@@ -64,4 +66,10 @@ public class HeaderParams {
       this.topologyAge = topologyAge;
       return this;
    }
+
+   public HeaderParams dataFormat(DataFormat dataFormat) {
+      this.dataFormat = dataFormat;
+      return this;
+   }
+
 }

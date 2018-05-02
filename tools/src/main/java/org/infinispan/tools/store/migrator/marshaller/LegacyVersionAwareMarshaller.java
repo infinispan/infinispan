@@ -8,6 +8,7 @@ import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.util.Map;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -58,8 +59,7 @@ public class LegacyVersionAwareMarshaller extends AbstractMarshaller implements 
       ObjectInput in = defaultMarshaller.startObjectInput(is, isReentrant);
       try {
          in.readShort();
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          finishObjectInput(in);
          log.unableToReadVersionId();
          throw new IOException("Unable to read version id from first two bytes of stream: " + e.getMessage());
@@ -75,6 +75,11 @@ public class LegacyVersionAwareMarshaller extends AbstractMarshaller implements 
    @Override
    public boolean isMarshallable(Object o) throws Exception {
       return defaultMarshaller.isMarshallable(o);
+   }
+
+   @Override
+   public MediaType mediaType() {
+      return defaultMarshaller.mediaType();
    }
 
    @Override

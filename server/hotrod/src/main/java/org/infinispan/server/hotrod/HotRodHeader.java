@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod;
 
+import org.infinispan.commons.dataconversion.MediaType;
+
 /**
  * @author wburns
  * @since 9.0
@@ -12,9 +14,19 @@ public class HotRodHeader {
    int flag;
    short clientIntel;
    int topologyId;
+   MediaType keyType;
+   MediaType valueType;
 
    public HotRodOperation getOp() {
       return op;
+   }
+
+   public String getKeyMediaType() {
+      return keyType == null ? MediaType.MATCH_ALL_TYPE : keyType.getTypeSubtype();
+   }
+
+   public String getValueMediaType() {
+      return valueType == null ? MediaType.MATCH_ALL_TYPE : valueType.getTypeSubtype();
    }
 
    public byte getVersion() {
@@ -51,6 +63,8 @@ public class HotRodHeader {
             ", flag=" + flag +
             ", clientIntel=" + clientIntel +
             ", topologyId=" + topologyId +
+            ", keyType=" + keyType +
+            ", valueType=" + valueType +
             '}';
    }
 }

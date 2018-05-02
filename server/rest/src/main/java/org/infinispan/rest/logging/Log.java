@@ -56,9 +56,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Remote requests are not allowed to internal caches when authorization is disabled. Do no send remote requests to cache '%s'", id = 12012)
    CacheUnavailableException requestNotAllowedToInternalCachesWithoutAuthz(String cacheName);
 
-   @Message(value = "Content cannot be converted to XML", id = 12013)
-   UnacceptableDataFormatException cannotConvertToXML(@Cause Throwable e);
-
    @Message(value = "Illegal compression level '%d'. The value must be >= 0 and <= 9", id = 12014)
    CacheConfigurationException illegalCompressionLevel(int compressionLevel);
 }

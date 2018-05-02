@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.ProtobufUtil;
@@ -39,7 +40,8 @@ public class ProtostreamJsonTranscoder implements Transcoder {
    public Object transcode(Object content, MediaType contentType, MediaType destinationType) {
       try {
          if (destinationType.match(APPLICATION_JSON)) {
-            return ProtobufUtil.toCanonicalJSON(ctx, (byte[]) content);
+            String converted = ProtobufUtil.toCanonicalJSON(ctx, (byte[]) content);
+            return StandardConversions.convertCharset(converted, contentType.getCharset(), destinationType.getCharset());
          }
          if (destinationType.match(APPLICATION_PROTOSTREAM)) {
             Reader reader;

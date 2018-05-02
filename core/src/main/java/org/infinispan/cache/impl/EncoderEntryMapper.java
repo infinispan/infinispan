@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.util.InjectiveFunction;
@@ -23,13 +22,14 @@ import org.infinispan.metadata.Metadata;
  * the requested format.
  */
 public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements InjectiveFunction<T, T> {
-   @Inject private transient InternalEntryFactory entryFactory;
+   @Inject
+   private transient InternalEntryFactory entryFactory;
 
    private final DataConversion keyDataConversion;
    private final DataConversion valueDataConversion;
 
    public static <K, V> EncoderEntryMapper<K, V, Map.Entry<K, V>> newEntryMapper(DataConversion keyDataConversion,
-         DataConversion valueDataConversion, InternalEntryFactory entryFactory) {
+                                                                                 DataConversion valueDataConversion, InternalEntryFactory entryFactory) {
       EncoderEntryMapper<K, V, Map.Entry<K, V>> mapper = new EncoderEntryMapper<>(keyDataConversion, valueDataConversion);
       mapper.entryFactory = entryFactory;
       return mapper;
@@ -53,11 +53,6 @@ public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements Inje
       registry.wireDependencies(valueDataConversion);
    }
 
-   private Object decode(Object o, Encoder encoder) {
-      if (o == null) return null;
-      return encoder.fromStorage(o);
-   }
-
    @Override
    @SuppressWarnings("unchecked")
    public T apply(T e) {
@@ -69,11 +64,11 @@ public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements Inje
       boolean valueFilterable = !ignoreStorageFormatFilterable && valueDataConversion.isStorageFormatFilterable();
       K key = e.getKey();
       Object unwrapped = keyDataConversion.getWrapper().unwrap(key);
-      Object newKey = keyFilterable ? unwrapped : decode(unwrapped, keyDataConversion.getEncoder());
+      Object newKey = keyFilterable ? unwrapped : keyDataConversion.fromStorage(key);
       V value = e.getValue();
 
       Object unwrappedValue = valueDataConversion.getWrapper().unwrap(value);
-      Object newValue = valueFilterable ? unwrappedValue : decode(unwrappedValue, valueDataConversion.getEncoder());
+      Object newValue = valueFilterable ? unwrappedValue : valueDataConversion.fromStorage(value);
       if (key != newKey || value != newValue) {
          if (e instanceof CacheEntry) {
             CacheEntry<K, V> ce = (CacheEntry<K, V>) e;

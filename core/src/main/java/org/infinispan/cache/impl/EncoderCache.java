@@ -36,7 +36,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.ListenerHolder;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
@@ -56,8 +55,10 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    private static Log log = LogFactory.getLog(EncoderCache.class);
 
-   @Inject private InternalEntryFactory entryFactory;
-   @Inject private ComponentRegistry componentRegistry;
+   @Inject
+   private InternalEntryFactory entryFactory;
+   @Inject
+   private ComponentRegistry componentRegistry;
 
    private final DataConversion keyDataConversion;
    private final DataConversion valueDataConversion;
@@ -493,11 +494,8 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    private void lookupEncoderWrapper() {
-      ComponentStatus status = cache.getAdvancedCache().getComponentRegistry().getStatus();
-      if (!status.equals(ComponentStatus.STOPPING) && !status.equals(ComponentStatus.TERMINATED)) {
-         componentRegistry.wireDependencies(keyDataConversion);
-         componentRegistry.wireDependencies(valueDataConversion);
-      }
+      componentRegistry.wireDependencies(keyDataConversion);
+      componentRegistry.wireDependencies(valueDataConversion);
    }
 
    private void initState(EncoderCache<K, V> encoderCache, EncoderCache<K, V> template) {
@@ -571,7 +569,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
     * @return true if all classes are identity oness
     */
    private boolean allIdentity(Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass,
-         Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
+                               Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
       return keyEncoderClass == IdentityEncoder.class && valueEncoderClass == IdentityEncoder.class &&
             keyWrapperClass == IdentityWrapper.class && valueWrapperClass == IdentityWrapper.class;
    }

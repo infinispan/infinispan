@@ -150,7 +150,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                }
                AbstractClientEvent cacheEvent;
                try {
-                  cacheEvent = codec.readCacheEvent(in, channelFactory.getMarshaller(),
+                  cacheEvent = codec.readCacheEvent(in, listenerNotifier::getCacheDataFormat,
                         receivedOpCode, configuration.serialWhitelist(), ctx.channel().remoteAddress());
                } catch (Signal signal) {
                   throw signal;

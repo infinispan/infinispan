@@ -141,4 +141,5 @@ public class RestCacheManager<V> {
       RollingUpgradeManager migrationManager = cr.getComponent(RollingUpgradeManager.class);
       if (migrationManager != null) migrationManager.addSourceMigrator(new RestSourceMigrator(cache));
    }
+
 }

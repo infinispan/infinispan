@@ -24,6 +24,7 @@ import org.infinispan.client.hotrod.event.ClientCacheEntryCreatedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
 import org.infinispan.client.hotrod.event.ClientEvent;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
@@ -194,6 +195,11 @@ public class HotRodCustomMarshallerEventIT {
         @Override
         public boolean isMarshallable(Object o) {
             return true;
+        }
+
+        @Override
+        public MediaType mediaType() {
+            return MediaType.parse("application/x-java-object; type=java.lang.Integer");
         }
     }
 }

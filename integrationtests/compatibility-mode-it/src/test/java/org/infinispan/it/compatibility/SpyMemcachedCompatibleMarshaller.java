@@ -1,5 +1,6 @@
 package org.infinispan.it.compatibility;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AbstractMarshaller;
@@ -32,6 +33,11 @@ public class SpyMemcachedCompatibleMarshaller extends AbstractMarshaller {
       } catch (Throwable t) {
          return false;
       }
+   }
+
+   @Override
+   public MediaType mediaType() {
+      return MediaType.parse("application/x-memcached");
    }
 
 }

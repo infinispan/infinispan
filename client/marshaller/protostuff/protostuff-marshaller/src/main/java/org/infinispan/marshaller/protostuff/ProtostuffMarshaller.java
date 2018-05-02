@@ -5,6 +5,7 @@ import static io.protostuff.LinkedBuffer.MIN_BUFFER_SIZE;
 import java.io.IOException;
 import java.util.ServiceLoader;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AbstractMarshaller;
@@ -24,6 +25,7 @@ public class ProtostuffMarshaller extends AbstractMarshaller {
       ClassLoader loader = ProtostuffMarshaller.class.getClassLoader();
       ServiceLoader.load(SchemaRegistryService.class, loader).forEach(SchemaRegistryService::register);
    }
+
    private static final Schema<Wrapper> WRAPPER_SCHEMA = RuntimeSchema.getSchema(Wrapper.class);
 
    @Override
@@ -48,5 +50,10 @@ public class ProtostuffMarshaller extends AbstractMarshaller {
       } catch (Throwable t) {
          return false;
       }
+   }
+
+   @Override
+   public MediaType mediaType() {
+      return MediaType.APPLICATION_PROTOSTUFF;
    }
 }

@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.impl.iteration.RemoteCloseableIterator;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
@@ -18,8 +19,8 @@ class CallbackRemoteIterator<E> extends RemoteCloseableIterator<E> {
    private Set<Object> callBackKeys = new HashSet<>();
    private IterationCallBack callback;
 
-   CallbackRemoteIterator(OperationsFactory operationsFactory, int batchSize, Set<Integer> segments, boolean metadata) {
-      super(operationsFactory, new GenericJBossMarshaller(), batchSize, segments, metadata);
+   CallbackRemoteIterator(OperationsFactory operationsFactory, int batchSize, Set<Integer> segments, boolean metadata, DataFormat dataFormat) {
+      super(operationsFactory, new GenericJBossMarshaller(), batchSize, segments, metadata, dataFormat);
    }
 
    @Override

@@ -3,22 +3,17 @@ package org.infinispan.server.hotrod;
 import java.util.BitSet;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-
-import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
-import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.server.hotrod.HotRodServer.CacheInfo;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.logging.Log;
 
@@ -29,13 +24,10 @@ import io.netty.channel.Channel;
 class CacheRequestProcessor extends BaseRequestProcessor {
    private static final Log log = LogFactory.getLog(CacheRequestProcessor.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
-   private static final Flag[] LOCAL_NON_BLOCKING_GET = new Flag[] { Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_LOAD };
-   private static final Flag[] SKIP_STATISTICS = new Flag[] { Flag.SKIP_STATISTICS };
+   private static final Flag[] SKIP_STATISTICS = new Flag[]{Flag.SKIP_STATISTICS};
 
    private final HotRodServer server;
    private final ClientListenerRegistry listenerRegistry;
-   // cacheStopped could be invoked concurrently
-   private final Map<String, CacheInfo> cacheInfo = new ConcurrentHashMap<>();
 
    CacheRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
       super(channel, executor);
@@ -46,27 +38,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    @CacheStopped
    public void cacheStopped(CacheStoppedEvent event) {
-      cacheInfo.remove(event.getCacheName());
-   }
-
-   private CacheInfo getCacheInfo(CacheDecodeContext cdc) {
-      // Fetching persistence manager would require security action, and would be too expensive
-      AdvancedCache<byte[], byte[]> cache = cdc.cache();
-      CacheInfo info = cacheInfo.get(cache.getName());
-      if (info == null) {
-         AdvancedCache<byte[], byte[]> localNonBlocking =
-               SecurityActions.anonymizeSecureCache(cache).noFlags().withFlags(LOCAL_NON_BLOCKING_GET);
-         if (cache.getStatus() != ComponentStatus.RUNNING) {
-            // stay on the safe side
-            return new CacheInfo(localNonBlocking, true, true);
-         }
-         ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(cache);
-         PersistenceManager pm = cr.getComponent(PersistenceManager.class);
-         boolean hasIndexing = SecurityActions.getCacheConfiguration(cache).indexing().index().isEnabled();
-         info = new CacheInfo(localNonBlocking, pm.isEnabled(), hasIndexing);
-         cacheInfo.put(cache.getName(), info);
-      }
-      return info;
+      server.cacheStopped(event.getCacheName());
    }
 
    private boolean isBlockingRead(CacheDecodeContext cdc, CacheInfo info) {
@@ -74,14 +46,14 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    private boolean isBlockingWrite(CacheDecodeContext cdc) {
-      CacheInfo info = getCacheInfo(cdc);
+      CacheInfo info = server.getCacheInfo(cdc);
       // Note: cache store cannot be skipped (yet)
       return info.persistence || info.indexing && !cdc.decoder.isSkipIndexing(cdc.header);
    }
 
    void get(CacheDecodeContext cdc) {
       // This request is very fast, try to satisfy immediately
-      CacheInfo info = getCacheInfo(cdc);
+      CacheInfo info = server.getCacheInfo(cdc);
       CacheEntry<byte[], byte[]> entry = info.localNonBlocking(cdc.subject).getCacheEntry(cdc.key);
       if (entry != null) {
          handleGet(cdc, entry, null);
@@ -111,7 +83,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void getKeyMetadata(CacheDecodeContext cdc) {
       // This request is very fast, try to satisfy immediately
-      CacheInfo info = getCacheInfo(cdc);
+      CacheInfo info = server.getCacheInfo(cdc);
       CacheEntry<byte[], byte[]> entry = info.localNonBlocking(cdc.subject).getCacheEntry(cdc.key);
       if (entry != null) {
          handleGetKeyMetadata(cdc, entry, null);
@@ -145,7 +117,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void containsKey(CacheDecodeContext cdc) {
       // This request is very fast, try to satisfy immediately
-      CacheInfo info = getCacheInfo(cdc);
+      CacheInfo info = server.getCacheInfo(cdc);
       boolean contains = info.localNonBlocking(cdc.subject).containsKey(cdc.key);
       if (contains) {
          writeSuccess(cdc, null);
@@ -400,7 +372,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void getAll(CacheDecodeContext cdc) {
-      if (isBlockingRead(cdc, getCacheInfo(cdc))) {
+      if (isBlockingRead(cdc, server.getCacheInfo(cdc))) {
          executor.execute(() -> getAllInternal(cdc));
       } else {
          getAllInternal(cdc);
@@ -594,26 +566,6 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          }
       } finally {
          buf.release();
-      }
-   }
-
-   private static class CacheInfo {
-      final AdvancedCache<byte[], byte[]> localNonBlocking;
-      final boolean persistence;
-      final boolean indexing;
-
-      private CacheInfo(AdvancedCache<byte[], byte[]> localNonBlocking, boolean persistence, boolean indexing) {
-         this.localNonBlocking = localNonBlocking;
-         this.persistence = persistence;
-         this.indexing = indexing;
-      }
-
-      AdvancedCache<byte[], byte[]> localNonBlocking(Subject subject) {
-         if (subject == null) {
-            return localNonBlocking;
-         } else {
-            return localNonBlocking.withSubject(subject);
-         }
       }
    }
 }

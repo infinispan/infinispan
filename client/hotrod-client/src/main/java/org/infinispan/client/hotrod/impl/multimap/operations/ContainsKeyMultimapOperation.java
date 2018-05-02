@@ -24,7 +24,7 @@ import io.netty.channel.Channel;
  */
 public class ContainsKeyMultimapOperation extends AbstractKeyOperation<Boolean> {
    public ContainsKeyMultimapOperation(Codec codec, ChannelFactory transportFactory, Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(CONTAINS_KEY_MULTIMAP_REQUEST, CONTAINS_KEY_MULTIMAP_RESPONSE, codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
+      super(CONTAINS_KEY_MULTIMAP_REQUEST, CONTAINS_KEY_MULTIMAP_RESPONSE, codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, cfg, null);
    }
 
    @Override

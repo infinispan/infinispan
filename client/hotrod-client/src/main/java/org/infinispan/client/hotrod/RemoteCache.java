@@ -458,4 +458,14 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
     * Returns a cache where values are manipulated using {@link java.io.InputStream} and {@link java.io.OutputStream}
     */
    StreamingRemoteCache<K> streaming();
+
+   /**
+    * Return a new instance of {@link RemoteCache} using the supplied {@link DataFormat}.
+    */
+   <T, U> RemoteCache<T, U> withDataFormat(DataFormat dataFormat);
+
+   /**
+    * Return the currently {@link DataFormat} being used.
+    */
+   DataFormat getDataFormat();
 }

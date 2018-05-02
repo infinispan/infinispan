@@ -39,7 +39,7 @@ public class GetKeyWithMetadataMultimapOperation<V> extends AbstractKeyOperation
    public GetKeyWithMetadataMultimapOperation(Codec codec, ChannelFactory channelFactory,
                                               Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags,
                                               Configuration cfg) {
-      super(GET_MULTIMAP_WITH_METADATA_REQUEST, GET_MULTIMAP_WITH_METADATA_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
+      super(GET_MULTIMAP_WITH_METADATA_REQUEST, GET_MULTIMAP_WITH_METADATA_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, null);
    }
 
    @Override

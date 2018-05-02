@@ -1,4 +1,7 @@
-package org.infinispan.rest.dataconversion;
+package org.infinispan.server.core.dataconversion;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.test.data.Address;
@@ -6,9 +9,6 @@ import org.infinispan.test.data.Person;
 import org.infinispan.test.dataconversion.AbstractTranscoderTest;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 @Test(groups = "functional", testName = "rest.JavaSerializationTranscoderTest")
 public class JavaSerializationTranscoderTest extends AbstractTranscoderTest {
