@@ -834,7 +834,7 @@ public class PutFromLoadValidator {
 				// With multiple invalidations in parallel we don't know the order in which
 				// the writes were applied into DB and therefore we can't update the cache
 				// with the most recent value.
-				if (invalidators.isEmpty()) {
+				if (valueForPFER != null && invalidators.isEmpty()) {
 					put(new PendingPut(owner));
 				}
 				else {
