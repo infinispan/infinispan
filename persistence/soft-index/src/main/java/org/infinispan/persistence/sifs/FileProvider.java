@@ -30,7 +30,7 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-class FileProvider {
+public class FileProvider {
    private static final org.infinispan.persistence.sifs.Log log =
          LogFactory.getLog(FileProvider.class, org.infinispan.persistence.sifs.Log.class);
 

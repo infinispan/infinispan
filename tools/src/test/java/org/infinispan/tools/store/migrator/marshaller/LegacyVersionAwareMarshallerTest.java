@@ -64,6 +64,7 @@ public class ByteOutputGenerator {
       PersistenceConfigurationBuilder pb = new ConfigurationBuilder().persistence();
       pb.addStore(LevelDBStoreConfigurationBuilder.class);
       pb.addStore(SingleFileStoreConfigurationBuilder.class);
+      pb.addStore(SoftIndexFileStoreConfigurationBuilder.class);
       Configuration config = pb.build();
 
       EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig, config);
