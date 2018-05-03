@@ -43,7 +43,10 @@
    <SASL mech="DIGEST-MD5" 
          client_callback_handler_class="org.infinispan.test.integration.security.utils.SaslPropCallbackHandler" />
 
-   <pbcast.STABLE stability_delay="500" desired_avg_gossip="5000" max_bytes="1m"/>
+   <pbcast.STABLE stability_delay="500"
+                  desired_avg_gossip="5000"
+                  max_bytes="1M"
+   />
    <pbcast.GMS print_local_addr="false"
                join_timeout="${jgroups.join_timeout:2000}"/>
 

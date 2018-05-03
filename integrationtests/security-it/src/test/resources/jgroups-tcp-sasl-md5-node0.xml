@@ -46,8 +46,11 @@
          server_callback_handler_class="org.infinispan.test.integration.security.utils.SaslPropCallbackHandler"
          client_callback_handler_class="org.infinispan.test.integration.security.utils.SaslPropCallbackHandler" 
          sasl_props="com.sun.security.sasl.digest.realm=test_realm" />
-         
-   <pbcast.STABLE stability_delay="500" desired_avg_gossip="5000" max_bytes="1m"/>
+
+   <pbcast.STABLE stability_delay="500"
+                  desired_avg_gossip="5000"
+                  max_bytes="1M"
+   />
    <pbcast.GMS print_local_addr="false"
                join_timeout="${jgroups.join_timeout:2000}"/>
 
