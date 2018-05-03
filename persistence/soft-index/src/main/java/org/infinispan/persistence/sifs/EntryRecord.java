@@ -9,7 +9,7 @@ import java.nio.channels.FileChannel;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-class EntryRecord {
+public class EntryRecord {
 
    private EntryHeader header;
    private byte[] key;

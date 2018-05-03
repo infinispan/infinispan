@@ -5,6 +5,7 @@ import static org.infinispan.tools.store.migrator.Element.SOURCE;
 import java.util.Properties;
 
 import org.infinispan.tools.store.migrator.file.SingleFileStoreReader;
+import org.infinispan.tools.store.migrator.file.SoftIndexFileStoreIterator;
 import org.infinispan.tools.store.migrator.jdbc.JdbcStoreReader;
 import org.infinispan.tools.store.migrator.rocksdb.RocksDBReader;
 
@@ -22,6 +23,8 @@ class StoreIteratorFactory {
             return new RocksDBReader(props);
          case SINGLE_FILE_STORE:
             return new SingleFileStoreReader(props);
+         case SOFT_INDEX_FILE_STORE:
+            return new SoftIndexFileStoreIterator(props);
       }
       return null;
    }

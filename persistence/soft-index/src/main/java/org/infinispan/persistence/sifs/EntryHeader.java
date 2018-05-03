@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-class EntryHeader {
+public class EntryHeader {
    static final int MAGIC = 0xBE11A61C;
    static final boolean useMagic = false;
    static final int HEADER_SIZE = 24 + (useMagic ? 4 : 0);

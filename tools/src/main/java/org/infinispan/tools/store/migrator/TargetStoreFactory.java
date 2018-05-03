@@ -1,6 +1,7 @@
 package org.infinispan.tools.store.migrator;
 
 import static org.infinispan.tools.store.migrator.Element.COMPRESSION;
+import static org.infinispan.tools.store.migrator.Element.INDEX_LOCATION;
 import static org.infinispan.tools.store.migrator.Element.LOCATION;
 import static org.infinispan.tools.store.migrator.Element.TARGET;
 import static org.infinispan.tools.store.migrator.Element.TYPE;
@@ -21,6 +22,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.rocksdb.configuration.CompressionType;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
+import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
 import org.infinispan.tools.store.migrator.jdbc.JdbcConfigurationUtil;
 import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
 import org.infinispan.transaction.TransactionMode;
@@ -75,6 +77,11 @@ class TargetStoreFactory {
          case SINGLE_FILE_STORE:
             props.required(LOCATION);
             return new SingleFileStoreConfigurationBuilder(persistenceBuilder).location(props.get(LOCATION));
+         case SOFT_INDEX_FILE_STORE:
+            props.required(LOCATION);
+            props.required(INDEX_LOCATION);
+            return new SoftIndexFileStoreConfigurationBuilder(persistenceBuilder)
+                  .dataLocation(props.get(LOCATION)).indexLocation(props.get(INDEX_LOCATION));
          default:
             throw new CacheConfigurationException(String.format("Unknown store type '%s'", storeType));
       }

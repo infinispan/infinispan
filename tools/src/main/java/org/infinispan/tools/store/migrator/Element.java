@@ -21,6 +21,7 @@ public enum Element {
    DRIVER_CLASS("driver_class"),
    EXTERNALIZERS("externalizers"),
    ID("id"),
+   INDEX_LOCATION("index_location"),
    KEY_TO_STRING_MAPPER("key_to_string_mapper"),
    LOCATION("location"),
    MAJOR_VERSION("major_version"),
