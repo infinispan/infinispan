@@ -150,7 +150,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
                .addBackup()
                .site(siteName)
                .strategy(BackupConfiguration.BackupStrategy.SYNC)
-               .replicationTimeout(120_000)
+               .replicationTimeout(30_000)
                .backupFailurePolicy(BackupFailurePolicy.FAIL);
          });
 
