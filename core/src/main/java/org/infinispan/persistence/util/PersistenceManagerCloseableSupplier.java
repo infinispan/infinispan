@@ -1,5 +1,6 @@
 package org.infinispan.persistence.util;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
@@ -20,6 +21,8 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.function.CloseableSupplier;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A closeable supplier that provides a way to supply cache entries from a given persistence manager.  On the first
@@ -30,6 +33,9 @@ import org.infinispan.util.function.CloseableSupplier;
  * @since 8.0
  */
 public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSupplier<CacheEntry<K, V>> {
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+   private static final boolean trace = log.isTraceEnabled();
+
    private final Executor executor;
    private final PersistenceManager manager;
    private final KeyFilter<K> filter;
@@ -126,7 +132,7 @@ public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSuppl
          closeLock.lock();
          try {
             // If is possible that someone inserted a value and then acquired the close lock - thus we must recheck
-            if (closed || (entry = queue.poll()) != null) {
+            if ((entry = queue.poll()) != null || closed) {
                break;
             }
             long targetTime = System.nanoTime() + unit.toNanos(timeout);
@@ -144,6 +150,9 @@ public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSuppl
       }
       if (interrupted) {
          Thread.currentThread().interrupt();
+      }
+      if (trace) {
+         log.tracef("Returning entry: " + entry);
       }
       return entry;
    }
