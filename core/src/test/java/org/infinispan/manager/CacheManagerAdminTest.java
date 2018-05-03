@@ -17,7 +17,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
-@Test(testName = "manager.CacheManagerAdminTest", groups = "functional")
+@Test(testName = "manager.CacheManagerAdminTest", groups = {"functional", "unstable"}, description = "ISPN-8969")
 @CleanupAfterMethod
 public class CacheManagerAdminTest extends MultipleCacheManagersTest {
    @Override
