@@ -7,6 +7,16 @@ The Infinispan community
 
 This guide walks you through the process of upgrading Infinispan.
 
+== Upgrading from 9.2 to 9.3
+
+=== Partition Handling Configuration
+In 9.3 the default MergePolicy is now MergePolicy.NONE, opposed to MergePolicy.PREFERRED_ALWAYS. See link:../user_guide/user_guide.html#merge-policies[here]
+for a detailed description of the different merge policies.
+
+=== Stat Changes
+We have reverted the stat changes introduced in 9.1, so average values for read, write and removals are once again returned
+as milliseconds.
+
 == Upgrading from 9.0 to 9.1
 
 === Kubernetes Ping changes
