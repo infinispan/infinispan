@@ -35,8 +35,10 @@ public class JndiCacheManagerProvider implements EmbeddedCacheManagerProvider {
          };
       }
       String factoryClass = properties.getProperty(Environment.CACHE_REGION_FACTORY);
-      // Warn about old-style usages
-      if (factoryClass.endsWith("JndiInfinispanRegionFactory") || factoryClass.equals("infinispan-jndi")) {
+      if (factoryClass == null) {
+         // Factory class might not be defined in WF
+         return null;
+      } else if (factoryClass.endsWith("JndiInfinispanRegionFactory") || factoryClass.equals("infinispan-jndi")) {
          throw log.propertyCacheManagerResourceNotSet();
       }
       return null;
