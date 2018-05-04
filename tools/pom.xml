@@ -40,6 +40,12 @@
       <dependency>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-cachestore-jdbc</artifactId>
+         <exclusions>
+            <exclusion>
+               <groupId>org.jboss.slf4j</groupId>
+               <artifactId>slf4j-jboss-logging</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
 
       <dependency>
