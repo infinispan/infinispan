@@ -63,8 +63,8 @@ public class SingleSiteRequest<T> extends AbstractRequest<T> {
       completeExceptionally(log.requestTimedOut(requestId, site));
    }
 
-   public void sitesUnreachable(Set<String> sites) {
-      if (sites.contains(site)) {
+   public void sitesUnreachable(String unreachableSite) {
+      if (site.equals(unreachableSite)) {
          receiveResponse(null, CacheNotFoundResponse.INSTANCE);
       }
    }
