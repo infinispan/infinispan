@@ -44,6 +44,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private final GlobalComponentRegistry globalComponents;
    private final String cacheName;
    private static final Log log = LogFactory.getLog(ComponentRegistry.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    @Inject private CacheManagerNotifier cacheManagerNotifier;
 
@@ -127,10 +128,14 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    @Override
    protected final Component lookupComponent(String componentClassName, String name, boolean nameIsFQCN) {
       if (isGlobal(componentClassName, name, nameIsFQCN)) {
-         log.tracef("Looking up global component %s", componentClassName);
+         if (trace) {
+            log.tracef("Looking up global component %s", componentClassName);
+         }
          return globalComponents.lookupComponent(componentClassName, name, nameIsFQCN);
       } else {
-         log.tracef("Looking up local component %s", componentClassName);
+         if (trace) {
+            log.tracef("Looking up local component %s", componentClassName);
+         }
          return lookupLocalComponent(componentClassName, name, nameIsFQCN);
       }
    }
@@ -146,10 +151,14 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    @Override
    protected final <T> T getOrCreateComponent(Class<T> componentClass, String name, boolean nameIsFQCN) {
       if (isGlobal(componentClass.getName(), name, nameIsFQCN)) {
-         log.tracef("Get or create global component %s", componentClass);
+         if (trace) {
+            log.tracef("Get or create global component %s", componentClass);
+         }
          return globalComponents.getOrCreateComponent(componentClass, name, nameIsFQCN);
       } else {
-         log.tracef("Get or create local component %s", componentClass);
+         if (trace) {
+            log.tracef("Get or create local component %s", componentClass);
+         }
          return super.getOrCreateComponent(componentClass, name, nameIsFQCN);
       }
    }
@@ -167,10 +176,14 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
       AbstractComponentFactory cf;
       if (isGlobal(cfClass)) {
-         log.tracef("Looking up global factory for component %s", componentClass);
+         if (trace) {
+            log.tracef("Looking up global factory for component %s", componentClass);
+         }
          cf = globalComponents.getFactory(componentClass);
       } else {
-         log.tracef("Looking up local factory for component %s", componentClass);
+         if (trace) {
+            log.tracef("Looking up local factory for component %s", componentClass);
+         }
          cf = super.getFactory(componentClass);
       }
       return cf;
