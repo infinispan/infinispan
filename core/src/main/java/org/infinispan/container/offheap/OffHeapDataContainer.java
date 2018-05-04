@@ -636,7 +636,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
                lock.lock();
                try {
                   checkDeallocation();
-                  long address = memoryLookup.getMemoryAddressOffset(a);
+                  long address = memoryLookup.getMemoryAddressOffsetNoTraceIfAbsent(a);
                   if (address == 0) {
                      return null;
                   }

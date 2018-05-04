@@ -46,6 +46,10 @@ public class MemoryAddressHash {
       return MEMORY.getLong(memory,((long) offset) << 3);
    }
 
+   public long getMemoryAddressOffsetNoTraceIfAbsent(int offset) {
+      return MEMORY.getLongNoTraceIfAbsent(memory,((long) offset) << 3);
+   }
+
    public void deallocate() {
       allocator.deallocate(memory, pointerCount << 3);
    }

@@ -60,9 +60,17 @@ class OffHeapMemory {
    }
 
    long getLong(long srcAddress, long offset) {
+      return getLong(srcAddress, offset, true);
+   }
+
+   long getLongNoTraceIfAbsent(long srcAddress, long offset) {
+      return getLong(srcAddress, offset, false);
+   }
+
+   private long getLong(long srcAddress, long offset, boolean alwaysTrace) {
       checkAddress(srcAddress, offset + 8);
       long value = UNSAFE.getLong(srcAddress + offset);
-      if (trace) {
+      if (trace && (alwaysTrace || value != 0)) {
          log.tracef("Read long value 0x%016x from address 0x%016x+%d", value, srcAddress, offset);
       }
       return value;
