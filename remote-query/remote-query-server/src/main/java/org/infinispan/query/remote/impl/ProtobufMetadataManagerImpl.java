@@ -8,8 +8,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Stream;
 
 import javax.management.MBeanException;
 import javax.management.ObjectName;
@@ -151,7 +149,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
                .site(siteName)
                .strategy(BackupConfiguration.BackupStrategy.SYNC)
                .replicationTimeout(30_000)
-               .backupFailurePolicy(BackupFailurePolicy.FAIL);
+               .backupFailurePolicy(BackupFailurePolicy.WARN);
          });
 
       return cfg;
