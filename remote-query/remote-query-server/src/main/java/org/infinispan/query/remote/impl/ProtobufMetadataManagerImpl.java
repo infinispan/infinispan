@@ -117,7 +117,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
 
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.transaction()
-            .transactionMode(TransactionMode.TRANSACTIONAL).invocationBatching().enable()
+            .transactionMode(TransactionMode.TRANSACTIONAL)
             .transaction().lockingMode(LockingMode.PESSIMISTIC)
             .locking().isolationLevel(IsolationLevel.READ_COMMITTED).useLockStriping(false)
             .clustering().cacheMode(cacheMode).sync()
