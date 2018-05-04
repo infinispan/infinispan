@@ -20,6 +20,13 @@ as milliseconds.
 === Event log changes
 Several new event log messages have been added, and one message has been removed (ISPN100013).
 
+=== Max Idle Expiration Changes
+The max idle entry expiration information is sent between owners in the cluster. However when an entry expires via max idle on a given node, this was not replicated (only removing it locally). Max idle has been enhanced to now expire an entry across the entire cluster, instead of per node. This includes ensuring that max idle expiration is applied across all owners (meaning if another node has accessed the entry within the given time it will prevent that entry from expiring on other nodes that didn't have an access).
+
+Max idle in a transactional clustered cache does not remove expired entries on access (although it will not be returned). These entries are only removed via the expiration reaper.
+
+Iteration in a clustered cache will still show entries that are expired via maxIdle to ensure good performance, but could be removed at any point due to expiration reaper.
+
 == Upgrading from 9.0 to 9.1
 
 === Kubernetes Ping changes
