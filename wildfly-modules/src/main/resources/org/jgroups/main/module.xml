@@ -9,5 +9,6 @@
 
     <dependencies>
         <module name="javax.api"/>
+        <module name="sun.jdk"/>
     </dependencies>
 </module>
