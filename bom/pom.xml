@@ -71,7 +71,7 @@
       <!-- Dependency versions duplicated in the parent POM -->
       <version.antlr>3.4</version.antlr>
       <version.c3p0>0.9.5-pre8</version.c3p0>
-      <version.caffeine>2.4.0</version.caffeine>
+      <version.caffeine>2.6.2</version.caffeine>
       <version.cdi>1.2</version.cdi>
       <version.groovy>2.4.8</version.groovy>
       <version.hibernate.core>5.2.12.Final</version.hibernate.core>

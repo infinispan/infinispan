@@ -214,7 +214,7 @@
       <!-- Dependency versions duplicated in BOM -->
       <version.antlr>3.4</version.antlr>
       <version.c3p0>0.9.5-pre8</version.c3p0>
-      <version.caffeine>2.4.0</version.caffeine>
+      <version.caffeine>2.6.2</version.caffeine>
       <version.cdi>1.2</version.cdi>
       <version.commonslang3>3.4</version.commonslang3>
       <version.groovy>2.4.8</version.groovy>
