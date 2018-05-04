@@ -148,7 +148,9 @@ element to your `<*-cache />`  configuration sections.
 When an entry expires it will reside in the data container or cache store
 until it is accessed again by a user request.  There is also an optional
 expiration reaper that can run at a given configurable interval of
-milliseconds which will check for expired entries and remove them.
+milliseconds which will check for expired entries and remove them. Expiration reaper
+is always enabled when a cache store is present. It is highly recommended to always enable
+the reaper when using max idle in a clustered cache.
 
 ==== Difference between Eviction and Expiration
 
@@ -170,18 +172,45 @@ stay in the cache or _maximum idle time_ , time it's allowed to be untouched
 
 .  _Expiration_ is a top-level construct, represented in the configuration as well as in the cache API.
 .  While eviction is _local to each cache instance_ , expiration is _cluster-wide_ .  Expiration lifespans and maxIdle values are replicated along with the cache entry.
-.  While maxIdle is replicated, expiration due to maxIdle is not cluster wide, only lifespan.  As such it is not recommended to use maxIdle in a clustered cache.
+.  Max idle requires additional network messages to work in a cluster.  As such using maxIdle in a clustered cache can cause some operations to be slower at times.
 .  Expiration lifespan and maxIdle are also persisted in CacheStores, so this information survives eviction/passivation.
+
+
+==== Max Idle Details
+
+Max idle expiration occurs when an entry has not been accessed within a given time frame. This poses a more interesting problem than lifespan, which is very simple. Thus this type of expiration behaves slightly different in a local versus cluster cache.
+
+===== Local Max Idle
+
+Max idle is pretty straightforward in a non clustered cache. It removes expired entries when accessed directly (ie. Cache.get), also removes expired entries entries when iterated upon (ie. Cache.size) or via expiration reaper.
+
+===== Cluster Max Idle
+
+Max idle in a cluster is quite a bit more complicated. Since each node can have a different access time, an entry is not removed until all owners of said entry say it hasn't been accessed in the given amount of time.
+
+This check is done when a given node finds an entry has expired via maxIdle. It then will ask all the other owners what their last access time was (if it hasn't expired). If all owners say that the entry has expired, then it will not be returned to the user and removed based on the operation.
+
+WARN: Clustered caches should always enable reaper when using max idle expiration due to some limitations listed in the section below.
+
+When using max idle, it is important to keep the following points in mind:
+
+. A Cache.get in a clustered cache will return the "expired" entry if at least one owner finds that this entry is not expired. All owners will then update their last access time to the highest number, essentially refreshing this entry until that time.
+. Iteration in a clustered cache *will* return entries that this node thinks are expired via max idle. This is to ensure performance as no remote invocations are done. The entry is not refreshed and may be removed by the reaper or get access.
+. A clustered transactional cache does *NOT* remove entries expired via max idle on a get. These entries are only removed via reaper. This is prevented as doing so can cause deadlocking.
+
+WARN: Care should be used when utilizing max idle expiration and exception based eviction since expired entries that aren't removed still will count towards container sizing
 
 ==== Configuration
 
-Eviction may be configured using the Configuration bean or the XML file.  Eviction configuration is on a per-cache basis.  Valid eviction-related configuration elements are:
+Eviction and Expiration may be configured using the programmatic or declarative XML configuration. This configuration is on a per-cache basis. Valid eviction/expiration-related configuration elements are:
 
 [source,xml]
 ----
+<!-- Eviction -->
 <memory>
    <object size="2000"/>
 </memory>
+<!-- Expiration -->
 <expiration lifespan="1000" max-idle="500" interval="1000" />
 
 ----
@@ -229,7 +258,7 @@ Eviction is disabled by default. Default values are used:
 * size: -1 is used if not specified, which means unlimited entries.
 * 0 means no entries, and the eviction thread will strive to keep the cache empty.
 
-Expiration lifespan and maxIdle both default to -1.
+Expiration lifespan and maxIdle both default to -1, which means that entries will be created immortal by default. This can be overridden per entry with the API.
 
 ==== Using expiration
 
