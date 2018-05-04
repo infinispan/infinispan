@@ -1,5 +1,6 @@
 package org.infinispan.remoting.transport;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -14,6 +15,10 @@ public interface BackupResponse {
    void waitForBackupToFinish() throws Exception;
 
    Map<String,Throwable> getFailedBackups();
+
+   default Map<String, Object> getValues() {
+      return Collections.emptyMap();
+   };
 
    /**
     * Returns the list of sites where the backups failed due to a bridge communication error (as opposed to an
