@@ -89,7 +89,6 @@ import org.jgroups.Header;
 import org.jgroups.JChannel;
 import org.jgroups.MergeView;
 import org.jgroups.Message;
-import org.jgroups.Receiver;
 import org.jgroups.UpHandler;
 import org.jgroups.View;
 import org.jgroups.blocks.RequestCorrelator;
@@ -388,7 +387,7 @@ public class JGroupsTransport implements Transport {
 
       initChannel();
 
-      channel.setReceiver(channelCallbacks);
+      channel.setUpHandler(channelCallbacks);
       setXSiteViewListener(channelCallbacks);
       setSiteMasterPicker(new SiteMasterPickerImpl());
 
@@ -1161,7 +1160,7 @@ public class JGroupsTransport implements Transport {
    private void siteUnreachable(String site) {
       requests.forEach(request -> {
          if (request instanceof SingleSiteRequest) {
-            ((SingleSiteRequest) request).sitesUnreachable(Collections.singleton(site));
+            ((SingleSiteRequest) request).sitesUnreachable(site);
          }
       });
    }
@@ -1358,12 +1357,7 @@ public class JGroupsTransport implements Transport {
       throw new IllegalArgumentException("Unable to decode order from flags " + flags);
    }
 
-   private class ChannelCallbacks implements Receiver, RouteStatusListener, UpHandler {
-      @Override
-      public void viewAccepted(View new_view) {
-         receiveClusterView(new_view);
-      }
-
+   private class ChannelCallbacks implements RouteStatusListener, UpHandler {
       @Override
       public void sitesUp(String... sites) {
          updateSitesView(Arrays.asList(sites), Collections.emptyList());
@@ -1375,20 +1369,15 @@ public class JGroupsTransport implements Transport {
       }
 
       @Override
-      public void receive(Message message) {
-         processMessage(message);
-      }
-
-      @Override
-      public void receive(MessageBatch batch) {
-         batch.forEach((message, messages) -> processMessage(message));
-      }
-
-      @Override
       public Object up(Event evt) {
          switch (evt.getType()) {
+            case Event.VIEW_CHANGE:
+               receiveClusterView(evt.getArg());
+               break;
             case Event.SITE_UNREACHABLE:
-               siteUnreachable(evt.getArg());
+               SiteMaster site_master = evt.getArg();
+               String site = site_master.getSite();
+               siteUnreachable(site);
                break;
          }
          return null;
@@ -1396,12 +1385,13 @@ public class JGroupsTransport implements Transport {
 
       @Override
       public Object up(Message msg) {
+         processMessage(msg);
          return null;
       }
 
       @Override
       public void up(MessageBatch batch) {
-
+         batch.forEach((message, messages) -> processMessage(message));
       }
    }
 }
