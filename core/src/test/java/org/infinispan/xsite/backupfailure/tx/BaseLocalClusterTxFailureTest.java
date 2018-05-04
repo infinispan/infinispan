@@ -2,16 +2,19 @@ package org.infinispan.xsite.backupfailure.tx;
 
 import static org.testng.AssertJUnit.assertNull;
 
-import javax.transaction.xa.XAException;
+import javax.transaction.RollbackException;
 
+import org.infinispan.commons.CacheException;
 import org.infinispan.test.Exceptions;
 import org.infinispan.xsite.AbstractTwoSitesTest;
 import org.infinispan.xsite.backupfailure.BaseBackupFailureTest;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus
  * @since 5.2
  */
+@Test(groups = "xsite")
 public abstract class BaseLocalClusterTxFailureTest extends AbstractTwoSitesTest {
 
    private BaseBackupFailureTest.FailureInterceptor failureInterceptor;
@@ -26,7 +29,7 @@ public abstract class BaseLocalClusterTxFailureTest extends AbstractTwoSitesTest
    public void testPrepareFailure() {
       failureInterceptor.enable();
       try {
-         Exceptions.expectException(XAException.class, () -> cache("LON", 0).put("k", "v"));
+         Exceptions.expectException(CacheException.class, RollbackException.class, () -> cache("LON", 0).put("k", "v"));
       } finally {
          failureInterceptor.disable();
       }
