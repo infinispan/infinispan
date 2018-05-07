@@ -6,8 +6,6 @@
  */
 package org.infinispan.hibernate.cache.commons.access;
 
-import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
-
 import javax.transaction.Status;
 
 /**
@@ -16,7 +14,6 @@ import javax.transaction.Status;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class InvalidationSynchronization implements javax.transaction.Synchronization {
-   private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationSynchronization.class);
 	public final Object lockOwner;
 	private final NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor;
 	private final Object key;
@@ -33,7 +30,6 @@ public class InvalidationSynchronization implements javax.transaction.Synchroniz
 
 	@Override
 	public void afterCompletion(int status) {
-      log.tracef("After completion callback with status %d", status);
 		nonTxPutFromLoadInterceptor.endInvalidating(key, lockOwner, status == Status.STATUS_COMMITTED || status == Status.STATUS_COMMITTING);
 	}
 }
