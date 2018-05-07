@@ -8,7 +8,7 @@ package org.infinispan.hibernate.cache.v53.impl;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.hibernate.cache.commons.access.NonTxPutFromLoadInterceptor;
+import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 
 /**
@@ -16,17 +16,17 @@ import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public class InvalidationInvocation implements Invocation {
-   private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationInvocation.class);
+public class LocalInvalidationInvocation implements Invocation {
+   private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(LocalInvalidationInvocation.class);
    private final static boolean trace = log.isTraceEnabled();
 
    private final Object lockOwner;
-   private final NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor;
+   private final PutFromLoadValidator validator;
    private final Object key;
 
-   public InvalidationInvocation(NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor, Object key, Object lockOwner) {
+   public LocalInvalidationInvocation(PutFromLoadValidator validator, Object key, Object lockOwner) {
       assert lockOwner != null;
-      this.nonTxPutFromLoadInterceptor = nonTxPutFromLoadInterceptor;
+      this.validator = validator;
       this.key = key;
       this.lockOwner = lockOwner;
    }
@@ -36,7 +36,7 @@ public class InvalidationInvocation implements Invocation {
       if (trace) {
          log.tracef("After completion callback, success=%b", success);
       }
-      nonTxPutFromLoadInterceptor.endInvalidating(key, lockOwner, success);
+      validator.endInvalidatingKey(lockOwner, key, success);
       return null;
    }
 }
