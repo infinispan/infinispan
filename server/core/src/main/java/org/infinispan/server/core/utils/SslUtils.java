@@ -37,7 +37,7 @@ public class SslUtils {
             sslEngineConfiguration.keyStoreCertificatePassword(),
             sslEngineConfiguration.keyAlias(),
             sslEngineConfiguration.trustStoreFileName(),
-            sslEngineConfiguration.keyStoreType(),
+            sslEngineConfiguration.trustStoreType(),
             sslEngineConfiguration.trustStorePassword(),
             sslEngineConfiguration.protocol(), null);
    }

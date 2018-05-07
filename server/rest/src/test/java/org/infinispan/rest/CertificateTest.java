@@ -16,8 +16,8 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "rest.AuthenticationTest")
 public class CertificateTest extends AbstractInfinispanTest {
 
-   public static final String TRUST_STORE_PATH = CertificateTest.class.getClassLoader().getResource("./default_client_truststore.jks").getPath();
-   public static final String KEY_STORE_PATH = CertificateTest.class.getClassLoader().getResource("./default_client_truststore.jks").getPath();
+   public static final String TRUST_STORE_PATH = CertificateTest.class.getClassLoader().getResource("./client.p12").getPath();
+   public static final String KEY_STORE_PATH = CertificateTest.class.getClassLoader().getResource("./client.p12").getPath();
 
    private HttpClient client;
    private RestServerHelper restServer;
@@ -41,16 +41,18 @@ public class CertificateTest extends AbstractInfinispanTest {
       SslContextFactory sslContextFactory = new SslContextFactory();
       sslContextFactory.setTrustStorePassword(TRUST_STORE_PATH);
       sslContextFactory.setTrustStorePassword("secret");
+      sslContextFactory.setTrustStoreType("pkcs12");
       sslContextFactory.setKeyStorePath(KEY_STORE_PATH);
       sslContextFactory.setKeyStorePassword("secret");
+      sslContextFactory.setKeyStoreType("pkcs12");
 
       client = new HttpClient(sslContextFactory);
       client.start();
 
       restServer = RestServerHelper.defaultRestServer()
             .withAuthenticator(new ClientCertAuthenticator())
-            .withKeyStore(KEY_STORE_PATH, "secret")
-            .withTrustStore(TRUST_STORE_PATH, "secret")
+            .withKeyStore(KEY_STORE_PATH, "secret", "pkcs12")
+            .withTrustStore(TRUST_STORE_PATH, "secret", "pkcs12")
             .withClientAuth()
             .start(TestResourceTracker.getCurrentTestShortName());
 

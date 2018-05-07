@@ -23,15 +23,20 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "server.hotrod.HotRodSslFunctionalTest")
 public class HotRodSslFunctionalTest extends HotRodFunctionalTest {
 
-   private String keyStoreFileName = getClass().getClassLoader().getResource("default_server_keystore.jks").getPath();
-   private String trustStoreFileName = getClass().getClassLoader().getResource("default_client_truststore.jks").getPath();
+   private String keyStoreFileName = getClass().getClassLoader().getResource("default_server_keystore.p12").getPath();
+   private String trustStoreFileName = getClass().getClassLoader().getResource("default_client_truststore.p12").getPath();
 
    @Override
    protected HotRodServer createStartHotRodServer(EmbeddedCacheManager cacheManager) {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
       builder.proxyHost(host()).proxyPort(serverPort()).idleTimeout(0);
-      builder.ssl().enable().keyStoreFileName(keyStoreFileName).keyStorePassword("secret".toCharArray())
-             .trustStoreFileName(trustStoreFileName).trustStorePassword("secret".toCharArray());
+      builder.ssl().enable()
+            .keyStoreFileName(keyStoreFileName)
+            .keyStorePassword("secret".toCharArray())
+            .keyStoreType("pkcs12")
+            .trustStoreFileName(trustStoreFileName)
+            .trustStorePassword("secret".toCharArray())
+            .trustStoreType("pkcs12");
       return startHotRodServer(cacheManager, serverPort(), -1, builder);
    }
 
