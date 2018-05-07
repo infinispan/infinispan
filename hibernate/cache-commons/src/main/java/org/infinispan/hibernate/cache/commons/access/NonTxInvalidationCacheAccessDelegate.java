@@ -8,7 +8,6 @@ package org.infinispan.hibernate.cache.commons.access;
 
 import org.hibernate.cache.CacheException;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
@@ -35,9 +34,11 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
    private final KeyPartitioner keyPartitioner;
 	private final InvocationContextFactory contextFactory;
 	protected final NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor;
+	protected final boolean isLocal;
 
 	public NonTxInvalidationCacheAccessDelegate(InfinispanDataRegion region, PutFromLoadValidator validator) {
 		super(region, validator);
+		isLocal = !region.getCache().getCacheConfiguration().clustering().cacheMode().isClustered();
 		ComponentRegistry cr = region.getCache().getComponentRegistry();
 		invoker = cr.getComponent(AsyncInterceptorChain.class);
 		commandsFactory = cr.getComponent(CommandsFactory.class);
@@ -75,19 +76,30 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 		write(session, key, null);
 	}
 
-	private void write(Object session, Object key, Object value) {
-		// We need to be invalidating even for regular writes; if we were not and the write was followed by eviction
-		// (or any other invalidation), naked put that was started after the eviction ended but before this insert/update
-		// ended could insert the stale entry into the cache (since the entry was removed by eviction).
-		RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, keyPartitioner.getSegment(key), REMOVE_FLAGS);
-		registerRemoteInvalidation(command, session);
-		if (!putValidator.beginInvalidatingWithPFER(command.getKeyLockOwner(), key, value)) {
-			throw log.failedInvalidatePendingPut(key, region.getName());
-		}
-		InvocationContext ctx = contextFactory.createSingleKeyNonTxInvocationContext();
-		ctx.setLockOwner(command.getKeyLockOwner());
-		invoke(session, ctx, command);
-	}
+   private void write(Object session, Object key, Object value) {
+      // We need to be invalidating even for regular writes; if we were not and the write was followed by eviction
+      // (or any other invalidation), naked put that was started after the eviction ended but before this insert/update
+      // ended could insert the stale entry into the cache (since the entry was removed by eviction).
+      if (isLocal) {
+         // Lock owner is not serialized in local mode so we can use anything (only equals and hashCode are needed)
+         Object lockOwner = new Object();
+         registerLocalInvalidation(session, lockOwner, key);
+         if (!putValidator.beginInvalidatingWithPFER(lockOwner, key, value)) {
+            throw log.failedInvalidatePendingPut(key, region.getName());
+         }
+         // Make use of the simple cache mode here
+         cache.remove(key);
+      } else {
+         RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, keyPartitioner.getSegment(key), REMOVE_FLAGS);
+         registerClusteredInvalidation(session, command.getKeyLockOwner(), command.getKey());
+         if (!putValidator.beginInvalidatingWithPFER(command.getKeyLockOwner(), key, value)) {
+            throw log.failedInvalidatePendingPut(key, region.getName());
+         }
+         InvocationContext ctx = contextFactory.createSingleKeyNonTxInvocationContext();
+         ctx.setLockOwner(command.getKeyLockOwner());
+         invoke(session, ctx, command);
+      }
+   }
 
 	protected void invoke(Object session, InvocationContext ctx, RemoveCommand command) {
 		invoker.invoke(ctx, command);
@@ -118,15 +130,25 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 		}
 	}
 
-	protected void registerRemoteInvalidation(AbstractDataWriteCommand command, Object session) {
+	protected void registerLocalInvalidation(Object session, Object lockOwner, Object key) {
 		SessionAccess.TransactionCoordinatorAccess transactionCoordinator = SESSION_ACCESS.getTransactionCoordinator(session);
 		if (transactionCoordinator == null) {
 			return;
 		}
 		if (trace) {
-         log.tracef("Registering synchronization on transaction in %s, cache %s: %s", command.getKeyLockOwner(), cache.getName(), command.getKey());
+			log.tracef("Registering synchronization on transaction in %s, cache %s: %s", lockOwner, cache.getName(), key);
+		}
+		transactionCoordinator.registerLocalSynchronization(new LocalInvalidationSynchronization(putValidator, key, lockOwner));
+	}
+
+	protected void registerClusteredInvalidation(Object session, Object lockOwner, Object key) {
+		SessionAccess.TransactionCoordinatorAccess transactionCoordinator = SESSION_ACCESS.getTransactionCoordinator(session);
+		if (transactionCoordinator == null) {
+			return;
+		}
+		if (trace) {
+         log.tracef("Registering synchronization on transaction in %s, cache %s: %s", lockOwner, cache.getName(), key);
       }
-		InvalidationSynchronization sync = new InvalidationSynchronization(nonTxPutFromLoadInterceptor, command.getKey(), command.getKeyLockOwner());
-		transactionCoordinator.registerLocalSynchronization(sync);
+		transactionCoordinator.registerLocalSynchronization(new InvalidationSynchronization(nonTxPutFromLoadInterceptor, key, lockOwner));
 	}
 }

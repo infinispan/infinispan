@@ -9,7 +9,6 @@ package org.infinispan.hibernate.cache.v53.impl;
 import java.util.concurrent.CompletableFuture;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -27,12 +26,21 @@ class NonTxInvalidationCacheAccessDelegate extends org.infinispan.hibernate.cach
    }
 
    @Override
-   protected void registerRemoteInvalidation(AbstractDataWriteCommand command, Object session) {
+   protected void registerLocalInvalidation(Object session, Object lockOwner, Object key) {
       Sync sync = (Sync)((SharedSessionContractImplementor) session).getCacheTransactionSynchronization();
       if (trace) {
-         log.tracef("Registering synchronization on transaction in %s, cache %s: %s", command.getKeyLockOwner(), cache.getName(), command.getKey());
+         log.tracef("Registering synchronization on transaction in %s, cache %s: %s", lockOwner, cache.getName(), key);
       }
-      sync.registerAfterCommit(new InvalidationInvocation(nonTxPutFromLoadInterceptor, command.getKey(), command.getKeyLockOwner()));
+      sync.registerAfterCommit(new LocalInvalidationInvocation(putValidator, key, lockOwner));
+   }
+
+   @Override
+   protected void registerClusteredInvalidation(Object session, Object lockOwner, Object key) {
+      Sync sync = (Sync)((SharedSessionContractImplementor) session).getCacheTransactionSynchronization();
+      if (trace) {
+         log.tracef("Registering synchronization on transaction in %s, cache %s: %s", lockOwner, cache.getName(), key);
+      }
+      sync.registerAfterCommit(new InvalidationInvocation(nonTxPutFromLoadInterceptor, key, lockOwner));
    }
 
    @Override
