@@ -9,6 +9,9 @@ This guide walks you through the process of upgrading Infinispan.
 
 == Upgrading from 9.2 to 9.3
 
+=== AdvancedCacheLoader changes
+The AdvancedCacheLoader SPI has been enhanced to provide an alternative method to process and instead allows reactive streams based publishKeys and publishEntries methods which provide benefits in performance, threading and ease of use. Note this change will only affect you if you wish take advantage of it in any custom CacheLoaders you may have implemented.
+
 === Partition Handling Configuration
 In 9.3 the default MergePolicy is now MergePolicy.NONE, opposed to MergePolicy.PREFERRED_ALWAYS. See link:../user_guide/user_guide.html#merge-policies[here]
 for a detailed description of the different merge policies.

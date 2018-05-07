@@ -269,7 +269,7 @@ include::persistence_storemigrator.adoc[]
 
 Following sections describe the SPI and also discuss the SPI implementations that {brandname} ships out of the box.
 
-=== API
+=== SPI
 
 The following class diagram presents the main SPI interfaces of the persistence API:
 
@@ -291,7 +291,7 @@ A provider might choose to only implement a subset of these interfaces:
 
 * Not implementing the  link:{javadocroot}/org/infinispan/persistence/spi/AdvancedCacheWriter.html[AdvancedCacheWriter] makes the given writer not usable for purging expired entries or clear
 
-* If a loader does not implement the link:{javadocroot}/org/infinispan/persistence/spi/AdvancedCacheWriter.html[AdvancedCacheWriter]
+* If a loader does not implement the link:{javadocroot}/org/infinispan/persistence/spi/AdvancedCacheLoader.html[AdvancedCacheLoader]
 inteface, then it will not participate in preloading nor in cache iteration
 (required also for stream operations).
 
