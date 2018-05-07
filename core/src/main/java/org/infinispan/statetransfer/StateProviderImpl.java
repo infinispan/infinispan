@@ -112,7 +112,8 @@ public class StateProviderImpl implements StateProvider {
       //todo [anistor] must cancel transfers for all segments that we no longer own
    }
 
-   @Start(priority = 60)
+   // Must start before StateTransferManager sends the join request
+   @Start(priority = 50)
    @Override
    public void start() {
       this.cacheName = cache.getName();
