@@ -12,8 +12,8 @@ import org.testng.annotations.Test;
 public class SSLClassPathConfigurationTest {
 
    public void testLoadTrustStore() {
-      String keyStoreFileName = getClass().getResource("/keystore_client.jks").getPath();
-      String truststoreFileName = "classpath:ca.jks";
+      String keyStoreFileName = getClass().getResource("/keystore_client.p12").getPath();
+      String truststoreFileName = "classpath:ca.p12";
       char[] password = "secret".toCharArray();
 
       SSLContext context =

@@ -36,13 +36,13 @@ import io.netty.util.AsciiString;
  * <p>
  *    Unfortunately it is very hard to get a good HTTP/2 client with ALPN support. All major implementations require
  *    using Jetty Java Agent (which needs to be applied into bootclasspath. This is very inconvenient. Thankfully Netty
- *    can use OpenSSL but the downside is that it contains lots and lots of bolerplate code.
+ *    can use OpenSSL but the downside is that it contains lots and lots of boilerplate code.
  *
  *    It might be a good idea to replace this implementation once JDK9 is mainstream and use something better.
  * </p>
  *
  * @author Sebastian Łaskawiec
- * @see https://github.com/fstab/http2-examples/tree/master/multiplexing-examples/netty-client/src/main/java/de/consol/labs/h2c/examples/client/netty
+ * @link https://github.com/fstab/http2-examples/tree/master/multiplexing-examples/netty-client/src/main/java/de/consol/labs/h2c/examples/client/netty
  */
 public class Http2Client {
 
@@ -66,10 +66,10 @@ public class Http2Client {
    }
 
    public static Http2Client newClientWithAlpn(String keystorePath, String keystorePassword) throws Exception {
-      KeyStore ks = KeyStore.getInstance("JKS");
+      KeyStore ks = KeyStore.getInstance("pkcs12");
       ks.load(new FileInputStream(keystorePath), keystorePassword.toCharArray());
       KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-      kmf.init(ks, "secret".toCharArray());
+      kmf.init(ks, keystorePassword.toCharArray());
 
       SslProvider provider = OpenSsl.isAlpnSupported() ? SslProvider.OPENSSL : SslProvider.JDK;
       SslContext sslCtx = SslContextBuilder.forClient()
@@ -103,7 +103,7 @@ public class Http2Client {
       channel = b.connect().syncUninterruptibly().channel();
       System.out.println("Connected to [" + host + ':' + port + ']');
 
-         // Wait for the HTTP/2 upgrade to occur.
+      // Wait for the HTTP/2 upgrade to occur.
       Http2SettingsHandler http2SettingsHandler = initializer.settingsHandler();
       http2SettingsHandler.awaitSettings(15, TimeUnit.SECONDS);
    }

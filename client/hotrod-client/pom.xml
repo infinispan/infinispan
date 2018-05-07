@@ -16,13 +16,13 @@
    <properties>
       <ca.dname>CN=CA,OU=Infinispan,O=JBoss,L=Red Hat</ca.dname>
       <ca.alias>infinispan-ca</ca.alias>
-      <ca.keystore>${project.build.testOutputDirectory}/ca.jks</ca.keystore>
+      <ca.keystore>${project.build.testOutputDirectory}/ca.p12</ca.keystore>
       <client.dname>CN=HotRodClient1,OU=Infinispan,O=JBoss,L=Red Hat</client.dname>
       <client.alias>client1</client.alias>
       <server.dname>CN=HotRodServer,OU=Infinispan,O=JBoss,L=Red Hat</server.dname>
       <server.alias>hotrod</server.alias>
-      <client.keystore>${project.build.testOutputDirectory}/keystore_client.jks</client.keystore>
-      <server.keystore>${project.build.testOutputDirectory}/keystore_server.jks</server.keystore>
+      <client.keystore>${project.build.testOutputDirectory}/keystore_client.p12</client.keystore>
+      <server.keystore>${project.build.testOutputDirectory}/keystore_server.p12</server.keystore>
       <default.password>secret</default.password>
       <alt.password>changeme</alt.password>
    </properties>
@@ -202,13 +202,15 @@
                                  <arg value="-noprompt"/>
                                  <arg value="-storepass"/>
                                  <arg value="${default.password}"/>
+                                 <arg value="-storetype"/>
+                                 <arg value="pkcs12"/>
                                  <!-- additional arguments -->
                                  <args/>
                               </java>
                            </sequential>
                         </macrodef>
                         <delete quiet="true">
-                           <fileset dir="${project.build.testOutputDirectory}" includes="*.jks,*.csr,*.cer"/>
+                           <fileset dir="${project.build.testOutputDirectory}" includes="*.jks,*.csr,*.cer,*.p12"/>
                         </delete>
                         <echo message="Generate the CA certificate"/>
                         <keytool command="-genkeypair">
@@ -243,7 +245,7 @@
                               <arg value="-alias"/>
                               <arg value="${ca.alias}"/>
                               <arg value="-keystore"/>
-                              <arg value="${project.build.testOutputDirectory}/truststore_server.jks"/>
+                              <arg value="${project.build.testOutputDirectory}/truststore_server.p12"/>
                               <arg value="-file"/>
                               <arg value="${project.build.testOutputDirectory}/ca.cer"/>
                               <arg value="-keypass"/>
@@ -256,7 +258,7 @@
                               <arg value="-alias"/>
                               <arg value="${ca.alias}"/>
                               <arg value="-keystore"/>
-                              <arg value="${project.build.testOutputDirectory}/truststore_client.jks"/>
+                              <arg value="${project.build.testOutputDirectory}/truststore_client.p12"/>
                               <arg value="-file"/>
                               <arg value="${project.build.testOutputDirectory}/ca.cer"/>
                               <arg value="-keypass"/>
@@ -413,11 +415,13 @@
                               <arg value="-srckeypass"/>
                               <arg value="${default.password}"/>
                               <arg value="-destkeystore"/>
-                              <arg value="${project.build.testOutputDirectory}/keystore_client_alt_cert_password.jks"/>
+                              <arg value="${project.build.testOutputDirectory}/keystore_client.jks"/>
                               <arg value="-deststorepass"/>
                               <arg value="${default.password}"/>
                               <arg value="-destkeypass"/>
                               <arg value="${alt.password}"/>
+                              <arg value="-deststoretype"/>
+                              <arg value="JCEKS"/>
                            </args>
                         </keytool>
                         <keytool command="-importcert">
@@ -425,11 +429,13 @@
                               <arg value="-alias"/>
                               <arg value="${ca.alias}"/>
                               <arg value="-keystore"/>
-                              <arg value="${project.build.testOutputDirectory}/keystore_client_alt_cert_password.jks"/>
+                              <arg value="${project.build.testOutputDirectory}/keystore_client.jks"/>
                               <arg value="-file"/>
                               <arg value="${project.build.testOutputDirectory}/ca.cer"/>
                               <arg value="-keypass"/>
                               <arg value="${alt.password}"/>
+                              <arg value="-storetype"/>
+                              <arg value="JCEKS"/>
                            </args>
                         </keytool>
                         <!-- Alternate password server certificate -->
@@ -445,11 +451,13 @@
                               <arg value="-srckeypass"/>
                               <arg value="${default.password}"/>
                               <arg value="-destkeystore"/>
-                              <arg value="${project.build.testOutputDirectory}/keystore_server_alt_cert_password.jks"/>
+                              <arg value="${project.build.testOutputDirectory}/keystore_server.jks"/>
                               <arg value="-deststorepass"/>
                               <arg value="${default.password}"/>
                               <arg value="-destkeypass"/>
                               <arg value="${alt.password}"/>
+                              <arg value="-deststoretype"/>
+                              <arg value="JCEKS"/>
                            </args>
                         </keytool>
                         <keytool command="-importcert">
@@ -457,11 +465,13 @@
                               <arg value="-alias"/>
                               <arg value="${ca.alias}"/>
                               <arg value="-keystore"/>
-                              <arg value="${project.build.testOutputDirectory}/keystore_server_alt_cert_password.jks"/>
+                              <arg value="${project.build.testOutputDirectory}/keystore_server.jks"/>
                               <arg value="-file"/>
                               <arg value="${project.build.testOutputDirectory}/ca.cer"/>
                               <arg value="-keypass"/>
                               <arg value="${alt.password}"/>
+                              <arg value="-storetype"/>
+                              <arg value="JCEKS"/>
                            </args>
                         </keytool>
                      </target>

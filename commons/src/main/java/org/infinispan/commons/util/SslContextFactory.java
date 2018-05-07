@@ -46,6 +46,12 @@ public class SslContextFactory {
       return getContext(keyStoreFileName, DEFAULT_KEYSTORE_TYPE, keyStorePassword, keyStoreCertificatePassword, null, trustStoreFileName, DEFAULT_KEYSTORE_TYPE, trustStorePassword, sslProtocol, null);
    }
 
+   public static SSLContext getContext(String keyStoreFileName, String keyStoreType, char[] keyStorePassword,
+                                       String trustStoreFileName, String trustStoreType, char[] trustStorePassword) {
+      return getContext(keyStoreFileName, keyStoreType, keyStorePassword, null, null,
+            trustStoreFileName, trustStoreType, trustStorePassword, DEFAULT_SSL_PROTOCOL, null);
+   }
+
    public static SSLContext getContext(String keyStoreFileName, String keyStoreType, char[] keyStorePassword, char[] keyStoreCertificatePassword,
                                        String keyAlias, String trustStoreFileName, String trustStoreType, char[] trustStorePassword, String sslProtocol,
                                        ClassLoader classLoader) {

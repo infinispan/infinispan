@@ -3,7 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
-import javax.net.ssl.SSLException;
+import java.io.IOException;
 
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.SslConfigurationBuilder;
@@ -53,12 +53,13 @@ public class SslTest extends SingleCacheManagerTest {
       HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
 
       ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-      String serverKeyStore = tccl.getResource(altCertPassword ? "keystore_server_alt_cert_password.jks" : "keystore_server.jks").getPath();
-      String serverTrustStore = tccl.getResource("ca.jks").getPath();
+      String serverKeyStore = tccl.getResource(altCertPassword ? "keystore_server.jks" : "keystore_server.p12").getPath();
+      String serverTrustStore = tccl.getResource("ca.p12").getPath();
       org.infinispan.server.core.configuration.SslConfigurationBuilder serverSSLConfig = serverBuilder.ssl()
             .enabled(sslServer)
             .keyStoreFileName(serverKeyStore)
-            .keyStorePassword(STORE_PASSWORD);
+            .keyStorePassword(STORE_PASSWORD)
+            .keyStoreType(altCertPassword ? "JCEKS" : "PKCS12");
       if (altCertPassword)
          serverSSLConfig.keyStoreCertificatePassword(ALT_CERTIFICATE_PASSWORD);
       if (requireClientAuth) {
@@ -70,8 +71,8 @@ public class SslTest extends SingleCacheManagerTest {
       hotrodServer.start(serverBuilder.build(), cacheManager);
       log.info("Started server on port: " + hotrodServer.getPort());
 
-      String clientKeyStore = tccl.getResource(altCertPassword ? "keystore_client_alt_cert_password.jks" : "keystore_client.jks").getPath();
-      String clientTrustStore = tccl.getResource("ca.jks").getPath();
+      String clientKeyStore = tccl.getResource(altCertPassword ? "keystore_client.jks" : "keystore_client.p12").getPath();
+      String clientTrustStore = tccl.getResource("ca.p12").getPath();
       ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
       SslConfigurationBuilder clientSSLConfig = clientBuilder
             .addServer()
@@ -92,7 +93,8 @@ public class SslTest extends SingleCacheManagerTest {
          if (clientAuth) {
             clientSSLConfig
                   .keyStoreFileName(clientKeyStore)
-                  .keyStorePassword(STORE_PASSWORD);
+                  .keyStorePassword(STORE_PASSWORD)
+                  .keyStoreType(altCertPassword ? "JCEKS" : "PKCS12");
             if (altCertPassword) {
                clientSSLConfig
                      .keyStoreCertificatePassword(ALT_CERTIFICATE_PASSWORD);
@@ -135,10 +137,10 @@ public class SslTest extends SingleCacheManagerTest {
 
    // Note: with Netty this started to throw SSLException instead of SSLHandshakeException
    public void testClientAuthWithAnonClient() throws Exception {
-      Exceptions.expectException(TransportException.class, SSLException.class, () -> initServerAndClient(true, true, true, false, false));
+      Exceptions.expectExceptionNonStrict(TransportException.class, IOException.class, () -> initServerAndClient(true, true, true, false, false));
    }
 
-   public void testClientAuthAltCertPassowrd() throws Exception {
+   public void testClientAuthAltCertPassword() throws Exception {
       initServerAndClient(true, true, true, true, true);
       defaultRemote.put("k", "v");
       assertEquals("v", defaultRemote.get("k"));

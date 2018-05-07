@@ -21,6 +21,7 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import java.util.Queue;
 
 import org.assertj.core.api.Assertions;
+import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.rest.http2.Http2Client;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -44,7 +45,7 @@ import io.netty.util.CharsetUtil;
 @Test(groups = "functional", testName = "rest.Http2Test")
 public final class Http2Test extends AbstractInfinispanTest {
 
-    public static final String KEY_STORE_PATH = Http2Test.class.getClassLoader().getResource("./default_client_truststore.jks").getPath();
+    public static final String KEY_STORE_PATH = Http2Test.class.getClassLoader().getResource("./client.p12").getPath();
 
     private Http2Client client;
     private RestServerHelper restServer;
@@ -61,13 +62,14 @@ public final class Http2Test extends AbstractInfinispanTest {
 
     @Test
     public void shouldUpgradeUsingALPN() throws Exception {
+        SkipTestNG.skipSinceJDK(10); // TODO: OpenSSL ALPN doesn't seem to work. Restructure the test to use internal JDK ALPN
         if (!OpenSsl.isAlpnSupported()) {
             throw new SkipException("OpenSSL is not present, can not test TLS/ALPN support");
         }
 
         //given
         restServer = RestServerHelper.defaultRestServer("http2testcache")
-              .withKeyStore(KEY_STORE_PATH, "secret")
+              .withKeyStore(KEY_STORE_PATH, "secret", "pkcs12")
               .start(TestResourceTracker.getCurrentTestShortName());
 
         client = Http2Client.newClientWithAlpn(KEY_STORE_PATH, "secret");

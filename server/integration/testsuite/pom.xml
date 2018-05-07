@@ -505,6 +505,8 @@
                                             <arg value="secret"/>
                                             <arg value="-keypass"/>
                                             <arg value="secret"/>
+                                            <arg value="-storetype"/>
+                                            <arg value="JKS"/>
                                             <!-- additional arguments -->
                                             <args/>
                                         </java>

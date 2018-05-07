@@ -40,15 +40,15 @@ import org.testng.annotations.Test;
 public class HotRodSniFunctionalTest extends HotRodSingleNodeTest {
 
    private String defaultServerKeystore =
-         getClass().getClassLoader().getResource("default_server_keystore.jks").getPath();
-   private String sniServerKeystore = getClass().getClassLoader().getResource("sni_server_keystore.jks").getPath();
+         getClass().getClassLoader().getResource("default_server_keystore.p12").getPath();
+   private String sniServerKeystore = getClass().getClassLoader().getResource("sni_server_keystore.p12").getPath();
    private String noAuthorizedClientsServerKeystore =
-         getClass().getClassLoader().getResource("no_trusted_clients_keystore.jks").getPath();
+         getClass().getClassLoader().getResource("no_trusted_clients_keystore.p12").getPath();
 
    private String defaultTrustedClientTruststore =
-         getClass().getClassLoader().getResource("default_client_truststore.jks").getPath();
+         getClass().getClassLoader().getResource("default_client_truststore.p12").getPath();
    private String sniTrustedClientTruststore =
-         getClass().getClassLoader().getResource("sni_client_truststore.jks").getPath();
+         getClass().getClassLoader().getResource("sni_client_truststore.p12").getPath();
 
    @AfterMethod(alwaysRun = true)
    public void afterMethod() {
@@ -138,8 +138,8 @@ public class HotRodSniFunctionalTest extends HotRodSingleNodeTest {
 
       public HotrodClientBuilder useSslConfiguration(String keystoreFileName, String keystorePassword,
                                                      String truststoreFileName, String truststorePassword) {
-         sslContext = SslContextFactory.getContext(keystoreFileName, keystorePassword.toCharArray(), truststoreFileName,
-                                                   truststorePassword.toCharArray());
+         sslContext = SslContextFactory.getContext(keystoreFileName, "pkcs12", keystorePassword.toCharArray(),
+               truststoreFileName, "pkcs12", truststorePassword.toCharArray());
          sslEngine = SslContextFactory.getEngine(sslContext, true, false);
          return this;
       }

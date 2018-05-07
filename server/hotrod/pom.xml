@@ -91,13 +91,15 @@
                                  <arg value="secret"/>
                                  <arg value="-keypass"/>
                                  <arg value="secret"/>
+                                 <arg value="-storetype"/>
+                                 <arg value="pkcs12"/>
                                  <!-- additional arguments -->
                                  <args/>
                               </java>
                            </sequential>
                         </macrodef>
                         <delete quiet="true">
-                           <fileset dir="${project.build.testOutputDirectory}" includes="*.jks,*.csr,*.cer"/>
+                           <fileset dir="${project.build.testOutputDirectory}" includes="*.jks,*.csr,*.cer,*.p12"/>
                         </delete>
                         <echo message="Generate the server certificate"/>
                         <keytool command="-genkeypair">
@@ -107,7 +109,7 @@
                               <arg value="-dname"/>
                               <arg value="${certificate.dname}"/>
                               <arg value="-keystore"/>
-                              <arg value="${project.build.testOutputDirectory}/password_server_keystore.jks"/>
+                              <arg value="${project.build.testOutputDirectory}/password_server_keystore.p12"/>
                            </args>
                         </keytool>
                         <keytool command="-genkeypair">
@@ -117,7 +119,7 @@
                               <arg value="-dname"/>
                               <arg value="${certificate.dname}"/>
                               <arg value="-keystore"/>
-                              <arg value="${project.build.testOutputDirectory}/default_server_keystore.jks"/>
+                              <arg value="${project.build.testOutputDirectory}/default_server_keystore.p12"/>
                            </args>
                         </keytool>
                         <keytool command="-genkeypair">
@@ -127,7 +129,7 @@
                               <arg value="-dname"/>
                               <arg value="${certificate.dname}"/>
                               <arg value="-keystore"/>
-                              <arg value="${project.build.testOutputDirectory}/sni_server_keystore.jks"/>
+                              <arg value="${project.build.testOutputDirectory}/sni_server_keystore.p12"/>
                            </args>
                         </keytool>
                         <keytool command="-genkeypair">
@@ -137,17 +139,17 @@
                               <arg value="-dname"/>
                               <arg value="${certificate.dname}"/>
                               <arg value="-keystore"/>
-                              <arg value="${project.build.testOutputDirectory}/no_trusted_clients_keystore.jks"/>
+                              <arg value="${project.build.testOutputDirectory}/no_trusted_clients_keystore.p12"/>
                            </args>
                         </keytool>
                         <keytool command="-importkeystore">
                            <args>
                               <arg value="-srckeystore"/>
-                              <arg value="${project.build.testOutputDirectory}/password_server_keystore.jks"/>
+                              <arg value="${project.build.testOutputDirectory}/password_server_keystore.p12"/>
                               <arg value="-srcstorepass"/>
                               <arg value="secret"/>
                               <arg value="-destkeystore"/>
-                              <arg value="${project.build.testOutputDirectory}/password_client_truststore.jks"/>
+                              <arg value="${project.build.testOutputDirectory}/password_client_truststore.p12"/>
                               <arg value="-deststorepass"/>
                               <arg value="secret"/>
                            </args>
@@ -155,11 +157,11 @@
                         <keytool command="-importkeystore">
                            <args>
                               <arg value="-srckeystore"/>
-                              <arg value="${project.build.testOutputDirectory}/default_server_keystore.jks"/>
+                              <arg value="${project.build.testOutputDirectory}/default_server_keystore.p12"/>
                               <arg value="-srcstorepass"/>
                               <arg value="secret"/>
                               <arg value="-destkeystore"/>
-                              <arg value="${project.build.testOutputDirectory}/default_client_truststore.jks"/>
+                              <arg value="${project.build.testOutputDirectory}/default_client_truststore.p12"/>
                               <arg value="-deststorepass"/>
                               <arg value="secret"/>
                            </args>
@@ -167,11 +169,11 @@
                         <keytool command="-importkeystore">
                            <args>
                               <arg value="-srckeystore"/>
-                              <arg value="${project.build.testOutputDirectory}/sni_server_keystore.jks"/>
+                              <arg value="${project.build.testOutputDirectory}/sni_server_keystore.p12"/>
                               <arg value="-srcstorepass"/>
                               <arg value="secret"/>
                               <arg value="-destkeystore"/>
-                              <arg value="${project.build.testOutputDirectory}/sni_client_truststore.jks"/>
+                              <arg value="${project.build.testOutputDirectory}/sni_client_truststore.p12"/>
                               <arg value="-deststorepass"/>
                               <arg value="secret"/>
                            </args>

@@ -82,15 +82,21 @@ public class RestServerHelper {
       return cacheManager;
    }
 
-   public RestServerHelper withKeyStore(String keyStorePath, String secret) {
+   public RestServerHelper withKeyStore(String keyStorePath, String secret, String type) {
       restServerConfigurationBuilder.ssl().enable();
-      restServerConfigurationBuilder.ssl().keyStoreFileName(keyStorePath).keyStorePassword(secret.toCharArray());
+      restServerConfigurationBuilder.ssl()
+            .keyStoreFileName(keyStorePath)
+            .keyStorePassword(secret.toCharArray())
+            .keyStoreType(type);
       return this;
    }
 
-   public RestServerHelper withTrustStore(String trustStorePath, String secret) {
+   public RestServerHelper withTrustStore(String trustStorePath, String secret, String type) {
       restServerConfigurationBuilder.ssl().enable();
-      restServerConfigurationBuilder.ssl().trustStoreFileName(trustStorePath).trustStorePassword(secret.toCharArray());
+      restServerConfigurationBuilder.ssl()
+            .trustStoreFileName(trustStorePath)
+            .trustStorePassword(secret.toCharArray())
+            .trustStoreType(type);
       return this;
    }
 

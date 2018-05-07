@@ -49,8 +49,8 @@ public class Http11VsHttp20Benchmark {
    @State(Scope.Benchmark)
    public static class BenchmarkState {
 
-      private static final String KEY_STORE_PATH = BenchmarkState.class.getClassLoader().getResource("./default_client_truststore.jks").getPath();
-      private static final String TRUST_STORE_PATH = BenchmarkState.class.getClassLoader().getResource("./default_client_truststore.jks").getPath();
+      private static final String KEY_STORE_PATH = BenchmarkState.class.getClassLoader().getResource("./client.jks").getPath();
+      private static final String TRUST_STORE_PATH = BenchmarkState.class.getClassLoader().getResource("./client.jks").getPath();
       private final String EXISTING_KEY = "existing_key";
       private final String NON_EXISTING_KEY = "non_existing_key";
 
@@ -77,7 +77,7 @@ public class Http11VsHttp20Benchmark {
          restServer = RestServerHelper.defaultRestServer();
          if (useTLS) {
             client = new BenchmarkHttpClient(KEY_STORE_PATH, "secret", TRUST_STORE_PATH, "secret");
-            restServer.withKeyStore(KEY_STORE_PATH, "secret");
+            restServer.withKeyStore(KEY_STORE_PATH, "secret", "pkcs12");
          } else {
             client = new BenchmarkHttpClient();
          }

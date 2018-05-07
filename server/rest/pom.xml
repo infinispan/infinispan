@@ -130,13 +130,15 @@
                                           <arg value="secret"/>
                                           <arg value="-keypass"/>
                                           <arg value="secret"/>
+                                          <arg value="-storetype"/>
+                                          <arg value="pkcs12"/>
                                           <!-- additional arguments -->
                                           <args/>
                                       </java>
                                   </sequential>
                               </macrodef>
                               <delete quiet="true">
-                                  <fileset dir="${project.build.testOutputDirectory}" includes="*.jks,*.csr,*.cer"/>
+                                  <fileset dir="${project.build.testOutputDirectory}" includes="*.jks,*.csr,*.cer,*.p12"/>
                               </delete>
                               <echo message="Generate the CA certificate"/>
                               <keytool command="-genkeypair">
@@ -146,19 +148,23 @@
                                       <arg value="-dname"/>
                                       <arg value="${certificate.dname}"/>
                                       <arg value="-keystore"/>
-                                      <arg value="${project.build.testOutputDirectory}/default_server_keystore.jks"/>
+                                      <arg value="${project.build.testOutputDirectory}/server.p12"/>
                                   </args>
                               </keytool>
                               <keytool command="-importkeystore">
                                   <args>
                                       <arg value="-srckeystore"/>
-                                      <arg value="${project.build.testOutputDirectory}/default_server_keystore.jks"/>
+                                      <arg value="${project.build.testOutputDirectory}/server.p12"/>
                                       <arg value="-srcstorepass"/>
                                       <arg value="secret"/>
+                                      <arg value="-srcstoretype"/>
+                                      <arg value="pkcs12"/>
                                       <arg value="-destkeystore"/>
-                                      <arg value="${project.build.testOutputDirectory}/default_client_truststore.jks"/>
+                                      <arg value="${project.build.testOutputDirectory}/client.p12"/>
                                       <arg value="-deststorepass"/>
                                       <arg value="secret"/>
+                                      <arg value="-deststoretype"/>
+                                      <arg value="pkcs12"/>
                                   </args>
                               </keytool>
                           </target>
