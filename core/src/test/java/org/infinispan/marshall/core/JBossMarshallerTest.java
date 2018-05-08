@@ -59,12 +59,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
    @Test(expectedExceptions=CacheException.class)
    public void testForeignExternalizerIdNegative() {
       GlobalConfigurationBuilder global = createForeignExternalizerGlobalConfig(-1);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(global, new ConfigurationBuilder());
-      try {
-         cm.getCache();
-      } finally {
-         TestingUtil.killCacheManagers(cm);
-      }
+      TestCacheManagerFactory.createCacheManager(global, new ConfigurationBuilder());
    }
 
    @Test(expectedExceptions=CacheConfigurationException.class)
