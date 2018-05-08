@@ -772,7 +772,9 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
    @Override
    public void prepareForPersist(ScopedPersistentState state) {
-      state.setProperty("uuid", persistentUUID.toString());
+      if (persistentUUID != null) {
+         state.setProperty("uuid", persistentUUID.toString());
+      }
    }
 
    @Override

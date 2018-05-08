@@ -147,10 +147,10 @@ public class GlobalMarshaller implements StreamingMarshaller {
    @Override
    @Stop(priority = 11) // Stop after transport to avoid send/receive and marshaller not being ready
    public void stop() {
-      internalExts.clear();
-      reverseInternalExts.clear();
-      externalExts.clear();
-      reverseExternalExts.clear();
+      internalExts = null;
+      reverseInternalExts = null;
+      externalExts = null;
+      reverseExternalExts = null;
       classIdentifiers = null;
       stopDefaultExternalMarshaller();
    }
@@ -274,10 +274,10 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    private boolean isMarshallableCandidate(Object o) {
       return o instanceof Serializable
-            || internalExts.get(o.getClass()) != null
-            || externalExts.get(o.getClass()) != null
-            || o.getClass().getAnnotation(SerializeWith.class) != null
-            || isExternalMarshallable(o);
+             || getExternalizer(internalExts, o.getClass()) != null
+             || getExternalizer(externalExts, o.getClass()) != null
+             || o.getClass().getAnnotation(SerializeWith.class) != null
+             || isExternalMarshallable(o);
    }
 
    private boolean isExternalMarshallable(Object o) {
@@ -338,9 +338,9 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    public <T> Externalizer<T> findExternalizerFor(Object obj) {
       Class<?> clazz = obj.getClass();
-      Externalizer ext = internalExts.get(clazz);
+      Externalizer ext = getExternalizer(internalExts, clazz);
       if (ext == null) {
-         ext = externalExts.get(clazz);
+         ext = getExternalizer(externalExts, clazz);
          if (ext == null)
             ext = findAnnotatedExternalizer(clazz);
       }
@@ -363,14 +363,14 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    BiConsumer<ObjectOutput, Object> findWriter(Object obj) {
       Class<?> clazz = obj.getClass();
-      AdvancedExternalizer internalExt = internalExts.get(clazz);
+      AdvancedExternalizer internalExt = getExternalizer(internalExts, clazz);
       if (internalExt != null)
          return (out, object) -> {
             writeInternalClean(object, internalExt, out);
          };
 
 
-      AdvancedExternalizer externalExt = externalExts.get(clazz);
+      AdvancedExternalizer externalExt = getExternalizer(externalExts, clazz);
       if (externalExt != null)
          return (out, object) -> writeExternalClean(object, externalExt, out);
 
@@ -381,9 +381,9 @@ public class GlobalMarshaller implements StreamingMarshaller {
       int type = in.readUnsignedByte();
       switch (type) {
          case ID_INTERNAL:
-            return reverseInternalExts.get(in.readUnsignedByte());
+            return getExternalizer(reverseInternalExts, in.readUnsignedByte());
          case ID_EXTERNAL:
-            return reverseExternalExts.get(in.readInt());
+            return getExternalizer(reverseExternalExts, in.readInt());
          default:
             return null;
       }
@@ -397,11 +397,11 @@ public class GlobalMarshaller implements StreamingMarshaller {
       } else if (clazz.isArray()) {
          writeArray(clazz, obj, out);
       } else {
-         AdvancedExternalizer ext = internalExts.get(clazz);
+         AdvancedExternalizer ext = getExternalizer(internalExts, clazz);
          if (ext != null) {
             writeInternal(obj, ext, out);
          } else {
-            ext = externalExts.get(clazz);
+            ext = getExternalizer(externalExts, clazz);
             if (ext != null) {
                writeExternal(obj, ext, out);
             } else {
@@ -413,6 +413,20 @@ public class GlobalMarshaller implements StreamingMarshaller {
             }
          }
       }
+   }
+
+   private AdvancedExternalizer getExternalizer(ClassToExternalizerMap class2ExternalizerMap, Class<?> clazz) {
+      if (class2ExternalizerMap == null) {
+         throw log.cacheManagerIsStopping();
+      }
+      return class2ExternalizerMap.get(clazz);
+   }
+
+   private AdvancedExternalizer getExternalizer(IdToExternalizerMap id2ExternalizerMap, int i) {
+      if (id2ExternalizerMap == null) {
+         throw log.cacheManagerIsStopping();
+      }
+      return id2ExternalizerMap.get(i);
    }
 
    private void writeArray(Class<?> clazz, Object array, BytesObjectOutput out) throws IOException {
@@ -462,9 +476,9 @@ public class GlobalMarshaller implements StreamingMarshaller {
       }
 
       AdvancedExternalizer ext;
-      if ((ext = internalExts.get(componentType)) != null) {
+      if ((ext = getExternalizer(internalExts, componentType)) != null) {
          writeFlagsWithExternalizer(out, componentType, componentTypeMatch, ext, flags, ID_INTERNAL);
-      } else if ((ext = externalExts.get(componentType)) != null) {
+      } else if ((ext = getExternalizer(externalExts, componentType)) != null) {
          writeFlagsWithExternalizer(out, componentType, componentTypeMatch, ext, flags, ID_EXTERNAL);
       } else {
          // We cannot use annotated externalizer to specify the component type, so we will
@@ -506,10 +520,10 @@ public class GlobalMarshaller implements StreamingMarshaller {
          } else if (componentTypeMatch) {
             // Note: ext can be null here!
             elementExt = ext;
-         } else if ((elementExt = internalExts.get(elementType)) != null) {
+         } else if ((elementExt = getExternalizer(internalExts, elementType)) != null) {
             out.writeByte(ID_INTERNAL);
             out.writeByte(((AdvancedExternalizer) elementExt).getId());
-         } else if ((elementExt = externalExts.get(elementType)) != null) {
+         } else if ((elementExt = getExternalizer(externalExts, elementType)) != null) {
             out.writeByte(ID_EXTERNAL);
             out.writeInt(((AdvancedExternalizer) elementExt).getId());
          } else if ((elementExt = findAnnotatedExternalizer(elementType)) != null) {
@@ -690,7 +704,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    private Object readWithExternalizer(int id, IdToExternalizerMap reverseMap, BytesObjectInput in)
          throws IOException, ClassNotFoundException {
-      AdvancedExternalizer ext = reverseMap.get(id);
+      AdvancedExternalizer ext = getExternalizer(reverseMap, id);
       return ext.readObject(in);
    }
 
@@ -717,11 +731,11 @@ public class GlobalMarshaller implements StreamingMarshaller {
          case ID_ARRAY:
             throw new IOException("Unexpected component type: " + type);
          case ID_INTERNAL:
-            componentExt = reverseInternalExts.get(in.readByte());
+            componentExt = getExternalizer(reverseInternalExts, in.readByte());
             componentType = getOrReadClass(in, componentExt);
             break;
          case ID_EXTERNAL:
-            componentExt = reverseExternalExts.get(in.readInt());
+            componentExt = getExternalizer(reverseExternalExts, in.readInt());
             componentType = getOrReadClass(in, componentExt);
             break;
          case ID_ANNOTATED:
@@ -771,7 +785,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
       if (singleType) {
          Externalizer<?> ext;
          if (componentTypeMatch) {
-            ext = getExternalizer(type, componentExt, extClazz);
+            ext = getArrayElementExternalizer(type, componentExt, extClazz);
          } else {
             type = in.readByte();
             ext = readExternalizer(in, type);
@@ -805,7 +819,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
       return array;
    }
 
-   private Externalizer<?> getExternalizer(int type, AdvancedExternalizer<?> componentExt, Class<?> extClazz) throws IOException {
+   private Externalizer<?> getArrayElementExternalizer(int type, AdvancedExternalizer<?> componentExt, Class<?> extClazz) throws IOException {
       switch (type) {
          case ID_INTERNAL:
          case ID_EXTERNAL:
@@ -827,9 +841,9 @@ public class GlobalMarshaller implements StreamingMarshaller {
       Class<?> extClazz;
       switch (type) {
          case ID_INTERNAL:
-            return reverseInternalExts.get((0xFF & in.readByte()));
+            return getExternalizer(reverseInternalExts, 0xFF & in.readByte());
          case ID_EXTERNAL:
-            return reverseExternalExts.get(in.readInt());
+            return getExternalizer(reverseExternalExts, in.readInt());
          case ID_ANNOTATED:
             extClazz = (Class<?>) in.readObject();
             try {
