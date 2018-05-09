@@ -16,6 +16,7 @@ import java.util.concurrent.Future;
 import org.infinispan.remoting.CacheUnreachableException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -32,7 +33,7 @@ public class JGroupsBackupResponse implements BackupResponse {
 
    private static Log log = LogFactory.getLog(JGroupsBackupResponse.class);
 
-   private final Map<XSiteBackup, Future<Response>> syncBackupCalls;
+   private final Map<XSiteBackup, Future<ValidResponse>> syncBackupCalls;
    private Map<String, Throwable> errors;
    private Set<String> communicationErrors;
    private final TimeService timeService;
@@ -41,7 +42,7 @@ public class JGroupsBackupResponse implements BackupResponse {
    // happens. Track that and adjust the timeouts accordingly.
    private long sendTimeNanos;
 
-   public JGroupsBackupResponse(Map<XSiteBackup, Future<Response>> syncBackupCalls, TimeService timeService) {
+   public JGroupsBackupResponse(Map<XSiteBackup, Future<ValidResponse>> syncBackupCalls, TimeService timeService) {
       this.syncBackupCalls = syncBackupCalls;
       this.timeService = timeService;
       sendTimeNanos = timeService.time();
@@ -52,8 +53,7 @@ public class JGroupsBackupResponse implements BackupResponse {
       long deductFromTimeout = timeService.timeDuration(sendTimeNanos, MILLISECONDS);
       errors = new HashMap<>(syncBackupCalls.size());
       long elapsedTime = 0;
-      for (Map.Entry<XSiteBackup, Future<Response>> entry : syncBackupCalls.entrySet()) {
-
+      for (Map.Entry<XSiteBackup, Future<ValidResponse>> entry : syncBackupCalls.entrySet()) {
          XSiteBackup xSiteBackup = entry.getKey();
          long timeout = xSiteBackup.getTimeout();
          String siteName = xSiteBackup.getSiteName();

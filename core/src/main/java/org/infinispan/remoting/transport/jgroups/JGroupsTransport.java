@@ -62,6 +62,7 @@ import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.AbstractRequest;
@@ -71,10 +72,10 @@ import org.infinispan.remoting.transport.impl.FilterMapResponseCollector;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.impl.MultiTargetRequest;
 import org.infinispan.remoting.transport.impl.Request;
-import org.infinispan.remoting.transport.impl.PassthroughSingleResponseCollector;
 import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleTargetRequest;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.util.TimeService;
@@ -309,16 +310,15 @@ public class JGroupsTransport implements Transport {
       if (trace)
          log.tracef("About to send to backups %s, command %s", backups, command);
       boolean rsvp = isRsvpCommand(command);
-      Map<XSiteBackup, Future<Response>> syncBackupCalls = new HashMap<>(backups.size());
+      Map<XSiteBackup, Future<ValidResponse>> syncBackupCalls = new HashMap<>(backups.size());
       for (XSiteBackup xsb : backups) {
          Address recipient = JGroupsAddressCache.fromJGroupsAddress(new SiteMaster(xsb.getSiteName()));
          if (xsb.isSync()) {
             long timeout = xsb.getTimeout();
             long requestId = requests.newRequestId();
             logRequest(requestId, command, recipient);
-            SingleSiteRequest<Response> request =
-                  new SingleSiteRequest<>(PassthroughSingleResponseCollector.INSTANCE, requestId, requests,
-                                          xsb.getSiteName());
+            SingleSiteRequest<ValidResponse> request =
+                  new SingleSiteRequest<>(SingleResponseCollector.validOnly(), requestId, requests, xsb.getSiteName());
             addRequest(request);
 
             try {
