@@ -294,7 +294,7 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
       getCacheCommandFactory().clearRegions(regions);
       // Ensure we cleanup any caches we created
       regions.forEach( region -> {
-         region.getCache().stop();
+         region.destroy();
          manager.undefineConfiguration( region.getCache().getName() );
       } );
       regions.clear();
