@@ -22,4 +22,6 @@ public interface InfinispanBaseRegion extends TimeSource {
    long getLastRegionInvalidation();
 
    boolean checkValid();
+
+   void destroy();
 }
