@@ -12,7 +12,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Request implementation that waits for a response from a single target node.
+ * Request implementation that waits for a response from a single target site.
  *
  * @author Dan Berindei
  * @since 9.1
