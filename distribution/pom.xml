@@ -270,12 +270,19 @@
                   <configuration>
                      <skip>${skipArtifactUpload}</skip>
                      <target>
+                        <echo message="Creating checksums of distribution files"/>
+                        <checksum algorithm="SHA-1" fileext=".sha1">
+                           <fileset dir="${project.build.directory}/distribution">
+                              <include name="*.zip"/>
+                           </fileset>
+                        </checksum>
                         <echo message="Uploading Distributions to ${upload.downloadsDir}"/>
                         <exec dir="${project.build.directory}/distribution" executable="rsync">
                            <arg value="-rvm"/>
                            <arg line="--protocol=29"/>
                            <arg line="-e &quot;ssh -i ${upload.keyFile}&quot;"/>
                            <arg line="--include='*.zip'"/>
+                           <arg line="--include='*.sha1'"/>
                            <arg line="--exclude='*'"/>
                            <arg value="."/>
                            <arg value="${upload.downloadsDir}"/>
