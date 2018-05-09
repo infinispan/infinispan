@@ -190,7 +190,7 @@
       <skipArtifactUpload>false</skipArtifactUpload>
       <upload.username>infinispan</upload.username>
       <upload.host>filemgmt.jboss.org</upload.host>
-      <upload.downloadsDir>${upload.username}@${upload.host}:/downloads_htdocs/infinispan/${infinispan.base.version}</upload.downloadsDir>
+      <upload.downloadsDir>${upload.username}@${upload.host}:/downloads_htdocs/infinispan/${project.version}</upload.downloadsDir>
       <upload.docsPath>/docs_htdocs/infinispan/${infinispan.base.version}</upload.docsPath>
       <upload.docsDir>${upload.username}@${upload.host}:${upload.docsPath}</upload.docsDir>
       <upload.keyFile>${env.HOME}/.ssh/ispn_release</upload.keyFile>
