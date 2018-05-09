@@ -142,4 +142,8 @@ public interface InfinispanMessageLogger extends BasicLogger {
 	@LogMessage(level = WARN)
 	@Message(value = "Transactional caches are not supported. The configuration option will be ignored; please unset.", id = 25030)
 	void transactionalConfigurationIgnored();
+
+	@LogMessage(level = WARN)
+	@Message(value = "Configuration for pending-puts cache '%s' is already defined - another instance of SessionFactory was not closed properly.", id = 25031)
+	void pendingPutsCacheAlreadyDefined(String pendingPutsName);
 }

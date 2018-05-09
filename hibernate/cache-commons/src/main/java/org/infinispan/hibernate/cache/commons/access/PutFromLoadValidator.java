@@ -136,12 +136,16 @@ public class PutFromLoadValidator {
 	 */
 	public PutFromLoadValidator(AdvancedCache cache, TimeSource timeSource, EmbeddedCacheManager cacheManager, Configuration pendingPutsConfiguration) {
 		this.timeSource = timeSource;
-		Configuration cacheConfiguration = cache.getCacheConfiguration();
-		ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
-		configurationBuilder.read(pendingPutsConfiguration);
-		configurationBuilder.dataContainer().keyEquivalence(cacheConfiguration.dataContainer().keyEquivalence());
-      String pendingPutsName = getPendingPutsName( cache );
-		cacheManager.defineConfiguration(pendingPutsName, configurationBuilder.build());
+		String pendingPutsName = getPendingPutsName(cache);
+		if (cacheManager.getCacheConfiguration(pendingPutsName) != null) {
+			log.pendingPutsCacheAlreadyDefined(pendingPutsName);
+		} else {
+			Configuration cacheConfiguration = cache.getCacheConfiguration();
+			ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+			configurationBuilder.read(pendingPutsConfiguration);
+			configurationBuilder.dataContainer().keyEquivalence(cacheConfiguration.dataContainer().keyEquivalence());
+			cacheManager.defineConfiguration(pendingPutsName, configurationBuilder.build());
+		}
 
 		if (pendingPutsConfiguration.expiration() != null && pendingPutsConfiguration.expiration().maxIdle() > 0) {
 			this.expirationPeriod = pendingPutsConfiguration.expiration().maxIdle();
