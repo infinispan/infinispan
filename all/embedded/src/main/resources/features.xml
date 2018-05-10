@@ -2,6 +2,7 @@
 <features name="infinispan-embedded-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.4.0">
    <feature name="infinispan-embedded" version="${project.version}">
       <feature>transaction</feature>
+      <feature>aries-blueprint</feature>
       <bundle>mvn:org.infinispan/infinispan-embedded/${project.version}</bundle>
    </feature>
    <!-- c3p0 dependencies required only when using PooledConnectionFactory with JDBC cache store -->
