@@ -13,6 +13,7 @@ import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -133,6 +134,11 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
          // TODO: execute asynchronously
          backupCache.clear();
          return null;
+      }
+
+      @Override
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+         return backupCache.get(command.getKey());
       }
 
       @Override

@@ -27,6 +27,7 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -190,6 +191,11 @@ public class BackupSenderImpl implements BackupSender {
       return backupCommand(command, xSiteBackups);
    }
 
+   @Override
+   public BackupResponse backupGet(GetKeyValueCommand command) throws Exception {
+      List<XSiteBackup> xSiteBackups = calculateBackupInfo(BackupFilter.KEEP_ALL);
+      return backupCommand(command, xSiteBackups);
+   }
 
    @Override
    public BringSiteOnlineResponse bringSiteOnline(String siteName) {

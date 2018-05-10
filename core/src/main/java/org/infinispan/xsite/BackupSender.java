@@ -5,6 +5,7 @@ import java.util.Map;
 import javax.transaction.Transaction;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -38,6 +39,8 @@ public interface BackupSender {
    BackupResponse backupCommit(CommitCommand command) throws Exception;
 
    BackupResponse backupRollback(RollbackCommand command) throws Exception;
+
+   BackupResponse backupGet(GetKeyValueCommand command) throws Exception;
 
    void processResponses(BackupResponse backupResponse, VisitableCommand command, Transaction transaction) throws Throwable;
 
