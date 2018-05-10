@@ -43,7 +43,7 @@ that you will need Jetty ALPN Agent or OpenSSL bindings.
 ==== REST API
 HTTP PUT and POST methods are used to place data in the cache, with URLs to address the cache name and key(s) - the data being the body of the request (the data can be anything you like). Other headers are used to control the cache settings and behaviour.
 
-===== Data formats
+===== Data formats[[server-rest:data-format]]
 
 ====== Configuration
 
