@@ -5,12 +5,12 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-bom</artifactId>
-      <version>9.2.3-SNAPSHOT</version>
+      <version>9.2.4-SNAPSHOT</version>
       <relativePath>../bom/pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-checkstyle</artifactId>
-   <version>9.2.3-SNAPSHOT</version>
+   <version>9.2.4-SNAPSHOT</version>
    <name>Infinispan Checkstyle Rules</name>
    <description>Contains the definitions for the Infinispan commons code style and conventions</description>
 
