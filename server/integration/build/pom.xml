@@ -94,7 +94,6 @@
                             <target>
                                 <ant antfile="build.xml" inheritRefs="true">
                                     <target name="trim-server" />
-                                    <target name="server-version" />
                                 </ant>
                             </target>
                         </configuration>

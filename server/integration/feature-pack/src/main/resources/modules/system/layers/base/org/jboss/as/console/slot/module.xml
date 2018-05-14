@@ -22,14 +22,12 @@
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
   -->
 
-<module xmlns="urn:jboss:module:1.5" name="org.jboss.as.domain-http-error-context" slot="ispn">
+<module xmlns="urn:jboss:module:1.5" name="org.jboss.as.console" slot="@infinispan.module.slot.prefix@">
 
     <resources>
-        <resource-root path="dir" />
+        <artifact name="${org.infinispan:infinispan-management-console}" />
     </resources>
 
     <dependencies>
-        <!-- Do not add dependencies to the error context as resources in any
-             dependencies could be served up through the HTTP interface. -->
     </dependencies>
 </module>

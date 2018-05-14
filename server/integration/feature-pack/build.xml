@@ -1,0 +1,18 @@
+<project name="feature-pack" basedir="." default="branding">
+    <target name="branding">
+        <move todir="${project.build.directory}/${server.output.dir.prefix}-${project.version}" filtering="true">
+            <fileset dir="${project.build.directory}/${server.output.dir.prefix}-${project.version}"/>
+            <filterset>
+                <filter token="infinispan.brand.name" value="${infinispan.brand.name}"/>
+                <filter token="infinispan.brand.version" value="${infinispan.brand.version}"/>
+                <filter token="infinispan.module.slot.prefix" value="${infinispan.module.slot.prefix}"/>
+            </filterset>
+            <regexpmapper from="(.*)/slot/(.*)" to="\1/${infinispan.module.slot.prefix}/\2" />
+        </move>
+        <delete includeemptydirs="true">
+            <fileset dir="${project.build.directory}/${server.output.dir.prefix}-${project.version}">
+                <include name="**/slot" />
+            </fileset>
+        </delete>
+    </target>
+</project>
