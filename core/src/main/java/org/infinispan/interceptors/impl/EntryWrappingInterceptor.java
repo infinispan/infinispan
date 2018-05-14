@@ -137,10 +137,10 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    private final InvocationSuccessAction commitEntriesSuccessHandler = (rCtx, rCommand, rv) -> commitContextEntries(rCtx, null);
 
-   private final InvocationFinallyAction
-         commitEntriesFinallyHandler = this::commitEntriesFinally;
-
+   private final InvocationFinallyAction commitEntriesFinallyHandler = this::commitEntriesFinally;
    private final InvocationSuccessFunction prepareHandler = this::prepareHandler;
+   private final InvocationSuccessAction applyAndFixVersion = this::applyAndFixVersion;
+   private final InvocationSuccessAction applyAndFixVersionForMany = this::applyAndFixVersionForMany;
 
    protected Log getLog() {
       return log;
@@ -618,30 +618,32 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
     * Locks the value for the keys accessed by the command to avoid being override from a remote get.
     */
    protected Object setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(InvocationContext ctx, WriteCommand command) {
-      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-         WriteCommand writeCommand = (WriteCommand) rCommand;
-         if (!rCtx.isInTxScope()) {
-            applyChanges(rCtx, writeCommand);
-            return;
-         }
+      return invokeNextThenAccept(ctx, command, applyAndFixVersionForMany);
+   }
 
-         if (trace)
-            log.tracef("The return value is %s", toStr(rv));
-         if (useRepeatableRead) {
-            boolean addVersionRead = isVersioned && writeCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD;
-            TxInvocationContext txCtx = (TxInvocationContext) rCtx;
-            for (Object key : writeCommand.getAffectedKeys()) {
-               CacheEntry cacheEntry = rCtx.lookupEntry(key);
-               if (cacheEntry != null) {
-                  cacheEntry.setSkipLookup(true);
-                  if (addVersionRead && ((MVCCEntry) cacheEntry).isRead()) {
-                     addVersionRead(txCtx, cacheEntry, key);
-                  }
-                  ((MVCCEntry) cacheEntry).updatePreviousValue();
+   private void applyAndFixVersionForMany(InvocationContext ctx, VisitableCommand cmd, Object rv) {
+      WriteCommand writeCommand = (WriteCommand) cmd;
+      if (!ctx.isInTxScope()) {
+         applyChanges(ctx, writeCommand);
+         return;
+      }
+
+      if (trace)
+         log.tracef("The return value is %s", toStr(rv));
+      if (useRepeatableRead) {
+         boolean addVersionRead = isVersioned && writeCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD;
+         TxInvocationContext txCtx = (TxInvocationContext) ctx;
+         for (Object key : writeCommand.getAffectedKeys()) {
+            CacheEntry cacheEntry = ctx.lookupEntry(key);
+            if (cacheEntry != null) {
+               cacheEntry.setSkipLookup(true);
+               if (addVersionRead && ((MVCCEntry) cacheEntry).isRead()) {
+                  addVersionRead(txCtx, cacheEntry, key);
                }
+               ((MVCCEntry) cacheEntry).updatePreviousValue();
             }
          }
-      });
+      }
    }
 
    private void addVersionRead(TxInvocationContext rCtx, CacheEntry cacheEntry, Object key) {
@@ -661,28 +663,30 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
     */
    protected Object setSkipRemoteGetsAndInvokeNextForDataCommand(InvocationContext ctx,
                                                                DataWriteCommand command) {
-      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-         DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
-         if (!rCtx.isInTxScope()) {
-            applyChanges(rCtx, dataWriteCommand);
-            return;
-         }
+      return invokeNextThenAccept(ctx, command, applyAndFixVersion);
+   }
 
-         if (trace)
-            log.tracef("The return value is %s", rv);
-         if (useRepeatableRead) {
-            CacheEntry cacheEntry = rCtx.lookupEntry(dataWriteCommand.getKey());
-            // The entry is not in context when the command's execution type does not contain origin
-            if (cacheEntry != null) {
-               cacheEntry.setSkipLookup(true);
-               if (isVersioned && dataWriteCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD
-                     && ((MVCCEntry) cacheEntry).isRead()) {
-                  addVersionRead((TxInvocationContext) rCtx, cacheEntry, dataWriteCommand.getKey());
-               }
-               ((MVCCEntry) cacheEntry).updatePreviousValue();
+   private void applyAndFixVersion(InvocationContext ctx, VisitableCommand cmd, Object rv) {
+      DataWriteCommand dataWriteCommand = (DataWriteCommand) cmd;
+      if (!ctx.isInTxScope()) {
+         applyChanges(ctx, dataWriteCommand);
+         return;
+      }
+
+      if (trace)
+         log.tracef("The return value is %s", rv);
+      if (useRepeatableRead) {
+         CacheEntry cacheEntry = ctx.lookupEntry(dataWriteCommand.getKey());
+         // The entry is not in context when the command's execution type does not contain origin
+         if (cacheEntry != null) {
+            cacheEntry.setSkipLookup(true);
+            if (isVersioned && dataWriteCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD
+                  && ((MVCCEntry) cacheEntry).isRead()) {
+               addVersionRead((TxInvocationContext) ctx, cacheEntry, dataWriteCommand.getKey());
             }
+            ((MVCCEntry) cacheEntry).updatePreviousValue();
          }
-      });
+      }
    }
 
    private void commitEntriesFinally(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t) {

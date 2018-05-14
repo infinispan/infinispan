@@ -93,6 +93,7 @@ import org.infinispan.notifications.cachelistener.filter.KeyValueFilterAsCacheEv
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.functional.impl.StatsEnvelope;
+import org.infinispan.remoting.responses.BiasRevocationResponse;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -145,6 +146,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new AtomicKeySetImpl.FunctionExternalizer(), exts);
       addInternalExternalizer(new AtomicMapProxyImpl.Externalizer(), exts);
       addInternalExternalizer(new AvailabilityMode.Externalizer(), exts);
+      addInternalExternalizer(new BiasRevocationResponse.Externalizer(), exts);
       addInternalExternalizer(new BiFunctionMapper.Externalizer(), exts);
       addInternalExternalizer(new ByteBufferImpl.Externalizer(), exts);
       addInternalExternalizer(new CacheEventConverterAsConverter.Externalizer(), exts);

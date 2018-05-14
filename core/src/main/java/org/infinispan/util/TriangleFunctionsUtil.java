@@ -44,7 +44,7 @@ public final class TriangleFunctionsUtil {
    }
 
    public static PutMapCommand copy(PutMapCommand command, Collection<Object> keys) {
-      PutMapCommand copy = new PutMapCommand(command, false);
+      PutMapCommand copy = new PutMapCommand(command);
       copy.setMap(filterEntries(command.getMap(), keys));
       return copy;
    }

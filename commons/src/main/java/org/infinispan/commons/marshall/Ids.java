@@ -199,6 +199,7 @@ public interface Ids {
    int CACHE_STATE = 136;
 
    int STATS_ENVELOPE = 137;
+   int BIAS_REVOCATION_RESPONSE = 138;
 
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter

@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
  * @since 8.0
  */
 public class CompletableFutures {
+   public static final CompletableFuture[] EMPTY_ARRAY = new CompletableFuture[0];
 
    private static final CompletableFuture<Boolean> completedTrueFuture = CompletableFuture.completedFuture(Boolean.TRUE);
    private static final CompletableFuture<Boolean> completedFalseFuture = CompletableFuture.completedFuture(Boolean.FALSE);
