@@ -155,7 +155,7 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
 
    @Override
    public void startKeysTransfer(Set<Integer> segments, Address origin) {
-      CacheTopology cacheTopology = stateConsumer.getCacheTopology();
+      CacheTopology cacheTopology = distributionManager.getCacheTopology();
       Address localAddress = rpcManager.getAddress();
       OutboundTransferTask outboundTransferTask = new OutboundTransferTask(origin, segments, chunkSize,
          cacheTopology.getTopologyId(), keyPartitioner,

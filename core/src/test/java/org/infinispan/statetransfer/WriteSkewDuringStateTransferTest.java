@@ -168,7 +168,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
    }
 
    private int currentTopologyId(Cache cache) {
-      return TestingUtil.extractComponent(cache, StateTransferManager.class).getCacheTopology().getTopologyId();
+      return cache.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
    }
 
    private Future<Object> executeTransaction(final Cache<Object, Object> cache, final Object key) {

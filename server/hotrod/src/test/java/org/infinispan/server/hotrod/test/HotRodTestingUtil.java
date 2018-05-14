@@ -35,6 +35,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -53,8 +54,6 @@ import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.HotRodChannelInitializer;
 import org.infinispan.server.hotrod.transport.SingleByteFrameDecoderChannelInitializer;
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
-import org.infinispan.statetransfer.StateTransferManager;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.util.KeyValuePair;
 
@@ -324,8 +323,8 @@ public class HotRodTestingUtil {
       assertEquals(hashTopologyResp.hashFunction, 3);
       // Assert segments
       Cache cache = servers.get(0).getCacheManager().getCache(cacheName);
-      StateTransferManager stateTransferManager = TestingUtil.extractComponent(cache, StateTransferManager.class);
-      ConsistentHash ch = stateTransferManager.getCacheTopology().getCurrentCH();
+      DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
+      ConsistentHash ch = distributionManager.getCacheTopology().getCurrentCH();
       int numSegments = ch.getNumSegments();
       int numOwners = ch.getNumOwners();
       assertEquals(hashTopologyResp.segments.size(), numSegments);
@@ -397,8 +396,8 @@ public class HotRodTestingUtil {
 
    public static void assertHashIds(Map<ServerAddress, List<Integer>> hashIds, List<HotRodServer> servers, String cacheName) {
       Cache cache = servers.get(0).getCacheManager().getCache(cacheName);
-      StateTransferManager stateTransferManager = TestingUtil.extractComponent(cache, StateTransferManager.class);
-      ConsistentHash consistentHash = stateTransferManager.getCacheTopology().getCurrentCH();
+      DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
+      ConsistentHash consistentHash = distributionManager.getCacheTopology().getCurrentCH();
       int numSegments = consistentHash.getNumSegments();
       int numOwners = consistentHash.getNumOwners();
       assertEquals(hashIds.size(), servers.size());
@@ -432,8 +431,8 @@ public class HotRodTestingUtil {
    public static void assertReplicatedHashIds(Map<ServerAddress, List<Integer>> hashIds, List<HotRodServer> servers,
                                               String cacheName) {
       Cache cache = servers.get(0).getCacheManager().getCache(cacheName);
-      StateTransferManager stateTransferManager = TestingUtil.extractComponent(cache, StateTransferManager.class);
-      ConsistentHash consistentHash = stateTransferManager.getCacheTopology().getCurrentCH();
+      DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
+      ConsistentHash consistentHash = distributionManager.getCacheTopology().getCurrentCH();
       int numSegments = consistentHash.getNumSegments();
       int numOwners = consistentHash.getNumOwners();
 

@@ -20,6 +20,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import io.reactivex.Flowable;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commons.CacheException;
@@ -27,6 +28,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
@@ -42,15 +45,11 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.scattered.ScatteredVersionManager;
-import org.infinispan.statetransfer.StateConsumer;
-import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
-
-import io.reactivex.Flowable;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -70,7 +69,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    @Inject private RpcManager rpcManager;
    @Inject private DataContainer<K, ?> dataContainer;
    @Inject private PersistenceManager persistenceManager;
-   @Inject private StateConsumer stateConsumer;
+   @Inject private DistributionManager distributionManager;
    @Inject private ClusterTopologyManager clusterTopologyManager;
    @Inject private OrderedUpdatesManager orderedUpdatesManager;
 
@@ -101,12 +100,13 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
       segmentStates = new AtomicReferenceArray<>(numSegments);
       blockedFutures = new AtomicReferenceArray<>(numSegments);
       ownerTopologyIds = new AtomicIntegerArray(numSegments);
-      CacheTopology cacheTopology = stateConsumer.getCacheTopology();
-      ConsistentHash consistentHash = cacheTopology == null ? null : cacheTopology.getCurrentCH();
+      LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
+      // Can't use the read owners, as we become read owners in the CH before we receive the data
+      ConsistentHash ch = cacheTopology.getCurrentCH();
       for (int i = 0; i < numSegments; ++i) {
          // The component can be rewired, and then this is executed without any topology change
          SegmentState state = SegmentState.NOT_OWNED;
-         if (consistentHash != null && consistentHash.isSegmentLocalToNode(rpcManager.getAddress(), i)) {
+         if (cacheTopology.isConnected() && ch.isSegmentLocalToNode(rpcManager.getAddress(), i)) {
             state = SegmentState.OWNED;
          }
          segmentStates.set(i, state);
@@ -358,7 +358,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
          segmentVersions.set(segment, 0);
          ownerTopologyIds.set(segment, topologyId);
          if (!segmentStates.compareAndSet(segment, SegmentState.NOT_OWNED, SegmentState.OWNED)) {
-            throw new IllegalStateException("Segment %d is in state " + segmentStates.get(segment));
+            throw new IllegalStateException(String.format("Segment %d is in state %s", segment, segmentStates.get(segment)));
          }
       }
       if (log.isDebugEnabled()) {
@@ -371,7 +371,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    public void startKeyTransfer(Set<Integer> segments) {
       for (int segment : segments) {
          if (!segmentStates.compareAndSet(segment, SegmentState.BLOCKED, SegmentState.KEY_TRANSFER)) {
-            throw new IllegalStateException("Segment " + segment + " is in state " + segmentStates.get(segment));
+            throw new IllegalStateException(String.format("Segment %d is in state %s", segment, segmentStates.get(segment)));
          }
          blockedFutures.get(segment).complete(null);
          log.tracef("Node %s, segment %d expects key transfer", rpcManager.getAddress(), segment);

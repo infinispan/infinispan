@@ -15,6 +15,7 @@ import javax.management.ObjectName;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -76,9 +77,9 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       ObjectName ltmName1 = TestingUtil.getCacheManagerObjectName(domain1, "DefaultCacheManager", "LocalTopologyManager");
 
       // Check initial state
-      StateTransferManager stm0 = TestingUtil.extractComponent(cache(0), StateTransferManager.class);
-      assertEquals(Arrays.asList(address(0), address(1)), stm0.getCacheTopology().getCurrentCH().getMembers());
-      assertNull(stm0.getCacheTopology().getPendingCH());
+      DistributionManager dm0 = advancedCache(0).getDistributionManager();
+      assertEquals(Arrays.asList(address(0), address(1)), dm0.getCacheTopology().getCurrentCH().getMembers());
+      assertNull(dm0.getCacheTopology().getPendingCH());
 
       assertTrue(mBeanServer.isRegistered(ltmName0));
       assertTrue((Boolean) mBeanServer.getAttribute(ltmName0, REBALANCING_ENABLED));
@@ -99,13 +100,14 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       assertFalse(ctm2.isRebalancingEnabled());
       ClusterTopologyManager ctm3 = TestingUtil.extractGlobalComponent(manager(3), ClusterTopologyManager.class);
       assertFalse(ctm3.isRebalancingEnabled());
+      StateTransferManager stm0 = TestingUtil.extractComponent(cache(0), StateTransferManager.class);
       assertEquals(RebalancingStatus.SUSPENDED.toString(), stm0.getRebalancingStatus());
 
       // Check that no rebalance happened after 1 second
       Thread.sleep(1000);
       assertFalse((Boolean) mBeanServer.getAttribute(ltmName1, REBALANCING_ENABLED));
-      assertNull(stm0.getCacheTopology().getPendingCH());
-      assertEquals(Arrays.asList(address(0), address(1)), stm0.getCacheTopology().getCurrentCH().getMembers());
+      assertNull(dm0.getCacheTopology().getPendingCH());
+      assertEquals(Arrays.asList(address(0), address(1)), dm0.getCacheTopology().getCurrentCH().getMembers());
 
       // Re-enable rebalancing
       log.debugf("Rebalancing with nodes %s %s %s %s", address(0), address(1), address(2), address(3));
@@ -116,9 +118,9 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
 
       // Check that the cache now has 4 nodes, and the CH is balanced
       TestingUtil.waitForNoRebalance(cache(0), cache(1), cache(2), cache(3));
-      assertNull(stm0.getCacheTopology().getPendingCH());
+      assertNull(dm0.getCacheTopology().getPendingCH());
       assertEquals(RebalancingStatus.COMPLETE.toString(), stm0.getRebalancingStatus());
-      ConsistentHash ch = stm0.getCacheTopology().getCurrentCH();
+      ConsistentHash ch = dm0.getCacheTopology().getCurrentCH();
       assertEquals(Arrays.asList(address(0), address(1), address(2), address(3)), ch.getMembers());
       for (int i = 0; i < ch.getNumSegments(); i++) {
          assertEquals(ch.getNumOwners(), ch.locateOwnersForSegment(i).size());
@@ -139,9 +141,9 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       // Implicitly, this also checks that no data has been lost - if both a segment's owners had left,
       // the CH factory would have assigned 2 owners.
       Thread.sleep(1000);
-      StateTransferManager stm2 = TestingUtil.extractComponent(cache(2), StateTransferManager.class);
-      assertNull(stm2.getCacheTopology().getPendingCH());
-      ch = stm2.getCacheTopology().getCurrentCH();
+      DistributionManager dm2 = advancedCache(2).getDistributionManager();
+      assertNull(dm2.getCacheTopology().getPendingCH());
+      ch = dm2.getCacheTopology().getCurrentCH();
       assertEquals(Arrays.asList(address(2), address(3)), ch.getMembers());
       // Scattered cache cannot reliably tolerate failure of two nodes, some segments may get lost
       if (cacheMode.isDistributed()) {
@@ -149,6 +151,7 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
             assertEquals(1, ch.locateOwnersForSegment(i).size());
          }
       }
+      StateTransferManager stm2 = TestingUtil.extractComponent(cache(2), StateTransferManager.class);
       assertEquals(RebalancingStatus.SUSPENDED.toString(), stm2.getRebalancingStatus());
 
       // Enable rebalancing again
@@ -164,8 +167,8 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       // Check that the CH is now balanced (and every segment has 2 copies)
       TestingUtil.waitForNoRebalance(cache(2), cache(3));
       assertEquals(RebalancingStatus.COMPLETE.toString(), stm2.getRebalancingStatus());
-      assertNull(stm2.getCacheTopology().getPendingCH());
-      ch = stm2.getCacheTopology().getCurrentCH();
+      assertNull(dm2.getCacheTopology().getPendingCH());
+      ch = dm2.getCacheTopology().getCurrentCH();
       assertEquals(Arrays.asList(address(2), address(3)), ch.getMembers());
       for (int i = 0; i < ch.getNumSegments(); i++) {
          assertEquals(ch.getNumOwners(), ch.locateOwnersForSegment(i).size());

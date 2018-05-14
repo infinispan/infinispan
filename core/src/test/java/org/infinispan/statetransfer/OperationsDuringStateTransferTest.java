@@ -124,7 +124,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       log.info("Added a new node");
 
       // node B is not a member yet and rebalance has not started yet
-      CacheTopology cacheTopology = advancedCache(1).getComponentRegistry().getStateTransferManager().getCacheTopology();
+      CacheTopology cacheTopology = advancedCache(1).getDistributionManager().getCacheTopology();
       assertNull(cacheTopology.getPendingCH());
       assertTrue(cacheTopology.getMembers().contains(address(0)));
       assertFalse(cacheTopology.getMembers().contains(address(1)));
@@ -215,7 +215,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       log.info("Added a new node");
 
       // node B is not a member yet and rebalance has not started yet
-      CacheTopology cacheTopology = advancedCache(1).getComponentRegistry().getStateTransferManager().getCacheTopology();
+      CacheTopology cacheTopology = advancedCache(1).getDistributionManager().getCacheTopology();
       assertNull(cacheTopology.getPendingCH());
       assertTrue(cacheTopology.getMembers().contains(address(0)));
       assertFalse(cacheTopology.getMembers().contains(address(1)));
@@ -293,7 +293,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       log.info("Added a new node");
 
       // node B is not a member yet and rebalance has not started yet
-      CacheTopology cacheTopology = advancedCache(1).getComponentRegistry().getStateTransferManager().getCacheTopology();
+      CacheTopology cacheTopology = advancedCache(1).getDistributionManager().getCacheTopology();
       assertNull(cacheTopology.getPendingCH());
       assertTrue(cacheTopology.getMembers().contains(address(0)));
       assertFalse(cacheTopology.getMembers().contains(address(1)));

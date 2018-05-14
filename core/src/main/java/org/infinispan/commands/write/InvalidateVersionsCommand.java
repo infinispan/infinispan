@@ -5,10 +5,10 @@ import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.persistence.manager.OrderedUpdatesManager;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
@@ -41,7 +41,7 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
    protected DataContainer dataContainer;
    protected OrderedUpdatesManager orderedUpdatesManager;
    protected StateTransferLock stateTransferLock;
-   protected StateTransferManager stateTransferManager;
+   protected DistributionManager distributionManager;
    protected BiasManager biasManager;
 
    public InvalidateVersionsCommand() {
@@ -62,12 +62,12 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
    }
 
    public void init(DataContainer dataContainer, OrderedUpdatesManager orderedUpdatesManager,
-                    StateTransferLock stateTransferLock, StateTransferManager stateTransferManager,
+                    StateTransferLock stateTransferLock, DistributionManager distributionManager,
                     BiasManager biasManager) {
       this.dataContainer = dataContainer;
       this.orderedUpdatesManager = orderedUpdatesManager;
       this.stateTransferLock = stateTransferLock;
-      this.stateTransferManager = stateTransferManager;
+      this.distributionManager = distributionManager;
       this.biasManager = biasManager;
    }
 
@@ -77,8 +77,8 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
          stateTransferLock.acquireSharedTopologyLock();
       }
       try {
-         if (topologyId >= 0 && stateTransferManager != null) {
-            int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
+         if (topologyId >= 0 && distributionManager != null) {
+            int currentTopologyId = distributionManager.getCacheTopology().getTopologyId();
             if (topologyId > currentTopologyId) {
                if (trace) {
                   log.tracef("Delaying command %s, current topology id %d", this, currentTopologyId);

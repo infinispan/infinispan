@@ -149,7 +149,7 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
          if (blockUpdates) {
             BlockingClusterTopologyManager bctm = BlockingClusterTopologyManager.replace(c.getCacheManager());
             BlockingClusterTopologyManager.Handle<CacheTopology> handle = bctm.startBlockingTopologyUpdate(topology -> true);
-            int currentTopology = cr.getComponent(StateTransferManager.class).getCacheTopology().getTopologyId();
+            int currentTopology = cr.getDistributionManager().getCacheTopology().getTopologyId();
             cleanup.add(handle::stopBlocking);
             if (write) {
                TestingUtil.wrapComponent(cache(0), StateTransferLock.class,

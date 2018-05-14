@@ -32,6 +32,8 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
@@ -94,8 +96,8 @@ public class StateProviderTest {
    private DataContainer dataContainer;
    private TransactionTable transactionTable;
    private StateTransferLock stateTransferLock;
-   private StateConsumer stateConsumer;
-   private CacheTopology cacheTopology;
+   private DistributionManager distributionManager;
+   private LocalizedCacheTopology cacheTopology;
    private InternalEntryFactory ef;
 
    @BeforeClass
@@ -120,9 +122,9 @@ public class StateProviderTest {
       dataContainer = mock(DataContainer.class);
       transactionTable = mock(TransactionTable.class);
       stateTransferLock = mock(StateTransferLock.class);
-      stateConsumer = mock(StateConsumer.class);
+      distributionManager = mock(DistributionManager.class);
       ef = mock(InternalEntryFactory.class);
-      when(stateConsumer.getCacheTopology()).thenAnswer(invocation -> cacheTopology);
+      when(distributionManager.getCacheTopology()).thenAnswer(invocation -> cacheTopology);
    }
 
    public void test1() throws InterruptedException {
@@ -154,8 +156,8 @@ public class StateProviderTest {
       // create state provider
       StateProviderImpl stateProvider = new StateProviderImpl();
       TestingUtil.inject(stateProvider, cache, mockExecutorService,
-            configuration, rpcManager, commandsFactory, cacheNotifier, persistenceManager,
-            dataContainer, transactionTable, stateTransferLock, stateConsumer, ef, keyPartitioner, TransactionOriginatorChecker.LOCAL);
+                         configuration, rpcManager, commandsFactory, cacheNotifier, persistenceManager,
+                         dataContainer, transactionTable, stateTransferLock, distributionManager, ef, keyPartitioner, TransactionOriginatorChecker.LOCAL);
       stateProvider.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<>();
@@ -167,8 +169,11 @@ public class StateProviderTest {
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.emptyList());
 
-      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch1, CacheTopology.Phase.READ_OLD_WRITE_ALL, ch1.getMembers(), persistentUUIDManager.mapAddresses(ch1.getMembers()));
-      stateProvider.onTopologyUpdate(cacheTopology, false);
+      CacheTopology simpleTopology = new CacheTopology(1, 1, ch1, ch1, ch1,
+                                                       CacheTopology.Phase.READ_OLD_WRITE_ALL, ch1.getMembers(),
+                                                       persistentUUIDManager.mapAddresses(ch1.getMembers()));
+      this.cacheTopology = new LocalizedCacheTopology(CacheMode.DIST_SYNC, simpleTopology, keyPartitioner, A, true);
+      stateProvider.onTopologyUpdate(this.cacheTopology, false);
 
       log.debug("ch1: " + ch1);
       Set<Integer> segmentsToRequest = ch1.getSegmentsForOwner(members1.get(0));
@@ -189,8 +194,11 @@ public class StateProviderTest {
       assertTrue(stateProvider.isStateTransferInProgress());
 
       log.debug("ch2: " + ch2);
-      cacheTopology = new CacheTopology(2, 1, ch2, ch2, ch2, CacheTopology.Phase.READ_OLD_WRITE_ALL, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers()));
-      stateProvider.onTopologyUpdate(cacheTopology, true);
+      simpleTopology = new CacheTopology(2, 1, ch2, ch2, ch2, CacheTopology.Phase.READ_OLD_WRITE_ALL,
+                                                      ch2.getMembers(),
+                                                      persistentUUIDManager.mapAddresses(ch2.getMembers()));
+      this.cacheTopology = new LocalizedCacheTopology(CacheMode.DIST_SYNC, simpleTopology, keyPartitioner, A, true);
+      stateProvider.onTopologyUpdate(this.cacheTopology, true);
 
       assertFalse(stateProvider.isStateTransferInProgress());
 
@@ -255,8 +263,8 @@ public class StateProviderTest {
       // create state provider
       StateProviderImpl stateProvider = new StateProviderImpl();
       TestingUtil.inject(stateProvider, cache, mockExecutorService,
-            configuration, rpcManager, commandsFactory, cacheNotifier, persistenceManager,
-            dataContainer, transactionTable, stateTransferLock, stateConsumer, ef, keyPartitioner, TransactionOriginatorChecker.LOCAL);
+                         configuration, rpcManager, commandsFactory, cacheNotifier, persistenceManager,
+                         dataContainer, transactionTable, stateTransferLock, distributionManager, ef, keyPartitioner, TransactionOriginatorChecker.LOCAL);
       stateProvider.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<>();
@@ -272,8 +280,11 @@ public class StateProviderTest {
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.emptyList());
 
-      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch1, CacheTopology.Phase.READ_OLD_WRITE_ALL, ch1.getMembers(), persistentUUIDManager.mapAddresses(ch1.getMembers()));
-      stateProvider.onTopologyUpdate(cacheTopology, false);
+      CacheTopology simpleTopology = new CacheTopology(1, 1, ch1, ch1, ch1, CacheTopology.Phase.READ_OLD_WRITE_ALL,
+                                                      ch1.getMembers(),
+                                                      persistentUUIDManager.mapAddresses(ch1.getMembers()));
+      this.cacheTopology = new LocalizedCacheTopology(CacheMode.DIST_SYNC, simpleTopology, keyPartitioner, A, true);
+      stateProvider.onTopologyUpdate(this.cacheTopology, false);
 
       log.debug("ch1: " + ch1);
       Set<Integer> segmentsToRequest = ch1.getSegmentsForOwner(members1.get(0));
@@ -295,8 +306,11 @@ public class StateProviderTest {
 
       // TestingUtil.sleepThread(15000);
       log.debug("ch2: " + ch2);
-      cacheTopology = new CacheTopology(2, 1, ch2, ch2, ch2, CacheTopology.Phase.READ_OLD_WRITE_ALL, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers()));
-      stateProvider.onTopologyUpdate(cacheTopology, false);
+      simpleTopology = new CacheTopology(2, 1, ch2, ch2, ch2, CacheTopology.Phase.READ_OLD_WRITE_ALL,
+                                                      ch2.getMembers(),
+                                                      persistentUUIDManager.mapAddresses(ch2.getMembers()));
+      this.cacheTopology = new LocalizedCacheTopology(CacheMode.DIST_SYNC, simpleTopology, keyPartitioner, A, true);
+      stateProvider.onTopologyUpdate(this.cacheTopology, false);
 
       assertFalse(stateProvider.isStateTransferInProgress());
 

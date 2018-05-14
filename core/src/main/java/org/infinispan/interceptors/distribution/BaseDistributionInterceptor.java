@@ -292,12 +292,12 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          getLog().tracef("Skipping topology check for command %s", command);
          return cacheTopology;
       }
+      if (trace) {
+         getLog().tracef("Current topology %d, command topology %d", currentTopologyId, cmdTopology);
+      }
       if (cmdTopology >= 0 && currentTopologyId != cmdTopology) {
          throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
                cmdTopology + ", got " + currentTopologyId);
-      }
-      if (trace) {
-         getLog().tracef("Current topology %d, command topology %d", currentTopologyId, cmdTopology);
       }
       return cacheTopology;
    }

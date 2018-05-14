@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.DataType;
@@ -43,6 +44,9 @@ public interface StateTransferManager {
     */
    boolean isStateTransferInProgressForKey(Object key);
 
+   /**
+    * @deprecated Since 9.3, please use {@link DistributionManager#getCacheTopology()} instead.
+    */
    @Deprecated
    CacheTopology getCacheTopology();
 

@@ -290,11 +290,7 @@ public class StateConsumerImpl implements StateConsumer {
       stateTransferLock.acquireExclusiveTopologyLock();
       beforeTopologyInstalled(cacheTopology.getTopologyId(), startRebalance, previousWriteCh, newWriteCh);
       this.cacheTopology = cacheTopology;
-      triangleOrderManager.updateCacheTopology(cacheTopology);
-      if (distributionManager != null) {
-         distributionManager.setCacheTopology(cacheTopology);
-         conflictManager.onTopologyUpdate(distributionManager.getCacheTopology());
-      }
+      distributionManager.setCacheTopology(cacheTopology);
 
       // We need to track changes so that user puts during conflict resolution are prioritised over MergePolicy updates
       // Tracking is stopped once the subsequent rebalance completes

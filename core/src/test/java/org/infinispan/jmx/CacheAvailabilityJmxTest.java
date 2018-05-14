@@ -5,7 +5,6 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
-
 import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -13,9 +12,9 @@ import javax.management.ObjectName;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.partitionhandling.PartitionHandling;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -58,9 +57,9 @@ public class CacheAvailabilityJmxTest extends MultipleCacheManagersTest {
       final ObjectName cacheName1 = TestingUtil.getCacheObjectName(domain1, CacheContainer.DEFAULT_CACHE_NAME + "(dist_sync)");
 
       // Check initial state
-      StateTransferManager stm0 = TestingUtil.extractComponent(cache(0), StateTransferManager.class);
-      assertEquals(Arrays.asList(address(0), address(1)), stm0.getCacheTopology().getCurrentCH().getMembers());
-      assertNull(stm0.getCacheTopology().getPendingCH());
+      DistributionManager dm0 = advancedCache(0).getDistributionManager();
+      assertEquals(Arrays.asList(address(0), address(1)), dm0.getCacheTopology().getCurrentCH().getMembers());
+      assertNull(dm0.getCacheTopology().getPendingCH());
 
       assertTrue(mBeanServer.isRegistered(cacheName0));
       assertEquals("AVAILABLE", mBeanServer.getAttribute(cacheName0, "CacheAvailability"));
@@ -87,8 +86,8 @@ public class CacheAvailabilityJmxTest extends MultipleCacheManagersTest {
 
       // Check that no rebalance happened after 1 second
       Thread.sleep(1000);
-      assertEquals(Arrays.asList(address(0), address(1)), stm0.getCacheTopology().getCurrentCH().getMembers());
-      assertNull(stm0.getCacheTopology().getPendingCH());
+      assertEquals(Arrays.asList(address(0), address(1)), dm0.getCacheTopology().getCurrentCH().getMembers());
+      assertNull(dm0.getCacheTopology().getPendingCH());
 
       assertEquals("DEGRADED_MODE", mBeanServer.getAttribute(cacheName0, "CacheAvailability"));
       assertEquals("DEGRADED_MODE", mBeanServer.getAttribute(cacheName1, "CacheAvailability"));

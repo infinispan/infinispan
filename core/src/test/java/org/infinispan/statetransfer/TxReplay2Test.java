@@ -95,7 +95,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
       // Now, we kill cache(1). the transaction is prepared in cache(1) and it should be transferred to cache(2)
       killMember(1);
 
-      final int currentTopologyId = TestingUtil.extractComponentRegistry(primaryOwnerCache).getStateTransferManager().getCacheTopology().getTopologyId();
+      int currentTopologyId = primaryOwnerCache.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
       Future<Object> secondCommitFuture = fork(() -> {
          // Wait for the commit command to block replaying the prepare on the new backup
          sequencer.advance("sim:before_extra_commit");

@@ -18,6 +18,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -63,7 +64,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
    }
 
    public void testSimulatedOldStateResponse() throws Throwable {
-      // Initial owners for both segments are cache 1 and cache 2
+      // Initial owners for both segments are cache 1, 2, and 3
       // Start a rebalance, with cache 0 becoming an owner of both CH segments
       // Block the first StateRequestCommand on cache 0
       // While state transfer is blocked, simulate an old state response command on cache 0
@@ -75,11 +76,12 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       cache(2).put("k2", "v2");
       cache(3).put("k3", "v3");
 
-      final StateTransferManager stm0 = advancedCache(0).getComponentRegistry().getStateTransferManager();
-      final int initialTopologyId = stm0.getCacheTopology().getTopologyId();
+      DistributionManager dm0 = advancedCache(0).getDistributionManager();
+      final int initialTopologyId = dm0.getCacheTopology().getTopologyId();
 
-      assertEquals(Arrays.asList(address(1), address(2), address(3)), stm0.getCacheTopology().getCurrentCH().locateOwners("k1"));
-      assertNull(stm0.getCacheTopology().getPendingCH());
+      assertEquals(Arrays.asList(address(1), address(2), address(3)),
+                   dm0.getCacheTopology().getDistribution("k1").readOwners());
+      assertNull(dm0.getCacheTopology().getPendingCH());
 
       // Block when cache 0 sends the first state request to cache 1
       CommandMatcher segmentRequestMatcher = new CommandMatcher() {
@@ -102,8 +104,11 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
 
       sequencer.enter("st:simulate_old_response");
 
-      assertNotNull(stm0.getCacheTopology().getPendingCH());
-      assertEquals(Arrays.asList(address(0), address(1), address(2)), stm0.getCacheTopology().getPendingCH().locateOwners("k1"));
+      assertNotNull(dm0.getCacheTopology().getPendingCH());
+      assertEquals(Arrays.asList(address(0), address(1), address(2)),
+                   dm0.getCacheTopology().getPendingCH().locateOwnersForSegment(0));
+      assertEquals(Arrays.asList(address(1), address(2), address(3), address(0)),
+                   dm0.getCacheTopology().getDistribution("k1").writeOwners());
 
       // Cache 0 didn't manage to request any segments yet, but it has registered all the inbound transfer tasks.
       // We'll pretend it got a StateResponseCommand with an older topology id.
@@ -122,9 +127,9 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       waitForNoRebalance(cache(0), cache(1), cache(2), cache(3));
 
       // Check that state wasn't lost
-      assertTrue(stm0.getCacheTopology().getReadConsistentHash().isKeyLocalToNode(address(0), "k1"));
-      assertTrue(stm0.getCacheTopology().getReadConsistentHash().isKeyLocalToNode(address(0), "k2"));
-      assertTrue(stm0.getCacheTopology().getReadConsistentHash().isKeyLocalToNode(address(0), "k3"));
+      assertTrue(dm0.getCacheTopology().isReadOwner("k1"));
+      assertTrue(dm0.getCacheTopology().isReadOwner("k2"));
+      assertTrue(dm0.getCacheTopology().isReadOwner("k3"));
       assertEquals("v1", cache(0).get("k1"));
       assertEquals("v2", cache(0).get("k2"));
       assertEquals("v3", cache(0).get("k3"));
@@ -192,13 +197,16 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       advanceOnOutboundRpc(sequencer, cache(0), secondStateRequestMatcher)
             .before("st:block_second_state_request", "st:resume_second_state_request");
 
-      final StateTransferManager stm0 = advancedCache(0).getComponentRegistry().getStateTransferManager();
+      DistributionManager dm0 = advancedCache(0).getDistributionManager();
+      StateTransferManager stm0 = advancedCache(0).getComponentRegistry().getStateTransferManager();
 
       MagicKey k1 = new MagicKey("k1", cache(1));
-      assertEquals(Arrays.asList(address(1), address(2), address(3)), stm0.getCacheTopology().getCurrentCH().locateOwners(k1));
+      assertEquals(Arrays.asList(address(1), address(2), address(3)),
+                   dm0.getCacheTopology().getDistribution(k1).readOwners());
       cache(0).put(k1, "v1");
       MagicKey k2 = new MagicKey("k2", cache(2));
-      assertEquals(Arrays.asList(address(2), address(1), address(3)), stm0.getCacheTopology().getCurrentCH().locateOwners(k2));
+      assertEquals(Arrays.asList(address(2), address(1), address(3)),
+                   dm0.getCacheTopology().getDistribution(k2).readOwners());
       cache(0).put(k2, "v2");
 
       // Start the rebalance
@@ -208,14 +216,14 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       // Wait for cache0 to receive the state response
       sequencer.enter("st:kill_node");
 
-      assertNotNull(stm0.getCacheTopology().getPendingCH());
+      assertNotNull(dm0.getCacheTopology().getPendingCH());
 
       // No need to update the owner indexes, the CH factory only knows about the cache members
       int nodeToKeep = managerIndex(firstResponseSender.get());
       int nodeToKill = nodeToKeep == 1 ? 2 : 1;
       log.debugf("Blocked state response from %s, killing %s", firstResponseSender.get(), manager(nodeToKill));
       cache(nodeToKill).stop();
-      eventuallyEquals(3, () -> stm0.getCacheTopology().getMembers().size());
+      eventuallyEquals(3, () -> dm0.getCacheTopology().getMembers().size());
 
       sequencer.exit("st:kill_node");
 
@@ -226,8 +234,8 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       // Only the 3 live caches are in the collection, wait for the rehash to end
       waitForNoRebalance(cache(0), cache(nodeToKeep), cache(3));
 
-      assertTrue(stm0.getCacheTopology().getReadConsistentHash().isKeyLocalToNode(address(0), k1));
-      assertTrue(stm0.getCacheTopology().getReadConsistentHash().isKeyLocalToNode(address(0), k2));
+      assertTrue(dm0.getCacheTopology().isReadOwner(k1));
+      assertTrue(dm0.getCacheTopology().isReadOwner(k2));
       assertEquals("v1", cache(0).get(k1));
       assertEquals("v2", cache(0).get(k2));
    }

@@ -319,7 +319,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
          }
       }
 
-      int preJoinTopologyId = primaryOwnerCache.getComponentRegistry().getStateTransferManager().getCacheTopology().getTopologyId();
+      int preJoinTopologyId = primaryOwnerCache.getDistributionManager().getCacheTopology().getTopologyId();
 
       // Block any state response commands on cache0
       CheckPoint checkPoint = new CheckPoint();

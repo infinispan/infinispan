@@ -23,6 +23,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.distexec.DistributedCallable;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.ComponentName;
@@ -69,7 +70,7 @@ public class StateProviderImpl implements StateProvider {
    @Inject protected StateTransferLock stateTransferLock;
    @Inject protected InternalEntryFactory entryFactory;
    @Inject protected KeyPartitioner keyPartitioner;
-   @Inject protected StateConsumer stateConsumer;
+   @Inject protected DistributionManager distributionManager;
    @Inject private TransactionOriginatorChecker transactionOriginatorChecker;
 
    protected String cacheName;
@@ -176,7 +177,7 @@ public class StateProviderImpl implements StateProvider {
    }
 
    private CacheTopology getCacheTopology(int requestTopologyId, Address destination, boolean isReqForTransactions) throws InterruptedException {
-      CacheTopology cacheTopology = stateConsumer.getCacheTopology();
+      CacheTopology cacheTopology = distributionManager.getCacheTopology();
       int currentTopologyId = cacheTopology != null ? cacheTopology.getTopologyId() : -1;
       if (requestTopologyId < currentTopologyId) {
          if (isReqForTransactions)
@@ -196,7 +197,7 @@ public class StateProviderImpl implements StateProvider {
          } catch (TimeoutException e) {
             throw log.failedWaitingForTopology(requestTopologyId);
          }
-         cacheTopology = stateConsumer.getCacheTopology();
+         cacheTopology = distributionManager.getCacheTopology();
       }
       return cacheTopology;
    }

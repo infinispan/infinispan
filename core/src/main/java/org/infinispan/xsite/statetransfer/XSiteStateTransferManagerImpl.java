@@ -30,6 +30,7 @@ import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.SitesConfiguration;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -72,6 +73,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    @Inject @ComponentName(value = ASYNC_TRANSPORT_EXECUTOR)
    private ExecutorService asyncExecutor;
    @Inject private StateTransferManager stateTransferManager;
+   @Inject private DistributionManager distributionManager;
    @Inject private CacheNotifier cacheNotifier;
    @Inject private XSiteStateConsumer consumer;
    @Inject private XSiteStateProvider provider;
@@ -332,7 +334,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    }
 
    private int currentTopologyId() {
-      return stateTransferManager.getCacheTopology().getTopologyId();
+      return distributionManager.getCacheTopology().getTopologyId();
    }
 
    private XSiteBackup findSite(String siteName) {
