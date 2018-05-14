@@ -705,6 +705,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public <T> T execute(String taskName, Map<String, ?> params) {
+      return execute(taskName, params, null);
+   }
+
+   @Override
+   public <T> T execute(String taskName, Map<String, ?> params, Object key) {
       assertRemoteCacheManagerIsStarted();
       Map<String, byte[]> marshalledParams = new HashMap<>();
       if (params != null) {
@@ -712,7 +717,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
             marshalledParams.put(entry.getKey(), keyToBytes(entry.getValue()));
          }
       }
-      ExecuteOperation<T> op = operationsFactory.newExecuteOperation(taskName, marshalledParams);
+      Object keyHint = null;
+      if (key != null) {
+         keyHint = hasCompatibility ? key : keyToBytes(key);
+      }
+      ExecuteOperation<T> op = operationsFactory.newExecuteOperation(taskName, marshalledParams, keyHint);
       return await(op.execute());
    }
 

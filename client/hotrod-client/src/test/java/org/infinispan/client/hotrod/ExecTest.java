@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -194,6 +195,26 @@ public class ExecTest extends MultiHotRodServersTest {
             l.expectOnlyCreatedEvent("local-key-listen");
             assertEquals("local-value-listen", result);
       }));
+   }
+
+   @Test(dataProvider = "CacheNameProvider")
+   public void testExecWithHint(String cacheName) {
+      withScript(manager(0), "/test-is-primary-owner.js", scriptName -> {
+         RemoteCache<Object, Object> cache = clients.get(0).getCache(cacheName);
+         for (int i = 0; i < 50; ++i) {
+            String someKey = "someKey" + i;
+            assertTrue(cache.execute(scriptName, Collections.singletonMap("k", someKey), someKey));
+         }
+         int notHinted = 0;
+         for (int i = 0; i < 50; ++i) {
+            String someKey = "someKey" + i;
+            if (cache.execute(scriptName, Collections.singletonMap("k", someKey))) {
+               ++notHinted;
+            }
+         }
+         assertTrue("Not hinted: " + notHinted, notHinted > 0);
+         assertTrue("Not hinted: " + notHinted, notHinted < 50);
+      });
    }
 
    private void execPutGet(String cacheName, String path, ExecMode mode, String key, String value) {
