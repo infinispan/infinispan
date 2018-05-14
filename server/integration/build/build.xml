@@ -28,16 +28,7 @@
          <fileset dir="${output.dir}/docs/schema" excludesfile="keep-schemas.txt"/>
       </delete>
    </target>
-   
-   <target name="server-version">
-      <copy todir="${output.dir}" overwrite="true">
-          <fileset dir="src/main/resources" />
-          <filterset>
-              <filter token="project.version" value="${project.version}"/>
-          </filterset>
-      </copy>
-   </target>
-   
+
    <target name="default">
        <echo message="This script needs to be executed by the maven ant plugin" />
    </target>
