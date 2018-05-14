@@ -56,7 +56,7 @@ public class MemoryBasedEvictionFunctionalTest extends SingleCacheManagerTest {
 
    @Override
    protected String parameters() {
-      return "storageType=" + storageType;
+      return "[storageType=" + storageType + "]";
    }
 
    public void testByteArray() throws Exception {
