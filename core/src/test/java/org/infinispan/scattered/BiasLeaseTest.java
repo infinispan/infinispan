@@ -15,7 +15,6 @@ import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
-import org.infinispan.commands.write.PrimaryAckCommand;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
@@ -64,7 +63,7 @@ public class BiasLeaseTest extends MultipleCacheManagersTest {
    }
 
    public void testBiasTimesOut() throws Exception {
-      rpcManager0.excludeCommands(PrimaryAckCommand.class, ExceptionAckCommand.class);
+      rpcManager0.excludeCommands(ExceptionAckCommand.class);
       MagicKey key = new MagicKey(cache(0));
       cache(1).put(key, "v0");
       assertTrue(biasManager(1).hasLocalBias(key));
@@ -80,7 +79,7 @@ public class BiasLeaseTest extends MultipleCacheManagersTest {
 
    public void testBiasLeaseRenewed() throws Exception {
       MagicKey key = new MagicKey(cache(0));
-      rpcManager0.excludeCommands(PrimaryAckCommand.class, ExceptionAckCommand.class);
+      rpcManager0.excludeCommands(ExceptionAckCommand.class);
       cache(1).put(key, "v0");
       assertEquals(Collections.singletonList(address(1)), biasManager(0).getRemoteBias(key));
       assertTrue(biasManager(1).hasLocalBias(key));

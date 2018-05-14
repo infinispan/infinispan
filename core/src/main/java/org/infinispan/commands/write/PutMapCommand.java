@@ -57,17 +57,11 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    }
 
    public PutMapCommand(PutMapCommand command) {
-      this(command, true);
-   }
-
-   public PutMapCommand(PutMapCommand command, boolean generateNewId) {
       this.map = command.map;
       this.notifier = command.notifier;
       this.metadata = command.metadata;
       this.isForwarded = command.isForwarded;
-      this.commandInvocationId = generateNewId ?
-            CommandInvocationId.generateIdFrom(command.commandInvocationId) :
-            command.commandInvocationId;
+      this.commandInvocationId = command.commandInvocationId;
       setFlagsBitSet(command.getFlagsBitSet());
    }
 

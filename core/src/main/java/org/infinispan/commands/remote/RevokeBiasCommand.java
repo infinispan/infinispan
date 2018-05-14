@@ -17,7 +17,7 @@ import org.infinispan.util.ByteString;
 
 /**
  * Informs node that it is not allowed to serve reads from the local record anymore.
- * After local bias is revoked a {@link BackupAckCommand} is sent to the originator.*
+ * After local bias is revoked a {@link BackupAckCommand} is sent to the originator, and this confirms all keys.
  */
 //TODO: consolidate this with InvalidateVersionsCommand
 public class RevokeBiasCommand extends BaseRpcCommand {

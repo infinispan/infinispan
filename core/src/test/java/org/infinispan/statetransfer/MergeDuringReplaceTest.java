@@ -78,11 +78,7 @@ public class MergeDuringReplaceTest extends MultipleCacheManagersTest {
       TestingUtil.waitForNoRebalance(partition1.get(0), partition1.get(1));
       TestingUtil.waitForNoRebalance(c);
 
-      if (cacheMode.isScattered()) {
-         blockedReplace.sendWithoutResponses();
-      } else {
-         blockedReplace.send().receiveAll();
-      }
+      blockedReplace.send().receiveAll();
 
       // Since the non owner didn't have the value before the split it can't do the replace correctly
       assertEquals(future.get(10, TimeUnit.SECONDS), Boolean.FALSE);

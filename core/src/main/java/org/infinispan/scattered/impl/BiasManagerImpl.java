@@ -357,6 +357,11 @@ public class BiasManagerImpl implements BiasManager {
       }
 
       @Override
+      public CompletionStage<?> toCompletionStage() {
+         return future;
+      }
+
+      @Override
       public <T> CompletableFuture<T> handleCompose(Supplier<CompletionStage<T>> supplier) {
          return future.handle((nil, throwable) -> null).thenCompose(nil -> supplier.get());
       }

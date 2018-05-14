@@ -19,12 +19,14 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.responses.BiasRevocationResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.util.concurrent.CommandAckCollector;
+import org.infinispan.util.concurrent.CommandAckCollector.MultiTargetCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 public class BiasedScatteredDistributionInterceptor extends ScatteredDistributionInterceptor {
@@ -38,18 +40,23 @@ public class BiasedScatteredDistributionInterceptor extends ScatteredDistributio
    }
 
    @Override
-   protected CompletionStage<Map<Address, Response>> singleWriteOnRemotePrimary(Address target, DataWriteCommand command) {
-      Collector<Response> collector = commandAckCollector.createBiased(command.getCommandInvocationId().getId(),
-            target, command.getTopologyId());
-      rpcManager.sendTo(target, command, DeliverOrder.NONE);
-      return collector.getFuture().thenApply(value -> Collections.singletonMap(target, value));
+   protected CompletionStage<ValidResponse> singleWriteOnRemotePrimary(Address target, DataWriteCommand command) {
+      BiasedCollector collector = commandAckCollector.createBiased(command.getCommandInvocationId().getId(),
+            command.getTopologyId());
+      rpcManager.invokeCommand(target, command, collector, rpcManager.getSyncRpcOptions());
+      return collector.getFuture();
    }
 
    @Override
-   protected CompletionStage<Map<Address, Response>> manyWriteOnRemotePrimary(Address target, WriteCommand command) {
-      Collector<Response> collector = commandAckCollector.createMultiTargetCollector(command.getCommandInvocationId().getId(), target, command.getTopologyId());
-      rpcManager.sendTo(target, command, DeliverOrder.NONE);
-      return collector.getFuture().thenApply(value -> Collections.singletonMap(target, value));
+   protected CompletionStage<ValidResponse> manyWriteOnRemotePrimary(Address target, WriteCommand command, MultiTargetCollector multiTargetCollector) {
+      BiasedCollector collector = multiTargetCollector.collectorFor(target);
+      rpcManager.invokeCommand(target, command, collector, rpcManager.getSyncRpcOptions());
+      return collector.getFuture();
+   }
+
+   @Override
+   protected <C extends WriteCommand> MultiTargetCollector createMultiTargetCollector(C command, int primaries) {
+      return commandAckCollector.createMultiTargetCollector(command.getCommandInvocationId().getId(), primaries, command.getTopologyId());
    }
 
    @Override
@@ -133,31 +140,27 @@ public class BiasedScatteredDistributionInterceptor extends ScatteredDistributio
    }
 
    @Override
-   protected void singleWriteResponse(InvocationContext ctx, DataWriteCommand cmd, Object returnValue) {
+   protected Object singleWriteResponse(InvocationContext ctx, DataWriteCommand cmd, Object returnValue) {
       BiasManager.Revocation revocation;
       if (!cmd.isSuccessful() || (revocation = biasManager.startRevokingRemoteBias(cmd.getKey(), ctx.getOrigin())) == null) {
-         rpcManager.sendTo(ctx.getOrigin(), cf.buildPrimaryAckCommand(cmd.getCommandInvocationId().getId(),
-               cmd.isSuccessful(), returnValue, null), DeliverOrder.NONE);
+         return returnValue;
       } else if (revocation.shouldRevoke()) {
          Address[] waitFor = revocation.biased().toArray(new Address[revocation.biased().size()]);
          sendRevokeBias(revocation.biased(), Collections.singleton(cmd.getKey()), cmd.getTopologyId(), cmd.getCommandInvocationId())
                .whenComplete(revocation);
          // When the revocation does not succeed this node does not care; originator will get timeout
          // expecting BackupAckCommand from the node that had the bias revoked
-         rpcManager.sendTo(ctx.getOrigin(), cf.buildPrimaryAckCommand(cmd.getCommandInvocationId().getId(),
-               cmd.isSuccessful(), returnValue, waitFor), DeliverOrder.NONE);
+         return new BiasRevocationResponse(returnValue, waitFor);
       } else {
          // We'll send the response & revocations later but the command
          // will be already completed on this node
-         revocation.handleCompose(() -> {
-            singleWriteResponse(ctx, cmd, returnValue);
-            return null;
-         });
+         return asyncValue(revocation.toCompletionStage()).andHandle(ctx, cmd, (rCtx, rCommand, rv, throwable) ->
+                     singleWriteResponse(rCtx, (DataWriteCommand) rCommand, returnValue));
       }
    }
 
    @Override
-   protected void manyWriteResponse(InvocationContext ctx, WriteCommand cmd, Object returnValue) {
+   protected Object manyWriteResponse(InvocationContext ctx, WriteCommand cmd, Object returnValue) {
       List<Address> waitFor = null;
       if (cmd.isSuccessful()) {
          Collection<?> keys = cmd.getAffectedKeys();
@@ -186,22 +189,22 @@ public class BiasedScatteredDistributionInterceptor extends ScatteredDistributio
          }
          if (futures != null) {
             List<Address> waitForFinal = waitFor;
-            CompletableFuture<List<Address>>[] cfs = futures.toArray(new CompletableFuture[futures.size()]);
-            CompletableFuture.allOf(cfs).thenRun(() -> {
+            CompletableFuture<List<Address>>[] cfs = futures.toArray(CompletableFutures.EMPTY_ARRAY);
+            return asyncValue(CompletableFuture.allOf(cfs).thenApply(nil -> {
                Address[] waitForAddresses = null;
                if (waitForFinal != null) {
                   Stream.of(cfs).map(CompletableFuture::join).filter(Objects::nonNull).forEach(waitForFinal::addAll);
-                  waitForAddresses = waitForFinal.toArray(new Address[waitForFinal.size()]);
+                  waitForAddresses = waitForFinal.toArray(Address.EMPTY_ARRAY);
                }
-               rpcManager.sendTo(ctx.getOrigin(), cf.buildPrimaryAckCommand(cmd.getCommandInvocationId().getId(),
-                     cmd.isSuccessful(), returnValue, waitForAddresses), DeliverOrder.NONE);
-            });
-            return;
+               return new BiasRevocationResponse(returnValue, waitForAddresses);
+            }));
          }
       }
-      Address[] waitForAddresses = waitFor == null ? null : waitFor.toArray(new Address[waitFor.size()]);
-      rpcManager.sendTo(ctx.getOrigin(), cf.buildPrimaryAckCommand(cmd.getCommandInvocationId().getId(),
-            cmd.isSuccessful(), returnValue, waitForAddresses), DeliverOrder.NONE);
+      if (waitFor == null) {
+         return returnValue;
+      } else {
+         return new BiasRevocationResponse(returnValue, waitFor.toArray(Address.EMPTY_ARRAY));
+      }
    }
 
    private CompletableFuture<List<Address>> revokeBiasAsync(WriteCommand cmd, Object key, Address backup) {

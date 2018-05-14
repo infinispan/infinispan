@@ -29,11 +29,10 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.interceptors.distribution.BiasedCollector;
 import org.infinispan.interceptors.distribution.Collector;
 import org.infinispan.interceptors.distribution.PrimaryOwnerOnlyCollector;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.responses.UnsuccessfulResponse;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.logging.Log;
@@ -99,24 +98,24 @@ public class CommandAckCollector {
       return collector;
    }
 
-   public <T> Collector<T> createBiased(long id, Address primaryOwner, int topologyId) {
-      SingleKeyCollector<T> collector = new BiasedKeyCollector<>(id, primaryOwner, topologyId);
+   public BiasedCollector createBiased(long id, int topologyId) {
+      BiasedKeyCollector collector = new BiasedKeyCollector(id, topologyId);
       BaseAckTarget prev = collectorMap.put(id, collector);
-      assert prev == null : prev.toString();
+      assert prev == null || prev.topologyId < topologyId : prev.toString();
       if (trace) {
-         log.tracef("Created new biased collector for %s, primary is %s", id, primaryOwner);
+         log.tracef("Created new biased collector for %d", id);
       }
       return collector;
    }
 
-   public Collector<Response> createMultiTargetCollector(long id, Address target, int topologyId) {
-      MultiAckTarget multiAckTarget = new MultiAckTarget(id, topologyId);
-      BaseAckTarget prev = collectorMap.put(id, multiAckTarget);
-      assert prev == null : prev.toString();
+   public MultiTargetCollector createMultiTargetCollector(long id, int primaries, int topologyId) {
+      MultiTargetCollectorImpl multiTargetCollector = new MultiTargetCollectorImpl(id, primaries, topologyId);
+      BaseAckTarget prev = collectorMap.put(id, multiTargetCollector);
+      assert prev == null || prev.topologyId < topologyId : prev.toString();
       if (trace) {
-         log.tracef("Created new multi target collector for %s and primary %s", id, target);
+         log.tracef("Created new multi target collector for %d", id);
       }
-      return multiAckTarget.collectorFor(target);
+      return multiTargetCollector;
    }
 
    /**
@@ -167,32 +166,8 @@ public class CommandAckCollector {
       BaseAckTarget ackTarget = collectorMap.get(id);
       if (ackTarget instanceof SingleKeyCollector) {
          ((SingleKeyCollector) ackTarget).backupAck(topologyId, from);
-      } else if (ackTarget instanceof MultiAckTarget) {
-         ((MultiAckTarget) ackTarget).backupAck(topologyId, from);
-      }
-   }
-
-   // This method is used only by scattered cache with biased reads
-   public void primaryAck(long id, Address from, Object value, boolean success, Address[] waitFor) {
-      BaseAckTarget ackTarget = collectorMap.get(id);
-      if (ackTarget == null) {
-         if (trace) {
-            log.tracef("No collector for %d", id);
-         }
-      } else if (ackTarget instanceof BiasedKeyCollector) {
-         //noinspection unchecked
-         BiasedKeyCollector<Response> collector = (BiasedKeyCollector) ackTarget;
-         collector.addPendingAcks(success, waitFor);
-         // TODO: Using response here is suboptimal but we can't signal non-success through CF in any other way
-         collector.primaryResult(success ? SuccessfulResponse.create(value) : UnsuccessfulResponse.create(value), success);
-      } else if (ackTarget instanceof MultiAckTarget) {
-         MultiAckTarget multiAckTarget = (MultiAckTarget) ackTarget;
-         if (success && waitFor != null) {
-            multiAckTarget.addPendingAcks(waitFor);
-         }
-         multiAckTarget.primaryResult(from, value, success);
-      } else {
-         throw new IllegalStateException("Unexpected ack: " + ackTarget);
+      } else if (ackTarget instanceof MultiTargetCollectorImpl) {
+         ((MultiTargetCollectorImpl) ackTarget).backupAck(topologyId, from);
       }
    }
 
@@ -238,7 +213,7 @@ public class CommandAckCollector {
    public void onMembersChange(Collection<Address> members) {
       Set<Address> currentMembers = new HashSet<>(members);
       this.currentMembers = currentMembers;
-      for (BaseAckTarget ackTarget : collectorMap.values()) {
+      for (BaseAckTarget<?> ackTarget : collectorMap.values()) {
          ackTarget.onMembersChange(currentMembers);
       }
    }
@@ -247,7 +222,7 @@ public class CommandAckCollector {
       return log.timeoutWaitingForAcks(Util.prettyPrintTime(timeoutNanoSeconds, TimeUnit.NANOSECONDS), id);
    }
 
-   private abstract class BaseAckTarget implements Callable<Void> {
+   private abstract class BaseAckTarget<T> implements Callable<Void>, BiConsumer<T, Throwable> {
       final long id;
       final int topologyId;
       final ScheduledFuture<?> timeoutTask;
@@ -258,12 +233,26 @@ public class CommandAckCollector {
          this.timeoutTask = timeoutExecutor.schedule(this, timeoutNanoSeconds, TimeUnit.NANOSECONDS);
       }
 
+      /**
+       * Invoked when the collector's future is completed, it must cleanup all task related to this collector.
+       * <p>
+       * The tasks includes removing the collector from the map and cancel the timeout task.
+       */
+      public final void accept(T t, Throwable throwable) {
+         if (trace) {
+            log.tracef("[Collector#%s] Collector completed with ret=%s, throw=%s", id, t, throwable);
+         }
+         boolean removed = collectorMap.remove(id, this);
+         assert removed;
+         timeoutTask.cancel(false);
+      }
+
       abstract void completeExceptionally(Throwable throwable, int topologyId);
       abstract boolean hasPendingBackupAcks();
       abstract void onMembersChange(Collection<Address> members);
    }
 
-   private abstract class BaseCollector<T> extends BaseAckTarget implements BiConsumer<T, Throwable>, Collector<T> {
+   private abstract class BaseCollector<T> extends BaseAckTarget<T> implements Collector<T> {
 
       final CompletableFuture<T> future;
       final CompletableFuture<T> exposedFuture;
@@ -285,21 +274,6 @@ public class CommandAckCollector {
       public final synchronized Void call() {
          future.completeExceptionally(createTimeoutException(id));
          return null;
-      }
-
-      /**
-       * Invoked when the future is completed, it must cleanup all task related to this collector.
-       * <p>
-       * The tasks includes removing the collector from the map and cancel the timeout task.
-       */
-      @Override
-      public final void accept(T t, Throwable throwable) {
-         if (trace) {
-            log.tracef("[Collector#%s] Collector completed with ret=%s, throw=%s", id, t, throwable);
-         }
-         boolean removed = collectorMap.remove(id, this);
-         assert removed;
-         timeoutTask.cancel(false);
       }
 
       @Override
@@ -338,6 +312,9 @@ public class CommandAckCollector {
 
       @Override
       synchronized boolean hasPendingBackupAcks() {
+         if (trace) {
+            log.tracef("Pending backup acks: %s", backupOwners);
+         }
          return !backupOwners.isEmpty();
       }
 
@@ -389,22 +366,12 @@ public class CommandAckCollector {
       }
    }
 
-   private class BiasedKeyCollector<T> extends SingleKeyCollector<T> {
-      private final Address primaryOwner;
+   private class BiasedKeyCollector extends SingleKeyCollector<ValidResponse> implements BiasedCollector {
       @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
       private Collection<Address> unsolicitedAcks;
 
-      private BiasedKeyCollector(long id, Address primaryOwner, int topologyId) {
+      private BiasedKeyCollector(long id, int topologyId) {
          super(id, Collections.emptyList(), topologyId);
-         this.primaryOwner = primaryOwner;
-      }
-
-      @Override
-      public void onMembersChange(Collection<Address> members) {
-         if (primaryOwner != null && !members.contains(primaryOwner)) {
-            future.completeExceptionally(log.remoteNodeSuspected(primaryOwner));
-         }
-         super.onMembersChange(members);
       }
 
       void backupAck(int topologyId, Address from) {
@@ -431,7 +398,8 @@ public class CommandAckCollector {
          }
       }
 
-      synchronized void addPendingAcks(boolean success, Address[] waitFor) {
+      @Override
+      public synchronized void addPendingAcks(boolean success, Address[] waitFor) {
          if (success && waitFor != null) {
             Collection<Address> members = currentMembers;
             for (Address address : waitFor) {
@@ -520,37 +488,22 @@ public class CommandAckCollector {
       }
    }
 
-   private static class ExceptionCollector<T> extends CompletableFuture<T> implements Collector<T> {
-      ExceptionCollector(Throwable throwable) {
-         completeExceptionally(throwable);
+   /**
+    * Contrary to {@link MultiTargetCollectorImpl} implements the {@link Collector} interface delegating its calls
+    * to the {@link MultiTargetCollectorImpl} which is stored in {@link #collectorMap}.
+    */
+   private static class SingleTargetCollectorImpl implements BiasedCollector, Function<Void, CompletableFuture<ValidResponse>> {
+      private final MultiTargetCollectorImpl parent;
+      private final CompletableFuture<ValidResponse> resultFuture = new CompletableFuture<>();
+      private final CompletableFuture<ValidResponse> combinedFuture;
+
+      private SingleTargetCollectorImpl(MultiTargetCollectorImpl parent) {
+         this.parent = parent;
+         this.combinedFuture = CompletableFuture.allOf(resultFuture, parent.acksFuture).thenCompose(this);
       }
 
       @Override
-      public CompletableFuture<T> getFuture() {
-         return this;
-      }
-
-      @Override
-      public void primaryException(Throwable throwable) {
-         throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void primaryResult(T result, boolean success) {
-         throw new UnsupportedOperationException();
-      }
-   }
-
-   private static class CombiningCollector<T> implements Collector<T>, Function<Void, CompletableFuture<T>> {
-      private final CompletableFuture<T> resultFuture = new CompletableFuture<>();
-      private final CompletableFuture<T> combinedFuture;
-
-      private CombiningCollector(CompletableFuture<?> acksFuture) {
-         this.combinedFuture = CompletableFuture.allOf(resultFuture, acksFuture).thenCompose(this);
-      }
-
-      @Override
-      public CompletableFuture<T> getFuture() {
+      public CompletableFuture<ValidResponse> getFuture() {
          return combinedFuture;
       }
 
@@ -561,35 +514,54 @@ public class CommandAckCollector {
       }
 
       @Override
-      public void primaryResult(T result, boolean success) {
+      public void primaryResult(ValidResponse result, boolean success) {
+         if (trace) {
+            log.tracef("Received result for %d, topology %d: %s", parent.id, parent.topologyId, result);
+         }
          resultFuture.complete(result);
+         parent.checkComplete();
       }
 
       @Override
-      public CompletableFuture<T> apply(Void nil) {
+      public CompletableFuture<ValidResponse> apply(Void nil) {
          return resultFuture;
+      }
+
+      @Override
+      public void addPendingAcks(boolean success, Address[] waitFor) {
+         if (success && waitFor != null) {
+            parent.addPendingAcks(waitFor);
+         }
       }
    }
 
-   private class MultiAckTarget extends BaseAckTarget {
-      private final Map<Address, Collector<Response>> primaryCollectors = new HashMap<>();
+   public interface MultiTargetCollector {
+      BiasedCollector collectorFor(Address target);
+   }
+
+   private class MultiTargetCollectorImpl extends BaseAckTarget<Void> implements MultiTargetCollector {
+      private final Map<Address, SingleTargetCollectorImpl> primaryCollectors = new HashMap<>();
       // Note that this is a list, since we may expect multiple acks from single node.
       private final List<Address> pendingAcks = new ArrayList<>();
       private final CompletableFuture<Void> acksFuture = new CompletableFuture<>();
+      private final int primaries;
       @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
       private List<Address> unsolicitedAcks;
       private Throwable throwable;
 
-      MultiAckTarget(long id, int topologyId) {
+      MultiTargetCollectorImpl(long id, int primaries, int topologyId) {
          super(id, topologyId);
+         this.primaries = primaries;
+         acksFuture.whenComplete(this);
       }
 
-      synchronized Collector<Response> collectorFor(Address target) {
+      @Override
+      public synchronized BiasedCollector collectorFor(Address target) {
          if (throwable != null) {
-            return new ExceptionCollector<>(throwable);
+            throw CompletableFutures.asCompletionException(throwable);
          } else {
-            Collector<Response> collector = new CombiningCollector<>(acksFuture);
-            Collector<Response> prev = primaryCollectors.put(target, collector);
+            SingleTargetCollectorImpl collector = new SingleTargetCollectorImpl(this);
+            Collector<ValidResponse> prev = primaryCollectors.put(target, collector);
             assert prev == null : prev.toString();
             return collector;
          }
@@ -606,23 +578,9 @@ public class CommandAckCollector {
                pendingAcks.add(member);
             }
          }
-      }
-
-      /**
-       * This method must be called after {@link #addPendingAcks(Address[])}
-       */
-      synchronized void primaryResult(Address from, Object value, boolean success) {
-         Collector<Response> collector = primaryCollectors.get(from);
-         if (trace) {
-            log.tracef("[Collector#%s] PutMap Primary ACK. Address=%s", id, from);
-         }
-         collector.primaryResult(success ? SuccessfulResponse.create(value) : UnsuccessfulResponse.create(value), success);
          if (unsolicitedAcks != null) {
             // this should work for multiple acks from same node as well
             unsolicitedAcks.removeIf(pendingAcks::remove);
-         }
-         if (pendingAcks.isEmpty()) {
-            acksFuture.complete(null);
          }
       }
 
@@ -639,6 +597,7 @@ public class CommandAckCollector {
                unsolicitedAcks.add(from);
             }
          }
+         checkComplete();
       }
 
       @Override
@@ -659,7 +618,7 @@ public class CommandAckCollector {
       @Override
       synchronized void onMembersChange(Collection<Address> members) {
          pendingAcks.retainAll(members);
-         for (Map.Entry<Address, Collector<Response>> pair : primaryCollectors.entrySet()) {
+         for (Map.Entry<Address, SingleTargetCollectorImpl> pair : primaryCollectors.entrySet()) {
             if (!members.contains(pair.getKey())) {
                pair.getValue().primaryException(OutdatedTopologyException.INSTANCE);
             }
@@ -670,6 +629,18 @@ public class CommandAckCollector {
       public Void call() {
          completeExceptionally(createTimeoutException(id), topologyId);
          return null;
+      }
+
+      synchronized void checkComplete() {
+         if (primaries != primaryCollectors.size()) {
+            return;
+         }
+         for (SingleTargetCollectorImpl c : primaryCollectors.values()) {
+            if (!c.resultFuture.isDone()) return;
+         }
+         if (!hasPendingBackupAcks()) {
+            acksFuture.complete(null);
+         }
       }
    }
 }

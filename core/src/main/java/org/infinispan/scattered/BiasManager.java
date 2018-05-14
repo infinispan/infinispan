@@ -84,6 +84,8 @@ public interface BiasManager {
       void complete();
       void fail();
 
+      CompletionStage<?> toCompletionStage();
+
       /**
        * Similar to {@link CompletableFuture#thenCompose(Function)}, returns future provided by the supplier
        * after the current revocation has been finished

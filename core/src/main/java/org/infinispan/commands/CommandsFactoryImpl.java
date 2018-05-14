@@ -77,7 +77,6 @@ import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
-import org.infinispan.commands.write.PrimaryAckCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -602,9 +601,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case WriteOnlyManyEntriesCommand.COMMAND_ID:
             ((AbstractWriteManyCommand) c).init(componentRegistry);
             break;
-         case PrimaryAckCommand.COMMAND_ID:
-            ((PrimaryAckCommand) c).setCommandAckCollector(commandAckCollector);
-            break;
          case RevokeBiasCommand.COMMAND_ID:
             ((RevokeBiasCommand) c).init(biasManager, this, rpcManager);
             break;
@@ -850,11 +846,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(long id, int segment, int topologyId) {
       return new BackupMultiKeyAckCommand(cacheName, id, segment, topologyId);
-   }
-
-   @Override
-   public PrimaryAckCommand buildPrimaryAckCommand(long id, boolean success, Object value, Address[] waitFor) {
-      return new PrimaryAckCommand(cacheName, id, success, value, waitFor);
    }
 
    @Override

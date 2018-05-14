@@ -20,7 +20,7 @@ public class SuccessfulResponse extends ValidResponse {
 
    private final Object responseValue;
 
-   private SuccessfulResponse(Object responseValue) {
+   protected SuccessfulResponse(Object responseValue) {
       this.responseValue = responseValue;
    }
 

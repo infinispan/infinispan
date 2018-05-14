@@ -21,9 +21,6 @@ import org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
-import org.infinispan.commands.write.PrimaryAckCommand;
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -70,15 +67,15 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
 
    private long lockTimeout;
    private Address localAddress;
-   private boolean indirectRpc;
+   private boolean isLocking;
    private boolean syncCache;
 
    @Start
    public void start() {
       lockTimeout = configuration.locking().lockAcquisitionTimeout();
       localAddress = rpcManager.getAddress();
-      this.indirectRpc = configuration.clustering().biasAcquisition() != BiasAcquisition.NEVER;
-      this.syncCache = configuration.clustering().cacheMode().isSynchronous();
+      isLocking = !configuration.clustering().cacheMode().isScattered();
+      syncCache = configuration.clustering().cacheMode().isSynchronous();
    }
 
    @Override
@@ -108,9 +105,6 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
                return;
             case ExceptionAckCommand.COMMAND_ID:
                handleExceptionAck((ExceptionAckCommand) command);
-               return;
-            case PrimaryAckCommand.COMMAND_ID:
-               handlePrimaryAck((PrimaryAckCommand) command);
                return;
             case StateRequestCommand.COMMAND_ID:
                handleStateRequestCommand((StateRequestCommand) command, reply, order);
@@ -214,38 +208,16 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       command.ack();
    }
 
-   private void handlePrimaryAck(PrimaryAckCommand command) {
-      command.ack();
-   }
-
    private void handleSingleRpcCommand(SingleRpcCommand command, Reply reply, DeliverOrder order) {
       if (executeOnExecutorService(order, command)) {
          int commandTopologyId = extractCommandTopologyId(command);
-         BlockingRunnable runnable;
-         // Bias-enabled scattered cache sends WriteCommands both synchronously (from primary == originator to backup)
-         // and asynchronously (from originator to primary).
-         if (indirectRpc && reply == Reply.NO_OP) {
-            runnable = createIndirectRpcRunnable(command, commandTopologyId);
-         } else {
-            runnable = createReadyActionRunnable(command, reply, commandTopologyId, order.preserveOrder(),
-                  createReadyAction(commandTopologyId, command));
-         }
+         BlockingRunnable runnable = createReadyActionRunnable(command, reply, commandTopologyId, order.preserveOrder(),
+               createReadyAction(commandTopologyId, command));
          remoteCommandsExecutor.execute(runnable);
       } else {
          createDefaultRunnable(command, reply, extractCommandTopologyId(command), TopologyMode.WAIT_TX_DATA,
                order.preserveOrder()).run();
       }
-   }
-
-   private BlockingRunnable createIndirectRpcRunnable(SingleRpcCommand command, int commandTopologyId) {
-      return new DefaultTopologyRunnable(this, command, Reply.NO_OP, TopologyMode.READY_TX_DATA, commandTopologyId, false) {
-         @Override
-         protected void onException(Throwable throwable) {
-            WriteCommand writeCommand = (WriteCommand) ((SingleRpcCommand) command).getCommand();
-            sendExceptionAck(writeCommand.getCommandInvocationId(), throwable, commandTopologyId,
-                  writeCommand.getFlagsBitSet());
-         }
-      };
    }
 
    private void sendExceptionAck(CommandInvocationId id, Throwable throwable, int topologyId, long flagBitSet) {
@@ -365,7 +337,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    }
 
    private ReadyAction createReadyAction(int topologyId, RemoteLockCommand command) {
-      if (command.hasSkipLocking()) {
+      if (command.hasSkipLocking() || !isLocking) {
          return null;
       }
       Collection<?> keys = command.getKeysToLock();
