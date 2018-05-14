@@ -1,4 +1,4 @@
-package org.infinispan.util.logging.log4j;
+package org.infinispan.commons.logging.log4j;
 
 import java.util.regex.Pattern;
 

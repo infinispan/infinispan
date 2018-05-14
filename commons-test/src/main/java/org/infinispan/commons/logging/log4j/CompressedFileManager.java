@@ -14,9 +14,8 @@
  * See the license for the specific language governing permissions and
  * limitations under the license.
  */
-package org.infinispan.util.logging.log4j;
+package org.infinispan.commons.logging.log4j;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -57,15 +56,22 @@ public class CompressedFileManager extends FileManager {
     *           The layout
     * @param bufferSize
     *           buffer size for buffered IO
+    * @param compressionLevel
+    *           gzip compression level
     * @return A FileManager for the File.
     */
-   public static CompressedFileManager getFileManager(final String fileName, final boolean append, boolean locking, final boolean bufferedIo, final String advertiseUri,
-         final Layout<? extends Serializable> layout, final int bufferSize) {
+   public static CompressedFileManager getFileManager(final String fileName, final boolean append, boolean locking,
+                                                      final boolean bufferedIo, final String advertiseUri,
+                                                      final Layout<? extends Serializable> layout, final int bufferSize,
+                                                      int compressionLevel) {
 
       if (locking && bufferedIo) {
          locking = false;
       }
-      return (CompressedFileManager) getManager(fileName, new FactoryData(append, locking, bufferedIo, bufferSize, advertiseUri, layout), FACTORY);
+      return (CompressedFileManager) getManager(fileName,
+                                                new FactoryData(append, locking, bufferedIo, bufferSize, advertiseUri,
+                                                                layout, compressionLevel),
+                                                FACTORY);
    }
 
    /**
@@ -78,11 +84,11 @@ public class CompressedFileManager extends FileManager {
       private final int bufferSize;
       private final String advertiseURI;
       private final Layout<? extends Serializable> layout;
+      public final int compressionLevel;
 
       /**
        * Constructor.
-       *
-       * @param append
+       *  @param append
        *           Append status.
        * @param locking
        *           Locking status.
@@ -91,16 +97,19 @@ public class CompressedFileManager extends FileManager {
        * @param bufferSize
        *           Buffer size.
        * @param advertiseURI
-       *           the URI to use when advertising the file
+       * @param compressionLevel
+       *           gzip compression level
        */
-      public FactoryData(final boolean append, final boolean locking, final boolean bufferedIO, final int bufferSize, final String advertiseURI,
-            final Layout<? extends Serializable> layout) {
+      public FactoryData(final boolean append, final boolean locking, final boolean bufferedIO, final int bufferSize,
+                         final String advertiseURI,
+                         final Layout<? extends Serializable> layout, int compressionLevel) {
          this.append = append;
          this.locking = locking;
          this.bufferedIO = bufferedIO;
          this.bufferSize = bufferSize;
          this.advertiseURI = advertiseURI;
          this.layout = layout;
+         this.compressionLevel = compressionLevel;
       }
    }
 
@@ -130,16 +139,9 @@ public class CompressedFileManager extends FileManager {
          try {
             os = new FileOutputStream(name, data.append);
             int bufferSize = data.bufferSize;
-            if (name.endsWith(".gz")) {
-               os = new GZIPOutputStream(os, bufferSize, true);
-               os.flush();
-            } else {
-               if (data.bufferedIO) {
-                  os = new BufferedOutputStream(os, bufferSize);
-               } else {
-                  bufferSize = -1; // signals to RollingFileManager not to use BufferedOutputStream
-               }
-            }
+            os = new GZIPOutputStream(os, bufferSize, false) {{
+               def.setLevel(data.compressionLevel);
+            }};
             boolean writeHeader = !data.append || !file.exists();
             return new CompressedFileManager(name, os, data.append, data.locking, data.advertiseURI, data.layout, bufferSize, writeHeader);
          } catch (final IOException ex) {

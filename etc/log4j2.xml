@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Configuration name="CommandLineConfig" packages="org.infinispan.util.logging.log4j">
+<Configuration name="CommandLineConfig" packages="org.infinispan.commons.logging.log4j">
   <Properties>
-    <Property name="infinispan.module-suffix"></Property>
-    <Property name="infinispan.log.path">.</Property>
-    <Property name="infinispan.log.thread-filter"></Property>
+     <Property name="infinispan.module-suffix"/>
+     <Property name="infinispan.log.path">target</Property>
   </Properties>
 
   <Appenders>
     <Console name="STDOUT">
       <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t) [%c{1}] %m%throwable{10}%n"/>
     </Console>
+     <!-- Use the sys: lookup so system properties set on the command line are preferred -->
     <File name="File" fileName="${sys:infinispan.log.path}/infinispan${sys:infinispan.module-suffix}.log"
           append="false">
       <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t:%x) [%c{1}] %m%n"/>

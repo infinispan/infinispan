@@ -66,10 +66,18 @@ public class TestSuiteProgress {
       log.info(message, exception);
    }
 
-   void setupFailed(String name, Throwable exception) {
+   void configurationStarted(String name) {
+      log.debug("Test configuration started: " + name);
+   }
+
+   void configurationFinished(String name) {
+      log.debug("Test configuration finished: " + name);
+   }
+
+   void configurationFailed(String name, Throwable exception) {
       failed.incrementAndGet();
-      String message = "Test setup failed: " + name;
-      progress(RED, message);
+      String message = "Test configuration failed: " + name;
+      progress(RED, message, exception);
       log.error(message, exception);
    }
 
