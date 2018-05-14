@@ -417,6 +417,11 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
+   public <T> T execute(String scriptName, Map<String, ?> params, Object key) {
+      return delegate.execute(scriptName, params, key);
+   }
+
+   @Override
    public CacheTopologyInfo getCacheTopologyInfo() {
       return delegate.getCacheTopologyInfo();
    }

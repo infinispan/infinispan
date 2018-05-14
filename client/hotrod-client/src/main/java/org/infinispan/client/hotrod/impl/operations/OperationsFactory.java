@@ -218,9 +218,9 @@ public class OperationsFactory implements HotRodConstants {
       return new SizeOperation(codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg);
    }
 
-   public <T> ExecuteOperation<T> newExecuteOperation(String taskName, Map<String, byte[]> marshalledParams) {
+   public <T> ExecuteOperation<T> newExecuteOperation(String taskName, Map<String, byte[]> marshalledParams, Object key) {
       return new ExecuteOperation<>(codec, channelFactory, cacheNameBytes,
-            topologyId, flags(), cfg, taskName, marshalledParams);
+            topologyId, flags(), cfg, taskName, marshalledParams, key);
    }
 
    public AdminOperation newAdminOperation(String taskName, Map<String, byte[]> marshalledParams) {

@@ -450,6 +450,14 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
    <T> T execute(String scriptName, Map<String, ?> params);
 
    /**
+    * Executes a remote script passing a set of named parameters, hinting that the script should be executed
+    * on the server that is expected to store given key. The key itself is not transferred to the server.
+    */
+   default <T> T execute(String scriptName, Map<String, ?> params, Object key) {
+      return execute(scriptName, params);
+   }
+
+   /**
     * Returns {@link CacheTopologyInfo} for this cache.
     */
    CacheTopologyInfo getCacheTopologyInfo();

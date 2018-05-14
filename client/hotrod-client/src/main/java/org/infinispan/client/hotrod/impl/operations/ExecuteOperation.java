@@ -1,7 +1,9 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
@@ -23,13 +25,24 @@ public class ExecuteOperation<T> extends RetryOnFailureOperation<T> {
 
    private final String taskName;
    private final Map<String, byte[]> marshalledParams;
+   private final Object key;
 
    protected ExecuteOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
                               AtomicInteger topologyId, int flags, Configuration cfg,
-                              String taskName, Map<String, byte[]> marshalledParams) {
+                              String taskName, Map<String, byte[]> marshalledParams, Object key) {
       super(EXEC_REQUEST, EXEC_RESPONSE, codec, channelFactory, cacheName == null ? DEFAULT_CACHE_NAME_BYTES : cacheName, topologyId, flags, cfg, null);
       this.taskName = taskName;
       this.marshalledParams = marshalledParams;
+      this.key = key;
+   }
+
+   @Override
+   protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
+      if (key != null) {
+         channelFactory.fetchChannelAndInvoke(key, failedServers, cacheName, this);
+      } else {
+         channelFactory.fetchChannelAndInvoke(failedServers, cacheName, this);
+      }
    }
 
    @Override
