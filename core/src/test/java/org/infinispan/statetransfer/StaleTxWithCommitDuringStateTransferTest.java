@@ -20,6 +20,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -84,8 +85,8 @@ public class StaleTxWithCommitDuringStateTransferTest extends MultipleCacheManag
       final Transaction tx = tm0.suspend();
 
       // Start cache 1, but the tx data request will be blocked on cache 0
-      StateTransferManager stm0 = TestingUtil.extractComponent(cache0, StateTransferManager.class);
-      int initialTopologyId = stm0.getCacheTopology().getTopologyId();
+      DistributionManager dm0 = cache0.getDistributionManager();
+      int initialTopologyId = dm0.getCacheTopology().getTopologyId();
       int rebalanceTopologyId = initialTopologyId + 1;
       AdvancedCache<Object, Object> cache1 = advancedCache(1, CACHE_NAME);
       checkpoint.awaitStrict("post_get_transactions_" + rebalanceTopologyId + "_from_" + address(1), 10, SECONDS);

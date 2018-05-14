@@ -1,14 +1,13 @@
 package org.infinispan.partitionhandling;
 
-import static org.infinispan.test.TestingUtil.extractComponentRegistry;
 import static org.testng.Assert.assertEquals;
 
 import org.infinispan.Cache;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.PartitionStatusChanged;
 import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEvent;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.testng.annotations.Test;
@@ -69,8 +68,8 @@ public class DelayedAvailabilityUpdateTest extends BasePartitionHandlingTest {
 
       ss.enter("main:check_availability");
       // Keys stay available in between the availability mode update and the topology update
-      StateTransferManager stmP0N1 = extractComponentRegistry(cache(p0.node(1))).getStateTransferManager();
-      eventuallyEquals(2, () -> stmP0N1.getCacheTopology().getActualMembers().size());
+      DistributionManager dmP0N1 = advancedCache(p0.node(1)).getDistributionManager();
+      eventuallyEquals(2, () -> dmP0N1.getCacheTopology().getActualMembers().size());
       assertEquals(AvailabilityMode.AVAILABLE, partitionHandlingManager(p0.node(0)).getAvailabilityMode());
 
       // The availability didn't change on p0.node0, check that keys owned by p1 are not accessible

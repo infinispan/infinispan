@@ -11,7 +11,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -52,12 +52,11 @@ public class MergeDuringReplaceTest extends MultipleCacheManagersTest {
          nonOwner = findNonOwner(key);
          c = cache(nonOwner);
       } else {
-         ConsistentHash ch = cache(0).getAdvancedCache().getComponentRegistry()
-            .getStateTransferManager().getCacheTopology().getCurrentCH();
-         List<Address> members = new ArrayList<>(ch.getMembers());
-         List<Address> owners = ch.locateOwners(key);
+         LocalizedCacheTopology cacheTopology = advancedCache(0).getDistributionManager().getCacheTopology();
+         List<Address> members = new ArrayList<>(cacheTopology.getMembers());
+         List<Address> owners = cacheTopology.getDistribution(key).readOwners();
          members.removeAll(owners);
-         nonOwner = ch.getMembers().indexOf(members.get(0));
+         nonOwner = cacheTopology.getMembers().indexOf(members.get(0));
          c = cache(nonOwner);
       }
 

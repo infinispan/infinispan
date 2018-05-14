@@ -329,8 +329,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       WriteCommand writeCommand = (WriteCommand) rCommand;
       int newTopologyId = getNewTopologyId(ce, currentTopologyId, writeCommand);
       if (trace)
-         log.tracef("Retrying command because of topology change, current topology is %d (requested: %d): %s",
-               currentTopologyId, newTopologyId, writeCommand);
+         log.tracef("Retrying command because of %s, current topology is %d (requested: %d): %s",
+               ce, currentTopologyId, newTopologyId, writeCommand);
       writeCommand.setTopologyId(newTopologyId);
       writeCommand.addFlags(FlagBitSets.COMMAND_RETRY);
       // In non-tx context, waiting for transaction data is equal to waiting for topology

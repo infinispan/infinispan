@@ -31,6 +31,7 @@ import org.infinispan.topology.CacheTopology;
 public class LocalizedCacheTopology extends CacheTopology {
 
    private final Address localAddress;
+   private boolean connected;
    private final Set<Address> membersSet;
    private final KeyPartitioner keyPartitioner;
    private final boolean isDistributed;
@@ -42,15 +43,19 @@ public class LocalizedCacheTopology extends CacheTopology {
    private final boolean isScattered;
    private final IntSet localReadSegments;
 
+   /**
+    * @param cacheMode Ignored, the result topology is always LOCAL
+    * @param localAddress Address of the local node
+    */
    public static LocalizedCacheTopology makeSingletonTopology(CacheMode cacheMode, Address localAddress) {
       List<Address> members = Collections.singletonList(localAddress);
       ConsistentHash ch = new ReplicatedConsistentHash(MurmurHash3.getInstance(), members, new int[]{0});
-      CacheTopology cacheTopology = new CacheTopology(0, 0, ch, null, Phase.NO_REBALANCE, members, null);
-      return new LocalizedCacheTopology(cacheMode, cacheTopology, key -> 0, localAddress);
+          CacheTopology cacheTopology = new CacheTopology(-1, -1, null, null, Phase.NO_REBALANCE, members, null);
+          return new LocalizedCacheTopology(CacheMode.LOCAL, cacheTopology, key -> 0, localAddress, false);
    }
 
    public LocalizedCacheTopology(CacheMode cacheMode, CacheTopology cacheTopology, KeyPartitioner keyPartitioner,
-                                 Address localAddress) {
+                                 Address localAddress, boolean connected) {
       super(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(), cacheTopology.getCurrentCH(),
             cacheTopology.getPendingCH(), cacheTopology.getUnionCH(), cacheTopology.getPhase(), cacheTopology.getActualMembers(),
             cacheTopology.getMembersPersistentUUIDs());
@@ -59,13 +64,14 @@ public class LocalizedCacheTopology extends CacheTopology {
       ConsistentHash writeCH = getWriteConsistentHash();
 
       this.localAddress = localAddress;
+      this.connected = connected;
       this.membersSet = new ImmutableHopscotchHashSet<>(cacheTopology.getMembers());
       this.keyPartitioner = keyPartitioner;
       this.isDistributed = cacheMode.isDistributed();
       isScattered = cacheMode.isScattered();
       boolean isReplicated = cacheMode.isReplicated();
       this.isSegmented = isDistributed || isReplicated || isScattered;
-      this.numSegments = readCH.getNumSegments();
+      this.numSegments = isSegmented ? readCH.getNumSegments() : 1;
 
       if (isDistributed || isScattered) {
          this.distributionInfos = new DistributionInfo[numSegments];
@@ -216,5 +222,13 @@ public class LocalizedCacheTopology extends CacheTopology {
 
    public Set<Address> getMembersSet() {
       return membersSet;
+   }
+
+   /**
+    * @return {@code true} if the local node received this topology from the coordinator,
+    * {@code false} otherwise (e.g. during preload).
+    */
+   public boolean isConnected() {
+      return connected;
    }
 }

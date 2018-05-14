@@ -17,7 +17,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -259,7 +259,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
             assertNull(dc2.get(i));
          }
       } else if (op == Operation.PUT || op == Operation.PUT_MAP || op == Operation.REPLACE) {
-         ConsistentHash ch = advancedCache(0).getComponentRegistry().getStateTransferManager().getCacheTopology().getReadConsistentHash();
+         LocalizedCacheTopology cacheTopology = advancedCache(0).getDistributionManager().getCacheTopology();
          // check that all values are the ones expected after state transfer
          for (int i = 0; i < numKeys; i++) {
             // check number of owners
@@ -270,7 +270,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
             if (dc2.get(i) != null) {
                owners++;
             }
-            assertEquals("Wrong number of owners", ch.locateOwners(i).size(), owners);
+            assertEquals("Wrong number of owners", cacheTopology.getDistribution(i).readOwners().size(), owners);
 
             // check values were not overwritten with old values carried by state transfer
             String expected = "after_st_" + i;
@@ -278,7 +278,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
             assertEquals("after_st_" + i, cache(2).get(i));
          }
       } else { // PUT_IF_ABSENT
-         ConsistentHash ch = advancedCache(0).getComponentRegistry().getStateTransferManager().getCacheTopology().getReadConsistentHash();
+         LocalizedCacheTopology cacheTopology = advancedCache(0).getDistributionManager().getCacheTopology();
          for (int i = 0; i < numKeys; i++) {
             // check number of owners
             int owners = 0;
@@ -288,7 +288,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
             if (dc2.get(i) != null) {
                owners++;
             }
-            assertEquals("Wrong number of owners", ch.locateOwners(i).size(), owners);
+            assertEquals("Wrong number of owners", cacheTopology.getDistribution(i).readOwners().size(), owners);
 
             String expected = "before_st_" + i;
             assertEquals(expected, cache(0).get(i));

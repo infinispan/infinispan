@@ -134,7 +134,7 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
          log.tracef("Previous value inserted: %s = %s", key, previousValue);
       }
 
-      int preJoinTopologyId = cache0.getComponentRegistry().getStateTransferManager().getCacheTopology().getTopologyId();
+      int preJoinTopologyId = cache0.getDistributionManager().getCacheTopology().getTopologyId();
 
       // Block any state response commands on cache0
       CheckPoint checkPoint = new CheckPoint();

@@ -163,7 +163,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          if (command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
             // we don't increment versions with state transfer
          } else if (info.isPrimary()) {
-            if (cacheTopology.getTopologyId() == 0 && command instanceof MetadataAwareCommand) {
+            if (!cacheTopology.isConnected() && command instanceof MetadataAwareCommand) {
                // Preload does not use functional commands which are not metadata-aware
                Metadata metadata = ((MetadataAwareCommand) command).getMetadata();
                svm.updatePreloadedEntryVersion(metadata.version());
@@ -315,8 +315,8 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
 
    private <T extends FlagAffectedCommand & TopologyAffectedCommand> LocalizedCacheTopology checkTopology(T command) {
       LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
-      assert command.getTopologyId() >= 0;
       if (!command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.CACHE_MODE_LOCAL) && command.getTopologyId() != cacheTopology.getTopologyId()) {
+         assert command.getTopologyId() >= 0;
          // When this exception is thrown and the topology is installed before we handle this in StateTransferInterceptor,
          // we would wait for topology with id that will never come (due to +1).
          // Note that this does not happen to write commands as these are not processed until we receive the topology

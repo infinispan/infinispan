@@ -1,11 +1,10 @@
 package org.infinispan.distribution;
 
+import net.jcip.annotations.GuardedBy;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.statetransfer.OutdatedTopologyException;
-import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import net.jcip.annotations.GuardedBy;
 
 /**
  * It manages the order of updates from the primary owner to backup owner.
@@ -25,7 +24,7 @@ public class TriangleOrderManager {
    private static final Log log = LogFactory.getLog(TriangleOrderManager.class);
    private static final boolean trace = log.isTraceEnabled();
    private final TriangleSequencer[] sequencers;
-   private volatile CacheTopology currentCacheTopology;
+   @Inject private DistributionManager distributionManager;
 
    public TriangleOrderManager(int segments) {
       TriangleSequencer[] triangleSequencers = new TriangleSequencer[segments];
@@ -46,17 +45,13 @@ public class TriangleOrderManager {
    }
 
    public boolean isNext(int segmentId, long sequenceNumber, int commandTopologyId) {
-      final int topologyId = currentCacheTopology.getTopologyId();
+      final int topologyId = distributionManager.getCacheTopology().getTopologyId();
       return commandTopologyId < topologyId ||
             (commandTopologyId == topologyId && checkIfNext(segmentId, commandTopologyId, sequenceNumber));
    }
 
    public void markDelivered(int segmentId, long sequenceNumber, int commandTopologyId) {
       sequencers[segmentId].deliver(commandTopologyId, sequenceNumber);
-   }
-
-   public void updateCacheTopology(CacheTopology newCacheTopology) {
-      this.currentCacheTopology = newCacheTopology;
    }
 
    private long getNext(int segmentId, int topologyId) {
@@ -68,7 +63,7 @@ public class TriangleOrderManager {
    }
 
    private void checkTopologyId(int topologyId) {
-      if (topologyId != currentCacheTopology.getTopologyId()) {
+      if (topologyId != distributionManager.getCacheTopology().getTopologyId()) {
          throw OutdatedTopologyException.INSTANCE;
       }
    }

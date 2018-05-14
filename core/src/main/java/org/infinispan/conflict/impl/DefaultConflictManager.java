@@ -99,7 +99,6 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    private final AtomicBoolean streamInProgress = new AtomicBoolean();
    private final Map<K, VersionRequest> versionRequestMap = new HashMap<>();
    private final Queue<VersionRequest> retryQueue = new ConcurrentLinkedQueue<>();
-   private volatile LocalizedCacheTopology installedTopology;
    private volatile boolean running = false;
    private volatile ReplicaSpliterator conflictSpliterator;
    private volatile CompletableFuture<Void> conflictFuture;
@@ -108,7 +107,6 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    public void start() {
       this.cacheName = cache.getName();
       this.localAddress = rpcManager.getAddress();
-      this.installedTopology = distributionManager.getCacheTopology();
 
       PartitionHandlingConfiguration config = cache.getCacheConfiguration().clustering().partitionHandling();
       this.entryMergePolicy = mergePolicyRegistry.createInstance(config);
@@ -133,15 +131,6 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
       if (isConflictResolutionInProgress() && conflictSpliterator != null)
          conflictSpliterator.stop();
-   }
-
-   @Override
-   public void onTopologyUpdate(LocalizedCacheTopology cacheTopology) {
-      if (!running)
-         return;
-
-      this.installedTopology = cacheTopology;
-      if (trace) log.tracef("(isRunning=%s) Installed new topology %s: %s", running, cacheTopology.getTopologyId(), cacheTopology);
    }
 
    @Override
@@ -195,7 +184,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    @Override
    public Stream<Map<Address, CacheEntry<K, V>>> getConflicts() {
       checkIsRunning();
-      return getConflicts(installedTopology);
+      return getConflicts(distributionManager.getCacheTopology());
    }
 
    private Stream<Map<Address, CacheEntry<K, V>>> getConflicts(LocalizedCacheTopology topology) {
@@ -233,7 +222,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    @Override
    public void resolveConflicts(EntryMergePolicy<K, V> mergePolicy) {
       checkIsRunning();
-      doResolveConflicts(installedTopology, mergePolicy, null);
+      doResolveConflicts(distributionManager.getCacheTopology(), mergePolicy, null);
    }
 
    @Override
@@ -369,7 +358,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       }
 
       void cancelRequestIfOutdated() {
-         Collection<Address> latestOwners = installedTopology.getWriteOwners(key);
+         Collection<Address> latestOwners = distributionManager.getCacheTopology().getWriteOwners(key);
          if (rpcFuture != null && !completableFuture.isDone() && !keyOwners.equals(latestOwners)) {
             rpcFuture = null;
             keyOwners.clear();
@@ -382,7 +371,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       }
 
       void start() {
-         LocalizedCacheTopology topology = installedTopology;
+         LocalizedCacheTopology topology = distributionManager.getCacheTopology();
          keyOwners = topology.getWriteOwners(key);
 
          if (trace) log.tracef("Attempting %s from owners %s", this, keyOwners);

@@ -86,7 +86,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.statetransfer.OutdatedTopologyException;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -102,7 +101,6 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
          FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.IGNORE_RETURN_VALUES | FlagBitSets.SKIP_REMOTE_LOOKUP |
          FlagBitSets.SKIP_SHARED_CACHE_STORE | SKIP_OWNERSHIP_CHECK | FlagBitSets.SKIP_XSITE_BACKUP;
    @Inject protected ScatteredVersionManager svm;
-   @Inject protected StateTransferManager stm;
    @Inject protected DistributionManager dm;
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject protected CommandsFactory commandsFactory;
@@ -579,7 +577,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
             return;
          }
          do {
-            lastTopology = stm.getCacheTopology().getTopologyId();
+            lastTopology = dm.getCacheTopology().getTopologyId();
             int numSegments = cache.getCacheConfiguration().clustering().hash().numSegments();
             if (blockedSegments != null) {
                blockedSegments.clear();
@@ -597,7 +595,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
                      break;
                }
             }
-         } while (stm.getCacheTopology().getTopologyId() != lastTopology);
+         } while (dm.getCacheTopology().getTopologyId() != lastTopology);
       }
 
       private void addBlocked(int segment) {
@@ -627,7 +625,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
                }
             }
             if (blockedSegments != null && !blockedSegments.isEmpty()) {
-               if (lastTopology == stm.getCacheTopology().getTopologyId()) {
+               if (lastTopology == dm.getCacheTopology().getTopologyId()) {
                   int numSegments = cache.getCacheConfiguration().clustering().hash().numSegments();
                   boolean[] newFinishedSegments = finishedSegments == null ? new boolean[numSegments] : Arrays.copyOf(finishedSegments, numSegments);
                   for (int segment = 0; segment < numSegments; ++segment) {
@@ -636,7 +634,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
                      }
                   }
                   // do one more check to find if the topology hasn't changed during iteration through states
-                  if (lastTopology == stm.getCacheTopology().getTopologyId()) {
+                  if (lastTopology == dm.getCacheTopology().getTopologyId()) {
                      finishedSegments = newFinishedSegments;
                   }
                }

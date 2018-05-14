@@ -18,9 +18,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
@@ -54,7 +54,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
    @Inject private TimeService timeService;
    @Inject @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
    private ScheduledExecutorService timeoutExecutor;
-   @Inject private StateTransferManager stateTransferManager;
+   @Inject private DistributionManager distributionManager;
 
    public DefaultPendingLockManager() {
       pendingLockPromiseMap = new ConcurrentHashMap<>();
@@ -190,7 +190,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
       boolean isFromStateTransfer = context.isOriginLocal() && ((LocalTransaction) tx).isFromStateTransfer();
       // if the transaction is from state transfer it should not wait for the backup locks of other transactions
       if (!isFromStateTransfer) {
-         final int topologyId = stateTransferManager.getCacheTopology().getTopologyId();
+         final int topologyId = distributionManager.getCacheTopology().getTopologyId();
          if (topologyId != TransactionTable.CACHE_STOPPED_TOPOLOGY_ID) {
             if (transactionTable.getMinTopologyId() < topologyId) {
                return topologyId;

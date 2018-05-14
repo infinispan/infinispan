@@ -565,7 +565,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case InvalidateVersionsCommand.COMMAND_ID:
             InvalidateVersionsCommand invalidateVersionsCommand = (InvalidateVersionsCommand) c;
-            invalidateVersionsCommand.init(dataContainer, orderedUpdatesManager, stateTransferLock, stateTransferManager, biasManager);
+            invalidateVersionsCommand.init(dataContainer, orderedUpdatesManager, stateTransferLock, distributionManager, biasManager);
             break;
 
          // === Functional commands ====

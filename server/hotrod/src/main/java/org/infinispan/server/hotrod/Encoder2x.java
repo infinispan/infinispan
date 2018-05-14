@@ -68,7 +68,7 @@ class Encoder2x implements VersionedEncoder {
          Configuration configuration = server.getCacheConfiguration(cacheName);
          CacheMode cacheMode = configuration == null ? CacheMode.LOCAL : configuration.clustering().cacheMode();
 
-         cacheTopology = cacheMode.isClustered() ? cr.getStateTransferManager().getCacheTopology() : null;
+         cacheTopology = cacheMode.isClustered() ? cr.getDistributionManager().getCacheTopology() : null;
          newTopology = getTopologyResponse(r, addressCache, cacheMode, cacheTopology);
          compatibilityEnabled = configuration != null && configuration.compatibility().enabled();
       }
@@ -104,7 +104,7 @@ class Encoder2x implements VersionedEncoder {
    private CacheTopology getCounterCacheTopology(EmbeddedCacheManager cacheManager) {
       AdvancedCache<?,?> cache = cacheManager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME).getAdvancedCache();
       return cache.getCacheConfiguration().clustering().cacheMode().isClustered() ?
-            cache.getComponentRegistry().getStateTransferManager().getCacheTopology() :
+            cache.getComponentRegistry().getDistributionManager().getCacheTopology() :
             null; //local cache
    }
 

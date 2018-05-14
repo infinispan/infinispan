@@ -18,6 +18,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -244,8 +245,9 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       if (availabilityMode == AvailabilityMode.AVAILABLE)
          return;
 
-      Collection<Address> owners = distributionManager.getCacheTopology().getDistribution(key).writeOwners();
-      List<Address> actualMembers = stateTransferManager.getCacheTopology().getActualMembers();
+      LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
+      Collection<Address> owners = cacheTopology.getDistribution(key).writeOwners();
+      List<Address> actualMembers = cacheTopology.getActualMembers();
       if (!actualMembers.containsAll(owners) && !isOperationAllowed(isWrite)) {
          if (trace) log.tracef("Partition is in %s mode, PartitionHandling is set to to %s, access is not allowed for key %s", availabilityMode, partitionHandling, key);
          throw log.degradedModeKeyUnavailable(key);

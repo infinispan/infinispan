@@ -6,6 +6,7 @@
  */
 package org.infinispan.hibernate.cache.commons.access;
 
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.hibernate.cache.commons.util.BeginInvalidationCommand;
 import org.infinispan.hibernate.cache.commons.util.CacheCommandInitializer;
 import org.infinispan.hibernate.cache.commons.util.EndInvalidationCommand;
@@ -21,7 +22,6 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.ByteString;
 
 import java.util.List;
@@ -41,7 +41,7 @@ public class NonTxPutFromLoadInterceptor extends BaseCustomAsyncInterceptor {
 
 	@Inject private CacheCommandInitializer commandInitializer;
 	@Inject private RpcManager rpcManager;
-	@Inject private StateTransferManager stateTransferManager;
+	@Inject private DistributionManager distributionManager;
 
 	private RpcOptions asyncUnordered;
 
@@ -73,7 +73,7 @@ public class NonTxPutFromLoadInterceptor extends BaseCustomAsyncInterceptor {
 
 		EndInvalidationCommand endInvalidationCommand = commandInitializer.buildEndInvalidationCommand(
 				cacheName, new Object[] { key }, lockOwner);
-		List<Address> members = stateTransferManager.getCacheTopology().getMembers();
+		List<Address> members = distributionManager.getCacheTopology().getMembers();
 		rpcManager.invokeRemotely(members, endInvalidationCommand, asyncUnordered);
 	}
 }

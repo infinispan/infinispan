@@ -10,10 +10,10 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TimeService;
@@ -83,13 +83,13 @@ public class CreateCacheCommand extends BaseRpcCommand {
    protected void waitForCacheToStabilize(Cache<Object, Object> cache, Configuration cacheConfig)
          throws InterruptedException {
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
-      StateTransferManager stateTransferManager = componentRegistry.getStateTransferManager();
+      DistributionManager distributionManager = componentRegistry.getDistributionManager();
       StateTransferLock stateTransferLock = componentRegistry.getStateTransferLock();
       TimeService timeService = componentRegistry.getTimeService();
 
       long endTime = timeService.expectedEndTime(cacheConfig.clustering().stateTransfer().timeout(),
             TimeUnit.MILLISECONDS);
-      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+      CacheTopology cacheTopology = distributionManager.getCacheTopology();
       while (cacheTopology.getMembers().size() < expectedMembers || cacheTopology.getPendingCH() != null) {
          long remainingTime = timeService.remainingTime(endTime, TimeUnit.NANOSECONDS);
          try {
@@ -98,7 +98,7 @@ public class CreateCacheCommand extends BaseRpcCommand {
          } catch (TimeoutException ignored) {
             throw log.creatingTmpCacheTimedOut(cacheNameToCreate, cacheManager.getAddress());
          }
-         cacheTopology = stateTransferManager.getCacheTopology();
+         cacheTopology = distributionManager.getCacheTopology();
       }
    }
 

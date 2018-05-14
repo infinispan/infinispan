@@ -16,6 +16,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -60,9 +61,9 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
 
       AdvancedCache<Object, Object> cache0 = advancedCache(0, CACHE_NAME);
       TransactionManager tm0 = cache0.getTransactionManager();
-      StateTransferManager stm0 = TestingUtil.extractComponent(cache0, StateTransferManager.class);
+      DistributionManager dm0 = cache0.getDistributionManager();
 
-      int initialTopologyId = stm0.getCacheTopology().getTopologyId();
+      int initialTopologyId = dm0.getCacheTopology().getTopologyId();
       int rebalanceTopologyId = initialTopologyId + 1;
       final int finalTopologyId = rebalanceTopologyId + 3;
 
@@ -93,7 +94,7 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
 
       // Wait for the rebalance to start
       sequencer.advance("tx:before_lock");
-      assertEquals(rebalanceTopologyId, stm0.getCacheTopology().getTopologyId());
+      assertEquals(rebalanceTopologyId, dm0.getCacheTopology().getTopologyId());
 
       // Start a transaction on cache 0
       MagicKey key = new MagicKey("testkey", cache0);
@@ -105,7 +106,7 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
       sequencer.advance("tx:after_commit");
 
       TestingUtil.waitForNoRebalance(caches(CACHE_NAME));
-      assertEquals(finalTopologyId, stm0.getCacheTopology().getTopologyId());
+      assertEquals(finalTopologyId, dm0.getCacheTopology().getTopologyId());
 
       // Check for stale locks
       final TransactionTable tt0 = TestingUtil.extractComponent(cache0, TransactionTable.class);

@@ -81,4 +81,14 @@ public class DistributionInfo {
    public Ownership writeOwnership() {
       return isPrimary ? Ownership.PRIMARY : (isWriteOwner ? Ownership.BACKUP : Ownership.NON_OWNER);
    }
+
+   @Override
+   public String toString() {
+      return "DistributionInfo{" +
+             (isPrimary ? "primary, " : (isReadOwner ? "read+write, " : (isWriteBackup ? "write-only, " : ""))) +
+             "segmentId=" + segmentId +
+             ", readOwners=" + readOwners +
+             ", writeOwners=" + writeOwners +
+             '}';
+   }
 }

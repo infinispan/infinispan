@@ -28,6 +28,7 @@ import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.BlockingInterceptor;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
@@ -37,7 +38,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.CacheTopology.Phase;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
@@ -539,7 +539,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
          joiner.topologyManager.confirmTopologyUpdate(Phase.READ_NEW_WRITE_ALL);
       }
       eventuallyEquals(currentTopologyId + topologyOnNode2,
-                       () -> wfti.stateTransferManager.getCacheTopology().getTopologyId());
+                       () -> wfti.distributionManager.getCacheTopology().getTopologyId());
 
       ControlledRpcManager.BlockedResponseMap blockedGet = sentGet.awaitAll();
       int succesful = 0;
@@ -751,7 +751,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
    }
 
    private int currentTopologyId(Cache cache) {
-      return TestingUtil.extractComponent(cache, StateTransferManager.class).getCacheTopology().getTopologyId();
+      return cache.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
    }
 
    private void assertTopologyId(final int expectedTopologyId, final Cache cache) {
@@ -836,7 +836,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
 
       protected final int expectedTopologyId;
       // ugly hooks to be able to access topology from test
-      private volatile StateTransferManager stateTransferManager;
+      private volatile DistributionManager distributionManager;
       private volatile StateTransferLock stateTransferLock;
 
       private WaitForTopologyInterceptor(int expectedTopologyId) {
@@ -844,8 +844,8 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       }
 
       @Inject
-      public void init(StateTransferManager stateTransferManager, StateTransferLock stateTransferLock) {
-         this.stateTransferManager = stateTransferManager;
+      public void init(DistributionManager distributionManager, StateTransferLock stateTransferLock) {
+         this.distributionManager = distributionManager;
          this.stateTransferLock = stateTransferLock;
       }
 
@@ -857,7 +857,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
          if (topologyFuture != null) {
             topologyFuture.get(10, TimeUnit.SECONDS);
          }
-         assertEquals(expectedTopologyId, stateTransferManager.getCacheTopology().getTopologyId());
+         assertEquals(expectedTopologyId, distributionManager.getCacheTopology().getTopologyId());
          return invokeNext(ctx, command);
       }
    }

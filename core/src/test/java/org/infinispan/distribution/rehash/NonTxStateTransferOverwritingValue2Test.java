@@ -113,7 +113,7 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
          log.tracef("Previous value inserted: %s = %s", key, previousValue);
       }
 
-      int preJoinTopologyId = cache0.getComponentRegistry().getStateTransferManager().getCacheTopology().getTopologyId();
+      int preJoinTopologyId = cache0.getDistributionManager().getCacheTopology().getTopologyId();
 
       // Block any state response commands on cache0
       // So that we can install the spy ClusteringDependentLogic on cache1 before state transfer is applied

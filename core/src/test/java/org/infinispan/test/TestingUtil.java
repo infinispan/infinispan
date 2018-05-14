@@ -115,7 +115,6 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.security.impl.SecureCacheImpl;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.statetransfer.StateTransferManagerImpl;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -451,9 +450,9 @@ public class TestingUtil {
          if (c instanceof SecureCacheImpl) {
             c = (Cache) extractField(SecureCacheImpl.class, c, "delegate");
          }
-         StateTransferManager stateTransferManager = extractComponent(c, StateTransferManager.class);
+         DistributionManager distributionManager = c.getAdvancedCache().getDistributionManager();
          while (true) {
-            CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+            CacheTopology cacheTopology = distributionManager.getCacheTopology();
             boolean allMembersExist = cacheTopology != null && cacheTopology.getMembers().containsAll(expectedMembers);
             boolean isCorrectPhase = cacheTopology != null && cacheTopology.getPhase() == phase;
             if (allMembersExist && isCorrectPhase) break;

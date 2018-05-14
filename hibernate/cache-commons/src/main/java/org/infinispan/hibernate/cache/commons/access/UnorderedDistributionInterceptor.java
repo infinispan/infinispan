@@ -50,13 +50,13 @@ public class UnorderedDistributionInterceptor extends NonTxDistributionIntercept
 			return invokeNext(ctx, command);
 		}
 		int commandTopologyId = command.getTopologyId();
-		int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
+      LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
+		int currentTopologyId = cacheTopology.getTopologyId();
 		if (commandTopologyId != -1 && currentTopologyId != commandTopologyId) {
 			throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
 				commandTopologyId + ", got " + currentTopologyId);
 		}
 
-		LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
 		if (isReplicated) {
 			// local result is always ignored
 			return invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, throwable) ->

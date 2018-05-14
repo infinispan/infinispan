@@ -5,7 +5,7 @@ import static org.testng.Assert.assertTrue;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -43,8 +43,8 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       final TransactionTable tt0 = TestingUtil.getTransactionTable(cache(0));
       final TransactionTable tt1 = TestingUtil.getTransactionTable(cache(1));
 
-      StateTransferManager stateTransferManager0 = TestingUtil.extractComponent(cache(0), StateTransferManager.class);
-      final int topologyId = stateTransferManager0.getCacheTopology().getTopologyId();
+      DistributionManager distributionManager0 = advancedCache(0).getDistributionManager();
+      final int topologyId = distributionManager0.getCacheTopology().getTopologyId();
 
       assertEquals(tt0.getMinTopologyId(), topologyId);
       assertEquals(tt1.getMinTopologyId(), topologyId);
@@ -55,7 +55,7 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
       log.trace("New node added.");
 
-      final int topologyId2 = stateTransferManager0.getCacheTopology().getTopologyId();
+      final int topologyId2 = distributionManager0.getCacheTopology().getTopologyId();
       assertTrue(topologyId2 > topologyId);
 
       final TransactionTable tt2 = TestingUtil.getTransactionTable(cache(2));
@@ -68,8 +68,8 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       final TransactionTable tt0 = TestingUtil.getTransactionTable(cache(0));
       final TransactionTable tt1 = TestingUtil.getTransactionTable(cache(1));
 
-      StateTransferManager stateTransferManager0 = TestingUtil.extractComponent(cache(0), StateTransferManager.class);
-      final int topologyId = stateTransferManager0.getCacheTopology().getTopologyId();
+      DistributionManager distributionManager0 = advancedCache(0).getDistributionManager();
+      final int topologyId = distributionManager0.getCacheTopology().getTopologyId();
 
       tm(1).begin();
       cache(1).put(getKeyForCache(0),"v");
@@ -85,7 +85,7 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
       log.trace("New node added.");
 
-      final int topologyId2 = stateTransferManager0.getCacheTopology().getTopologyId();
+      final int topologyId2 = distributionManager0.getCacheTopology().getTopologyId();
       assertTrue(topologyId2 > topologyId);
 
       assertEquals(tt0.getMinTopologyId(), topologyId);

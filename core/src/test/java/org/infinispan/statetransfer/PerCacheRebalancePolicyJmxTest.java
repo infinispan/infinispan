@@ -16,6 +16,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -89,13 +90,13 @@ public class PerCacheRebalancePolicyJmxTest extends MultipleCacheManagersTest {
       ObjectName jmxCacheB = TestingUtil.getCacheObjectName(domain0, "b(" + cacheMode.name().toLowerCase() + ")");
 
       // Check initial state
-      StateTransferManager stm0a = TestingUtil.extractComponent(cache(0, "a"), StateTransferManager.class);
-      assertEquals(Arrays.asList(address(0), address(1)), stm0a.getCacheTopology().getCurrentCH().getMembers());
-      assertNull(stm0a.getCacheTopology().getPendingCH());
+      DistributionManager dm0a = advancedCache(0, "a").getDistributionManager();
+      assertEquals(Arrays.asList(address(0), address(1)), dm0a.getCacheTopology().getCurrentCH().getMembers());
+      assertNull(dm0a.getCacheTopology().getPendingCH());
 
-      StateTransferManager stm0b = TestingUtil.extractComponent(cache(0, "b"), StateTransferManager.class);
-      assertEquals(Arrays.asList(address(0), address(1)), stm0b.getCacheTopology().getCurrentCH().getMembers());
-      assertNull(stm0b.getCacheTopology().getPendingCH());
+      DistributionManager dm0b = advancedCache(0, "b").getDistributionManager();
+      assertEquals(Arrays.asList(address(0), address(1)), dm0b.getCacheTopology().getCurrentCH().getMembers());
+      assertNull(dm0b.getCacheTopology().getPendingCH());
 
       assertTrue(mBeanServer.isRegistered(ltmName0));
       assertTrue((Boolean) mBeanServer.getAttribute(ltmName0, REBALANCING_ENABLED));
@@ -122,8 +123,8 @@ public class PerCacheRebalancePolicyJmxTest extends MultipleCacheManagersTest {
       // Check that no rebalance happened after 1 second
       Thread.sleep(1000);
       assertFalse((Boolean) mBeanServer.getAttribute(ltmName1, REBALANCING_ENABLED));
-      assertNull(stm0a.getCacheTopology().getPendingCH());
-      assertEquals(Arrays.asList(address(0), address(1)), stm0a.getCacheTopology().getCurrentCH().getMembers());
+      assertNull(dm0a.getCacheTopology().getPendingCH());
+      assertEquals(Arrays.asList(address(0), address(1)), dm0a.getCacheTopology().getCurrentCH().getMembers());
 
       // Disable rebalancing for cache b
       mBeanServer.setAttribute(jmxCacheB, new Attribute(REBALANCING_ENABLED, false));
@@ -133,22 +134,22 @@ public class PerCacheRebalancePolicyJmxTest extends MultipleCacheManagersTest {
       mBeanServer.setAttribute(ltmName0, new Attribute(REBALANCING_ENABLED, true));
       assertTrue((Boolean) mBeanServer.getAttribute(ltmName0, REBALANCING_ENABLED));
 
-      checkRehashed(stm0a, getCaches("a"), Arrays.asList(address(0), address(1), address(2), address(3)));
+      checkRehashed(dm0a, getCaches("a"), Arrays.asList(address(0), address(1), address(2), address(3)));
 
       // Check that cache "b" still has rebalancing disabled
       assertFalse((Boolean)mBeanServer.getAttribute(jmxCacheB, REBALANCING_ENABLED));
-      assertEquals(Arrays.asList(address(0), address(1)), stm0b.getCacheTopology().getCurrentCH().getMembers());
+      assertEquals(Arrays.asList(address(0), address(1)), dm0b.getCacheTopology().getCurrentCH().getMembers());
 
       // Enable rebalancing for cache b
       mBeanServer.setAttribute(jmxCacheB, new Attribute(REBALANCING_ENABLED, true));
       // Check that cache "b" now has 4 nodes, and the CH is balanced
-      checkRehashed(stm0b, getCaches("b"), Arrays.asList(address(0), address(1), address(2), address(3)));
+      checkRehashed(dm0b, getCaches("b"), Arrays.asList(address(0), address(1), address(2), address(3)));
    }
 
-   private void checkRehashed(StateTransferManager stm, List<Cache<Object,Object>> caches, List<Address> addresses) {
+   private void checkRehashed(DistributionManager dm, List<Cache<Object,Object>> caches, List<Address> addresses) {
       TestingUtil.waitForNoRebalance(caches);
-      assertNull(stm.getCacheTopology().getPendingCH());
-      ConsistentHash ch = stm.getCacheTopology().getCurrentCH();
+      assertNull(dm.getCacheTopology().getPendingCH());
+      ConsistentHash ch = dm.getCacheTopology().getCurrentCH();
       assertEquals(addresses, ch.getMembers());
       for (int i = 0; i < ch.getNumSegments(); i++) {
          assertEquals(ch.getNumOwners(), ch.locateOwnersForSegment(i).size());

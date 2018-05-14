@@ -599,7 +599,13 @@ public class JGroupsTransport implements Transport {
       // The first view is installed before returning from JChannel.connect
       // So we need to set the local address here
       if (address == null) {
-         address = fromJGroupsAddress(channel.getAddress());
+         org.jgroups.Address jgroupsAddress = channel.getAddress();
+         this.address = fromJGroupsAddress(jgroupsAddress);
+         if (trace) {
+            String uuid = (jgroupsAddress instanceof org.jgroups.util.UUID) ?
+                          ((org.jgroups.util.UUID) jgroupsAddress).toStringLong() : "N/A";
+            log.tracef("Local address %s, uuid %s", jgroupsAddress, uuid);
+         }
       }
       List<List<Address>> subGroups;
       if (newView instanceof MergeView) {

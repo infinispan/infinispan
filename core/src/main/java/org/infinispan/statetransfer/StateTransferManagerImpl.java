@@ -170,7 +170,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    private void doTopologyUpdate(CacheTopology newCacheTopology, boolean isRebalance) {
-      CacheTopology oldCacheTopology = stateConsumer.getCacheTopology();
+      CacheTopology oldCacheTopology = distributionManager.getCacheTopology();
 
       int newTopologyId = newCacheTopology.getTopologyId();
       if (oldCacheTopology != null && oldCacheTopology.getTopologyId() > newTopologyId) {
@@ -209,7 +209,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newTopologyId, false);
 
       if (initialStateTransferComplete.getCount() > 0) {
-         assert stateConsumer.getCacheTopology() == newCacheTopology;
+         assert distributionManager.getCacheTopology().getTopologyId() == newCacheTopology.getTopologyId();
          boolean isJoined = phase == CacheTopology.Phase.NO_REBALANCE
                && newCacheTopology.getReadConsistentHash().getMembers().contains(rpcManager.getAddress());
          if (isJoined) {
@@ -248,7 +248,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    @Override
    public boolean isJoinComplete() {
-      return stateConsumer.getCacheTopology() != null; // TODO [anistor] this does not mean we have received a topology update or a rebalance yet
+      return distributionManager.getCacheTopology() != null; // TODO [anistor] this does not mean we have received a topology update or a rebalance yet
    }
 
    @Override
@@ -268,7 +268,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    @Override
    public CacheTopology getCacheTopology() {
-      return stateConsumer.getCacheTopology();
+      return distributionManager.getCacheTopology();
    }
 
    @Override

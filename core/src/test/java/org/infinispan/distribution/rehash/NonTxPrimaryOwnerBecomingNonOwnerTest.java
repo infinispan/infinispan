@@ -146,7 +146,7 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
       final int postJoinTopologyId = duringJoinTopologyId + 1;
       checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_" + address(0));
       eventuallyEquals(postJoinTopologyId,
-            () -> cache0.getComponentRegistry().getStateTransferManager().getCacheTopology().getTopologyId());
+            () -> cache0.getDistributionManager().getCacheTopology().getTopologyId());
 
       // Allow the command to proceed
       log.tracef("Unblocking the write command on node " + address(1));

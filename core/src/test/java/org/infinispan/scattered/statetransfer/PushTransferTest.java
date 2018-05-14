@@ -16,7 +16,6 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.statetransfer.StateResponseCommand;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.BlockingLocalTopologyManager;
@@ -40,7 +39,7 @@ public class PushTransferTest extends AbstractStateTransferTest {
    public void testNodeJoin() throws Exception {
       List<MagicKey> keys = init();
       EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(defaultConfig, TRANSPORT_FLAGS);
-      int startTopologyId = TestingUtil.extractComponent(c1, StateTransferManager.class).getCacheTopology().getTopologyId();
+      int startTopologyId = c1.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
 
       BlockingLocalTopologyManager bltm = BlockingLocalTopologyManager.replaceTopologyManager(cm4, CACHE_NAME);
 

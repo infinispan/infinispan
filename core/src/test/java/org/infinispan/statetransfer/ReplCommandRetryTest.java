@@ -1,7 +1,6 @@
 package org.infinispan.statetransfer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.findInterceptor;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 import static org.testng.AssertJUnit.assertEquals;
@@ -75,7 +74,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(buildConfig(null, PutKeyValueCommand.class, true));
       final Cache<Object, Object> c1 = cm1.getCache();
       DelayInterceptor di1 = findInterceptor(c1, DelayInterceptor.class);
-      int initialTopologyId = extractComponent(c1, StateTransferManager.class).getCacheTopology().getTopologyId();
+      int initialTopologyId = c1.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
 
       EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(buildConfig(null, PutKeyValueCommand.class, false));
       final Cache<Object, Object> c2 = cm2.getCache();
@@ -165,7 +164,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(buildConfig(lockingMode, commandClass, false));
       final Cache<Object, Object> c1 = cm1.getCache();
       DelayInterceptor di1 = findInterceptor(c1, DelayInterceptor.class);
-      int initialTopologyId = extractComponent(c1, StateTransferManager.class).getCacheTopology().getTopologyId();
+      int initialTopologyId = c1.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
 
       EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(buildConfig(lockingMode, commandClass, true));
       final Cache<String, String> c2 = cm2.getCache();
@@ -236,7 +235,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
    private void waitForStateTransfer(int expectedTopologyId, Cache... caches) {
       waitForNoRebalance(caches);
       for (Cache c : caches) {
-         CacheTopology cacheTopology = extractComponent(c, StateTransferManager.class).getCacheTopology();
+         CacheTopology cacheTopology = c.getAdvancedCache().getDistributionManager().getCacheTopology();
          assertEquals(String.format("Wrong topology on cache %s, expected %d and got %s", c, expectedTopologyId, cacheTopology),
                expectedTopologyId, cacheTopology.getTopologyId());
       }
