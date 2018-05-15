@@ -11,12 +11,12 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import javax.security.auth.Subject;
-import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.DecoratedCache;
+import org.infinispan.commons.api.TransactionalCache;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.Experimental;
@@ -53,7 +53,7 @@ import org.infinispan.util.function.SerializableFunction;
  * @author Tristan Tarrant
  * @since 4.0
  */
-public interface AdvancedCache<K, V> extends Cache<K, V> {
+public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
 
    /**
     * A method that adds flags to any API call.  For example, consider the following code snippet:
@@ -309,14 +309,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return the data container associated with this cache instance
     */
    DataContainer<K, V> getDataContainer();
-
-   /**
-    * Returns the transaction manager configured for this cache. If no transaction manager was configured, this method
-    * returns null.
-    *
-    * @return the transaction manager associated with this cache instance or null
-    */
-   TransactionManager getTransactionManager();
 
    /**
     * Returns the component that deals with all aspects of acquiring and releasing locks for cache entries.

@@ -24,7 +24,7 @@ package org.jboss.as.clustering.infinispan;
 
 import javax.transaction.TransactionManager;
 
-import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 
 /**
  * @author Paul Ferraro
@@ -39,7 +39,7 @@ public class TransactionManagerProvider implements TransactionManagerLookup {
 
     /**
      * {@inheritDoc}
-     * @see org.infinispan.transaction.lookup.TransactionManagerLookup#getTransactionManager()
+     * @see TransactionManagerLookup#getTransactionManager()
      */
     @Override
     public TransactionManager getTransactionManager() {

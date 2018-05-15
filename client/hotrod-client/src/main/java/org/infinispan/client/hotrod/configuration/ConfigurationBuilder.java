@@ -323,8 +323,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private final NearCacheConfigurationBuilder nearCache;
    private final List<String> whiteListRegExs = new ArrayList<>();
    private int batchSize = ConfigurationProperties.DEFAULT_BATCH_SIZE;
+   private final TransactionConfigurationBuilder transaction;
 
-   private final List<ClusterConfigurationBuilder> clusters = new ArrayList<ClusterConfigurationBuilder>();
+   private final List<ClusterConfigurationBuilder> clusters = new ArrayList<>();
 
    public ConfigurationBuilder() {
       this.classLoader = new WeakReference<>(Thread.currentThread().getContextClassLoader());
@@ -332,6 +333,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.asyncExecutorFactory = new ExecutorFactoryConfigurationBuilder(this);
       this.security = new SecurityConfigurationBuilder(this);
       this.nearCache = new NearCacheConfigurationBuilder(this);
+      this.transaction = new TransactionConfigurationBuilder(this);
    }
 
    @Override
@@ -559,6 +561,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
+   public TransactionConfigurationBuilder transaction() {
+      return transaction;
+   }
+
+   @Override
    public ConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
 
@@ -610,7 +617,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       }
 
       this.batchSize(typed.getIntProperty(ConfigurationProperties.BATCH_SIZE, batchSize, true));
-
+      transaction.withTransactionProperties(properties);
       return this;
    }
 
@@ -620,10 +627,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       asyncExecutorFactory.validate();
       security.validate();
       nearCache.validate();
+      transaction.validate();
       if (maxRetries < 0) {
          throw log.invalidMaxRetries(maxRetries);
       }
-      Set<String> clusterNameSet = new HashSet<String>(clusters.size());
+      Set<String> clusterNameSet = new HashSet<>(clusters.size());
       for (ClusterConfigurationBuilder clusterConfigBuilder : clusters) {
          if (!clusterNameSet.add(clusterConfigBuilder.getClusterName())) {
             throw log.duplicateClusterDefinition(clusterConfigBuilder.getClusterName());
@@ -634,7 +642,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
    @Override
    public Configuration create() {
-      List<ServerConfiguration> servers = new ArrayList<ServerConfiguration>();
+      List<ServerConfiguration> servers = new ArrayList<>();
       if (this.servers.size() > 0)
          for (ServerConfigurationBuilder server : this.servers) {
             servers.add(server.create());
@@ -651,7 +659,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
             consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive,
-            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize);
+            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize, transaction.create());
    }
 
    @Override
@@ -695,6 +703,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.maxRetries = template.maxRetries();
       this.nearCache.read(template.nearCache());
       this.whiteListRegExs.addAll(template.serialWhitelist());
+      this.transaction.read(template.transaction());
 
       return this;
    }

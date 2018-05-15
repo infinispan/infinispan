@@ -6,6 +6,7 @@
 
     <dependencies>
         <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
         <module name="io.netty" slot="${slot}"/>
         <module name="org.infinispan.commons" slot="${slot}"/>
         <module name="com.github.ben-manes.caffeine" slot="${slot}"/>

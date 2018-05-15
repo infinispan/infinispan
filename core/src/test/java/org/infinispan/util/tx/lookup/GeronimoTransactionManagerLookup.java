@@ -10,7 +10,7 @@ import org.apache.geronimo.transaction.manager.TransactionLog;
 import org.apache.geronimo.transaction.manager.XidFactoryImpl;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

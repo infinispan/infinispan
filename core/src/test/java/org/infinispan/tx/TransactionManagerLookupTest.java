@@ -9,7 +9,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
-import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.testng.annotations.Test;
 
 /**

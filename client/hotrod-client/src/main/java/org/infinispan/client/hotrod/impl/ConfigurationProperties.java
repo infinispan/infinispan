@@ -6,6 +6,8 @@ import java.util.regex.Pattern;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder;
+import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
@@ -66,6 +68,8 @@ public class ConfigurationProperties {
          Pattern.compile('^' + ConfigurationProperties.SASL_PROPERTIES_PREFIX + '.');
    public static final String JAVA_SERIAL_WHITELIST = "infinispan.client.hotrod.java_serial_whitelist";
    public static final String BATCH_SIZE = "infinispan.client.hotrod.batch_size";
+   public static final String TRANSACTION_MANAGER_LOOKUP = "infinispan.client.hotrod.transaction.transaction_manager_lookup";
+   public static final String TRANSACTION_MODE = "infinispan.client.hotrod.transaction.transaction_mode";
 
    // defaults
 
@@ -191,6 +195,14 @@ public class ConfigurationProperties {
 
    public int getBatchSize() {
       return props.getIntProperty(BATCH_SIZE, DEFAULT_BATCH_SIZE);
+   }
+
+   public String getTransactionManagerLookup() {
+      return props.getProperty(TRANSACTION_MANAGER_LOOKUP, TransactionConfigurationBuilder.defaultTransactionManagerLookup().getClass().getName(), true);
+   }
+
+   public TransactionMode getTransactionMode() {
+      return props.getEnumProperty(TRANSACTION_MODE, TransactionMode.class, TransactionMode.NONE, true);
    }
 
    /**

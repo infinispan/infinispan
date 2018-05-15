@@ -3,7 +3,7 @@ package org.infinispan.tx.recovery;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
-import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 
 /**

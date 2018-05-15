@@ -8,6 +8,7 @@ import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readMaybeRa
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readMaybeSignedInt;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readMaybeString;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readMaybeVInt;
+import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readMaybeVLong;
 
 import java.io.IOException;
 import java.security.PrivilegedActionException;
@@ -574,7 +575,12 @@ class Decoder2x implements VersionedDecoder {
          case 0x08:
             return Optional.of(new ExpirationParam(EXPIRATION_NONE, TimeUnitValue.decode(timeUnit)));
          default:
-            return readMaybeLong(byteBuf).map(time -> new ExpirationParam(time, TimeUnitValue.decode(timeUnit)));
+            return readMaybeVLong(byteBuf).map(time -> {
+               if (time == Long.MIN_VALUE) {
+                  return null;
+               }
+               return new ExpirationParam(time, TimeUnitValue.decode(timeUnit));
+            });
       }
    }
 

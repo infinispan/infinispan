@@ -479,15 +479,15 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return await(operationsFactory.newFaultTolerantPingOperation().execute());
    }
 
-   byte[] keyToBytes(Object o) {
+   protected byte[] keyToBytes(Object o) {
       return dataFormat.keyToBytes(o, estimateKeySize, estimateValueSize);
    }
 
-   byte[] valueToBytes(Object o) {
+   protected byte[] valueToBytes(Object o) {
       return dataFormat.valueToBytes(o, estimateKeySize, estimateValueSize);
    }
 
-   private void assertRemoteCacheManagerIsStarted() {
+   protected void assertRemoteCacheManagerIsStarted() {
       if (!remoteCacheManager.isStarted()) {
          String message = "Cannot perform operations on a cache associated with an unstarted RemoteCacheManager. Use RemoteCacheManager.start before using the remote cache.";
          if (log.isInfoEnabled()) {
@@ -683,7 +683,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
          // TODO: This would be more efficient if done on the server as a task or separate protocol
          // Have to close the stream, just in case stream terminates early
          try (Stream<V> stream = stream()) {
-            return stream.anyMatch(v -> Objects.equals(v, o));
+            return stream.anyMatch(v -> Objects.deepEquals(v, o));
          }
       }
 

@@ -210,6 +210,11 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder batchSize(int batchSize);
 
    /**
+    * Transaction configuration
+    */
+   TransactionConfigurationBuilder transaction();
+
+   /**
     * Configures this builder using the specified properties. See {@link ConfigurationBuilder} for a list.
     */
    ConfigurationBuilder withProperties(Properties properties);

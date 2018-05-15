@@ -1,7 +1,11 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
 import static org.infinispan.commons.io.SignedNumeric.encode;
+
+import javax.transaction.xa.Xid;
+
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.transaction.manager.RemoteXid;
 import org.infinispan.commons.util.Util;
 
 import io.netty.buffer.ByteBuf;
@@ -21,8 +25,7 @@ public final class ByteBufUtil {
 
    public static String readString(ByteBuf buf) {
       byte[] strContent = readArray(buf);
-      String readString = new String(strContent, HotRodConstants.HOTROD_STRING_CHARSET);
-      return readString;
+      return new String(strContent, HotRodConstants.HOTROD_STRING_CHARSET);
    }
 
    public static void writeString(ByteBuf buf, String string) {
@@ -128,6 +131,41 @@ public final class ByteBufUtil {
          }
       } finally {
          buf.readerIndex(currentReaderIndex);
+      }
+   }
+
+   /**
+    * Estimates the {@link Xid} encoding size.
+    * <p>
+    * If the instance is a {@link RemoteXid}, the estimation is accurate. Otherwise, the max size is used.
+    *
+    * @param xid the {@link Xid} instance to test.
+    * @return the estimated size.
+    */
+   public static int estimateXidSize(Xid xid) {
+      if (xid instanceof RemoteXid) {
+         return ((RemoteXid) xid).estimateSize();
+      } else {
+         // Worst case.
+         // To be more accurate, we need to invoke getGlobalTransactionId and getBranchQualifier that will most likely
+         //create and copy the array
+         return estimateVIntSize(xid.getFormatId()) + Xid.MAXBQUALSIZE + Xid.MAXGTRIDSIZE;
+      }
+   }
+
+   /**
+    * Writes the {@link Xid} to the {@link ByteBuf}.
+    *
+    * @param buf the buffer to write to.
+    * @param xid the {@link Xid} to encode
+    */
+   public static void writeXid(ByteBuf buf, Xid xid) {
+      if (xid instanceof RemoteXid) {
+         ((RemoteXid) xid).writeTo(buf);
+      } else {
+         ByteBufUtil.writeSignedVInt(buf, xid.getFormatId());
+         writeArray(buf, xid.getGlobalTransactionId());
+         writeArray(buf, xid.getBranchQualifier());
       }
    }
 }

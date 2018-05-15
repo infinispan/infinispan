@@ -1,0 +1,202 @@
+:tx: link:{javaeedocroot}/javax/transaction/Transaction.html[Transaction]
+:tm: link:{javaeedocroot}/javax/transaction/TransactionManager.html[TransactionManager]
+:sync: link:{javaeedocroot}/javax/transaction/Synchronization.html[Synchronization]
+:xa: link:{javaeedocroot}/javax/transaction/xa/XAResource.html[XAResource]
+:rcm: link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager]
+:rc: link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache]
+:tx-mode: link:{javadocroot}/org/infinispan/client/hotrod/configuration/TransactionMode.html[TransactionMode]
+:cb: link:{javadocroot}/org/infinispan/client/hotrod/configuration/ConfigurationBuilder.html[ConfigurationBuilder]
+:gtml: link:{javadocroot}/org/infinispan/client/hotrod/transaction/lookup/GenericTransactionManagerLookup.html[GenericTransactionManagerLookup]
+:rtml: link:{javadocroot}/org/infinispan/client/hotrod/transaction/lookup/RemoteTransactionManagerLookup.html[RemoteTransactionManagerLookup]
+:rtm: link:{javadocroot}/org/infinispan/client/hotrod/transaction/manager/RemoteTransactionManager.html[RemoteTransactionManager]
+
+==== Hot Rod Transaction
+
+This section provides details about how to configure and use the Hot Rod client to be a participant in a JTA {tx}.
+
+In order to participate in a transaction, the client needs to know the {tm} to interact with and
+how it is going to participate in the {tx} (as {sync} or {xa}).
+
+INFO: The transactions are optimistic in a way that the write locks are acquired at prepare time.
+
+===== Server Configuration
+
+To allow the client to participate in JTA {tx}s, the cache in the server must be transactional too.
+The following configuration is mandatory in the server:
+
+* use `REPEATABLE_READ` isolation level:
+This is the only supported isolation level.
+
+* use `PESSIMISTIC` locking mode:
+`OPTIMISTIC` locking mode will be supported in the future.
+
+If any of the configuration above isn't correct, your transactions will rollback only.
+
+Also, as transaction mode, it is recommended to use `NON_XA` or `NON_DURABLE_XA`.
+`FULL_XA` imposes a performance penalty and it won't be used by your Hot Rod transaction.
+Hot Rod transaction will have it owns recovery mechanism.
+
+===== Client Configuration
+
+When creating the {rcm}, it is possible to set the default {tm} and {tx-mode} to use by the {rc}.
+However, it is possible to set a different {tm} and {tx-mode} for each cache.
+This will be shown later in this section.
+
+The code snippet below shows only the configuration available for transactional caches:
+
+[source,java]
+----
+org.infinispan.client.hotrod.configuration.ConfigurationBuilder cb = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+//other client configuration parameters
+cb.transaction().transactionManagerLookup(GenericTransactionManagerLookup.getInstance());
+cb.transaction().transactionMode(TransactionMode.NON_XA);
+RemoteCacheManager rmc = new RemoteCacheManager(cb.build());
+----
+
+For a complete reference to the available configuration options please refer to the {cb}'s javadoc.
+
+It is also possible to configure the Java Hot Rod client using a properties file, e.g.:
+
+[source]
+----
+# other client configuration properties
+infinispan.client.hotrod.transaction.transaction_manager_lookup = org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup
+infinispan.client.hotrod.transaction.transaction_mode = NON_XA
+----
+
+====== The `TransactionManagerLookup` interface
+
+This interface is the entry point to fetch the {tm} to use.
+There are a couple of implementations available and you can implement this interface to add your own {tm}.
+
+The available implementations are:
+
+* {gtml}:
+This is a lookup class that locate {tm}s in the most popular Java EE application servers.
+If no {tm} can be found, it defaults to the {rtm}.
+
+* {rtml}:
+This provides a basic {tm} which should only be used when no other implementation is available.
+This implementation is just a basic and volatile implementation and has some severe limitations to do with
+concurrent transactions and recovery.
+
+====== The `TransactionMode`
+
+The {tx-mode} tells how the {rc} is going to interact with the {tm}.
+The possible modes are:
+
+* `NONE`: The {rc} does not interact with the {tm}.
+It is non-transactional.
+This is the default mode.
+
+* `NON_XA`: The {rc} interacts via {sync}.
+
+* `NON_DURABLE_XA`: The {rc} interacts via {xa} but without recovery capabilities enabled.
+This mode isn't implemented yet.
+
+* `FULL_XA`: Same as above but with recovery available.
+This mode isn't implemented yet.
+
+===== The `RemoteCacheManager`
+
+The `getCache(String)` method returns a {rc} based on the configuration provided.
+However, {rcm} has new overloads method to return your {rc} with or without transactional support:
+
+* `getCache(String cacheName, TransactionMode transactionMode)`:
+it returns a {rc} overriding the configured {tx-mode} only.
+
+* `getCache(String cacheName, boolean forceReturnValue, TransactionMode transactionMode)`:
+same as above but forcing (or not) a return value for write operations.
+
+* `getCache(String cacheName, TransactionManager transactionManager)`:
+it returns a {rc} overriding the configured {tm} only.
+
+* `getCache(String cacheName, boolean forceReturnValue, TransactionManager transactionManager)
+same as above but forcing (or not) a return value for write operations.
+
+* `getCache(String cacheName, TransactionMode transactionMode, TransactionManager transactionManager)`:
+it returns a {rc} overriding the configured {tm} and {tx-mode}.
+If `transactionManager` or `transactionMode` is null, it will use the configured values.
+
+* `getCache(String cacheName, boolean forceReturnValue, TransactionMode transactionMode, TransactionManager transactionManager)`:
+same as above but forcing (or not) a return value for write operations.
+
+NOTE: When `forceReturnValue` is `true`, it will force a return value for operation even if it isn't needed (example a put(k,v)).
+Conditional writes always need the current value and they ignore this parameter.
+
+The {rc} was extended with `getTransactionManager()` to return the {tm} used by the cache.
+It is `null` if the {rc} isn't transaction.
+
+===== Usage Example
+
+**Using the configured `TransactionManager` and `TransactionMode`**
+
+[source,java]
+----
+//configure the transaction manager and transaction mode
+org.infinispan.client.hotrod.configuration.ConfigurationBuilder cb = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+cb.transaction().transactionManagerLookup(RemoteTransactionManagerLookup.getInstance());
+cb.transaction().transactionMode(TransactionMode.NON_XA);
+
+RemoteCacheManager rcm = new RemoteCacheManager(cb.build());
+
+//my-cache will be using the transaction manager and mode as configured above.
+RemoteCache<String, String> cache = rcm.getCache("my-cache");
+
+//it returns the transaction manager used by the cache
+TransactionManager tm = cache.getTransactionManager();
+
+//just a simple transaction.
+tm.begin();
+cache.put("k1", "v1");
+System.out.println("K1 value is " + cache.get("k1"));
+tm.commit();
+----
+
+**Overriding the `TransactionManager`**
+
+[source,java]
+----
+//configure the transaction manager and transaction mode
+org.infinispan.client.hotrod.configuration.ConfigurationBuilder cb = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+cb.transaction().transactionManagerLookup(RemoteTransactionManagerLookup.getInstance());
+cb.transaction().transactionMode(TransactionMode.NON_XA);
+
+RemoteCacheManager rcm = new RemoteCacheManager(cb.build());
+
+//a custom transaction manager
+TransactionManager myCustomTM = ...
+
+//my-cache overrides the TransactionManager. null for TransactionMode means to use the default.
+RemoteCache<String, String> cache = rcm.getCache("my-cache", null, myCustomTM);
+
+//just a simple transaction.
+myCustomTM.begin();
+cache.put("k1", "v1");
+System.out.println("K1 value is " + cache.get("k1"));
+myCustomTM.commit();
+----
+
+**Overriding the TransactionMode**
+
+[source,java]
+----
+//configure the transaction manager and transaction mode
+org.infinispan.client.hotrod.configuration.ConfigurationBuilder cb = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+cb.transaction().transactionManagerLookup(RemoteTransactionManagerLookup.getInstance());
+cb.transaction().transactionMode(TransactionMode.NON_XA);
+
+RemoteCacheManager rcm = new RemoteCacheManager(cb.build());
+
+//my-cache overrides the TransactionMode.
+RemoteCache<String, String> cache = rcm.getCache("my-cache", TransactionMode.NON_DURABLE_XA, null);
+
+//it returns the transaction manager used by the cache
+TransactionManager tm = cache.getTransactionManager();
+
+//just a simple transaction.
+tm.begin();
+cache.put("k1", "v1");
+System.out.println("K1 value is " + cache.get("k1"));
+tm.commit();
+----

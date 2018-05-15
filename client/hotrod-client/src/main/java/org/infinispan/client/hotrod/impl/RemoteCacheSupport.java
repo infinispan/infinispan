@@ -177,12 +177,12 @@ public abstract class RemoteCacheSupport<K,V> implements RemoteCache<K,V> {
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan,
                   TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return merge(key, value, remappingFunction, lifespan, lifespanUnit, defaultMaxIdleTime, MILLISECONDS);
+      throw new UnsupportedOperationException();
    }
 
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan,
                   TimeUnit lifespanUnit) {
-      throw new UnsupportedOperationException();
+      return merge(key, value, remappingFunction, lifespan, lifespanUnit, defaultMaxIdleTime, MILLISECONDS);
    }
 }

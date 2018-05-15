@@ -4,7 +4,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.tree.TreeCache;
 import org.infinispan.tree.TreeCacheFactory;
 import org.testng.annotations.Test;

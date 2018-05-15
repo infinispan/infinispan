@@ -49,13 +49,15 @@ public class Configuration {
    private final List<ClusterConfiguration> clusters;
    private final List<String> serialWhitelist;
    private final int batchSize;
+   private final TransactionConfiguration transaction;
 
    Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory, ClassLoader classLoader,
                  ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate,
                  Marshaller marshaller, Class<? extends Marshaller> marshallerClass,
                  ProtocolVersion protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
                  int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
-                 List<ClusterConfiguration> clusters, List<String> serialWhitelist, int batchSize) {
+                 List<ClusterConfiguration> clusters, List<String> serialWhitelist, int batchSize,
+                 TransactionConfiguration transaction) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategyFactory = balancingStrategyFactory;
       this.maxRetries = maxRetries;
@@ -79,6 +81,7 @@ public class Configuration {
       this.clusters = clusters;
       this.serialWhitelist = serialWhitelist;
       this.batchSize = batchSize;
+      this.transaction = transaction;
    }
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {
@@ -221,6 +224,10 @@ public class Configuration {
       return batchSize;
    }
 
+   public TransactionConfiguration transaction() {
+      return transaction;
+   }
+
    @Override
    public String toString() {
       return "Configuration [asyncExecutorFactory=" + asyncExecutorFactory + ", balancingStrategyFactory=()->" + balancingStrategyFactory.get()
@@ -231,7 +238,8 @@ public class Configuration {
             + ", valueSizeEstimate=" + valueSizeEstimate + ", maxRetries=" + maxRetries
             + ", serialWhiteList=" + serialWhitelist
             + ", batchSize=" + batchSize
-            + "nearCache=" + nearCache + "]";
+            + ", nearCache=" + nearCache
+            + ", transaction=" + transaction + "]";
    }
 
    public Properties properties() {
@@ -336,6 +344,7 @@ public class Configuration {
 
       properties.setProperty(ConfigurationProperties.BATCH_SIZE, Integer.toString(batchSize));
 
+      transaction.toProperties(properties);
       return properties;
    }
 }
