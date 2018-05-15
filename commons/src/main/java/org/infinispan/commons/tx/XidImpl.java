@@ -92,20 +92,12 @@ public class XidImpl implements Xid {
 
    @Override
    public byte[] getGlobalTransactionId() {
-      int firstByteOfBranch = rawId[0] & 0xFF;
-      int length = firstByteOfBranch - 1; //we need to remove the control byte
-      byte[] globalId = new byte[length];
-      System.arraycopy(rawId, 1, globalId, 0, length);
-      return globalId;
+      return Arrays.copyOfRange(rawId, globalIdOffset(), branchQualifierOffset());
    }
 
    @Override
    public byte[] getBranchQualifier() {
-      int firstByteOfBranch = rawId[0] & 0xFF;
-      int length = rawId.length - firstByteOfBranch;
-      byte[] branch = new byte[length];
-      System.arraycopy(rawId, firstByteOfBranch, branch, 0, length);
-      return branch;
+      return Arrays.copyOfRange(rawId, branchQualifierOffset(), rawId.length);
    }
 
    @Override
@@ -153,6 +145,26 @@ public class XidImpl implements Xid {
             ", globalTransactionId=" + Util.toHexString(rawId, 1, firstByteOfBranch) +
             ",branchQualifier=" + Util.toHexString(rawId, firstByteOfBranch, rawId.length) +
             "}";
+   }
+
+   protected int globalIdOffset() {
+      return 1;
+   }
+
+   protected int globalIdLength() {
+      return branchQualifierOffset() - 1; //we need to remove the control byte
+   }
+
+   protected int branchQualifierOffset() {
+      return (rawId[0] & 0xFF);
+   }
+
+   protected int branchQualifierLength() {
+      return rawId.length - branchQualifierOffset();
+   }
+
+   protected byte[] rawData() {
+      return rawId;
    }
 
    private boolean arraysEquals(byte[] other, int start, int end, int length) {

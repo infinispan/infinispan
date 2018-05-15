@@ -1,9 +1,12 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.DataFormat;
@@ -15,6 +18,7 @@ import org.infinispan.client.hotrod.impl.iteration.KeyTracker;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.query.RemoteQuery;
+import org.infinispan.client.hotrod.impl.transaction.entry.Modification;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 
 import io.netty.channel.Channel;
@@ -306,5 +310,15 @@ public class OperationsFactory implements HotRodConstants {
 
    public AuthOperation newAuthOperation(Channel channel, String saslMechanism, byte[] response) {
       return new AuthOperation(codec, topologyId, cfg, channel, channelFactory, saslMechanism, response);
+   }
+
+   public PrepareTransactionOperation newPrepareTransactionOperation(Xid xid, boolean onePhaseCommit,
+         Collection<Modification> modifications) {
+      return new PrepareTransactionOperation(codec, channelFactory, cacheNameBytes, topologyId, cfg, xid,
+            onePhaseCommit, modifications);
+   }
+
+   public CompleteTransactionOperation newCompleteTransactionOperation(Xid xid, boolean commit) {
+      return new CompleteTransactionOperation(codec, channelFactory, cacheNameBytes, topologyId, cfg, xid, commit);
    }
 }

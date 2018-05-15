@@ -39,7 +39,7 @@ RemoteCacheManager rmc = new RemoteCacheManager(cb.build());
 For a complete reference to the available configuration option please refer to the
 link:{javadocroot}/org/infinispan/client/hotrod/configuration/ConfigurationBuilder.html[ConfigurationBuilder]'s javadoc.
 
-It is also possible to configure the Java Hot Rod client using an properties file, e.g.:
+It is also possible to configure the Java Hot Rod client using a properties file, e.g.:
 
 [source]
 ----
@@ -1202,6 +1202,8 @@ assert "aValue".equals(cache.withFlags(Flag.FORCE_RETURN_VALUE).put("aKey",
 ----
 
 This default behavior can can be changed through force-return-value=true configuration parameter (see configuration section bellow).
+
+include::server_protocols_hotrod_transaction.adoc[]
 
 ==== Client Intelligence
 HotRod defines three level of intelligence for the clients:

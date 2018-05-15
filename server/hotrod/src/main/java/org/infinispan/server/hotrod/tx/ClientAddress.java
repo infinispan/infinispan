@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -30,7 +31,9 @@ public class ClientAddress implements Address {
    @Override
    public int compareTo(Address o) {
       if (o instanceof ClientAddress) {
-         return localAddress.compareTo(((ClientAddress) o).localAddress);
+         return localAddress == null ?
+               (((ClientAddress) o).localAddress == null ? 0 : -1) :
+               localAddress.compareTo(((ClientAddress) o).localAddress);
       }
       return -1;
    }
@@ -45,12 +48,12 @@ public class ClientAddress implements Address {
       }
 
       ClientAddress that = (ClientAddress) o;
-      return localAddress.equals(that.localAddress);
+      return Objects.equals(localAddress, that.localAddress);
    }
 
    @Override
    public int hashCode() {
-      return localAddress.hashCode();
+      return localAddress == null ? 0 : localAddress.hashCode();
    }
 
    @Override

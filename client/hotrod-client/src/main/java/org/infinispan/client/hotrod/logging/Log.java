@@ -291,4 +291,17 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The client listener must be configured with useRawData=true when using a custom data format", id = 4081)
    IncorrectClientListenerException clientListenerMustUseRawDataWithCustomDataFormat();
+
+   @Message(value = "TransactionMode must be non-null.", id = 4082)
+   CacheConfigurationException invalidTransactionMode();
+
+   @Message(value = "TransactionManagerLookup must be non-null", id = 4083)
+   CacheConfigurationException invalidTransactionManagerLookup();
+
+   @Message(value = "Cache %s doesn't support transactions. Please check the documentation how to configure it properly.", id = 4084)
+   HotRodClientException cacheDoesNotSupportTransactions(String name);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error checking server configuration for transactional cache %s", id = 4085)
+   void invalidTxServerConfig(String name, @Cause Throwable throwable);
 }

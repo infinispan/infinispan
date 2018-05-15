@@ -34,6 +34,7 @@ import org.hibernate.internal.util.config.ConfigurationHelper;
 import org.hibernate.service.ServiceRegistry;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.module.ModuleCommandFactory;
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.TransactionConfiguration;
@@ -83,7 +84,7 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
 	private final Map<DataType, Configuration> dataTypeConfigurations = new HashMap<>();
 	private EmbeddedCacheManager manager;
 
-	private org.infinispan.transaction.lookup.TransactionManagerLookup transactionManagerlookup;
+	private TransactionManagerLookup transactionManagerlookup;
 	private TransactionManager transactionManager;
 
 	private List<BaseRegion> regions = new ArrayList<>();
@@ -264,7 +265,7 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
 		return new DefaultCacheManagerProvider(serviceRegistry).getEmbeddedCacheManager(properties);
 	}
 
-	protected org.infinispan.transaction.lookup.TransactionManagerLookup createTransactionManagerLookup(
+	protected TransactionManagerLookup createTransactionManagerLookup(
 			SessionFactoryOptions settings, Properties properties) {
 		return new HibernateTransactionManagerLookup( settings, properties );
 	}

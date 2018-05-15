@@ -2,7 +2,7 @@ package org.infinispan.test.tx;
 
 import javax.transaction.TransactionManager;
 
-import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 
 public class TestLookup implements TransactionManagerLookup {
 

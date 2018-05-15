@@ -1,7 +1,5 @@
 package org.infinispan.transaction.lookup;
 
-import javax.transaction.TransactionManager;
-
 /**
  * Factory interface, allows {@link org.infinispan.Cache} to use different transactional systems. Names of implementors of
  * this class can be configured using {@link Configuration#setTransactionManagerLookupClass}.
@@ -13,14 +11,8 @@ import javax.transaction.TransactionManager;
  *
  * @author Bela Ban, Aug 26 2003
  * @since 4.0
+ * @deprecated Use {@link org.infinispan.commons.tx.lookup.TransactionManagerLookup} instead.
  */
-public interface TransactionManagerLookup {
-
-   /**
-    * Returns a new TransactionManager.
-    *
-    * @throws Exception if lookup failed
-    */
-   TransactionManager getTransactionManager() throws Exception;
-
+@Deprecated
+public interface TransactionManagerLookup extends org.infinispan.commons.tx.lookup.TransactionManagerLookup {
 }

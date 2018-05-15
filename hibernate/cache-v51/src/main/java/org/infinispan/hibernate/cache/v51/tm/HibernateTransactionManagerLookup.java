@@ -11,6 +11,7 @@ import javax.transaction.TransactionManager;
 
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 
 /**
  * Hibernate transaction manager lookup class for Infinispan, so that
@@ -19,7 +20,7 @@ import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
  * @author Galder Zamarreño
  * @since 3.5
  */
-public class HibernateTransactionManagerLookup implements org.infinispan.transaction.lookup.TransactionManagerLookup {
+public class HibernateTransactionManagerLookup implements TransactionManagerLookup {
 	private final JtaPlatform jtaPlatform;
 
    /**

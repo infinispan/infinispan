@@ -343,7 +343,7 @@ public class TransactionImpl implements Transaction {
 
    @Override
    public String toString() {
-      return "EmbeddedTransaction{" +
+      return "TransactionImpl{" +
             "xid=" + xid +
             ", status=" + Util.transactionStatusToString(status) +
             '}';
