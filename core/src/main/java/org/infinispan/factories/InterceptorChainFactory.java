@@ -6,7 +6,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
@@ -34,7 +33,6 @@ import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.interceptors.impl.ClusteredCacheLoaderInterceptor;
-import org.infinispan.interceptors.impl.CompatibilityInterceptor;
 import org.infinispan.interceptors.impl.DistCacheWriterInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.GroupingInterceptor;
@@ -46,13 +44,14 @@ import org.infinispan.interceptors.impl.PassivationWriterInterceptor;
 import org.infinispan.interceptors.impl.PrefetchInterceptor;
 import org.infinispan.interceptors.impl.RetryingEntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.ScatteredCacheWriterInterceptor;
+import org.infinispan.interceptors.impl.TransactionalExceptionEvictionInterceptor;
 import org.infinispan.interceptors.impl.TransactionalStoreInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
+import org.infinispan.interceptors.impl.VersionInterceptor;
 import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
-import org.infinispan.interceptors.impl.TransactionalExceptionEvictionInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderDistributionInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderStateTransferInterceptor;
@@ -134,10 +133,8 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       }
       interceptorChain.appendInterceptor(createInterceptor(new InvocationContextInterceptor(), InvocationContextInterceptor.class), false);
 
-      CompatibilityModeConfiguration compatibility = configuration.compatibility();
-      if (compatibility.enabled()) {
-         interceptorChain.appendInterceptor(createInterceptor(
-               new CompatibilityInterceptor(), CompatibilityInterceptor.class), false);
+      if (!configuration.transaction().transactionMode().isTransactional()) {
+         interceptorChain.appendInterceptor(createInterceptor(new VersionInterceptor(), VersionInterceptor.class), false);
       }
 
       // add marshallable check interceptor for situations where we want to figure out before marshalling
