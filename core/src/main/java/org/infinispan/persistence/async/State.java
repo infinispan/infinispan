@@ -1,9 +1,7 @@
 package org.infinispan.persistence.async;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 
@@ -103,34 +101,4 @@ public class State {
             throw new IllegalArgumentException("Unknown modification type " + mod.getType());
       }
    }
-
-
-   public Set getKeysInTransit() {
-      Set result = new HashSet();
-      _loadKeys(this, result);
-      return result;
-   }
-
-   private void _loadKeys(State s, Set result) {
-      // if not cleared, get keys from next State or the back-end store
-      if (!s.clear) {
-         State next = s.next;
-         if (next != null)
-            _loadKeys(next, result);
-      }
-
-      // merge keys of the current State
-      for (Modification mod : s.modifications.values()) {
-         switch (mod.getType()) {
-            case STORE:
-               Object key = ((Store) mod).getKey();
-                  result.add(key);
-               break;
-            case REMOVE:
-               result.remove(((Remove) mod).getKey());
-               break;
-         }
-      }
-   }
-
 }

@@ -1659,6 +1659,19 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="fail-silently" type="xs:boolean" default="${AsyncStore.failSilently}">
+      <xs:annotation>
+        <xs:documentation>
+          When enabled, write operations are only attempted `connection-attempts` times by the async store and if all attempts
+          fail the errors are simply ignored and the operations are never executed on the store; where `connection-attempts`
+          is configured in the PersistenceConfiguration. When disabled, failed modifications are not discarded on failure.
+          Instead they are re-attempted when the underlying store becomes available. In the event that the modification-queue
+          becomes full before the underlying store becomes available, an error will be thrown on all future writes to the
+          store until the modification-queue is successfully flushed. In the event that the underlying store does not become
+          available before the Async store is stopped, queued modifications are not persisted.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="custom-store">

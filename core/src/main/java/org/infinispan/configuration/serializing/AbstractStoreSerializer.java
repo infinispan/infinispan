@@ -36,6 +36,7 @@ public abstract class AbstractStoreSerializer {
          writer.writeStartElement(Element.WRITE_BEHIND);
          writeBehind.write(writer, AsyncStoreConfiguration.MODIFICATION_QUEUE_SIZE, Attribute.MODIFICATION_QUEUE_SIZE);
          writeBehind.write(writer, AsyncStoreConfiguration.THREAD_POOL_SIZE, Attribute.THREAD_POOL_SIZE);
+         writeBehind.write(writer, AsyncStoreConfiguration.FAIL_SILENTLY, Attribute.FAIL_SILENTLY);
          writer.writeEndElement();
       }
    }

@@ -15,22 +15,25 @@ public class AsyncStoreConfiguration {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    public static final AttributeDefinition<Integer> MODIFICATION_QUEUE_SIZE  = AttributeDefinition.builder("modificationQueueSize", 1024).immutable().build();
    public static final AttributeDefinition<Integer> THREAD_POOL_SIZE = AttributeDefinition.builder("threadPoolSize", 1).immutable().build();
+   public static final AttributeDefinition<Boolean> FAIL_SILENTLY = AttributeDefinition.builder("failSilently", false).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(AsyncStoreConfiguration.class, ENABLED, MODIFICATION_QUEUE_SIZE, THREAD_POOL_SIZE);
+      return new AttributeSet(AsyncStoreConfiguration.class, ENABLED, MODIFICATION_QUEUE_SIZE, THREAD_POOL_SIZE, FAIL_SILENTLY);
    }
 
    private final Attribute<Boolean> enabled;
    private final Attribute<Integer> modificationQueueSize;
    private final Attribute<Integer> threadPoolSize;
+   private final Attribute<Boolean> failSilently;
 
    private final AttributeSet attributes;
 
    AsyncStoreConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
-      enabled = attributes.attribute(ENABLED);
-      modificationQueueSize = attributes.attribute(MODIFICATION_QUEUE_SIZE);
-      threadPoolSize = attributes.attribute(THREAD_POOL_SIZE);
+      this.enabled = attributes.attribute(ENABLED);
+      this.modificationQueueSize = attributes.attribute(MODIFICATION_QUEUE_SIZE);
+      this.threadPoolSize = attributes.attribute(THREAD_POOL_SIZE);
+      this.failSilently = attributes.attribute(FAIL_SILENTLY);
    }
 
    /**
@@ -87,6 +90,10 @@ public class AsyncStoreConfiguration {
     */
    public int threadPoolSize() {
       return threadPoolSize.get();
+   }
+
+   public boolean failSilently() {
+      return failSilently.get();
    }
 
    public AttributeSet attributes() {

@@ -54,7 +54,7 @@
          <expiration interval="10000" lifespan="10" max-idle="10"/>
          <persistence passivation="false" availability-interval="2000" connection-attempts="5" connection-interval="100">
             <file-store path="path" relative-to="jboss.server.temp.dir" shared="false" singleton="false" fetch-state="false" preload="true" purge="false">
-               <write-behind modification-queue-size="2048" thread-pool-size="1" />
+               <write-behind modification-queue-size="2048" thread-pool-size="1" fail-silently="true"/>
             </file-store>
          </persistence>
          <memory>

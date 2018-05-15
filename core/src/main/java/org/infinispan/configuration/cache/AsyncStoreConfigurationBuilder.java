@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.AsyncStoreConfiguration.ENABLED;
+import static org.infinispan.configuration.cache.AsyncStoreConfiguration.FAIL_SILENTLY;
 import static org.infinispan.configuration.cache.AsyncStoreConfiguration.MODIFICATION_QUEUE_SIZE;
 import static org.infinispan.configuration.cache.AsyncStoreConfiguration.THREAD_POOL_SIZE;
 
@@ -91,6 +92,20 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
     */
    public AsyncStoreConfigurationBuilder<S> threadPoolSize(int i) {
       attributes.attribute(THREAD_POOL_SIZE).set(i);
+      return this;
+   }
+
+   /**
+    * @param failSilently When true, write operations are only attempted `connection-attempts` times by the async store and if all attempts
+    *           fail the errors are simply ignored and the operations are never executed on the store; where `connection-attempts`
+    *           is configured in the PersistenceConfiguration. When disabled, failed modifications are not discarded on failure.
+    *           Instead they are re-attempted when the underlying store becomes available. In the event that the modification-queue
+    *           becomes full before the underlying store becomes available, an error will be thrown on all future writes to the
+    *           store until the modification-queue is successfully flushed. In the event that the underlying store does not become
+    *           available before the Async store is stopped, queued modifications are not persisted.
+    */
+   public AsyncStoreConfigurationBuilder<S> failSilently(boolean failSilently) {
+      attributes.attribute(FAIL_SILENTLY).set(failSilently);
       return this;
    }
 

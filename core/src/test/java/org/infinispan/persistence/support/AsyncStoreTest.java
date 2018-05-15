@@ -103,16 +103,17 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
             .enable()
             .threadPoolSize(10);
       dummyCfg.slow(slow);
-      DummyInMemoryStore underlying = new DummyInMemoryStore();
-      writer = new SlowAdvancedAsyncCacheWriter(underlying);
       InitializationContext ctx = PersistenceMockUtil.createContext(getClass().getSimpleName(), builder.build(), marshaller);
+      DummyInMemoryStore underlying = new DummyInMemoryStore();
+      underlying.init(ctx);
+      underlying.start();
+      writer = new SlowAdvancedAsyncCacheWriter(underlying);
       writer.init(ctx);
       writer.start();
       loader = new AdvancedAsyncCacheLoader(underlying, writer.getState());
       loader.init(ctx);
       loader.start();
-      underlying.init(ctx);
-      underlying.start();
+      eventually(writer::isAvailable);
    }
 
    @BeforeMethod
