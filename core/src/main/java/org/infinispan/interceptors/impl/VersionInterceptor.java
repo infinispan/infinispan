@@ -13,7 +13,7 @@ import org.infinispan.metadata.Metadata;
  * @author wburns
  * @since 9.0
  */
-public class CompatibilityInterceptor extends DDAsyncInterceptor {
+public class VersionInterceptor extends DDAsyncInterceptor {
 
    @Inject protected VersionGenerator versionGenerator;
 
