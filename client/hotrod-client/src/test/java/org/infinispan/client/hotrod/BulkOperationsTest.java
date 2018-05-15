@@ -10,6 +10,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -193,6 +194,7 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
       collection.remove(transform.function.apply(23));
       collection.remove(transform.function.apply(1001));
       assertEquals(98, collection.size());
+      assertEquals(98, remoteCache.size());
    }
 
    @Test(dataProvider = "collections-item")
@@ -206,6 +208,7 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
       assertEquals(96, collection.size());
       collection.removeAll(Arrays.asList(transform.function.apply(5), transform.function.apply(890)));
       assertEquals(96, collection.size());
+      assertEquals(96, remoteCache.size());
    }
 
    @Test(dataProvider = "collections-item")
@@ -214,6 +217,7 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
       Collection<?> collection = op.function.apply(remoteCache);
       collection.retainAll(Arrays.asList(transform.function.apply(1), transform.function.apply(23), transform.function.apply(102)));
       assertEquals(2, collection.size());
+      assertEquals(2, remoteCache.size());
    }
 
    @Test(dataProvider = "collections-item", expectedExceptions = UnsupportedOperationException.class)
@@ -258,6 +262,19 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
                       stream.filter(o -> Objects.equals(o, transform.function.apply(4)))
                             .findAny()
                             .get());
+      }
+   }
+
+   @Test(dataProvider = "collections-item")
+   public void testForEach(CollectionOp op, ItemTransform transform) {
+      populateCacheManager();
+      Collection<?> collection = op.function.apply(remoteCache);
+      List<Object> objects = new ArrayList<>();
+      collection.forEach(objects::add);
+      assertEquals(100, objects.size());
+
+      for (int i = 0; i < 100; i++) {
+         assertTrue(collection.contains(transform.function.apply(i)));
       }
    }
 
