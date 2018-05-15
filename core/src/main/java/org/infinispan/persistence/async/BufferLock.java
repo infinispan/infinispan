@@ -29,14 +29,6 @@ class BufferLock {
          this.size = size;
       }
 
-      int add(int count) {
-         for (;;) {
-            int state = getState();
-            if (compareAndSetState(state, state + count))
-               return state + count;
-         }
-      }
-
       @Override
       protected int tryAcquireShared(int count) {
          for (;;) {
@@ -52,6 +44,11 @@ class BufferLock {
       protected boolean tryReleaseShared(int state) {
          setState(state);
          return state < size;
+      }
+
+      boolean isFull() {
+         int state = getState();
+         return state >= size;
       }
    }
 
@@ -182,15 +179,7 @@ class BufferLock {
       available.releaseShared(count);
    }
 
-   /**
-    * Modifies the buffer counter by the specified value.
-    *
-    * @param count
-    *           number of items to add to the buffer counter
-    */
-   void add(int count) {
-      if (counter != null)
-         count = counter.add(count);
-      available.releaseShared(count);
+   boolean hasCapacity() {
+      return !counter.isFull();
    }
 }

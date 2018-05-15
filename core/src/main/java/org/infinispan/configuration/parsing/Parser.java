@@ -2487,6 +2487,9 @@ public class Parser implements ConfigurationParser {
                storeBuilder.modificationQueueSize(Integer.parseInt(value));
                break;
             }
+            case FAIL_SILENTLY:
+               storeBuilder.failSilently(Boolean.parseBoolean(value));
+               break;
             case SHUTDOWN_TIMEOUT: {
                if (reader.getSchema().since(9, 0)) {
                   throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());

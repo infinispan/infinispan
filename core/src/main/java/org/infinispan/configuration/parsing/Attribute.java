@@ -49,6 +49,7 @@ public enum Attribute {
     @Deprecated
     EVICTION_EXECUTOR("eviction-executor"),
     EXPIRATION_EXECUTOR("expiration-executor"),
+    FAIL_SILENTLY("fail-silently"),
     FAILURE_POLICY_CLASS("failure-policy-class"),
     FETCH_STATE("fetch-state"),
     @Deprecated

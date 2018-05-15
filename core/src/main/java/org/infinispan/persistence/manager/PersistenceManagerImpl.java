@@ -830,7 +830,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    private void startWriter(CacheWriter writer, Set<Lifecycle> undelegated) {
       startStore(writer.getClass().getName(), () -> {
-         writer.start();
          if (writer instanceof DelegatingCacheWriter) {
             CacheWriter actual = undelegate(writer);
             actual.start();
@@ -838,6 +837,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          } else {
             undelegated.add(writer);
          }
+         writer.start();
 
          if (getStoreConfig(writer).purgeOnStartup()) {
             if (!(writer instanceof AdvancedCacheWriter))

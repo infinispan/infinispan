@@ -22,6 +22,7 @@ import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.QueryableDataContainer;
+import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
@@ -122,6 +123,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(5, persistenceConfiguration.connectionAttempts());
       assertEquals(100, persistenceConfiguration.connectionInterval());
       assertEquals(2000, persistenceConfiguration.availabilityInterval());
+      assertFalse(persistenceConfiguration.stores().isEmpty());
+      AsyncStoreConfiguration asyncConfig = persistenceConfiguration.stores().iterator().next().async();
+      assertTrue(asyncConfig.failSilently());
    }
 
    private static void configurationCheck92(EmbeddedCacheManager cm) {
