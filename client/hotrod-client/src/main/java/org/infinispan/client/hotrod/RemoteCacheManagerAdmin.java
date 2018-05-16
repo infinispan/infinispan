@@ -40,7 +40,7 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
    <K, V> RemoteCache<K, V> createCache(String name, BasicConfiguration configuration) throws HotRodClientException;
 
    /**
-    * Retrieves a an existing cache on the remote server cluster. If it doesn't exist, it will be created using the
+    * Retrieves an existing cache on the remote server cluster. If it doesn't exist, it will be created using the
     * specified template.
     *
     * @param name the name of the cache to create
@@ -53,7 +53,7 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
    <K, V> RemoteCache<K, V> getOrCreateCache(String name, String template) throws HotRodClientException;
 
    /**
-    * Retrieves a an existing cache on the remote server cluster. If it doesn't exist, it will be created using the
+    * Retrieves an existing cache on the remote server cluster. If it doesn't exist, it will be created using the
     * specified configuration.
     *
     * @param name the name of the cache to create
