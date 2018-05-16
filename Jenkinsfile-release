@@ -19,7 +19,8 @@ pipeline {
                 script {
                     env.MAVEN_HOME = tool('Maven')
                     env.MAVEN_OPTS = "-Xmx800m -XX:+HeapDumpOnOutOfMemoryError"
-                    env.JAVA_HOME = tool('Oracle JDK 8')
+                    env.JAVA_HOME = tool('JDK 8')
+                    env.JAVA10_HOME = tool('JDK 10')
                 }
 
                 sh returnStdout: true, script: 'cleanup.sh'
@@ -50,7 +51,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh "$MAVEN_HOME/bin/mvn -B -V -Pdistribution -DskipTests clean deploy -DstagingRepositoryId=$STAGING_REPO_ID"
+                sh "$MAVEN_HOME/bin/mvn -B -V -Pdistribution -DskipTests clean deploy -DstagingRepositoryId=$STAGING_REPO_ID -Djava10.home=$JAVA10_HOME"
             }
         }
 
