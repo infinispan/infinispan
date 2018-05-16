@@ -61,9 +61,8 @@ import io.reactivex.Flowable;
  * The table can be created/dropped on-the-fly, at deployment time. For more details consult javadoc for {@link
  * org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration}.
  * <p/>
- * <b>Preload &amp; Iteration</b>.In order to support preload or iteration functionality the store needs to read the string
- * keys from the database and transform them into the corresponding key objects.
- * {@link org.infinispan.persistence.keymappers.Key2StringMapper} only supports
+ * <b>Preload</b>.In order to support preload functionality the store needs to read the string keys from the database and transform them
+ * into the corresponding key objects. {@link org.infinispan.persistence.keymappers.Key2StringMapper} only supports
  * key to string transformation(one way); in order to be able to use preload one needs to specify an
  * {@link org.infinispan.persistence.keymappers.TwoWayKey2StringMapper}, which extends {@link org.infinispan.persistence.keymappers.Key2StringMapper} and
  * allows bidirectional transformation.
@@ -165,10 +164,16 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
       }
    }
 
-   void initializeConnectionFactory(ConnectionFactory connectionFactory) throws PersistenceException {
-      if (connectionFactory != null)
-         return;
+   @Override
+   public boolean isAvailable() {
+      try {
+         return connectionFactory.getConnection().isValid(10);
+      } catch (SQLException e) {
+         return false;
+      }
+   }
 
+   void initializeConnectionFactory(ConnectionFactory connectionFactory) throws PersistenceException {
       this.connectionFactory = connectionFactory;
       tableManager = getTableManager();
       tableManager.setCacheName(cacheName);
