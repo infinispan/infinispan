@@ -153,7 +153,7 @@ public final class QueryRequest {
          }
 
          @Override
-         public Class<? extends NamedParameter> getJavaClass() {
+         public Class<NamedParameter> getJavaClass() {
             return NamedParameter.class;
          }
 

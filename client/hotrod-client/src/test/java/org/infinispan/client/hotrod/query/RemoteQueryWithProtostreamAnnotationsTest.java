@@ -157,7 +157,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
          }
 
          @Override
-         public Class<? extends Author> getJavaClass() {
+         public Class<Author> getJavaClass() {
             return Author.class;
          }
 

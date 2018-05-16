@@ -108,7 +108,7 @@ public final class FilterResult {
       }
 
       @Override
-      public Class<? extends FilterResult> getJavaClass() {
+      public Class<FilterResult> getJavaClass() {
          return FilterResult.class;
       }
 
