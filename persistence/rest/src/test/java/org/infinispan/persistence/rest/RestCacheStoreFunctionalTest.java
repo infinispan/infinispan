@@ -22,7 +22,7 @@ public class RestCacheStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @Override
    protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder loaders, boolean preload) {
-      localCacheManager = TestCacheManagerFactory.createCacheManager();
+      localCacheManager = TestCacheManagerFactory.createServerModeCacheManager();
       RestServerConfigurationBuilder restServerConfigurationBuilder = new RestServerConfigurationBuilder();
       restServerConfigurationBuilder.port(0);
       restServer = new RestServer();
@@ -34,6 +34,11 @@ public class RestCacheStoreFunctionalTest extends BaseStoreFunctionalTest {
             .path("/rest/"+BasicCacheContainer.DEFAULT_CACHE_NAME)
             .preload(preload);
       return loaders;
+   }
+
+   @Override
+   protected EmbeddedCacheManager createCacheManager() {
+      return TestCacheManagerFactory.createServerModeCacheManager();
    }
 
    @Override

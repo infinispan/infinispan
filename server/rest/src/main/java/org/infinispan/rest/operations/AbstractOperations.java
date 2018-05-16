@@ -9,7 +9,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.rest.RestResponseException;
 import org.infinispan.rest.cachemanager.RestCacheManager;
@@ -50,16 +49,12 @@ abstract class AbstractOperations {
 
    MediaType tryNarrowMediaType(MediaType negotiated, AdvancedCache<?, ?> cache) {
       if (!negotiated.matchesAll()) return negotiated;
+      MediaType storageMediaType = cache.getValueDataConversion().getStorageMediaType();
 
-      Configuration cacheConfiguration = cache.getCacheConfiguration();
-      boolean compat = cacheConfiguration.compatibility().enabled();
-      MediaType valueStorageFormat = cache.getValueDataConversion().getStorageMediaType();
-      if (compat) {
-         return TEXT_PLAIN;
-      }
-      if (valueStorageFormat != null && valueStorageFormat.match(MediaType.APPLICATION_PROTOSTREAM)) {
-         return APPLICATION_JSON;
-      }
+      if(storageMediaType == null) return negotiated;
+      if (storageMediaType.equals(MediaType.APPLICATION_OBJECT)) return TEXT_PLAIN;
+      if (storageMediaType.match(MediaType.APPLICATION_PROTOSTREAM)) return APPLICATION_JSON;
+
       return negotiated;
    }
 
