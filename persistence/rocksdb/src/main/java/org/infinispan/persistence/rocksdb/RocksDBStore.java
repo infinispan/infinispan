@@ -158,6 +158,11 @@ public class RocksDBStore<K,V> implements AdvancedLoadWriteStore<K,V> {
     }
 
     @Override
+    public boolean isAvailable() {
+        return new File(getQualifiedLocation()).exists() && new File(getQualifiedExpiredLocation()).exists();
+    }
+
+    @Override
     public void clear() {
         long count = 0;
         boolean destroyDatabase = false;
