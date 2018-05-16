@@ -4,11 +4,21 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.Search;
@@ -163,6 +173,26 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
         Object[] projections = (Object[]) entries.get(0).getValue();
         assertEquals("Cat", projections[0]);
         assertEquals("Tom", projections[1]);
+    }
+
+    @Test
+    public void testQueryViaRest() throws IOException {
+        remoteCache.put(1, createUser1());
+        remoteCache.put(2, createUser2());
+
+        String query = "from sample_bank_account.User where name='Adrian'";
+
+        String searchURI = "http://localhost:8080/rest/localtestcache?action=search&query=" + URLEncoder.encode(query, "UTF-8");
+        HttpGet httpget = new HttpGet(searchURI);
+
+        try (CloseableHttpClient httpClient = HttpClients.createDefault();
+             CloseableHttpResponse response = httpClient.execute(httpget)) {
+
+            HttpEntity entity = response.getEntity();
+            JsonNode results = new ObjectMapper().readTree(entity.getContent());
+            assertEquals(1, results.get("total_results").asInt());
+            EntityUtils.consume(entity);
+        }
     }
 
     private User createUser1() {
