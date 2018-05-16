@@ -25,7 +25,7 @@ public class AnalyzerTestEntityMarshaller implements MessageMarshaller<AnalyzerT
    }
 
    @Override
-   public Class<? extends AnalyzerTestEntity> getJavaClass() {
+   public Class<AnalyzerTestEntity> getJavaClass() {
       return AnalyzerTestEntity.class;
    }
 

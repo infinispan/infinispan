@@ -50,7 +50,7 @@ public final class ContinuousQueryResult {
          }
 
          @Override
-         public Class<? extends ResultType> getJavaClass() {
+         public Class<ResultType> getJavaClass() {
             return ResultType.class;
          }
 
@@ -138,7 +138,7 @@ public final class ContinuousQueryResult {
       }
 
       @Override
-      public Class<? extends ContinuousQueryResult> getJavaClass() {
+      public Class<ContinuousQueryResult> getJavaClass() {
          return ContinuousQueryResult.class;
       }
 
