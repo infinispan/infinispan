@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertNull;
 import java.io.IOException;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -39,9 +38,7 @@ public class RestStoreTest extends BaseStoreTest {
       ConfigurationBuilder localBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       localBuilder.memory().evictionType(EvictionType.COUNT).size(WRITE_DELETE_BATCH_MAX_ENTRIES).expiration().wakeUpInterval(10L);
 
-      GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder().nonClusteredDefault();
-
-      localCacheManager = TestCacheManagerFactory.createCacheManager(globalConfig, localBuilder);
+      localCacheManager = TestCacheManagerFactory.createServerModeCacheManager(localBuilder);
       localCacheManager.defineConfiguration(REMOTE_CACHE, localCacheManager.getDefaultCacheConfiguration());
       localCacheManager.getCache(REMOTE_CACHE);
       GlobalComponentRegistry gcr = localCacheManager.getGlobalComponentRegistry();

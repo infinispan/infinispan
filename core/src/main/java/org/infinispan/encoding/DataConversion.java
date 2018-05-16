@@ -121,10 +121,6 @@ public final class DataConversion {
       if (contentTypeConfiguration.isMediaTypeChanged()) {
          return contentTypeConfiguration.mediaType();
       }
-      // Compatibility mode assumes application/x-java-object
-      if (configuration.compatibility().enabled()) {
-         return MediaType.APPLICATION_OBJECT;
-      }
       // Indexed caches started by the server will assume application/protostream as storage media type
       if (!embeddedMode && configuration.indexing().index().isEnabled() && contentTypeConfiguration.mediaType() == null) {
          return MediaType.APPLICATION_PROTOSTREAM;

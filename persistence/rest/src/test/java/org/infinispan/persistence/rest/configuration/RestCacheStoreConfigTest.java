@@ -33,7 +33,7 @@ public class RestCacheStoreConfigTest extends AbstractInfinispanTest {
 
    @BeforeClass
    public void startUp() {
-      cacheManager = TestCacheManagerFactory.createCacheManager();
+      cacheManager = TestCacheManagerFactory.createServerModeCacheManager();
       assertEquals(cacheManager.getCache().size(), 0);
       RestServerConfigurationBuilder restServerConfigurationBuilder = new RestServerConfigurationBuilder();
       restServerConfigurationBuilder.port(18212);
