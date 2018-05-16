@@ -589,7 +589,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
             checkDeallocation();
             long now = timeService.wallClockTime();
             for (int j = i; j < memoryAddressCount; j += lockCount) {
-               long address = memoryLookup.getMemoryAddressOffset(j);
+               long address = memoryLookup.getMemoryAddressOffsetNoTraceIfAbsent(j);
                while (address != 0) {
                   long nextAddress = offHeapEntryFactory.getNext(address);
                   InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(address);
