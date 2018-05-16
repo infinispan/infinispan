@@ -182,7 +182,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
 
         String query = "from sample_bank_account.User where name='Adrian'";
 
-        String searchURI = "http://localhost:8080/rest/localtestcache?action=search&query=" + URLEncoder.encode(query, "UTF-8");
+        String searchURI = "http://localhost:8080/rest/" + cacheName + "?action=search&query=" + URLEncoder.encode(query, "UTF-8");
         HttpGet httpget = new HttpGet(searchURI);
 
         try (CloseableHttpClient httpClient = HttpClients.createDefault();
