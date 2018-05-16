@@ -9,7 +9,10 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -54,16 +57,26 @@ class RunningTestsRegistry {
 
          String jvmName = ManagementFactory.getRuntimeMXBean().getName();
          String ppid = jvmName.split("@")[0];
+
          ArrayList<String> pids = new ArrayList<>(singleton(ppid));
          int index = 0;
          while (index < pids.size()) {
             String pid = pids.get(index);
             if (OS.getCurrentOs() != OS.WINDOWS) {
+               // List pid and command name of child processes
                Process ps = new ProcessBuilder()
-                               .command("ps", "-o", "ppid=", pid)
+                               .command("ps", "-o", "pid=,comm=", "--ppid", pid)
                                .start();
-               BufferedReader psOutput = new BufferedReader(new InputStreamReader(ps.getInputStream()));
-               psOutput.lines().forEach(line -> pids.add(line.trim()));
+               try (BufferedReader psOutput = new BufferedReader(new InputStreamReader(ps.getInputStream()))) {
+                  psOutput.lines().forEach(line -> {
+                     // Add children to the list excluding the ps command we just ran
+                     String[] pidAndCommand = line.split("\\s+");
+                     if (!"ps".equals(pidAndCommand[1].trim())) {
+                        pids.add(pidAndCommand[0].trim());
+                     }
+                  });
+               }
+
                ps.waitFor(10, SECONDS);
             }
 
@@ -75,11 +88,13 @@ class RunningTestsRegistry {
                .redirectOutput(dumpFile)
                .start();
             jstack.waitFor(10, SECONDS);
+
+            index++;
          }
 
          // Interrupt the test thread
          testThread.interrupt();
-         System.out.printf("Interrupted thread %s (%d).", testThread.getName(), testThread.getId());
+         System.out.printf("Interrupted thread %s (%d).\n", testThread.getName(), testThread.getId());
 
          testThread.join(SECONDS.toMillis(MAX_TEST_SECONDS) / 10);
          if (testThread.isAlive()) {
@@ -88,19 +103,26 @@ class RunningTestsRegistry {
             // So we just kill the fork and its children instead
             Process kill;
             if (OS.getCurrentOs() == OS.WINDOWS) {
+               List<String> command = new ArrayList<>(Arrays.asList("taskkill", "/t", "/pid"));
+               for (String pid : pids) {
+                  command.add("/pid");
+                  command.add(pid);
+               }
                kill = new ProcessBuilder()
-                         .command("taskkill /t /pid " + String.join("/pid ", pids))
+                         .command(command)
                          .start();
             } else {
+               List<String> command = new ArrayList<>(Collections.singletonList("kill"));
+               command.addAll(pids);
                kill = new ProcessBuilder()
-                         .command("kill " + String.join(" ", pids))
+                         .command(command)
                          .start();
             }
             kill.waitFor(10, SECONDS);
-            System.out.printf("Killed processes %s", pids);
+            System.out.printf("Killed processes %s\n", String.join(" ", pids));
          }
       } catch (Exception e) {
-         System.err.println("Error dumping thread stacks:" + e);
+         System.err.println("Error dumping thread stacks/interrupting threads/killing processes:" + e);
       }
    }
 }
