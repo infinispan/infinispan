@@ -98,7 +98,7 @@ public class TestClusterCacheStatus {
     * {@link CacheTopology#getReadConsistentHash()} doesn't work.
     */
    public ConsistentHash readConsistentHash() {
-      return AvailabilityStrategy.readConsistentHash(topology, joinInfo.getConsistentHashFactory());
+      return AvailabilityStrategy.ownersConsistentHash(topology, joinInfo.getConsistentHashFactory());
    }
 
    public void updateStableTopology() {

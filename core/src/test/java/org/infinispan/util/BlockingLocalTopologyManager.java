@@ -177,6 +177,7 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
                       " blocked updates in the queue: " + queuedTopologies);
       }
       enabled = false;
+      log.debugf("Stopped blocking topology updates");
    }
 
    @Override
@@ -194,7 +195,7 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
 
    @Override
    protected final void beforeHandleRebalance(String cacheName, CacheTopology cacheTopology, int viewId) {
-      if (!expectedCacheName.equals(cacheName))
+      if (!enabled || !expectedCacheName.equals(cacheName))
          return;
 
       Event event = new Event(cacheTopology, cacheTopology.getTopologyId(), viewId,
