@@ -125,12 +125,14 @@ public final class DataConversion {
       if (!embeddedMode && configuration.indexing().index().isEnabled() && contentTypeConfiguration.mediaType() == null) {
          return MediaType.APPLICATION_PROTOSTREAM;
       }
-      // Otherwise assume java object for embedded and octet-stream for server
-      return embeddedMode ? MediaType.APPLICATION_OBJECT : MediaType.APPLICATION_OCTET_STREAM;
+      // Assume octet-stream for server
+      if (!embeddedMode) return MediaType.APPLICATION_OCTET_STREAM;
+
+      return null;
    }
 
    public boolean isConversionSupported(MediaType mediaType) {
-      return encoderRegistry.isConversionSupported(storageMediaType, mediaType);
+      return storageMediaType == null || encoderRegistry.isConversionSupported(storageMediaType, mediaType);
    }
 
    @Inject
@@ -169,7 +171,7 @@ public final class DataConversion {
    }
 
    private void lookupTranscoder() {
-      boolean needsTranscoding = requestMediaType != null && !requestMediaType.matchesAll() && !requestMediaType.equals(storageMediaType);
+      boolean needsTranscoding = storageMediaType != null && requestMediaType != null && !requestMediaType.matchesAll() && !requestMediaType.equals(storageMediaType);
       if (needsTranscoding) {
          Transcoder directTranscoder = null;
          if (encoder.getStorageFormat() != null) {
