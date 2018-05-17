@@ -1778,6 +1778,14 @@ public class TestingUtil {
       return wrap;
    }
 
+   public static <T, W extends T> W wrapGlobalComponent(CacheContainer cacheContainer, Class<T> tClass,
+                                                        Function<T, W> ctor, boolean rewire) {
+      T current = extractGlobalComponent(cacheContainer, tClass);
+      W wrap = ctor.apply(current);
+      replaceComponent(cacheContainer, tClass, wrap, rewire);
+      return wrap;
+   }
+
    public static <T, W extends T> W wrapComponent(Cache<?, ?> cache, Class<T> tClass,
                                                   WrapFactory<T, W, Cache<?, ?>> factory, boolean rewire) {
       T current = extractComponent(cache, tClass);

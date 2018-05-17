@@ -500,6 +500,11 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       for (int i = 0; i < keys.size(); ++i) {
          Object key = keys.get(i);
          InternalCacheValue icv = values[i];
+         if (icv == null) {
+            // The entry got lost in the meantime - this can happen when the container is cleared concurrently to processing
+            // the GetAllCommand. We'll just avoid NPEs here: data is lost as > 1 nodes have left.
+            continue;
+         }
          PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(key, icv.getValue(),
                keyPartitioner.getSegment(key), icv.getMetadata(), STATE_TRANSFER_FLAGS);
          try {
