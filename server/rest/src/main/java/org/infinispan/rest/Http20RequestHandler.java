@@ -13,6 +13,7 @@ import org.infinispan.util.logging.LogFactory;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.unix.Errors;
 import io.netty.handler.codec.TooLongFrameException;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -79,6 +80,11 @@ public class Http20RequestHandler extends SimpleChannelInboundHandler<FullHttpRe
       if (e.getCause() instanceof TooLongFrameException) {
          DefaultHttpResponse response = new DefaultHttpResponse(HTTP_1_1, REQUEST_ENTITY_TOO_LARGE);
          ctx.write(response).addListener(ChannelFutureListener.CLOSE);
+      } else if (e instanceof Errors.NativeIoException) {
+         // Native IO exceptions happen on HAProxy disconnect. It sends RST instead of FIN, which cases
+         // a Netty IO Exception. The only solution is to ignore it, just like Tomcat does.
+         logger.debug("Native IO Exception", e);
+         ctx.close();
       } else {
          logger.uncaughtExceptionInThePipeline(e);
          ctx.close();
