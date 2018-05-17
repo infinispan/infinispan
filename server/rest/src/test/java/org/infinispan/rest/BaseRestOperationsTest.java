@@ -2,6 +2,7 @@ package org.infinispan.rest;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIALIZED_OBJECT;
@@ -54,8 +55,6 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
 
    protected abstract ConfigurationBuilder getDefaultCacheBuilder();
 
-   protected abstract boolean enableCompatibility();
-
    @BeforeClass
    public void beforeSuite() throws Exception {
       restServer = RestServerHelper.defaultRestServer(getDefaultCacheBuilder(), "default");
@@ -91,8 +90,9 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       text.encoding().key().mediaType(TEXT_PLAIN_TYPE);
       text.encoding().value().mediaType(TEXT_PLAIN_TYPE);
 
-      ConfigurationBuilder compat = getDefaultCacheBuilder();
-      compat.compatibility().enabled(enableCompatibility());
+      ConfigurationBuilder pojoCache = getDefaultCacheBuilder();
+      pojoCache.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
+      pojoCache.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
 
       restServer.defineCache("expiration", expirationConfiguration);
       restServer.defineCache("xml", xmlCacheConfiguration);
@@ -101,10 +101,8 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       restServer.defineCache("unknown", unknownContentCacheConfiguration);
       restServer.defineCache("serialized", javaSerialized);
       restServer.defineCache("textCache", text);
-      restServer.defineCache("compatCache", compat);
-
+      restServer.defineCache("pojoCache", pojoCache);
    }
-
 
    @AfterClass
    public void afterSuite() throws Exception {

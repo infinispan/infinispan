@@ -14,9 +14,4 @@ public class RestOperationsOffHeapTest extends BaseRestOperationsTest {
       return configurationBuilder;
    }
 
-   @Override
-   protected boolean enableCompatibility() {
-      return false;
-   }
-
 }
