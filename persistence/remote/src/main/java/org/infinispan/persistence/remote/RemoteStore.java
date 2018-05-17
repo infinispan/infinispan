@@ -14,6 +14,8 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
+import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
+import org.infinispan.client.hotrod.impl.operations.PingOperation;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.Marshaller;
@@ -113,6 +115,16 @@ public class RemoteStore<K, V> implements AdvancedLoadWriteStore<K, V>, FlagAffe
    @Override
    public void stop() throws PersistenceException {
       remoteCacheManager.stop();
+   }
+
+   @Override
+   public boolean isAvailable() {
+      try {
+         PingOperation.PingResult pr = ((RemoteCacheImpl) remoteCache).ping();
+         return pr == PingOperation.PingResult.SUCCESS || pr == PingOperation.PingResult.SUCCESS_WITH_COMPAT;
+      } catch (Exception e) {
+         return false;
+      }
    }
 
    @Override
