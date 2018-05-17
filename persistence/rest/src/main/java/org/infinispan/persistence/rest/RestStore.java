@@ -139,6 +139,20 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       workerGroup.shutdownGracefully();
    }
 
+   @Override
+   public boolean isAvailable() {
+      try {
+         DefaultHttpRequest get = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, path);
+         HttpResponseHandler handler = new HttpResponseHandler(true);
+         Channel ch = bootstrap.connect(configuration.host(), configuration.port()).awaitUninterruptibly().channel().pipeline().addLast(
+               new HttpObjectAggregator(maxContentLength), handler).channel();
+         ch.writeAndFlush(get).sync().channel().closeFuture().sync();
+         return handler.getResponse().status().code() == 200;
+      } catch (Exception e) {
+         return false;
+      }
+   }
+
    public void setInternalCacheEntryFactory(InternalEntryFactory iceFactory) {
       if (this.iceFactory != null) {
          throw new IllegalStateException();
