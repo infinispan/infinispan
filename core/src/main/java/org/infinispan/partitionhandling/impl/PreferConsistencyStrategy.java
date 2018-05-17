@@ -1,6 +1,6 @@
 package org.infinispan.partitionhandling.impl;
 
-import static org.infinispan.partitionhandling.impl.AvailabilityStrategy.readConsistentHash;
+import static org.infinispan.partitionhandling.impl.AvailabilityStrategy.ownersConsistentHash;
 import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 import java.util.ArrayList;
@@ -208,13 +208,13 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
             for (CacheStatusResponse response : statusResponseMap.values()) {
                CacheTopology cacheTopology = response.getCacheTopology();
                if (cacheTopology != null) {
-                  ConsistentHash readCH = readConsistentHash(cacheTopology, joinInfo.getConsistentHashFactory());
+                  ConsistentHash readCH = ownersConsistentHash(cacheTopology, joinInfo.getConsistentHashFactory());
                   if (readCH != null && !readCH.getMembers().isEmpty()) {
                      distinctHashes.add(readCH);
                   }
                }
             }
-            ConsistentHash preferredHash = readConsistentHash(mergedTopology, joinInfo.getConsistentHashFactory());
+            ConsistentHash preferredHash = ownersConsistentHash(mergedTopology, joinInfo.getConsistentHashFactory());
             ConsistentHash conflictHash = context.calculateConflictHash(preferredHash, distinctHashes, expectedMembers);
 
             mergedTopology = new CacheTopology(++maxTopologyId, maxRebalanceId + 1, conflictHash, null,
