@@ -29,11 +29,6 @@ public class RestOperationsTest extends BaseRestOperationsTest {
    }
 
    @Override
-   protected boolean enableCompatibility() {
-      return true;
-   }
-
-   @Override
    protected void defineCaches() {
       super.defineCaches();
       ConfigurationBuilder object = getDefaultCacheBuilder();
@@ -107,9 +102,9 @@ public class RestOperationsTest extends BaseRestOperationsTest {
    }
 
    @Test
-   public void shouldReadAsBinaryWithCompatMode() throws Exception {
+   public void shouldReadAsBinaryWithPojoCache() throws Exception {
       //given
-      String cacheName = "compatCache";
+      String cacheName = "pojoCache";
       String key = "test";
       TestClass value = new TestClass();
       value.setName("test");
@@ -125,9 +120,9 @@ public class RestOperationsTest extends BaseRestOperationsTest {
    }
 
    @Test
-   public void shouldReadTextWithCompatMode() throws Exception {
+   public void shouldReadTextWithPojoCache() throws Exception {
       //given
-      String cacheName = "compatCache";
+      String cacheName = "pojoCache";
       String key = "k1";
       String value = "v1";
 
@@ -143,15 +138,15 @@ public class RestOperationsTest extends BaseRestOperationsTest {
    }
 
    @Test
-   public void shouldReadByteArrayWithCompatMode() throws Exception {
+   public void shouldReadByteArrayWithPojoCache() throws Exception {
       //given
-      Cache cache = restServer.getCacheManager().getCache("compatCache").getAdvancedCache()
+      Cache cache = restServer.getCacheManager().getCache("pojoCache").getAdvancedCache()
             .withEncoding(IdentityEncoder.class);
       cache.put("k1", "v1".getBytes());
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "compatCache", "k1"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "pojoCache", "k1"))
             .header(HttpHeader.ACCEPT, APPLICATION_OCTET_STREAM_TYPE)
             .send();
 
@@ -162,15 +157,15 @@ public class RestOperationsTest extends BaseRestOperationsTest {
    }
 
    @Test
-   public void shouldReadAsJsonWithCompatMode() throws Exception {
+   public void shouldReadAsJsonWithPojoCache() throws Exception {
       //given
       TestClass testClass = new TestClass();
       testClass.setName("test");
-      putValueInCache("compatCache", "test", testClass);
+      putValueInCache("pojoCache", "test", testClass);
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "compatCache", "test"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "pojoCache", "test"))
             .header(HttpHeader.ACCEPT, MediaType.APPLICATION_JSON_TYPE)
             .send();
 
@@ -181,11 +176,11 @@ public class RestOperationsTest extends BaseRestOperationsTest {
    }
 
    @Test
-   public void shouldNegotiateFromCompatCacheWithoutAccept() throws Exception {
+   public void shouldNegotiateFromPojoCacheWithoutAccept() throws Exception {
       //given
       TestClass testClass = new TestClass();
       testClass.setName("test");
-      String cacheName = "compatCache";
+      String cacheName = "pojoCache";
       String key = "k1";
 
       putValueInCache(cacheName, key, testClass);
@@ -200,13 +195,13 @@ public class RestOperationsTest extends BaseRestOperationsTest {
    }
 
    @Test
-   public void shouldWriteTextContentWithCompatMode() throws Exception {
+   public void shouldWriteTextContentWithPjoCache() throws Exception {
       //given
-      putStringValueInCache("compatCache", "key1", "data");
+      putStringValueInCache("pojoCache", "key1", "data");
 
       //when
       ContentResponse response = client
-            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "compatCache", "key1"))
+            .newRequest(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "pojoCache", "key1"))
             .header(HttpHeader.ACCEPT, TEXT_PLAIN_TYPE)
             .send();
 
