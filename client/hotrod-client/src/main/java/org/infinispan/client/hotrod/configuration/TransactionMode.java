@@ -25,8 +25,6 @@ public enum TransactionMode {
    NON_XA,
    /**
     * The cache is enlisted as {@link XAResource} but it doesn't keep any recovery information.
-    *
-    * This mode isn't available yet.
     */
    NON_DURABLE_XA,
    /**

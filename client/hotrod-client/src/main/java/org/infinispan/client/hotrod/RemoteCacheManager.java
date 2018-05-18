@@ -39,6 +39,7 @@ import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transaction.SyncModeTransactionTable;
 import org.infinispan.client.hotrod.impl.transaction.TransactionTable;
 import org.infinispan.client.hotrod.impl.transaction.TransactionalRemoteCacheImpl;
+import org.infinispan.client.hotrod.impl.transaction.XaModeTransactionTable;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -92,6 +93,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    private final Runnable stop = this::stop;
    private final RemoteCounterManager counterManager;
    private final TransactionTable syncTransactionTable = new SyncModeTransactionTable();
+   private final TransactionTable xaTransactionTable = new XaModeTransactionTable();
 
    /**
     * Create a new RemoteCacheManager using the supplied {@link Configuration}.
@@ -446,10 +448,11 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
       switch (transactionMode) {
          case NON_XA:
             return syncTransactionTable;
-         case FULL_XA:
          case NON_DURABLE_XA:
+            return xaTransactionTable;
+         case FULL_XA:
          default:
-            throw new IllegalArgumentException("XA isn't supported yet!");
+            throw new IllegalArgumentException("FULL_XA isn't supported yet!");
       }
    }
 

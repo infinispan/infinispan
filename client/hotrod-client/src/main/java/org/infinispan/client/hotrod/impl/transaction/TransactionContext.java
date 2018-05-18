@@ -13,9 +13,14 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transaction;
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.MetadataValue;
+import org.infinispan.client.hotrod.impl.operations.CompleteTransactionOperation;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.PrepareTransactionOperation;
 import org.infinispan.client.hotrod.impl.transaction.entry.Modification;
 import org.infinispan.client.hotrod.impl.transaction.entry.TransactionEntry;
 import org.infinispan.client.hotrod.logging.Log;
@@ -162,6 +167,52 @@ public class TransactionContext<K, V> {
          return entry;
       });
       return ref.get();
+   }
+
+   /**
+    * Prepares the {@link Transaction} in the server and returns the {@link XAResource} code.
+    * <p>
+    * A special value {@link Integer#MIN_VALUE} is used to signal an error before contacting the server (for example,
+    * it wasn't able to marshall the key/value)
+    */
+   int prepareContext(Xid xid, boolean onePhaseCommit) {
+      PrepareTransactionOperation operation;
+      Collection<Modification> modifications;
+      try {
+         modifications = toModification();
+         if (trace) {
+            log.tracef("Preparing transaction xid=%s, remote-cache=%s, modification-size=%d", xid, cacheName, modifications.size());
+         }
+         if (modifications.isEmpty()) {
+            return XAResource.XA_RDONLY;
+         }
+      } catch (Exception e) {
+         return Integer.MIN_VALUE;
+      }
+      try {
+         int xaReturnCode;
+         do {
+            operation = operationsFactory.newPrepareTransactionOperation(xid, onePhaseCommit, modifications);
+            xaReturnCode = operation.execute().get();
+         } while (operation.shouldRetry());
+         return xaReturnCode;
+      } catch (Exception e) {
+         log.exceptionDuringPrepare(xid, e);
+         return XAException.XA_RBROLLBACK;
+      }
+   }
+
+   int complete(Xid xid, boolean commit) {
+      try {
+         if (trace) {
+            log.tracef("%s transaction xid=%s, remote-cache=%s", commit ? "Committing" : "Rolling-Back", xid, cacheName);
+         }
+         CompleteTransactionOperation operation = operationsFactory.newCompleteTransactionOperation(xid, commit);
+         return operation.execute().get();
+      } catch (Exception e) {
+         log.debug("Exception while commit/rollback.", e);
+         return XAException.XA_HEURRB; //heuristically rolled-back
+      }
    }
 
    private TransactionEntry<K, V> createEntryFromRemote(K key, Function<K, MetadataValue<V>> remoteValueSupplier) {

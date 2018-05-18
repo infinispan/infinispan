@@ -20,7 +20,6 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.impl.operations.CompleteTransactionOperation;
 import org.infinispan.client.hotrod.impl.operations.PrepareTransactionOperation;
 import org.infinispan.client.hotrod.impl.transaction.entry.Modification;
 import org.infinispan.client.hotrod.logging.Log;
@@ -139,43 +138,12 @@ public class SyncModeTransactionTable implements TransactionTable {
          }
          //we only use the preparedCaches. the remaining caches are read-only or they didn't contact the server.
          try {
-            if (status == Status.STATUS_COMMITTED) {
-               for (TransactionContext<?,?> ctx : preparedCaches) {
-                  commitContext(ctx);
-               }
-            } else {
-               for (TransactionContext<?,?> ctx : preparedCaches) {
-                  rollbackContext(ctx);
-               }
+            boolean commit = status == Status.STATUS_COMMITTED;
+            for (TransactionContext<?, ?> ctx : preparedCaches) {
+               ctx.complete(xid, commit);
             }
          } finally {
             cleanupTask.accept(transaction);
-         }
-      }
-
-      private void rollbackContext(TransactionContext<?, ?> context) {
-         try {
-            if (trace) {
-               log.tracef("Rolling-back transaction xid=%s, remote-cache=%s", xid, context.getCacheName());
-            }
-            CompleteTransactionOperation operation = context.getOperationsFactory()
-                  .newCompleteTransactionOperation(xid, false);
-            operation.execute().get();
-         } catch (Exception e) {
-            log.debug("Exception while rollback.", e);
-         }
-      }
-
-      private void commitContext(TransactionContext<?, ?> context) {
-         try {
-            if (trace) {
-               log.tracef("Committing transaction xid=%s, remote-cache=%s", xid, context.getCacheName());
-            }
-            CompleteTransactionOperation operation = context.getOperationsFactory()
-                  .newCompleteTransactionOperation(xid, true);
-            operation.execute().get();
-         } catch (Exception e) {
-            log.debug("Exception while commit.", e);
          }
       }
 
