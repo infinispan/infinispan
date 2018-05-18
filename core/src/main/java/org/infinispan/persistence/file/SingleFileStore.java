@@ -155,6 +155,11 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       }
    }
 
+   @Override
+   public boolean isAvailable() {
+      return file.exists();
+   }
+
    /**
     * Rebuilds the in-memory index from file.
     */
