@@ -179,6 +179,7 @@ public class EntityRegionAccessStrategyTest extends
 	}
 
 	@Test
+	@Ignore("ISPN-9175")
 	public void testUpdate() throws Exception {
 		if (accessType == AccessType.READ_ONLY) {
 			return;

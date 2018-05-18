@@ -44,6 +44,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.util.ControlledTimeService;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -127,6 +128,7 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 	}
 
 	@Test
+	@Ignore("ISPN-9175")
 	public void testAll() throws Exception {
 		assertEmptyCaches();
 		assertTrue( remoteListener.isEmpty() );
