@@ -30,7 +30,7 @@ import javax.transaction.SystemException;
  */
 @MessageLogger(projectCode = "HHH")
 public interface InfinispanMessageLogger extends BasicLogger {
-   // Workaround for JBLOGGING-120: cannot add static interface method
+	// Workaround for JBLOGGING-120: cannot add static interface method
 	class Provider {
 		public static InfinispanMessageLogger getLog(Class clazz) {
 			return Logger.getMessageLogger(InfinispanMessageLogger.class, clazz.getName());
@@ -146,4 +146,16 @@ public interface InfinispanMessageLogger extends BasicLogger {
 	@LogMessage(level = WARN)
 	@Message(value = "Configuration for pending-puts cache '%s' is already defined - another instance of SessionFactory was not closed properly.", id = 25031)
 	void pendingPutsCacheAlreadyDefined(String pendingPutsName);
+
+	@LogMessage(level = WARN)
+	@Message(value = "Cache configuration '%s' is present but the use has not been defined through " + InfinispanProperties.PREFIX + "%s" + InfinispanProperties.CONFIG_SUFFIX + "=%s", id = 25032)
+	void regionNameMatchesCacheName(String regionName, String regionName2, String regionName3);
+
+	@LogMessage(level = WARN)
+	@Message(value = "Configuration properties contain record for unqualified region name '%s' but it should contain qualified region name '%s'", id = 25033)
+	void usingUnqualifiedNameInConfiguration(String unqualifiedRegionName, String cacheName);
+
+	@LogMessage(level = WARN)
+	@Message(value = "Configuration for unqualified region name '%s' is defined but the cache will use qualified name '%s'", id = 25034)
+	void configurationWithUnqualifiedName(String unqualifiedRegionName, String cacheName);
 }
