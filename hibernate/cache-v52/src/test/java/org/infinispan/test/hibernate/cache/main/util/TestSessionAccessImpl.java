@@ -8,13 +8,18 @@ import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CollectionRegion;
 import org.hibernate.cache.spi.EntityRegion;
 import org.hibernate.cache.spi.GeneralDataRegion;
+import org.hibernate.cache.spi.QueryCache;
+import org.hibernate.cache.spi.UpdateTimestampsCache;
 import org.hibernate.cache.spi.access.AccessType;
+import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
 import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
+import org.hibernate.cache.spi.access.NaturalIdRegionAccessStrategy;
 import org.hibernate.cache.spi.access.RegionAccessStrategy;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.hibernate.engine.jdbc.connections.spi.JdbcConnectionAccess;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.engine.jdbc.spi.SqlExceptionHelper;
+import org.hibernate.engine.spi.CacheImplementor;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.transaction.internal.TransactionImpl;
@@ -36,7 +41,10 @@ import org.kohsuke.MetaInfServices;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -164,7 +172,31 @@ public final class TestSessionAccessImpl implements TestSessionAccess {
 
    @Override
    public InfinispanBaseRegion getRegion(SessionFactoryImplementor sessionFactory, String regionName) {
-      return (InfinispanBaseRegion) sessionFactory.getSecondLevelCacheRegion(regionName);
+      CacheImplementor cache = sessionFactory.getCache();
+      EntityRegionAccessStrategy entityRegionAccess = cache.getEntityRegionAccess(regionName);
+      if (entityRegionAccess != null) return (InfinispanBaseRegion) entityRegionAccess.getRegion();
+      CollectionRegionAccessStrategy collectionRegionAccess = cache.getCollectionRegionAccess(regionName);
+      if (collectionRegionAccess != null) return (InfinispanBaseRegion) collectionRegionAccess.getRegion();
+      NaturalIdRegionAccessStrategy naturalIdRegionAccess = cache.getNaturalIdCacheRegionAccessStrategy(regionName);
+      if (naturalIdRegionAccess != null) return (InfinispanBaseRegion) naturalIdRegionAccess.getRegion();
+      QueryCache queryCache = cache.getQueryCache(regionName);
+      if (queryCache != null) return (InfinispanBaseRegion) queryCache.getRegion();
+      UpdateTimestampsCache updateTimestampsCache = cache.getUpdateTimestampsCache();
+      if (updateTimestampsCache != null && updateTimestampsCache.getRegion().getName().equals(regionName)) {
+         return (InfinispanBaseRegion) updateTimestampsCache.getRegion();
+      }
+      return null;
+   }
+
+   @Override
+   public Collection<InfinispanBaseRegion> getAllRegions(SessionFactoryImplementor sessionFactory) {
+      return Stream.of(sessionFactory.getCache().getSecondLevelCacheRegionNames()).map(regionName -> {
+         InfinispanBaseRegion region = getRegion(sessionFactory, regionName);
+         if (region == null) {
+            throw new IllegalArgumentException("Unknown region " + regionName);
+         }
+         return region;
+      }).collect(Collectors.toList());
    }
 
    private static SessionImplementor unwrap(Object session) {

@@ -79,10 +79,9 @@ public class DomainDataRegionImpl
       NONE, VALIDATION, TOMBSTONES, VERSIONED_ENTRIES
    }
 
-   public DomainDataRegionImpl(
-         AdvancedCache cache, DomainDataRegionConfig config,
-         InfinispanRegionFactory factory, CacheKeysFactory cacheKeysFactory) {
-      super( cache, config.getRegionName(), factory);
+   public DomainDataRegionImpl(AdvancedCache cache, DomainDataRegionConfig config,
+                               InfinispanRegionFactory factory, CacheKeysFactory cacheKeysFactory) {
+      super(cache, config.getRegionName(), factory);
       this.config = config;
       this.cacheKeysFactory = cacheKeysFactory;
 
