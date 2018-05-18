@@ -190,7 +190,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       assertEquals("b", AtomicMapLookup.getAtomicMap(cache, m.getName()).get("a"));
    }
 
-   @Test(groups = "unstable")
+   @Test
    public void testRestoreTransactionalAtomicMap(final Method m) throws Exception {
       cacheManager.defineConfiguration(m.getName(), configureCacheLoader(null, false).build());
       Cache<String, Object> cache = cacheManager.getCache(m.getName());

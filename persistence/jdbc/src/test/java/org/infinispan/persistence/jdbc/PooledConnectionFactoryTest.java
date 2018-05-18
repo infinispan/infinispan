@@ -48,7 +48,7 @@ public class PooledConnectionFactoryTest {
       testValuesNoOverrides();
    }
 
-   @Test(groups = "unstable", description = "See ISPN-3522")
+   @Test
    public void testC3P0ValuesNoOverrides() throws Exception {
       System.setProperty("infinispan.jdbc.c3p0.force", "true");
       testValuesNoOverrides();
