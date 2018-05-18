@@ -28,7 +28,7 @@ public class VersionTestHelper {
    }
 
    public static String hibernateOrmModuleName() {
-      return "org.hibernate:" + injectVariables( "${hibernate-orm.module.slot}" );
+      return "org.hibernate.orm:" + injectVariables( "${hibernate-orm.module.slot}" );
    }
 
    public static String hibernateSearchModuleName() {

@@ -2207,20 +2207,7 @@
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-core</artifactId>
-      <version>5.2.12.Final</version>
-      <licenses>
-        <license>
-          <name>GNU Lesser General Public License v2 (or 2.1) only</name>
-          <url>http://www.gnu.org/licenses/lgpl-2.1.html</url>
-          <distribution>repo</distribution>
-          <comments>See discussion at http://hibernate.org/license for more details.</comments>
-        </license>
-      </licenses>
-    </dependency>
-    <dependency>
-      <groupId>org.hibernate</groupId>
-      <artifactId>hibernate-entitymanager</artifactId>
-      <version>5.2.12.Final</version>
+      <version>5.3.0.Final</version>
       <licenses>
         <license>
           <name>GNU Lesser General Public License v2 (or 2.1) only</name>
@@ -2233,33 +2220,7 @@
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-envers</artifactId>
-      <version>5.1.10.Final</version>
-      <licenses>
-        <license>
-          <name>GNU Lesser General Public License v2 (or 2.1) only</name>
-          <url>http://www.gnu.org/licenses/lgpl-2.1.html</url>
-          <distribution>repo</distribution>
-          <comments>See discussion at http://hibernate.org/license for more details.</comments>
-        </license>
-      </licenses>
-    </dependency>
-    <dependency>
-      <groupId>org.hibernate</groupId>
-      <artifactId>hibernate-infinispan</artifactId>
-      <version>5.0.10.Final</version>
-      <licenses>
-        <license>
-          <name>GNU Lesser General Public License v2 (or 2.1) only</name>
-          <url>http://www.gnu.org/licenses/lgpl-2.1.html</url>
-          <distribution>repo</distribution>
-          <comments>See discussion at http://hibernate.org/license for more details.</comments>
-        </license>
-      </licenses>
-    </dependency>
-    <dependency>
-      <groupId>org.hibernate</groupId>
-      <artifactId>hibernate-java8</artifactId>
-      <version>5.1.10.Final</version>
+      <version>5.3.0.Final</version>
       <licenses>
         <license>
           <name>GNU Lesser General Public License v2 (or 2.1) only</name>
@@ -2272,7 +2233,7 @@
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-search-backend-jgroups</artifactId>
-      <version>5.9.0.Final</version>
+      <version>5.10.0.Final</version>
       <licenses>
         <license>
           <name>GNU Lesser General Public License v2 (or 2.1) only</name>
@@ -2284,7 +2245,7 @@
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-search-backend-jms</artifactId>
-      <version>5.9.0.Final</version>
+      <version>5.10.0.Final</version>
       <licenses>
         <license>
           <name>GNU Lesser General Public License v2 (or 2.1) only</name>
@@ -2296,7 +2257,7 @@
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-search-elasticsearch</artifactId>
-      <version>5.9.0.Final</version>
+      <version>5.10.0.Final</version>
       <licenses>
         <license>
           <name>GNU Lesser General Public License v2 (or 2.1) only</name>
@@ -2308,7 +2269,7 @@
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-search-engine</artifactId>
-      <version>5.9.0.Final</version>
+      <version>5.10.0.Final</version>
       <licenses>
         <license>
           <name>GNU Lesser General Public License v2 (or 2.1) only</name>
@@ -2320,7 +2281,7 @@
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-search-orm</artifactId>
-      <version>5.9.0.Final</version>
+      <version>5.10.0.Final</version>
       <licenses>
         <license>
           <name>GNU Lesser General Public License v2 (or 2.1) only</name>
@@ -2332,7 +2293,7 @@
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-search-serialization-avro</artifactId>
-      <version>5.9.0.Final</version>
+      <version>5.10.0.Final</version>
       <licenses>
         <license>
           <name>GNU Lesser General Public License v2 (or 2.1) only</name>
@@ -2377,9 +2338,9 @@
       </licenses>
     </dependency>
     <dependency>
-      <groupId>org.hibernate.javax.persistence</groupId>
-      <artifactId>hibernate-jpa-2.1-api</artifactId>
-      <version>1.0.0.Final</version>
+      <groupId>javax.persistence</groupId>
+      <artifactId>javax.persistence-api</artifactId>
+      <version>2.2</version>
       <licenses>
         <license>
           <name>Eclipse Public License, Version 1.0</name>
