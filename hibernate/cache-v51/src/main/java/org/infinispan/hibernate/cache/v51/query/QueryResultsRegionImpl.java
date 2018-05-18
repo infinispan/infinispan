@@ -85,9 +85,8 @@ public final class QueryResultsRegionImpl extends BaseTransactionalDataRegion im
       try {
          // Invalidate the local region and then go remote
          invalidateRegion();
-         Caches.broadcastEvictAll( cache );
-      }
-      finally {
+         Caches.broadcastEvictAll(cache);
+      } finally {
          resume( tx );
       }
    }

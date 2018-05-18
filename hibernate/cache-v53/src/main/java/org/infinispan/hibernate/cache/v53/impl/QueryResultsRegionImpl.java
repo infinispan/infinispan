@@ -61,7 +61,7 @@ public final class QueryResultsRegionImpl extends BaseRegionImpl implements Quer
       transactionContext.clear();
       // Invalidate the local region and then go remote
       invalidateRegion();
-      Caches.broadcastEvictAll( cache );
+      Caches.broadcastEvictAll(cache);
    }
 
    @Override

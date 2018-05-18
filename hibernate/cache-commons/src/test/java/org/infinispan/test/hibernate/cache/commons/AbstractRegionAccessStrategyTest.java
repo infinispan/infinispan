@@ -60,7 +60,7 @@ public abstract class AbstractRegionAccessStrategyTest<S>
 		extends AbstractNonFunctionalTest {
 	protected final Logger log = Logger.getLogger(getClass());
 
-	public static final String REGION_NAME = "test/com.foo.test";
+	public static final String REGION_NAME = "com.foo.test";
 	public static final String KEY_BASE = "KEY";
 	public static final TestCacheEntry VALUE1 = new TestCacheEntry("VALUE1", 1);
 	public static final TestCacheEntry VALUE2 = new TestCacheEntry("VALUE2", 2);
@@ -127,6 +127,7 @@ public abstract class AbstractRegionAccessStrategyTest<S>
 		if (remoteRegion != null) remoteRegion.getCache().clear();
 		node1Exception = node2Exception = null;
 		node1Failure = node2Failure = null;
+		TIME_SERVICE.advance(1); // There might be invalidation from the previous test
 	}
 
 	@AfterClassOnce

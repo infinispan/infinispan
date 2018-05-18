@@ -111,15 +111,12 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
 
    @Override
    public DomainDataRegion buildDomainDataRegion(DomainDataRegionConfig regionConfig, DomainDataRegionBuildingContext buildingContext) {
-      if ( log.isDebugEnabled() ) {
-         log.debugf(
-               "Building domain data region [%s] entities=%s collections=%s naturalIds=%s",
-               regionConfig.getRegionName(),
-               regionConfig.getEntityCaching(),
-               regionConfig.getCollectionCaching(),
-               regionConfig.getNaturalIdCaching()
-         );
-      }
+      log.debugf("Building domain data region [%s] entities=%s collections=%s naturalIds=%s",
+            regionConfig.getRegionName(),
+            regionConfig.getEntityCaching(),
+            regionConfig.getCollectionCaching(),
+            regionConfig.getNaturalIdCaching()
+      );
       // TODO: data type is probably deprecated, but we need it for backwards-compatible configuration
       DataType dataType;
       int entities = regionConfig.getEntityCaching().size();
@@ -137,7 +134,7 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
          dataType = DataType.ENTITY;
       }
 
-      AdvancedCache cache = getCache(regionConfig.getRegionName(), dataType);
+      AdvancedCache cache = getCache(qualify(regionConfig.getRegionName()), dataType);
       DomainDataRegionImpl region = new DomainDataRegionImpl(cache, regionConfig, this, getCacheKeysFactory());
       startRegion(region);
       return region;
@@ -145,11 +142,9 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
 
    @Override
    public QueryResultsRegion buildQueryResultsRegion(String regionName, SessionFactoryImplementor sessionFactory) {
-      if ( log.isDebugEnabled() ) {
-         log.debug( "Building query results cache region [" + regionName + "]" );
-      }
+      log.debugf("Building query results cache region [%s]", regionName);
 
-       AdvancedCache cache = getCache(regionName, DataType.QUERY);
+      AdvancedCache cache = getCache(qualify(regionName), DataType.QUERY);
       QueryResultsRegionImpl region = new QueryResultsRegionImpl(cache, regionName, this);
       startRegion(region);
       return region;
@@ -157,11 +152,10 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
 
    @Override
    public TimestampsRegion buildTimestampsRegion(String regionName, SessionFactoryImplementor sessionFactory) {
-      if ( log.isDebugEnabled() ) {
-         log.debug( "Building timestamps cache region [" + regionName + "]" );
-      }
-      final AdvancedCache cache = getCache(regionName, DataType.TIMESTAMPS);
-      TimestampsRegionImpl region = createTimestampsRegion( cache, regionName );
+      log.debugf("Building timestamps cache region [%s]", regionName);
+
+      final AdvancedCache cache = getCache(qualify(regionName), DataType.TIMESTAMPS);
+      TimestampsRegionImpl region = createTimestampsRegion(cache, regionName);
       startRegion(region);
       return region;
    }
@@ -427,17 +421,17 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
       }
    }
 
-   protected AdvancedCache getCache(String regionName, DataType type) {
-      if (!manager.cacheExists(regionName)) {
-         String templateCacheName = baseConfigurations.get(regionName);
+   protected AdvancedCache getCache(String cacheName, DataType type) {
+      if (!manager.cacheExists(cacheName)) {
+         String templateCacheName = baseConfigurations.get(cacheName);
          Configuration configuration = null;
          ConfigurationBuilder builder = new ConfigurationBuilder();
          if (templateCacheName != null) {
             configuration = manager.getCacheConfiguration(templateCacheName);
             if (configuration == null) {
-               log.customConfigForRegionNotFound(templateCacheName, regionName, type.key);
+               log.customConfigForRegionNotFound(templateCacheName, cacheName, type.key);
             } else {
-               log.debugf("Region '%s' will use cache template '%s'", regionName, templateCacheName);
+               log.debugf("Region '%s' will use cache template '%s'", cacheName, templateCacheName);
                builder.read(configuration);
                unsetTransactions(builder);
                // do not apply data type overrides to regions that set special cache configuration
@@ -451,9 +445,9 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
             builder.read(configuration);
             // overrides for data types are already applied, but we should check custom ones
          }
-         ConfigurationBuilder override = configOverrides.get(regionName);
+         ConfigurationBuilder override = configOverrides.get(cacheName);
          if (override != null) {
-            log.debugf("Region '%s' has additional configuration set through properties.", regionName);
+            log.debugf("Region '%s' has additional configuration set through properties.", cacheName);
             builder.read(override.build(false));
          }
          if (globalStats != null) {
@@ -461,9 +455,9 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
          }
          configuration = builder.build();
          type.validate(configuration);
-         manager.defineConfiguration(regionName, configuration);
+         manager.defineConfiguration(cacheName, configuration);
       }
-      final AdvancedCache cache = manager.getCache( regionName ).getAdvancedCache();
+      final AdvancedCache cache = manager.getCache( cacheName ).getAdvancedCache();
       // TODO: not sure if this is needed in recent Infinispan
       if ( !cache.getStatus().allowInvocations() ) {
          cache.start();
