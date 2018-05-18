@@ -229,6 +229,80 @@
                </execution>
             </executions>
          </plugin>
+         <!--
+            Temporary: WF12 only includes JPA 2.1, but Hibernate ORM 5.3+ require JPA 2.2
+            There is a patch availble to allow such testing on WF12
+            This will no longer be needed in WF13.
+            -->
+         <plugin>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>fetch-jpa-patch</id>
+                  <phase>process-test-resources</phase>
+                  <goals>
+                     <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>org.hibernate.javax.persistence</groupId>
+                           <artifactId>hibernate-jpa-api-2.2-wildflymodules</artifactId>
+                           <classifier>wildfly-12.0.0.Final-patch</classifier>
+                           <version>1.0.0.Beta2</version>
+                           <type>zip</type>
+                           <outputDirectory>${project.build.directory}</outputDirectory>
+                           <overWrite>true</overWrite>
+                           <destFileName>jpa22-wildfly-patch.zip</destFileName>
+                        </artifactItem>
+                     </artifactItems>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.wildfly.plugins</groupId>
+            <artifactId>wildfly-maven-plugin</artifactId>
+            <executions>
+               <!-- Install JPA 2.2 patch on node1 -->
+               <execution>
+                  <id>apply-wildfly-node1-jpa22-patch-file</id>
+                  <phase>pre-integration-test</phase>
+                  <goals>
+                     <goal>execute-commands</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                     <offline>true</offline>
+                     <jbossHome>${project.build.directory}/node1</jbossHome>
+                     <!-- The CLI script below will fail if the patch was already applied in a previous build -->
+                     <fail-on-error>false</fail-on-error>
+                     <commands>
+                        <command>patch apply --override-all ${project.build.directory}/jpa22-wildfly-patch.zip</command>
+                     </commands>
+                  </configuration>
+               </execution>
+               <!-- Install JPA 2.2 patch on node2 -->
+               <execution>
+                  <id>apply-wildfly-node2-jpa22-patch-file</id>
+                  <phase>pre-integration-test</phase>
+                  <goals>
+                     <goal>execute-commands</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                     <offline>true</offline>
+                     <jbossHome>${project.build.directory}/node2</jbossHome>
+                     <!-- The CLI script below will fail if the patch was already applied in a previous build -->
+                     <fail-on-error>false</fail-on-error>
+                     <commands>
+                        <command>patch apply --override-all ${project.build.directory}/jpa22-wildfly-patch.zip</command>
+                     </commands>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>

@@ -7,11 +7,6 @@
 				artifactId="hibernate-search-jbossmodules-orm"
 				version="${version.hibernate.search}" />
 
-		<feature-pack
-				groupId="org.hibernate"
-				artifactId="hibernate-search-jbossmodules-hibernate-orm"
-				version="${version.hibernate.search}" />
-
 	</feature-packs>
 
 </server-provisioning>

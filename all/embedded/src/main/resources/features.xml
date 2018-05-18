@@ -23,13 +23,15 @@
       <!-- hibernate -->
       <bundle>mvn:org.hibernate/hibernate-core/${version.hibernate.core}</bundle>
       <bundle>mvn:org.hibernate/hibernate-osgi/${version.hibernate.osgi}</bundle>
-      <bundle>mvn:org.hibernate.javax.persistence/hibernate-jpa-2.1-api/${version.hibernate.javax.persistence}</bundle>
+      <bundle>mvn:javax.persistence/javax.persistence-api/${version.javax.persistence}</bundle>
       <!-- hibernate's dependencies -->
       <!-- jboss logging not included as it conflicts with pax-logging-api in Karaf -->
       <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.antlr/${version.hibernate_dep.antlr}</bundle>
       <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.dom4j/${version.hibernate_dep.dom4j}</bundle>
       <bundle>mvn:com.fasterxml/classmate/${version.hibernate_dep.classmate}</bundle>
       <bundle>mvn:org.javassist/javassist/${version.hibernate_dep.javassist}</bundle>
+      <!--Hardcoded for now: Hibernate ORM requires this version, which would clash with the Mockito dependency used elsewhere -->
+      <bundle>mvn:net.bytebuddy/byte-buddy/1.8.0</bundle>
       <bundle>mvn:org.hibernate.common/hibernate-commons-annotations/${version.hibernate_dep.hibernate-commons-annotations}</bundle>
       <bundle>mvn:org.jboss/jandex/${version.hibernate_dep.jandex}</bundle>
    </feature>
