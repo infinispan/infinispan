@@ -6,6 +6,7 @@ import org.hibernate.Transaction;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.cfg.spi.DomainDataCachingConfig;
+import org.hibernate.cache.spi.CacheImplementor;
 import org.hibernate.cache.spi.DirectAccessRegion;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.CachedDomainDataAccess;
@@ -42,7 +43,9 @@ import org.kohsuke.MetaInfServices;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -191,6 +194,14 @@ public class TestSessionAccessImpl implements TestSessionAccess {
    @Override
    public InfinispanBaseRegion getRegion(SessionFactoryImplementor sessionFactory, String regionName) {
       return (InfinispanBaseRegion) sessionFactory.getCache().getRegion(regionName);
+   }
+
+   @Override
+   public Collection<InfinispanBaseRegion> getAllRegions(SessionFactoryImplementor sessionFactory) {
+      CacheImplementor cache = sessionFactory.getCache();
+      return cache.getCacheRegionNames().stream()
+            .map(regionName -> (InfinispanBaseRegion) cache.getRegion(regionName))
+            .collect(Collectors.toList());
    }
 
    private static SharedSessionContractImplementor unwrap(Object session) {

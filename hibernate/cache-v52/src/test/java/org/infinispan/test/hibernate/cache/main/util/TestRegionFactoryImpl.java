@@ -74,21 +74,29 @@ class TestRegionFactoryImpl implements TestRegionFactory {
 
    @Override
    public InfinispanBaseRegion buildCollectionRegion(String regionName, AccessType accessType) {
+      String prefix = delegate.getSettings().getCacheRegionPrefix();
+      if (prefix != null && !prefix.isEmpty()) regionName = prefix + '.' + regionName;
       return (InfinispanBaseRegion) delegate.buildCollectionRegion(regionName, (Properties) null, MUTABLE_VERSIONED);
    }
 
    @Override
    public InfinispanBaseRegion buildEntityRegion(String regionName, AccessType accessType) {
+      String prefix = delegate.getSettings().getCacheRegionPrefix();
+      if (prefix != null && !prefix.isEmpty()) regionName = prefix + '.' + regionName;
       return (InfinispanBaseRegion) delegate.buildEntityRegion(regionName, (Properties) null, MUTABLE_VERSIONED);
    }
 
    @Override
    public InfinispanBaseRegion buildTimestampsRegion(String regionName) {
+      String prefix = delegate.getSettings().getCacheRegionPrefix();
+      if (prefix != null && !prefix.isEmpty()) regionName = prefix + '.' + regionName;
       return (InfinispanBaseRegion) delegate.buildTimestampsRegion(regionName, (Properties) null);
    }
 
    @Override
    public InfinispanBaseRegion buildQueryResultsRegion(String regionName) {
+      String prefix = delegate.getSettings().getCacheRegionPrefix();
+      if (prefix != null && !prefix.isEmpty()) regionName = prefix + '.' + regionName;
       return (InfinispanBaseRegion) delegate.buildQueryResultsRegion(regionName, (Properties) null);
    }
 

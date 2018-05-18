@@ -217,8 +217,8 @@ public class Caches {
 
 	/**
 	 * Broadcast an evict-all command with the given cache instance.
-	 *
 	 * @param cache instance used to broadcast command
+	 *
 	 */
 	public static void broadcastEvictAll(AdvancedCache cache) {
 		final RpcManager rpcManager = cache.getRpcManager();

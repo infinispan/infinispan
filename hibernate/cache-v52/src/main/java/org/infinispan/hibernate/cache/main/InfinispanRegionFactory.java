@@ -20,6 +20,7 @@ import org.hibernate.boot.registry.selector.spi.StrategySelector;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.internal.DefaultCacheKeysFactory;
+import org.hibernate.cache.internal.StandardQueryCache;
 import org.hibernate.cache.spi.CacheDataDescription;
 import org.hibernate.cache.spi.CacheKeysFactory;
 import org.hibernate.cache.spi.CollectionRegion;
@@ -151,6 +152,12 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
 		if ( log.isDebugEnabled() ) {
 			log.debug( "Building query results cache region [" + regionName + "]" );
 		}
+
+		// CacheImpl forgets to add region prefix to the default cache.
+		if (regionName != null && regionName.equals(StandardQueryCache.class.getName())
+            && settings.getCacheRegionPrefix() != null && !settings.getCacheRegionPrefix().isEmpty()) {
+		   regionName = settings.getCacheRegionPrefix() + "." + regionName;
+      }
 
 		final AdvancedCache cache = getCache( regionName, DataType.QUERY, null);
 		final QueryResultsRegion region = new QueryResultsRegionImpl(cache, regionName, transactionManager, this);
@@ -460,5 +467,9 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
 			}
 			builder.transaction().useSynchronization( DEF_USE_SYNCHRONIZATION );
 		}
+	}
+
+	public SessionFactoryOptions getSettings() {
+		return settings;
 	}
 }
