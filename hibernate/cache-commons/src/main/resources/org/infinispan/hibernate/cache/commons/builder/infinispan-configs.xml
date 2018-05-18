@@ -21,34 +21,42 @@
       <local-cache-configuration name="the-default-cache" statistics="false" />
 
       <!-- Default configuration is appropriate for entity/collection caching. -->
-      <invalidation-cache-configuration name="entity" mode="SYNC" remote-timeout="20000" statistics="false" statistics-available="false">
+      <invalidation-cache-configuration name="entity" remote-timeout="20000" statistics="false" statistics-available="false">
          <locking concurrency-level="1000" acquire-timeout="15000"/>
          <transaction mode="NONE" />
-         <eviction size="10000" strategy="LRU"/>
          <expiration max-idle="100000" interval="5000"/>
+         <memory>
+            <object size="10000" strategy="LRU" />
+         </memory>
       </invalidation-cache-configuration>
 
-      <replicated-cache-configuration name="replicated-entity" mode="SYNC" remote-timeout="20000" statistics="false" statistics-available="false">
+      <replicated-cache-configuration name="replicated-entity" remote-timeout="20000" statistics="false" statistics-available="false">
          <locking concurrency-level="1000" acquire-timeout="15000"/>
          <transaction mode="NONE" />
          <expiration max-idle="100000" interval="5000"/>
+         <memory>
+            <object size="10000" strategy="LRU" />
+         </memory>
       </replicated-cache-configuration>
 
       <!-- A config appropriate for query caching. Does not replicate queries. -->
       <local-cache-configuration name="local-query" statistics="false" statistics-available="false">
          <locking concurrency-level="1000" acquire-timeout="15000"/>
          <transaction mode="NONE" />
-         <eviction size="10000" strategy="LRU"/>
          <expiration max-idle="100000" interval="5000"/>
+         <memory>
+            <object size="10000" strategy="LRU" />
+         </memory>
       </local-cache-configuration>
 
       <!-- A query cache that replicates queries. Replication is asynchronous. -->
       <replicated-cache-configuration name="replicated-query" mode="ASYNC" statistics="false" statistics-available="false">
-         <!-- TODO: Wait for Radim to come back and see if this is needed -->
          <locking concurrency-level="1000" acquire-timeout="15000" isolation="READ_COMMITTED"/>
          <transaction mode="NONE" />
-         <eviction size="10000" strategy="LRU"/>
          <expiration max-idle="100000" interval="5000"/>
+         <memory>
+            <object size="10000" strategy="LRU" />
+         </memory>
       </replicated-cache-configuration>
 
       <!-- Optimized for timestamp caching. A clustered timestamp cache
@@ -58,9 +66,11 @@
          <locking concurrency-level="1000" acquire-timeout="15000"/>
          <!-- Explicitly non transactional -->
          <transaction mode="NONE"/>
-         <!--  Don't ever evict modification timestamps -->
-         <eviction strategy="NONE"/>
          <expiration interval="0"/>
+         <!--  Don't ever evict modification timestamps -->
+         <memory>
+            <object strategy="NONE" />
+         </memory>
       </replicated-cache-configuration>
 
       <!-- When providing custom configuration, always make this cache local and non-transactional.
