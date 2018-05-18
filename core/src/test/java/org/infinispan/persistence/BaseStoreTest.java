@@ -546,6 +546,18 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertNull(cl.load("20"));
    }
 
+   public void testEmptyBatch() {
+      assertIsEmpty();
+
+      cl.writeBatch(Collections.emptyList());
+      assertSize(TestingUtil.allEntries(cl), 0);
+
+      cl.deleteBatch(Collections.emptyList());
+      assertSize(TestingUtil.allEntries(cl), 0);
+
+      assertIsEmpty();
+   }
+
    protected final InitializationContext createContext(Configuration configuration) {
       return PersistenceMockUtil.createContext(getClass().getSimpleName(), configuration, getMarshaller(), timeService);
    }
