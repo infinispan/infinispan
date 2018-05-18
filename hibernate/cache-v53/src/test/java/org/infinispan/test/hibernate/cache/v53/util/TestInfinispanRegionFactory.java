@@ -66,8 +66,8 @@ public class TestInfinispanRegionFactory extends InfinispanRegionFactory {
    }
 
    @Override
-   protected AdvancedCache getCache(String cacheName, DataType type) {
-      AdvancedCache cache = super.getCache(cacheName, type);
+   protected AdvancedCache getCache(String cacheName, String unqualifiedRegionName, DataType type) {
+      AdvancedCache cache = super.getCache(cacheName, unqualifiedRegionName, type);
       return wrapCache == null ? cache : wrapCache.apply(cache);
    }
 

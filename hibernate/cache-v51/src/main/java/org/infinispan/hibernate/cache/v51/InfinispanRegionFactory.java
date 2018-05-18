@@ -378,18 +378,30 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
 	protected AdvancedCache getCache(String regionName, DataType type, CacheDataDescription metadata) {
 		if (!manager.cacheExists(regionName)) {
 			String templateCacheName = baseConfigurations.get(regionName);
-			Configuration configuration = null;
+			Configuration configuration;
 			ConfigurationBuilder builder = new ConfigurationBuilder();
 			if (templateCacheName != null) {
 				configuration = manager.getCacheConfiguration(templateCacheName);
 				if (configuration == null) {
 					log.customConfigForRegionNotFound(templateCacheName, regionName, type.key);
-				}
-				else {
+				} else {
 					log.debugf("Region '%s' will use cache template '%s'", regionName, templateCacheName);
 					builder.read(configuration);
 					configureTransactionManager(builder);
 					// do not apply data type overrides to regions that set special cache configuration
+					if (templateCacheName.equals(regionName)) {
+						// we'll define the configuration at the end of this method
+						manager.undefineConfiguration(regionName);
+					}
+				}
+			} else {
+				configuration = manager.getCacheConfiguration(regionName);
+				if (configuration != null) {
+					// While we could just use the defined configuration it's better to force user to include
+					// the configuration properties so that it's obvious from persistence.xml that this entity
+					// will get some special treatment.
+					log.regionNameMatchesCacheName(regionName, regionName, regionName);
+					manager.undefineConfiguration(regionName);
 				}
 			}
 			if (configuration == null) {

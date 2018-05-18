@@ -78,6 +78,24 @@
          <transaction mode="NONE"/>
          <expiration max-idle="120000" />
       </local-cache>
+
+      <!-- ISPN-8836 check what happens when custom region name matches cache name -->
+      <invalidation-cache-configuration name="myregion" remote-timeout="20000" statistics="false" statistics-available="false">
+         <locking concurrency-level="1000" acquire-timeout="15000"/>
+         <transaction mode="NONE" />
+         <expiration max-idle="100000" interval="5000"/>
+         <memory>
+            <object size="10000" strategy="LRU" />
+         </memory>
+      </invalidation-cache-configuration>
+      <invalidation-cache-configuration name="otherregion" remote-timeout="20000" statistics="false" statistics-available="false">
+         <locking concurrency-level="1000" acquire-timeout="15000"/>
+         <transaction mode="NONE" />
+         <expiration max-idle="100000" interval="5000"/>
+         <memory>
+            <object size="10000" strategy="LRU" />
+         </memory>
+      </invalidation-cache-configuration>
    </cache-container>
 
 </infinispan>
