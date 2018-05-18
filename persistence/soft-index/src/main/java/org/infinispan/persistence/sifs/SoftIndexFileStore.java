@@ -1,5 +1,6 @@
 package org.infinispan.persistence.sifs;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.Executor;
@@ -252,6 +253,11 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
       } finally {
          started = false;
       }
+   }
+
+   @Override
+   public boolean isAvailable() {
+      return new File(configuration.dataLocation()).exists() && new File(configuration.dataLocation()).exists();
    }
 
    @Override
