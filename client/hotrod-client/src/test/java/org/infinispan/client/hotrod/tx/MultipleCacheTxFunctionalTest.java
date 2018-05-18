@@ -1,5 +1,11 @@
 package org.infinispan.client.hotrod.tx;
 
+import static org.infinispan.client.hotrod.configuration.TransactionMode.NON_DURABLE_XA;
+import static org.infinispan.client.hotrod.configuration.TransactionMode.NON_XA;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.assertNoTransaction;
+import static org.infinispan.client.hotrod.tx.util.KeyValueGenerator.BYTE_ARRAY_GENERATOR;
+import static org.infinispan.client.hotrod.tx.util.KeyValueGenerator.GENERIC_ARRAY_GENERATOR;
+import static org.infinispan.client.hotrod.tx.util.KeyValueGenerator.STRING_GENERATOR;
 import static org.testng.AssertJUnit.assertSame;
 
 import java.lang.reflect.Method;
@@ -20,6 +26,7 @@ import org.infinispan.test.Exceptions;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -40,13 +47,20 @@ public class MultipleCacheTxFunctionalTest<K, V> extends MultiHotRodServersTest 
    @Override
    public Object[] factory() {
       return new Object[]{
-            new MultipleCacheTxFunctionalTest<String, String>()
-                  .keyValueGenerator(KeyValueGenerator.STRING_GENERATOR).transactionMode(TransactionMode.NON_XA),
-            new MultipleCacheTxFunctionalTest<byte[], byte[]>()
-                  .keyValueGenerator(KeyValueGenerator.BYTE_ARRAY_GENERATOR).transactionMode(TransactionMode.NON_XA),
-            new MultipleCacheTxFunctionalTest<Object[], Object[]>()
-                  .keyValueGenerator(KeyValueGenerator.GENERIC_ARRAY_GENERATOR).transactionMode(TransactionMode.NON_XA)
+            new MultipleCacheTxFunctionalTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_XA),
+            new MultipleCacheTxFunctionalTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(NON_XA),
+            new MultipleCacheTxFunctionalTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_XA),
+            new MultipleCacheTxFunctionalTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_DURABLE_XA),
+            new MultipleCacheTxFunctionalTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA),
+            new MultipleCacheTxFunctionalTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA)
       };
+   }
+
+   @AfterMethod(alwaysRun = true)
+   @Override
+   protected void clearContent() throws Throwable {
+      assertNoTransaction(clients);
+      super.clearContent();
    }
 
    public void testMultipleCaches(Method method) throws Exception {

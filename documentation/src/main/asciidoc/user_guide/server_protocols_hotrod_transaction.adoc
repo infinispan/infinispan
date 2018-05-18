@@ -92,7 +92,6 @@ This is the default mode.
 * `NON_XA`: The {rc} interacts via {sync}.
 
 * `NON_DURABLE_XA`: The {rc} interacts via {xa} but without recovery capabilities enabled.
-This mode isn't implemented yet.
 
 * `FULL_XA`: Same as above but with recovery available.
 This mode isn't implemented yet.

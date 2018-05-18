@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import javax.transaction.xa.Xid;
+
 import org.infinispan.client.hotrod.event.IncorrectClientListenerException;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
@@ -304,4 +306,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Error checking server configuration for transactional cache %s", id = 4085)
    void invalidTxServerConfig(String name, @Cause Throwable throwable);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Exception caught while preparing transaction %s", id = 4086)
+   void exceptionDuringPrepare(Xid xid, @Cause Exception e);
 }

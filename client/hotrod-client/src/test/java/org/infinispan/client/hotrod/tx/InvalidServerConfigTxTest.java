@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.tx;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.assertNoTransaction;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.lang.reflect.Method;
@@ -39,6 +40,7 @@ public class InvalidServerConfigTxTest extends SingleHotRodServerTest {
       } finally {
          tm.rollback();
       }
+      assertNoTransaction(remoteCacheManager);
    }
 
    public void testReadCommitted(Method method) throws SystemException, NotSupportedException {
@@ -54,6 +56,7 @@ public class InvalidServerConfigTxTest extends SingleHotRodServerTest {
       } finally {
          tm.rollback();
       }
+      assertNoTransaction(remoteCacheManager);
    }
 
    public void testOptimistic(Method method) throws SystemException, NotSupportedException {
@@ -70,6 +73,7 @@ public class InvalidServerConfigTxTest extends SingleHotRodServerTest {
       } finally {
          tm.rollback();
       }
+      assertNoTransaction(remoteCacheManager);
    }
 
    public void testOkConfig(Method method) throws Exception {
@@ -87,5 +91,6 @@ public class InvalidServerConfigTxTest extends SingleHotRodServerTest {
          tm.commit();
       }
       assertEquals("v1", cache.get("k1"));
+      assertNoTransaction(remoteCacheManager);
    }
 }
