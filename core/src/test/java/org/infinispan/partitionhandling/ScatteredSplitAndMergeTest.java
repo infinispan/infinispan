@@ -56,7 +56,6 @@ public class ScatteredSplitAndMergeTest extends BasePartitionHandlingTest {
          new PartitionDescriptor(DEGRADED_MODE, 3));
    }
 
-   @Test(groups = "unstable", description = "ISPN-8431")
    public void testSplitAndMerge5() throws Exception {
       testSplitAndMerge(
          new PartitionDescriptor(AVAILABLE, 1, 2, 3),

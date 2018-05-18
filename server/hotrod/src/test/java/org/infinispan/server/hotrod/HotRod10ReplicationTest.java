@@ -34,7 +34,7 @@ import org.testng.annotations.Test;
  * @author Galder Zamarreño
  * @since 4.1
  */
-@Test(groups = "unstable", testName = "server.hotrod.HotRod10ReplicationTest", description = "ISPN-3804")
+@Test(groups = "functional", testName = "server.hotrod.HotRod10ReplicationTest")
 public class HotRod10ReplicationTest extends HotRodMultiNodeTest {
 
    @Override
