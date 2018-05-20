@@ -49,7 +49,6 @@ public final class DeploymentJmsMasterSlaveAndInfinispan {
             .addClasses(RegistrationController.class, RegisteredMember.class, RegistrationConfiguration.class, SearchNewEntityJmsMasterSlaveAndInfinispan.class, MembersCache.class)
             .addAsResource(new StringAsset(unitDef.exportAsString()), "META-INF/persistence.xml")
             .addAsResource("default-jgroups4-udp.xml")
-            .addAsWebInfResource("jboss-deployment-structure-excludejavassist.xml", "jboss-deployment-structure.xml")
             .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml");
       return webArchive;
    }
