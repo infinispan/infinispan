@@ -3,9 +3,9 @@
 	<feature-packs>
 
 		<feature-pack
-				groupId="org.hibernate"
-				artifactId="hibernate-search-jbossmodules-orm"
-				version="${version.hibernate.search}" />
+				groupId="org.wildfly"
+				artifactId="wildfly-feature-pack"
+				version="13.0.0.Beta1" />
 
 	</feature-packs>
 
