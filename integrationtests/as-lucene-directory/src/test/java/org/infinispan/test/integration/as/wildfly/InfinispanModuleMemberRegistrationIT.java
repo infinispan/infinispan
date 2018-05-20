@@ -53,7 +53,6 @@ public class InfinispanModuleMemberRegistrationIT extends MemberRegistrationBase
               //This test is simply reusing the default configuration file, but we copy
               //this configuration into the Archive to verify that resources can be loaded from it:
               .addAsResource("user-provided-infinispan.xml", "user-provided-infinispan.xml")
-              .addAsWebInfResource( "jboss-deployment-structure-excludejavassist.xml", "jboss-deployment-structure.xml" )
               .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml");
       return webArchive;
    }
