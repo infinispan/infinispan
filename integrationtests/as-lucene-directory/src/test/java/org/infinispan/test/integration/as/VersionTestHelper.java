@@ -28,11 +28,13 @@ public class VersionTestHelper {
    }
 
    public static String hibernateOrmModuleName() {
-      return "org.hibernate.orm:" + injectVariables( "${hibernate-orm.module.slot}" );
+      return "org.hibernate"; //Happens to be the one we need on WildFly 13
+      //return "org.hibernate:" + injectVariables( "${hibernate-orm.module.slot}" );
    }
 
    public static String hibernateSearchModuleName() {
-      return "org.hibernate.search.orm:" + injectVariables( "${hibernate-search.module.slot}" );
+      return "org.hibernate.search.orm:5.10";
+      //return "org.hibernate.search.orm:" + injectVariables( "${hibernate-search.module.slot}" );
    }
 
    public static Asset manifestDependencies(String moduleDependencies) {
