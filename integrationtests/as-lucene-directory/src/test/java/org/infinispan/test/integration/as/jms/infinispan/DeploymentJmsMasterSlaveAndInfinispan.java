@@ -48,7 +48,6 @@ public final class DeploymentJmsMasterSlaveAndInfinispan {
             .create(WebArchive.class, name + ".war")
             .addClasses(RegistrationController.class, RegisteredMember.class, RegistrationConfiguration.class, SearchNewEntityJmsMasterSlaveAndInfinispan.class, MembersCache.class)
             .addAsResource(new StringAsset(unitDef.exportAsString()), "META-INF/persistence.xml")
-            .addAsResource("default-jgroups4-udp.xml")
             .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml");
       return webArchive;
    }
@@ -106,12 +105,6 @@ public final class DeploymentJmsMasterSlaveAndInfinispan {
             .createProperty()
             .name("hibernate.search.default.directory_provider")
             .value("infinispan")
-            .up()
-            //ISPN-7227: SearchNewEntityJmsMasterSlaveUsingInfinispanAndModulesIT intentionally uses main slot of WF modules
-            //which causes that default ISPN config loads old JGroups config. Once WF uses JGroups4, this option can be removed (and default-jgroups4-udp.xml as well)
-            .createProperty()
-            .name("hibernate.search.infinispan.configuration.transport_override_resourcename")
-            .value("default-jgroups4-udp.xml")
             .up()
             .createProperty()
             .name("hibernate.search.default.worker.execution")
