@@ -268,7 +268,42 @@
                           </resources>
                       </configuration>
                   </execution>
-              </executions>
+                  <!-- Fix broken module definitions -->
+                  <execution>
+                     <id>fix-search-module-node1</id>
+                     <phase>pre-integration-test</phase>
+                     <goals>
+                        <goal>copy-resources</goal>
+                     </goals>
+                     <configuration>
+                        <skip>${skipTests}</skip>
+                        <outputDirectory>${project.build.directory}/node1/modules/system/layers/base/org/hibernate/search/orm/5.10</outputDirectory>
+                        <overwrite>true</overwrite>
+                        <resources>
+                           <resource>
+                              <directory>${basedir}/src/wildflyConfig/patching</directory>
+                           </resource>
+                        </resources>
+                     </configuration>
+                  </execution>
+                  <execution>
+                     <id>fix-search-module-node2</id>
+                     <phase>pre-integration-test</phase>
+                     <goals>
+                        <goal>copy-resources</goal>
+                     </goals>
+                     <configuration>
+                        <skip>${skipTests}</skip>
+                        <outputDirectory>${project.build.directory}/node2/modules/system/layers/base/org/hibernate/search/orm/5.10</outputDirectory>
+                        <overwrite>true</overwrite>
+                        <resources>
+                           <resource>
+                              <directory>${basedir}/src/wildflyConfig/patching</directory>
+                           </resource>
+                        </resources>
+                     </configuration>
+               </execution>
+            </executions>
           </plugin>
       </plugins>
    </build>
