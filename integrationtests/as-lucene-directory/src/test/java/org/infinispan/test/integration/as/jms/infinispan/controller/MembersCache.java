@@ -1,10 +1,7 @@
 package org.infinispan.test.integration.as.jms.infinispan.controller;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.ejb.Stateless;
-
-import org.infinispan.manager.CacheContainer;
 
 /**
  * A simple cache to store some information about a newly registered member.
@@ -14,15 +11,8 @@ import org.infinispan.manager.CacheContainer;
 @Stateless
 public class MembersCache {
 
-   @Resource(lookup = "java:jboss/infinispan/container/membersCache")
-   private CacheContainer container;
-
+   @Resource(lookup = "java:jboss/infinispan/cache/membersCache/default")
    private org.infinispan.Cache<String, String> cache;
-
-   @PostConstruct
-   public void initCache() {
-      this.cache = container.getCache();
-   }
 
    public String get(String key) {
       return this.cache.get(key);
@@ -31,4 +21,5 @@ public class MembersCache {
    public void put(String key, String value) {
       this.cache.put(key, value);
    }
+
 }
