@@ -18,6 +18,7 @@
                     -Xmx500m ${testjvm.commonArgs}
                     -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1
                     -Djgroups.join_timeout=2000 -XX:+IgnoreUnrecognizedVMOptions
+                    -Dee8.preview.mode=true
                 </property>
             </configuration>
         </container>
@@ -33,6 +34,7 @@
                     -Djboss.socket.binding.port-offset=10000
                     -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1
                     -Djgroups.join_timeout=2000 -XX:+IgnoreUnrecognizedVMOptions
+                    -Dee8.preview.mode=true
                 </property>
                 <property name="managementPort">19990</property>
             </configuration>
