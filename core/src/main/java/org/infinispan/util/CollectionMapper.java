@@ -66,7 +66,7 @@ public class CollectionMapper<E, R> extends AbstractCollection<R> {
 
    @Override
    public void forEach(Consumer<? super R> action) {
-      stream().forEach(action);
+      realCollection.forEach(c -> action.accept(mapper.apply(c)));
    }
 
    // Write operations are not supported!
