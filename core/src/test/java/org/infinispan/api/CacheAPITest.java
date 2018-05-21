@@ -9,8 +9,10 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -445,5 +447,40 @@ public abstract class CacheAPITest extends APINonTxTest {
       });
 
       assertEquals(1, cache.size());
+   }
+
+   public void testEntrySetForEachNonSerializable() {
+      assertEquals(0, cache.size());
+      cache.put("k1", "v1");
+
+      List<Object> values = new ArrayList<>();
+      cache.entrySet().forEach(values::add);
+
+      assertEquals(1, values.size());
+      Map.Entry<Object, Object> entry = (Map.Entry<Object, Object>) values.iterator().next();
+      assertEquals("k1", entry.getKey());
+      assertEquals("v1", entry.getValue());
+   }
+
+   public void testKeySetForEachNonSerializable() {
+      assertEquals(0, cache.size());
+      cache.put("k1", "v1");
+
+      List<Object> values = new ArrayList<>();
+      cache.keySet().forEach(values::add);
+
+      assertEquals(1, values.size());
+      assertEquals("k1", values.iterator().next());
+   }
+
+   public void testValuesForEachNonSerializable() {
+      assertEquals(0, cache.size());
+      cache.put("k1", "v1");
+
+      List<Object> values = new ArrayList<>();
+      cache.values().forEach(values::add);
+
+      assertEquals(1, values.size());
+      assertEquals("v1", values.iterator().next());
    }
 }
