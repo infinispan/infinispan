@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -318,6 +319,9 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          if (partitionHandling != PartitionHandling.ALLOW_READ_WRITES) {
             assertAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
          }
+         // Keys do not become unavailable immediately after the partition becomes degraded
+         // but only after the cache topology is updated so that the key owners are not actual members
+         assertActualMembers();
       }
 
       public void assertKeyAvailableForRead(Object k, Object expectedValue) {
@@ -383,7 +387,17 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
 
       public void assertConsistentHashMembers(List<org.infinispan.remoting.transport.Address> expectedMembers) {
          for (Cache c : cachesInThisPartition()) {
-            assertEquals(new HashSet<>(c.getAdvancedCache().getDistributionManager().getConsistentHash().getMembers()), new HashSet<>(expectedMembers));
+            assertEquals(new HashSet<>(c.getAdvancedCache().getDistributionManager().getCacheTopology().getMembers()), new HashSet<>(expectedMembers));
+         }
+      }
+
+      public void assertActualMembers() {
+         Set<org.infinispan.remoting.transport.Address> expected =
+            cachesInThisPartition().stream()
+                                   .map(c -> c.getAdvancedCache().getRpcManager().getAddress())
+                                   .collect(Collectors.toSet());
+         for (Cache c : cachesInThisPartition()) {
+            eventuallyEquals(expected, () -> new HashSet<>(c.getAdvancedCache().getDistributionManager().getCacheTopology().getActualMembers()));
          }
       }
 
@@ -393,10 +407,12 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    }
 
    protected void assertKeyAvailableForRead(Cache c, Object k, Object expectedValue) {
+      log.tracef("Checking key is available on %s", c);
       assertEquals(c.get(k), expectedValue, "Cache " + c.getAdvancedCache().getRpcManager().getAddress() + " doesn't see the right value: ");
    }
 
    protected void assertKeyNotAvailableForRead(Cache<Object, ?> c, Object key) {
+      log.tracef("Checking key is not available on %s", c);
       expectException(AvailabilityException.class, () -> c.get(key));
       expectException(AvailabilityException.class, () -> c.getAdvancedCache().getAll(Collections.singleton(key)));
    }
