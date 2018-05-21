@@ -21,7 +21,6 @@ import org.hibernate.cache.spi.CacheKeysFactory;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.jpa.AvailableSettings;
 import org.hibernate.persister.entity.EntityPersister;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.WithEmbeddedId;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.PK;
@@ -45,7 +44,7 @@ public class CacheKeySerializationTest extends BaseUnitTestCase {
 				.setProperty( Environment.USE_SECOND_LEVEL_CACHE, "true")
 				.setProperty(Environment.CACHE_REGION_FACTORY, TestRegionFactoryProvider.load().getRegionFactoryClass().getName())
 				.setProperty(Environment.DEFAULT_CACHE_CONCURRENCY_STRATEGY, "transactional")
-				.setProperty( AvailableSettings.SHARED_CACHE_MODE, "ALL")
+				.setProperty("javax.persistence.sharedCache.mode", "ALL")
 				.setProperty(Environment.HBM2DDL_AUTO, "create-drop");
 		if (cacheKeysFactory != null) {
 			configuration.setProperty(Environment.CACHE_KEYS_FACTORY, cacheKeysFactory);
