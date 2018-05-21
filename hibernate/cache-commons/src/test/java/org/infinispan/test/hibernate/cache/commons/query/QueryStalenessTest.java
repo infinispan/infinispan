@@ -11,7 +11,6 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.engine.spi.CacheImplementor;
-import org.hibernate.jpa.AvailableSettings;
 import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;
 import org.hibernate.testing.TestForIssue;
@@ -52,7 +51,7 @@ public class QueryStalenessTest {
             .setProperty(Environment.CACHE_REGION_FACTORY, TestRegionFactoryProvider.load().getRegionFactoryClass().getName())
             .setProperty(Environment.DEFAULT_CACHE_CONCURRENCY_STRATEGY, "transactional")
             .setProperty("hibernate.allow_update_outside_transaction", "true") // only applies in 5.2
-            .setProperty(AvailableSettings.SHARED_CACHE_MODE, "ALL")
+            .setProperty("javax.persistence.sharedCache.mode", "ALL")
             .setProperty(Environment.HBM2DDL_AUTO, "create-drop");
       Properties testProperties = new Properties();
       testProperties.put(TestRegionFactory.TIME_SERVICE, timeService);
