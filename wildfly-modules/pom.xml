@@ -253,6 +253,28 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>assemble</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>single</goal>
+                  </goals>
+               </execution>
+            </executions>
+            <configuration>
+               <descriptors>
+                  <descriptor>src/main/assembly/dist.xml</descriptor>
+               </descriptors>
+               <finalName>${project.artifactId}-${project.version}</finalName>
+               <outputDirectory>${buildDirectory}/distribution</outputDirectory>
+               <workDirectory>${buildDirectory}/assembly/work</workDirectory>
+               <appendAssemblyId>false</appendAssemblyId>
+            </configuration>
+         </plugin>
       </plugins>
    </build>
 </project>

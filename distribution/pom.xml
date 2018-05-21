@@ -335,20 +335,6 @@
                   </configuration>
                </execution>
                <execution>
-                  <id>assemble-wildfly-modules</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>single</goal>
-                  </goals>
-                  <configuration>
-                     <descriptors>
-                        <descriptor>src/main/assemblies/wildfly.xml</descriptor>
-                     </descriptors>
-                     <finalName>${infinispan.brand.prefix}-wildfly-modules-${infinispan.brand.version}</finalName>
-                     <appendAssemblyId>false</appendAssemblyId>
-                  </configuration>
-               </execution>
-               <execution>
                   <id>assemble-server</id>
                   <phase>package</phase>
                   <goals>
