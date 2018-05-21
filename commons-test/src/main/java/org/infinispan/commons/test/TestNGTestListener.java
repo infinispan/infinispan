@@ -147,7 +147,7 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
 
    @Override
    public void onConfigurationSkip(ITestResult testResult) {
-      RunningTestsRegistry.unregisterThreadWithTest();
+      // beforeConfiguration didn't run, no need to unregister thread
       if (testResult.getThrowable() != null) {
          progressLogger.testIgnored(testName(testResult));
       }
