@@ -187,14 +187,6 @@
                   </configuration>
                </execution>
             </executions>
-            <dependencies>
-               <dependency>
-                  <groupId>org.hibernate</groupId>
-                  <artifactId>hibernate-search-jbossmodules-orm</artifactId>
-                  <version>${version.hibernate.search}</version>
-                  <type>zip</type>
-               </dependency>
-            </dependencies>
          </plugin>
          <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
