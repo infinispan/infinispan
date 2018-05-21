@@ -32,6 +32,9 @@
         <extension module="org.wildfly.extension.undertow"/>
         <extension module="org.wildfly.iiop-openjdk"/>
     </extensions>
+    <system-properties>
+        <property name="ee8.preview.mode" value="true"/>
+    </system-properties>
     <management>
         <security-realms>
             <security-realm name="ManagementRealm">
