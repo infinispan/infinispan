@@ -210,6 +210,7 @@
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
       <testNGListeners>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter</testNGListeners>
+      <log4j.configurationFile>${infinispan.root}/log4j2.xml</log4j.configurationFile>
       <uberjar.deps.optional>true</uberjar.deps.optional>
 
       <!-- Java source/target version -->
@@ -1819,8 +1820,7 @@
                <disableXmlReport>true</disableXmlReport>
                <useFile>false</useFile>
                <systemPropertyVariables>
-                  <infinispan.test.jgroups.protocol>${infinispan.test.jgroups.protocol}
-                  </infinispan.test.jgroups.protocol>
+                  <infinispan.test.jgroups.protocol>${infinispan.test.jgroups.protocol}</infinispan.test.jgroups.protocol>
                   <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
@@ -2517,7 +2517,7 @@
          </properties>
       </profile>
 
-      <!-- Only one of the root-dirX profiles will be active, and it will set log4j.configurationFile
+      <!-- Only one of the root-dirX profiles will be active, and it will set infinispan.root
            to $REACTOR_ROOT/etc/log4j2.xml -->
       <profile>
          <id>root-dir1</id>
@@ -2527,7 +2527,7 @@
             </file>
          </activation>
          <properties>
-            <log4j.configurationFile>${basedir}/../etc/log4j2.xml</log4j.configurationFile>
+            <infinispan.root>${basedir}/../etc</infinispan.root>
          </properties>
       </profile>
       <profile>
@@ -2538,7 +2538,7 @@
             </file>
          </activation>
          <properties>
-            <log4j.configurationFile>${basedir}/../../etc/log4j2.xml</log4j.configurationFile>
+            <infinispan.root>${basedir}/../../etc</infinispan.root>
          </properties>
       </profile>
       <profile>
@@ -2549,7 +2549,18 @@
             </file>
          </activation>
          <properties>
-            <log4j.configurationFile>${basedir}/../../../etc/log4j2.xml</log4j.configurationFile>
+            <infinispan.root>${basedir}/../../../etc</infinispan.root>
+         </properties>
+      </profile>
+      <profile>
+         <id>root-dir4</id>
+         <activation>
+            <file>
+               <exists>${basedir}/../../../../etc/log4j2.xml</exists>
+            </file>
+         </activation>
+         <properties>
+            <infinispan.root>${basedir}/../../../../etc</infinispan.root>
          </properties>
       </profile>
       <profile>
@@ -2567,21 +2578,9 @@
          <activation>
             <activeByDefault>false</activeByDefault>
          </activation>
-         <build>
-            <plugins>
-               <!-- Redefine surefire plugin to avoid external log4j settings
-                    not being discovered when passed as command line arguments -->
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <configuration>
-                     <systemPropertyVariables>
-                        <log4j.configurationFile>log4j2-trace.xml</log4j.configurationFile>
-                     </systemPropertyVariables>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
+         <properties>
+            <log4j.configurationFile>${infinispan.root}/log4j2-trace.xml</log4j.configurationFile>
+         </properties>
       </profile>
       <profile>
          <id>coverage</id>
