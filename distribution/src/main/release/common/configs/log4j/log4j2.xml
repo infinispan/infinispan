@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Configuration name="CommandLineConfig" packages="org.infinispan.commons.logging.log4j">
+   <Properties>
+      <Property name="infinispan.module-suffix"></Property>
+      <Property name="infinispan.log.path">.</Property>
+   </Properties>
+
+   <Appenders>
+      <Console name="STDOUT">
+         <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t) [%c{1}] %m%throwable{10}%n"/>
+      </Console>
+      <!-- Use the sys: lookup so system properties set on the command line are preferred -->
+      <File name="File" fileName="${sys:infinispan.log.path}/infinispan.log"
+            append="false">
+         <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t:%x) [%c{1}] %m%n"/>
+      </File>
+   </Appenders>
+
+   <Loggers>
+      <Logger name="org.infinispan" level="DEBUG"/>
+      <Logger name="com.mchange" level="WARN"/>
+      <Logger name="org.jgroups" level="DEBUG"/>
+
+      <Root level="DEBUG">
+         <AppenderRef ref="STDOUT" level="FATAL"/>
+         <AppenderRef ref="File"/>
+      </Root>
+   </Loggers>
+</Configuration>

@@ -156,12 +156,12 @@ function start() {
   if [ "x$LOG4J_CONFIG" = "x" ]; then
     # Log4J config path needs path conversion in Cygwin
     if $CYGWIN; then
-      LOG4J_CONFIG=`cygpath -w "file:///${ISPN_HOME}/configs/log4j/log4j.xml"`
+      LOG4J_CONFIG=`cygpath -w "file:///${ISPN_HOME}/configs/log4j/log4j2.xml"`
     else
-      LOG4J_CONFIG=file:///${ISPN_HOME}/configs/log4j/log4j.xml
+      LOG4J_CONFIG=file:///${ISPN_HOME}/configs/log4j/log4j2.xml
     fi 
   fi
-  START_ARGS=( "${START_ARGS[@]}" "-Dlog4j.configuration=$LOG4J_CONFIG" )
+  START_ARGS=( "${START_ARGS[@]}" "-Dlog4j.configurationFile=$LOG4J_CONFIG" )
 
   # Main class and its arguments
   START_ARGS=( "${START_ARGS[@]}" "$MAIN_CLASS" )
