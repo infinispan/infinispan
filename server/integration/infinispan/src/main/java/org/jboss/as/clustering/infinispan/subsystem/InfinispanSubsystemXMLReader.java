@@ -1920,6 +1920,10 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     this.parseStoreImplementation(reader, store, additionalConfigurationOperations);
                     break;
                 }
+                case WRITE_BEHIND: {
+                    parseStoreWriteBehind(reader, store, additionalConfigurationOperations);
+                    break;
+                }
                 default: {
                     this.parseStoreProperty(reader, store, additionalConfigurationOperations);
                 }
@@ -2033,6 +2037,10 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 }
                 case COMPRESSION: {
                     this.parseStoreCompression(reader, store, additionalConfigurationOperations);
+                    break;
+                }
+                case WRITE_BEHIND: {
+                    parseStoreWriteBehind(reader, store, additionalConfigurationOperations);
                     break;
                 }
                 default: {

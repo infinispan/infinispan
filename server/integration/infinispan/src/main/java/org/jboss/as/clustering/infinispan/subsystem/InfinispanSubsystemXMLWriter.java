@@ -610,6 +610,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 this.writeOptional(writer, Attribute.CACHE_SIZE, store, ModelKeys.CACHE_SIZE);
                 this.writeOptional(writer, Attribute.CLEAR_THRESHOLD, store, ModelKeys.CLEAR_THRESHOLD);
                 this.writeStoreAttributes(writer, store);
+                this.writeStoreWriteBehind(writer, store);
                 this.writeRocksDBStoreExpiration(writer, store);
                 this.writeRocksDBStoreCompression(writer, store);
                 this.writeStoreProperties(writer, store);

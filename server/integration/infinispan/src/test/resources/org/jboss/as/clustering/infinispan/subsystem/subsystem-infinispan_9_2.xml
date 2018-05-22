@@ -61,6 +61,7 @@
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="READ_COMMITTED"/>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
             <rocksdb-store path="rocksdb-store" block-size="4096" cache-size="50000" clear-threshold="100000">
+                <write-behind modification-queue-size="2048" thread-pool-size="1" />
                 <expiration path="rocksdb-store-expired" queue-size="2000"/>
                 <compression type="SNAPPY"/>
             </rocksdb-store>
