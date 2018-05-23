@@ -20,6 +20,6 @@ public class LocalInvalidationSynchronization implements Synchronization {
 
    @Override
    public void afterCompletion(int status) {
-      validator.endInvalidatingKey(key, lockOwner, status == Status.STATUS_COMMITTED || status == Status.STATUS_COMMITTING);
+      validator.endInvalidatingKey(lockOwner, key, status == Status.STATUS_COMMITTED || status == Status.STATUS_COMMITTING);
    }
 }
