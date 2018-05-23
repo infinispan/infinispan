@@ -48,6 +48,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InvocationSuccessAction;
+import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -444,6 +445,15 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    )
    public long getWritesToTheStores() {
       return cacheStores.get();
+   }
+
+   @ManagedAttribute(
+         description = "Number of entries currently persisted excluding expired entries",
+         displayName = "Number of persisted entries",
+         displayType = DisplayType.SUMMARY
+   )
+   public int getNumberOfPersistedEntries() {
+      return persistenceManager.size();
    }
 
    void storeEntry(InvocationContext ctx, Object key, FlagAffectedCommand command) {
