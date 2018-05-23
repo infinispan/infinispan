@@ -242,6 +242,13 @@ Whenever a new _entity or collection is read from database_ and needs to be cach
 This option can be changed so that entities/collections are cached cluster wide, by switching the entity/collection cache to be replicated or distributed.
 How to change this option is explained in the <<_configuration_properties, configuration properties>> section.
 
+WARNING: When data read from the database is put in the cache, with replicated or distributed caches,
+the data is propagated to other nodes using asynchronous communication.
+In the presence of concurrent database loads, one operation will succeed while others might fail (silently).
+This is fine because they'd all be trying to put the same data loaded from the database.
+This has the side effect that under these circumstances, the cache might not be up to date right after making the JPA call that leads to the database load.
+However, the cache will eventually contain the data loaded, even if it happens after a short delay.
+
 All _entities and collections are configured to use a synchronous invalidation_ as clustering mode.
 This means that when an entity is updated, the updated cache will send a message to the other members of the cluster telling them that the entity has been modified.
 Upon receipt of this message, the other nodes will remove this data from their local cache, if it was stored there.

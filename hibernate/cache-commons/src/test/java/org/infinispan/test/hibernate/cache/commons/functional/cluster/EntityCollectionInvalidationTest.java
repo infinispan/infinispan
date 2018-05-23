@@ -44,8 +44,9 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.util.ControlledTimeService;
-import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -72,6 +73,10 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 	private MyListener localListener, remoteListener;
 	private SessionFactory localFactory, remoteFactory;
 	private final ControlledTimeService timeService = new ControlledTimeService();
+
+   @Rule
+   public TestName name = new TestName();
+
 
 	@Override
 	public List<Object[]> getParameters() {
@@ -128,8 +133,9 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 	}
 
 	@Test
-	@Ignore("ISPN-9175")
 	public void testAll() throws Exception {
+      log.infof(name.getMethodName());
+
 		assertEmptyCaches();
 		assertTrue( remoteListener.isEmpty() );
 		assertTrue( localListener.isEmpty() );
@@ -144,6 +150,14 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 		// and therefore the putFromLoad in getCustomer could be considered stale if executed too soon.
 		timeService.advance(1);
 
+      CountDownLatch remoteCollectionLoadLatch = null;
+      if (!cacheMode.isInvalidation()) {
+         remoteCollectionLoadLatch = new CountDownLatch(1);
+         ExpectingInterceptor.get(remoteCollectionCache)
+            .when((ctx, cmd) -> cmd instanceof PutKeyValueCommand)
+            .countDown(remoteCollectionLoadLatch);
+      }
+
 		log.debug( "Find node 0" );
 		// This actually brings the collection into the cache
 		getCustomer( ids.customerId, localFactory );
@@ -157,6 +171,12 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 		// Check the read came from the cache
 		log.debug( "Check cache 0" );
 		assertLoadedFromCache( localListener, ids.customerId, ids.contactIds );
+
+      if (remoteCollectionLoadLatch != null) {
+         log.debug( "Wait for remote collection put from load to complete" );
+         assertTrue(remoteCollectionLoadLatch.await(2, TimeUnit.SECONDS));
+         ExpectingInterceptor.cleanup(remoteCollectionCache);
+      }
 
 		log.debug( "Find node 1" );
 		// This actually brings the collection into the cache since invalidation is in use
