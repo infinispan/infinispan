@@ -9,6 +9,7 @@ import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.util.ControlledTimeService;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.ServiceLoader;
 
@@ -44,6 +45,8 @@ public interface TestSessionAccess {
    Object entityAccess(InfinispanBaseRegion region, AccessType accessType);
 
    InfinispanBaseRegion getRegion(SessionFactoryImplementor sessionFactory, String regionName);
+
+   Collection<InfinispanBaseRegion> getAllRegions(SessionFactoryImplementor sessionFactory);
 
    interface TestRegionAccessStrategy {
 

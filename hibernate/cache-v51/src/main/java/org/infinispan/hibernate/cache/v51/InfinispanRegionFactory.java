@@ -461,4 +461,8 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
 			builder.transaction().useSynchronization( DEF_USE_SYNCHRONIZATION );
 		}
 	}
+
+	public SessionFactoryOptions getSettings() {
+		return settings;
+	}
 }
