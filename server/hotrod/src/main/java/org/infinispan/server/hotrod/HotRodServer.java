@@ -389,7 +389,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          } else {
             cache = getCacheInstance(cdc, cacheName, cacheManager, true, true);
          }
-         return cache;
       }
       cache = cdc.decoder.getOptimizedCache(cdc.header, cache, getCacheConfiguration(cacheName));
       if (cdc.subject != null) {

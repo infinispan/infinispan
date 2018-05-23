@@ -8,7 +8,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -17,8 +17,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.TransactionPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
@@ -31,7 +30,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.dsl.embedded.testdomain.Address;
+import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
@@ -145,26 +144,24 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
 
       // Create the cache
       client(0).administration().createCache(cacheName, "template");
-      RemoteCache<Object, Object> cache = client(0).getCache(cacheName);
-      User user1 = new UserPB();
-      user1.setId(1);
-      user1.setName("Tom");
-      user1.setSurname("Cat");
-      user1.setGender(User.Gender.MALE);
-      user1.setAccountIds(Collections.singleton(12));
-      Address address1 = new AddressPB();
-      address1.setStreet("Dark Alley");
-      address1.setPostCode("1234");
-      user1.setAddresses(Collections.singletonList(address1));
-      cache.withFlags(Flag.SKIP_INDEXING).put(0, user1);
-      verifyUserQuery(cache, 0);
+      RemoteCache<String, Transaction> cache = client(0).getCache(cacheName);
+      Transaction tx = new TransactionPB();
+      tx.setId(1);
+      tx.setAccountId(777);
+      tx.setAmount(500);
+      tx.setDate(new Date(1));
+      tx.setDescription("February rent");
+      tx.setLongDescription("February rent");
+      tx.setNotes("card was not present");
+      cache.withFlags(Flag.SKIP_INDEXING).put("tx", tx);
+      verifyQuery(cache, 0);
       client(0).administration().reindexCache(cacheName);
-      verifyUserQuery(cache, 1);
+      verifyQuery(cache, 1);
       client(0).administration().removeCache(cacheName);
    }
 
-   private void verifyUserQuery(RemoteCache<Object, Object> cache, int count) {
-      List<User> users = Search.getQueryFactory(cache).create("from sample_bank_account.User where name='Tom'").list();
+   private void verifyQuery(RemoteCache<String, Transaction> cache, int count) {
+      List<User> users = Search.getQueryFactory(cache).create("from sample_bank_account.Transaction where longDescription:'RENT'").list();
       assertEquals(count, users.size());
    }
 
