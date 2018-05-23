@@ -837,6 +837,10 @@ public class JGroupsTransport implements Transport {
       Address excludedTarget = deliverOrder == DeliverOrder.TOTAL ? null : getAddress();
       MultiTargetRequest<T> request =
             new MultiTargetRequest<>(collector, requestId, requests, targets, excludedTarget);
+      // Request may be completed due to exclusion of target nodes, so only send it if it isn't complete
+      if (request.isDone()) {
+         return request;
+      }
       try {
          addRequest(request);
          boolean checkView = request.onNewView(clusterView.getMembersSet());
@@ -859,6 +863,10 @@ public class JGroupsTransport implements Transport {
       Address excludedTarget = deliverOrder == DeliverOrder.TOTAL ? null : getAddress();
       MultiTargetRequest<T> request =
             new MultiTargetRequest<>(collector, requestId, requests, clusterView.getMembers(), excludedTarget);
+      // Request may be completed due to exclusion of target nodes, so only send it if it isn't complete
+      if (request.isDone()) {
+         return request;
+      }
       try {
          addRequest(request);
          request.onNewView(clusterView.getMembersSet());
@@ -882,6 +890,10 @@ public class JGroupsTransport implements Transport {
       Address excludedTarget = deliverOrder == DeliverOrder.TOTAL ? null : getAddress();
       MultiTargetRequest<T> request =
          new MultiTargetRequest<>(collector, requestId, requests, requiredTargets, excludedTarget);
+      // Request may be completed due to exclusion of target nodes, so only send it if it isn't complete
+      if (request.isDone()) {
+         return request;
+      }
       try {
          addRequest(request);
          request.onNewView(clusterView.getMembersSet());
@@ -926,6 +938,10 @@ public class JGroupsTransport implements Transport {
       Address excludedTarget = getAddress();
       MultiTargetRequest<T> request =
             new MultiTargetRequest<>(collector, requestId, requests, targets, excludedTarget);
+      // Request may be completed due to exclusion of target nodes, so only send it if it isn't complete
+      if (request.isDone()) {
+         return request;
+      }
       addRequest(request);
       boolean checkView = request.onNewView(clusterView.getMembersSet());
       try {

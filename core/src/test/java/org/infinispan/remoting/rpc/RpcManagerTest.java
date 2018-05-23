@@ -207,7 +207,7 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
       RpcManager rpcManager0 = cache(0).getAdvancedCache().getRpcManager();
 
       Exceptions.expectException(IllegalArgumentException.class, () -> {
-         rpcManager0.invokeCommands(Arrays.asList(address(0)), a -> command, MapResponseCollector.validOnly(),
+         rpcManager0.invokeCommands(Arrays.asList(address(1)), a -> command, MapResponseCollector.validOnly(),
                                     rpcManager0.getSyncRpcOptions());
       });
 
