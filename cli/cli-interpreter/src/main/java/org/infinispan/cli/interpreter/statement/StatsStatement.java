@@ -3,6 +3,9 @@ package org.infinispan.cli.interpreter.statement;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.infinispan.Cache;
@@ -101,7 +104,9 @@ public class StatsStatement implements Statement {
       }
       ManageableComponentMetadata mcm = cm.toManageableComponentMetadata();
       pw.printf("%s: {\n", mcm.getJmxObjectName());
-      for (JmxAttributeMetadata s : mcm.getAttributeMetadata()) {
+      List<JmxAttributeMetadata> attrs = new ArrayList<>(mcm.getAttributeMetadata());
+      Collections.sort(attrs, Comparator.comparing(JmxAttributeMetadata::getName));
+      for (JmxAttributeMetadata s : attrs) {
          pw.printf("  %s: %s\n", s.getName(), getAttributeValue(component, s));
       }
       pw.println("}");
