@@ -43,7 +43,7 @@ This means that the documentation on how to use it and it's Maven coordinates ar
 link:https://docs.jboss.org/hibernate/orm/5.0/userguide/html_single/Hibernate_User_Guide.html#caching-provider-infinispan[Hibernate documentation].
 
 Apart from {brandname} specific configuration, it's worth noting that enabling second cache requires some changes to the descriptor file
-(`persistence.xml` for JPA, `hibernate.cfg.xml` for Hibernate or `application.properties` for Spring).
+(`persistence.xml` for JPA or `application.properties` for Spring).
 To use second level cache, you first need to enable the second level cache so that entities and/or collections can be cached:
 
 .Enable second-level cache
@@ -154,6 +154,9 @@ This means that when using JPA in WildFly, region factory is already set to `inf
 {brandname}'s configuration is located in WildFly's `standalone.xml` file.
 It follows the same settings explained in <<_default_local_configuration,local configuration>> section.
 
+WARNING: When running in Wildfly, do not set `hibernate.cache.infinispan.cfg`.
+The configuration of the caches comes from WildFly's configuration file.
+
 Several aspects of the {brandname} second level cache provider can be configured directly in `persistence.xml`.
 This means that some of those tweaks do not require changing WildFly's `standalone.xml` file.
 You can find out more about these changes in the <<_configuration_properties, configuration properties>> section.
@@ -234,7 +237,8 @@ These are the characteristics of such configuration:
 
 .Entities and Collections
 
-For all entities and collections, whenever a new _entity or collection is read from database_ and needs to be cached, _it's only cached locally_ in order to reduce intra-cluster traffic.
+By default all _entities and collections are configured to use a synchronous invalidation_ as clustering mode.
+Whenever a new _entity or collection is read from database_ and needs to be cached, _it's only cached locally_ in order to reduce intra-cluster traffic.
 This option can be changed so that entities/collections are cached cluster wide, by switching the entity/collection cache to be replicated or distributed.
 How to change this option is explained in the <<_configuration_properties, configuration properties>> section.
 
@@ -268,6 +272,8 @@ However, replication for query cache only makes sense if, and only if, all of th
 
 NOTE: Hibernate must aggressively invalidate query results from the cache any time any instance of one of the entity types targeted by the query.
 All such query results are invalidated, even if the change made to the specific entity instance would not have affected the query result.
+For example: the cached result of `SELECT id FROM cars where color = 'red'` is thrown away when you call `INSERT INTO cars VALUES ..., color = 'blue'`.
+Also, the result of an update within a transaction is not visible to the result obtained from the query cache.
 
 _query cache_ uses the _same eviction/expiration settings as for entities/collections_.
 
@@ -292,6 +298,7 @@ All cached query results referencing given entity type are invalidated, even if 
 The timestamps cache plays here an important role - it contains last modification timestamp for each entity type.
 After a cached query results is loaded, its timestamp is compared to all timestamps of the entity types that are referenced in the query.
 If any of these is higher, the cached query result is discarded and the query is executed against DB.
+This requires synchronization of the wall clock across the cluster to work as expected.
 
 
 ===== Configuration Properties
@@ -486,34 +493,3 @@ TX1: end commit
 Tx3: read A = 1, B = 1 // reads after TX1 commit completes are consistent again
 ----
 ====
-
-==== Remote {brandname} Caching
-
-Several questions (
-link:http://community.jboss.org/message/575814#575814[here]
-and
-link:http://community.jboss.org/message/585841#585841[here]
-) have appeared in the {brandname} user forums asking whether it'd be possible to have an {brandname} second level cache that instead of living in the same JVM as the Hibernate code, it resides in a remote server, i.e. an {brandname} Hot Rod server.
-It's important to understand that trying to set up second level cache in this way is generally not a good idea for the following reasons:
-
-* The purpose of a JPA/Hibernate second level cache is to store entities/collections recently retrieved from database or to maintain results of recent queries.
-So, part of the aim of the second level cache is to have data accessible locally rather than having to go to the database to retrieve it everytime this is needed.
-Hence, if you decide to set the second level cache to be remote as well, you're losing one of the key advantages of the second level cache: the fact that the cache is local to the code that requires it.
-* Setting a remote second level cache can have a negative impact in the overall performance of your application because it means that cache misses require accessing a remote location to verify whether a particular entity/collection/query is cached.
-With a local second level cache however, these misses are resolved locally and so they are much faster to execute than with a remote second level cache.
-
-There are however some edge cases where it might make sense to have a remote second level cache, for example:
-
-* You are having memory issues in the JVM where JPA/Hibernate code and the second level cache is running.
-Off loading the second level cache to remote Hot Rod servers could be an interesting way to separate systems and allow you find the culprit of the memory issues more easily.
-* Your application layer cannot be clustered but you still want to run multiple application layer nodes.
-In this case, you can't have multiple local second level cache instances running because they won't be able to invalidate each other for example when data in the second level cache is updated.
-In this case, having a remote second level cache could be a way out to make sure your second level cache is always in a consistent state, will all nodes in the application layer pointing to it.
-* Rather than having the second level cache in a remote server, you want to simply keep the cache in a separate VM still within the same machine.
-In this case you would still have the additional overhead of talking across to another JVM, but it wouldn't have the latency of across a network.
-+
-The benefit of doing this is that:
-+
-** Size the cache separate from the application, since the cache and the application server have very different memory profiles.
-One has lots of short lived objects, and the other could have lots of long lived objects.
-** To pin the cache and the application server onto different CPU cores (using _numactl_ ), and even pin them to different physically memory based on the NUMA nodes.
