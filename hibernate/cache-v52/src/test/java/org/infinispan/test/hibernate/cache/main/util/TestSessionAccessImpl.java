@@ -36,6 +36,7 @@ import org.kohsuke.MetaInfServices;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.List;
 
 import static org.mockito.Mockito.mock;
@@ -165,6 +166,11 @@ public final class TestSessionAccessImpl implements TestSessionAccess {
    @Override
    public InfinispanBaseRegion getRegion(SessionFactoryImplementor sessionFactory, String regionName) {
       return (InfinispanBaseRegion) sessionFactory.getSecondLevelCacheRegion(regionName);
+   }
+
+   @Override
+   public Collection<InfinispanBaseRegion> getAllRegions(SessionFactoryImplementor sessionFactory) {
+      return (Collection<InfinispanBaseRegion>) sessionFactory.getAllSecondLevelCacheRegions();
    }
 
    private static SessionImplementor unwrap(Object session) {
