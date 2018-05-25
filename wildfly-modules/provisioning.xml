@@ -1,0 +1,42 @@
+<!--
+  We use the WildFly provisioning tool to materialize the wildfly modules as fat-modules
+  (copy-module-artifacts=true).
+  Dependencies are being excluded as the `hibernate-search-jbossmodules-engine` and `infinispan-feature-pack-commons` depends
+  on the feature pack `org.wildfly:wildfly-feature-pack`, which would pull in the whole WildFly server
+  into our modules zip.
+  -->
+<server-provisioning xmlns="urn:wildfly:server-provisioning:1.1" copy-module-artifacts="true" exclude-dependencies="true">
+	<feature-packs>
+		<feature-pack
+				groupId="org.hibernate"
+				artifactId="hibernate-search-jbossmodules-engine"
+				version="${version.hibernate.search}" />
+
+		<feature-pack
+				groupId="org.hibernate"
+				artifactId="hibernate-search-jbossmodules-elasticsearch"
+				version="${version.hibernate.search}"/>
+
+		<feature-pack
+				groupId="org.hibernate.lucene-jbossmodules"
+				artifactId="lucene-jbossmodules"
+				version="${version.lucene.featurepack}"/>
+
+		<feature-pack
+				groupId="org.hibernate.elasticsearch-client-jbossmodules"
+				artifactId="elasticsearch-client-jbossmodules"
+				version="${version.elasticsearch-client.featurepack}"/>
+
+		<feature-pack
+				groupId="org.hibernate.gson-jbossmodules"
+				artifactId="gson-jbossmodules"
+				version="${version.gson.featurepack}"/>
+
+		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-client" version="${project.version}" />
+		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-commons" version="${project.version}" />
+		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-embedded" version="${project.version}" />
+		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-embedded-query" version="${project.version}" />
+		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-server" version="${project.version}" />
+		<feature-pack groupId="org.infinispan" artifactId="infinispan-feature-pack-wf-modules" version="${project.version}" />
+	</feature-packs>
+</server-provisioning>
