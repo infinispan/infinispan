@@ -1348,7 +1348,116 @@ is a fine example.
 
 ===== Ickle [[query.ickle]]
 
-TODO
+Using Ickle, a light and small subset of JP-QL with full-text extensions, it is possible to create relational and full-text queries in both Library and Remote Client-Server mode. Ickle is a string-based querying language, and has the following characteristics:
+
+* Query Java classes and supports Protocol Buffers.
+* Queries can target a single entity type.
+* Queries can filter on properties of embedded objects, including collections.
+* Supports projections, aggregations, sorting, named parameters.
+* Supports indexed and non-indexed execution.
+* Supports complex boolean expressions.
+* Supports full-text queries.
+* Does not support computations in expressions, such as `user.age > sqrt(user.shoeSize+3)`.
+* Does not support joins.
+* Does not support subqueries.
+* Is supported across various {{brandname}} APIs. Whenever a Query is produced by the QueryBuilder is accepted, including continuous queries or in event filters for listeners.
+
+To use the API, first obtain a QueryFactory to the cache and then call the .create() method, passing in the string to use in the query. For instance:
+
+[source,java,tile="Using Ickle"]
+----
+QueryFactory qf = Search.getQueryFactory(remoteCache);
+Query q = qf.create("from sample_bank_account.Transaction where amount > 20");
+----
+
+When using Ickle all fields used with full-text operators must be both `Indexed` and `Analysed`.
+
+====== Deviations from the Lucene Query Parser Syntax
+
+While Ickle is a subset of JP-QL it does have the following deviations in its query syntax:
+
+* Whitespace is not significant.
+* There is no support for wildcards in field names.
+* A field name or path must always be specified, as there is no default field.
+* `&&` and `||` are accepted instead of `AND` or `OR` in both full-text and JPA predicates.
+* `!` may be used instead of `NOT`.
+* A missing boolean operator is interpreted as `OR`.
+* String terms must be enclosed with either single or double quotes.
+* Fuzziness and boosting are not accepted in arbitrary order; fuzziness always comes first.
+* `!=` is accepted instead of `<>`.
+* Boosting cannot be applied to `>`,`>=`,`<`,`⇐` operators. Ranges may be used to achieve the same result.
+
+====== Fuzzy Queries
+
+To execute a fuzzy query add `~` along with an integer, representing the distance from the term used, after the term.
+For instance
+
+[source,java,tile="Fuzzy Queries in Ickle"]
+----
+Query fuzzyQuery = qf.create("from sample_bank_account.Transaction where description : 'cofee'~2");
+----
+
+====== Range Queries
+
+To execute a range query define the given boundaries within a pair of braces, as seen in the following example:
+
+Query rangeQuery = qf.create("from sample_bank_account.Transaction where amount : [20 to 50]");
+
+====== Phrase Queries
+
+A group of words may be searched by surrounding them in quotation marks, as seen in the following example:
+
+Query q = qf.create("from sample_bank_account.Transaction where description : 'bus fare'");
+
+====== Proximity Queries
+
+To execute a proximity query, finding two terms within a specific distance, add a `~` along with the distance after the phrase.
+For instance, the following example will find the words canceling and fee provided they are not more than 3 words apart:
+
+[source,java,tile="Proximity queries with Ickle"]
+----
+Query proximityQuery = qf.create("from sample_bank_account.Transaction where description : 'canceling fee'~3 ");
+----
+
+====== Wildcard Queries
+
+Both single-character and multi-character wildcard searches may be performed:
+
+* A single-character wildcard search may be used with the ? character.
+* A multi-character wildcard search may be used with the * character.
+
+To search for text or test the following single-character wildcard search would be used:
+
+[source,java,tile="Single-character wildcard queries with Ickle"]
+----
+Query wildcardQuery = qf.create("from sample_bank_account.Transaction where description : 'te?t'");
+----
+
+To search for test, tests, or tester the following multi-character wildcard search would be useD:
+
+[source,java,tile="Multi-character wildcard queries with Ickle"]
+----
+Query wildcardQuery = qf.create("from sample_bank_account.Transaction where description : 'test*'");
+----
+
+====== Regular Expression Queries
+
+Regular expression queries may be performed by specifing a pattern between /. Ickle uses Lucene’s regular expression syntax, so to search for the words moat or boat the following could be used:
+
+[source,java,tile="Regular Expression queries with Ickle"]
+----
+Query regExpQuery = qf.create("from sample_library.Book  where title : /[mb]oat/");
+----
+
+====== Boosting Queries
+
+Terms may be boosted by adding a ^ after the term to increase their relevance in a given query, the higher the boost factor the more relevant the term will be. For instance to search for titles containing beer and wine with a higher relevance on beer, by a factor of 3, the following could be used:
+
+[source,java,tile="Boosting queries with Ickle"]
+----
+Query boostedQuery = qf.create("from sample_library.Book where title : beer^3 OR wine");
+----
+
 
 ===== Continuous Query [[query.continuous]]
 
