@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.5" name="org.infinispan.query" slot="@infinispan.module.slot@">
+    <resources>
+        <artifact name="${org.infinispan:infinispan-query}"/>
+    </resources>
+
+    <dependencies>
+        <module name="javax.api" />
+        <module name="javax.transaction.api" />
+        <module name="org.apache.lucene" slot="@lucene.module.slot@"/>
+        <module name="org.hibernate.search.engine" slot="@hibernate.search.module.slot@" export="true"/>
+        <module name="org.hibernate.search.elasticsearch" slot="@hibernate.search.module.slot@"/>
+        <module name="org.infinispan.core" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.query.dsl" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.objectfilter" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.lucene-directory" slot="@infinispan.module.slot@" services="export" />
+        <module name="org.infinispan.hibernate-search.directory-provider" slot="@infinispan.module.slot@" export="true" services="export"/>
+        <module name="org.jboss.logging" />
+    </dependencies>
+</module>

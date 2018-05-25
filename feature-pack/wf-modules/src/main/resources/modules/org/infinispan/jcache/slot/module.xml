@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.5" name="org.infinispan.jcache" slot="@infinispan.module.slot@">
+    <resources>
+        <artifact name="org.infinispan:infinispan-jcache"/>
+    </resources>
+
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="javax.cache.api" slot="@infinispan.module.slot@" export="true"/>
+        <module name="javax.transaction.api"/>
+        <module name="org.jgroups" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.core" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.cdi.embedded" slot="@infinispan.module.slot@" services="import" />
+        <module name="org.infinispan.jcache.commons" slot="@infinispan.module.slot@" />
+        <module name="org.jboss.logging"/>
+    </dependencies>
+</module>

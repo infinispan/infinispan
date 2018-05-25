@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.5" name="org.infinispan.core" slot="@infinispan.module.slot@">
+    <resources>
+        <artifact name="${org.infinispan:infinispan-core}"/>
+    </resources>
+
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
+        <module name="org.apache.xerces" services="import"/>
+        <module name="org.infinispan.commons" slot="@infinispan.module.slot@" />
+        <module name="com.github.ben-manes.caffeine" slot="@infinispan.module.slot@"/>
+        <module name="io.reactivex.rxjava2.rxjava" slot="@infinispan.module.slot@"/>
+        <module name="org.reactivestreams.reactive-streams" slot="@infinispan.module.slot@"/>
+        <module name="org.jboss.jandex"/>
+        <module name="org.jboss.logging"/>
+        <module name="org.jboss.marshalling" services="import" slot="@infinispan.module.slot@"/>
+        <module name="org.jgroups" slot="@infinispan.module.slot@"/>
+        <module name="sun.jdk"/>
+
+        <!-- The CacheStore modules are listed as dependencies so that people can use them even
+          when they aren't directly exposed to the deployment !-->
+        <module name="org.infinispan.persistence.jdbc" slot="@infinispan.module.slot@" services="import" optional="true"/>
+        <module name="org.infinispan.persistence.jpa" slot="@infinispan.module.slot@" services="import" optional="true"/>
+        <module name="org.infinispan.persistence.remote" slot="@infinispan.module.slot@" services="import" optional="true"/>
+        <module name="org.infinispan.persistence.rest" slot="@infinispan.module.slot@" services="import" optional="true"/>
+        <module name="org.infinispan.persistence.rocksdb" slot="@infinispan.module.slot@" services="import" optional="true"/>
+    </dependencies>
+</module>

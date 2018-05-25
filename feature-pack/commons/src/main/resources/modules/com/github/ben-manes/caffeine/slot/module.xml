@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.5" name="com.github.ben-manes.caffeine" slot="@infinispan.module.slot@">
+    <resources>
+        <artifact name="${com.github.ben-manes.caffeine:caffeine}" />
+    </resources>
+
+    <dependencies>
+        <module name="sun.jdk" />
+    </dependencies>
+</module>

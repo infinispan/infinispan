@@ -1,0 +1,5 @@
+<build xmlns="urn:wildfly:feature-pack-build:1.1">
+    <dependencies>
+        <artifact name="org.infinispan:infinispan-feature-pack-commons" />
+    </dependencies>
+</build>

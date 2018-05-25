@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.5" name="org.infinispan.objectfilter" slot="@infinispan.module.slot@">
+   <resources>
+      <artifact name="${org.infinispan:infinispan-objectfilter}"/>
+   </resources>
+
+   <dependencies>
+      <module name="org.infinispan.query.dsl" slot="@infinispan.module.slot@"/>
+      <!-- TODO [anistor] We still need antlr-runtime because RecognitionException is used by the logger -->
+      <module name="org.antlr.antlr-runtime" slot="@infinispan.module.slot@"/>
+      <module name="org.infinispan.protostream" slot="@infinispan.module.slot@"/>
+      <module name="org.jboss.logging" />
+   </dependencies>
+</module>

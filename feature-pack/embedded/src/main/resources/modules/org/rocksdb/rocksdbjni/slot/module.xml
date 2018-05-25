@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.5" name="org.rocksdb.rocksdbjni" slot="@infinispan.module.slot@">
+   <properties>
+      <property name="jboss.api" value="private"/>
+   </properties>
+
+   <resources>
+      <artifact name="${org.rocksdb:rocksdbjni}" />
+   </resources>
+</module>
+

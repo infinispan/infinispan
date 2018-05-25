@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.5" name="org.infinispan.tasks.api" slot="@infinispan.module.slot@">
+    <resources>
+        <artifact name="${org.infinispan:infinispan-tasks-api}"/>
+    </resources>
+
+    <dependencies>
+        <module name="org.infinispan.core" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
+    </dependencies>
+</module>
