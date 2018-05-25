@@ -1,0 +1,7 @@
+<build xmlns="urn:wildfly:feature-pack-build:1.1">
+    <dependencies>
+        <artifact name="org.hibernate.elasticsearch-client-jbossmodules:elasticsearch-client-jbossmodules" />
+        <artifact name="org.hibernate.gson-jbossmodules:gson-jbossmodules" />
+        <artifact name="org.infinispan:infinispan-feature-pack-server" />
+    </dependencies>
+</build>

@@ -133,6 +133,7 @@
       <module>cdi/embedded</module>
       <module>cdi/remote</module>
       <module>lock</module>
+      <module>feature-pack</module>
       <module>server/integration</module>
       <module>jcache</module>
       <module>wildfly-modules</module>
@@ -162,6 +163,7 @@
       <infinispan.codename>WIP</infinispan.codename>
       <infinispan.module.slot.prefix>ispn</infinispan.module.slot.prefix>
       <infinispan.base.version>9.3</infinispan.base.version>
+      <infinispan.module.slot>${infinispan.module.slot.prefix}-${infinispan.base.version}</infinispan.module.slot>
       <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
 
       <!-- Semantic versioning defaults. -->

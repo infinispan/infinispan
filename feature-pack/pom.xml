@@ -1,0 +1,141 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-parent</artifactId>
+        <version>9.3.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>infinispan-feature-pack</artifactId>
+    <name>Infinispan Wildfly Feature Pack</name>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>commons</module>
+        <module>client</module>
+        <module>embedded</module>
+        <module>embedded-query</module>
+        <module>server</module>
+        <module>wf-modules</module>
+    </modules>
+
+    <properties>
+        <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
+        <feature-pack.dir>${project.build.directory}/feature-pack</feature-pack.dir>
+    </properties>
+
+    <dependencies>
+        <!-- Prevent infinispan-parent transistive dependencies being loaded-->
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging-processor</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss</groupId>
+            <artifactId>jboss-transaction-spi</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <phase>generate-resources</phase>
+                            <goals>
+                                <goal>copy-resources</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>${feature-pack.dir}</outputDirectory>
+                                <resources>
+                                    <resource>
+                                        <directory>src/main/resources</directory>
+                                        <filtering>true</filtering>
+                                    </resource>
+                                </resources>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.wildfly.build</groupId>
+                    <artifactId>wildfly-feature-pack-build-maven-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>feature-pack-build</id>
+                            <goals>
+                                <goal>build</goal>
+                            </goals>
+                            <phase>compile</phase>
+                            <configuration>
+                                <config-file>feature-pack-build.xml</config-file>
+                                <config-dir>${feature-pack.dir}</config-dir>
+                                <resourcesDir>/</resourcesDir>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>branded-modules</id>
+                            <goals>
+                                <goal>run</goal>
+                            </goals>
+                            <phase>generate-resources</phase>
+                            <configuration>
+                                <target>
+                                    <ant antfile="../build.xml" inheritRefs="true">
+                                        <target name="branding" />
+                                    </ant>
+                                </target>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <configuration>
+                        <appendAssemblyId>false</appendAssemblyId>
+                        <finalName>${project.artifactId}-${project.version}</finalName>
+                        <descriptors>
+                            <descriptor>../assembly.xml</descriptor>
+                        </descriptors>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>make-assembly</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

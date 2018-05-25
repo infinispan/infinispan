@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.5" name="org.infinispan.client.hotrod" slot="@infinispan.module.slot@">
+    <properties>
+        <property name="jboss.api" value="private"/>
+    </properties>
+
+    <resources>
+        <artifact name="${org.infinispan:infinispan-client-hotrod}"/>
+    </resources>
+
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
+        <module name="io.netty" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
+        <module name="com.github.ben-manes.caffeine" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.protostream" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.query.dsl" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.query.remote.client" slot="@infinispan.module.slot@"/>
+        <module name="org.jboss.logging"/>
+    </dependencies>
+</module>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+This Module is meant to be used exclusively by Hibernate Search as used in combination with Hibernate ORM;
+(Not the Hibernate Search version used by Infinispan Query as an internal dependency).
+
+It is a slimmed down alternative for the combination of modules normally built by the Infinispan project:
+ - org.infinispan.lucene-directory
+ - org.infinispan
+
+As it needs to link to the classloaders of Hibernate Search without introducing possible linkage errors,
+it needs to point to the slot of module org.apache.lucene of the consuming Hibernate Search,
+and obviously needs to avoid dependencies to different versions of Hibernate Search.
+
+-->
+<module xmlns="urn:jboss:module:1.5" name="org.infinispan.hibernate-search.directory-provider" slot="for-hibernatesearch-5.10">
+    <properties>
+        <property name="jboss.api" value="private"/>
+    </properties>
+    <resources>
+        <artifact name="${org.infinispan:infinispan-directory-provider}"/>
+        <artifact name="${org.infinispan:infinispan-lucene-directory}"/>
+    </resources>
+
+    <dependencies>
+        <module name="org.apache.lucene" slot="5.5" />
+        <module name="org.hibernate.search.engine" slot="5.10" />
+        <module name="javax.api"/>
+        <module name="org.infinispan.commons" slot="@infinispan.module.slot@" export="true"/>
+        <module name="org.infinispan.core" slot="@infinispan.module.slot@" export="true" services="export" />
+        <module name="org.jboss.logging"/>
+    </dependencies>
+</module>

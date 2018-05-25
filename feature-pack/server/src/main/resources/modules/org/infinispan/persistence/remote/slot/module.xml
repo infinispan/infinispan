@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.5" name="org.infinispan.persistence.remote" slot="@infinispan.module.slot@">
+    <properties>
+        <property name="jboss.api" value="private"/>
+    </properties>
+
+    <resources>
+        <artifact name="${org.infinispan:infinispan-cachestore-remote}"/>
+    </resources>
+
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
+        <module name="org.infinispan.core" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.client.hotrod" export="true" slot="@infinispan.module.slot@"/>
+        <module name="org.infinispan.server" slot="@infinispan.module.slot@"/>
+        <module name="io.reactivex.rxjava2.rxjava" slot="@infinispan.module.slot@"/>
+        <module name="org.reactivestreams.reactive-streams" slot="@infinispan.module.slot@"/>
+        <module name="org.jboss.logging"/>
+        <module name="org.jboss.marshalling" services="import" slot="@infinispan.module.slot@"/>
+    </dependencies>
+</module>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.5" name="org.infinispan" slot="@infinispan.module.slot@">
+    <dependencies>
+        <module name="org.infinispan.commons" slot="@infinispan.module.slot@" export="true"/>
+        <module name="org.infinispan.core" slot="@infinispan.module.slot@" export="true" services="export" />
+        <module name="org.infinispan.query" slot="@infinispan.module.slot@" export="true" services="import" optional="true" />
+        <module name="org.infinispan.lucene-directory" slot="@infinispan.module.slot@" export="true" services="import" optional="true" />
+    </dependencies>
+</module>

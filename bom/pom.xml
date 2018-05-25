@@ -390,6 +390,42 @@
             <version>${project.version}</version>
          </dependency>
          <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-feature-pack-commons</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-feature-pack-client</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-feature-pack-embedded</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-feature-pack-embedded-query</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-feature-pack-server</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-feature-pack-wf-modules</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+         </dependency>
+         <dependency>
             <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-cli</artifactId>
             <version>${project.version}</version>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.5" name="org.jgroups" slot="@infinispan.module.slot@">
+
+    <resources>
+        <artifact name="${org.jgroups:jgroups}"/>
+    </resources>
+
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="org.jgroups.azure" optional="true" slot="@infinispan.module.slot@"/>
+        <module name="org.jgroups.kubernetes" optional="true" slot="@infinispan.module.slot@"/>
+        <module name="org.wildfly.security.elytron-private" optional="true" services="import"/>
+        <module name="sun.jdk"/>
+    </dependencies>
+</module>

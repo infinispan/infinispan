@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.5" name="org.infinispan.server" slot="@infinispan.module.slot@">
+   <properties>
+      <property name="jboss.api" value="private" />
+   </properties>
+
+   <resources>
+      <artifact name="${org.infinispan:infinispan-server-core}"/>
+   </resources>
+
+   <dependencies>
+      <module name="javax.api" />
+      <module name="com.thoughtworks.xstream" export="true" slot="@infinispan.module.slot@"/>
+      <module name="javax.transaction.api" />
+      <module name="org.apache.xerces" services="import" />
+      <module name="org.infinispan.commons" slot="@infinispan.module.slot@" export="true"/>
+      <module name="org.infinispan.core" slot="@infinispan.module.slot@" export="true" services="export"/>
+      <module name="org.infinispan.query" slot="@infinispan.module.slot@" export="true" services="import" optional="true" />
+      <module name="org.infinispan.lucene-directory" slot="@infinispan.module.slot@" export="true" services="import" optional="true" />
+      <module name="org.infinispan.tasks" services="import" slot="@infinispan.module.slot@"/>
+      <module name="org.jboss.logging" />
+      <module name="org.codehaus.jackson.jackson-core-asl" export="true"/>
+      <module name="org.codehaus.jackson.jackson-mapper-asl" export="true"/>
+      <module name="org.codehaus.jackson.jackson-jaxrs" export="true"/>
+      <module name="org.codehaus.jackson.jackson-xc" export="true"/>
+      <module name="org.jboss.marshalling" services="import" slot="@infinispan.module.slot@"/>
+      <module name="io.netty" export="true" slot="@infinispan.module.slot@"/>
+      <module name="org.jgroups" slot="@infinispan.module.slot@"/>
+   </dependencies>
+</module>
