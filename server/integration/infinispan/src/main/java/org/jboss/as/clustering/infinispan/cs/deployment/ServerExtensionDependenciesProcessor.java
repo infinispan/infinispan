@@ -1,5 +1,6 @@
 package org.jboss.as.clustering.infinispan.cs.deployment;
 
+import org.infinispan.Version;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
@@ -27,8 +28,8 @@ import org.jboss.modules.ModuleLoader;
  */
 public class ServerExtensionDependenciesProcessor implements DeploymentUnitProcessor {
 
-   private static final ModuleIdentifier API = ModuleIdentifier.create("org.infinispan");
-   private static final ModuleIdentifier TASKS_API = ModuleIdentifier.create("org.infinispan.tasks.api");
+   private static final ModuleIdentifier API = ModuleIdentifier.create("org.infinispan", Version.getModuleSlot());
+   private static final ModuleIdentifier TASKS_API = ModuleIdentifier.create("org.infinispan.tasks.api", Version.getModuleSlot());
 
    @Override
    public void deploy(DeploymentPhaseContext ctx) {
