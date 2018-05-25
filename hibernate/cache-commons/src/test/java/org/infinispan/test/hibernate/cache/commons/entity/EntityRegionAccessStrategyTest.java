@@ -363,4 +363,12 @@ public class EntityRegionAccessStrategyTest extends
 		Object session = TEST_SESSION_ACCESS.mockSession(jtaPlatform, TIME_SERVICE);
 		assertEquals("Correct node1 value", VALUE2, testLocalAccessStrategy.get(session, KEY, SESSION_ACCESS.getTimestamp(session)));
 	}
+
+   @Test
+   @Ignore("ISPN-9175")
+   @Override
+   public void testRemoveAll() throws Exception {
+      super.testRemoveAll();
+   }
+
 }
