@@ -2,6 +2,7 @@ package org.infinispan.server.endpoint.deployments;
 
 import java.util.List;
 
+import org.infinispan.Version;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
@@ -21,7 +22,7 @@ import org.jboss.modules.ModuleLoader;
 
 public class ServerExtensionDependenciesProcessor implements DeploymentUnitProcessor {
 
-    private static final ModuleIdentifier API = ModuleIdentifier.create("org.infinispan");
+    private static final ModuleIdentifier API = ModuleIdentifier.create("org.infinispan", Version.getModuleSlot());
 
     @Override
     public void deploy(DeploymentPhaseContext ctx) throws DeploymentUnitProcessingException {

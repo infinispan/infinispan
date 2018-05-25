@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module-alias xmlns="urn:jboss:module:1.5"
+              name="org.infinispan.scripting" slot="main"
+              target-name="org.infinispan.scripting" target-slot="@infinispan.module.slot@" />

@@ -1,3 +1,0 @@
-JBoss-Product-Release-Name: @infinispan.brand.name@ Server
-JBoss-Product-Release-Version: @infinispan.brand.version@
-JBoss-Product-Console-Slot: @infinispan.module.slot.prefix@

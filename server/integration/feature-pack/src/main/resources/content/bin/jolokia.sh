@@ -11,5 +11,5 @@ then
    fi
 fi
 
-AGENT_BOND_JAR=$(ls $JBOSS_HOME/modules/system/layers/base/io/fabric8/agent-bond/main/*.jar | sed -e "s| |:|g")
+AGENT_BOND_JAR=$(ls $JBOSS_HOME/modules/io/fabric8/agent-bond/main/*.jar | sed -e "s| |:|g")
 export JAVA_OPTS="$JAVA_OPTS -javaagent:$AGENT_BOND_JAR=$JMX_CONF"
