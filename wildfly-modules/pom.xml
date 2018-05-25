@@ -9,208 +9,19 @@
    </parent>
 
    <artifactId>infinispan-wildfly-modules</artifactId>
-   <name>Infinispan modules for Wildfly</name>
+   <name>Infinispan Wildfly Modules</name>
    <packaging>pom</packaging>
+
+   <properties>
+      <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
+   </properties>
 
    <dependencies>
       <dependency>
-         <groupId>org.apache.ant</groupId>
-         <artifactId>ant</artifactId>
-      </dependency>
-
-      <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-core</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-client-hotrod</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-clustered-counter</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cachestore-jdbc</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cachestore-rocksdb</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cachestore-remote</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cachestore-rest</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cachestore-jpa</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cdi-embedded</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cdi-common</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cdi-remote</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-jcache</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-lucene-directory</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-query</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-directory-provider</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-remote-query-client</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan.protostream</groupId>
-         <artifactId>protostream</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-query-dsl</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-tree</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-hotrod</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-memcached</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-rest</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-router</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-websocket</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan.server</groupId>
-         <artifactId>infinispan-server-infinispan</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-core</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan.server</groupId>
-         <artifactId>infinispan-server-commons</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan.server</groupId>
-         <artifactId>infinispan-server-endpoints</artifactId>
-      </dependency>
-
-       <dependency>
-           <groupId>org.infinispan.server</groupId>
-           <artifactId>infinispan-server-event-logger</artifactId>
-       </dependency>
-
-      <dependency>
-         <groupId>org.infinispan.server</groupId>
-         <artifactId>infinispan-server-jgroups</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>com.thoughtworks.xstream</groupId>
-         <artifactId>xstream</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>xpp3</groupId>
-         <artifactId>xpp3</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>com.github.ben-manes.caffeine</groupId>
-         <artifactId>caffeine</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>com.microsoft.azure</groupId>
-         <artifactId>azure-storage</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.jboss.marshalling</groupId>
-         <artifactId>jboss-marshalling-osgi</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.xerial.snappy</groupId>
-         <artifactId>snappy-java</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>javax.cache</groupId>
-         <artifactId>cache-api</artifactId>
-         <scope>provided</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>org.jgroups.kubernetes</groupId>
-         <artifactId>jgroups-kubernetes</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.jgroups.azure</groupId>
-         <artifactId>jgroups-azure</artifactId>
+         <artifactId>infinispan-feature-pack-wf-modules</artifactId>
+         <version>${project.version}</version>
+         <type>zip</type>
       </dependency>
    </dependencies>
 
@@ -221,59 +32,36 @@
             <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
             <executions>
                <execution>
-                  <id>provision-hibernatesearch-modules</id>
+                  <id>provision-modules</id>
                   <goals>
                      <goal>build</goal>
                   </goals>
                   <phase>compile</phase>
                   <configuration>
-                     <config-file>provisioning-of-hibernatesearch.xml</config-file>
-                     <server-name>hibernate-search-featurepack-expanded</server-name>
+                     <config-file>provisioning.xml</config-file>
+                     <server-name>wildfly-modules</server-name>
                   </configuration>
                </execution>
             </executions>
          </plugin>
          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>build-dist-dir</id>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-                  <phase>package</phase>
-                  <configuration>
-                     <target>
-                        <ant antfile="build.xml" inheritRefs="true">
-                           <target name="all" />
-                        </ant>
-                     </target>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-assembly-plugin</artifactId>
+            <configuration>
+               <appendAssemblyId>false</appendAssemblyId>
+               <finalName>${project.artifactId}-${project.version}</finalName>
+               <descriptors>
+                  <descriptor>assembly.xml</descriptor>
+               </descriptors>
+            </configuration>
             <executions>
                <execution>
-                  <id>assemble</id>
+                  <id>make-assembly</id>
                   <phase>package</phase>
                   <goals>
                      <goal>single</goal>
                   </goals>
                </execution>
             </executions>
-            <configuration>
-               <descriptors>
-                  <descriptor>src/main/assembly/dist.xml</descriptor>
-               </descriptors>
-               <finalName>${project.artifactId}-${project.version}</finalName>
-               <outputDirectory>${buildDirectory}/distribution</outputDirectory>
-               <workDirectory>${buildDirectory}/assembly/work</workDirectory>
-               <appendAssemblyId>false</appendAssemblyId>
-            </configuration>
          </plugin>
       </plugins>
    </build>
