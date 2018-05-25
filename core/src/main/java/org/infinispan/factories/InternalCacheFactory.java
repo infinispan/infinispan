@@ -84,9 +84,8 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
     * @return a cache
     * @throws CacheConfigurationException if there are problems with the cfg
     */
-   public Cache<K, V> createCache(Configuration configuration,
-                                  GlobalComponentRegistry globalComponentRegistry,
-                                  String cacheName) throws CacheConfigurationException {
+   public Cache<K, V> createCache(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
+         String cacheName) throws CacheConfigurationException {
       try {
          if (configuration.simpleCache()) {
             return createSimpleCache(configuration, globalComponentRegistry, cacheName);
@@ -101,12 +100,12 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    }
 
    private AdvancedCache<K, V> createAndWire(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
-                                             String cacheName) throws Exception {
+         String cacheName) throws Exception {
       StreamingMarshaller marshaller = globalComponentRegistry.getOrCreateComponent(StreamingMarshaller.class);
 
       final BiFunction<DataConversion, DataConversion, AdvancedCache<K, V>> actualBuilder = (kc, kv) -> new CacheImpl<>(cacheName);
       BiFunction<DataConversion, DataConversion, AdvancedCache<K, V>> usedBuilder;
-      // We can optimize REPL reads that meet some criteria. This allows us to bypass
+      // We can optimize REPL reads that meet some criteria. This allows us to bypass interceptor chain
       if (configuration.clustering().cacheMode().isReplicated() && !configuration.persistence().usingStores()
             && !configuration.transaction().transactionMode().isTransactional() && configuration.clustering().stateTransfer().awaitInitialTransfer()) {
          usedBuilder = (kc, kv) -> {
@@ -146,7 +145,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    }
 
    private AdvancedCache<K, V> createSimpleCache(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
-                                                 String cacheName) {
+         String cacheName) {
       AdvancedCache<K, V> cache;
 
       JMXStatisticsConfiguration jmxStatistics = configuration.jmxStatistics();
@@ -164,7 +163,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
             if (statisticsAvailable) {
                registerComponent(new StatsCollector.Factory(), StatsCollector.Factory.class);
             }
-            registerComponent(new ClusterEventManagerStub<>(), ClusterEventManager.class);
+            registerComponent(new ClusterEventManagerStub<K, V>(), ClusterEventManager.class);
             registerComponent(new PassivationManagerStub(), PassivationManager.class);
             registerComponent(new ActivationManagerStub(), ActivationManager.class);
             registerComponent(new PersistenceManagerStub(), PersistenceManager.class);
@@ -188,7 +187,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
     * Bootstraps this factory with a Configuration and a ComponentRegistry.
     */
    private void bootstrap(String cacheName, AdvancedCache<?, ?> cache, Configuration configuration,
-                          GlobalComponentRegistry globalComponentRegistry) {
+         GlobalComponentRegistry globalComponentRegistry) {
       this.configuration = configuration;
 
       // injection bootstrap stuff
@@ -222,15 +221,14 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       requireNonNull(key, "Null keys are not supported!");
    }
 
-   private static void checkCanRun(Cache<?, ?> cache, ComponentRegistry componentRegistry) {
+   private static void checkCanRun(Cache<?, ?> cache, String cacheName) {
       ComponentStatus status = cache.getStatus();
       if (status == ComponentStatus.FAILED || status == ComponentStatus.TERMINATED) {
-         throw log.cacheIsTerminated(componentRegistry.getCacheName(), status.toString());
+         throw log.cacheIsTerminated(cacheName, status.toString());
       }
    }
 
-   private static abstract class AbstractGetAdvancedCache<K, V, T extends AbstractGetAdvancedCache<K, V, T>>
-         extends AbstractDelegatingAdvancedCache<K, V> {
+   private static abstract class AbstractGetAdvancedCache<K, V, T extends AbstractGetAdvancedCache<K, V, T>> extends AbstractDelegatingAdvancedCache<K, V> {
 
       @Inject protected ComponentRegistry componentRegistry;
 
@@ -238,10 +236,10 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
          super(cache, wrapper);
       }
 
-      @Inject
       /**
        * This method is for additional components that need to be wired after the field wiring is complete
        */
+      @Inject
       public void wireRealCache() {
          // Wire the cache to ensure all components are ready
          componentRegistry.wireDependencies(cache);
@@ -261,7 +259,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       @Override
       public V get(Object key) {
          assertKeyNotNull(key);
-         checkCanRun(cache, componentRegistry);
+         checkCanRun(cache, cache.getName());
          InternalCacheEntry<K, V> ice = getDataContainer().get(key);
          if (ice != null) {
             return ice.getValue();
@@ -293,6 +291,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    private static class PartitionHandlingCache<K, V> extends AbstractGetAdvancedCache<K, V, PartitionHandlingCache<K, V>> {
       @Inject private PartitionHandlingManager manager;
 
+      // We store the flags as bits passed from AdvancedCache.withFlags etc.
       private final long bitFlags;
 
       public PartitionHandlingCache(AbstractGetAdvancedCache<K, V, ?> cache) {
