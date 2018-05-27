@@ -980,7 +980,7 @@ List<Person> result = broadcastQuery.list();
 
 ===== Infinispan Query DSL [[query.dsl]]
 
-Starting with 6.0 Infinispan provides its own query DSL, independent of Lucene and Hibernate Search.
+Infinispan provides its own query DSL, independent of Lucene and Hibernate Search.
 Decoupling the query API from the underlying query and indexing mechanism makes it possible to introduce new alternative
 engines in the future, besides Lucene, and still being able to use the same uniform query API.
 The current implementation of indexing and searching is still based on
@@ -999,7 +999,7 @@ import org.infinispan.query.dsl.*;
 // get the DSL query factory from the cache, to be used for constructing the Query object:
 QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
 
-// create a query for all the books that have a title which contains the word "engine":
+// create a query for all the books that have a title which contains "engine":
 org.infinispan.query.dsl.Query query = qf.from(Book.class)
       .having("title").like("%engine%")
       .build();
@@ -1117,8 +1117,8 @@ operator still has higher priority than `or` even though `or` was invoked first.
 
 [source,java]
 ----
-// match all books that have the word "Infinispan" in their title
-// or have an author named "Manik" and their description contains the word "clustering"
+// match all books that have "Infinispan" in their title
+// or have an author named "Manik" and their description contains "clustering"
 Query query = queryFactory.from(Book.class)
   .having("title").like("%Infinispan%")
   .or().having("author.name").eq("Manik")
@@ -1131,7 +1131,7 @@ only to the next simple attribute condition.
 
 [source,java]
 ----
-// match all books that do not have the word "Infinispan" in their title and are authored by "Manik"
+// match all books that do not have "Infinispan" in their title and are authored by "Manik"
 Query query = queryFactory.from(Book.class)
   .not().having("title").like("%Infinispan%")
   .and().having("author.name").eq("Manik")
@@ -1146,7 +1146,7 @@ subsequent complex condition created with the same query factory.
 [source,java]
 ----
 // match all books that have an author named "Manik" and their title contains
-// the word "Infinispan" or their description contains the word "clustering"
+// "Infinispan" or their description contains "clustering"
 Query query = queryFactory.from(Book.class)
   .having("author.name").eq("Manik")
   .and(queryFactory.having("title").like("%Infinispan%")
@@ -1165,7 +1165,7 @@ TODO document what needs to be configured for an attribute to be available for p
 
 [source,java]
 ----
-// match all books that have the word "Infinispan" in their title or description
+// match all books that have "Infinispan" in their title or description
 // and return only their title and publication year
 Query query = queryFactory.from(Book.class)
   .select("title", "publicationYear")
@@ -1185,7 +1185,7 @@ TODO document what needs to be configured for an attribute to be available for s
 
 [source,java]
 ----
-// match all books that have the word "Infinispan" in their title or description
+// match all books that have "Infinispan" in their title or description
 // and return them sorted by the publication year and title
 Query query = queryFactory.from(Book.class)
   .orderBy("publicationYear", SortOrder.DESC)
@@ -1202,7 +1202,7 @@ conjunction with setting the _startOffset_ in order to achieve pagination of the
 
 [source,java]
 ----
-// match all books that have the word "clustering" in their title
+// match all books that have "clustering" in their title
 // sorted by publication year and title
 // and return 3'rd page of 10 results
 Query query = queryFactory.from(Book.class)
@@ -1549,7 +1549,7 @@ ContinuousQueryListener<Integer, Person> listener = new ContinuousQueryListener<
 
     @Override
     public void resultUpdated(Integer key, Person value) {
-        // just ignore it
+        // we do not process this event
     }
 
     @Override
@@ -1722,7 +1722,7 @@ public class BookMarshaller implements MessageMarshaller<Book> {
       String title = reader.readString("title");
       String description = reader.readString("description");
       int publicationYear = reader.readInt("publicationYear");
-      Set<Author> authors = reader.readCollection("authors", new HashSet<Author>(), Author.class);
+      Set<Author> authors = reader.readCollection("authors", new HashSet<>(), Author.class);
       return new Book(title, description, publicationYear, authors);
    }
 }
@@ -1747,16 +1747,19 @@ is detailed in the <<query:configuration,Querying Infinispan>> chapter.
 There is however an extra configuration step involved. While in embedded mode the indexing metadata is obtained via Java
 reflection by analyzing the presence of various Hibernate Search annotations on the entry's class, this is obviously not
 possible if the entry is protobuf encoded.
-The server needs to extract the relevant metadata from the same descriptor (.proto file) as the client.
-The descriptors are stored in a dedicated cache on the server _'___protobuf_metadata'_.
-Registering a new schema is therefore as simple as performing a _put_ operation on that cache using the schema's name as
-a key and the schema itself as the value.
-Alternatively you can use the CLI (via the cache-container=*:register-proto-schemas() operation), the Console or the
-_ProtobufMetadataManager_ MBean via JMX.
+The server needs to obtain the relevant metadata from the same descriptor (.proto file) as the client.
+The descriptors are stored in a dedicated cache on the server named _'___protobuf_metadata'_. Both keys and values in
+this cache are plain strings. Registering a new schema is therefore as simple as performing a _put_ operation on this
+cache using the schema's name as key and the schema file itself as the value.
+Alternatively you can use the CLI (via the cache-container=*:register-proto-schemas() operation), the Management Console
+or the _ProtobufMetadataManager_ MBean via JMX.
 Be aware that, when security is enabled, access to the schema cache via the remote protocols requires
 that the user belongs to the pass:['___schema_manager'] role.
-NOTE: Once indexing is enabled for a cache all fields of Protobuf encoded entries are going to be indexed.
-Future versions will allow you to select which fields to index (see link:https://issues.jboss.org/browse/ISPN-3718[ISPN-3718]).
+
+NOTE: Once indexing is enabled for a cache all fields of Protobuf encoded entries will be fully indexed unless you use
+the _@Indexed_ and _@Field_ protobuf schema pseudo-annotations in order to control precisely what fields need to get
+indexed. The default behaviour can be very inefficient when dealing with types having many or very larger fields so we
+encourage you to always specify what fields should be indexed instead of relying on the default indexing behaviour.
 
 ==== A remote query example
 You've managed to configure both client and server to talk protobuf and you've enabled indexing. Let's put some data in
@@ -1781,7 +1784,7 @@ remoteCache.put(2, book2);
 
 QueryFactory qf = Search.getQueryFactory(remoteCache);
 Query query = qf.from(Book.class)
-            .having("title").like("%Infinispan%").toBuilder()
+            .having("title").like("%Infinispan%")
             .build();
 
 List<Book> list = query.list(); // Voila! We have our book back from the cache!
@@ -1803,7 +1806,7 @@ SearchManager searchManager = Search.getSearchManager(cache);
 org.hibernate.search.stat.Statistics statistics = searchManager.getStatistics();
 ----
 
-TIP: This data is also available via JMX through the link:http://docs.jboss.org/hibernate/search/4.4/reference/en-US/html/search-monitoring.html#d0e7624[Hibernate Search StatisticsInfoMBean]
+TIP: This data is also available via JMX through the link:https://docs.jboss.org/hibernate/search/5.9/reference/en-US/html_single/#_statisticsinfombean[Hibernate Search StatisticsInfoMBean]
 registered under the name `org.infinispan:type=Query,manager="{name-of-cache-manager}",cache="{name-of-cache}",component=Statistics`.
 Please note this MBean is always registered by Infinispan but the statistics are collected only if
 link:#enabling_jmx_statistics[statistics collection is enabled] at cache level.
