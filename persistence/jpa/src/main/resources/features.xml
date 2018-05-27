@@ -25,8 +25,7 @@
       <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.dom4j/${version.hibernate_dep.dom4j}</bundle>
       <bundle>mvn:com.fasterxml/classmate/${version.hibernate_dep.classmate}</bundle>
       <bundle>mvn:org.javassist/javassist/${version.hibernate_dep.javassist}</bundle>
-      <!--Hardcoded for now: Hibernate ORM requires this version, which would clash with the Mockito dependency used elsewhere -->
-      <bundle>mvn:net.bytebuddy/byte-buddy/1.8.0</bundle>
+      <bundle>mvn:net.bytebuddy/byte-buddy/${version.mockito_dep.bytebuddy}</bundle>
       <bundle>mvn:org.hibernate.common/hibernate-commons-annotations/${version.hibernate_dep.hibernate-commons-annotations}</bundle>
       <bundle>mvn:org.jboss/jandex/${version.hibernate_dep.jandex}</bundle>
    </feature>
