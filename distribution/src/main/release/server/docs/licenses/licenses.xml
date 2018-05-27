@@ -2210,10 +2210,10 @@
       <version>5.3.1.Final</version>
       <licenses>
         <license>
-          <name>GNU Lesser General Public License v2 (or 2.1) only</name>
-          <url>http://www.gnu.org/licenses/lgpl-2.1.html</url>
+          <name>GNU Lesser General Public License v2.1 or later</name>
+          <url>http://www.opensource.org/licenses/LGPL-2.1</url>
           <distribution>repo</distribution>
-          <comments>See discussion at http://hibernate.org/license for more details.</comments>
+          <comments>See http://hibernate.org/community/license/ for more details.</comments>
         </license>
       </licenses>
     </dependency>
@@ -2223,10 +2223,10 @@
       <version>5.3.1.Final</version>
       <licenses>
         <license>
-          <name>GNU Lesser General Public License v2 (or 2.1) only</name>
-          <url>http://www.gnu.org/licenses/lgpl-2.1.html</url>
+          <name>GNU Lesser General Public License v2.1 or later</name>
+          <url>http://www.opensource.org/licenses/LGPL-2.1</url>
           <distribution>repo</distribution>
-          <comments>See discussion at http://hibernate.org/license for more details.</comments>
+          <comments>See http://hibernate.org/community/license/ for more details.</comments>
         </license>
       </licenses>
     </dependency>
@@ -2236,9 +2236,9 @@
       <version>5.10.1.Final</version>
       <licenses>
         <license>
-          <name>GNU Lesser General Public License v2 (or 2.1) only</name>
-          <url>http://www.gnu.org/licenses/lgpl-2.1.html</url>
-          <comments>See also: http://hibernate.org/license</comments>
+          <name>GNU Lesser General Public License v2.1 or later</name>
+          <url>http://www.opensource.org/licenses/LGPL-2.1</url>
+          <comments>See http://hibernate.org/community/license/ for more details.</comments>
         </license>
       </licenses>
     </dependency>
@@ -2248,9 +2248,9 @@
       <version>5.10.1.Final</version>
       <licenses>
         <license>
-          <name>GNU Lesser General Public License v2 (or 2.1) only</name>
-          <url>http://www.gnu.org/licenses/lgpl-2.1.html</url>
-          <comments>See also: http://hibernate.org/license</comments>
+          <name>GNU Lesser General Public License v2.1 or later</name>
+          <url>http://www.opensource.org/licenses/LGPL-2.1</url>
+          <comments>See http://hibernate.org/community/license/ for more details.</comments>
         </license>
       </licenses>
     </dependency>
@@ -2260,9 +2260,9 @@
       <version>5.10.1.Final</version>
       <licenses>
         <license>
-          <name>GNU Lesser General Public License v2 (or 2.1) only</name>
-          <url>http://www.gnu.org/licenses/lgpl-2.1.html</url>
-          <comments>See also: http://hibernate.org/license</comments>
+          <name>GNU Lesser General Public License v2.1 or later</name>
+          <url>http://www.opensource.org/licenses/LGPL-2.1</url>
+          <comments>See http://hibernate.org/community/license/ for more details.</comments>
         </license>
       </licenses>
     </dependency>
@@ -2272,9 +2272,9 @@
       <version>5.10.1.Final</version>
       <licenses>
         <license>
-          <name>GNU Lesser General Public License v2 (or 2.1) only</name>
-          <url>http://www.gnu.org/licenses/lgpl-2.1.html</url>
-          <comments>See also: http://hibernate.org/license</comments>
+          <name>GNU Lesser General Public License v2.1 or later</name>
+          <url>http://www.opensource.org/licenses/LGPL-2.1</url>
+          <comments>See http://hibernate.org/community/license/ for more details.</comments>
         </license>
       </licenses>
     </dependency>
@@ -2284,9 +2284,9 @@
       <version>5.10.1.Final</version>
       <licenses>
         <license>
-          <name>GNU Lesser General Public License v2 (or 2.1) only</name>
-          <url>http://www.gnu.org/licenses/lgpl-2.1.html</url>
-          <comments>See also: http://hibernate.org/license</comments>
+          <name>GNU Lesser General Public License v2.1 or later</name>
+          <url>http://www.opensource.org/licenses/LGPL-2.1</url>
+          <comments>See http://hibernate.org/community/license/ for more details.</comments>
         </license>
       </licenses>
     </dependency>
@@ -2296,9 +2296,9 @@
       <version>5.10.1.Final</version>
       <licenses>
         <license>
-          <name>GNU Lesser General Public License v2 (or 2.1) only</name>
-          <url>http://www.gnu.org/licenses/lgpl-2.1.html</url>
-          <comments>See also: http://hibernate.org/license</comments>
+          <name>GNU Lesser General Public License v2.1 or later</name>
+          <url>http://www.opensource.org/licenses/LGPL-2.1</url>
+          <comments>See http://hibernate.org/community/license/ for more details.</comments>
         </license>
       </licenses>
     </dependency>
@@ -2330,10 +2330,10 @@
       <version>5.0.3.Final</version>
       <licenses>
         <license>
-          <name>GNU Lesser General Public License v2 (or 2.1) only</name>
-          <url>http://www.gnu.org/licenses/lgpl-2.1.html</url>
+          <name>GNU Lesser General Public License v2.1 or later</name>
+          <url>http://www.opensource.org/licenses/LGPL-2.1</url>
           <distribution>repo</distribution>
-          <comments>See discussion at http://hibernate.org/license for more details.</comments>
+          <comments>See http://hibernate.org/community/license/ for more details.</comments>
         </license>
       </licenses>
     </dependency>
