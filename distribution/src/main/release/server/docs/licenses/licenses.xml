@@ -2207,7 +2207,7 @@
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-core</artifactId>
-      <version>5.3.0.Final</version>
+      <version>5.3.1.Final</version>
       <licenses>
         <license>
           <name>GNU Lesser General Public License v2 (or 2.1) only</name>
@@ -2220,7 +2220,7 @@
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-envers</artifactId>
-      <version>5.3.0.Final</version>
+      <version>5.3.1.Final</version>
       <licenses>
         <license>
           <name>GNU Lesser General Public License v2 (or 2.1) only</name>
@@ -2233,7 +2233,7 @@
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-search-backend-jgroups</artifactId>
-      <version>5.10.0.Final</version>
+      <version>5.10.1.Final</version>
       <licenses>
         <license>
           <name>GNU Lesser General Public License v2 (or 2.1) only</name>
@@ -2245,7 +2245,7 @@
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-search-backend-jms</artifactId>
-      <version>5.10.0.Final</version>
+      <version>5.10.1.Final</version>
       <licenses>
         <license>
           <name>GNU Lesser General Public License v2 (or 2.1) only</name>
@@ -2257,7 +2257,7 @@
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-search-elasticsearch</artifactId>
-      <version>5.10.0.Final</version>
+      <version>5.10.1.Final</version>
       <licenses>
         <license>
           <name>GNU Lesser General Public License v2 (or 2.1) only</name>
@@ -2269,7 +2269,7 @@
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-search-engine</artifactId>
-      <version>5.10.0.Final</version>
+      <version>5.10.1.Final</version>
       <licenses>
         <license>
           <name>GNU Lesser General Public License v2 (or 2.1) only</name>
@@ -2281,7 +2281,7 @@
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-search-orm</artifactId>
-      <version>5.10.0.Final</version>
+      <version>5.10.1.Final</version>
       <licenses>
         <license>
           <name>GNU Lesser General Public License v2 (or 2.1) only</name>
@@ -2293,7 +2293,7 @@
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-search-serialization-avro</artifactId>
-      <version>5.10.0.Final</version>
+      <version>5.10.1.Final</version>
       <licenses>
         <license>
           <name>GNU Lesser General Public License v2 (or 2.1) only</name>

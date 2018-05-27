@@ -74,9 +74,9 @@
       <version.caffeine>2.6.2</version.caffeine>
       <version.cdi>1.2</version.cdi>
       <version.groovy>2.4.8</version.groovy>
-      <version.hibernate.core>5.3.0.Final</version.hibernate.core>
+      <version.hibernate.core>5.3.1.Final</version.hibernate.core>
       <version.javax.persistence>2.2</version.javax.persistence>
-      <version.hibernate.search>5.10.0.Final</version.hibernate.search>
+      <version.hibernate.search>5.10.1.Final</version.hibernate.search>
       <version.hikaricp>2.4.6</version.hikaricp>
       <version.javax.cache>1.1.0</version.javax.cache>
       <version.jboss.logging>3.3.1.Final</version.jboss.logging>
