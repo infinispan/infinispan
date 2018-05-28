@@ -40,6 +40,7 @@ import org.hibernate.mapping.RootClass;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Address;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Family;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Person;
+import org.infinispan.test.hibernate.cache.commons.tm.NarayanaStandaloneJtaPlatform;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.junit.After;
 import org.junit.Before;
@@ -118,7 +119,7 @@ public class SecondLevelCacheStressTestCase {
 
    protected void applyCacheSettings(StandardServiceRegistryBuilder ssrb) {
       ssrb.applySetting( Environment.CACHE_REGION_FACTORY, TestRegionFactoryProvider.load().getRegionFactoryClass().getName() );
-      ssrb.applySetting( Environment.JTA_PLATFORM, "org.hibernate.service.jta.platform.internal.JBossStandAloneJtaPlatform" );
+      ssrb.applySetting( Environment.JTA_PLATFORM, new NarayanaStandaloneJtaPlatform() );
       ssrb.applySetting( InfinispanProperties.INFINISPAN_CONFIG_RESOURCE_PROP, "stress-local-infinispan.xml" );
    }
 

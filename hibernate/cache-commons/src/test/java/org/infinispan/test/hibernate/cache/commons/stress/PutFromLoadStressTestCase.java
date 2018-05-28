@@ -31,6 +31,8 @@ import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.RootClass;
 
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Age;
+import org.infinispan.test.hibernate.cache.commons.tm.NarayanaStandaloneJtaPlatform;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -75,7 +77,7 @@ public class PutFromLoadStressTestCase {
               )
               .applySetting(
                       Environment.JTA_PLATFORM,
-                      "org.hibernate.service.jta.platform.internal.JBossStandAloneJtaPlatform"
+                      new NarayanaStandaloneJtaPlatform()
               )
               // Force minimal puts off to simplify stressing putFromLoad logic
               .applySetting( Environment.USE_MINIMAL_PUTS, "false" )
