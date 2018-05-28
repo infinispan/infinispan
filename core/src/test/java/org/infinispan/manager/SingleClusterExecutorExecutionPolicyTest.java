@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
  * @author wburns
  * @since 9.1
  */
-@Test(groups = {"functional", "smoke"}, testName = "manager.AllClusterExecutorExecutionPolicyTest")
+@Test(groups = {"functional", "smoke"}, testName = "manager.SingleClusterExecutorExecutionPolicyTest")
 public class SingleClusterExecutorExecutionPolicyTest extends MultipleCacheManagersTest {
 
    @Override

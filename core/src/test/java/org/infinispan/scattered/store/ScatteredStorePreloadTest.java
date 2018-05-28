@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "scattered.store.ScatteredStorePreloadTest")
 public class ScatteredStorePreloadTest extends DistStorePreloadTest {
 
    public ScatteredStorePreloadTest() {

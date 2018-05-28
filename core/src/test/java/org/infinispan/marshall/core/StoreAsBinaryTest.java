@@ -56,7 +56,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-@Test(groups = "functional", testName = "marshall.core.MarshalledValueTest")
+@Test(groups = "functional", testName = "marshall.core.StoreAsBinaryTest")
 public class StoreAsBinaryTest extends MultipleCacheManagersTest {
    private static final Log log = LogFactory.getLog(StoreAsBinaryTest.class);
 

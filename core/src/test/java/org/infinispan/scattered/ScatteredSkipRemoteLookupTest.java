@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "scattered.ScatteredSkipRemoteLookupTest")
 public class ScatteredSkipRemoteLookupTest extends DistSkipRemoteLookupTest {
    public ScatteredSkipRemoteLookupTest() {
       cacheMode = CacheMode.SCATTERED_SYNC;

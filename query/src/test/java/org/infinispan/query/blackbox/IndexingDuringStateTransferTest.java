@@ -40,7 +40,7 @@ import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "query.blackbox.QueryOnTopologyChangeTest")
+@Test(groups = "functional", testName = "query.blackbox.IndexingDuringStateTransferTest")
 public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
    private static final String KEY = "k";
    private static final Person RADIM = new Person("Radim", "Tough guy!", 29);

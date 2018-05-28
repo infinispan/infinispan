@@ -30,7 +30,7 @@ public abstract class AbstractTwoCachesExpirationTest extends MultipleCacheManag
    protected final ControlledTimeService controlledTimeService = new ControlledTimeService();
    protected static final int EXPIRATION_TIMEOUT = 1000;
 
-   @Test
+   @Test(groups = "functional")
    public void testExpiration(Method m) {
       Cache<String, String> cache1 = getCache1(m);
       Cache<String, String> cache2 = getCache2(m);

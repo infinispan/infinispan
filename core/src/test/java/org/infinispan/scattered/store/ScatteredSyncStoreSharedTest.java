@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "scattered.store.ScatteredSyncStoreSharedTest")
 public class ScatteredSyncStoreSharedTest extends DistSyncStoreSharedTest {
    public ScatteredSyncStoreSharedTest() {
       cacheMode = CacheMode.SCATTERED_SYNC;

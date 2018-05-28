@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
 /**
  * @since 9.2
  */
-@Test(groups = "functional", testName = "rest.JsonObjectTranscoderTest")
+@Test(groups = "functional", testName = "server.core.dataconversion.JsonTranscoderTest")
 public class JsonTranscoderTest extends AbstractTranscoderTest {
    protected Person dataSrc;
 

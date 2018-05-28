@@ -13,6 +13,7 @@ import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.MapSession;
 import org.testng.annotations.Test;
 
+@Test(groups = "functional")
 public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanTest {
 
    protected SpringCache springCache;

@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 9.2
  */
-@Test(groups = "functional", testName = "counter.LocalStrongCounterTest")
+@Test(groups = "functional", testName = "counter.LocalWeakCounterTest")
 public class LocalWeakCounterTest extends WeakCounterTest {
 
    @Override

@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
  * @author Dan Berindei
  * @since 9.0
  */
-@Test
+@Test(groups = "unit", testName = "remoting.transport.jgroups.JGroupsTransportTest")
 public class JGroupsTransportTest extends MultipleCacheManagersTest {
 
    public static final ByteString CACHE_NAME = ByteString.fromString("cache");

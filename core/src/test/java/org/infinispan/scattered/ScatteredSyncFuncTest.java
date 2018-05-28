@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "scattered.ScatteredSyncFuncTest")
 public class ScatteredSyncFuncTest extends DistSyncFuncTest {
    @Override
    public Object[] factory() {

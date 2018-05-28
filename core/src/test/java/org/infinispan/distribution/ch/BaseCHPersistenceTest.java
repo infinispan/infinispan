@@ -15,8 +15,8 @@ import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.testng.annotations.Test;
 
-@Test
-public abstract class CHPersistenceTest {
+@Test(groups = "unit")
+public abstract class BaseCHPersistenceTest {
 
    protected abstract ConsistentHashFactory<?> createConsistentHashFactory();
 

@@ -37,7 +37,7 @@ import io.reactivex.subscribers.TestSubscriber;
  * @author wburns
  * @since 9.0
  */
-@Test(testName = "stream.impl.AbstractWriteSkewStressTest", groups = "functional")
+@Test(testName = "stream.impl.CompletionRehashPublisherDecoratorTest", groups = "functional")
 public class CompletionRehashPublisherDecoratorTest {
 
    <S> CompletionRehashPublisherDecorator<S> createDecorator(Consumer<Supplier<PrimitiveIterator.OfInt>> userListener,

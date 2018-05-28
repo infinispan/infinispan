@@ -17,6 +17,7 @@ import org.testng.annotations.Test;
  * @author William burns
  * @since 6.0
  */
+@Test(groups = "functional", testName = "invalidation.ClusteredCacheLoaderInvalidationTest")
 public class ClusteredCacheLoaderInvalidationTest extends MultipleCacheManagersTest {
    private static final String key = "key";
    private static final String value = "value";

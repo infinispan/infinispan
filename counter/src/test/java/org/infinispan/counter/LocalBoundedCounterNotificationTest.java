@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 9.2
  */
-@Test(groups = "functional", testName = "counter.LocalBoundedCounterTest")
+@Test(groups = "functional", testName = "counter.LocalBoundedCounterNotificationTest")
 public class LocalBoundedCounterNotificationTest extends BoundedCounterNotificationTest {
 
    @Override

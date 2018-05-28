@@ -4,7 +4,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "functional.FunctionalEncoderTest")
+@Test(groups = "functional", testName = "functional.FunctionalStorageTypeTest")
 public class FunctionalStorageTypeTest extends FunctionalMapTest {
    StorageType storageType;
 

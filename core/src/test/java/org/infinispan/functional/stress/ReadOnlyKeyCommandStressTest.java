@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.test.fwk.InCacheMode;
+import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+@Test(groups = "stress", testName = "functional.stress.ReadOnlyKeyCommandStressTest")
 @InCacheMode(CacheMode.DIST_SYNC)
 public class ReadOnlyKeyCommandStressTest extends GetAllCommandStressTest {
    @Override

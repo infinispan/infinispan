@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
  *
  * See https://issues.jboss.org/browse/ISPN-7105
  */
-@Test(groups = "functional", testName = "expiration.impl.ExpirationWriteSkewFunctionalTest")
+@Test(groups = "functional", testName = "expiration.impl.ExpirationWithClusteredWriteSkewTest")
 public class ExpirationWithClusteredWriteSkewTest extends MultipleCacheManagersTest {
    public static final String KEY = "key";
    public static final String VALUE = "value";

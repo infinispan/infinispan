@@ -49,7 +49,7 @@ import org.testng.annotations.Test;
  * @author Dan Berindei
  * @since 9.2
  */
-@Test(groups = "unit", testName = "partitionhandling.impl.PreferAvailabilityStrategyNoConflictResolutionTest")
+@Test(groups = "unit", testName = "partitionhandling.impl.PreferAvailabilityStrategyTest")
 public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
    private final ConflictResolution conflicts;
 

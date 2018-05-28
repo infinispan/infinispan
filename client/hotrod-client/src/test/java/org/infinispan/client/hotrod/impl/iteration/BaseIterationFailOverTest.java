@@ -30,7 +30,7 @@ public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest i
 
    public abstract ConfigurationBuilder getCacheConfiguration();
 
-   @Test
+   @Test(groups = "functional")
    public void testFailOver() throws InterruptedException {
       int cacheSize = 10000;
       int batch = 17;

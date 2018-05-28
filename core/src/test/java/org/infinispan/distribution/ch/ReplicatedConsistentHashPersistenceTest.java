@@ -11,7 +11,7 @@ import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.ch.ReplicatedConsistentHashPersistenceTest")
-public class ReplicatedConsistentHashPersistenceTest extends CHPersistenceTest {
+public class ReplicatedConsistentHashPersistenceTest extends BaseCHPersistenceTest {
 
    @Override
    protected ConsistentHashFactory<?> createConsistentHashFactory() {

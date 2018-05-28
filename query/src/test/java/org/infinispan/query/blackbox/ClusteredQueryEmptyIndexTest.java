@@ -4,11 +4,13 @@ import java.util.stream.IntStream;
 
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.Person;
+import org.testng.annotations.Test;
 
 /**
  * Tests for clustered queries where some of the local indexes are empty
  * @since 9.1
  */
+@Test(groups = "functional", testName = "query.blackbox.ClusteredQueryEmptyIndexTest")
 public class ClusteredQueryEmptyIndexTest extends ClusteredQueryTest {
 
    protected void prepareTestData() {

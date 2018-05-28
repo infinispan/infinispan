@@ -20,7 +20,7 @@ import org.infinispan.test.fwk.InTransactionMode;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "functional.FunctionalEncoderTest")
+@Test(groups = "functional", testName = "functional.FunctionalEncodingTypeTest")
 public class FunctionalEncodingTypeTest extends FunctionalMapTest {
 
    @Override
@@ -271,7 +271,7 @@ public class FunctionalEncodingTypeTest extends FunctionalMapTest {
 
       @Override
       public Object fromStorage(Object content) {
-         return content == null ? null : new UserType<>(1, content);
+         return content == null ? null : new UserType<>(2, content);
       }
 
       @Override

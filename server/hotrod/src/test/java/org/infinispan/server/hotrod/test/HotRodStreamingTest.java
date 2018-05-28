@@ -5,7 +5,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import org.infinispan.server.hotrod.OperationStatus;
 import org.testng.annotations.Test;
 
-@Test(testName = "server.hotrod.test.HotRodStreamingTest")
+@Test(groups = "functional", testName = "server.hotrod.test.HotRodStreamingTest")
 public class HotRodStreamingTest extends org.infinispan.server.hotrod.test.HotRodSingleNodeTest {
    private final byte[] K1 = "K1".getBytes();
    private final byte[] V1;

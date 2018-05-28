@@ -20,7 +20,7 @@ import static org.testng.AssertJUnit.assertTrue;
  * @author wburns
  * @since 9.3
  */
-@Test(groups = "functional", testName = "container.SimpleDataContainerTest")
+@Test(groups = "functional", testName = "container.DefaultSegmentedDataContainerTest")
 public class DefaultSegmentedDataContainerTest extends MultipleCacheManagersTest {
    private static final String CACHE_NAME = "dist";
 

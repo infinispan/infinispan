@@ -23,7 +23,7 @@ import org.infinispan.util.function.SerializableFunction;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "functional.FunctionalTxInMemoryTest")
 public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
    private static final int NUM_KEYS = 2;
    private static final Integer[] INT_KEYS = IntStream.range(0, NUM_KEYS).mapToObj(Integer::valueOf).toArray(Integer[]::new);

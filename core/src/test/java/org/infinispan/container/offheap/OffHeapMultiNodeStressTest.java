@@ -22,7 +22,7 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
-@Test(groups = "stress", testName = "commands.OffHeapMultiNodeTest", timeOut = 15 * 60 * 1000)
+@Test(groups = "stress", testName = "container.offheap.OffHeapMultiNodeStressTest", timeOut = 15 * 60 * 1000)
 public class OffHeapMultiNodeStressTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
