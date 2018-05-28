@@ -15,7 +15,7 @@ import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.impl.externalizers.ExternalizerIds;
 
-import jdk.nashorn.internal.ir.annotations.Immutable;
+import net.jcip.annotations.Immutable;
 
 /**
  * Stores the counter's value and {@link CounterState}.
