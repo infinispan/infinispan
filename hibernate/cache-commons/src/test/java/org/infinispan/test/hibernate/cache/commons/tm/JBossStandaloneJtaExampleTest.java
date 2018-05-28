@@ -25,7 +25,6 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.resource.transaction.spi.TransactionStatus;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.hibernate.cfg.Environment;
-import org.hibernate.engine.transaction.jta.platform.internal.JBossStandAloneJtaPlatform;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.RootClass;
@@ -250,7 +249,7 @@ public class JBossStandaloneJtaExampleTest {
 				  .applySetting( Environment.RELEASE_CONNECTIONS, "auto" )
 				  .applySetting( Environment.USE_SECOND_LEVEL_CACHE, "true" )
 				  .applySetting( Environment.USE_QUERY_CACHE, "true" )
-				  .applySetting( Environment.JTA_PLATFORM, new JBossStandAloneJtaPlatform() )
+				  .applySetting( Environment.JTA_PLATFORM, new NarayanaStandaloneJtaPlatform() )
 				  .applySetting( Environment.CACHE_REGION_FACTORY, TestRegionFactoryProvider.load().getRegionFactoryClass().getName() );
 
 		StandardServiceRegistry serviceRegistry = ssrb.build();
