@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
  * @author gustavonalle
  * @since 7.0
  */
+@Test(groups = "functional")
 public abstract class BaseDeltaAwarePreloadTest extends MultipleCacheManagersTest {
 
    protected static final int CLUSTER_SIZE = 2;

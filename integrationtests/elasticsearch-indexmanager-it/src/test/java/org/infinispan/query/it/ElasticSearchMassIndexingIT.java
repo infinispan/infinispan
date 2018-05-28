@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.query.distributed.DistributedMassIndexingTest;
 import org.infinispan.query.queries.faceting.Car;
+import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 /**
  * @since 9.0
  */
+@Test(groups = "functional", testName = "query.it.ElasticSearchMassIndexingIT")
 public class ElasticSearchMassIndexingIT extends DistributedMassIndexingTest {
 
     @Override

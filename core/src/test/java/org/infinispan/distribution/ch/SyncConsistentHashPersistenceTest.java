@@ -12,7 +12,7 @@ import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.ch.SyncConsistentHashPersistenceTest")
-public class SyncConsistentHashPersistenceTest extends CHPersistenceTest {
+public class SyncConsistentHashPersistenceTest extends BaseCHPersistenceTest {
 
    @Override
    protected ConsistentHashFactory<?> createConsistentHashFactory() {

@@ -7,6 +7,7 @@ import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
+import org.testng.annotations.Test;
 
 /**
  * ISPN-8925 This test creates several caches and then initiates a split-brain followed by a merge. The purpose of this
@@ -16,6 +17,7 @@ import org.infinispan.test.fwk.TransportFlags;
  *
  * @author Ryan Emerson
  */
+@Test(groups = "functional", testName = "conflict.impl.MultipleCachesDuringConflictResolutionTest")
 public class MultipleCachesDuringConflictResolutionTest extends BasePartitionHandlingTest {
 
    // Does not include the org.infinispan.CONFIG and ___defaultCache, so total caches = numberOfCaches + 2

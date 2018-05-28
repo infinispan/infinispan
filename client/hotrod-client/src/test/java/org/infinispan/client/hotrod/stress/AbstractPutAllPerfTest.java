@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
  * @author William Burns
  * @since 7.2
  */
-@Test
+@Test(groups = "stress")
 public abstract class AbstractPutAllPerfTest extends MultipleCacheManagersTest {
 
    protected HotRodServer[] hotrodServers;

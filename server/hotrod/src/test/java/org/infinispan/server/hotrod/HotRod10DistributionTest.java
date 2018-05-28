@@ -34,7 +34,7 @@ import org.testng.annotations.Test;
  * @author Galder Zamarreño
  * @since 4.1
  */
-@Test(groups = "functional", testName = "server.hotrod.HotRodDistributionTest")
+@Test(groups = "functional", testName = "server.hotrod.HotRod10DistributionTest")
 public class HotRod10DistributionTest extends HotRodMultiNodeTest {
 
    @Override

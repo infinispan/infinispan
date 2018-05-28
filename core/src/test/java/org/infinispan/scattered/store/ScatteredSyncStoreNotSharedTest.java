@@ -12,7 +12,7 @@ import java.lang.reflect.Method;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "scattered.store.ScatteredSyncStoreNotSharedTest")
 public class ScatteredSyncStoreNotSharedTest extends DistSyncStoreNotSharedTest {
    public ScatteredSyncStoreNotSharedTest() {
       numOwners = 1;

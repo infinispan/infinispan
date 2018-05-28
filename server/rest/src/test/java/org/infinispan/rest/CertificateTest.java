@@ -13,7 +13,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "rest.AuthenticationTest")
+@Test(groups = "functional", testName = "rest.CertificateTest")
 public class CertificateTest extends AbstractInfinispanTest {
 
    public static final String TRUST_STORE_PATH = CertificateTest.class.getClassLoader().getResource("./client.p12").getPath();

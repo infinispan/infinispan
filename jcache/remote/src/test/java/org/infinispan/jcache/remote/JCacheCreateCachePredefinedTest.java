@@ -16,6 +16,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+@Test(groups = "functional", testName = "jcache.remote.JCacheCreateCachePredefinedTest")
 public class JCacheCreateCachePredefinedTest extends SingleHotRodServerTest {
    static String CACHE_NAME_UNTOUCHED = "jcache-remote-predefined-untouched";
    static String CACHE_NAME_TOUCHED = "jcache-remote-predefined-touched";

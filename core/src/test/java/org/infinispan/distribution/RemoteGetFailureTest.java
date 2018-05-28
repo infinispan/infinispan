@@ -53,7 +53,7 @@ import org.jgroups.protocols.pbcast.GMS;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "distribution.RemoteGetFailureTest")
 @CleanupAfterMethod
 public class RemoteGetFailureTest extends MultipleCacheManagersTest {
    private Object key;

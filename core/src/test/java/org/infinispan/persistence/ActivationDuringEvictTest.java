@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
  *
  * @author Dan Berindei
  */
-@Test(groups = "functional", testName = "persistence.LoadDuringEvictTest")
+@Test(groups = "functional", testName = "persistence.ActivationDuringEvictTest")
 public class ActivationDuringEvictTest extends SingleCacheManagerTest {
    public static final String KEY = "a";
    public static final String VALUE = "b";

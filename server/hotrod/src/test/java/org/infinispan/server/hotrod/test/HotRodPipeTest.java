@@ -33,7 +33,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.handler.codec.ReplayingDecoder;
 
-@Test(testName = "server.hotrod.test.HotRodPipeTest")
+@Test(groups = "functional", testName = "server.hotrod.test.HotRodPipeTest")
 public class HotRodPipeTest extends SingleCacheManagerTest {
 
    HotRodServer server;

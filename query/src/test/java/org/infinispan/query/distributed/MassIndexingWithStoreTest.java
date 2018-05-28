@@ -2,6 +2,7 @@ package org.infinispan.query.distributed;
 
 import org.infinispan.Cache;
 import org.infinispan.query.queries.faceting.Car;
+import org.testng.annotations.Test;
 
 /**
  * Test for MassIndexer with a store
@@ -9,6 +10,7 @@ import org.infinispan.query.queries.faceting.Car;
  * @author gustavonalle
  * @since 7.1
  */
+@Test(groups = "functional", testName = "query.distributed.MassIndexingWithStoreTest")
 public class MassIndexingWithStoreTest extends DistributedMassIndexingTest {
 
    @Override

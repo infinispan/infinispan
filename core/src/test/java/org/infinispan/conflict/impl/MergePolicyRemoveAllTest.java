@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
  * @author Ryan Emerson
  * @since 9.1
  */
-@Test(groups = "functional", testName = "partitionhandling.MergePolicyRemoveAllTest")
+@Test(groups = "functional", testName = "conflict.impl.MergePolicyRemoveAllTest")
 public class MergePolicyRemoveAllTest extends BaseMergePolicyTest {
 
    @Override

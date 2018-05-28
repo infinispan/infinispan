@@ -10,7 +10,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
-@Test(groups = "profiling", testName = "distribution.RemoteGetStressTest")
+@Test(groups = "profiling", testName = "distribution.RemoteGetPerfTest")
 public class RemoteGetPerfTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {

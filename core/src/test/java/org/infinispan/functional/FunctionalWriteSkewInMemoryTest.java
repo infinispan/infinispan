@@ -22,7 +22,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "functional.FunctionalWriteSkewInMemoryTest")
 public class FunctionalWriteSkewInMemoryTest extends FunctionalTxInMemoryTest {
 
    public FunctionalWriteSkewInMemoryTest() {

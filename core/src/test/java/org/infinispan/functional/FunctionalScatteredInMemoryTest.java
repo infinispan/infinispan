@@ -17,6 +17,7 @@ import org.infinispan.scattered.Utils;
 import org.infinispan.test.TestException;
 import org.testng.annotations.Test;
 
+@Test(groups = "functional", testName = "functional.FunctionalScatteredInMemoryTest")
 public class FunctionalScatteredInMemoryTest extends AbstractFunctionalOpTest {
    @Override
    public Object[] factory() {

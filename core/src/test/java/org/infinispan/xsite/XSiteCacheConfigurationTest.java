@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
-@Test(groups = "functional, xsite", testName = "xsite.XSiteCacheConfigurationTest")
+@Test(groups = {"functional", "xsite"}, testName = "xsite.XSiteCacheConfigurationTest")
 public class XSiteCacheConfigurationTest {
 
    public void testApi() {

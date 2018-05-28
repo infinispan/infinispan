@@ -30,6 +30,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+@Test(groups = "unit", testName = "topology.ClusterCacheStatusTest")
 public class ClusterCacheStatusTest extends AbstractInfinispanTest {
    private static final String CACHE_NAME = "test";
    private static final CacheJoinInfo JOIN_INFO =

@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
  * @author vjuranek
  * @since 9.2
  */
-@Test(groups = "functional", testName = "scripting.ScriptingTest")
+@Test(groups = "functional", testName = "scripting.ScriptingDataStoresTest")
 @CleanupAfterMethod
 public class ScriptingDataStoresTest extends AbstractScriptingTest {
 

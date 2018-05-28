@@ -16,6 +16,7 @@ import org.testng.annotations.Test;
  * @author William Burns
  * @since 6.0
  */
+@Test(groups = "functional", testName = "invalidation.WriteStoreInvalidationTest")
 public class WriteStoreInvalidationTest extends MultipleCacheManagersTest {
    private static final String key = "key";
    private static final String value = "value";

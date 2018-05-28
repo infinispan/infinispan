@@ -10,10 +10,12 @@ import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigu
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.testng.annotations.Test;
 
 /**
  * @author Ryan Emerson
  */
+@Test(groups = "functional", testName = "persistence.jdbc.stringbased.JdbcStringBasedStoreAltTwoWayMapperTest")
 public class JdbcStringBasedStoreAltTwoWayMapperTest extends JdbcStringBasedStoreAltMapperTest {
 
    @Override
