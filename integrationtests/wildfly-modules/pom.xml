@@ -220,52 +220,30 @@
                </execution>
             </executions>
          </plugin>
-
          <plugin>
-            <artifactId>maven-dependency-plugin</artifactId>
+            <groupId>org.wildfly.build</groupId>
+            <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
             <executions>
                <execution>
-                  <id>unpack</id>
-                  <phase>pre-integration-test</phase>
+                  <id>server-provisioning-node1</id>
                   <goals>
-                     <goal>unpack</goal>
+                     <goal>build</goal>
                   </goals>
+                  <phase>pre-integration-test</phase>
                   <configuration>
-                     <skip>${skipTests}</skip>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>org.wildfly</groupId>
-                           <artifactId>wildfly-dist</artifactId>
-                           <version>${version.org.wildfly}</version>
-                           <type>zip</type>
-                           <overWrite>false</overWrite>
-                           <outputDirectory>${project.build.directory}/node1</outputDirectory>
-                        </artifactItem>
-                        <artifactItem>
-                           <groupId>org.wildfly</groupId>
-                           <artifactId>wildfly-dist</artifactId>
-                           <version>${version.org.wildfly}</version>
-                           <type>zip</type>
-                           <overWrite>false</overWrite>
-                           <outputDirectory>${project.build.directory}/node2</outputDirectory>
-                        </artifactItem>
-                        <artifactItem>
-                           <groupId>org.infinispan</groupId>
-                           <artifactId>infinispan-wildfly-modules</artifactId>
-                           <version>${project.version}</version>
-                           <type>zip</type>
-                           <overWrite>false</overWrite>
-                           <outputDirectory>${project.build.directory}/node1/wildfly-${version.org.wildfly}/modules</outputDirectory>
-                        </artifactItem>
-                        <artifactItem>
-                           <groupId>org.infinispan</groupId>
-                           <artifactId>infinispan-wildfly-modules</artifactId>
-                           <version>${project.version}</version>
-                           <type>zip</type>
-                           <overWrite>false</overWrite>
-                           <outputDirectory>${project.build.directory}/node2/wildfly-${version.org.wildfly}/modules</outputDirectory>
-                        </artifactItem>
-                     </artifactItems>
+                     <config-file>server-provisioning.xml</config-file>
+                     <server-name>node1/wildfly-${version.org.wildfly}</server-name>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>server-provisioning-node2</id>
+                  <goals>
+                     <goal>build</goal>
+                  </goals>
+                  <phase>pre-integration-test</phase>
+                  <configuration>
+                     <config-file>server-provisioning.xml</config-file>
+                     <server-name>node2/wildfly-${version.org.wildfly}</server-name>
                   </configuration>
                </execution>
             </executions>
