@@ -290,8 +290,6 @@ As a result, _no eviction/expiration is allowed for timestamp caches either_.
 IMPORTANT: Asynchronous replication was selected as default for timestamps cache for performance reasons.
 A side effect of this choice is that when an entity/collection is updated, for a very brief period of time stale queries might be returned.
 It's important to note that due to how {brandname} deals with asynchronous replication, stale queries might be found even query is done right after an entity/collection update on same node.
-The reason why asynchronous replication works this way is because there's a single node that's owner for a given key, and that enables changes to be applied in the same order in all nodes.
-Without it, it could happen that an older value could replace a newer value in certain nodes.
 
 NOTE: Hibernate must aggressively invalidate query results from the cache any time any instance of one of the entity types is modified.
 All cached query results referencing given entity type are invalidated, even if the change made to the specific entity instance would not have affected the query result.
@@ -377,6 +375,8 @@ When applying entity/collection level changes inside JPA applications deployed i
 
 IMPORTANT: Cache configurations are used only as a template for the cache created for given region.
 Usually each entity hierarchy or collection has its own region
+
+WARNING: Except for eviction/expiration settings, it is highly recommended not to deviate from the template configuration settings.
 
 Some options in the cache configuration can also be overridden directly through properties.
 These are:
