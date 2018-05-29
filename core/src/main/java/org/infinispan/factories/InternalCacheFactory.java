@@ -2,14 +2,10 @@ package org.infinispan.factories;
 
 import static java.util.Objects.requireNonNull;
 
-import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 
 import org.infinispan.AdvancedCache;
@@ -38,16 +34,12 @@ import org.infinispan.eviction.impl.ActivationManagerStub;
 import org.infinispan.eviction.impl.PassivationManagerStub;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.cluster.impl.ClusterEventManagerStub;
-import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
-import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -424,13 +416,16 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
 
       @Inject private CacheNotifier<K, V> cacheNotifier;
 
-      private final AtomicBoolean hasListeners;
+      // The hasListeners is commented out until EncoderCache can properly pass down the addListener invocation
+      // to the next delegate in the chain. Otherwise we miss listener additions and don't fire events properly.
+      // This is detailed in https://issues.jboss.org/browse/ISPN-9240
+//      private final AtomicBoolean hasListeners;
+//
+//      GetReplCache(AdvancedCache<K, V> cache) {
+//         this(cache, new AtomicBoolean());
+//      }
 
-      GetReplCache(AdvancedCache<K, V> cache) {
-         this(cache, new AtomicBoolean());
-      }
-
-      private GetReplCache(AdvancedCache<K, V> cache, AtomicBoolean hasListeners) {
+      private GetReplCache(AdvancedCache<K, V> cache/*, AtomicBoolean hasListeners*/) {
          super(cache, new AdvancedCacheWrapper<K, V>() {
             @Override
             public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
@@ -440,12 +435,12 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
             @Override
             public AdvancedCache<K, V> wrap(AdvancedCache<K, V> self, AdvancedCache<K, V> newDelegate) {
                GetReplCache<K, V> oldCache = (GetReplCache<K, V>) self;
-               GetReplCache<K, V> newCache = new GetReplCache<K, V>(newDelegate, oldCache.hasListeners);
+               GetReplCache<K, V> newCache = new GetReplCache<K, V>(newDelegate/*, oldCache.hasListeners*/);
                newCache.internalWire(oldCache);
                return newCache;
             }
          });
-         this.hasListeners = hasListeners;
+//         this.hasListeners = hasListeners;
       }
 
       @Override
@@ -454,53 +449,53 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
          super.internalWire(cache);
       }
 
-      private boolean canFire(Object listener) {
-         for (Method m : listener.getClass().getMethods()) {
-            // Visitor listeners are very rare, so optimize to not call when we don't have any registered
-            if (m.isAnnotationPresent(CacheEntryVisited.class)) {
-               return true;
-            }
-         }
-         return false;
-      }
-
-      @Override
-      public void addListener(Object listener, KeyFilter<? super K> filter) {
-         super.addListener(listener, filter);
-         if (!hasListeners.get() && canFire(listener)) {
-            hasListeners.set(true);
-         }
-      }
-
-      @Override
-      public <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter) {
-         super.addListener(listener, filter, converter);
-         if (!hasListeners.get() && canFire(listener)) {
-            hasListeners.set(true);
-         }
-      }
-
-      @Override
-      public void addListener(Object listener) {
-         super.addListener(listener);
-         if (!hasListeners.get() && canFire(listener)) {
-            hasListeners.set(true);
-         }
-      }
-
-      @Override
-      public <C> void addFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter,
-            CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
-         super.addFilteredListener(listener, filter, converter, filterAnnotations);
-         if (!hasListeners.get() && canFire(listener)) {
-            hasListeners.set(true);
-         }
-      }
+//      private boolean canFire(Object listener) {
+//         for (Method m : listener.getClass().getMethods()) {
+//            // Visitor listeners are very rare, so optimize to not call when we don't have any registered
+//            if (m.isAnnotationPresent(CacheEntryVisited.class)) {
+//               return true;
+//            }
+//         }
+//         return false;
+//      }
+//
+//      @Override
+//      public void addListener(Object listener, KeyFilter<? super K> filter) {
+//         super.addListener(listener, filter);
+//         if (!hasListeners.get() && canFire(listener)) {
+//            hasListeners.set(true);
+//         }
+//      }
+//
+//      @Override
+//      public <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter) {
+//         super.addListener(listener, filter, converter);
+//         if (!hasListeners.get() && canFire(listener)) {
+//            hasListeners.set(true);
+//         }
+//      }
+//
+//      @Override
+//      public void addListener(Object listener) {
+//         super.addListener(listener);
+//         if (!hasListeners.get() && canFire(listener)) {
+//            hasListeners.set(true);
+//         }
+//      }
+//
+//      @Override
+//      public <C> void addFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter,
+//            CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
+//         super.addFilteredListener(listener, filter, converter, filterAnnotations);
+//         if (!hasListeners.get() && canFire(listener)) {
+//            hasListeners.set(true);
+//         }
+//      }
 
       @Override
       public V get(Object key) {
          V value = super.get(key);
-         if (value != null && hasListeners.get()) {
+         if (value != null/* && hasListeners.get()*/) {
             cacheNotifier.notifyCacheEntryVisited((K) key, value, true, ImmutableContext.INSTANCE, null);
             cacheNotifier.notifyCacheEntryVisited((K) key, value, false, ImmutableContext.INSTANCE, null);
          }
