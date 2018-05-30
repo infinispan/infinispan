@@ -30,9 +30,9 @@ import java.util.List;
 }
 
 @parser::members {
-   private Tree generatePersisterSpacesTree(List<Tree> persistenceSpaces) {
+   private Tree generatePersisterSpacesTree(List persisterSpaces) {
       List<Tree> persisterSpaceList = new ArrayList<>();
-      for (Tree persistenceSpaceData : persistenceSpaces) {
+      for (Tree persistenceSpaceData : (List<Tree>) persisterSpaces) {
          if (persistenceSpaceData.getType() == PERSISTER_JOIN || persistenceSpaceData.getType() == PROPERTY_JOIN) {
             adaptor.addChild(persisterSpaceList.get(persisterSpaceList.size() - 1), persistenceSpaceData);
          } else {

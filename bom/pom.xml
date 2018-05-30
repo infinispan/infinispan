@@ -69,7 +69,7 @@
       <version.java>1.8</version.java>
 
       <!-- Dependency versions duplicated in the parent POM -->
-      <version.antlr>3.4</version.antlr>
+      <version.antlr>3.5.2</version.antlr>
       <version.c3p0>0.9.5-pre8</version.c3p0>
       <version.caffeine>2.6.2</version.caffeine>
       <version.cdi>1.2</version.cdi>
