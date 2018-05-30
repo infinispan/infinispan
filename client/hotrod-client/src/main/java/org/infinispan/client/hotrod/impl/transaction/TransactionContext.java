@@ -139,6 +139,10 @@ public class TransactionContext<K, V> {
       return future;
    }
 
+   boolean isReadWrite() {
+      return entries.values().stream().anyMatch(TransactionEntry::isModified);
+   }
+
    Collection<Modification> toModification() {
       return entries.values().stream()
             .filter(TransactionEntry::isModified)

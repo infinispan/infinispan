@@ -2,10 +2,12 @@ package org.infinispan.client.hotrod.impl.transaction;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
@@ -109,6 +111,10 @@ public class XaModeTransactionTable implements TransactionTable {
          }
          assertStartInvoked();
          assertSameXid(xid, XAException.XAER_OUTSIDE);
+         if (flags == XAResource.TMFAIL) {
+            //tx will rollback. we can cleanup immediately
+            registeredCaches.clear();
+         }
          //no other work to be done.
       }
 
@@ -119,7 +125,7 @@ public class XaModeTransactionTable implements TransactionTable {
          }
          assertStartInvoked();
          assertSameXid(xid, XAException.XAER_INVAL);
-         return internalPrepare(false);
+         return internalPrepare();
       }
 
       @Override
@@ -131,7 +137,7 @@ public class XaModeTransactionTable implements TransactionTable {
          assertSameXid(xid, XAException.XAER_INVAL);
          try {
             if (onePhaseCommit) {
-               internalPrepare(true); //one phase commit
+               onePhaseCommit();
             } else {
                internalCommit();
             }
@@ -310,10 +316,10 @@ public class XaModeTransactionTable implements TransactionTable {
          // commits only.
       }
 
-      private int internalPrepare(boolean onePhaseCommit) throws XAException {
+      private int internalPrepare() throws XAException {
          boolean readOnly = true;
          for (TransactionContext<?, ?> ctx : registeredCaches.values()) {
-            switch (ctx.prepareContext(currentXid, onePhaseCommit)) {
+            switch (ctx.prepareContext(currentXid, false)) {
                case XAResource.XA_OK:
                   readOnly = false;
                   preparedCaches.add(ctx);
@@ -331,6 +337,45 @@ public class XaModeTransactionTable implements TransactionTable {
             }
          }
          return readOnly ? XAResource.XA_RDONLY : XAResource.XA_OK;
+      }
+
+      private void onePhaseCommit() throws XAException {
+         //check only the write transaction to know who is the last cache to commit
+         List<TransactionContext<?,?>> txCaches = registeredCaches.values().stream()
+               .filter(TransactionContext::isReadWrite)
+               .collect(Collectors.toList());
+         int size = txCaches.size();
+         if (size == 0) {
+            return;
+         }
+         boolean commit = true;
+
+         outer: for (int i = 0; i < size - 1; ++i) {
+            TransactionContext<?,?> ctx = txCaches.get(i);
+            switch (ctx.prepareContext(currentXid, false)) {
+               case XAResource.XA_OK:
+                  preparedCaches.add(ctx);
+                  break;
+               case Integer.MIN_VALUE:
+                  //signals a marshaller error of key or value. the server wasn't contacted
+                  commit = false;
+                  break outer;
+               default:
+                  //any other code we need to rollback
+                  //we may need to send the rollback later
+                  preparedCaches.add(ctx);
+                  commit = false;
+                  break outer;
+            }
+         }
+
+         //last resource one phase commit!
+         if (commit && txCaches.get(size - 1).prepareContext(currentXid, true) == XAResource.XA_OK) {
+            internalCommit(); //commit other caches
+         } else {
+            internalRollback();
+            throw new XAException(XAException.XA_RBROLLBACK); //tell TM to rollback
+         }
       }
 
       private <K, V> TransactionContext<K, V> registerCache(TransactionalRemoteCacheImpl<K, V> txRemoteCache) {
