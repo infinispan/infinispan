@@ -947,7 +947,7 @@
     <dependency>
       <groupId>org.antlr</groupId>
       <artifactId>antlr-runtime</artifactId>
-      <version>3.4</version>
+      <version>3.5.2</version>
       <licenses>
         <license>
           <name>The BSD license</name>
