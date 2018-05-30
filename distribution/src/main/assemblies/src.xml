@@ -23,7 +23,6 @@
                 <exclude>**/output/**</exclude>
                 <exclude>**/test-output/**</exclude>
                 <exclude>**/out/**</exclude>
-                <exclude>**/jbossdb/**</exclude>
                 <exclude>**/testFiles/**</exclude>
                 <exclude>**/*.jdb</exclude>
                 <exclude>**/*.iml</exclude>
@@ -35,10 +34,7 @@
                 <exclude>**/.project</exclude>
                 <exclude>**/.factorypath</exclude>
                 <exclude>**/.settings</exclude>
-                <exclude>**/*-BdbjeCacheStore/**</exclude>
-                <exclude>**/ObjectStore/**</exclude>
                 <exclude>**/PutObjectStoreDirHere/**</exclude>
-                <exclude>**/coretarget/**</exclude>
                 <exclude>**/.git/**</exclude>
             </excludes>
         </fileSet>
