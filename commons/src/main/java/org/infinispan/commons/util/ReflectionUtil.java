@@ -128,8 +128,8 @@ public class ReflectionUtil {
       if (!c.equals(Object.class)) {
          if (!c.isInterface()) {
             inspectRecursively(c.getSuperclass(), s, annotationType);
-            for (Class<?> ifc : c.getInterfaces()) inspectRecursively(ifc, s, annotationType);
          }
+         for (Class<?> ifc : c.getInterfaces()) inspectRecursively(ifc, s, annotationType);
       }
    }
 
