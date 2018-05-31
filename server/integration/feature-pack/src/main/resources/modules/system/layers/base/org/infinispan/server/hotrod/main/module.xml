@@ -10,11 +10,16 @@
 
    <dependencies>
       <module name="javax.api" />
+      <module name="com.thoughtworks.xstream" />
       <module name="javax.transaction.api" />
       <module name="org.apache.xerces" services="import" />
       <module name="org.infinispan" />
       <module name="org.infinispan.counter" />
       <!-- Netty is exported by server core -->
+      <module name="org.codehaus.jackson.jackson-core-asl" />
+      <module name="org.codehaus.jackson.jackson-mapper-asl" />
+      <module name="org.codehaus.jackson.jackson-jaxrs" />
+      <module name="org.codehaus.jackson.jackson-xc" />
       <module name="org.infinispan.server" />
       <module name="org.infinispan.scripting" services="import"/>
       <module name="org.infinispan.tasks" services="import"/>
