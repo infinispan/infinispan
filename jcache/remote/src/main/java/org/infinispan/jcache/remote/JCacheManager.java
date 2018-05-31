@@ -75,7 +75,7 @@ public class JCacheManager extends AbstractJCacheManager {
    @Override
    protected <K, V, C extends Configuration<K, V>> AbstractJCache<K, V> create(String cacheName, C configuration) {
       ConfigurationAdapter<K, V> adapter = ConfigurationAdapter.create(configuration);
-      cm.administration().getOrCreateCache(cacheName, (String)null); // TODO: convert a JCache configuration to an Infinispan XML
+      cm.administration().getOrCreateCache(cacheName, (String)null); // TODO: ISPN-9237 convert a JCache configuration to an Infinispan XML
       return createJCache(cacheName, adapter);
    }
 
