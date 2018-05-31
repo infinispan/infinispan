@@ -2,7 +2,7 @@ package org.infinispan.context;
 
 import java.util.Set;
 
-import org.infinispan.container.EntryFactory;
+import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.remoting.transport.Address;

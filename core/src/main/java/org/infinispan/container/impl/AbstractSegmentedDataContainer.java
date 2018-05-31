@@ -1,4 +1,4 @@
-package org.infinispan.container;
+package org.infinispan.container.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
 
@@ -29,6 +29,7 @@ import org.infinispan.commons.util.EvictionListener;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.PeekableMap;
 import org.infinispan.configuration.cache.HashConfiguration;
+import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -237,7 +238,7 @@ public abstract class AbstractSegmentedDataContainer<K, V> implements SegmentedD
    }
 
    @Override
-   public InternalCacheEntry<K, V> compute(int segment, K key, ComputeAction<K, V> action) {
+   public InternalCacheEntry<K, V> compute(int segment, K key, DataContainer.ComputeAction<K, V> action) {
       ConcurrentMap<K, InternalCacheEntry<K, V>> entries = getMapForSegment(segment);
       return entries != null ? entries.compute(key, (k, oldEntry) -> {
          InternalCacheEntry<K, V> newEntry = action.compute(k, oldEntry, entryFactory);
@@ -257,7 +258,7 @@ public abstract class AbstractSegmentedDataContainer<K, V> implements SegmentedD
    }
 
    @Override
-   public InternalCacheEntry<K, V> compute(K key, ComputeAction<K, V> action) {
+   public InternalCacheEntry<K, V> compute(K key, DataContainer.ComputeAction<K, V> action) {
       return compute(getSegmentForKey(key), key, action);
    }
 

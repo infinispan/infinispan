@@ -1,4 +1,4 @@
-package org.infinispan.container;
+package org.infinispan.container.impl;
 
 /**
  * This interface is <strong>not</strong> a public API.

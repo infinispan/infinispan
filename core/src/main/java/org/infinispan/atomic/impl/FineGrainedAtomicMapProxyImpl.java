@@ -17,7 +17,7 @@ import org.infinispan.atomic.FineGrainedAtomicMap;
 import org.infinispan.commons.CacheException;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.Param;
-import org.infinispan.container.EntryFactory;
+import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.context.Flag;

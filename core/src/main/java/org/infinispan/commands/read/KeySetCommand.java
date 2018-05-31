@@ -16,7 +16,7 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.SpliteratorMapper;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.SegmentedDataContainer;
+import org.infinispan.container.impl.SegmentedDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;

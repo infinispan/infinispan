@@ -1,10 +1,11 @@
-package org.infinispan.container;
+package org.infinispan.container.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
 
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.VersionedRepeatableReadEntry;
 import org.infinispan.container.entries.InternalCacheEntry;

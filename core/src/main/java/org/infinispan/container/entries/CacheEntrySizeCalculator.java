@@ -2,8 +2,8 @@ package org.infinispan.container.entries;
 
 import org.infinispan.commons.util.AbstractEntrySizeCalculatorHelper;
 import org.infinispan.commons.util.EntrySizeCalculator;
-import org.infinispan.container.InternalEntryFactoryImpl;
-import org.infinispan.container.KeyValueMetadataSizeCalculator;
+import org.infinispan.container.impl.InternalEntryFactoryImpl;
+import org.infinispan.container.impl.KeyValueMetadataSizeCalculator;
 import org.infinispan.container.entries.metadata.MetadataImmortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataMortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientCacheEntry;

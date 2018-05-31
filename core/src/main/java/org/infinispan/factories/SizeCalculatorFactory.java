@@ -2,7 +2,7 @@ package org.infinispan.factories;
 
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.container.KeyValueMetadataSizeCalculator;
+import org.infinispan.container.impl.KeyValueMetadataSizeCalculator;
 import org.infinispan.container.entries.CacheEntrySizeCalculator;
 import org.infinispan.container.entries.PrimitiveEntrySizeCalculator;
 import org.infinispan.container.offheap.OffHeapEntryFactory;

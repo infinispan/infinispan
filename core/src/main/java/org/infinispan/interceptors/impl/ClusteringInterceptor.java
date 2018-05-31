@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.EntryFactory;
+import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;

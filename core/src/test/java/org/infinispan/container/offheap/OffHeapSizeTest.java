@@ -9,7 +9,7 @@ import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.util.MemoryUnit;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.container.KeyValueMetadataSizeCalculator;
+import org.infinispan.container.impl.KeyValueMetadataSizeCalculator;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.eviction.EvictionStrategy;

@@ -12,7 +12,7 @@ import static org.infinispan.container.entries.ReadCommittedEntry.Flags.REMOVED;
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.SegmentedDataContainer;
+import org.infinispan.container.impl.SegmentedDataContainer;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

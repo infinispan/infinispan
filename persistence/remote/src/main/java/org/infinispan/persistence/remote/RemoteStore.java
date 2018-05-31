@@ -22,7 +22,7 @@ import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.Util;
-import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.marshall.core.MarshalledEntry;
