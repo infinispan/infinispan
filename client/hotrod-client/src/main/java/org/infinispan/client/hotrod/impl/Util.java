@@ -20,7 +20,9 @@ public class Util {
          // timed wait does not do busy waiting
          return cf.get(BIG_DELAY_NANOS, TimeUnit.NANOSECONDS);
       } catch (InterruptedException e) {
-         throw new CacheException(e);
+         // Need to restore interrupt status because InterruptedException cannot be sent back as is
+         Thread.currentThread().interrupt();
+         throw new HotRodClientException(e);
       } catch (ExecutionException e) {
          throw rewrap(e);
       } catch (TimeoutException e) {
@@ -32,7 +34,9 @@ public class Util {
       try {
          return cf.get(timeoutMillis, TimeUnit.MILLISECONDS);
       } catch (InterruptedException e) {
-         throw new CacheException(e);
+         // Need to restore interrupt status because InterruptedException cannot be sent back as is
+         Thread.currentThread().interrupt();
+         throw new HotRodClientException(e);
       } catch (ExecutionException e) {
          throw rewrap(e);
       } catch (TimeoutException e) {
