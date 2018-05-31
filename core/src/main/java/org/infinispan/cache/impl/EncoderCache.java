@@ -29,7 +29,7 @@ import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.compat.BiFunctionMapper;
 import org.infinispan.compat.FunctionMapper;
-import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ForwardingCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;

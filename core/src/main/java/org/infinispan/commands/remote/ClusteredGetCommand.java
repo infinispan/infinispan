@@ -11,7 +11,7 @@ import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;

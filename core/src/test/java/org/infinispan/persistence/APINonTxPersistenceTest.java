@@ -11,8 +11,8 @@ import org.infinispan.api.APINonTxTest;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DataContainer.ComputeAction;
-import org.infinispan.container.InternalEntryFactory;
-import org.infinispan.container.InternalEntryFactoryImpl;
+import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 
 /**

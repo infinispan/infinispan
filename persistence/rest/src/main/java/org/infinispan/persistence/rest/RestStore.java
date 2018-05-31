@@ -14,7 +14,7 @@ import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.Util;
-import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.metadata.InternalMetadata;

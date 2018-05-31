@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
 
-import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;

@@ -19,6 +19,8 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.container.impl.DefaultDataContainer;
+import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.metadata.EmbeddedMetadata;

@@ -1,10 +1,11 @@
-package org.infinispan.container;
+package org.infinispan.container.impl;
 
 import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.metadata.Metadata;
 

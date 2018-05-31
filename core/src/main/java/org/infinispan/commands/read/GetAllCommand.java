@@ -13,7 +13,7 @@ import java.util.Map;
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;

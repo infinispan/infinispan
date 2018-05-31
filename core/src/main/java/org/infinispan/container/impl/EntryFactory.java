@@ -1,6 +1,7 @@
-package org.infinispan.container;
+package org.infinispan.container.impl;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.context.InvocationContext;

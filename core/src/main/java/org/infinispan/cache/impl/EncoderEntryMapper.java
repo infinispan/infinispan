@@ -10,7 +10,7 @@ import java.util.Set;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.util.InjectiveFunction;
-import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;

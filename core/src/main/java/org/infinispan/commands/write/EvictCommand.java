@@ -5,7 +5,7 @@ import java.util.Collections;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;

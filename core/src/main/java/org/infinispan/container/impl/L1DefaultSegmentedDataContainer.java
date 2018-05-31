@@ -1,4 +1,4 @@
-package org.infinispan.container;
+package org.infinispan.container.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;

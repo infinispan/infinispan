@@ -19,8 +19,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.container.InternalEntryFactory;
-import org.infinispan.container.InternalEntryFactoryImpl;
+import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.core.MarshalledEntry;

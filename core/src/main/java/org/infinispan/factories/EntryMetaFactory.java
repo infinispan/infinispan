@@ -1,9 +1,9 @@
 package org.infinispan.factories;
 
-import org.infinispan.container.EntryFactory;
-import org.infinispan.container.EntryFactoryImpl;
-import org.infinispan.container.InternalEntryFactory;
-import org.infinispan.container.InternalEntryFactoryImpl;
+import org.infinispan.container.impl.EntryFactory;
+import org.infinispan.container.impl.EntryFactoryImpl;
+import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 
 @DefaultFactoryFor(classes = {EntryFactory.class, InternalEntryFactory.class})

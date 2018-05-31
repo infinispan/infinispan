@@ -39,7 +39,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.EntryFactory;
+import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;

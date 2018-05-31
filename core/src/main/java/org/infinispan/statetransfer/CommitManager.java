@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.commands.SegmentSpecificCommand;
-import org.infinispan.container.MergeOnStore;
+import org.infinispan.container.impl.MergeOnStore;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ReadCommittedEntry;

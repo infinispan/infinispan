@@ -10,8 +10,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.DefaultDataContainer;
-import org.infinispan.container.InternalEntryFactoryImpl;
+import org.infinispan.container.impl.DefaultDataContainer;
+import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionManager;

@@ -45,7 +45,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.conflict.impl.InternalConflictManager;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.SegmentedDataContainer;
+import org.infinispan.container.impl.SegmentedDataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;

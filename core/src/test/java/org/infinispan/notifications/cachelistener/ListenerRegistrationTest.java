@@ -13,7 +13,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.container.InternalEntryFactoryImpl;
+import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;

@@ -19,7 +19,7 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.RemovableIterator;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.SegmentedDataContainer;
+import org.infinispan.container.impl.SegmentedDataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;

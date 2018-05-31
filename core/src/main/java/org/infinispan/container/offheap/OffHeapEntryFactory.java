@@ -1,7 +1,7 @@
 package org.infinispan.container.offheap;
 
 import org.infinispan.commons.marshall.WrappedBytes;
-import org.infinispan.container.KeyValueMetadataSizeCalculator;
+import org.infinispan.container.impl.KeyValueMetadataSizeCalculator;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.metadata.Metadata;
 

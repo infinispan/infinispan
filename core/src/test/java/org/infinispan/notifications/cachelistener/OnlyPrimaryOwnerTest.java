@@ -18,7 +18,7 @@ import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.VersionGenerator;

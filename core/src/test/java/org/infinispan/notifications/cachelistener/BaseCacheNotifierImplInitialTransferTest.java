@@ -29,7 +29,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.InternalEntryFactoryImpl;
+import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;

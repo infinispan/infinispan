@@ -1,4 +1,4 @@
-package org.infinispan.container;
+package org.infinispan.container.impl;
 
 import java.lang.invoke.MethodHandles;
 import java.util.AbstractSet;

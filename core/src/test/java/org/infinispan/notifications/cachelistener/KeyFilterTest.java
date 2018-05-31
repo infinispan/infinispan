@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 
 import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
