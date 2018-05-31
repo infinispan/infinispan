@@ -5,7 +5,7 @@
 		<feature-pack
 				groupId="org.wildfly"
 				artifactId="wildfly-feature-pack"
-				version="13.0.0.Beta1" />
+				version="13.0.0.Final" />
 
 	</feature-packs>
 
