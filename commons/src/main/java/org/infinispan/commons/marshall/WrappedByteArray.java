@@ -115,7 +115,7 @@ public class WrappedByteArray implements WrappedBytes {
       }
 
       @Override
-      public WrappedByteArray readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public WrappedByteArray readObject(ObjectInput input) throws IOException {
          byte[] bytes = MarshallUtil.unmarshallByteArray(input);
          boolean hasHashCode = input.readBoolean();
          if (hasHashCode) {
