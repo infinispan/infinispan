@@ -415,9 +415,6 @@ public class ChannelFactory {
    }
 
    public int getMaxRetries() {
-      if (Thread.currentThread().isInterrupted()) {
-         return -1;
-      }
       return maxRetries;
    }
 
