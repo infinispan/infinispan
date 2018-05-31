@@ -65,12 +65,10 @@ public class JCacheTestingUtil {
 
    public static Cache createCacheWithProperties(CachingProvider provider, Class invoker, String cacheName, Properties properties) {
       CacheManager manager = provider.getCacheManager(URI.create(invoker.getName()), new TestClassLoader(Thread.currentThread().getContextClassLoader()), properties);
-      properties.setProperty("infinispan.jcache.remote.managed_access", "false");
       return manager.createCache(cacheName, new MutableConfiguration());
    }
 
    public static CacheManager createCacheManager(CachingProvider provider, Class invoker, String cacheName, Properties properties) {
-      properties.setProperty("infinispan.jcache.remote.managed_access", "false");
       return provider.getCacheManager(URI.create(invoker.getName()), new TestClassLoader(Thread.currentThread().getContextClassLoader()), properties);
    }
 
