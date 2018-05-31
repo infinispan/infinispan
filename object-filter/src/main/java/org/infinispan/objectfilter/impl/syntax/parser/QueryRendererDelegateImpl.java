@@ -17,6 +17,7 @@ import org.infinispan.objectfilter.impl.ql.QueryRendererDelegate;
 import org.infinispan.objectfilter.impl.syntax.ComparisonExpr;
 import org.infinispan.objectfilter.impl.syntax.ConstantValueExpr;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
+import org.infinispan.query.dsl.ProjectionConstants;
 import org.jboss.logging.Logger;
 
 /**
@@ -487,7 +488,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          Class<?> propertyType;
          Object nullMarker;
          if (propertyPath.getLength() == 1 && propertyPath.isAlias()) {
-            projection = new PropertyPath<>(Collections.singletonList(new PropertyPath.PropertyReference<>("__HSearch_This", null, true))); //todo [anistor] this is a leftover from hsearch ????   this represents the entity itself. see org.hibernate.search.ProjectionConstants
+            projection = new PropertyPath<>(Collections.singletonList(new PropertyPath.PropertyReference<>(ProjectionConstants.VALUE, null, true))); //todo [anistor] this is a leftover from hsearch ????   this represents the entity itself. see org.hibernate.search.ProjectionConstants
             propertyType = null;
             nullMarker = null;
          } else {

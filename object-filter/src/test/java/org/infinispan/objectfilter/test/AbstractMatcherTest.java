@@ -16,6 +16,7 @@ import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.objectfilter.test.model.Address;
 import org.infinispan.objectfilter.test.model.Person;
 import org.infinispan.objectfilter.test.model.PhoneNumber;
+import org.infinispan.query.dsl.ProjectionConstants;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.junit.Ignore;
@@ -67,7 +68,7 @@ public abstract class AbstractMatcherTest {
 
    protected abstract Matcher createMatcher();
 
-   protected boolean match(String queryString, Object obj) throws Exception {
+   protected boolean match(String queryString, Object obj) {
       Matcher matcher = createMatcher();
 
       int[] matchCount = {0};
@@ -77,7 +78,7 @@ public abstract class AbstractMatcherTest {
       return matchCount[0] == 1;
    }
 
-   protected boolean match(Query query, Object obj) throws Exception {
+   protected boolean match(Query query, Object obj) {
       Matcher matcher = createMatcher();
 
       int[] matchCount = {0};
@@ -695,7 +696,7 @@ public abstract class AbstractMatcherTest {
    }
 
    @Test
-   public void testProjectionOnEmbeddedEntity() throws Exception {
+   public void testProjectionOnEmbeddedEntity() {
       expectedException.expect(ParsingException.class);
       expectedException.expectMessage("ISPN028503");
 
@@ -735,7 +736,51 @@ public abstract class AbstractMatcherTest {
    }
 
    @Test
-   public void testDisallowGroupingAndAggregations() throws Exception {
+   public void testProjectionOnValue() throws Exception {
+      String queryString = "select " + ProjectionConstants.VALUE + " from org.infinispan.objectfilter.test.model.Person p where p.name = 'John'";
+
+      Matcher matcher = createMatcher();
+      Object person = createPerson1();
+
+      final List<Object[]> result = new ArrayList<>();
+
+      FilterSubscription filterSubscription = matcher.registerFilter(queryString, (userContext, instance, eventType, projection, sortProjection) -> result.add(projection));
+
+      assertNotNull(filterSubscription.getProjection());
+      assertEquals(1, filterSubscription.getProjection().length);
+      assertEquals(ProjectionConstants.VALUE, filterSubscription.getProjection()[0]);
+
+      matcher.match(null, person, null);
+
+      matcher.unregisterFilter(filterSubscription);
+
+      assertTrue(person == result.get(0)[0]);
+   }
+
+   @Test
+   public void testProjectionOnKey() throws Exception {
+      String queryString = "select " + ProjectionConstants.KEY + " from org.infinispan.objectfilter.test.model.Person p where p.name = 'John'";
+
+      Matcher matcher = createMatcher();
+      Object person = createPerson1();
+
+      final List<Object[]> result = new ArrayList<>();
+
+      FilterSubscription filterSubscription = matcher.registerFilter(queryString, (userContext, instance, eventType, projection, sortProjection) -> result.add(projection));
+
+      assertNotNull(filterSubscription.getProjection());
+      assertEquals(1, filterSubscription.getProjection().length);
+      assertEquals(ProjectionConstants.VALUE, filterSubscription.getProjection()[0]);
+
+      matcher.match(null, person, null);
+
+      matcher.unregisterFilter(filterSubscription);
+
+      assertTrue(person == result.get(0)[0]);
+   }
+
+   @Test
+   public void testDisallowGroupingAndAggregations() {
       expectedException.expect(ParsingException.class);
       expectedException.expectMessage("Filters cannot use grouping or aggregations");
 
