@@ -1,14 +1,19 @@
 package org.infinispan.spring.session;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.infinispan.spring.provider.SpringCache;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.MapSession;
 import org.springframework.session.SessionRepository;
 
@@ -19,12 +24,14 @@ import org.springframework.session.SessionRepository;
  * @see <a href="http://projects.spring.io/spring-session">Spring Session Web Page</a>
  * @see SessionRepository
  * @see ApplicationEventPublisherAware
+ * @see FindByIndexNameSessionRepository
  * @since 9.0
  */
-public abstract class AbstractInfinispanSessionRepository implements SessionRepository<MapSession>, ApplicationEventPublisherAware, InitializingBean, DisposableBean {
+public abstract class AbstractInfinispanSessionRepository implements SessionRepository<MapSession>, FindByIndexNameSessionRepository<MapSession>, ApplicationEventPublisherAware, InitializingBean, DisposableBean {
 
    protected final AbstractApplicationPublisherBridge applicationEventPublisher;
    protected final SpringCache cache;
+   protected final PrincipalNameResolver principalNameResolver = new PrincipalNameResolver();
 
    protected AbstractInfinispanSessionRepository(SpringCache cache, AbstractApplicationPublisherBridge eventsBridge) {
       Objects.requireNonNull(cache, "SpringCache can not be null");
@@ -91,5 +98,17 @@ public abstract class AbstractInfinispanSessionRepository implements SessionRepo
    public void delete(String id) {
       applicationEventPublisher.emitSessionDeletedEvent(id);
       cache.evict(id);
+   }
+
+   @Override
+   public Map<String, MapSession> findByIndexNameAndIndexValue(String indexName, String indexValue) {
+      if (!PRINCIPAL_NAME_INDEX_NAME.equals(indexName)) {
+         return Collections.emptyMap();
+      }
+
+      return cache.getNativeCache().values().stream()
+            .map(cacheValue -> (MapSession) cacheValue)
+            .filter(session -> indexValue.equals(principalNameResolver.resolvePrincipal(session)))
+            .collect(Collectors.toMap(MapSession::getId, Function.identity()));
    }
 }
