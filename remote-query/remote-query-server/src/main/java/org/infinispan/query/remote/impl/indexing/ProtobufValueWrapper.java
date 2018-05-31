@@ -26,6 +26,8 @@ public final class ProtobufValueWrapper implements WrappedBytes {
 
    public static final IndexedTypeIdentifier INDEXING_TYPE = PojoIndexedTypeIdentifier.convertFromLegacy(ProtobufValueWrapper.class);
 
+   private static final int MAX_BYTES_IN_TOSTRING = 40;
+
    // The protobuf encoded payload
    private final byte[] binary;
 
@@ -45,10 +47,16 @@ public final class ProtobufValueWrapper implements WrappedBytes {
       return binary;
    }
 
+   /**
+    * Returns the Protobuf descriptor of the message type of the payload.
+    */
    public Descriptor getMessageDescriptor() {
       return messageDescriptor;
    }
 
+   /**
+    * Sets the Protobuf descriptor of the message type of the payload.
+    */
    public void setMessageDescriptor(Descriptor messageDescriptor) {
       this.messageDescriptor = messageDescriptor;
    }
@@ -73,7 +81,7 @@ public final class ProtobufValueWrapper implements WrappedBytes {
    @Override
    public String toString() {
       // Render only max 40 bytes
-      int len = Math.min(binary.length, 40);
+      int len = Math.min(binary.length, MAX_BYTES_IN_TOSTRING);
       StringBuilder sb = new StringBuilder(50 + 3 * len);
       sb.append("ProtobufValueWrapper(length=").append(binary.length).append(", binary=[");
       for (int i = 0; i < len; i++) {
