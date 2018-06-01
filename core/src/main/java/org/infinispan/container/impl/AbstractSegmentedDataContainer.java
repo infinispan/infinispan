@@ -36,7 +36,7 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.PassivationManager;
-import org.infinispan.expiration.ExpirationManager;
+import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.metadata.Metadata;
@@ -62,7 +62,7 @@ public abstract class AbstractSegmentedDataContainer<K, V> implements SegmentedD
 
    @Inject protected TimeService timeService;
    @Inject protected EvictionManager evictionManager;
-   @Inject protected ExpirationManager<K, V> expirationManager;
+   @Inject protected InternalExpirationManager<K, V> expirationManager;
    @Inject protected InternalEntryFactory entryFactory;
    @Inject protected ActivationManager activator;
    @Inject protected PassivationManager passivator;

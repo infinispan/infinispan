@@ -94,6 +94,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                      expiredMortal = ExpiryHelper.isExpiredMortal(lifespan, e.getCreated(), currentTimeMillis);
                      expiredTransient = ExpiryHelper.isExpiredTransient(maxIdle, e.getLastUsed(), currentTimeMillis);
                   }
+                  // We check lifespan first as this is much less expensive to remove than max idle.
                   if (expiredMortal) {
                      offset = addAndWaitIfFull(handleLifespanExpireEntry(e.getKey(), value, lifespan), futures, offset);
                   } else if (expiredTransient) {
@@ -103,7 +104,9 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
             }
             if (offset != 0) {
                // Make sure that all of the futures are complete before returning
-               CompletableFuture.allOf(Arrays.copyOf(futures, offset)).join();
+               for (int i = 0; i < offset; ++i) {
+                  futures[i].join();
+               }
             }
             if (trace) {
                log.tracef("Purging data container completed in %s",
@@ -259,7 +262,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
 
       // Need to gather last access times
       RetrieveLastAccessCommand rlac = cf.buildRetrieveLastAccessCommand(key, value);
-      rlac.setTopologyId(rpcManager.getTopologyId());
+      rlac.setTopologyId(topology.getTopologyId());
 
       // In scattered cache read owners will only contain primary
       return rpcManager.invokeCommand(info.readOwners(), rlac, new MaxResponseCollector<>(access),

@@ -781,13 +781,13 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    CompletableFuture<Void> removeLifespanExpired(K key, V value, Long lifespan);
 
    /**
-    * Attempts to remove the entry for the given key, when it has expired due to max idle. This command first locks
+    * Attempts to remove the entry for the given key, if it has expired due to max idle. This command first locks
     * the key and then verifies that the entry has expired via maxIdle across all nodes. If it has this will then
     * remove the given key.
     * <p>
     * This method returns a boolean when it has determined if the entry has expired. This is useful for when a backup
     * node invokes this command for a get that found the entry expired. This way the node can return back to the caller
-    * much faster when the entry is not expired.
+    * much faster when the entry is not expired and do any additional processing asynchronously if needed.
     * <p>
     * This method will suspend any ongoing transaction and start a new one just for the invocation of this command. It
     * is automatically committed or rolled back after the command completes, either successfully or via an exception.

@@ -44,6 +44,7 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -118,6 +119,12 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleSingleKeyWriteCommand(ctx, command, TriangleFunctionsUtil::backupFrom);
+   }
+
+   @Override
+   protected Object invokeRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command, DistributionInfo distributionInfo) throws Throwable {
+      assert distributionInfo.isPrimary();
+      return localPrimaryOwnerWrite(ctx, command, distributionInfo, TriangleFunctionsUtil::backupFrom);
    }
 
    @Override
@@ -390,9 +397,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
 
       if (distributionInfo.isPrimary()) {
          assert context.lookupEntry(command.getKey()) != null;
-         // Not only if the context is local, but also if the command id is local (this occurs with newly created
-         // commands in response to a remote request (ie. RemoveExpiredCommannd)
-         return context.isOriginLocal() || command.getCommandInvocationId().getAddress().equals(localAddress) ?
+         return context.isOriginLocal() ?
                localPrimaryOwnerWrite(context, command, distributionInfo, backupBuilder) :
                remotePrimaryOwnerWrite(context, command, distributionInfo, backupBuilder);
       } else if (distributionInfo.isWriteBackup()) {

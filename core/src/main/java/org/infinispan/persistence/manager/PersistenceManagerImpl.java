@@ -44,7 +44,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.eviction.EvictionType;
-import org.infinispan.expiration.ExpirationManager;
+import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -104,7 +104,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Inject private ByteBufferFactory byteBufferFactory;
    @Inject private MarshalledEntryFactory marshalledEntryFactory;
    @Inject private CacheStoreFactoryRegistry cacheStoreFactoryRegistry;
-   @Inject private ExpirationManager<Object, Object> expirationManager;
+   @Inject private InternalExpirationManager<Object, Object> expirationManager;
    @Inject private CacheNotifier cacheNotifier;
 
    @GuardedBy("storesMutex")
@@ -398,9 +398,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private static class AdvancedPurgeListener<K, V> implements AdvancedCacheExpirationWriter.ExpirationPurgeListener<K, V> {
-      private final ExpirationManager<K, V> expirationManager;
+      private final InternalExpirationManager<K, V> expirationManager;
 
-      private AdvancedPurgeListener(ExpirationManager<K, V> expirationManager) {
+      private AdvancedPurgeListener(InternalExpirationManager<K, V> expirationManager) {
          this.expirationManager = expirationManager;
       }
 

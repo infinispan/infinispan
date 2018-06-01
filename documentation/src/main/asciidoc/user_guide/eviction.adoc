@@ -172,7 +172,7 @@ stay in the cache or _maximum idle time_ , time it's allowed to be untouched
 
 .  _Expiration_ is a top-level construct, represented in the configuration as well as in the cache API.
 .  While eviction is _local to each cache instance_ , expiration is _cluster-wide_ .  Expiration lifespans and maxIdle values are replicated along with the cache entry.
-.  Max idle requires additional network messages to work in a cluster.  As such using maxIdle in a clustered cache can cause some operations to be slower at times.
+.  Max idle requires additional network messages to work in a cluster.  As such using maxIdle in a clustered cache will cause some operations to be slower at times.
 .  Expiration lifespan and maxIdle are also persisted in CacheStores, so this information survives eviction/passivation.
 
 
@@ -194,11 +194,14 @@ WARN: Clustered caches should always enable reaper when using max idle expiratio
 
 When using max idle, it is important to keep the following points in mind:
 
-. A Cache.get in a clustered cache will return the "expired" entry if at least one owner finds that this entry is not expired. All owners will then update their last access time to the highest number, essentially refreshing this entry until that time.
+. A Cache.get in a clustered cache will return the "expired" entry if at least one owner finds that this entry is not expired. The last access time for the given entry will be updated to the current time.
+. When an entry is found to have expired due to max idle in the expiration reaper, instead of updating the last access time to current time, it will update all nodes to the most recent access of all owners.
 . Iteration in a clustered cache *will* return entries that this node thinks are expired via max idle. This is to ensure performance as no remote invocations are done. The entry is not refreshed and may be removed by the reaper or get access.
 . A clustered transactional cache does *NOT* remove entries expired via max idle on a get. These entries are only removed via reaper. This is prevented as doing so can cause deadlocking.
 
 WARN: Care should be used when utilizing max idle expiration and exception based eviction since expired entries that aren't removed still will count towards container sizing
+
+INFO: Entries transferred via state transfer will be created on the new node with a last access time equal to the current time, essentially refreshing any of these entries
 
 ==== Configuration
 

@@ -6,9 +6,28 @@
  */
 package org.infinispan.hibernate.cache.v51.impl;
 
+import java.util.Comparator;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+
+import javax.transaction.TransactionManager;
+
+import org.hibernate.cache.spi.CacheDataDescription;
+import org.hibernate.cache.spi.CacheKeysFactory;
+import org.hibernate.cache.spi.TransactionalDataRegion;
+import org.hibernate.cache.spi.access.AccessType;
+import org.infinispan.AdvancedCache;
+import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.Flag;
+import org.infinispan.expiration.impl.ClusterExpirationManager;
+import org.infinispan.expiration.impl.ExpirationManagerImpl;
+import org.infinispan.expiration.impl.InternalExpirationManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.MetaParam;
-import org.infinispan.hibernate.cache.v51.InfinispanRegionFactory;
+import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.hibernate.cache.commons.access.AccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.LockingInterceptor;
 import org.infinispan.hibernate.cache.commons.access.NonStrictAccessDelegate;
@@ -18,35 +37,15 @@ import org.infinispan.hibernate.cache.commons.access.TombstoneAccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.TxInvalidationCacheAccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.UnorderedDistributionInterceptor;
 import org.infinispan.hibernate.cache.commons.access.UnorderedReplicationLogic;
-import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.commons.util.Tombstone;
 import org.infinispan.hibernate.cache.commons.util.VersionedEntry;
-import org.hibernate.cache.spi.CacheDataDescription;
-import org.hibernate.cache.spi.CacheKeysFactory;
-import org.hibernate.cache.spi.TransactionalDataRegion;
-
-import org.hibernate.cache.spi.access.AccessType;
-import org.infinispan.AdvancedCache;
-import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.expiration.ExpirationManager;
-import org.infinispan.expiration.impl.ClusterExpirationManager;
-import org.infinispan.expiration.impl.ExpirationManagerImpl;
-import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.hibernate.cache.v51.InfinispanRegionFactory;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
-
-import javax.transaction.TransactionManager;
-
-import java.util.Comparator;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 /**
  * Support for Inifinispan {@link org.hibernate.cache.spi.TransactionalDataRegion} implementors.
@@ -209,11 +208,11 @@ public abstract class BaseTransactionalDataRegion
 		// undesired overhead. When get() triggers a RemoteExpirationCommand executed in async executor
 		// this locks the entry for the duration of RPC, and putFromLoad with ZERO_LOCK_ACQUISITION_TIMEOUT
 		// fails as it finds the entry being blocked.
-		ExpirationManager expirationManager = registry.getComponent(ExpirationManager.class);
+		InternalExpirationManager expirationManager = registry.getComponent(InternalExpirationManager.class);
 		if ((expirationManager instanceof ClusterExpirationManager)) {
 			// re-registering component does not stop the old one
 			((ClusterExpirationManager) expirationManager).stop();
-			registry.registerComponent(new ExpirationManagerImpl<>(), ExpirationManager.class);
+			registry.registerComponent(new ExpirationManagerImpl<>(), InternalExpirationManager.class);
 			registry.rewire();
 		}
 		else if (expirationManager instanceof ExpirationManagerImpl) {

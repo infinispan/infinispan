@@ -92,6 +92,7 @@ import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.expiration.ExpirationManager;
+import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -160,7 +161,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Inject protected RpcManager rpcManager;
    @Inject protected StreamingMarshaller marshaller;
    @Inject private EvictionManager evictionManager;
-   @Inject private ExpirationManager<K, V> expirationManager;
+   @Inject private InternalExpirationManager<K, V> expirationManager;
    @Inject private DataContainer dataContainer;
    @Inject private EmbeddedCacheManager cacheManager;
    @Inject private LockManager lockManager;
