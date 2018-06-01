@@ -94,4 +94,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Data format '%s' not supported", id = 5033)
    TranscodingException unsupportedDataFormat(MediaType contentFormat);
+
+   @Message(value = "Cannot create clustered caches in non-clustered servers", id = 5034)
+   UnsupportedOperationException cannotCreateClusteredCache();
 }
