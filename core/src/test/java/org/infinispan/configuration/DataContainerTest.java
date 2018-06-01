@@ -14,7 +14,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.DefaultDataContainer;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.eviction.ActivationManager;
-import org.infinispan.expiration.ExpirationManager;
+import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -73,7 +73,7 @@ public class DataContainerTest extends AbstractInfinispanTest {
          ActivationManager activationManager = mock(ActivationManager.class);
          doNothing().when(activationManager).onUpdate(Mockito.any(), Mockito.anyBoolean());
          TestingUtil.inject(ddc, new InternalEntryFactoryImpl(), activationManager,
-               TIME_SERVICE, mock(ExpirationManager.class));
+               TIME_SERVICE, mock(InternalExpirationManager.class));
          QueryableDataContainer.setDelegate(ddc);
 
          // Verify that the default is correctly established
@@ -109,7 +109,7 @@ public class DataContainerTest extends AbstractInfinispanTest {
          ActivationManager activationManager = mock(ActivationManager.class);
          doNothing().when(activationManager).onUpdate(Mockito.any(), Mockito.anyBoolean());
          TestingUtil.inject(ddc, new InternalEntryFactoryImpl(), activationManager,
-                 TIME_SERVICE, mock(ExpirationManager.class));
+                 TIME_SERVICE, mock(InternalExpirationManager.class));
          QueryableDataContainer.setDelegate(ddc);
 
          // Verify that the config is correct

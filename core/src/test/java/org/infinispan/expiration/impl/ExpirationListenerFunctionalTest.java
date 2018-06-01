@@ -7,7 +7,6 @@ import static org.testng.AssertJUnit.assertNotNull;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.event.Event;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -20,7 +19,7 @@ public class ExpirationListenerFunctionalTest extends ExpirationFunctionalTest {
    @Override
    protected void afterCacheCreated(EmbeddedCacheManager cm) {
       cache.addListener(listener);
-      manager = TestingUtil.extractComponent(cache, ExpirationManager.class);
+      manager = cache.getAdvancedCache().getExpirationManager();
    }
 
    @AfterMethod

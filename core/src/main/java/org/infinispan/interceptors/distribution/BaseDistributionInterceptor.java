@@ -48,7 +48,7 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.RemoteValueRetrievedListener;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.expiration.ExpirationManager;
+import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InvocationSuccessFunction;
@@ -65,6 +65,7 @@ import org.infinispan.remoting.transport.RemoteGetResponseCollector;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
+import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.statetransfer.AllOwnersLostException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -91,7 +92,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    @Inject protected RemoteValueRetrievedListener rvrl;
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject protected TimeService timeService;
-   @Inject protected ExpirationManager<Object, Object> expirationManager;
+   @Inject protected InternalExpirationManager<Object, Object> expirationManager;
 
    protected boolean isL1Enabled;
    protected boolean isReplicated;
@@ -965,14 +966,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       CacheEntry entry = ctx.lookupEntry(key);
 
       if (isLocalModeForced(command)) {
-         if (entry == null) {
-            entryFactory.wrapExternalEntry(ctx, key, null, false, true);
-         }
          return invokeNext(ctx, command);
       }
 
       LocalizedCacheTopology cacheTopology = checkTopologyId(command);
-      DistributionInfo info = cacheTopology.getDistribution(key);
+      DistributionInfo info = cacheTopology.getSegmentDistribution(command.getSegment());
       if (entry == null) {
          if (info.isPrimary()) {
             throw new IllegalStateException("Primary owner in writeCH should always be an owner in readCH as well.");
@@ -990,7 +988,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
             return asyncValue(completableFuture).thenApply(ctx, command, (rCtx, rCommand, max) -> {
                if (max != null) {
-                  // Make sure to fail the command for other interceptors
+                  // Make sure to fail the command for other interceptors, such as CacheWriterInterceptor, so it
+                  // won't remove it in the store
                   command.fail();
                   if (trace) {
                      log.tracef("Received %s as the latest last access time for key %s", max, key);
@@ -1003,9 +1002,9 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                   } else {
                      // If it wasn't -1 it has to be > 0 so send that update
                      UpdateLastAccessCommand ulac = cf.buildUpdateLastAccessCommand(key, longMax);
-                     ulac.setTopologyId(rpcManager.getTopologyId());
+                     ulac.setTopologyId(cacheTopology.getTopologyId());
                      CompletionStage<?> updateState = rpcManager.invokeCommand(info.readOwners(), ulac,
-                           MapResponseCollector.ignoreLeavers(info.writeOwners().size()), rpcManager.getSyncRpcOptions());
+                           VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
                      ulac.inject(dataContainer);
                      // We update locally as well
                      ulac.invokeAsync();
@@ -1020,12 +1019,12 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                      // Have to build a new command since the command id points to the originating node - causes
                      // issues with triangle since it needs to know the originating node to respond to
                      realRemoveCommand = cf.buildRemoveExpiredCommand(key, command.getValue());
-                     realRemoveCommand.setTopologyId(rpcManager.getTopologyId());
+                     realRemoveCommand.setTopologyId(cacheTopology.getTopologyId());
                   } else {
                      realRemoveCommand = command;
                   }
 
-                  return makeStage(visitRemoveCommand(ctx, realRemoveCommand)).thenApply(rCtx, rCommand,
+                  return makeStage(invokeRemoveExpiredCommand(ctx, realRemoveCommand, info)).thenApply(rCtx, rCommand,
                         (rCtx2, rCommand2, ignore) -> Boolean.TRUE);
                }
             });
@@ -1036,5 +1035,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             return invokeNext(ctx, command);
          }
       }
+   }
+
+   protected Object invokeRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command, DistributionInfo distributionInfo)
+         throws Throwable {
+      assert distributionInfo.isPrimary();
+      return visitRemoveCommand(ctx, command);
    }
 }

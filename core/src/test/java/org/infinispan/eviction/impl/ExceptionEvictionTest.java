@@ -487,7 +487,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
       // Also max idle in a transaction don't remove entries until reaper runs
       if (storageType == StorageType.OFF_HEAP || maxIdle) {
          for (Cache cache : caches()) {
-            ExpirationManager em = TestingUtil.extractComponent(cache, ExpirationManager.class);
+            ExpirationManager em = cache.getAdvancedCache().getExpirationManager();
             em.processExpiration();
          }
       }

@@ -187,7 +187,7 @@ public class AsyncStoreFunctionalTest extends AbstractInfinispanTest {
                modApplyLatch.countDown();
             }
 
-            ExpirationManager expirationManager = TestingUtil.extractComponent(cache, ExpirationManager.class);
+            ExpirationManager expirationManager = cache.getAdvancedCache().getExpirationManager();
             expirationManager.processExpiration();
 
             Set<Integer> keys = cache.keySet();

@@ -663,8 +663,8 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
                if (access != null) {
                   UpdateLastAccessCommand ulac = cf.buildUpdateLastAccessCommand(key, (long) access);
                   ulac.inject(dataContainer);
-                  // This command doesn't block
-                  ulac.invokeAsync().join();
+                  // Update local access time to what primary had
+                  ulac.invokeAsync();
                   // Make sure to notify other interceptors the command failed
                   command.fail();
                   return Boolean.FALSE;

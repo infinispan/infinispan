@@ -32,7 +32,7 @@ import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.eviction.impl.ActivationManagerStub;
 import org.infinispan.eviction.impl.PassivationManagerStub;
-import org.infinispan.expiration.ExpirationManager;
+import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.jmx.CacheJmxRegistration;
@@ -163,7 +163,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
 
          @Override
          public void cacheComponents() {
-            getOrCreateComponent(ExpirationManager.class);
+            getOrCreateComponent(InternalExpirationManager.class);
          }
       };
 

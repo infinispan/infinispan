@@ -12,7 +12,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -30,7 +29,7 @@ import org.infinispan.util.logging.LogFactory;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
-public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
+public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K, V> {
    private static final Log log = LogFactory.getLog(ExpirationManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -119,7 +118,7 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
    public CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime) {
       // We ignore the return from this method. It is possible for the entry to no longer be expired, but this means
       // it was updated by another thread. In that case it is a completely valid value for it to be expired then not.
-      // So for this we just tell them it was expired.
+      // So for this we just tell the caller it was expired.
       dataContainer.compute(entry.getKey(), ((k, oldEntry, factory) -> {
          if (oldEntry != null) {
             synchronized (oldEntry) {
@@ -139,6 +138,12 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
    public CompletableFuture<Boolean> entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry, long currentTime) {
       // Local we just remove the entry as we see them
       return entryExpiredInMemory(entry, currentTime);
+   }
+
+   @Override
+   public void handleInMemoryExpiration(InternalCacheEntry<K, V> entry, long currentTime) {
+      // Just invoke the new method and join
+      entryExpiredInMemory(entry, currentTime).join();
    }
 
    @Override
@@ -219,16 +224,6 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
          return CompletableFuture.completedFuture(lastAccess);
       }
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public void registerWriteIncoming(K key) {
-      expiring.put(key, key);
-   }
-
-   @Override
-   public void unregisterWrite(K key) {
-      expiring.remove(key);
    }
 
    @Stop(priority = 5)

@@ -59,6 +59,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
+import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.KeyFilter;
@@ -1125,7 +1126,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public ExpirationManager<K, V> getExpirationManager() {
-      return getComponentRegistry().getComponent(ExpirationManager.class);
+      return getComponentRegistry().getComponent(InternalExpirationManager.class);
    }
 
    @Override

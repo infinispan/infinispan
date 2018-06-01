@@ -5,10 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.configuration.cache.ExpirationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.util.concurrent.CompletableFutures;
 
 import net.jcip.annotations.ThreadSafe;
 
@@ -25,7 +22,6 @@ import net.jcip.annotations.ThreadSafe;
  * @since 7.2
  */
 @ThreadSafe
-@Scope(Scopes.NAMED_CACHE)
 public interface ExpirationManager<K, V> {
 
    /**
@@ -43,43 +39,10 @@ public interface ExpirationManager<K, V> {
     * preserve atomicity.
     * @param entry entry that is now expired
     * @param currentTime the current time in milliseconds
-    * @deprecated  since 9.3 Please use {@link #entryExpiredInMemory(InternalCacheEntry, long)} instead as it is
-    * possible that an entry may not be removed even though it was expired here
+    * @deprecated since 9.3 this method is not intended for external use
     */
    @Deprecated
-   default void handleInMemoryExpiration(InternalCacheEntry<K, V> entry, long currentTime) {
-      throw new UnsupportedOperationException("Should invoke entryExpiredInMemory instead!");
-   }
-
-   /**
-    * This should be invoked passing in an entry that is now expired.  This method may attempt to lock this key to
-    * preserve atomicity. This method should be invoked when an entry was read via get but found to be expired.
-    * <p>
-    * This method returns <b>true</b> if the entry was removed due to expiration or <b>false</b> if the entry was
-    * not removed due to expiration
-    * @param entry the entry that has expired
-    * @param currentTime the current time when it expired
-    * @return if this entry actually expired or not
-    */
-   default CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime) {
-      handleInMemoryExpiration(entry, currentTime);
-      return CompletableFutures.completedTrue();
-   }
-
-   /**
-    * This method is very similar to {@link #entryExpiredInMemory(InternalCacheEntry, long)} except that it does the
-    * bare minimum when an entry expired to guarantee if the entry is valid or not. This is important to reduce time
-    * spent per entry when iterating. This method may not actually remove the entry and may just return immediately
-    * if it is safe to do so.
-    * @param entry the entry that has expired
-    * @param currentTime the current time when it expired
-    * @return if this entry actually expired or not
-    */
-   default CompletableFuture<Boolean> entryExpiredInMemoryFromIteration(InternalCacheEntry<K, V> entry,
-         long currentTime) {
-      handleInMemoryExpiration(entry, currentTime);
-      return CompletableFutures.completedTrue();
-   }
+   void handleInMemoryExpiration(InternalCacheEntry<K, V> entry, long currentTime);
 
    /**
     * This is to be invoked when a store entry expires.  This method may attempt to lock this key to preserve atomicity.
@@ -87,7 +50,9 @@ public interface ExpirationManager<K, V> {
     * Note this method doesn't currently take a {@link InternalCacheEntry} and this is due to a limitation in the
     * cache store API.  This may cause some values to be removed if they were updated at the same time.
     * @param key the key of the expired entry
+    * @deprecated since 9.3 this method is not intended for external use
     */
+   @Deprecated
    void handleInStoreExpiration(K key);
 
    /**
@@ -95,18 +60,22 @@ public interface ExpirationManager<K, V> {
     * method is preferred over {@link ExpirationManager#handleInStoreExpiration(Object)} as it allows for more
     * specific expiration to possibly occur.
     * @param marshalledEntry the entry that can be unmarshalled as needed
+    * @deprecated since 9.3 this method is not intended for external use
     */
+   @Deprecated
    void handleInStoreExpiration(MarshalledEntry<K, V> marshalledEntry);
 
    /**
-    * Retrieves the last access time for the given key in the cache.
-    * If the entry is not in the cache or it is expired it will return null.
+    * Retrieves the last access time for the given key in the data container if it is using max idle.
+    * If the entry is not in the container or it is expired it will return null.
     * If the entry is present but cannot expire via max idle, it will return -1
     * If the entry is present and can expire via max idle but hasn't it will return a number > 0
     * @param key the key to retrieve the access time for
     * @param value the value to match if desired (this can be null)
     * @return the last access time if available
+    * @deprecated since 9.3 this method is not intended for external use
     */
+   @Deprecated
    CompletableFuture<Long> retrieveLastAccess(Object key, Object value);
 
    /**
@@ -116,7 +85,7 @@ public interface ExpirationManager<K, V> {
     * @deprecated since 9.3 There is no reason for this method and is implementation specific
     */
    @Deprecated
-   void registerWriteIncoming(K key);
+   default void registerWriteIncoming(K key) { }
 
    /**
     * This should always be invoked after registering write but after performing any operations required.
@@ -124,5 +93,5 @@ public interface ExpirationManager<K, V> {
     * @deprecated since 9.3 There is no reason for this method and is implementation specific
     */
    @Deprecated
-   void unregisterWrite(K key);
+   default void unregisterWrite(K key) { }
 }

@@ -20,9 +20,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.InCacheMode;
-import org.infinispan.test.fwk.InTransactionMode;
-import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
@@ -36,8 +33,6 @@ import org.testng.annotations.Test;
  * @since 8.0
  */
 @Test(groups = "functional", testName = "expiration.impl.ClusterExpirationFunctionalTest")
-@InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC})
-@InTransactionMode({TransactionMode.NON_TRANSACTIONAL, TransactionMode.TRANSACTIONAL})
 public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
 
    protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
@@ -51,10 +46,22 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
    protected Cache<Object, String> cache2;
 
    @Override
+   public Object[] factory() {
+      return new Object[] {
+            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.DIST_SYNC).transactional(true),
+            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
+            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.REPL_SYNC).transactional(true),
+            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.REPL_SYNC).transactional(false),
+            new ClusterExpirationFunctionalTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
+      };
+   }
+
+   @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(cacheMode);
       builder.transaction().transactionMode(transactionMode());
+      builder.expiration().disableReaper();
       createCluster(builder, 3);
       waitForClusterToForm();
       injectTimeServices();
@@ -65,12 +72,11 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected void injectTimeServices() {
-      long now = System.currentTimeMillis();
-      ts0 = new ControlledTimeService(now);
+      ts0 = new ControlledTimeService(0);
       TestingUtil.replaceComponent(manager(0), TimeService.class, ts0, true);
-      ts1 = new ControlledTimeService(now);
+      ts1 = new ControlledTimeService(0);
       TestingUtil.replaceComponent(manager(1), TimeService.class, ts1, true);
-      ts2 = new ControlledTimeService(now);
+      ts2 = new ControlledTimeService(0);
       TestingUtil.replaceComponent(manager(2), TimeService.class, ts2, true);
    }
 
@@ -280,5 +286,31 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
 
    public void testMaxIdleExpireBackupIterateBackup() {
       testMaxIdleExpireExpireIteration(false, false);
+   }
+
+   /**
+    * This test verifies that an entry is refreshed properly when the originator thinks the entry is expired
+    * but another node accessed recently, but not same timestamp
+    */
+   public void testMaxIdleAccessSuspectedExpiredEntryRefreshesProperly() {
+      MagicKey key = createKey(cache0, cache1);
+      String value = key.toString();
+      cache0.put(key, value, -1, null, 10, TimeUnit.SECONDS);
+
+      // Now proceed half way in the max idle period before we access it on backup node
+      incrementAllTimeServices(5, TimeUnit.SECONDS);
+
+      // Access it on the backup to update the last access time (primary still has old access time only)
+      assertEquals(value, cache1.get(key));
+
+      // Note now the entry would have been expired, if not for access above
+      incrementAllTimeServices(5, TimeUnit.SECONDS);
+
+      assertEquals(value, cache0.get(key));
+
+      // Now we try to access just before it expires, but it still should be available
+      incrementAllTimeServices(9, TimeUnit.SECONDS);
+
+      assertEquals(value, cache0.get(key));
    }
 }

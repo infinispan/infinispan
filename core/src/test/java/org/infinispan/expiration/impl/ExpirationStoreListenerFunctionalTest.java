@@ -24,7 +24,7 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
    @Override
    protected void afterCacheCreated(EmbeddedCacheManager cm) {
       cache.addListener(listener);
-      manager = TestingUtil.extractComponent(cache, ExpirationManager.class);
+      manager = cache.getAdvancedCache().getExpirationManager();
    }
 
    @AfterMethod

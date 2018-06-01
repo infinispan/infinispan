@@ -1,9 +1,9 @@
 package org.infinispan.factories;
 
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.expiration.impl.ClusterExpirationManager;
 import org.infinispan.expiration.impl.ExpirationManagerImpl;
+import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.expiration.impl.TxClusterExpirationManager;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 
@@ -13,7 +13,7 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
  * @author William Burns
  * @since 8.0
  */
-@DefaultFactoryFor(classes = ExpirationManager.class)
+@DefaultFactoryFor(classes = InternalExpirationManager.class)
 public class ExpirationManagerFactory extends AbstractNamedCacheComponentFactory implements
          AutoInstantiableFactory {
 
