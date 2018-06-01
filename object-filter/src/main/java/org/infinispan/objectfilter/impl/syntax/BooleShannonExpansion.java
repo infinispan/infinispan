@@ -106,11 +106,6 @@ public final class BooleShannonExpansion {
       }
 
       @Override
-      public BooleanExpr visit(ConstantBooleanExpr constantBooleanExpr) {
-         return constantBooleanExpr;
-      }
-
-      @Override
       public BooleanExpr visit(IsNullExpr isNullExpr) {
          PropertyValueExpr propertyValueExpr = (PropertyValueExpr) isNullExpr.getChild();
          if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
@@ -141,21 +136,6 @@ public final class BooleShannonExpansion {
             predicatesToRemove.add(likeExpr);
          }
          return likeExpr;
-      }
-
-      @Override
-      public ValueExpr visit(ConstantValueExpr constantValueExpr) {
-         return constantValueExpr;
-      }
-
-      @Override
-      public ValueExpr visit(PropertyValueExpr propertyValueExpr) {
-         return propertyValueExpr;
-      }
-
-      @Override
-      public ValueExpr visit(AggregationExpr aggregationExpr) {
-         return aggregationExpr;
       }
    }
 
@@ -245,21 +225,6 @@ public final class BooleShannonExpansion {
       @Override
       public BooleanExpr visit(LikeExpr likeExpr) {
          return replacePredicate(likeExpr);
-      }
-
-      @Override
-      public ValueExpr visit(ConstantValueExpr constantValueExpr) {
-         return constantValueExpr;
-      }
-
-      @Override
-      public ValueExpr visit(PropertyValueExpr propertyValueExpr) {
-         return propertyValueExpr;
-      }
-
-      @Override
-      public ValueExpr visit(AggregationExpr aggregationExpr) {
-         return aggregationExpr;
       }
 
       private BooleanExpr replacePredicate(PrimaryPredicateExpr primaryPredicateExpr) {

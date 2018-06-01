@@ -5,12 +5,9 @@ import org.hibernate.search.bridge.FieldBridge;
 import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.objectfilter.impl.syntax.AggregationExpr;
 import org.infinispan.objectfilter.impl.syntax.AndExpr;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.ComparisonExpr;
-import org.infinispan.objectfilter.impl.syntax.ConstantBooleanExpr;
-import org.infinispan.objectfilter.impl.syntax.ConstantValueExpr;
 import org.infinispan.objectfilter.impl.syntax.ExprVisitor;
 import org.infinispan.objectfilter.impl.syntax.FullTextBoostExpr;
 import org.infinispan.objectfilter.impl.syntax.FullTextOccurExpr;
@@ -22,7 +19,6 @@ import org.infinispan.objectfilter.impl.syntax.LikeExpr;
 import org.infinispan.objectfilter.impl.syntax.NotExpr;
 import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
-import org.infinispan.objectfilter.impl.syntax.ValueExpr;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
@@ -189,11 +185,6 @@ final class ProtobufFieldBridgeAndAnalyzerProvider implements LuceneQueryMaker.F
          }
 
          @Override
-         public BooleanExpr visit(ConstantBooleanExpr constantBooleanExpr) {
-            return constantBooleanExpr;
-         }
-
-         @Override
          public BooleanExpr visit(IsNullExpr isNullExpr) {
             PropertyValueExpr propertyValueExpr = (PropertyValueExpr) isNullExpr.getChild();
             collectAnalyzer(propertyValueExpr);
@@ -212,21 +203,6 @@ final class ProtobufFieldBridgeAndAnalyzerProvider implements LuceneQueryMaker.F
             PropertyValueExpr propertyValueExpr = (PropertyValueExpr) likeExpr.getChild();
             collectAnalyzer(propertyValueExpr);
             return likeExpr;
-         }
-
-         @Override
-         public ValueExpr visit(ConstantValueExpr constantValueExpr) {
-            return constantValueExpr;
-         }
-
-         @Override
-         public ValueExpr visit(PropertyValueExpr propertyValueExpr) {
-            return propertyValueExpr;
-         }
-
-         @Override
-         public ValueExpr visit(AggregationExpr aggregationExpr) {
-            return aggregationExpr;
          }
       }
 

@@ -18,7 +18,7 @@ public final class SyntaxTreePrinter {
       StringBuilder sb = new StringBuilder();
       if (whereClause != null) {
          if (whereClause == ConstantBooleanExpr.FALSE) {
-            throw new IllegalArgumentException("The WHERE clause must not be a contradiction");
+            throw new IllegalArgumentException("The WHERE clause must not be a boolean contradiction");
          }
          if (whereClause != ConstantBooleanExpr.TRUE) {
             sb.append(" WHERE ").append(whereClause.toQueryString());

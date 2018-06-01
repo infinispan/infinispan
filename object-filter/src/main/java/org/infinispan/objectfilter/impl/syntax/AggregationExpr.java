@@ -4,6 +4,8 @@ import org.infinispan.objectfilter.impl.ql.AggregationFunction;
 import org.infinispan.objectfilter.impl.syntax.parser.AggregationPropertyPath;
 
 /**
+ * An aggregation function applied to a property path.
+ *
  * @author anistor@redhat.com
  * @since 8.0
  */

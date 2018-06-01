@@ -33,7 +33,6 @@ import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.BooleanFilterNormalizer;
 import org.infinispan.objectfilter.impl.syntax.ComparisonExpr;
 import org.infinispan.objectfilter.impl.syntax.ConstantBooleanExpr;
-import org.infinispan.objectfilter.impl.syntax.ConstantValueExpr;
 import org.infinispan.objectfilter.impl.syntax.ExprVisitor;
 import org.infinispan.objectfilter.impl.syntax.FullTextVisitor;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
@@ -363,11 +362,6 @@ public class QueryEngine<TypeMetadata> {
          }
 
          @Override
-         public BooleanExpr visit(ConstantBooleanExpr constantBooleanExpr) {
-            return constantBooleanExpr;
-         }
-
-         @Override
          public BooleanExpr visit(IsNullExpr isNullExpr) {
             return new IsNullExpr(isNullExpr.getChild().acceptVisitor(this));
          }
@@ -380,11 +374,6 @@ public class QueryEngine<TypeMetadata> {
          @Override
          public BooleanExpr visit(LikeExpr likeExpr) {
             return new LikeExpr(likeExpr.getChild().acceptVisitor(this), likeExpr.getPattern(namedParameters));
-         }
-
-         @Override
-         public ValueExpr visit(ConstantValueExpr constantValueExpr) {
-            return constantValueExpr;
          }
 
          @Override
