@@ -66,6 +66,9 @@ public class CacheCreateTask extends AdminServerTask<Void> {
       String configuration = getParameter(parameters, "configuration");
       if (configuration != null) {
          Configuration config = getConfiguration(name, configuration);
+         if (!cacheManager.getCacheManagerConfiguration().isClustered() && config.clustering().cacheMode().isClustered()) {
+            throw log.cannotCreateClusteredCache();
+         }
          cacheManager.administration().withFlags(flags).createCache(name, config);
       } else {
          cacheManager.administration().withFlags(flags).createCache(name, template);
