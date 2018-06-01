@@ -1,0 +1,4 @@
+<module xmlns="urn:jboss:module:1.5" name="org.jboss.ws.jaxws-client">
+    <!--Empty module hack to prevent the transaction subsystem bringing in org.jboss.ws.api and all of it's dependencies-->
+    <!--This should not cause any issues as the ws.api is only required by Narayana's Compensating Transactions-->
+</module>
