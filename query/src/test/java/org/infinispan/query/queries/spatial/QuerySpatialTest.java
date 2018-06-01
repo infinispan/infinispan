@@ -23,22 +23,33 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.test.AbstractCacheTest;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+
 /**
- * Testing and verifying that Spatial queries work properly. The information on the coordinates was taken from the
- * hibernate-search tests.
+ * TODO [anistor]
+ *  - spatial query not available in unindexed mode, with listeners or CQ ?? (not technically impossible)
+ *  - spatial query not avaialble in queries with aggregation ?? (not technically impossible)
+ *  - geodist available for SELECT and ORDER BY
+ *  - geofilt available for WHERE only
+ */
+
+/**
+ * Testing and verifying that Spatial queries work properly, with the Hibernate Search API and also with Ickle query
+ * string.
  *
  * @author Anna Manukyan
+ * @author anistor@redhat.com
  */
 @Test(groups = {"functional"}, testName = "query.queries.spatial.QuerySpatialTest")
 public class QuerySpatialTest extends SingleCacheManagerTest {
 
    public QuerySpatialTest() {
-      cleanup = AbstractCacheTest.CleanupPhase.AFTER_METHOD;
    }
 
    @Override
@@ -53,8 +64,6 @@ public class QuerySpatialTest extends SingleCacheManagerTest {
    }
 
    public void testSpatialQueries() {
-      loadData();
-
       double centerLatitude = 39.51;
       double centerLongitude = -73.5;
 
@@ -97,20 +106,62 @@ public class QuerySpatialTest extends SingleCacheManagerTest {
             .sort(distanceSort)
             .projection("name", ProjectionConstants.SPATIAL_DISTANCE, ProjectionConstants.SPATIAL_DISTANCE)
             .setSpatialParameters(0, 0, "airport_location")
-            .setSpatialParameters(0, 0, "city_location")
-      ;
+            .setSpatialParameters(0, 0, "city_location");
+
       found = cacheQuery.list();
 
       // found two in 300Km
       assertEquals(2, found.size());
    }
 
-   private void loadData() {
+   public void testIckleSpatialQueries() {
+      double centerLatitude = 39.51;
+      double centerLongitude = -73.5;
+
+      double distance = 50;
+      QueryFactory queryFactory = Search.getQueryFactory(cache);
+      org.infinispan.query.dsl.Query query = queryFactory
+            .create("from " + CitySpatial.class.getName() + " where geofilt(city_location, " + centerLatitude + ", " + centerLongitude + ", " + distance + ")");
+      List<?> found = query.list();
+
+      // found none in 50km
+      assertEquals(0, found.size());
+
+      distance = 100;
+      query = queryFactory
+            .create("from " + CitySpatial.class.getName() + " where geofilt(city_location, " + centerLatitude + ", " + centerLongitude + ", " + distance + ")");
+      found = query.list();
+
+      // found one in 100Km
+      assertEquals(1, found.size());
+
+      distance = 300;
+      query = queryFactory
+            .create("select name"
+                  + ", geodist(city_location, 0, 0), geodist(airport_location, 0, 0) "
+                  + " from " + CitySpatial.class.getName() + " where geofilt(city_location, " + centerLatitude + ", " + centerLongitude + ", " + distance + ")"
+                  + " and geofilt(city_location, " + centerLatitude + ", " + centerLongitude + ", " + distance + ")"
+                  + " order by geodist(airport_location, 0, 0), geodist(city_location, 0, 0)"
+                  + "");
+      found = query.list();
+
+      // found two in 300Km
+      assertEquals(2, found.size());
+   }
+
+   @BeforeClass(alwaysRun = true)
+   protected void loadData() {
       cache.put("key1", new CitySpatial("Gotham City", 39.51d, -74.45d, 39.55d, -74.55d));
       cache.put("key2", new CitySpatial("New York City", 40.73d, -73.93d, 40.64, -73.79d));
    }
 
-   //todo try also @Spatial(name = "") to see how an empty property name behaves
+   @AfterMethod(alwaysRun = true)
+   @Override
+   protected void clearContent() {
+      // no need to clear cache between tests
+   }
+
+   //todo [anistor] try also @Spatial(name = "") to see how an empty property name behaves
    @Indexed
    @Spatial(name = "city_location", spatialMode = SpatialMode.HASH)
    @Spatial(name = "airport_location", spatialMode = SpatialMode.RANGE)
@@ -127,7 +178,7 @@ public class QuerySpatialTest extends SingleCacheManagerTest {
       @Field(store = Store.YES)
       String name;
 
-      public CitySpatial(String name, Double latitude, Double longitude, Double airportLatitude, Double airportLongitude) {
+      CitySpatial(String name, Double latitude, Double longitude, Double airportLatitude, Double airportLongitude) {
          this.name = name;
          this.latitude = latitude;
          this.longitude = longitude;

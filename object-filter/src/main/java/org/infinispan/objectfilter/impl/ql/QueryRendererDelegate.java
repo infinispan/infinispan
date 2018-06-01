@@ -80,6 +80,10 @@ public interface QueryRendererDelegate<TypeDescriptor> {
 
    void predicateConstantBoolean(boolean booleanConstant);
 
+   void predicateGeodist(String latitude, String longitude);
+
+   void predicateGeofilt(String latitude, String longitude, String radius);
+
    void predicateFullTextTerm(String term, String fuzzyFlop);
 
    void predicateFullTextRegexp(String term);
@@ -114,6 +118,10 @@ public interface QueryRendererDelegate<TypeDescriptor> {
    void activateAggregation(AggregationFunction aggregationFunction);
 
    void deactivateAggregation();
+
+   void activateSpatial(SpatialFunction spatialFunction);
+
+   void deactivateSpatial();
 
    /**
     * @param collateName optional collation name

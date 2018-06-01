@@ -28,6 +28,14 @@ public interface IndexedFieldProvider<TypeMetadata> {
       boolean isAnalyzed(String[] propertyPath);
 
       /**
+       * Checks if the property of the indexed entity is a spatial property.
+       *
+       * @param propertyPath the path of the property
+       * @return {@code true} if the property is spatial, {@code false} otherwise.
+       */
+      boolean isSpatial(String[] propertyPath);
+
+      /**
        * Checks if the property of the indexed entity is stored.
        *
        * @param propertyPath the path of the property
@@ -51,6 +59,11 @@ public interface IndexedFieldProvider<TypeMetadata> {
 
       @Override
       public boolean isStored(String[] propertyPath) {
+         return false;
+      }
+
+      @Override
+      public boolean isSpatial(String[] propertyPath) {
          return false;
       }
 

@@ -32,11 +32,29 @@ public final class BooleShannonExpansion {
       this.fieldIndexingMetadata = fieldIndexingMetadata;
    }
 
+   /**
+    * Checks if predicates refer to indexed fields and collects the ones that are not.
+    */
    private class Collector extends ExprVisitor {
 
+      /**
+       * Indicates if at least one indexed predicate was seen.
+       */
       private boolean foundIndexed = false;
 
+      /**
+       * Predicates referring to fields that are not indexed.
+       */
       private final Set<PrimaryPredicateExpr> predicatesToRemove = new LinkedHashSet<>();
+
+      private void collect(PrimaryPredicateExpr primaryPredicateExpr) {
+         PropertyValueExpr propertyValueExpr = (PropertyValueExpr) primaryPredicateExpr.getChild();
+         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
+            foundIndexed = true;
+         } else {
+            predicatesToRemove.add(primaryPredicateExpr);
+         }
+      }
 
       @Override
       public BooleanExpr visit(FullTextBoostExpr fullTextBoostExpr) {
@@ -52,34 +70,19 @@ public final class BooleShannonExpansion {
 
       @Override
       public BooleanExpr visit(FullTextTermExpr fullTextTermExpr) {
-         PropertyValueExpr propertyValueExpr = (PropertyValueExpr) fullTextTermExpr.getChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
-            foundIndexed = true;
-         } else {
-            predicatesToRemove.add(fullTextTermExpr);
-         }
+         collect(fullTextTermExpr);
          return fullTextTermExpr;
       }
 
       @Override
       public BooleanExpr visit(FullTextRegexpExpr fullTextRegexpExpr) {
-         PropertyValueExpr propertyValueExpr = (PropertyValueExpr) fullTextRegexpExpr.getChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
-            foundIndexed = true;
-         } else {
-            predicatesToRemove.add(fullTextRegexpExpr);
-         }
+         collect(fullTextRegexpExpr);
          return fullTextRegexpExpr;
       }
 
       @Override
       public BooleanExpr visit(FullTextRangeExpr fullTextRangeExpr) {
-         PropertyValueExpr propertyValueExpr = (PropertyValueExpr) fullTextRangeExpr.getChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
-            foundIndexed = true;
-         } else {
-            predicatesToRemove.add(fullTextRangeExpr);
-         }
+         collect(fullTextRangeExpr);
          return fullTextRangeExpr;
       }
 
@@ -107,35 +110,26 @@ public final class BooleShannonExpansion {
 
       @Override
       public BooleanExpr visit(IsNullExpr isNullExpr) {
-         PropertyValueExpr propertyValueExpr = (PropertyValueExpr) isNullExpr.getChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
-            foundIndexed = true;
-         } else {
-            predicatesToRemove.add(isNullExpr);
-         }
+         collect(isNullExpr);
          return isNullExpr;
       }
 
       @Override
       public BooleanExpr visit(ComparisonExpr comparisonExpr) {
-         PropertyValueExpr propertyValueExpr = (PropertyValueExpr) comparisonExpr.getLeftChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
-            foundIndexed = true;
-         } else {
-            predicatesToRemove.add(comparisonExpr);
-         }
+         collect(comparisonExpr);
          return comparisonExpr;
       }
 
       @Override
       public BooleanExpr visit(LikeExpr likeExpr) {
-         PropertyValueExpr propertyValueExpr = (PropertyValueExpr) likeExpr.getChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
-            foundIndexed = true;
-         } else {
-            predicatesToRemove.add(likeExpr);
-         }
+         collect(likeExpr);
          return likeExpr;
+      }
+
+      @Override
+      public BooleanExpr visit(GeofiltExpr geofiltExpr) {
+         collect(geofiltExpr);
+         return geofiltExpr;
       }
    }
 

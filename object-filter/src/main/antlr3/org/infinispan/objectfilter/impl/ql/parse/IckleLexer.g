@@ -79,6 +79,8 @@ tokens {
   FETCH;
   FROM;
   FULL;
+  GEODIST;
+  GEOFILT;
   GROUP_BY;
   HAVING;
   IN;

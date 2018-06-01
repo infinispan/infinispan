@@ -40,4 +40,6 @@ message Person {
    optional fixed64 lastUpdate = 10;
 
    required bool deleted = 11 [default = false];
+
+   optional int32 location = 12;
 }

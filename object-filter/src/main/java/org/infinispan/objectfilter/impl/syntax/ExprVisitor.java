@@ -1,7 +1,7 @@
 package org.infinispan.objectfilter.impl.syntax;
 
 /**
- * A pass-through, zero transformation {@link Visitor} implementation. Comes handy when you want to implement a {@link
+ * A pass-through, zero-transformation {@link Visitor} implementation. Comes handy when you want to implement a {@link
  * Visitor} but do not want to cover all the cases.
  *
  * @author anistor@redhat.com
@@ -72,6 +72,11 @@ public class ExprVisitor implements Visitor<BooleanExpr, ValueExpr> {
    @Override
    public BooleanExpr visit(LikeExpr likeExpr) {
       return likeExpr;
+   }
+
+   @Override
+   public BooleanExpr visit(GeofiltExpr geofiltExpr) {
+      return geofiltExpr;
    }
 
    @Override

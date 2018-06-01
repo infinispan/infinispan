@@ -20,6 +20,7 @@ import org.infinispan.objectfilter.impl.syntax.FullTextOccurExpr;
 import org.infinispan.objectfilter.impl.syntax.FullTextRangeExpr;
 import org.infinispan.objectfilter.impl.syntax.FullTextRegexpExpr;
 import org.infinispan.objectfilter.impl.syntax.FullTextTermExpr;
+import org.infinispan.objectfilter.impl.syntax.GeofiltExpr;
 import org.infinispan.objectfilter.impl.syntax.IsNullExpr;
 import org.infinispan.objectfilter.impl.syntax.LikeExpr;
 import org.infinispan.objectfilter.impl.syntax.NotExpr;
@@ -57,6 +58,10 @@ final class ExpressionBuilder<TypeMetadata> {
    public void setEntityType(TypeMetadata entityType) {
       this.entityType = entityType;
       stack.push(new LazyRootBooleanExpr());
+   }
+
+   public void addGeofilt(GeoDistPropertyPath<?> propertyPath, double radius) {
+      push(new GeofiltExpr(new PropertyValueExpr(propertyPath, false, Double.class), propertyPath.getLatitude(), propertyPath.getLongitude(), radius));
    }
 
    public void addFullTextTerm(PropertyPath<?> propertyPath, String value, Integer fuzzySlop) {

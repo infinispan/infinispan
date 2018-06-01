@@ -224,9 +224,20 @@ propertyReferenceExpression
    ;
 
 function
-	: setFunction
-	| standardFunction
+	:  geoFunction
+	|  setFunction
+	|  standardFunction
 	;
+
+geoFunction
+   :  ^(GEODIST propertyReference? signedNumericLiteralOrParameter signedNumericLiteralOrParameter)
+   |  ^(GEOFILT propertyReference? signedNumericLiteralOrParameter signedNumericLiteralOrParameter signedNumericLiteralOrParameter)
+   ;
+
+signedNumericLiteralOrParameter
+    :  signedNumericLiteral
+    |  parameter
+    ;
 
 setFunction
 	:	^(SUM numericValueExpression)
@@ -267,11 +278,11 @@ parameter
 	;
 
 constant
-	:	literal
-	|	NULL
-	|	TRUE
-	|	FALSE
-	;
+   :  literal
+   |  NULL
+   |  TRUE
+   |  FALSE
+   ;
 
 literal
 	:	numeric_literal
@@ -288,6 +299,12 @@ numeric_literal
 	|	DECIMAL_LITERAL
 	|	FLOATING_POINT_LITERAL
 	;
+
+signedNumericLiteral
+   :  ^(MINUS numeric_literal)
+   |  ^(PLUS numeric_literal)
+   |  numeric_literal
+   ;
 
 entityName
    :  ENTITY_NAME ALIAS_NAME { delegate.registerPersisterSpace(((EntityNameTree)$ENTITY_NAME).getEntityName(), $ALIAS_NAME); }

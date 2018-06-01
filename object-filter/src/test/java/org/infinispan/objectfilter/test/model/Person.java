@@ -124,6 +124,16 @@ public class Person {
       this._deleted = deleted;
    }
 
+   private int _location;
+
+   public int getLocation() {
+      return _location;
+   }
+
+   public void setLocation(int location) {
+      this._location = location;
+   }
+
    @Override
    public String toString() {
       return "Person{" +

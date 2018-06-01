@@ -32,6 +32,7 @@ import org.hibernate.search.query.dsl.QueryBuilder;
 import org.hibernate.search.query.dsl.QueryContextBuilder;
 import org.hibernate.search.query.dsl.RangeMatchingContext;
 import org.hibernate.search.query.dsl.RangeTerminationExcludable;
+import org.hibernate.search.query.dsl.Unit;
 import org.hibernate.search.query.dsl.impl.FieldBridgeCustomization;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
@@ -48,6 +49,7 @@ import org.infinispan.objectfilter.impl.syntax.FullTextOccurExpr;
 import org.infinispan.objectfilter.impl.syntax.FullTextRangeExpr;
 import org.infinispan.objectfilter.impl.syntax.FullTextRegexpExpr;
 import org.infinispan.objectfilter.impl.syntax.FullTextTermExpr;
+import org.infinispan.objectfilter.impl.syntax.GeofiltExpr;
 import org.infinispan.objectfilter.impl.syntax.IsNullExpr;
 import org.infinispan.objectfilter.impl.syntax.LikeExpr;
 import org.infinispan.objectfilter.impl.syntax.NotExpr;
@@ -476,6 +478,17 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
    @Override
    public Query visit(AggregationExpr aggregationExpr) {
       throw new IllegalStateException("This node type should not be visited");
+   }
+
+   @Override
+   public Query visit(GeofiltExpr geofiltExpr) {
+      // todo [anistor] FieldCustomization<SpatialMatchingContext> ? see SpatialMatchingContext
+      return queryBuilder.spatial()
+            .onField(geofiltExpr.getChild().getPropertyPath().asStringPath())
+            .within(geofiltExpr.getRadius(), Unit.KM)
+            .ofLatitude(geofiltExpr.getLatitude())
+            .andLongitude(geofiltExpr.getLongitude())
+            .createQuery();
    }
 
    private <F extends FieldCustomization> F applyFieldBridge(boolean isAnalyzed, PropertyPath<?> propertyPath, F field) {

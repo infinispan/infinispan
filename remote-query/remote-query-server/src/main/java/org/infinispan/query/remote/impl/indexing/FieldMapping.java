@@ -99,6 +99,9 @@ public final class FieldMapping {
 
    private final FieldDescriptor fieldDescriptor;
 
+   /**
+    * A legacy field definition using IndexedField annotation.
+    */
    private final boolean isLegacy;
 
    /**
@@ -110,8 +113,8 @@ public final class FieldMapping {
 
    private FieldBridge fieldBridge;
 
-   FieldMapping(String name, boolean index, float boost, boolean analyze, boolean store, boolean sortable, String analyzer,
-                String indexNullAs,
+   FieldMapping(String name, boolean index, float boost, boolean analyze, boolean store, boolean sortable,
+                String analyzer, String indexNullAs,
                 LuceneOptions luceneOptions,
                 FieldDescriptor fieldDescriptor,
                 boolean isLegacy) {

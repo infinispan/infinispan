@@ -103,4 +103,18 @@ public abstract class AbstractParsingTest<TypeMetadata> {
       String queryString = "from org.infinispan.objectfilter.test.model.Person where name : 'Joe'";
       IckleParser.parse(queryString, propertyHelper);
    }
+
+   @Test
+   public void testSpatial() {
+      String queryString = "FROM org.infinispan.objectfilter.test.model.Person p where geofilt(location, 44, 66, 100)";
+      //String queryString = "select geodist(location, :lat, :lon) FROM org.infinispan.objectfilter.test.model.Person WHERE geofilt(location, 33, 55, 100) and age > 30 order by geodist(location, 33, 55)";
+      IckleParsingResult<TypeMetadata> result = IckleParser.parse(queryString, propertyHelper);
+      //assertEquals(ConstantBooleanExpr.TRUE, result.getWhereClause());
+      assertNull(result.getHavingClause());
+
+//      queryString = "FROM org.infinispan.objectfilter.test.model.Person WHERE geofilt(location, 34, 60, 100)";
+//      result = IckleParser.parse(queryString, propertyHelper);
+//      //assertEquals(ConstantBooleanExpr.TRUE, result.getWhereClause());
+//      assertNull(result.getHavingClause());
+   }
 }

@@ -39,6 +39,11 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
    }
 
    @Override
+   public boolean isSpatial(String[] propertyPath) {
+      return getFlag(propertyPath, IndexingMetadata::isFieldSpatial, false);
+   }
+
+   @Override
    public boolean isStored(String[] propertyPath) {
       return getFlag(propertyPath, IndexingMetadata::isFieldStored, isLegacyIndexingEnabled);
    }

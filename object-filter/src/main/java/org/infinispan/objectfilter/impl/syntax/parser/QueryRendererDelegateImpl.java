@@ -14,6 +14,7 @@ import org.infinispan.objectfilter.impl.ql.AggregationFunction;
 import org.infinispan.objectfilter.impl.ql.JoinType;
 import org.infinispan.objectfilter.impl.ql.PropertyPath;
 import org.infinispan.objectfilter.impl.ql.QueryRendererDelegate;
+import org.infinispan.objectfilter.impl.ql.SpatialFunction;
 import org.infinispan.objectfilter.impl.syntax.ComparisonExpr;
 import org.infinispan.objectfilter.impl.syntax.ConstantValueExpr;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
@@ -59,6 +60,8 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    private PropertyPath<TypeDescriptor<TypeMetadata>> propertyPath;
 
    private AggregationFunction aggregationFunction;
+
+   private SpatialFunction spatialFunction;
 
    private final ExpressionBuilder<TypeMetadata> whereBuilder;
 
@@ -173,6 +176,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       alias = null;
       propertyPath = null;
       aggregationFunction = null;
+      spatialFunction = null;
    }
 
    @Override
@@ -350,6 +354,34 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    }
 
    @Override
+   public void predicateGeodist(String latitude, String longitude) {
+      //todo [anistor]
+      System.out.println("geodist latitude = [" + latitude + "], longitude = [" + longitude + "] prop=" + propertyPath);
+      if (phase == Phase.SELECT || phase == Phase.ORDER_BY) {
+         GeoDistPropertyPath geoDistPropertyPath = (GeoDistPropertyPath) propertyPath;
+         geoDistPropertyPath.setLatitude(Double.parseDouble(latitude));
+         geoDistPropertyPath.setLongitude(Double.parseDouble(longitude));
+      } else {
+         throw new IllegalStateException();
+      }
+   }
+
+   @Override
+   public void predicateGeofilt(String latitude, String longitude, String radius) {
+      //todo [anistor]
+      System.out.println("geofilt latitude = [" + latitude + "], longitude = [" + longitude + "], distance = [" + radius + "] prop=" + propertyPath);
+      GeoDistPropertyPath<TypeDescriptor<TypeMetadata>> property = (GeoDistPropertyPath)resolveAlias(propertyPath);
+      if (property.isEmpty()) {
+         throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
+      }
+      property.setLatitude(Double.parseDouble(latitude));
+      property.setLongitude(Double.parseDouble(longitude));
+
+      //todo implement params too
+      whereBuilder.addGeofilt(property, Double.parseDouble(radius));
+   }
+
+   @Override
    public void predicateFullTextTerm(String term, String fuzzyFlop) {
       ensureLeftSideIsAPropertyPath();
       PropertyPath<TypeDescriptor<TypeMetadata>> property = resolveAlias(propertyPath);
@@ -478,16 +510,27 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          }
          propertyPath = new AggregationPropertyPath<>(aggregationFunction, propertyPath.getNodes());
       }
+
+      if (spatialFunction != null) {
+         propertyPath = new GeoDistPropertyPath<>(propertyPath.getNodes());
+      }
+
       if (phase == Phase.SELECT) {
          if (projections == null) {
             projections = new ArrayList<>(ARRAY_INITIAL_LENGTH);
             projectedTypes = new ArrayList<>(ARRAY_INITIAL_LENGTH);
             projectedNullMarkers = new ArrayList<>(ARRAY_INITIAL_LENGTH);
          }
+
          PropertyPath<TypeDescriptor<TypeMetadata>> projection;
          Class<?> propertyType;
          Object nullMarker;
-         if (propertyPath.getLength() == 1 && propertyPath.isAlias()) {
+
+         if (spatialFunction != null) {
+            projection = resolveAlias(propertyPath);
+            propertyType = Double.class;
+            nullMarker = null;
+         } else if (propertyPath.getLength() == 1 && propertyPath.isAlias()) {
             projection = new PropertyPath<>(Collections.singletonList(new PropertyPath.PropertyReference<>(ProjectionConstants.VALUE, null, true))); //todo [anistor] this is a leftover from hsearch ????   this represents the entity itself. see org.hibernate.search.ProjectionConstants
             propertyType = null;
             nullMarker = null;
@@ -496,12 +539,13 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
             propertyType = propertyHelper.getPrimitivePropertyType(targetEntityMetadata, projection.asArrayPath());
             nullMarker = fieldIndexingMetadata.getNullMarker(projection.asArrayPath());
          }
+
          projections.add(projection);
          projectedTypes.add(propertyType);
          projectedNullMarkers.add(nullMarker);
-      } else {
-         this.propertyPath = propertyPath;
       }
+
+      this.propertyPath = propertyPath;
    }
 
    @Override
@@ -519,6 +563,17 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    @Override
    public void deactivateAggregation() {
       aggregationFunction = null;
+   }
+
+   @Override
+   public void activateSpatial(SpatialFunction spatialFunction) {
+      this.spatialFunction = spatialFunction;
+      propertyPath = null;
+   }
+
+   @Override
+   public void deactivateSpatial() {
+      spatialFunction = null;
    }
 
    /**
@@ -577,7 +632,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
             fullPath = resolved;
          }
 
-         return propertyHelper.convertToPropertyType(targetEntityMetadata, path.toArray(new String[path.size()]), value);
+         return propertyHelper.convertToPropertyType(targetEntityMetadata, path.toArray(new String[0]), value);
       }
    }
 
@@ -594,8 +649,15 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
 
    private PropertyPath<TypeDescriptor<TypeMetadata>> resolveAlias(PropertyPath<TypeDescriptor<TypeMetadata>> path) {
       List<PropertyPath.PropertyReference<TypeDescriptor<TypeMetadata>>> resolved = resolveAliasPath(path);
-      return path instanceof AggregationPropertyPath ?
-            new AggregationPropertyPath<>(((AggregationPropertyPath) path).getAggregationFunction(), resolved) : new PropertyPath<>(resolved);
+      if (path instanceof AggregationPropertyPath) {
+         AggregationPropertyPath p = (AggregationPropertyPath) path;
+         return new AggregationPropertyPath<>(p.getAggregationFunction(), resolved);
+      }
+      if (path instanceof GeoDistPropertyPath) {
+         GeoDistPropertyPath p = (GeoDistPropertyPath) path;
+         return new GeoDistPropertyPath<>(resolved, p.getLatitude(), p.getLongitude());
+      }
+      return new PropertyPath<>(resolved);
    }
 
    private List<PropertyPath.PropertyReference<TypeDescriptor<TypeMetadata>>> resolveAliasPath(PropertyPath<TypeDescriptor<TypeMetadata>> path) {

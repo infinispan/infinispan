@@ -99,4 +99,9 @@ public final class FullTextVisitor implements Visitor<Boolean, Boolean> {
    public Boolean visit(AggregationExpr aggregationExpr) {
       return Boolean.FALSE;
    }
+
+   @Override
+   public Boolean visit(GeofiltExpr geofiltExpr) {
+      return Boolean.FALSE;
+   }
 }

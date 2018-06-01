@@ -37,6 +37,8 @@ public interface Visitor<BE, VE> {
 
    BE visit(LikeExpr likeExpr);
 
+   BE visit(GeofiltExpr geofiltExpr);
+
    VE visit(ConstantValueExpr constantValueExpr);
 
    VE visit(PropertyValueExpr propertyValueExpr);

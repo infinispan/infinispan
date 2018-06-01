@@ -342,6 +342,7 @@ betweenList
 additiveExpression
    :  quantifiedExpression
    |  standardFunction
+   |  geoFunction
    |  setFunction
    |  collectionExpression
    |  atom
@@ -364,6 +365,16 @@ sizeFunction
 
 indexFunction
    :   index_key^ LPAREN! aliasReference RPAREN!
+   ;
+
+geoFunction
+   :   ( geodist_key^ ) LPAREN! (propertyReference COMMA!)? signedNumericLiteralOrParameter COMMA! signedNumericLiteralOrParameter RPAREN!
+   |   ( geofilt_key^ ) LPAREN! (propertyReference COMMA!)? signedNumericLiteralOrParameter COMMA! signedNumericLiteralOrParameter COMMA! signedNumericLiteralOrParameter RPAREN!
+   ;
+
+signedNumericLiteralOrParameter
+   :   signedNumericLiteral
+   |   parameterSpecification
    ;
 
 setFunction
@@ -618,6 +629,14 @@ full_key
 
 elements_key
    :   {validateSoftKeyword("elements")}?=> IDENTIFIER -> ELEMENTS[$IDENTIFIER]
+	;
+
+geofilt_key
+   :   {validateSoftKeyword("geofilt")}?=> IDENTIFIER -> GEOFILT[$IDENTIFIER]
+	;
+
+geodist_key
+   :   {validateSoftKeyword("geodist")}?=> IDENTIFIER -> GEODIST[$IDENTIFIER]
 	;
 
 properties_key

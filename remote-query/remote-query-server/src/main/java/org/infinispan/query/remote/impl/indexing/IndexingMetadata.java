@@ -1,7 +1,9 @@
 package org.infinispan.query.remote.impl.indexing;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -208,19 +210,21 @@ public final class IndexingMetadata {
    public static final String SORTABLE_FIELD_ANNOTATION = "SortableField";
    public static final String SORTABLE_FIELDS_ANNOTATION = "SortableFields";
 
-   public static final IndexingMetadata NO_INDEXING = new IndexingMetadata(false, null, null, null);
+   public static final IndexingMetadata NO_INDEXING = new IndexingMetadata(false, null, null, null, null);
 
    private final boolean isIndexed;
    private final String indexName;
    private final String analyzer;
    private final Map<String, FieldMapping> fields;
+   private final List<SpatialFieldMapping> spatialFields;
    private final Set<String> sortableFields;
 
-   IndexingMetadata(boolean isIndexed, String indexName, String analyzer, Map<String, FieldMapping> fields) {
+   IndexingMetadata(boolean isIndexed, String indexName, String analyzer, Map<String, FieldMapping> fields, List<SpatialFieldMapping> spatialFields) {
       this.isIndexed = isIndexed;
       this.indexName = indexName;
       this.analyzer = analyzer;
       this.fields = fields;
+      this.spatialFields = spatialFields;
       this.sortableFields = fields == null ? Collections.emptySet() : fields.values().stream()
             .filter(FieldMapping::sortable)
             .map(FieldMapping::name)
@@ -254,6 +258,18 @@ public final class IndexingMetadata {
       }
       FieldMapping fieldMapping = fields.get(fieldName);
       return fieldMapping != null && fieldMapping.analyze();
+   }
+
+   public boolean isFieldSpatial(String fieldName) {
+      if (spatialFields == null) {
+         return false;
+      }
+      for (SpatialFieldMapping sf : spatialFields) {
+         if (Objects.equals(sf.name(), fieldName)) {
+            return true;
+         }
+      }
+      return false;
    }
 
    public boolean isFieldStored(String fieldName) {

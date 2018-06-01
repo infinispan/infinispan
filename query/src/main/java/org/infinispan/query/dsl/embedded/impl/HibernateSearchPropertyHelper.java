@@ -378,6 +378,12 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
       }
 
       @Override
+      public boolean isSpatial(String[] propertyPath) {
+         DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(entityIndexBinding, propertyPath);
+         return fieldMetadata != null && fieldMetadata.isSpatial();
+      }
+
+      @Override
       public boolean isStored(String[] propertyPath) {
          DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(entityIndexBinding, propertyPath);
          return fieldMetadata != null && fieldMetadata.getStore() != Store.NO;

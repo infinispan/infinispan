@@ -223,9 +223,21 @@ propertyReferenceExpression
    ;
 
 function
-	: setFunction
-	| standardFunction
+	:  geoFunction
+	|  setFunction
+	|  standardFunction
 	;
+
+geoFunction
+@after { delegate.deactivateSpatial(); }
+   :  ^(GEODIST { delegate.activateSpatial(SpatialFunction.GEODIST); } propertyReference? lat=signedNumericLiteralOrParameter lon=signedNumericLiteralOrParameter) { delegate.predicateGeodist($lat.text, $lon.text); }
+   |  ^(GEOFILT { delegate.activateSpatial(SpatialFunction.GEOFILT); } propertyReference? lat=signedNumericLiteralOrParameter lon=signedNumericLiteralOrParameter dist=signedNumericLiteralOrParameter) { delegate.predicateGeofilt($lat.text, $lon.text, $dist.text); }
+   ;
+
+signedNumericLiteralOrParameter
+    :  signedNumericLiteral
+    |  parameter
+    ;
 
 setFunction
 @after { delegate.deactivateAggregation(); }
@@ -288,6 +300,12 @@ numeric_literal
 	|	DECIMAL_LITERAL
 	|	FLOATING_POINT_LITERAL
 	;
+
+signedNumericLiteral
+   :  ^(MINUS numeric_literal)
+   |  ^(PLUS numeric_literal)
+   |  numeric_literal
+   ;
 
 entityName
    :  ENTITY_NAME ALIAS_NAME { delegate.registerPersisterSpace(((EntityNameTree)$ENTITY_NAME).getEntityName(), $ALIAS_NAME); }

@@ -127,6 +127,17 @@ public class GrammarTest extends TestBase {
    }
 
    @Test
+   public void testSpatial() {
+      String expectedFrom = "(QUERY (QUERY_SPEC (SELECT_FROM (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF Cat cat))) (SELECT (SELECT_LIST (SELECT_ITEM cat)))) ";
+
+      expectParserSuccess("from Cat cat where geofilt(location, 45.6, 39.4, 100)",
+            expectedFrom + "(where (geofilt (PROPERTY_REFERENCE location) 45.6 39.4 100))))");
+
+      expectParserSuccess("from Cat cat where geofilt(location, 45.6, 39.4, 100) order by geodist(location, 40.3, 30.99)",
+            expectedFrom + "(where (geofilt (PROPERTY_REFERENCE location) 45.6 39.4 100))) (order (SORT_SPEC (geodist (PROPERTY_REFERENCE location) 40.3 30.99) asc)))");
+   }
+
+   @Test
    public void testFtRange() {
       String expectedFrom = "(QUERY (QUERY_SPEC (SELECT_FROM (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF Cat cat))) (SELECT (SELECT_LIST (SELECT_ITEM cat)))) ";
 
