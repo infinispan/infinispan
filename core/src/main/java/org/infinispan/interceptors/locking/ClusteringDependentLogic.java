@@ -198,7 +198,6 @@ public interface ClusteringDependentLogic {
             InternalCacheEntry entry = iterator.next();
             // Iterator doesn't support remove
             dataContainer.remove(entry.getKey());
-            notifier.notifyCacheEntryRemoved(entry.getKey(), entry.getValue(), entry.getMetadata(), false, context, command);
          }
       }
 

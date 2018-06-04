@@ -45,8 +45,6 @@ public class ClearCommand extends AbstractTopologyAffectedCommand implements Wri
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      dataContainer.forEach(e ->
-            notifier.notifyCacheEntryRemoved(e.getKey(), e.getValue(), e.getMetadata(), true, ctx, this));
       return null;
    }
 

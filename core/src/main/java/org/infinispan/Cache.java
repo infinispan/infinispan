@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -334,6 +335,10 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * concurrently.
     * <p/>
     * If the cache is transactional, it will not interact with the transaction.
+    *
+    * Starting with version 9.3, calling this method does not result if cache entry removed events being fired.
+    * If you rely on cache entry removed events
+    * , use {@link CacheStream#forEach(BiConsumer)} to individually remove each entry and get remove notifications.
     */
    @Override
    void clear();

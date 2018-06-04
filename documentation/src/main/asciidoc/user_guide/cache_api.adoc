@@ -65,6 +65,19 @@ if (cachedPerson == null) {
 
 Please note that link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead-K-V-[putForExternalRead] should never be used as a mechanism to update the cache with a new Person instance originating from application execution (i.e. from a transaction that modifies a Person's address). When updating cached values, please use the standard link:{jdkdocroot}/java/util/Map.html#put-K-V-[put] operation, otherwise the possibility of caching corrupt data is likely.
 
+==== Clearing the cache
+
+The fastest way to clear a cache is to call
+link:{javadocroot}/org/infinispan/Cache.html#clear--[clear] method.
+
+IMPORTANT: Starting with version 9.3, calling `clear` does no longer emit remove notifications for each removed key.
+If relying on removed events being fired upon calling `clear`, it is recommended to call `cache.keySet().stream().forEach(Cache::remove)`.
+Removing all entries in this way is optimized so that with distributed caches, removes happen in parallel.
+Further optimization can be achieved by calling `disableRehashAware` on the stream.
+However, when this option is enabled and concurrent writes are happening at the same time as cluster topology changes,
+a concurrent write might override the remove resulting in a non-empty cache.
+
+
 === The AdvancedCache interface
 In addition to the simple Cache interface, {brandname} offers an link:{javadocroot}/org/infinispan/AdvancedCache.html[AdvancedCache] interface, geared towards extension authors.  The AdvancedCache offers the ability to inject custom interceptors, access certain internal components and to apply flags to alter the default behavior of certain cache methods.  The following code snippet depicts how an AdvancedCache can be obtained:
 
