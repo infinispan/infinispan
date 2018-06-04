@@ -38,7 +38,6 @@ public class HierarchyDiscovery {
         try {
             discoverTypes(type);
         } catch (StackOverflowError e) {
-            System.out.println("type" + type);
             Thread.dumpStack();
             throw e;
         }

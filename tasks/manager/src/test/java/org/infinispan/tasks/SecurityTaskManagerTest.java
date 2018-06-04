@@ -91,7 +91,6 @@ public class SecurityTaskManagerTest extends SingleCacheManagerTest {
 
     @Test(dataProvider = "principleProvider")
     public void testTaskExecutionWithAuthorization(String principal, Subject subject) throws Exception {
-        System.out.println("Run with " + principal);
         Security.doAs(subject, new PrivilegedAction<Void>() {
             @Override
             public Void run() {

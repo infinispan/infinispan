@@ -156,7 +156,6 @@ public class Http2ClientInitializer extends CommunicationInitializer {
     private static class UserEventLogger extends ChannelInboundHandlerAdapter {
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-            System.out.println("User Event Triggered: " + evt);
             ctx.fireUserEventTriggered(evt);
         }
     }
