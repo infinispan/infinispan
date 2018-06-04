@@ -6,3 +6,121 @@ The {brandname} community
 :numbered:
 
 include::topics.adoc[]
+
+== Single Port
+
+Single Port features allows to expose multiple protocols over the same TCP port.
+This approach is very convenient in Cloud Environments such as OpenShift or Kubernetes where the application
+(a Pod) is hidden behind the frontend proxy (a Route or an Ingress).
+
+For protocol switching, Infinispan Server uses HTTP/1.1 Upgrade header or TLS/ALPN.
+
+NOTE: The initial implementation supports only HTTP/1.1, HTTP/2 and Hot Rod protocols.
+
+==== Single Port router
+
+Internally, Single Port reuses router component, therefore the configuration looks very similar to
+the Multi-tenancy.
+
+[source,xml]
+----
+
+<!-- TLS/ALPN negotiation -->
+<router-connector name="router-ssl" single-port-socket-binding="rest-ssl">
+    <single-port security-realm="SSLRealm1">
+        <hotrod name="hotrod" />
+        <rest name="rest" />
+    </single-port>
+</router-connector>
+<!-- HTTP 1.1/Upgrade procedure -->
+<router-connector name="router" single-port-socket-binding="rest">
+    <single-port>
+        <hotrod name="hotrod" />
+        <rest name="rest" />
+    </single-port>
+</router-connector>
+
+----
+
+With the configuration above, the Single Port Router will operate on `rest` and `rest-ssl` socket
+bindings. The router named `router` should typically operate on port `8080` and will use HTTP/1.1 Upgrade
+(also known as Plan Text Upgrade) procedure. The other router instance (called `router-ssl`) should typically
+operate on port `8443` and will use TLS/ALPN.
+
+==== Curl client
+
+A well-known `curl` tool can be used to access cache using both Plain Text Upgrade or TLS/ALPN. Here's an example:
+
+[source,bash]
+----
+
+curl -v -k --http2-prior-knowledge https://127.0.0.1:8443/rest/default/test
+
+----
+
+The `--http2-prior-knowledge` can be exchanged with `--http2` switch allowing to control how the switch procedure
+is being done (via Plain Text Upgrade or TLS/ALPN).
+
+==== Hotrod client
+
+Hot Rod client also supports Single Port functionality with both type of upgrades. Here's a configuration example
+for Plain Text Upgrade:
+
+[source,java]
+----
+
+ConfigurationBuilder builder = new ConfigurationBuilder()
+      .addServers("127.0.0.1:8080");
+
+RemoteCacheManager remoteCacheManager = new RemoteCacheManager(builder.build());
+RemoteCache<String, String> cache = remoteCacheManager.getCache("default"");
+
+----
+
+The Hotrod client detects if Single Port has been enabled on the server by checking the port number. If the port is
+specific to REST (ports 80, 8080, 8443 or similar), the Single Port functionality will be enabled on the client.
+
+Another supported way to do the upgrade is to use TLS/ALPN. Unfortunately ALPN extension is not supported in JDK8.
+Therefore, the suggested way is to use Boring SSL Library which turns on OpenSSL support in Netty (which is
+used in the Hotrod client):
+
+[source,xml]
+----
+
+<dependencyManagement>
+      <dependency>
+         <groupId>io.netty</groupId>
+         <artifactId>netty-bom</artifactId>
+         <!-- Pulled from Infinispan BOM -->
+         <version>${version.netty}</version>
+         <type>pom</type>
+         <scope>import</scope>
+      </dependency>
+   </dependencies>
+</dependencyManagement>
+
+<dependency>
+   <groupId>io.netty</groupId>
+   <artifactId>netty-tcnative-boringssl-static</artifactId>
+   <!-- The version is defined in Netty BOM -->
+</dependency>
+
+----
+
+After adding the library, configure your trust store accordingly:
+
+[source,java]
+----
+
+ConfigurationBuilder builder = new ConfigurationBuilder()
+      .addServers("127.0.0.1:8443")
+      .singlePort(true);
+
+builder.security().ssl().enable()
+      .trustStoreFileName("truststore.pkcs12")
+      .trustStorePassword(DEFAULT_TRUSTSTORE_PASSWORD.toCharArray());
+
+RemoteCacheManager remoteCacheManager = new RemoteCacheManager(builder.build());
+RemoteCache<String, String> cache = remoteCacheManager.getCache("default"");
+
+----
