@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.TransactionalCache;
 import org.infinispan.commons.util.CloseableIterator;
@@ -432,6 +433,12 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * The listener object must be annotated with @ClientListener annotation.
     */
    void addClientListener(Object listener, Object[] filterFactoryParams, Object[] converterFactoryParams);
+
+   /**
+    * Add a client listener to receive events that happen in the remote cache.
+    * The listener object must be annotated with @ClientListener annotation.
+    */
+   void addClientListener(Object listener, Object[] filterFactoryParams, Object[] converterFactoryParams, ClientListener overrides);
 
    /**
     * Remove a previously added client listener. If the listener was not added

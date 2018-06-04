@@ -12,6 +12,7 @@ import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.iteration.KeyTracker;
@@ -176,14 +177,15 @@ public class OperationsFactory implements HotRodConstants {
    public AddClientListenerOperation newAddClientListenerOperation(Object listener, DataFormat dataFormat) {
       return new AddClientListenerOperation(codec, channelFactory,
             cacheName, topologyId, flags(), cfg, listenerNotifier,
-            listener, null, null, dataFormat);
+            listener, null, null, dataFormat, null);
    }
 
    public AddClientListenerOperation newAddClientListenerOperation(
-         Object listener, byte[][] filterFactoryParams, byte[][] converterFactoryParams, DataFormat dataFormat) {
+         Object listener, byte[][] filterFactoryParams, byte[][] converterFactoryParams, DataFormat dataFormat, ClientListener overrides) {
       return new AddClientListenerOperation(codec, channelFactory,
             cacheName, topologyId, flags(), cfg, listenerNotifier,
-            listener, filterFactoryParams, converterFactoryParams, dataFormat);
+            listener, filterFactoryParams, converterFactoryParams,
+            dataFormat, overrides);
    }
 
    public RemoveClientListenerOperation newRemoveClientListenerOperation(Object listener) {
