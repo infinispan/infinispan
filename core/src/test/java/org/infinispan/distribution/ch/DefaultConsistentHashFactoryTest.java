@@ -362,18 +362,14 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       TestAddress D = new TestAddress(3, "D");
 
       DefaultConsistentHash ch1 = chf.create(MurmurHash3.getInstance(), 2, 60, Arrays.asList(A), null);
-      //System.out.println(ch1);
 
       DefaultConsistentHash ch2 = chf.updateMembers(ch1, Arrays.asList(A, B), null);
       ch2 = chf.rebalance(ch2);
-      //System.out.println(ch2);
 
       DefaultConsistentHash ch3 = chf.updateMembers(ch2, Arrays.asList(A, B, C), null);
       ch3 = chf.rebalance(ch3);
-      //System.out.println(ch3);
 
       DefaultConsistentHash ch4 = chf.updateMembers(ch3, Arrays.asList(A, B, C, D), null);
       ch4 = chf.rebalance(ch4);
-      //System.out.println(ch4);
    }
 }

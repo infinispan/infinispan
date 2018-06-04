@@ -206,8 +206,6 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          allViews.add(v1);
          allViews.add(v2);
 
-//         log.trace("Before installing new view: " + viewMembers);
-//         System.out.println("Before installing new view: " + viewMembers);
          MergeView mv = new MergeView(view1.get(0).getAddress(), (long)viewId.incrementAndGet(), allAddresses, allViews);
          for (JChannel c : channels)
             ((GMS) c.getProtocolStack().findProtocol(GMS.class)).installView(mv);
@@ -256,8 +254,6 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          partition.observeMembers(this);
          ArrayList<JChannel> view1 = new ArrayList<>(channels);
          ArrayList<JChannel> view2 = new ArrayList<>(partition.channels);
-//         System.out.println("view1 = " + printView(view1));
-//         System.out.println("view2 = " + printView(view2));
          partition.channels.stream().filter(c -> !channels.contains(c)).forEach(c -> channels.add(c));
          installMergeView(view1, view2);
          waitForPartitionToForm(waitForNoRebalance);

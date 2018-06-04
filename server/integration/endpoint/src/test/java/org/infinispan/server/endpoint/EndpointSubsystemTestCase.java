@@ -104,11 +104,6 @@ public class EndpointSubsystemTestCase extends ClusteringSubsystemTest {
       // Parse the subsystem xml into operations
       List<ModelNode> operations = super.parse(getSubsystemXml());
 
-      /*
-       * // print the operations System.out.println("List of operations"); for (ModelNode op :
-       * operations) { System.out.println("operation = " + op.toString()); }
-       */
-
       // Check that we have the expected number of operations
       // one for each resource instance
       Assert.assertEquals(this.operations, operations.size());
@@ -133,8 +128,6 @@ public class EndpointSubsystemTestCase extends ClusteringSubsystemTest {
 
       // Read the whole model and make sure it looks as expected
       ModelNode model = services.readWholeModel();
-
-      //System.out.println("model = " + model.asString());
 
       Assert.assertTrue(model.get(SUBSYSTEM).hasDefined(getMainSubsystemName()));
    }
