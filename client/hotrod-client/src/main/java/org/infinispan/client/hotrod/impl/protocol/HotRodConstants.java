@@ -5,6 +5,7 @@ import java.nio.charset.Charset;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants;
 import org.infinispan.commons.util.ReflectionUtil;
 
 /**
@@ -222,15 +223,20 @@ public interface HotRodConstants {
       static {
          Predicate<Field> filterRequestsResponses =
                f -> f.getName().endsWith("_REQUEST") || f.getName().endsWith("_RESPONSE");
-         int maxId = Stream.of(HotRodConstants.class.getFields())
-               .filter(filterRequestsResponses)
-               .mapToInt(f -> ReflectionUtil.getIntAccessibly(f, null)).max().orElse(0);
+         int maxId = Stream.concat(Stream.of(HotRodConstants.class.getFields()),
+                                   Stream.of(MultimapHotRodConstants.class.getFields()))
+                           .filter(filterRequestsResponses)
+                           .mapToInt(f -> ReflectionUtil.getIntAccessibly(f, null))
+                           .max().orElse(0);
          NAMES = new String[maxId + 1];
-         Stream.of(HotRodConstants.class.getFields()).filter(filterRequestsResponses).forEach(f -> {
-            int id = ReflectionUtil.getIntAccessibly(f, null);
-            assert NAMES[id] == null;
-            NAMES[id] = f.getName();
-         });
+         Stream.concat(Stream.of(HotRodConstants.class.getFields()),
+                       Stream.of(MultimapHotRodConstants.class.getFields()))
+               .filter(filterRequestsResponses)
+               .forEach(f -> {
+                  int id = ReflectionUtil.getIntAccessibly(f, null);
+                  assert NAMES[id] == null;
+                  NAMES[id] = f.getName();
+               });
          for (int i = 0; i < NAMES.length; ++i) {
             if (NAMES[i] == null)
                NAMES[i] = "UNKNOWN";
