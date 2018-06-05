@@ -23,7 +23,8 @@
 
     <properties>
         <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
-        <feature-pack.dir>${project.build.directory}/feature-pack</feature-pack.dir>
+        <feature-pack.root>${project.build.directory}/feature-pack</feature-pack.root>
+        <feature-pack.modules>${feature-pack.root}/modules/system/add-ons/${infinispan.module.slot.prefix}</feature-pack.modules>
     </properties>
 
     <dependencies>
@@ -59,16 +60,33 @@
                     <artifactId>maven-resources-plugin</artifactId>
                     <executions>
                         <execution>
+                            <id>copy-modules</id>
                             <phase>generate-resources</phase>
                             <goals>
                                 <goal>copy-resources</goal>
                             </goals>
                             <configuration>
-                                <outputDirectory>${feature-pack.dir}</outputDirectory>
+                                <outputDirectory>${feature-pack.modules}</outputDirectory>
+                                <resources>
+                                    <resource>
+                                        <directory>src/main/resources/modules</directory>
+                                        <filtering>true</filtering>
+                                    </resource>
+                                </resources>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>copy-config</id>
+                            <phase>generate-resources</phase>
+                            <goals>
+                                <goal>copy-resources</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>${feature-pack.root}</outputDirectory>
                                 <resources>
                                     <resource>
                                         <directory>src/main/resources</directory>
-                                        <filtering>true</filtering>
+                                        <include>feature-pack-build.xml</include>
                                     </resource>
                                 </resources>
                             </configuration>
@@ -87,7 +105,7 @@
                             <phase>compile</phase>
                             <configuration>
                                 <config-file>feature-pack-build.xml</config-file>
-                                <config-dir>${feature-pack.dir}</config-dir>
+                                <config-dir>${feature-pack.root}</config-dir>
                                 <resourcesDir>/</resourcesDir>
                             </configuration>
                         </execution>

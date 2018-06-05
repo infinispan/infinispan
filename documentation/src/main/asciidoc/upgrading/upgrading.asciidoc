@@ -30,6 +30,10 @@ Max idle in a transactional clustered cache does not remove expired entries on a
 
 Iteration in a clustered cache will still show entries that are expired via maxIdle to ensure good performance, but could be removed at any point due to expiration reaper.
 
+=== Wildfly Modules
+The {brandname} Wildfly modules are now located in the `system/add-ons/{moduleprefix}` dir as per the
+link:https://developer.jboss.org/wiki%20/LayeredDistributionsAndModulePathOrganization[Wildfly module conventions].
+
 == Upgrading from 9.0 to 9.1
 
 === Kubernetes Ping changes
