@@ -42,24 +42,31 @@ public class MultimapGetWithMetadataResponse extends MultimapResponse<Collection
 
    @Override
    public String toString() {
-      StringBuilder sb = new StringBuilder(super.toString()).append("MultimapGetWithMetadataResponse").append("{")
-            .append("version=").append(version)
-            .append(", messageId=").append(messageId)
-            .append(", cacheName=").append(cacheName)
-            .append(", clientIntel=").append(clientIntel)
-            .append(", operation=").append(operation)
-            .append(", status=").append(status)
-            .append(", topologyId=").append(topologyId)
-            .append(", value=[");
-      getResult().forEach(v -> sb.append(Util.printArray(v, true)));
-      sb.append("]")
-            .append(", dataVersion=").append(dataVersion)
-            .append(", created=").append(created)
-            .append(", lifespan=").append(lifespan)
-            .append(", lastUsed=").append(lastUsed)
-            .append(", maxIdle=").append(maxIdle);
+      StringBuilder sb = new StringBuilder(super.toString());
+      sb.append("MultimapGetWithMetadataResponse{")
+        .append("version=").append(version)
+        .append(", messageId=").append(messageId)
+        .append(", cacheName=").append(cacheName)
+        .append(", clientIntel=").append(clientIntel)
+        .append(", operation=").append(operation)
+        .append(", status=").append(status)
+        .append(", topologyId=").append(topologyId)
+        .append(", value=");
+      if (getResult() != null) {
+         sb.append("[");
+         getResult().forEach(v -> sb.append(Util.printArray(v, true)));
+         sb.append("]");
+      } else {
+         sb.append("null");
+      }
+      sb.append(", dataVersion=").append(dataVersion)
+        .append(", created=").append(created)
+        .append(", lifespan=").append(lifespan)
+        .append(", lastUsed=").append(lastUsed)
+        .append(", maxIdle=").append(maxIdle)
+        .append("}");
 
-      return sb.append("}").toString();
+      return sb.toString();
    }
 
    public int getLifespan() {
