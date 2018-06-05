@@ -549,7 +549,7 @@ Also, there will be no conflict with WildFly / EAP's internal modules since the 
 [[_Modules_installation_section]]
 ==== Installation
 
-The modules for WildFly / EAP are available in the link:http://infinispan.org/download/[downloads] section of our site. The zip should be extracted to `WILDFLY_HOME/modules`, so that for example the infinispan core module would be under `WILDFLY_HOME/modules/org/infinispan/core`.
+The modules for WildFly / EAP are available in the link:http://infinispan.org/download/[downloads] section of our site. The zip should be extracted to `WILDFLY_HOME/modules`, so that for example the infinispan core module would be under `WILDFLY_HOME/modules/system/add-ons/{moduleprefix}/org/infinispan/core`.
 
 ==== Application Dependencies
 
