@@ -11,7 +11,8 @@
    <threads>
       <thread-factory name="listener-factory" group-name="infinispan" thread-name-pattern="AsyncListenerThread"/>
       <thread-factory name="persistence-factory" group-name="infinispan" thread-name-pattern="PersistenceThread"/>
-      <thread-factory name="transport-factory" group-name="infinispan" thread-name-pattern="AsyncSerializationThread"/>
+      <thread-factory name="transport-factory" group-name="infinispan" thread-name-pattern="AsyncTransportThread"/>
+      <thread-factory name="async-factory" group-name="infinispan" thread-name-pattern="AsyncOperationsThread"/>
       <thread-factory name="remote-factory" group-name="infinispan" thread-name-pattern="RemoteCommandThread"/>
       <thread-factory name="expiration-factory" group-name="infinispan" thread-name-pattern="ExpirationThread"/>
       <thread-factory name="replication-queue-factory" group-name="infinispan" thread-name-pattern="ReplicationQueueThread"/>
@@ -19,13 +20,16 @@
       <blocking-bounded-queue-thread-pool name="persistence" thread-factory="persistence-factory" max-threads="6" queue-length="10001"/>
       <blocking-bounded-queue-thread-pool name="state-transfer" thread-factory="persistence-factory" max-threads="20" queue-length="5" keepalive-time="60000"/>
       <blocking-bounded-queue-thread-pool name="transport" thread-factory="transport-factory" max-threads="25" queue-length="10000"/>
+      <blocking-bounded-queue-thread-pool name="async" thread-factory="async-factory" max-threads="5" core-threads="5" queue-length="10000"/>
       <blocking-bounded-queue-thread-pool name="remote" thread-factory="transport-factory" max-threads="30" core-threads="2" queue-length="10000" keepalive-time="10000"/>
       <scheduled-thread-pool name="expiration" thread-factory="expiration-factory" />
       <scheduled-thread-pool name="replication-queue" thread-factory="replication-queue-factory" />
    </threads>
 
    <cache-container default-cache="default" statistics="true" shutdown-hook="REGISTER"
-                    listener-executor="listener" persistence-executor="persistence" state-transfer-executor="state-transfer" expiration-executor="expiration">
+                    listener-executor="listener" persistence-executor="persistence"
+                    state-transfer-executor="state-transfer" expiration-executor="expiration"
+                    async-executor="async">
       <transport stack="udp" cluster="infinispan-cluster" lock-timeout="50000" node-name="Jalapeno" machine="m1" rack="r1" site="s1"
                  executor="transport" remote-command-executor="remote" />
       <serialization marshaller="org.infinispan.marshall.TestObjectStreamMarshaller" version="1.0">

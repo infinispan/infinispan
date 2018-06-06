@@ -35,30 +35,29 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
  */
 public class PersistenceMockUtil {
 
-   public static InitializationContext createContext(String cacheName, Configuration configuration, StreamingMarshaller marshaller) {
-      return createContext(cacheName, configuration, marshaller, AbstractInfinispanTest.TIME_SERVICE);
+   public static InitializationContext createContext(String nodeName, Configuration configuration, StreamingMarshaller marshaller) {
+      return createContext(nodeName, configuration, marshaller, AbstractInfinispanTest.TIME_SERVICE);
    }
 
-   public static InitializationContext createContext(String cacheName, Configuration configuration, StreamingMarshaller marshaller, TimeService timeService) {
-      Cache mockCache = mockCache(cacheName, configuration, timeService);
+   public static InitializationContext createContext(String nodeName, Configuration configuration, StreamingMarshaller marshaller, TimeService timeService) {
+      Cache mockCache = mockCache(nodeName, configuration, timeService);
       return new InitializationContextImpl(configuration.persistence().stores().get(0), mockCache,
                                            SingleSegmentKeyPartitioner.getInstance(), marshaller,
                                            timeService, new ByteBufferFactoryImpl(), new MarshalledEntryFactoryImpl(marshaller),
                                            new WithinThreadExecutor());
    }
 
-   public static Cache mockCache(String name, Configuration configuration) {
-      return mockCache(name, configuration, AbstractInfinispanTest.TIME_SERVICE);
-   }
-
-   public static Cache mockCache(String name, Configuration configuration, TimeService timeService) {
-      String cacheName = "mock-cache-" + name;
+   private static Cache mockCache(String nodeName, Configuration configuration, TimeService timeService) {
+      String cacheName = "mock-cache";
       AdvancedCache cache = mock(AdvancedCache.class, RETURNS_DEEP_STUBS);
 
-      GlobalConfiguration gc = new GlobalConfigurationBuilder().build();
+      GlobalConfiguration gc = new GlobalConfigurationBuilder()
+                                  .transport().nodeName(nodeName)
+                                  .build();
 
       Set<String> cachesSet = new HashSet<>();
       EmbeddedCacheManager cm = mock(EmbeddedCacheManager.class);
+      when(cm.getCacheManagerConfiguration()).thenReturn(gc);
       GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cm, cachesSet);
       gcr.registerComponent(timeService, TimeService.class);
       ComponentRegistry registry = new ComponentRegistry(cacheName, configuration, cache, gcr,

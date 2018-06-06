@@ -137,15 +137,7 @@ public abstract class AbstractInfinispanTest {
    }
 
    public String getTestName() {
-      // will qualified test name and parameters, thread names can be quite long when debugging
-      boolean shortTestName = Boolean.getBoolean("test.infinispan.shortTestName");
-      String className;
-      if (shortTestName) {
-         className = "Test";
-      } else {
-         className = getClass().getName();
-      }
-
+      String className = getClass().getName();
       String parameters = parameters();
       return parameters == null ? className : className + parameters;
    }

@@ -60,8 +60,7 @@ public class TestResourceTracker {
 
    public static String getCurrentTestShortName() {
       String currentTestName = TestResourceTracker.getCurrentTestName();
-      int endIndex = currentTestName.contains("[") ? currentTestName.lastIndexOf("[") : currentTestName.length();
-      return currentTestName.substring(currentTestName.lastIndexOf(".") + 1, endIndex);
+      return getTestResources(currentTestName).getShortName();
    }
 
    public static String getCurrentTestName() {
@@ -132,17 +131,17 @@ public class TestResourceTracker {
    public static String getNextNodeName() {
       String testName = getCurrentTestName();
       TestResources resources = getTestResources(testName);
-      String simpleName = resources.getSimpleName();
+      String shortName = resources.getShortName();
       int nextNodeIndex = resources.addNode();
-      return simpleName + "-" + "Node" + getNameForIndex(nextNodeIndex);
+      return shortName + "-" + "Node" + getNameForIndex(nextNodeIndex);
    }
 
    public static String getNextTestThreadName() {
       String testName = getCurrentTestName();
       TestResources resources = getTestResources(testName);
-      String simpleName = resources.getSimpleName();
+      String shortName = resources.getShortName();
       int nextThreadIndex = resources.addThread();
-      return "testng-" + simpleName + (nextThreadIndex != 0 ? "-" + nextThreadIndex : "");
+      return "testng-" + shortName + (nextThreadIndex != 0 ? "-" + nextThreadIndex : "");
    }
 
    public static String getNameForIndex(int i) {
@@ -153,25 +152,30 @@ public class TestResourceTracker {
    }
 
    private static TestResources getTestResources(final String testName) {
-      return testResources.computeIfAbsent(testName, k -> new TestResources(getSimpleName(k)));
-   }
-
-   private static String getSimpleName(String fullTestName) {
-      return fullTestName.substring(fullTestName.lastIndexOf(".") + 1);
+      return testResources.computeIfAbsent(testName, TestResources::new);
    }
 
    private static class TestResources {
-      private final String simpleName;
+      private static final boolean shortenTestName = Boolean.getBoolean("infinispan.test.shortTestName");
+
+      private final String shortName;
       private final AtomicInteger nodeCount = new AtomicInteger(0);
       private final AtomicInteger threadCount = new AtomicInteger(0);
       private final List<Cleaner<?>> resourceCleaners = Collections.synchronizedList(new ArrayList<Cleaner<?>>());
 
-      private TestResources(String simpleName) {
-         this.simpleName = simpleName;
+      private TestResources(String testName) {
+         if (shortenTestName) {
+            this.shortName = "Test";
+         } else {
+            int simpleNameStart = testName.lastIndexOf(".");
+            int parametersStart = testName.indexOf('[');
+            this.shortName = testName.substring(simpleNameStart + 1,
+                                                parametersStart > 0 ? parametersStart : testName.length());
+         }
       }
 
-      public String getSimpleName() {
-         return simpleName;
+      public String getShortName() {
+         return shortName;
       }
 
       public int addNode() {
