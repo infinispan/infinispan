@@ -2,13 +2,17 @@ package org.infinispan.query.remote.client;
 
 import static org.junit.Assert.assertTrue;
 
+import java.time.Instant;
+import java.util.Date;
+
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.config.Configuration;
 import org.junit.Test;
 
 /**
- * Ensure BaseProtoStreamMarshaller is able to handle primitive types besides actual protobuf messages and enums.
+ * A simple smoke test to ensure BaseProtoStreamMarshaller is able to handle primitive types besides actual protobuf
+ * messages and enums.
  *
  * @author anistor@redhat.com
  */
@@ -18,12 +22,17 @@ public class BaseProtoStreamMarshallerTest {
    public void testBasicTypesAreMarshallable() {
       BaseProtoStreamMarshaller marshaller = makeIstance();
 
-      assertTrue(marshaller.isMarshallable(""));
+      assertTrue(marshaller.isMarshallable("a"));
+      assertTrue(marshaller.isMarshallable('a'));
       assertTrue(marshaller.isMarshallable(0));
       assertTrue(marshaller.isMarshallable(0L));
-      assertTrue(marshaller.isMarshallable(0.0));
-      assertTrue(marshaller.isMarshallable(0.0f));
+      assertTrue(marshaller.isMarshallable(0.0D));
+      assertTrue(marshaller.isMarshallable(0.0F));
+      assertTrue(marshaller.isMarshallable((byte) 0));
+      assertTrue(marshaller.isMarshallable((short) 0));
       assertTrue(marshaller.isMarshallable(true));
+      assertTrue(marshaller.isMarshallable(new Date(0)));
+      assertTrue(marshaller.isMarshallable(Instant.now()));
       assertTrue(marshaller.isMarshallable(new byte[0]));
    }
 
