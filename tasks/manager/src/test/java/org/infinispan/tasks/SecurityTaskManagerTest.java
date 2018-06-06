@@ -35,7 +35,7 @@ public class SecurityTaskManagerTest extends SingleCacheManagerTest {
     static final Subject ADMIN = TestingUtil.makeSubject("admin", "admin");
     static final Subject HACKER = TestingUtil.makeSubject("hacker", "hacker");
 
-    protected TaskManagerImpl taskManager;
+    private TaskManagerImpl taskManager;
     private DummyTaskEngine taskEngine;
 
     @Override
@@ -89,7 +89,7 @@ public class SecurityTaskManagerTest extends SingleCacheManagerTest {
         });
     }
 
-    @Test(dataProvider = "principleProvider")
+    @Test(dataProvider = "principalProvider")
     public void testTaskExecutionWithAuthorization(String principal, Subject subject) throws Exception {
         Security.doAs(subject, new PrivilegedAction<Void>() {
             @Override
@@ -116,8 +116,8 @@ public class SecurityTaskManagerTest extends SingleCacheManagerTest {
         });
     }
 
-    @DataProvider(name = "principleProvider")
-    private static Object[][] providePrinciples() {
+    @DataProvider(name = "principalProvider")
+    private static Object[][] providePrincipals() {
         return new Object[][] {{"admin", ADMIN}, {"hacker", HACKER}};
     }
 }
