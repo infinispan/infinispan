@@ -45,8 +45,10 @@ import org.jgroups.View;
 import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
 import org.jgroups.protocols.pbcast.GMS;
+import org.jgroups.protocols.pbcast.STABLE;
 import org.jgroups.stack.Protocol;
 import org.jgroups.stack.ProtocolStack;
+import org.jgroups.util.MutableDigest;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "partitionhandling.BasePartitionHandlingTest")
@@ -204,8 +206,9 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          View view = View.create(channels.get(0).getAddress(), viewId.incrementAndGet(), (Address[]) viewMembers.toArray(new Address[viewMembers.size()]));
 
          log.trace("Before installing new view...");
-         for (JChannel c : channels)
-            ((GMS) c.getProtocolStack().findProtocol(GMS.class)).installView(view);
+         for (JChannel c : channels) {
+            getGms(c).installView(view);
+         }
          return viewMembers;
       }
 
@@ -220,9 +223,28 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          allViews.add(v1);
          allViews.add(v2);
 
+         // Remove all sent NAKACK2 messages to reproduce ISPN-9291
+         for (JChannel c : channels) {
+            STABLE stable = c.getProtocolStack().findProtocol(STABLE.class);
+            stable.gc();
+         }
+         try {
+            Thread.sleep(10);
+         } catch (InterruptedException e) {
+            e.printStackTrace();
+         }
+
          MergeView mv = new MergeView(view1.get(0).getAddress(), (long)viewId.incrementAndGet(), allAddresses, allViews);
-         for (JChannel c : channels)
-            ((GMS) c.getProtocolStack().findProtocol(GMS.class)).installView(mv);
+         // Compute the merge digest, without it nodes would request the retransmission of all messages
+         // Including those that were removed by STABLE earlier
+         MutableDigest digest = new MutableDigest(allAddresses.toArray(new Address[0]));
+         for (JChannel c : channels) {
+            digest.merge(getGms(c).getDigest());
+         }
+
+         for (JChannel c : channels) {
+            getGms(c).installView(mv, digest);
+         }
          return allMembers;
       }
 
@@ -401,6 +423,10 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       public List<org.infinispan.remoting.transport.Address> getAddresses() {
          return channels.stream().map(ch -> new JGroupsAddress(ch.getAddress())).collect(Collectors.toList());
       }
+   }
+
+   private GMS getGms(JChannel c) {
+      return c.getProtocolStack().findProtocol(GMS.class);
    }
 
    protected void assertKeyAvailableForRead(Cache<?, ?> c, Object k, Object expectedValue) {
