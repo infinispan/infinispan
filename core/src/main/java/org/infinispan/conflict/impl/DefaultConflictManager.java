@@ -119,7 +119,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       this.conflictTimeout = cacheConfiguration.clustering().stateTransfer().timeout();
 
       // Limit the number of concurrent tasks to ensure that internal CR operations can never overlap
-      this.resolutionExecutor = new LimitedExecutor("ConflictManager-", stateTransferExecutor, 1);
+      this.resolutionExecutor = new LimitedExecutor("ConflictManager-" + cacheName, stateTransferExecutor, 1);
       this.running = true;
       if (trace) log.tracef("Cache %s starting %s. isRunning=%s", cacheName, getClass().getSimpleName(), !running);
    }
