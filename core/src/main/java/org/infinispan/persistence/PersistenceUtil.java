@@ -143,6 +143,8 @@ public class PersistenceUtil {
 
    public static <K, V> MarshalledEntry<K, V> loadAndCheckExpiration(PersistenceManager persistenceManager, Object key,
                                                         InvocationContext context, TimeService timeService) {
+      long expireCheckTime = timeService.wallClockTime();
+
       final MarshalledEntry<K, V> loaded = persistenceManager.loadFromAllStores(key, context.isOriginLocal());
       if (trace) {
          log.tracef("Loaded %s for key %s from persistence.", loaded, key);
@@ -151,7 +153,7 @@ public class PersistenceUtil {
          return null;
       }
       InternalMetadata metadata = loaded.getMetadata();
-      if (metadata != null && metadata.isExpired(timeService.wallClockTime())) {
+      if (metadata != null && metadata.isExpired(expireCheckTime)) {
          return null;
       }
       return loaded;
