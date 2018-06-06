@@ -35,7 +35,7 @@ public abstract class BaseProtoStreamMarshaller extends AbstractMarshaller {
 
    @Override
    public boolean isMarshallable(Object o) {
-      // Protostream can handle all of these type as well even if we do not
+      // our marshaller can handle all of these primitive/scalar types as well even if we do not
       // have a per-type marshaller defined in our SerializationContext
       return o instanceof String ||
             o instanceof Long ||
