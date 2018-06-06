@@ -189,39 +189,6 @@
             </executions>
          </plugin>
          <plugin>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>unpack</id>
-                  <phase>pre-integration-test</phase>
-                  <goals>
-                     <goal>unpack</goal>
-                  </goals>
-                  <configuration>
-                     <skip>${skipTests}</skip>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>org.infinispan</groupId>
-                           <artifactId>infinispan-wildfly-modules</artifactId>
-                           <version>${project.version}</version>
-                           <type>zip</type>
-                           <overWrite>true</overWrite>
-                           <outputDirectory>${project.build.directory}/node1/modules</outputDirectory>
-                        </artifactItem>
-                        <artifactItem>
-                           <groupId>org.infinispan</groupId>
-                           <artifactId>infinispan-wildfly-modules</artifactId>
-                           <version>${project.version}</version>
-                           <type>zip</type>
-                           <overWrite>true</overWrite>
-                           <outputDirectory>${project.build.directory}/node2/modules</outputDirectory>
-                        </artifactItem>
-                     </artifactItems>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
             <executions>
