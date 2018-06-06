@@ -17,7 +17,6 @@ import java.util.stream.Stream;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.MetadataAwareCommand;
-import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
@@ -153,7 +152,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
       EntryVersion seenVersion = getVersionOrNull(cacheEntry);
       LocalizedCacheTopology cacheTopology = checkTopology(command);
 
-      DistributionInfo info = cacheTopology.getDistribution(command.getKey());
+      DistributionInfo info = cacheTopology.getSegmentDistribution(command.getSegment());
       if (info.primary() == null) {
          throw new OutdatedTopologyException(cacheTopology.getTopologyId() + 1);
       }
@@ -282,10 +281,11 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
       WriteCommand backupCommand;
       long flags = command.getFlagsBitSet() | FlagBitSets.SKIP_OWNERSHIP_CHECK;
       if (cacheEntry.isRemoved()) {
-         backupCommand = cf.buildRemoveCommand(command.getKey(), null, flags);
+         backupCommand = cf.buildRemoveCommand(command.getKey(), null, info.segmentId(), flags);
          ((RemoveCommand) backupCommand).setMetadata(cacheEntry.getMetadata());
       } else {
-         backupCommand = cf.buildPutKeyValueCommand(command.getKey(), cacheEntry.getValue(), cacheEntry.getMetadata(), flags);
+         backupCommand = cf.buildPutKeyValueCommand(command.getKey(), cacheEntry.getValue(), info.segmentId(),
+               cacheEntry.getMetadata(), flags);
       }
       backupCommand.setTopologyId(command.getTopologyId());
       Address backup = getNextMember(cacheTopology);
@@ -565,7 +565,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          return invokeNext(ctx, command);
       }
 
-      DistributionInfo info = cacheTopology.getDistribution(command.getKey());
+      DistributionInfo info = cacheTopology.getSegmentDistribution(command.getSegment());
       if (info.isPrimary()) {
          if (trace) {
             log.tracef("In topology %d this is primary owner", cacheTopology.getTopologyId());
@@ -584,9 +584,8 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
             return invokeNext(ctx, command);
          }
 
-         int segment = SegmentSpecificCommand.extractSegment(command);
-
-         ClusteredGetCommand clusteredGetCommand = cf.buildClusteredGetCommand(command.getKey(), segment, command.getFlagsBitSet());
+         ClusteredGetCommand clusteredGetCommand = cf.buildClusteredGetCommand(command.getKey(), info.segmentId(),
+               command.getFlagsBitSet());
          clusteredGetCommand.setTopologyId(command.getTopologyId());
          SingletonMapResponseCollector collector = SingletonMapResponseCollector.ignoreLeavers();
          CompletionStage<Map<Address, Response>> rpcFuture =
@@ -646,7 +645,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
             return visitRemoveCommand(ctx, command);
          } else {
             // We are a backup, we just ask the primary what the last access time was
-            RetrieveLastAccessCommand rlac = cf.buildRetrieveLastAccessCommand(key, command.getValue());
+            RetrieveLastAccessCommand rlac = cf.buildRetrieveLastAccessCommand(key, command.getValue(), command.getSegment());
             rlac.setTopologyId(rpcManager.getTopologyId());
             CompletionStage<Long> completionStage = rpcManager.invokeCommand(info.primary(), rlac,
                   new SingleResponseCollector(), rpcManager.getSyncRpcOptions())
@@ -661,7 +660,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
                }
                // If it responded with a time we assume it wasn't expired
                if (access != null) {
-                  UpdateLastAccessCommand ulac = cf.buildUpdateLastAccessCommand(key, (long) access);
+                  UpdateLastAccessCommand ulac = cf.buildUpdateLastAccessCommand(key, command.getSegment(), (long) access);
                   ulac.inject(dataContainer);
                   // Update local access time to what primary had
                   ulac.invokeAsync();

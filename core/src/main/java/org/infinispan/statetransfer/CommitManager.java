@@ -7,11 +7,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import org.infinispan.commands.SegmentSpecificCommand;
-import org.infinispan.container.impl.MergeOnStore;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ReadCommittedEntry;
+import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.container.impl.MergeOnStore;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -36,7 +35,7 @@ public class CommitManager {
    private static final boolean trace = log.isTraceEnabled();
    private final ConcurrentMap<Object, DiscardPolicy> tracker = new ConcurrentHashMap<>();
 
-   @Inject private DataContainer dataContainer;
+   @Inject private InternalDataContainer dataContainer;
    @Inject private PersistenceManager persistenceManager;
    @Inject private TimeService timeService;
 
@@ -136,7 +135,7 @@ public class CommitManager {
             return factory.create(k, newValue, entry.getMetadata());
          });
       } else {
-         if (segment != SegmentSpecificCommand.UNKNOWN_SEGMENT && entry instanceof ReadCommittedEntry) {
+         if (entry instanceof ReadCommittedEntry) {
             ((ReadCommittedEntry) entry).commit(segment, dataContainer);
          } else {
             entry.commit(dataContainer);

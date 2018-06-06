@@ -16,6 +16,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -97,7 +98,7 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
       Map<GroupKey, String> expectedGroupSet = new HashMap<>();
       //noinspection unchecked
       for (InternalCacheEntry<GroupKey, String> entry :
-            (DataContainer<GroupKey, String>) TestingUtil.extractComponent(extractTargetCache(testCache), DataContainer.class)) {
+            (DataContainer<GroupKey, String>) TestingUtil.extractComponent(extractTargetCache(testCache), InternalDataContainer.class)) {
          if (entry.getKey().getGroup().equals(GROUP)) {
             expectedGroupSet.put(entry.getKey(), entry.getValue());
          }

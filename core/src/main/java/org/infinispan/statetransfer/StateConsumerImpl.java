@@ -44,8 +44,7 @@ import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.conflict.impl.InternalConflictManager;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.impl.SegmentedDataContainer;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
@@ -116,7 +115,7 @@ public class StateConsumerImpl implements StateConsumer {
    @Inject protected TransactionManager transactionManager;   // optional
    @Inject protected CommandsFactory commandsFactory;
    @Inject protected TransactionTable transactionTable;       // optional
-   @Inject protected DataContainer<Object, Object> dataContainer;
+   @Inject protected InternalDataContainer<Object, Object> dataContainer;
    @Inject protected PersistenceManager persistenceManager;
    @Inject protected AsyncInterceptorChain interceptorChain;
    @Inject protected InvocationContextFactory icf;
@@ -286,6 +285,9 @@ public class StateConsumerImpl implements StateConsumer {
       beforeTopologyInstalled(cacheTopology.getTopologyId(), startRebalance, previousWriteCh, newWriteCh);
       this.cacheTopology = cacheTopology;
       distributionManager.setCacheTopology(cacheTopology);
+
+      // Owned segments
+      dataContainer.addSegments(SmallIntSet.from(getOwnedSegments(newWriteCh)));
 
       // We need to track changes so that user puts during conflict resolution are prioritised over MergePolicy updates
       // Tracking is stopped once the subsequent rebalance completes
@@ -636,8 +638,8 @@ public class StateConsumerImpl implements StateConsumer {
                ctx = icf.createSingleKeyNonTxInvocationContext();
             }
 
-            PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(
-                  e.getKey(), e.getValue(), e.getMetadata(), STATE_TRANSFER_FLAGS);
+            PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(e.getKey(), e.getValue(), segmentId,
+                  e.getMetadata(), STATE_TRANSFER_FLAGS);
             ctx.setLockOwner(put.getKeyLockOwner());
             interceptorChain.invoke(ctx, put);
 
@@ -956,24 +958,17 @@ public class StateConsumerImpl implements StateConsumer {
          keyInvalidationListener.beforeInvalidation(removedSegments, Collections.emptySet());
       }
 
-      if (removedSegments.isEmpty())
-         return;
-
       // Keys that we used to own, and need to be removed from the data container AND the cache stores
       final ConcurrentHashSet<Object> keysToRemove = new ConcurrentHashSet<>();
 
-      if (dataContainer instanceof SegmentedDataContainer) {
-         SegmentedDataContainer sdc = (SegmentedDataContainer) dataContainer;
-         sdc.removeSegments(SmallIntSet.from(removedSegments));
-      } else {
-         dataContainer.forEach(ice -> {
-            Object key = ice.getKey();
-            int keySegment = getSegment(key);
-            if (removedSegments.contains(keySegment)) {
-               keysToRemove.add(key);
-            }
-         });
-      }
+      dataContainer.removeSegments(removedSegments);
+
+      // We have to invoke removeSegments above on the data container. This is always done in case if L1 is enabled. L1
+      // store removes all the temporary entries when removeSegments is invoked. However there is no reason to mess
+      // with the store if no segments are removed, so just exit early.
+      if (removedSegments.isEmpty())
+         return;
+
       // gather all keys from cache store that belong to the segments that are being removed/moved to L1
       try {
          Predicate<Object> filter = key -> {

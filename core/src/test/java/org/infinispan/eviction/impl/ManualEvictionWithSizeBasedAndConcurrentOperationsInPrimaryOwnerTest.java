@@ -4,32 +4,24 @@ import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.AbstractDelegatingInternalDataContainer;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.factories.annotations.Stop;
-import org.infinispan.filter.KeyFilter;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -335,18 +327,28 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       });
    }
 
-   private ControlledDataContainer replaceControlledDataContainer(final Latch latch) {
-      DataContainer current = TestingUtil.extractComponent(cache, DataContainer.class);
+   private void replaceControlledDataContainer(final Latch latch) {
+      InternalDataContainer current = TestingUtil.extractComponent(cache, InternalDataContainer.class);
       //noinspection unchecked
-      ControlledDataContainer controlledDataContainer = new ControlledDataContainer(current);
-      controlledDataContainer.beforeEvict = new Runnable() {
+      InternalDataContainer controlledDataContainer = new AbstractDelegatingInternalDataContainer() {
          @Override
-         public void run() {
+         protected InternalDataContainer delegate() {
+            return current;
+         }
+
+         @Override
+         public void evict(Object key) {
             latch.blockIfNeeded();
+            super.evict(key);
+         }
+
+         @Override
+         public void evict(int segment, Object key) {
+            latch.blockIfNeeded();
+            super.evict(segment, key);
          }
       };
-      TestingUtil.replaceComponent(cache, DataContainer.class, controlledDataContainer, true);
-      return controlledDataContainer;
+      TestingUtil.replaceComponent(cache, InternalDataContainer.class, controlledDataContainer, true);
    }
 
    public static class SameHashCodeKey implements Serializable, ExternalPojo {
@@ -378,111 +380,6 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       @Override
       public String toString() {
          return name;
-      }
-   }
-
-   private class ControlledDataContainer<K, V> implements DataContainer<K, V> {
-
-      private final DataContainer<K, V> delegate;
-      private volatile Runnable beforeEvict;
-
-      private ControlledDataContainer(DataContainer<K, V> delegate) {
-         this.delegate = delegate;
-      }
-
-      @Override
-      public InternalCacheEntry<K, V> get(Object k) {
-         return delegate.get(k);
-      }
-
-      @Override
-      public InternalCacheEntry<K, V> peek(Object k) {
-         return delegate.peek(k);
-      }
-
-      @Override
-      public void put(K k, V v, Metadata metadata) {
-         delegate.put(k, v, metadata);
-      }
-
-      @Override
-      public boolean containsKey(Object k) {
-         return delegate.containsKey(k);
-      }
-
-      @Override
-      public InternalCacheEntry<K, V> remove(Object k) {
-         return delegate.remove(k);
-      }
-
-      @Override
-      public int size() {
-         return delegate.size();
-      }
-
-      @Override
-      public int sizeIncludingExpired() {
-         return delegate.sizeIncludingExpired();
-      }
-
-      @Override
-      @Stop(priority = 999)
-      public void clear() {
-         delegate.clear();
-      }
-
-      @Override
-      public Set<K> keySet() {
-         return delegate.keySet();
-      }
-
-      @Override
-      public Collection<V> values() {
-         return delegate.values();
-      }
-
-      @Override
-      public Set<InternalCacheEntry<K, V>> entrySet() {
-         return delegate.entrySet();
-      }
-
-      @Override
-      public void evict(K key) {
-         run(beforeEvict);
-         delegate.evict(key);
-      }
-
-      @Override
-      public InternalCacheEntry<K, V> compute(K key, ComputeAction<K, V> action) {
-         return delegate.compute(key, action);
-      }
-
-      @Override
-      public Iterator<InternalCacheEntry<K, V>> iterator() {
-         return delegate.iterator();
-      }
-
-      @Override
-      public Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpired() {
-         return delegate.iteratorIncludingExpired();
-      }
-
-      @Override
-      public void executeTask(KeyFilter<? super K> filter, BiConsumer<? super K, InternalCacheEntry<K, V>> action)
-            throws InterruptedException {
-         throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void executeTask(KeyValueFilter<? super K, ? super V> filter, BiConsumer<? super K, InternalCacheEntry<K, V>> action) throws InterruptedException {
-         throw new UnsupportedOperationException();
-      }
-
-      private void run(Runnable runnable) {
-         if (runnable == null) {
-            return;
-         }
-         runnable.run();
       }
    }
 

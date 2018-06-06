@@ -32,6 +32,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -97,7 +98,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       cache1.put("key", value);
       assertTrue(cache1.containsKey("key"));
 
-      DataContainer dc1 = extractComponent(cache1, DataContainer.class);
+      DataContainer dc1 = extractComponent(cache1, InternalDataContainer.class);
 
       InternalCacheEntry ice = dc1.get(boxKey(cache1, "key"));
       Object o = ice.getValue();
@@ -106,7 +107,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       assertEquals(value, unboxValue(cache1, o));
 
       // now on cache 2
-      DataContainer dc2 = TestingUtil.extractComponent(cache2, DataContainer.class);
+      DataContainer dc2 = TestingUtil.extractComponent(cache2, InternalDataContainer.class);
       ice = dc2.get(boxKey(cache2, "key"));
       o = ice.getValue();
 
@@ -136,7 +137,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       Pojo key = new Pojo();
       cache1.put(key, "value");
 
-      DataContainer dc1 = extractComponent(cache1, DataContainer.class);
+      DataContainer dc1 = extractComponent(cache1, InternalDataContainer.class);
 
       Object o = dc1.keySet().iterator().next();
 
@@ -144,7 +145,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
 
 
       // now on cache 2
-      DataContainer dc2 = extractComponent(cache2, DataContainer.class);
+      DataContainer dc2 = extractComponent(cache2, InternalDataContainer.class);
       o = dc2.keySet().iterator().next();
       assertEquals("value", cache2.get(key));
    }

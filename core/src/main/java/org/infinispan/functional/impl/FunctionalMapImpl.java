@@ -8,6 +8,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.Param;
@@ -29,6 +30,7 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
    final InvocationContextFactory invCtxFactory;
    final Object lockOwner;
    final FunctionalNotifier notifier;
+   final KeyPartitioner keyPartitioner;
 
    public static <K, V> FunctionalMapImpl<K, V> create(Params params, AdvancedCache<K, V> cache) {
       params = params.addAll(Params.fromFlagsBitSet(getFlagsBitSet(cache)));
@@ -81,6 +83,7 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
       lockOwner = decoratedCache == null ? null : decoratedCache.getLockOwner();
       commandsFactory = componentRegistry.getComponent(CommandsFactory.class);
       notifier = componentRegistry.getComponent(FunctionalNotifier.class);
+      keyPartitioner = componentRegistry.getComponent(KeyPartitioner.class);
    }
 
    @Override

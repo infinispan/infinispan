@@ -25,7 +25,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.DataContainer;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.distribution.DistributionManager;
@@ -67,7 +67,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    private ExecutorService executorService;
    @Inject private CommandsFactory commandsFactory;
    @Inject private RpcManager rpcManager;
-   @Inject private DataContainer<K, ?> dataContainer;
+   @Inject private InternalDataContainer<K, ?> dataContainer;
    @Inject private PersistenceManager persistenceManager;
    @Inject private DistributionManager distributionManager;
    @Inject private ClusterTopologyManager clusterTopologyManager;

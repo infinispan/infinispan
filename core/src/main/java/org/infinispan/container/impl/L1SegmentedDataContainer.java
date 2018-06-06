@@ -22,15 +22,15 @@ import org.infinispan.container.entries.InternalCacheEntry;
  * Segmented data container that also allows for non owned segments to be written to a temporary map (L1). This
  * temporary map is cleared whenever a segment becomes no longer owned.
  * <p>
- * If the segment is owned, only the owner segment is used. If the segment is not owned it will query the tempoary
+ * If the segment is owned, only the owner segment is used. If the segment is not owned it will query the temporary
  * map to see if the object is stored there.
  * @author wburns
  * @since 9.3
  */
-public class L1DefaultSegmentedDataContainer<K, V> extends DefaultSegmentedDataContainer<K, V> {
+public class L1SegmentedDataContainer<K, V> extends DefaultSegmentedDataContainer<K, V> {
    private final ConcurrentMap<K, InternalCacheEntry<K, V>> nonOwnedEntries;
 
-   public L1DefaultSegmentedDataContainer(int numSegments) {
+   public L1SegmentedDataContainer(int numSegments) {
       super(numSegments);
       this.nonOwnedEntries = new ConcurrentHashMap<>();
    }
@@ -157,9 +157,7 @@ public class L1DefaultSegmentedDataContainer<K, V> extends DefaultSegmentedDataC
 
    @Override
    public void removeSegments(IntSet segments) {
-      if (!segments.isEmpty()) {
-         nonOwnedEntries.clear();
-      }
+      nonOwnedEntries.clear();
       super.removeSegments(segments);
    }
 }

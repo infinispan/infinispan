@@ -18,6 +18,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -104,8 +105,8 @@ public class ManyTxsDuringStateTransferTest extends MultipleCacheManagersTest {
       TestingUtil.waitForNoRebalance(caches(CACHE_NAME));
 
       // Wait for the txs to finish and check the results
-      DataContainer dataContainer0 = TestingUtil.extractComponent(cache0, DataContainer.class);
-      DataContainer dataContainer1 = TestingUtil.extractComponent(cache1, DataContainer.class);
+      DataContainer dataContainer0 = TestingUtil.extractComponent(cache0, InternalDataContainer.class);
+      DataContainer dataContainer1 = TestingUtil.extractComponent(cache1, InternalDataContainer.class);
       for (int i = 0; i < NUM_TXS; i++) {
          futures[i].get(10, SECONDS);
          assertEquals("v" + i, dataContainer0.get("testkey" + i).getValue());

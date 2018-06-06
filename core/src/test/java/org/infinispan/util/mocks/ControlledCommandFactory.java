@@ -170,13 +170,14 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, long flagsBitSet) {
-      return actual.buildPutKeyValueCommand(key, value, metadata, flagsBitSet);
+   public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, int segment, Metadata metadata,
+         long flagsBitSet) {
+      return actual.buildPutKeyValueCommand(key, value, segment, metadata, flagsBitSet);
    }
 
    @Override
-   public RemoveCommand buildRemoveCommand(Object key, Object value, long flagsBitSet) {
-      return actual.buildRemoveCommand(key, value, flagsBitSet);
+   public RemoveCommand buildRemoveCommand(Object key, Object value, int segment, long flagsBitSet) {
+      return actual.buildRemoveCommand(key, value, segment, flagsBitSet);
    }
 
    @Override
@@ -195,38 +196,40 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, Long lifespan) {
-      return actual.buildRemoveExpiredCommand(key, value, lifespan);
+   public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, Long lifespan) {
+      return actual.buildRemoveExpiredCommand(key, value, segment, lifespan);
    }
 
    @Override
-   public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value) {
-      return actual.buildRemoveExpiredCommand(key, value);
+   public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment) {
+      return actual.buildRemoveExpiredCommand(key, value, segment);
    }
 
    @Override
-   public RetrieveLastAccessCommand buildRetrieveLastAccessCommand(Object key, Object value) {
-      return actual.buildRetrieveLastAccessCommand(key, value);
+   public RetrieveLastAccessCommand buildRetrieveLastAccessCommand(Object key, Object value, int segment) {
+      return actual.buildRetrieveLastAccessCommand(key, value, segment);
    }
 
    @Override
-   public UpdateLastAccessCommand buildUpdateLastAccessCommand(Object key, long accessTime) {
-      return actual.buildUpdateLastAccessCommand(key, accessTime);
+   public UpdateLastAccessCommand buildUpdateLastAccessCommand(Object key, int segment, long accessTime) {
+      return actual.buildUpdateLastAccessCommand(key, segment, accessTime);
    }
 
    @Override
-   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, long flagsBitSet) {
-      return actual.buildReplaceCommand(key, oldValue, newValue, metadata, flagsBitSet);
+   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, int segment, Metadata metadata, long flagsBitSet) {
+      return actual.buildReplaceCommand(key, oldValue, newValue, segment, metadata, flagsBitSet);
    }
 
    @Override
-   public ComputeCommand buildComputeCommand(Object key, BiFunction mappingFunction, boolean computeIfPresent, Metadata metadata, long flagsBitSet) {
-      return actual.buildComputeCommand(key, mappingFunction, computeIfPresent, metadata, flagsBitSet);
+   public ComputeCommand buildComputeCommand(Object key, BiFunction mappingFunction, boolean computeIfPresent,
+         int segment, Metadata metadata, long flagsBitSet) {
+      return actual.buildComputeCommand(key, mappingFunction, computeIfPresent, segment, metadata, flagsBitSet);
    }
 
    @Override
-   public ComputeIfAbsentCommand buildComputeIfAbsentCommand(Object key, Function mappingFunction, Metadata metadata, long flagsBitSet) {
-      return actual.buildComputeIfAbsentCommand(key, mappingFunction, metadata, flagsBitSet);
+   public ComputeIfAbsentCommand buildComputeIfAbsentCommand(Object key, Function mappingFunction, int segment,
+         Metadata metadata, long flagsBitSet) {
+      return actual.buildComputeIfAbsentCommand(key, mappingFunction, segment, metadata, flagsBitSet);
    }
 
    @Override
@@ -235,8 +238,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public GetKeyValueCommand buildGetKeyValueCommand(Object key, long flagsBitSet) {
-      return actual.buildGetKeyValueCommand(key, flagsBitSet);
+   public GetKeyValueCommand buildGetKeyValueCommand(Object key, int segment, long flagsBitSet) {
+      return actual.buildGetKeyValueCommand(key, segment, flagsBitSet);
    }
 
    @Override
@@ -265,8 +268,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public EvictCommand buildEvictCommand(Object key, long flagsBitSet) {
-      return actual.buildEvictCommand(key, flagsBitSet);
+   public EvictCommand buildEvictCommand(Object key, int segment, long flagsBitSet) {
+      return actual.buildEvictCommand(key, segment, flagsBitSet);
    }
 
    @Override
@@ -449,8 +452,9 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(Object key, Function<EntryView.ReadEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return actual.buildReadOnlyKeyCommand(key, f, params, keyDataConversion, valueDataConversion);
+   public <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(Object key, Function<EntryView.ReadEntryView<K, V>, R> f,
+         int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      return actual.buildReadOnlyKeyCommand(key, f, segment, params, keyDataConversion, valueDataConversion);
    }
 
    @Override
@@ -460,14 +464,14 @@ public class ControlledCommandFactory implements CommandsFactory {
 
    @Override
    public <K, V, T, R> ReadWriteKeyValueCommand<K, V, T, R> buildReadWriteKeyValueCommand(Object key, Object argument, BiFunction<T, EntryView.ReadWriteEntryView<K, V>, R> f,
-                                                                                          Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return actual.buildReadWriteKeyValueCommand(key, argument, f, params, keyDataConversion, valueDataConversion);
+         int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      return actual.buildReadWriteKeyValueCommand(key, argument, f, segment, params, keyDataConversion, valueDataConversion);
    }
 
    @Override
    public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(
-         Object key, Function<EntryView.ReadWriteEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return actual.buildReadWriteKeyCommand(key, f, params, keyDataConversion, valueDataConversion);
+         Object key, Function<EntryView.ReadWriteEntryView<K, V>, R> f, int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      return actual.buildReadWriteKeyCommand(key, f, segment, params, keyDataConversion, valueDataConversion);
    }
 
    @Override
@@ -482,13 +486,14 @@ public class ControlledCommandFactory implements CommandsFactory {
 
    @Override
    public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(
-         Object key, Consumer<EntryView.WriteEntryView<K, V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return actual.buildWriteOnlyKeyCommand(key, f, params, keyDataConversion, valueDataConversion);
+         Object key, Consumer<EntryView.WriteEntryView<K, V>> f, int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      return actual.buildWriteOnlyKeyCommand(key, f, segment, params, keyDataConversion, valueDataConversion);
    }
 
    @Override
-   public <K, V, T> WriteOnlyKeyValueCommand<K, V, T> buildWriteOnlyKeyValueCommand(Object key, Object argument, BiConsumer<T, EntryView.WriteEntryView<K, V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return actual.buildWriteOnlyKeyValueCommand(key, argument, f, params, keyDataConversion, valueDataConversion);
+   public <K, V, T> WriteOnlyKeyValueCommand<K, V, T> buildWriteOnlyKeyValueCommand(Object key, Object argument, BiConsumer<T, EntryView.WriteEntryView<K, V>> f,
+         int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      return actual.buildWriteOnlyKeyValueCommand(key, argument, f, segment, params, keyDataConversion, valueDataConversion);
    }
 
    @Override

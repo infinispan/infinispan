@@ -116,20 +116,22 @@ public interface CommandsFactory {
     * Builds a PutKeyValueCommand
     * @param key key to put
     * @param value value to put
+    * @param segment the segment of the given key
     * @param metadata metadata of entry
     * @param flagsBitSet Command flags provided by cache
     * @return a PutKeyValueCommand
     */
-   PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, long flagsBitSet);
+   PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, int segment, Metadata metadata, long flagsBitSet);
 
    /**
     * Builds a RemoveCommand
     * @param key key to remove
     * @param value value to check for ina  conditional remove, or null for an unconditional remove.
+    * @param segment the segment of the given key
     * @param flagsBitSet Command flags provided by cache
     * @return a RemoveCommand
     */
-   RemoveCommand buildRemoveCommand(Object key, Object value, long flagsBitSet);
+   RemoveCommand buildRemoveCommand(Object key, Object value, int segment, long flagsBitSet);
 
    /**
     * Builds an InvalidateCommand
@@ -157,25 +159,27 @@ public interface CommandsFactory {
     * Builds an expired remove command that is used to remove only a specific entry when it expires via lifespan
     * @param key the key of the expired entry
     * @param value the value of the entry when it was expired
+    * @param segment the segment of the given key
     * @param lifespan the lifespan that expired from the command
     * @return a RemovedExpiredCommand
     */
-   RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, Long lifespan);
+   RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, Long lifespan);
 
    /**
     * Builds an expired remove command that is used to remove only a specific entry when it expires via maxIdle
     * @param key the key of the expired entry
     * @param value the value of the entry when it was expired
+    * @param segment the segment of the given key
     * @return a RemovedExpiredCommand
     */
-   RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value);
+   RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment);
 
    /**
     * Builds a retrieve max idle command that is used to get the last access time for a given key.
     * @param key the key of the entry to get the last access time of
     * @return a RetrieveLastAccessCommand
     */
-   RetrieveLastAccessCommand buildRetrieveLastAccessCommand(Object key, Object value);
+   RetrieveLastAccessCommand buildRetrieveLastAccessCommand(Object key, Object value, int segment);
 
    /**
     * Builds an update last access command that is used to update the last access time for a given key.
@@ -183,18 +187,20 @@ public interface CommandsFactory {
     * @param accessTime the time to set the access time to
     * @return a UpdateLastAccessCommand
     */
-   UpdateLastAccessCommand buildUpdateLastAccessCommand(Object key, long accessTime);
+   UpdateLastAccessCommand buildUpdateLastAccessCommand(Object key, int segment, long accessTime);
 
    /**
     * Builds a ReplaceCommand
     * @param key key to replace
     * @param oldValue existing value to check for if conditional, null if unconditional.
     * @param newValue value to replace with
+    * @param segment the segment of the given key
     * @param metadata metadata of entry
     * @param flagsBitSet Command flags provided by cache
     * @return a ReplaceCommand
     */
-   ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, long flagsBitSet);
+   ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, int segment, Metadata metadata,
+         long flagsBitSet);
 
 
    /**
@@ -202,21 +208,25 @@ public interface CommandsFactory {
     * @param key key to compute if this key is absent
     * @param mappingFunction BiFunction for the key and the value
     * @param computeIfPresent flag to apply as computeIfPresent mode
+    * @param segment the segment of the given key
     * @param metadata metadata of entry
     * @param flagsBitSet Command flags provided by cache
     * @return a ComputeCommand
     */
-   ComputeCommand buildComputeCommand(Object key, BiFunction mappingFunction, boolean computeIfPresent, Metadata metadata, long flagsBitSet);
+   ComputeCommand buildComputeCommand(Object key, BiFunction mappingFunction, boolean computeIfPresent, int segment,
+         Metadata metadata, long flagsBitSet);
 
    /**
     * Builds a ComputeIfAbsentCommand
     * @param key key to compute if this key is absent
     * @param mappingFunction mappingFunction for the key
+    * @param segment the segment of the given key
     * @param metadata metadata of entry
     * @param flagsBitSet Command flags provided by cache
     * @return a ComputeCommand
     */
-   ComputeIfAbsentCommand buildComputeIfAbsentCommand(Object key, Function mappingFunction, Metadata metadata, long flagsBitSet);
+   ComputeIfAbsentCommand buildComputeIfAbsentCommand(Object key, Function mappingFunction, int segment,
+         Metadata metadata, long flagsBitSet);
 
    /**
     * Builds a SizeCommand
@@ -228,15 +238,16 @@ public interface CommandsFactory {
    /**
     * Builds a GetKeyValueCommand
     * @param key key to get
+    * @param segment the segment of the given key
     * @param flagsBitSet Command flags provided by cache
     * @return a GetKeyValueCommand
     */
-   GetKeyValueCommand buildGetKeyValueCommand(Object key, long flagsBitSet);
+   GetKeyValueCommand buildGetKeyValueCommand(Object key, int segment, long flagsBitSet);
 
    /**
     * Builds a GetCacheEntryCommand
     * @param key key to get
-    * @param segment the segment for the key or {@link SegmentSpecificCommand#UNKNOWN_SEGMENT} if not known
+    * @param segment the segment for the key
     * @param flagsBitSet Command flags provided by cache
     * @return a GetCacheEntryCommand
     */
@@ -285,10 +296,11 @@ public interface CommandsFactory {
    /**
     * Builds an EvictCommand
     * @param key key to evict
+    * @param segment the segment for the key
     * @param flagsBitSet Command flags provided by cache
     * @return an EvictCommand
     */
-   EvictCommand buildEvictCommand(Object key, long flagsBitSet);
+   EvictCommand buildEvictCommand(Object key, int segment, long flagsBitSet);
 
    /**
     * Builds a PrepareCommand
@@ -353,17 +365,11 @@ public interface CommandsFactory {
    /**
     * Builds a ClusteredGetCommand, which is a remote lookup command
     * @param key key to look up
-    * @param segment the segment for the key or {@link SegmentSpecificCommand#UNKNOWN_SEGMENT} if not known
+    * @param segment the segment for the key
     * @param flagsBitSet Command flags provided by cache
     * @return a ClusteredGetCommand
     */
    ClusteredGetCommand buildClusteredGetCommand(Object key, int segment, long flagsBitSet);
-
-   @Deprecated
-   default ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet, boolean acquireRemoteLock, GlobalTransaction gtx) {
-      if (acquireRemoteLock) throw new UnsupportedOperationException("acquireRemoteLock is not supported, use Flag.FORCE_WRITE_LOCK");
-      return buildClusteredGetCommand(key, SegmentSpecificCommand.UNKNOWN_SEGMENT, flagsBitSet);
-   }
 
    /**
     * Builds a ClusteredGetAllCommand, which is a remote lookup command
@@ -545,30 +551,31 @@ public interface CommandsFactory {
 
    StreamIteratorCloseCommand buildStreamIteratorCloseCommand(Object id);
 
-   <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(Object key, Function<ReadEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
+   <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(Object key, Function<ReadEntryView<K, V>, R> f,
+         int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
    <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Collection<?> keys, Function<ReadEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
    <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(
-         Object key, Consumer<WriteEntryView<K, V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
+         Object key, Consumer<WriteEntryView<K, V>> f, int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
    <K, V, T, R> ReadWriteKeyValueCommand<K, V, T, R> buildReadWriteKeyValueCommand(
-         Object key, Object argument, BiFunction<T, ReadWriteEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
+         Object key, Object argument, BiFunction<T, ReadWriteEntryView<K, V>, R> f, int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
    <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(
-         Object key, Function<ReadWriteEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
+         Object key, Function<ReadWriteEntryView<K, V>, R> f, int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
    <K, V, T> WriteOnlyManyEntriesCommand<K, V, T> buildWriteOnlyManyEntriesCommand(
          Map<?, ?> arguments, BiConsumer<T, WriteEntryView<K, V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
-   <K, V, T> WriteOnlyKeyValueCommand<K, V, T> buildWriteOnlyKeyValueCommand(
-         Object key, Object argument, BiConsumer<T, WriteEntryView<K, V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
+   <K, V, T> WriteOnlyKeyValueCommand<K, V, T> buildWriteOnlyKeyValueCommand(Object key, Object argument,
+         BiConsumer<T, WriteEntryView<K, V>> f, int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
    <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Collection<?> keys, Consumer<WriteEntryView<K, V>> f,
                                                                Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
    <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Collection<?> keys, Function<ReadWriteEntryView<K, V>, R> f,
-                                                                     Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
+         Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
    <K, V, T, R> ReadWriteManyEntriesCommand<K, V, T, R> buildReadWriteManyEntriesCommand(Map<?, ?> entries, BiFunction<T, ReadWriteEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 

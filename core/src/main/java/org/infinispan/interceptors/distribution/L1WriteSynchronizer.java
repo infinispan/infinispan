@@ -7,8 +7,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.L1Metadata;
@@ -28,11 +28,11 @@ public class L1WriteSynchronizer {
    private final L1WriteSync sync = new L1WriteSync();
 
    private final long l1Lifespan;
-   private final DataContainer<Object, Object> dc;
+   private final InternalDataContainer<Object, Object> dc;
    private final StateTransferLock stateTransferLock;
    private final ClusteringDependentLogic cdl;
 
-   public L1WriteSynchronizer(DataContainer dc, long l1Lifespan, StateTransferLock stateTransferLock,
+   public L1WriteSynchronizer(InternalDataContainer dc, long l1Lifespan, StateTransferLock stateTransferLock,
                               ClusteringDependentLogic cdl) {
       //noinspection unchecked
       this.dc = dc;

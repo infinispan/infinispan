@@ -47,7 +47,8 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    public <R> CompletableFuture<R> eval(K key, Function<ReadWriteEntryView<K, V>, R> f) {
       log.tracef("Invoked eval(k=%s, %s)", key, params);
       Object keyEncoded = keyDataConversion.toStorage(key);
-      ReadWriteKeyCommand<K, V, R> cmd = fmap.commandsFactory.buildReadWriteKeyCommand(keyEncoded, (Function) f, params, keyDataConversion, valueDataConversion);
+      ReadWriteKeyCommand<K, V, R> cmd = fmap.commandsFactory.buildReadWriteKeyCommand(keyEncoded,
+            (Function) f, fmap.keyPartitioner.getSegment(keyEncoded), params, keyDataConversion, valueDataConversion);
       InvocationContext ctx = getInvocationContext(true, 1);
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());
@@ -60,7 +61,8 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
       log.tracef("Invoked eval(k=%s, v=%s, %s)", key, argument, params);
       Object keyEncoded = keyDataConversion.toStorage(key);
       Object argumentEncoded = valueDataConversion.toStorage(argument);
-      ReadWriteKeyValueCommand<K, V, T, R> cmd = fmap.commandsFactory.buildReadWriteKeyValueCommand(keyEncoded, argumentEncoded, (BiFunction) f, params, keyDataConversion, valueDataConversion);
+      ReadWriteKeyValueCommand<K, V, T, R> cmd = fmap.commandsFactory.buildReadWriteKeyValueCommand(keyEncoded,
+            argumentEncoded, (BiFunction) f, fmap.keyPartitioner.getSegment(keyEncoded), params, keyDataConversion, valueDataConversion);
       InvocationContext ctx = getInvocationContext(true, 1);
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());

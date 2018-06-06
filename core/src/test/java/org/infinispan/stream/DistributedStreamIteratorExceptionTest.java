@@ -1,5 +1,7 @@
 package org.infinispan.stream;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -8,7 +10,7 @@ import static org.testng.AssertJUnit.fail;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.container.DataContainer;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -32,11 +34,12 @@ public class DistributedStreamIteratorExceptionTest extends BaseSetupStreamItera
       Cache cache0 = cache(0, CACHE_NAME);
       Cache cache1 = cache(1, CACHE_NAME);
       // Extract real one to replace after
-      DataContainer dataContainer = TestingUtil.extractComponent(cache1, DataContainer.class);
+      InternalDataContainer dataContainer = TestingUtil.extractComponent(cache1, InternalDataContainer.class);
       try {
          Throwable t = new AssertionError();
-         DataContainer mockContainer = when(mock(DataContainer.class).spliterator()).thenThrow(t).getMock();
-         TestingUtil.replaceComponent(cache1, DataContainer.class, mockContainer, true);
+         InternalDataContainer mockContainer = when(mock(InternalDataContainer.class).spliterator(any())).thenThrow(t).getMock();
+         doThrow(t).when(mockContainer).spliterator();
+         TestingUtil.replaceComponent(cache1, InternalDataContainer.class, mockContainer, true);
 
          try {
             cache0.entrySet().stream().iterator().hasNext();
@@ -51,7 +54,7 @@ public class DistributedStreamIteratorExceptionTest extends BaseSetupStreamItera
             assertNotNull("We should have found the throwable as a cause", cause);
          }
       } finally {
-         TestingUtil.replaceComponent(cache1, DataContainer.class, dataContainer, true);
+         TestingUtil.replaceComponent(cache1, InternalDataContainer.class, dataContainer, true);
       }
    }
 }

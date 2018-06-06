@@ -142,7 +142,7 @@ public class SingletonCacheWriter extends DelegatingCacheWriter {
     */
    protected void pushState(final Cache<?, ?> cache) throws Exception {
       DataContainer<?, ?> dc = cache.getAdvancedCache().getDataContainer();
-      dc.iterator().forEachRemaining(entry -> {
+      dc.forEach(entry -> {
          MarshalledEntry me = ctx.getMarshalledEntryFactory().newMarshalledEntry(entry.getKey(), entry.getValue(),
                internalMetadata(entry));
          write(me);

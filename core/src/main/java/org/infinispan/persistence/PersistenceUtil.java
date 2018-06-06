@@ -6,13 +6,12 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
-import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.impl.InternalEntryFactory;
-import org.infinispan.container.impl.SegmentedDataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -39,6 +38,8 @@ public class PersistenceUtil {
    public static KeyFilter notNull(KeyFilter filter) {
       return filter == null ? KeyFilter.ACCEPT_ALL_FILTER : filter;
    }
+
+   private static final int SEGMENT_NOT_PROVIDED = -1;
 
    /**
     *
@@ -124,8 +125,8 @@ public class PersistenceUtil {
    public static <K, V> InternalCacheEntry<K,V> loadAndStoreInDataContainer(DataContainer<K, V> dataContainer,
          final PersistenceManager persistenceManager, K key, final InvocationContext ctx, final TimeService timeService,
          final AtomicReference<Boolean> isLoaded) {
-      return loadAndStoreInDataContainer(dataContainer, SegmentSpecificCommand.UNKNOWN_SEGMENT, persistenceManager, key, ctx,
-            timeService, isLoaded);
+      return loadAndStoreInDataContainer(dataContainer, SEGMENT_NOT_PROVIDED, persistenceManager, key, ctx, timeService,
+            isLoaded);
    }
 
    public static <K, V> InternalCacheEntry<K,V> loadAndStoreInDataContainer(DataContainer<K, V> dataContainer, int segment,
@@ -163,8 +164,8 @@ public class PersistenceUtil {
       };
 
       InternalCacheEntry<K,V> entry;
-      if (segment != SegmentSpecificCommand.UNKNOWN_SEGMENT && dataContainer instanceof SegmentedDataContainer) {
-         entry = ((SegmentedDataContainer) dataContainer).compute(segment, key, computeAction);
+      if (segment != SEGMENT_NOT_PROVIDED && dataContainer instanceof InternalDataContainer) {
+         entry = ((InternalDataContainer) dataContainer).compute(segment, key, computeAction);
       } else {
          entry = dataContainer.compute(key, computeAction);
       }
@@ -201,8 +202,8 @@ public class PersistenceUtil {
          return action.compute(k, newEntry, factory);
       };
       InternalCacheEntry<K,V> entry;
-      if (segment != SegmentSpecificCommand.UNKNOWN_SEGMENT && dataContainer instanceof SegmentedDataContainer) {
-         entry = ((SegmentedDataContainer<K, V>) dataContainer).compute(segment, key, computeAction);
+      if (segment != SEGMENT_NOT_PROVIDED && dataContainer instanceof InternalDataContainer) {
+         entry = ((InternalDataContainer<K, V>) dataContainer).compute(segment, key, computeAction);
       } else {
          entry = dataContainer.compute(key, computeAction);
       }

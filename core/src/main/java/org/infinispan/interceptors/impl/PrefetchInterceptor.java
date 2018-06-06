@@ -234,7 +234,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
             return;
          }
          PutKeyValueCommand putKeyValueCommand =
-               commandsFactory.buildPutKeyValueCommand(cmd.getKey(), maxValue.getValue(), maxValue.getMetadata(),
+               commandsFactory.buildPutKeyValueCommand(cmd.getKey(), maxValue.getValue(), segment, maxValue.getMetadata(),
                                                        STATE_TRANSFER_FLAGS);
          putKeyValueCommand.setTopologyId(cmd.getTopologyId());
          invokeNext(ctx1, putKeyValueCommand);

@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.LongAdder;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.DataContainer;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.offheap.OffHeapMemoryAllocator;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.AbstractNamedCacheComponentFactory;
@@ -46,7 +46,7 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
 
    @Inject private AdvancedCache cache;
    @Inject private TimeService timeService;
-   @Inject private DataContainer dataContainer;
+   @Inject private InternalDataContainer dataContainer;
    @Inject private OffHeapMemoryAllocator allocator;
    @Inject private Configuration configuration;
 

@@ -35,7 +35,6 @@ public class LocalizedCacheTopology extends CacheTopology {
    private final KeyPartitioner keyPartitioner;
    private final boolean isDistributed;
    private final boolean allLocal;
-   private final boolean isSegmented;
    private final int numSegments;
    private final int maxOwners;
    private final DistributionInfo[] distributionInfos;
@@ -69,10 +68,10 @@ public class LocalizedCacheTopology extends CacheTopology {
       this.isDistributed = cacheMode.isDistributed();
       isScattered = cacheMode.isScattered();
       boolean isReplicated = cacheMode.isReplicated();
-      this.isSegmented = isDistributed || isReplicated || isScattered;
-      this.numSegments = isSegmented ? readCH.getNumSegments() : 1;
+
 
       if (isDistributed || isScattered) {
+         this.numSegments = readCH.getNumSegments();
          this.distributionInfos = new DistributionInfo[numSegments];
          int maxOwners = 1;
          IntSet localReadSegments = new SmallIntSet(numSegments);
@@ -92,6 +91,7 @@ public class LocalizedCacheTopology extends CacheTopology {
          this.allLocal = false;
          this.localReadSegments = new ImmutableIntSet(localReadSegments);
       } else if (isReplicated) {
+         this.numSegments = readCH.getNumSegments();
          // Writes must be broadcast to the entire cluster
          Map<Address, List<Address>> readOwnersMap = new HashMap<>();
          Map<Address, List<Address>> writeOwnersMap = new HashMap<>();
@@ -112,6 +112,7 @@ public class LocalizedCacheTopology extends CacheTopology {
          this.localReadSegments = new RangeSet(allLocal ? numSegments : 0);
       } else { // Invalidation/Local
          assert cacheMode.isInvalidation() || cacheMode == CacheMode.LOCAL;
+         this.numSegments = 1;
          // Reads and writes are local, only the invalidation is replicated
          List<Address> owners = Collections.singletonList(localAddress);
          List<Address> writeBackups = Collections.emptyList();
@@ -179,7 +180,7 @@ public class LocalizedCacheTopology extends CacheTopology {
     * @return Information about the ownership of key {@code key}, including the primary owner.
     */
    public DistributionInfo getDistribution(Object key) {
-      int segmentId = isSegmented ? keyPartitioner.getSegment(key) : 0;
+      int segmentId = keyPartitioner.getSegment(key);
       return distributionInfos[segmentId];
    }
 

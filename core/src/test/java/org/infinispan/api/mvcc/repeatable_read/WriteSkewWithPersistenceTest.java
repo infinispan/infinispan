@@ -8,6 +8,7 @@ import javax.transaction.SystemException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -25,7 +26,7 @@ public class WriteSkewWithPersistenceTest extends WriteSkewTest {
    @Override
    protected void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SystemException {
       // Make sure that all entries are evicted from DC
-      DataContainer<Object, Object> dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
+      DataContainer<Object, Object> dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
       Object[] keys = dataContainer.entrySet().stream().map(InternalCacheEntry::getKey).toArray(Object[]::new);
       for (Object key : keys) {
          dataContainer.evict(key);

@@ -49,6 +49,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.transport.AggregateBackupResponse;
@@ -82,6 +83,7 @@ public class BackupSenderImpl implements BackupSender {
    @Inject private CommandsFactory commandsFactory;
    @Inject private EventLogManager eventLogManager;
    @Inject private GlobalConfiguration globalConfig;
+   @Inject private KeyPartitioner keyPartitioner;
 
    private final Map<String, CustomFailurePolicy> siteFailurePolicy = new HashMap<>();
    private final ConcurrentMap<String, OfflineStatus> offlineStatus = CollectionFactory.makeConcurrentMap();
@@ -319,10 +321,11 @@ public class BackupSenderImpl implements BackupSender {
             }
             WriteCommand replicatedCommand;
             if (entry.isRemoved()) {
-               replicatedCommand = commandsFactory.buildRemoveCommand(key, null, writeCommand.getFlagsBitSet());
+               replicatedCommand = commandsFactory.buildRemoveCommand(key, null, keyPartitioner.getSegment(key),
+                     writeCommand.getFlagsBitSet());
             } else if (entry.isChanged()) {
                replicatedCommand = commandsFactory.buildPutKeyValueCommand(key, entry.getValue(),
-                     entry.getMetadata(), writeCommand.getFlagsBitSet());
+                     keyPartitioner.getSegment(key), entry.getMetadata(), writeCommand.getFlagsBitSet());
             } else {
                continue;
             }

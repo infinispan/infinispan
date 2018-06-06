@@ -18,15 +18,13 @@ import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.RemovableIterator;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.impl.SegmentedDataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.stream.impl.local.EntryStreamSupplier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.stream.impl.local.SegmentedEntryStreamSupplier;
 import org.infinispan.util.DataContainerRemoveIterator;
@@ -42,9 +40,11 @@ import org.infinispan.util.EntryWrapper;
  */
 public class EntrySetCommand<K, V> extends AbstractLocalCommand implements VisitableCommand {
    private final Cache<K, V> cache;
+   private final InternalDataContainer<K, V> dataContainer;
    private final KeyPartitioner keyPartitioner;
 
-   public EntrySetCommand(Cache<K, V> cache, KeyPartitioner keyPartitioner, long flagsBitSet) {
+   public EntrySetCommand(Cache<K, V> cache, InternalDataContainer<K, V> dataContainer, KeyPartitioner keyPartitioner,
+         long flagsBitSet) {
       setFlagsBitSet(flagsBitSet);
       cache = AbstractDelegatingCache.unwrapCache(cache);
       if (flagsBitSet != EnumUtil.EMPTY_BIT_SET) {
@@ -52,6 +52,7 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
       } else {
          this.cache = cache;
       }
+      this.dataContainer = dataContainer;
       this.keyPartitioner = keyPartitioner;
    }
 
@@ -72,9 +73,9 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
       boolean isRemoteIteration = EnumUtil.containsAny(getFlagsBitSet(), FlagBitSets.REMOTE_ITERATION);
       Object lockOwner = ctx.getLockOwner();
       if (ctx.getLockOwner() != null) {
-         return new BackingEntrySet<>(cache.getAdvancedCache().lockAs(lockOwner), keyPartitioner, isRemoteIteration);
+         return new BackingEntrySet<>(cache.getAdvancedCache().lockAs(lockOwner), dataContainer, keyPartitioner, isRemoteIteration);
       }
-      return new BackingEntrySet<>(cache, keyPartitioner, isRemoteIteration);
+      return new BackingEntrySet<>(cache, dataContainer, keyPartitioner, isRemoteIteration);
    }
 
    @Override
@@ -87,10 +88,13 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
    static class BackingEntrySet<K, V> extends AbstractCollection<CacheEntry<K, V>> implements CacheSet<CacheEntry<K, V>> {
       private final boolean isRemoteIteration;
       private final Cache<K, V> cache;
+      private final InternalDataContainer<K, V> dataContainer;
       private final KeyPartitioner keyPartitioner;
 
-      BackingEntrySet(Cache<K, V> cache, KeyPartitioner keyPartitioner, boolean isRemoteIteration) {
+      BackingEntrySet(Cache<K, V> cache, InternalDataContainer<K, V> dataContainer, KeyPartitioner keyPartitioner,
+            boolean isRemoteIteration) {
          this.cache = cache;
+         this.dataContainer = dataContainer;
          this.keyPartitioner = keyPartitioner;
          this.isRemoteIteration = isRemoteIteration;
       }
@@ -99,9 +103,9 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
       public CloseableIterator<CacheEntry<K, V>> iterator() {
          if (isRemoteIteration) {
             // If remote don't do all this wrapping
-            return Closeables.iterator(cache.getAdvancedCache().getDataContainer().iterator());
+            return Closeables.iterator(dataContainer.iterator());
          }
-         Iterator<CacheEntry<K, V>> iterator = new DataContainerRemoveIterator<>(cache);
+         Iterator<CacheEntry<K, V>> iterator = new DataContainerRemoveIterator<>(cache, dataContainer);
          RemovableIterator<CacheEntry<K, V>> removableIterator = new RemovableIterator<>(iterator, e -> cache.remove(e.getKey(), e.getValue()));
          return new IteratorMapper<>(removableIterator, e -> new EntryWrapper<>(cache, e));
       }
@@ -115,23 +119,20 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
 
       @Override
       public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
-         DataContainer<K, V> dc = cache.getAdvancedCache().getDataContainer();
-
          // Spliterator doesn't support remove so just return it without wrapping
-         return closeableCast(dc.spliterator());
+         return closeableCast(dataContainer.spliterator());
       }
 
       @Override
       public int size() {
-         return cache.getAdvancedCache().getDataContainer().size();
+         return dataContainer.size();
       }
 
       @Override
       public boolean contains(Object o) {
          Map.Entry entry = toEntry(o);
          if (entry != null) {
-            DataContainer<K, V> container = cache.getAdvancedCache().getDataContainer();
-            InternalCacheEntry<K, V> value = container.get(entry.getKey());
+            InternalCacheEntry<K, V> value = dataContainer.get(entry.getKey());
             return value != null && value.getValue().equals(entry.getValue());
          }
          return false;
@@ -153,15 +154,8 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
       }
 
       private CacheStream<CacheEntry<K, V>> doStream(boolean parallel) {
-         DataContainer<K, V> dc = cache.getAdvancedCache().getDataContainer();
-         if (dc instanceof SegmentedDataContainer) {
-            SegmentedDataContainer<K, V> segmentedDataContainer = (SegmentedDataContainer) dc;
-            return new LocalCacheStream<>(new SegmentedEntryStreamSupplier<>(cache, keyPartitioner,
-                  segmentedDataContainer), parallel, cache.getAdvancedCache().getComponentRegistry());
-         } else {
-            return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, keyPartitioner,
-                  super::stream), parallel, cache.getAdvancedCache().getComponentRegistry());
-         }
+            return new LocalCacheStream<>(new SegmentedEntryStreamSupplier<>(cache, keyPartitioner, dataContainer),
+                  parallel, cache.getAdvancedCache().getComponentRegistry());
       }
 
       @Override

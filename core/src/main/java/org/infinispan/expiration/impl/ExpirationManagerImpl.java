@@ -10,8 +10,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -37,7 +37,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    protected ScheduledExecutorService executor;
    @Inject protected Configuration configuration;
    @Inject protected PersistenceManager persistenceManager;
-   @Inject protected DataContainer<K, V> dataContainer;
+   @Inject protected InternalDataContainer<K, V> dataContainer;
    @Inject protected CacheNotifier<K, V> cacheNotifier;
    @Inject protected TimeService timeService;
 
@@ -208,8 +208,8 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
       persistenceManager.deleteFromAllStores(key, PersistenceManager.AccessMode.BOTH);
    }
 
-   protected Long localLastAccess(Object key, Object value) {
-      InternalCacheEntry ice = dataContainer.peek(key);
+   protected Long localLastAccess(Object key, Object value, int segment) {
+      InternalCacheEntry ice = dataContainer.peek(segment, key);
       if (ice != null && (value == null || value.equals(ice.getValue())) &&
             !ice.isExpired(timeService.wallClockTime())) {
          return ice.getLastUsed();
@@ -218,8 +218,8 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    }
 
    @Override
-   public CompletableFuture<Long> retrieveLastAccess(Object key, Object value) {
-      Long lastAccess = localLastAccess(key, value);
+   public CompletableFuture<Long> retrieveLastAccess(Object key, Object value, int segment) {
+      Long lastAccess = localLastAccess(key, value, segment);
       if (lastAccess != null) {
          return CompletableFuture.completedFuture(lastAccess);
       }

@@ -33,7 +33,7 @@ public class VersionedRepeatableReadEntry extends RepeatableReadEntry implements
    /**
     *
     * @param container the data container to check the write skew against
-    * @param segment the segment matching this entry or {@link org.infinispan.commands.SegmentSpecificCommand#UNKNOWN_SEGMENT} if unknown
+    * @param segment the segment matching this entry
     * @param persistenceManager the persistence manager to possibly check write skew against
     * @param ctx the invocation context
     * @param versionSeen what version has been seen for this entry

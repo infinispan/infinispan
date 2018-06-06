@@ -12,14 +12,14 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.container.impl.SegmentedDataContainer;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * StreamSupplier that allows for creating streams where they utilize a {@link SegmentedDataContainer} so that
+ * StreamSupplier that allows for creating streams where they utilize a {@link InternalDataContainer} so that
  * the stream only looks at entries in those given segments.
  * @author wburns
  * @since 9.3
@@ -30,13 +30,13 @@ public class SegmentedEntryStreamSupplier<K, V> implements AbstractLocalCacheStr
 
    private final Cache<K, V> cache;
    private final ToIntFunction<Object> toIntFunction;
-   private final SegmentedDataContainer<K, V> segmentedDataContainer;
+   private final InternalDataContainer<K, V> internalDataContainer;
 
    public SegmentedEntryStreamSupplier(Cache<K, V> cache, ToIntFunction<Object> toIntFunction,
-         SegmentedDataContainer<K, V> segmentedDataContainer) {
+         InternalDataContainer<K, V> internalDataContainer) {
       this.cache = cache;
       this.toIntFunction = toIntFunction;
-      this.segmentedDataContainer = segmentedDataContainer;
+      this.internalDataContainer = internalDataContainer;
    }
 
    @Override
@@ -68,9 +68,9 @@ public class SegmentedEntryStreamSupplier<K, V> implements AbstractLocalCacheStr
          }
       } else {
          if (segmentsToFilter != null) {
-            stream = StreamSupport.stream(cast(segmentedDataContainer.spliterator(segmentsToFilter)), parallel);
+            stream = StreamSupport.stream(cast(internalDataContainer.spliterator(segmentsToFilter)), parallel);
          } else {
-            stream = StreamSupport.stream(cast(segmentedDataContainer.spliterator()), parallel);
+            stream = StreamSupport.stream(cast(internalDataContainer.spliterator()), parallel);
          }
          if (cache.getCacheConfiguration().clustering().cacheMode().isScattered()) {
             stream = stream.filter(ce -> ce.getValue() != null);

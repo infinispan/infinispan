@@ -21,9 +21,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
@@ -41,7 +41,7 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "interceptors.distribution.L1WriteSynchronizerTest")
 public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
    private L1WriteSynchronizer sync;
-   private DataContainer dc;
+   private InternalDataContainer dc;
    private StateTransferLock stl;
    private ClusteringDependentLogic cdl;
    private final long l1Timeout = 1000;
@@ -49,7 +49,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    public void beforeMethod() {
-      dc = mock(DataContainer.class);
+      dc = mock(InternalDataContainer.class);
       stl = mock(StateTransferLock.class);
       cdl = mock(ClusteringDependentLogic.class);
       when(cdl.getCacheTopology()).thenReturn(mock(LocalizedCacheTopology.class));

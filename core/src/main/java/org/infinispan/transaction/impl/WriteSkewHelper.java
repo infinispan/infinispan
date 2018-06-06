@@ -10,6 +10,7 @@ import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -38,7 +39,8 @@ public class WriteSkewHelper {
                                                                             PersistenceManager persistenceManager,
                                                                             VersionGenerator versionGenerator,
                                                                             TxInvocationContext context,
-                                                                            KeySpecificLogic ksl, TimeService timeService) {
+                                                                            KeySpecificLogic ksl, TimeService timeService,
+                                                                            KeyPartitioner keyPartitioner) {
       EntryVersionsMap uv = new EntryVersionsMap();
       if (prepareCommand.getVersionsSeen() == null) {
          // Do not perform the write skew check if this prepare command is being replayed for state transfer
@@ -47,14 +49,8 @@ public class WriteSkewHelper {
 
       for (WriteCommand c : prepareCommand.getModifications()) {
          for (Object k : c.getAffectedKeys()) {
-            boolean shouldPerformCheck;
-            int segment = SegmentSpecificCommand.extractSegment(c);
-            if (segment != -1) {
-               shouldPerformCheck = ksl.performCheckOnSegment(segment);
-            } else {
-               shouldPerformCheck = ksl.performCheckOnKey(k);
-            }
-            if (shouldPerformCheck) {
+            int segment = SegmentSpecificCommand.extractSegment(c, k, keyPartitioner);
+            if (ksl.performCheckOnSegment(segment)) {
                CacheEntry cacheEntry = context.lookupEntry(k);
                if (!(cacheEntry instanceof VersionedRepeatableReadEntry)) {
                   continue;
@@ -85,14 +81,16 @@ public class WriteSkewHelper {
                                                                                       VersionGenerator versionGenerator,
                                                                                       TxInvocationContext context,
                                                                                       KeySpecificLogic ksl,
-                                                                                      TimeService timeService) {
+                                                                                      TimeService timeService,
+                                                                                      KeyPartitioner keyPartitioner) {
       EntryVersionsMap uv = new EntryVersionsMap();
       for (WriteCommand c : prepareCommand.getModifications()) {
          for (Object k : c.getAffectedKeys()) {
-            if (ksl.performCheckOnKey(k)) {
+            int segment = SegmentSpecificCommand.extractSegment(c, k, keyPartitioner);
+            if (ksl.performCheckOnSegment(segment)) {
                VersionedRepeatableReadEntry entry = (VersionedRepeatableReadEntry) context.lookupEntry(k);
 
-               if (entry.performWriteSkewCheck(dataContainer, SegmentSpecificCommand.UNKNOWN_SEGMENT, persistenceManager,
+               if (entry.performWriteSkewCheck(dataContainer, segment, persistenceManager,
                      context, prepareCommand.getVersionsSeen().get(k), versionGenerator, timeService)) {
                   //in total order, it does not care about the version returned. It just need the keys validated
                   uv.put(k, null);
@@ -108,20 +106,8 @@ public class WriteSkewHelper {
    }
 
    public interface KeySpecificLogic {
-      boolean performCheckOnKey(Object key);
-
       boolean performCheckOnSegment(int segment);
    }
 
-   public static final KeySpecificLogic ALWAYS_TRUE_LOGIC = new KeySpecificLogic() {
-      @Override
-      public boolean performCheckOnKey(Object key) {
-         return true;
-      }
-
-      @Override
-      public boolean performCheckOnSegment(int segment) {
-         return true;
-      }
-   };
+   public static final KeySpecificLogic ALWAYS_TRUE_LOGIC = k -> true;
 }

@@ -14,9 +14,8 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.impl.SegmentedDataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -112,10 +111,9 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
    }
 
    protected void blockDataContainerIteration(final Cache<?, ?> cache, final CyclicBarrier barrier) {
-      DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
-      SegmentedDataContainer segmentedDataContainer = (SegmentedDataContainer) dataContainer;
+      InternalDataContainer dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(dataContainer);
-      SegmentedDataContainer mocaContainer = mock(SegmentedDataContainer.class, withSettings().defaultAnswer(forwardedAnswer));
+      InternalDataContainer mockContainer = mock(InternalDataContainer.class, withSettings().defaultAnswer(forwardedAnswer));
       doAnswer(invocation -> {
          // Wait for main thread to sync up
          barrier.await(10, TimeUnit.SECONDS);
@@ -123,7 +121,7 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
          barrier.await(10, TimeUnit.SECONDS);
 
          return forwardedAnswer.answer(invocation);
-      }).when(mocaContainer).removeSegments(any());
-      TestingUtil.replaceComponent(cache, DataContainer.class, mocaContainer, true);
+      }).when(mockContainer).removeSegments(any());
+      TestingUtil.replaceComponent(cache, InternalDataContainer.class, mockContainer, true);
    }
 }

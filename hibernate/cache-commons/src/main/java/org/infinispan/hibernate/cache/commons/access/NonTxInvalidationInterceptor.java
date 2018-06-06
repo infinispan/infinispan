@@ -70,7 +70,8 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 			if (!putFromLoadValidator.beginInvalidatingWithPFER(command.getKeyLockOwner(), command.getKey(), command.getValue())) {
 				log.failedInvalidatePendingPut(command.getKey(), cacheName);
 			}
-         RemoveCommand removeCommand = commandsFactory.buildRemoveCommand(command.getKey(), null, command.getFlagsBitSet());
+         RemoveCommand removeCommand = commandsFactory.buildRemoveCommand(command.getKey(), null,
+					command.getSegment(), command.getFlagsBitSet());
          return invokeNextAndHandle( ctx, removeCommand, new InvalidateAndReturnFunction(isTransactional, command.getKeyLockOwner()) );
 		}
 	}

@@ -11,16 +11,14 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 public class SingleSegmentKeyPartitioner implements KeyPartitioner {
    private SingleSegmentKeyPartitioner() { }
 
+   private static final SingleSegmentKeyPartitioner INSTANCE = new SingleSegmentKeyPartitioner();
+
    public static SingleSegmentKeyPartitioner getInstance() {
-      return SingletonHelper.INSTANCE;
+      return INSTANCE;
    }
 
    @Override
    public int getSegment(Object key) {
       return 0;
-   }
-
-   private static class SingletonHelper {
-      private static final SingleSegmentKeyPartitioner INSTANCE = new SingleSegmentKeyPartitioner();
    }
 }

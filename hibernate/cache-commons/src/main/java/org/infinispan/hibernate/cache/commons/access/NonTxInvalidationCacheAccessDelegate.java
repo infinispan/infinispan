@@ -12,6 +12,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
 import org.hibernate.cache.spi.access.SoftLock;
 import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
@@ -28,12 +29,14 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 	private final AsyncInterceptorChain invoker;
 	private final CommandsFactory commandsFactory;
 	private final Metadata metadata;
+	private final KeyPartitioner keyPartitioner;
 
 	public NonTxInvalidationCacheAccessDelegate(InfinispanDataRegion region, PutFromLoadValidator validator) {
 		super(region, validator);
 		ComponentRegistry cr = region.getCache().getComponentRegistry();
 		invoker = cr.getComponent(AsyncInterceptorChain.class);
 		commandsFactory = cr.getComponent(CommandsFactory.class);
+		keyPartitioner = cr.getComponent(KeyPartitioner.class);
 		Configuration config = region.getCache().getCacheConfiguration();
 		metadata = new EmbeddedMetadata.Builder()
 				.lifespan(config.expiration().lifespan()).maxIdle(config.expiration().maxIdle()).build();
@@ -49,7 +52,8 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 		// We need to be invalidating even for regular writes; if we were not and the write was followed by eviction
 		// (or any other invalidation), naked put that was started after the eviction ended but before this insert
 		// ended could insert the stale entry into the cache (since the entry was removed by eviction).
-		PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, metadata, FlagBitSets.IGNORE_RETURN_VALUES);
+		PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, keyPartitioner.getSegment(key),
+				metadata, FlagBitSets.IGNORE_RETURN_VALUES);
 		SessionInvocationContext ctx = new SessionInvocationContext(session, command.getKeyLockOwner());
 		// NonTxInvalidationInterceptor will call beginInvalidatingWithPFER and change this to a removal because
 		// we must publish the new value only after invalidation ends.
@@ -68,7 +72,8 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 		// We need to be invalidating even for regular writes; if we were not and the write was followed by eviction
 		// (or any other invalidation), naked put that was started after the eviction ended but before this update
 		// ended could insert the stale entry into the cache (since the entry was removed by eviction).
-		PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, metadata, FlagBitSets.IGNORE_RETURN_VALUES);
+		PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, keyPartitioner.getSegment(key),
+				metadata, FlagBitSets.IGNORE_RETURN_VALUES);
 		SessionInvocationContext ctx = new SessionInvocationContext(session, command.getKeyLockOwner());
 		// NonTxInvalidationInterceptor will call beginInvalidatingWithPFER and change this to a removal because
 		// we must publish the new value only after invalidation ends.
@@ -81,7 +86,8 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 		// We update whether or not the region is valid. Other nodes
 		// may have already restored the region so they need to
 		// be informed of the change.
-		RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, FlagBitSets.IGNORE_RETURN_VALUES);
+		RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, keyPartitioner.getSegment(key),
+				FlagBitSets.IGNORE_RETURN_VALUES);
 		SessionInvocationContext ctx = new SessionInvocationContext(session, command.getKeyLockOwner());
 		invoker.invoke(ctx, command);
 	}

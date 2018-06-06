@@ -49,9 +49,10 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.ImmutableContext;
@@ -124,7 +125,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Inject private ComponentRegistry componentRegistry;
    @Inject private Configuration configuration;
    @Inject private EmbeddedCacheManager cacheManager;
-   @Inject private DataContainer<K, V> dataContainer;
+   @Inject private InternalDataContainer<K, V> dataContainer;
    @Inject private CacheNotifier<K, V> cacheNotifier;
    @Inject private TimeService timeService;
 
@@ -548,7 +549,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       ArrayList<InternalCacheEntry<K, V>> copyEntries;
       if (hasListeners) {
          copyEntries = new ArrayList<>(dataContainer.sizeIncludingExpired());
-         dataContainer.iterator().forEachRemaining(entry -> {
+         dataContainer.forEach(entry -> {
             copyEntries.add(entry);
             cacheNotifier.notifyCacheEntryRemoved(entry.getKey(), entry.getValue(), entry.getMetadata(), true, ImmutableContext.INSTANCE, null);
          });

@@ -10,7 +10,6 @@ import java.util.Set;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
@@ -46,10 +45,10 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.container.impl.EntryFactory;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
@@ -58,6 +57,7 @@ import org.infinispan.context.SingleKeyNonTxInvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupFilter;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.factories.annotations.Inject;
@@ -92,7 +92,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
  */
 public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Inject private EntryFactory entryFactory;
-   @Inject private DataContainer<Object, Object> dataContainer;
+   @Inject private InternalDataContainer<Object, Object> dataContainer;
    @Inject protected ClusteringDependentLogic cdl;
    @Inject private VersionGenerator versionGenerator;
    @Inject protected DistributionManager distributionManager;
@@ -102,6 +102,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Inject private GroupManager groupManager;
    @Inject private CacheNotifier notifier;
    @Inject private StateTransferManager stateTransferManager;
+   @Inject private KeyPartitioner keyPartitioner;
 
    private final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
    private boolean isInvalidation;
@@ -217,7 +218,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       boolean ignoreOwnership = ignoreOwnership(command);
       for (Object key : command.getKeys()) {
-         entryFactory.wrapEntryForReading(ctx, key, SegmentSpecificCommand.UNKNOWN_SEGMENT, ignoreOwnership || canReadKey(key));
+         entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key), ignoreOwnership || canReadKey(key));
       }
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          GetAllCommand getAllCommand = (GetAllCommand) rCommand;
@@ -262,7 +263,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             // TODO: move this to distribution interceptors?
             // we need to try to wrap the entry to get it removed
             // for the removal itself, wrapping null would suffice, but listeners need previous value
-            entryFactory.wrapEntryForWriting(ctx, key, SegmentSpecificCommand.UNKNOWN_SEGMENT, true, false);
+            entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key), true, false);
          }
       }
       return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
@@ -297,7 +298,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          // TODO: move to distribution interceptors?
          // we need to try to wrap the entry to get it removed
          // for the removal itself, wrapping null would suffice, but listeners need previous value
-         entryFactory.wrapEntryForWriting(ctx, key, SegmentSpecificCommand.UNKNOWN_SEGMENT, false, false);
+         entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key), false, false);
          if (trace)
            log.tracef("Entry to be removed: %s", toStr(key));
       }
@@ -399,7 +400,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
       for (Object key : command.getMap().keySet()) {
          // as listeners may need the value, we'll load the previous value
-         entryFactory.wrapEntryForWriting(ctx, key, SegmentSpecificCommand.UNKNOWN_SEGMENT,
+         entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
                ignoreOwnership || canReadKey(key), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
       }
       return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
@@ -468,12 +469,12 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       if (command instanceof TxReadOnlyManyCommand) {
          // TxReadOnlyManyCommand may apply some mutations on the entry in context so we need to always wrap it
          for (Object key : command.getKeys()) {
-            entryFactory.wrapEntryForWriting(ctx, key, SegmentSpecificCommand.UNKNOWN_SEGMENT,
+            entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
                   ignoreOwnership(command) || canReadKey(key), true);
          }
       } else {
          for (Object key : command.getKeys()) {
-            entryFactory.wrapEntryForReading(ctx, key, SegmentSpecificCommand.UNKNOWN_SEGMENT,
+            entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key),
                   ignoreOwnership || canReadKey(key));
          }
       }
@@ -511,7 +512,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       boolean ignoreOwnership = ignoreOwnership(command);
       for (Object key : command.getArguments().keySet()) {
          //the put map never reads the keys
-         entryFactory.wrapEntryForWriting(ctx, key, SegmentSpecificCommand.UNKNOWN_SEGMENT,
+         entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
                ignoreOwnership || canReadKey(key), false);
       }
       return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
@@ -525,7 +526,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
       boolean ignoreOwnership = ignoreOwnership(command);
       for (Object key : command.getAffectedKeys()) {
-         entryFactory.wrapEntryForWriting(ctx, key, SegmentSpecificCommand.UNKNOWN_SEGMENT,
+         entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
                ignoreOwnership || canReadKey(key), false);
       }
       return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
@@ -546,7 +547,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
       boolean ignoreOwnership = ignoreOwnership(command);
       for (Object key : command.getAffectedKeys()) {
-         entryFactory.wrapEntryForWriting(ctx, key, SegmentSpecificCommand.UNKNOWN_SEGMENT,
+         entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
                ignoreOwnership || canReadKey(key), true);
       }
       return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
@@ -560,7 +561,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
       boolean ignoreOwnership = ignoreOwnership(command);
       for (Object key : command.getAffectedKeys()) {
-         entryFactory.wrapEntryForWriting(ctx, key, SegmentSpecificCommand.UNKNOWN_SEGMENT,
+         entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
                ignoreOwnership || canReadKey(key), true);
       }
       return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
@@ -807,7 +808,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       private Object handleWriteManyCommand(InvocationContext ctx, WriteCommand command) {
          boolean ignoreOwnership = ignoreOwnership(command);
          for (Object key : command.getAffectedKeys()) {
-            entryFactory.wrapEntryForWriting(ctx, key, SegmentSpecificCommand.UNKNOWN_SEGMENT,
+            entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
                   ignoreOwnership || canReadKey(key), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
          }
          return invokeNext(ctx, command);

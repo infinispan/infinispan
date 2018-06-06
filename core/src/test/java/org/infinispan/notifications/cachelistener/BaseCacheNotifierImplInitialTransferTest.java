@@ -36,6 +36,7 @@ import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -131,7 +132,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       cdl.init(null);
       TestingUtil.inject(n, mockCache, cdl, config,
             mock(DistributionManager.class), new InternalEntryFactoryImpl(),
-            mock(ClusterEventManager.class), mock(ComponentRegistry.class));
+            mock(ClusterEventManager.class), mock(ComponentRegistry.class), mock(KeyPartitioner.class));
       n.start();
       ctx = new NonTxInvocationContext(null);
    }
