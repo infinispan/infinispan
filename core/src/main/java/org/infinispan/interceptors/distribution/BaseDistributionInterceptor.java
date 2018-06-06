@@ -161,11 +161,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    }
 
    protected DistributionInfo retrieveDistributionInfo(LocalizedCacheTopology topology, ReplicableCommand command, Object key) {
-      if (command instanceof SegmentSpecificCommand) {
-         return topology.getDistributionForSegment(((SegmentSpecificCommand) command).getSegment());
-      } else {
-         return topology.getDistribution(key);
-      }
+      return topology.getSegmentDistribution(SegmentSpecificCommand.extractSegment(command, key, keyPartitioner));
    }
 
    protected <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletionStage<Void> remoteGet(
@@ -190,8 +186,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             key, topologyId, info.readOwners());
       }
 
-      ClusteredGetCommand getCommand = cf.buildClusteredGetCommand(key, SegmentSpecificCommand.extractSegment(command),
-            command.getFlagsBitSet());
+      ClusteredGetCommand getCommand = cf.buildClusteredGetCommand(key, info.segmentId(), command.getFlagsBitSet());
       getCommand.setTopologyId(topologyId);
       getCommand.setWrite(isWrite);
 
@@ -970,7 +965,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
 
       LocalizedCacheTopology cacheTopology = checkTopologyId(command);
-      DistributionInfo info = cacheTopology.getSegmentDistribution(command.getSegment());
+      int segment = command.getSegment();
+      DistributionInfo info = cacheTopology.getSegmentDistribution(segment);
       if (entry == null) {
          if (info.isPrimary()) {
             throw new IllegalStateException("Primary owner in writeCH should always be an owner in readCH as well.");
@@ -984,7 +980,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          if (info.isPrimary()) {
             // We don't pass the value for performance as we already have the lock obtained for this key - so it can't
             // change from its current value
-            CompletableFuture<Long> completableFuture = expirationManager.retrieveLastAccess(key, null);
+            CompletableFuture<Long> completableFuture = expirationManager.retrieveLastAccess(key, null, segment);
 
             return asyncValue(completableFuture).thenApply(ctx, command, (rCtx, rCommand, max) -> {
                if (max != null) {
@@ -1001,7 +997,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                      return Boolean.TRUE;
                   } else {
                      // If it wasn't -1 it has to be > 0 so send that update
-                     UpdateLastAccessCommand ulac = cf.buildUpdateLastAccessCommand(key, longMax);
+                     UpdateLastAccessCommand ulac = cf.buildUpdateLastAccessCommand(key, command.getSegment(), longMax);
                      ulac.setTopologyId(cacheTopology.getTopologyId());
                      CompletionStage<?> updateState = rpcManager.invokeCommand(info.readOwners(), ulac,
                            VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
@@ -1018,7 +1014,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                   if (!ctx.isOriginLocal()) {
                      // Have to build a new command since the command id points to the originating node - causes
                      // issues with triangle since it needs to know the originating node to respond to
-                     realRemoveCommand = cf.buildRemoveExpiredCommand(key, command.getValue());
+                     realRemoveCommand = cf.buildRemoveExpiredCommand(key, command.getValue(), segment);
                      realRemoveCommand.setTopologyId(cacheTopology.getTopologyId());
                   } else {
                      realRemoveCommand = command;

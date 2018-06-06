@@ -2,17 +2,15 @@ package org.infinispan.container.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.VersionedRepeatableReadEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.container.entries.RepeatableReadEntry;
+import org.infinispan.container.entries.VersionedRepeatableReadEntry;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -35,7 +33,7 @@ public class EntryFactoryImpl implements EntryFactory {
    private static final Log log = LogFactory.getLog(EntryFactoryImpl.class);
    private final static boolean trace = log.isTraceEnabled();
 
-   @Inject private DataContainer container;
+   @Inject private InternalDataContainer container;
    @Inject private Configuration configuration;
    @Inject private TimeService timeService;
    @Inject private VersionGenerator versionGenerator;
@@ -216,24 +214,8 @@ public class EntryFactoryImpl implements EntryFactory {
       return null;
    }
 
-   private InternalCacheEntry peek(Object key, int segment) {
-      if (segment != SegmentSpecificCommand.UNKNOWN_SEGMENT && container instanceof SegmentedDataContainer) {
-         return ((SegmentedDataContainer) container).peek(segment, key);
-      } else {
-         return container.peek(key);
-      }
-   }
-
-   private InternalCacheEntry get(Object key, int segment) {
-      if (segment != SegmentSpecificCommand.UNKNOWN_SEGMENT && container instanceof SegmentedDataContainer) {
-         return ((SegmentedDataContainer) container).get(segment, key);
-      } else {
-         return container.get(key);
-      }
-   }
-
    private CacheEntry getFromContainerForRead(Object key, int segment, boolean isOwner) {
-      InternalCacheEntry ice = get(key, segment);
+      InternalCacheEntry ice = container.get(segment, key);
       if (trace) {
          log.tracef("Retrieved from container %s", ice);
       }
@@ -249,7 +231,7 @@ public class EntryFactoryImpl implements EntryFactory {
       // Write operations should not cause expiration events to occur, because we will most likely overwrite the
       // value anyways - also required for remove expired to not cause infinite loop
       if (writeOperation) {
-         ice = peek(key, segment);
+         ice = container.peek(segment, key);
          if (ice != null && !returnExpired && ice.canExpire()) {
             long wallClockTime = timeService.wallClockTime();
             if (ice.isExpired(wallClockTime)) {
@@ -259,7 +241,7 @@ public class EntryFactoryImpl implements EntryFactory {
             }
          }
       } else {
-         ice = get(key, segment);
+         ice = container.get(segment, key);
       }
       return ice;
    }

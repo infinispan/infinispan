@@ -20,8 +20,8 @@ import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -63,7 +63,7 @@ public class StateProviderImpl implements StateProvider {
    @Inject protected CommandsFactory commandsFactory;
    @Inject private ClusterCacheNotifier clusterCacheNotifier;
    @Inject private TransactionTable transactionTable;     // optional
-   @Inject protected DataContainer dataContainer;
+   @Inject protected InternalDataContainer dataContainer;
    @Inject protected PersistenceManager persistenceManager; // optional
    @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
    protected ExecutorService executorService;

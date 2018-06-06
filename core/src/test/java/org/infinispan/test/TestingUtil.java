@@ -77,6 +77,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
@@ -926,7 +927,7 @@ public class TestingUtil {
       else
          str = "a cache manager at address " + a;
       log.debugf("Cleaning data for cache '%s' on %s", cache.getName(), str);
-      DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
+      InternalDataContainer dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
       if (log.isDebugEnabled()) log.debugf("Data container size before clear: %d", dataContainer.sizeIncludingExpired());
       dataContainer.clear();
    }
@@ -1177,6 +1178,9 @@ public class TestingUtil {
     * Extracts a component of a given type from the cache's internal component registry
     */
    public static <T> T extractComponent(Cache cache, Class<T> componentType) {
+      if (componentType.equals(DataContainer.class)) {
+         throw new UnsupportedOperationException("Should extract InternalDataContainer");
+      }
       ComponentRegistry cr = extractComponentRegistry(cache.getAdvancedCache());
       return cr.getComponent(componentType);
    }
@@ -1204,6 +1208,9 @@ public class TestingUtil {
     * @return the original component that was replaced
     */
    public static <T> T replaceComponent(Cache<?, ?> cache, Class<? extends T> componentType, T replacementComponent, boolean rewire) {
+      if (componentType.equals(DataContainer.class)) {
+         throw new UnsupportedOperationException();
+      }
       ComponentRegistry cr = extractComponentRegistry(cache);
       T old = cr.getComponent(componentType);
       cr.registerComponent(replacementComponent, componentType);
@@ -1283,7 +1290,7 @@ public class TestingUtil {
    }
 
    public static String printCache(Cache cache) {
-      DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
+      DataContainer dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
       Iterator it = dataContainer.iterator();
       StringBuilder builder = new StringBuilder(cache.getName() + "[");
       while (it.hasNext()) {

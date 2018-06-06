@@ -10,13 +10,13 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
@@ -24,8 +24,8 @@ import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.ByRef;
-import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.EvictionListener;
+import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.PeekableMap;
 import org.infinispan.configuration.cache.HashConfiguration;
@@ -56,7 +56,7 @@ import com.github.benmanes.caffeine.cache.RemovalCause;
  * @author wburns
  * @since 9.3
  */
-public abstract class AbstractSegmentedDataContainer<K, V> implements SegmentedDataContainer<K, V> {
+public abstract class AbstractInternalDataContainer<K, V> implements InternalDataContainer<K, V> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final boolean trace = log.isTraceEnabled();
 
@@ -151,7 +151,7 @@ public abstract class AbstractSegmentedDataContainer<K, V> implements SegmentedD
             return copy;
          });
       } else {
-         log.fatalf("Insertion attempted for key: %s but there was no map created for it at segment: %d", k, segment);
+         log.tracef("Insertion attempted for key: %s but there was no map created for it at segment: %d", k, segment);
       }
    }
 
@@ -208,19 +208,6 @@ public abstract class AbstractSegmentedDataContainer<K, V> implements SegmentedD
    }
 
    @Override
-   public int sizeIncludingExpired(IntSet segments) {
-      int size = 0;
-      // The foreach loop would use boxed Iterator, so we have to use old style for loop with iterator
-      for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
-         int segment = iter.next();
-         ConcurrentMap<K, InternalCacheEntry<K, V>> map = getMapForSegment(segment);
-         size += map.size();
-         if (size < 0) return Integer.MAX_VALUE;
-      }
-      return size;
-   }
-
-   @Override
    public void evict(int segment, K key) {
       ConcurrentMap<K, InternalCacheEntry<K, V>> entries = getMapForSegment(segment);
       if (entries != null) {
@@ -260,26 +247,6 @@ public abstract class AbstractSegmentedDataContainer<K, V> implements SegmentedD
    @Override
    public InternalCacheEntry<K, V> compute(K key, DataContainer.ComputeAction<K, V> action) {
       return compute(getSegmentForKey(key), key, action);
-   }
-
-   @Override
-   public Spliterator<InternalCacheEntry<K, V>> spliterator(IntSet segments) {
-      return Spliterators.spliteratorUnknownSize(iterator(segments), Spliterator.DISTINCT | Spliterator.CONCURRENT | Spliterator.NONNULL);
-   }
-
-   @Override
-   public Spliterator<InternalCacheEntry<K, V>> spliterator() {
-      return Spliterators.spliteratorUnknownSize(iterator(), Spliterator.DISTINCT | Spliterator.CONCURRENT | Spliterator.NONNULL);
-   }
-
-   @Override
-   public Spliterator<InternalCacheEntry<K, V>> spliteratorIncludingExpired(IntSet segments) {
-      return Spliterators.spliteratorUnknownSize(iteratorIncludingExpired(segments), Spliterator.DISTINCT | Spliterator.CONCURRENT | Spliterator.NONNULL);
-   }
-
-   @Override
-   public Spliterator<InternalCacheEntry<K, V>> spliteratorIncludingExpired() {
-      return Spliterators.spliteratorUnknownSize(iteratorIncludingExpired(), Spliterator.DISTINCT | Spliterator.CONCURRENT | Spliterator.NONNULL);
    }
 
    @Override
@@ -361,88 +328,6 @@ public abstract class AbstractSegmentedDataContainer<K, V> implements SegmentedD
       }
    }
 
-   /**
-    * Spliterator that wraps another to make sure to now return expired entries. This class also implements
-    * CloseableSpliterator to prevent additional allocations if user needs it to be closeable.
-    */
-   protected class EntrySpliterator implements CloseableSpliterator<InternalCacheEntry<K, V>> {
-      private final Spliterator<InternalCacheEntry<K, V>> spliterator;
-      // We assume that spliterator is not used concurrently - normally it is split so we can use these variables safely
-      private final Consumer<? super InternalCacheEntry<K, V>> consumer = ice -> current = ice;
-
-      private InternalCacheEntry<K, V> current;
-
-      public EntrySpliterator(Spliterator<InternalCacheEntry<K, V>> spliterator) {
-         this.spliterator = spliterator;
-      }
-
-      @Override
-      public void close() {
-         // Do nothing
-      }
-
-      @Override
-      public boolean tryAdvance(Consumer<? super InternalCacheEntry<K, V>> action) {
-         InternalCacheEntry<K, V> entryToUse = null;
-         boolean initializedTime = false;
-         long now = 0;
-         while (entryToUse == null && spliterator.tryAdvance(consumer)) {
-            entryToUse = current;
-            if (entryToUse.canExpire()) {
-               if (!initializedTime) {
-                  now = timeService.wallClockTime();
-                  initializedTime = true;
-               }
-               if (entryToUse.isExpired(now) &&
-                     expirationManager.entryExpiredInMemoryFromIteration(entryToUse, now).join() == Boolean.TRUE) {
-                  entryToUse = null;
-               }
-            }
-         }
-         if (entryToUse != null) {
-            action.accept(entryToUse);
-            return true;
-         }
-
-         return false;
-      }
-
-      @Override
-      public void forEachRemaining(Consumer<? super InternalCacheEntry<K, V>> action) {
-         // We don't call the forEachRemaining on the actual spliterator, since we want to keep the time between
-         // invocations
-         long now = timeService.wallClockTime();
-
-         while (spliterator.tryAdvance(consumer)) {
-            InternalCacheEntry<K, V> currentEntry = current;
-            if (currentEntry.canExpire() && currentEntry.isExpired(now) &&
-                  expirationManager.entryExpiredInMemoryFromIteration(currentEntry, now).join() == Boolean.TRUE) {
-               continue;
-            }
-            action.accept(currentEntry);
-         }
-      }
-
-      @Override
-      public Spliterator<InternalCacheEntry<K, V>> trySplit() {
-         Spliterator<InternalCacheEntry<K, V>> split = spliterator.trySplit();
-         if (split != null) {
-            return new EntrySpliterator(split);
-         }
-         return null;
-      }
-
-      @Override
-      public long estimateSize() {
-         return spliterator.estimateSize();
-      }
-
-      @Override
-      public int characteristics() {
-         return spliterator.characteristics() | Spliterator.DISTINCT;
-      }
-   }
-
    @Override
    public Collection<V> values() {
       return new Values();
@@ -456,12 +341,12 @@ public abstract class AbstractSegmentedDataContainer<K, V> implements SegmentedD
    protected class Values extends AbstractCollection<V> {
       @Override
       public Iterator<V> iterator() {
-         return new ValueIterator<>(AbstractSegmentedDataContainer.this.iteratorIncludingExpired());
+         return new ValueIterator<>(AbstractInternalDataContainer.this.iteratorIncludingExpired());
       }
 
       @Override
       public int size() {
-         return AbstractSegmentedDataContainer.this.sizeIncludingExpired();
+         return AbstractInternalDataContainer.this.sizeIncludingExpired();
       }
 
       @Override
@@ -531,7 +416,7 @@ public abstract class AbstractSegmentedDataContainer<K, V> implements SegmentedD
 
          @SuppressWarnings("rawtypes")
          Map.Entry e = (Map.Entry) o;
-         InternalCacheEntry ice = AbstractSegmentedDataContainer.this.get(e.getKey());
+         InternalCacheEntry ice = AbstractInternalDataContainer.this.get(e.getKey());
          if (ice == null) {
             return false;
          }
@@ -540,12 +425,12 @@ public abstract class AbstractSegmentedDataContainer<K, V> implements SegmentedD
 
       @Override
       public Iterator<InternalCacheEntry<K, V>> iterator() {
-         return new ImmutableEntryIterator(AbstractSegmentedDataContainer.this.iteratorIncludingExpired());
+         return new ImmutableEntryIterator(AbstractInternalDataContainer.this.iteratorIncludingExpired());
       }
 
       @Override
       public int size() {
-         return AbstractSegmentedDataContainer.this.sizeIncludingExpired();
+         return AbstractInternalDataContainer.this.sizeIncludingExpired();
       }
 
       @Override
@@ -595,7 +480,7 @@ public abstract class AbstractSegmentedDataContainer<K, V> implements SegmentedD
       });
    }
 
-   public static <K, V> Caffeine<K, V> caffeineBuilder() {
+   static <K, V> Caffeine<K, V> caffeineBuilder() {
       return (Caffeine<K, V>) Caffeine.newBuilder();
    }
 
@@ -619,5 +504,27 @@ public abstract class AbstractSegmentedDataContainer<K, V> implements SegmentedD
       @Override
       public void onEntryRemoved(Map.Entry<K, InternalCacheEntry<K, V>> entry) {
       }
+   }
+
+   /**
+    * Returns a new spliterator that will not return entries that have expired.
+    * @param spliterator the spliterator to filter expired entries out of
+    * @return new spliterator with expired entries filtered
+    */
+   protected Spliterator<InternalCacheEntry<K, V>> filterExpiredEntries(Spliterator<InternalCacheEntry<K, V>> spliterator) {
+      // This way we only read the wall clock time at the beginning
+      long accessTime = timeService.wallClockTime();
+      return new FilterSpliterator<>(spliterator, expiredIterationPredicate(accessTime));
+   }
+
+   /**
+    * Returns a predicate that will return false when an entry is expired. This predicate assumes this is invoked from
+    * an iteration process.
+    * @param accessTime the access time to base expiration off of
+    * @return predicate that returns true if an entry is not expired
+    */
+   protected Predicate<InternalCacheEntry<K, V>> expiredIterationPredicate(long accessTime) {
+      return e -> ! e.canExpire() ||
+            ! (e.isExpired(accessTime) && expirationManager.entryExpiredInMemoryFromIteration(e, accessTime).join() == Boolean.TRUE);
    }
 }

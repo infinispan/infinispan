@@ -6,6 +6,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.impl.DefaultSegmentedDataContainer;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -32,7 +33,7 @@ public class DefaultSegmentedDataContainerTest extends MultipleCacheManagersTest
 
    public void ensureOldMapsRemoved() {
       for (Cache<Object, Object> cache : caches(CACHE_NAME)) {
-         DataContainer dc = TestingUtil.extractComponent(cache, DataContainer.class);
+         DataContainer dc = TestingUtil.extractComponent(cache, InternalDataContainer.class);
          assertTrue(dc instanceof DefaultSegmentedDataContainer);
 
          DefaultSegmentedDataContainer segmentedDataContainer = (DefaultSegmentedDataContainer) dc;

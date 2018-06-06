@@ -30,6 +30,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
@@ -69,7 +70,8 @@ public class OnlyPrimaryOwnerTest {
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(Encoder.class)).thenReturn(new IdentityEncoder());
 
       TestingUtil.inject(n, mockCache, cdl, config, mock(DistributionManager.class),
-            mock(InternalEntryFactory.class), mock(ClusterEventManager.class), mock(ComponentRegistry.class));
+            mock(InternalEntryFactory.class), mock(ClusterEventManager.class), mock(ComponentRegistry.class),
+            mock(KeyPartitioner.class));
       cl = new PrimaryOwnerCacheListener();
       n.start();
       n.addListener(cl);
@@ -99,7 +101,7 @@ public class OnlyPrimaryOwnerTest {
       }
 
       @Override
-      public Commit commitType(FlagAffectedCommand command, InvocationContext ctx, Object key, int segment, boolean removed) {
+      public Commit commitType(FlagAffectedCommand command, InvocationContext ctx, int segment, boolean removed) {
          return isOwner ? Commit.COMMIT_LOCAL : Commit.NO_COMMIT;
       }
 

@@ -413,7 +413,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                retrievals = new ArrayList<>();
             }
             GetCacheEntryCommand fakeGetCommand = cf.buildGetCacheEntryCommand(key,
-                  SegmentSpecificCommand.extractSegment(command), command.getFlagsBitSet());
+                  SegmentSpecificCommand.extractSegment(command, key, keyPartitioner), command.getFlagsBitSet());
             CompletableFuture<?> getFuture =
                   remoteGet(ctx, fakeGetCommand, fakeGetCommand.getKey(), true).toCompletableFuture();
             retrievals.add(getFuture);

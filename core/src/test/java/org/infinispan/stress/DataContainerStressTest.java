@@ -168,7 +168,7 @@ public class DataContainerStressTest {
                  }
 
                  @Override
-                 public CompletableFuture<Long> retrieveLastAccess(Object key, Object value) {
+                 public CompletableFuture<Long> retrieveLastAccess(Object key, Object value, int segment) {
                     return null;
                  }
               });

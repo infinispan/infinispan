@@ -46,7 +46,8 @@ public final class ReadOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> imp
    public <R> CompletableFuture<R> eval(K key, Function<ReadEntryView<K, V>, R> f) {
       log.tracef("Invoked eval(k=%s, %s)", key, params);
       Object keyEncoded = keyDataConversion.toStorage(key);
-      ReadOnlyKeyCommand<K, V, R> cmd = fmap.commandsFactory.buildReadOnlyKeyCommand(keyEncoded, f, params, keyDataConversion, valueDataConversion);
+      ReadOnlyKeyCommand<K, V, R> cmd = fmap.commandsFactory.buildReadOnlyKeyCommand(keyEncoded, f,
+            fmap.keyPartitioner.getSegment(keyEncoded), params, keyDataConversion, valueDataConversion);
       InvocationContext ctx = fmap.invCtxFactory.createInvocationContext(false, 1);
       return (CompletableFuture<R>) fmap.chain.invokeAsync(ctx, cmd);
    }

@@ -16,9 +16,9 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.SmallIntSet;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -65,7 +65,7 @@ public class OutboundTransferTask implements Runnable {
 
    private final KeyPartitioner keyPartitioner;
 
-   private final DataContainer<Object, Object> dataContainer;
+   private final InternalDataContainer<Object, Object> dataContainer;
 
    private final PersistenceManager persistenceManager;
 
@@ -101,7 +101,7 @@ public class OutboundTransferTask implements Runnable {
                                int topologyId, KeyPartitioner keyPartitioner,
                                Consumer<OutboundTransferTask> onCompletion, Consumer<List<StateChunk>> onChunkReplicated,
                                BiFunction<InternalCacheEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromDataContainer,
-                               BiFunction<MarshalledEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromStore, DataContainer dataContainer,
+                               BiFunction<MarshalledEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromStore, InternalDataContainer dataContainer,
                                PersistenceManager persistenceManager, RpcManager rpcManager,
                                CommandsFactory commandsFactory, InternalEntryFactory ef, long timeout, String cacheName,
                                boolean applyState, boolean pushTransfer) {

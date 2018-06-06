@@ -13,6 +13,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.DefaultDataContainer;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
+import org.infinispan.container.impl.InternalDataContainerAdapter;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -79,9 +80,13 @@ public class DataContainerTest extends AbstractInfinispanTest {
          // Verify that the default is correctly established
          Assert.assertEquals(cm.getDefaultCacheConfiguration().dataContainer().dataContainer().getClass().getName(), QueryableDataContainer.class.getName());
 
-         Assert.assertEquals(cache.getDataContainer().getClass(), QueryableDataContainer.class);
+         DataContainer container = cache.getDataContainer();
+         Assert.assertEquals(container.getClass(), InternalDataContainerAdapter.class);
 
-         QueryableDataContainer dataContainer = QueryableDataContainer.class.cast(cache.getDataContainer());
+         DataContainer delegate = ((InternalDataContainerAdapter) container).delegate();
+         Assert.assertEquals(delegate.getClass(), QueryableDataContainer.class);
+
+         QueryableDataContainer dataContainer = QueryableDataContainer.class.cast(delegate);
 
          Assert.assertFalse(checkLoggedOperations(dataContainer.getLoggedOperations(), "setFoo(bar)"));
 
@@ -115,9 +120,13 @@ public class DataContainerTest extends AbstractInfinispanTest {
          // Verify that the config is correct
          Assert.assertEquals(cm.getDefaultCacheConfiguration().dataContainer().dataContainer().getClass(), QueryableDataContainer.class);
 
-         Assert.assertEquals(cache.getDataContainer().getClass(), QueryableDataContainer.class);
+         DataContainer container = cache.getDataContainer();
+         Assert.assertEquals(container.getClass(), InternalDataContainerAdapter.class);
 
-         QueryableDataContainer dataContainer = QueryableDataContainer.class.cast(cache.getDataContainer());
+         DataContainer delegate = ((InternalDataContainerAdapter) container).delegate();
+         Assert.assertEquals(delegate.getClass(), QueryableDataContainer.class);
+
+         QueryableDataContainer dataContainer = QueryableDataContainer.class.cast(delegate);
 
          cache.put("name", "Pete");
 

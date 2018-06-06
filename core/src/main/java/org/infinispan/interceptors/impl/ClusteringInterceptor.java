@@ -6,8 +6,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.EntryFactory;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -30,7 +30,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
    @Inject protected CommandsFactory cf;
    @Inject protected EntryFactory entryFactory;
    @Inject protected LockManager lockManager;
-   @Inject protected DataContainer dataContainer;
+   @Inject protected InternalDataContainer dataContainer;
    @Inject protected StateTransferManager stateTransferManager;
    @Inject protected DistributionManager distributionManager;
 

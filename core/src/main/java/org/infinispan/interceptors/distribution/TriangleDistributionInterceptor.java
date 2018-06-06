@@ -572,7 +572,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
          entryFactory.wrapExternalEntry(ctx, key, null, false, true);
       } else {
          GetCacheEntryCommand fakeGetCommand = cf.buildGetCacheEntryCommand(key,
-               SegmentSpecificCommand.extractSegment(command), command.getFlagsBitSet());
+               SegmentSpecificCommand.extractSegment(command, key, keyPartitioner), command.getFlagsBitSet());
          fakeGetCommand.setTopologyId(command.getTopologyId());
          futureList.add(remoteGet(ctx, fakeGetCommand, key, true).toCompletableFuture());
       }

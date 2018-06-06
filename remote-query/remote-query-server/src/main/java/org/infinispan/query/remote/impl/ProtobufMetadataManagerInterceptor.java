@@ -22,6 +22,7 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
@@ -54,6 +55,8 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
    private SerializationContext serializationContext;
 
+   private KeyPartitioner keyPartitioner;
+
    /**
     * A no-op callback.
     */
@@ -80,14 +83,17 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       public void handleError(String fileName, DescriptorParserException exception) {
          // handle first error per file, ignore the rest if any
          if (errorFiles.add(fileName)) {
-            VisitableCommand cmd = commandsFactory.buildPutKeyValueCommand(fileName + ERRORS_KEY_SUFFIX, exception.getMessage(), DEFAULT_METADATA, flagsBitSet);
+            Object key = fileName + ERRORS_KEY_SUFFIX;
+            VisitableCommand cmd = commandsFactory.buildPutKeyValueCommand(key, exception.getMessage(),
+                  keyPartitioner.getSegment(key), DEFAULT_METADATA, flagsBitSet);
             invoker.invoke(ctx, cmd);
          }
       }
 
       @Override
       public void handleSuccess(String fileName) {
-         VisitableCommand cmd = commandsFactory.buildRemoveCommand(fileName + ERRORS_KEY_SUFFIX, null, flagsBitSet);
+         Object key = fileName + ERRORS_KEY_SUFFIX;
+         VisitableCommand cmd = commandsFactory.buildRemoveCommand(key, null, keyPartitioner.getSegment(key), flagsBitSet);
          invoker.invoke(ctx, cmd);
       }
    }
@@ -168,9 +174,11 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    };
 
    @Inject
-   public void init(CommandsFactory commandsFactory, AsyncInterceptorChain invoker, ProtobufMetadataManager protobufMetadataManager) {
+   public void init(CommandsFactory commandsFactory, AsyncInterceptorChain invoker, KeyPartitioner keyPartitioner,
+         ProtobufMetadataManager protobufMetadataManager) {
       this.commandsFactory = commandsFactory;
       this.invoker = invoker;
+      this.keyPartitioner = keyPartitioner;
       this.serializationContext = ((ProtobufMetadataManagerImpl) protobufMetadataManager).getSerializationContext();
    }
 
@@ -309,7 +317,9 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             LockControlCommand lockCommand = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, flagsBitSet, null);
             invoker.invoke(ctx, lockCommand);
 
-            WriteCommand writeCommand = commandsFactory.buildRemoveCommand(key + ERRORS_KEY_SUFFIX, null, flagsBitSet);
+            Object keyWithSuffix = key + ERRORS_KEY_SUFFIX;
+            WriteCommand writeCommand = commandsFactory.buildRemoveCommand(keyWithSuffix, null,
+                  keyPartitioner.getSegment(keyWithSuffix), flagsBitSet);
             invoker.invoke(ctx, writeCommand);
 
             if (serializationContext.getFileDescriptors().containsKey(key)) {
@@ -321,23 +331,28 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             for (FileDescriptor fd : serializationContext.getFileDescriptors().values()) {
                String errorFileName = fd.getName() + ERRORS_KEY_SUFFIX;
                if (fd.isResolved()) {
-                  writeCommand = commandsFactory.buildRemoveCommand(errorFileName, null, flagsBitSet);
+                  writeCommand = commandsFactory.buildRemoveCommand(errorFileName, null,
+                        keyPartitioner.getSegment(errorFileName), flagsBitSet);
                   invoker.invoke(ctx, writeCommand);
                } else {
                   if (sb.length() > 0) {
                      sb.append('\n');
                   }
                   sb.append(fd.getName());
-                  PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(errorFileName, "One of the imported files is missing or has errors", DEFAULT_METADATA, flagsBitSet);
+                  PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(errorFileName,
+                        "One of the imported files is missing or has errors", keyPartitioner.getSegment(errorFileName),
+                        DEFAULT_METADATA, flagsBitSet);
                   put.setPutIfAbsent(true);
                   invoker.invoke(ctx, put);
                }
             }
 
             if (sb.length() > 0) {
-               writeCommand = commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX, sb.toString(), DEFAULT_METADATA, flagsBitSet);
+               writeCommand = commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX, sb.toString(),
+                     keyPartitioner.getSegment(ERRORS_KEY_SUFFIX), DEFAULT_METADATA, flagsBitSet);
             } else {
-               writeCommand = commandsFactory.buildRemoveCommand(ERRORS_KEY_SUFFIX, null, flagsBitSet);
+               writeCommand = commandsFactory.buildRemoveCommand(ERRORS_KEY_SUFFIX, null,
+                     keyPartitioner.getSegment(ERRORS_KEY_SUFFIX), flagsBitSet);
             }
             invoker.invoke(ctx, writeCommand);
          }
@@ -415,7 +430,8 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       // remove or update .errors accordingly
       VisitableCommand cmd;
       if (errorFiles.isEmpty()) {
-         cmd = commandsFactory.buildRemoveCommand(ERRORS_KEY_SUFFIX, null, flagsBitSet);
+         cmd = commandsFactory.buildRemoveCommand(ERRORS_KEY_SUFFIX, null, keyPartitioner.getSegment(ERRORS_KEY_SUFFIX),
+               flagsBitSet);
       } else {
          StringBuilder sb = new StringBuilder();
          for (String fileName : errorFiles) {
@@ -424,7 +440,8 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             }
             sb.append(fileName);
          }
-         cmd = commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX, sb.toString(), DEFAULT_METADATA, flagsBitSet);
+         cmd = commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX, sb.toString(),
+               keyPartitioner.getSegment(ERRORS_KEY_SUFFIX), DEFAULT_METADATA, flagsBitSet);
       }
       invoker.invoke(ctx, cmd);
    }

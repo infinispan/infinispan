@@ -129,14 +129,17 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
 
    private void handleSingleKeyWriteReturn(InvocationContext ctx, VisitableCommand command, Object rv) throws Throwable {
       DataWriteCommand dataWriteCommand = (DataWriteCommand) command;
+      int segment = dataWriteCommand.getSegment();
       if (dataWriteCommand.isSuccessful() &&
-            clusteringDependentLogic.getCacheTopology().getDistribution(dataWriteCommand.getKey()).isPrimary()) {
+            clusteringDependentLogic.getCacheTopology().getSegmentDistribution(segment).isPrimary()) {
          CacheEntry entry = ctx.lookupEntry(dataWriteCommand.getKey());
          DataWriteCommand crossSiteCommand;
          if (entry.isRemoved()) {
-            crossSiteCommand = commandsFactory.buildRemoveCommand(dataWriteCommand.getKey(), null, dataWriteCommand.getFlagsBitSet());
+            crossSiteCommand = commandsFactory.buildRemoveCommand(dataWriteCommand.getKey(), null, segment,
+                  dataWriteCommand.getFlagsBitSet());
          } else {
-            crossSiteCommand = commandsFactory.buildPutKeyValueCommand(dataWriteCommand.getKey(), entry.getValue(), entry.getMetadata(), dataWriteCommand.getFlagsBitSet());
+            crossSiteCommand = commandsFactory.buildPutKeyValueCommand(dataWriteCommand.getKey(), entry.getValue(),
+                  segment, entry.getMetadata(), dataWriteCommand.getFlagsBitSet());
          }
          backupSender.processResponses(backupSender.backupWrite(crossSiteCommand), dataWriteCommand);
       }
@@ -149,7 +152,8 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
          return invokeNext(ctx, command);
       } else if (command instanceof ReadWriteKeyCommand) {
          ReadWriteKeyCommand readWriteKeyCommand = (ReadWriteKeyCommand) command;
-         return commandsFactory.buildReadWriteKeyCommand(readWriteKeyCommand.getKey(), readWriteKeyCommand.getFunction(), readWriteKeyCommand.getParams(), readWriteKeyCommand.getKeyDataConversion(), readWriteKeyCommand.getValueDataConversion());
+         return commandsFactory.buildReadWriteKeyCommand(readWriteKeyCommand.getKey(), readWriteKeyCommand.getFunction(),
+               readWriteKeyCommand.getSegment(), readWriteKeyCommand.getParams(), readWriteKeyCommand.getKeyDataConversion(), readWriteKeyCommand.getValueDataConversion());
       }
       return invokeNextThenAccept(ctx, command, handleMultipleKeysWriteReturn);
    }

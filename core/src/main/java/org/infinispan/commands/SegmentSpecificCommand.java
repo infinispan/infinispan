@@ -1,5 +1,7 @@
 package org.infinispan.commands;
 
+import org.infinispan.distribution.ch.KeyPartitioner;
+
 /**
  * Interface to be implemented when the command can define a single segment for its operation. This is useful
  * so that subsequent operations requiring a segment can retrieve it from the command and have it only computed
@@ -18,21 +20,18 @@ public interface SegmentSpecificCommand {
    int getSegment();
 
    /**
-    * The value used to symbolize that a segment is unknown. This value cannot be returned from {@link #getSegment()}.
-    */
-   int UNKNOWN_SEGMENT = -1;
-
-   /**
-    * Utility to extract the segment from a given command that may be a {@link SegmentSpecificCommand}. If it is
-    * it will return the 0 or larger segment. If not it will return {@link #UNKNOWN_SEGMENT} to signify this.
+    * Utility to extract the segment from a given command that may be a {@link SegmentSpecificCommand}. If the
+    * command is a {@link SegmentSpecificCommand}, it will immediately return the value from {@link #getSegment()}.
+    * Otherwise it will return the result from invoking {@link KeyPartitioner#getSegment(Object)} passing the provided key.
     * @param command the command to extract the segment from
-    * @return the segment value from the command, being 0 or greater or {@link #UNKNOWN_SEGMENT} if this command doesn't
-    * implement {@link SegmentSpecificCommand}.
+    * @param key the key the segment belongs to
+    * @param keyPartitioner the partitioner to calculate the segment of the key
+    * @return the segment value to use.
     */
-   static int extractSegment(ReplicableCommand command) {
+   static int extractSegment(ReplicableCommand command, Object key, KeyPartitioner keyPartitioner) {
       if (command instanceof SegmentSpecificCommand) {
          return ((SegmentSpecificCommand) command).getSegment();
       }
-      return UNKNOWN_SEGMENT;
+      return keyPartitioner.getSegment(key);
    }
 }

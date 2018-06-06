@@ -33,8 +33,8 @@ import java.util.stream.IntStream;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -433,11 +433,11 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
    }
 
    protected void waitUntilDataContainerWillBeIteratedOn(final Cache<?, ?> cache, final CheckPoint checkPoint) {
-      DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
+      InternalDataContainer dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(dataContainer);
-      DataContainer mocaContainer = mock(DataContainer.class, withSettings().defaultAnswer(forwardedAnswer));
+      InternalDataContainer mockContainer = mock(InternalDataContainer.class, withSettings().defaultAnswer(forwardedAnswer));
       final AtomicInteger invocationCount = new AtomicInteger();
-      doAnswer(invocation -> {
+      Answer blockingAnswer = invocation -> {
          boolean waiting = false;
          if (invocationCount.getAndIncrement() == 0) {
             waiting = true;
@@ -458,7 +458,10 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
                checkPoint.awaitStrict("post_iterator_released", 10, TimeUnit.SECONDS);
             }
          }
-      }).when(mocaContainer).spliterator();
-      TestingUtil.replaceComponent(cache, DataContainer.class, mocaContainer, true);
+      };
+      doAnswer(blockingAnswer).when(mockContainer).spliterator(any());
+      // Scattered cache with prefetch doesn't use segmented container
+      doAnswer(blockingAnswer).when(mockContainer).spliterator();
+      TestingUtil.replaceComponent(cache, InternalDataContainer.class, mockContainer, true);
    }
 }

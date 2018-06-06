@@ -19,7 +19,7 @@ import javax.transaction.TransactionManager;
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.DataContainer;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.transport.Address;
@@ -119,11 +119,11 @@ public class StaleTxWithCommitDuringStateTransferTest extends MultipleCacheManag
 
       // Check the key on all caches
       if (commit) {
-         assertEquals("v0", TestingUtil.extractComponent(cache0, DataContainer.class).get(key).getValue());
-         assertEquals("v0", TestingUtil.extractComponent(cache1, DataContainer.class).get(key).getValue());
+         assertEquals("v0", TestingUtil.extractComponent(cache0, InternalDataContainer.class).get(key).getValue());
+         assertEquals("v0", TestingUtil.extractComponent(cache1, InternalDataContainer.class).get(key).getValue());
       } else {
-         assertNull(TestingUtil.extractComponent(cache0, DataContainer.class).get(key));
-         assertNull(TestingUtil.extractComponent(cache1, DataContainer.class).get(key));
+         assertNull(TestingUtil.extractComponent(cache0, InternalDataContainer.class).get(key));
+         assertNull(TestingUtil.extractComponent(cache1, InternalDataContainer.class).get(key));
       }
 
       // Check for stale locks

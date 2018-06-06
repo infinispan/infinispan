@@ -41,7 +41,6 @@ import org.infinispan.atomic.DeltaAware;
 import org.infinispan.atomic.impl.ApplyDelta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
@@ -81,6 +80,7 @@ import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
@@ -88,6 +88,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.PassivationManager;
@@ -160,9 +161,10 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Inject protected TransactionManager transactionManager;
    @Inject protected RpcManager rpcManager;
    @Inject protected StreamingMarshaller marshaller;
+   @Inject protected KeyPartitioner keyPartitioner;
    @Inject private EvictionManager evictionManager;
    @Inject private InternalExpirationManager<K, V> expirationManager;
-   @Inject private DataContainer dataContainer;
+   @Inject private InternalDataContainer dataContainer;
    @Inject private EmbeddedCacheManager cacheManager;
    @Inject private LockManager lockManager;
    @Inject private DistributionManager distributionManager;
@@ -298,7 +300,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          Metadata metadata, long flags, ContextBuilder contextBuilder) {
       assertKeyNotNull(key);
       assertFunctionNotNull(remappingFunction);
-      ComputeCommand command = commandsFactory.buildComputeCommand(key, remappingFunction, computeIfPresent, metadata, flags);
+      ComputeCommand command = commandsFactory.buildComputeCommand(key, remappingFunction, computeIfPresent,
+            keyPartitioner.getSegment(key), metadata, flags);
       return executeCommandAndCommitIfNeeded(contextBuilder, command, 1);
    }
 
@@ -317,7 +320,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          ContextBuilder contextBuilder) {
       assertKeyNotNull(key);
       assertFunctionNotNull(mappingFunction);
-      ComputeIfAbsentCommand command = commandsFactory.buildComputeIfAbsentCommand(key, mappingFunction, metadata, flags);
+      ComputeIfAbsentCommand command = commandsFactory.buildComputeIfAbsentCommand(key, mappingFunction,
+            keyPartitioner.getSegment(key), metadata, flags);
       return executeCommandAndCommitIfNeeded(contextBuilder, command, 1);
    }
 
@@ -357,8 +361,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       assertValueNotNull(value);
       assertFunctionNotNull(remappingFunction);
       ReadWriteKeyCommand<K, V, V> command = commandsFactory.buildReadWriteKeyCommand(key,
-            new MergeFunction<>(value, remappingFunction, metadata), Params.fromFlagsBitSet(flags),
-            getKeyDataConversion(), getValueDataConversion());
+            new MergeFunction<>(value, remappingFunction, metadata), keyPartitioner.getSegment(key),
+            Params.fromFlagsBitSet(flags), getKeyDataConversion(), getValueDataConversion());
       return executeCommandAndCommitIfNeeded(contextBuilder, command, 1);
    }
 
@@ -425,7 +429,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final boolean remove(Object key, Object value, long explicitFlags, ContextBuilder contextBuilder) {
       assertKeyValueNotNull(key, value);
-      RemoveCommand command = commandsFactory.buildRemoveCommand(key, value, explicitFlags);
+      RemoveCommand command = commandsFactory.buildRemoveCommand(key, value, keyPartitioner.getSegment(key), explicitFlags);
       return executeCommandAndCommitIfNeeded(contextBuilder, command, 1);
    }
 
@@ -471,13 +475,13 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    final V get(Object key, long explicitFlags, InvocationContext ctx) {
       assertKeyNotNull(key);
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags);
+      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, keyPartitioner.getSegment(key), explicitFlags);
       return (V) invoker.invoke(ctx, command);
    }
 
    final CacheEntry getCacheEntry(Object key, long explicitFlags, InvocationContext ctx) {
       assertKeyNotNull(key);
-      GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, SegmentSpecificCommand.UNKNOWN_SEGMENT,
+      GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, keyPartitioner.getSegment(key),
             explicitFlags);
       Object ret = invoker.invoke(ctx, command);
       return (CacheEntry) ret;
@@ -495,7 +499,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final CompletableFuture<CacheEntry<K,V>> getCacheEntryAsync(Object key, long explicitFlags, InvocationContext ctx) {
       assertKeyNotNull(key);
-      GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, SegmentSpecificCommand.UNKNOWN_SEGMENT,
+      GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, keyPartitioner.getSegment(key),
             explicitFlags);
       return invoker.invokeAsync(ctx, command).thenApply(CacheEntry.class::cast);
    }
@@ -630,12 +634,13 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    private RemoveCommand createRemoveCommand(Object key, long explicitFlags) {
       long flags = addUnsafeFlags(explicitFlags);
-      return commandsFactory.buildRemoveCommand(key, null, flags);
+      return commandsFactory.buildRemoveCommand(key, null, keyPartitioner.getSegment(key), flags);
    }
 
    @Override
    public CompletableFuture<Void> removeLifespanExpired(K key, V value, Long lifespan) {
-      RemoveExpiredCommand command = commandsFactory.buildRemoveExpiredCommand(key, value, lifespan);
+      RemoveExpiredCommand command = commandsFactory.buildRemoveExpiredCommand(key, value, keyPartitioner.getSegment(key),
+            lifespan);
       // Remove expired returns a boolean - just ignore it, the caller just needs to know that the expired
       // entry is removed when this completes
       CompletableFuture<Boolean> completableFuture = performRemoveExpiredCommand(command);
@@ -644,7 +649,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value) {
-      RemoveExpiredCommand command = commandsFactory.buildRemoveExpiredCommand(key, value);
+      RemoveExpiredCommand command = commandsFactory.buildRemoveExpiredCommand(key, value, keyPartitioner.getSegment(key));
       return performRemoveExpiredCommand(command);
    }
 
@@ -875,7 +880,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          log.evictionDisabled(name);
       }
       InvocationContext ctx = createSingleKeyNonTxInvocationContext();
-      EvictCommand command = commandsFactory.buildEvictCommand(key, explicitFlags);
+      EvictCommand command = commandsFactory.buildEvictCommand(key, keyPartitioner.getSegment(key), explicitFlags);
       invoker.invoke(ctx, command);
    }
 
@@ -1020,7 +1025,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    private ReadWriteKeyValueCommand<K, Object, Object, Object> createApplyDelta(K deltaAwareValueKey, Delta delta, long explicitFlags) {
       ReadWriteKeyValueCommand<K, Object, Object, Object> command = commandsFactory.buildReadWriteKeyValueCommand(
-            deltaAwareValueKey, delta, new ApplyDelta<>(marshaller), Params.create(), getKeyDataConversion(), getValueDataConversion());
+            deltaAwareValueKey, delta, new ApplyDelta<>(marshaller), keyPartitioner.getSegment(deltaAwareValueKey),
+            Params.create(), getKeyDataConversion(), getValueDataConversion());
       command.setFlagsBitSet(explicitFlags);
       return command;
    }
@@ -1357,7 +1363,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private PutKeyValueCommand createPutCommand(K key, V value, Metadata metadata, long explicitFlags) {
       long flags = addUnsafeFlags(explicitFlags);
       Metadata merged = applyDefaultMetadata(metadata);
-      return commandsFactory.buildPutKeyValueCommand(key, value, merged, flags);
+      return commandsFactory.buildPutKeyValueCommand(key, value, keyPartitioner.getSegment(key), merged, flags);
    }
 
    private long addIgnoreReturnValuesFlag(long flagBitSet) {
@@ -1397,7 +1403,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private PutKeyValueCommand createPutIfAbsentCommand(K key, V value, Metadata metadata, long explicitFlags) {
       long flags = addUnsafeFlags(explicitFlags);
       Metadata merged = applyDefaultMetadata(metadata);
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, merged, flags);
+      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, keyPartitioner.getSegment(key),
+            merged, flags);
       command.setPutIfAbsent(true);
       command.setValueMatcher(ValueMatcher.MATCH_EXPECTED);
       return command;
@@ -1453,7 +1460,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private ReplaceCommand createReplaceCommand(K key, V value, Metadata metadata, long explicitFlags) {
       long flags = addUnsafeFlags(explicitFlags);
       Metadata merged = applyDefaultMetadata(metadata);
-      return commandsFactory.buildReplaceCommand(key, null, value, merged, flags);
+      return commandsFactory.buildReplaceCommand(key, null, value, keyPartitioner.getSegment(key), merged, flags);
    }
 
    @Override
@@ -1473,7 +1480,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    private ReplaceCommand createReplaceConditionalCommand(K key, V oldValue, V value, Metadata metadata, long explicitFlags) {
       Metadata merged = applyDefaultMetadata(metadata);
-      return commandsFactory.buildReplaceCommand(key, oldValue, value, merged, explicitFlags);
+      return commandsFactory.buildReplaceCommand(key, oldValue, value, keyPartitioner.getSegment(key), merged, explicitFlags);
    }
 
    @Override
@@ -1560,7 +1567,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    final CompletableFuture<Boolean> removeAsync(final Object key, final Object value, final long explicitFlags,
                                                 ContextBuilder contextBuilder) {
       assertKeyValueNotNull(key, value);
-      RemoveCommand command = commandsFactory.buildRemoveCommand(key, value, explicitFlags);
+      RemoveCommand command = commandsFactory.buildRemoveCommand(key, value, keyPartitioner.getSegment(key), explicitFlags);
       return executeCommandAndCommitIfNeededAsync(contextBuilder, command, 1);
    }
 
@@ -1613,7 +1620,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    CompletableFuture<V> getAsync(final K key, final long explicitFlags, InvocationContext ctx) {
       assertKeyNotNull(key);
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags);
+      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, keyPartitioner.getSegment(key), explicitFlags);
       return (CompletableFuture<V>) invoker.invokeAsync(ctx, command);
    }
 

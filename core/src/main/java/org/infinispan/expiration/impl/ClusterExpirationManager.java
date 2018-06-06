@@ -2,8 +2,8 @@ package org.infinispan.expiration.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -73,40 +73,35 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                log.trace("Purging data container of expired entries");
                start = timeService.time();
             }
-            int offset = 0;
             // We limit it so there is only so many async expiration removals done at the same time
-            CompletableFuture[] futures = new CompletableFuture[MAX_ASYNC_EXPIRATIONS];
+            List<CompletableFuture> futures = new ArrayList<>(MAX_ASYNC_EXPIRATIONS);
             long currentTimeMillis = timeService.wallClockTime();
-            for (Iterator<InternalCacheEntry<K, V>> purgeCandidates = dataContainer.iteratorIncludingExpired();
-                 purgeCandidates.hasNext();) {
-               InternalCacheEntry<K, V> e = purgeCandidates.next();
-               if (e.canExpire()) {
+            dataContainer.forEachIncludingExpired((ice, segment) -> {
+               if (ice.canExpire()) {
                   // Have to synchronize on the entry to make sure we see the value and metadata at the same time
                   boolean expiredMortal;
                   boolean expiredTransient;
                   V value;
                   long lifespan;
                   long maxIdle;
-                  synchronized (e) {
-                     value = e.getValue();
-                     lifespan = e.getLifespan();
-                     maxIdle = e.getMaxIdle();
-                     expiredMortal = ExpiryHelper.isExpiredMortal(lifespan, e.getCreated(), currentTimeMillis);
-                     expiredTransient = ExpiryHelper.isExpiredTransient(maxIdle, e.getLastUsed(), currentTimeMillis);
+                  synchronized (ice) {
+                     value = ice.getValue();
+                     lifespan = ice.getLifespan();
+                     maxIdle = ice.getMaxIdle();
+                     expiredMortal = ExpiryHelper.isExpiredMortal(lifespan, ice.getCreated(), currentTimeMillis);
+                     expiredTransient = ExpiryHelper.isExpiredTransient(maxIdle, ice.getLastUsed(), currentTimeMillis);
                   }
                   // We check lifespan first as this is much less expensive to remove than max idle.
                   if (expiredMortal) {
-                     offset = addAndWaitIfFull(handleLifespanExpireEntry(e.getKey(), value, lifespan), futures, offset);
+                     addAndWaitIfFull(handleLifespanExpireEntry(ice.getKey(), value, lifespan), futures);
                   } else if (expiredTransient) {
-                     offset = addAndWaitIfFull(actualRemoveMaxIdleExpireEntry(e.getKey(), value, maxIdle), futures, offset);
+                     addAndWaitIfFull(actualRemoveMaxIdleExpireEntry(ice.getKey(), value, maxIdle), futures);
                   }
                }
-            }
-            if (offset != 0) {
+            });
+            if (!futures.isEmpty()) {
                // Make sure that all of the futures are complete before returning
-               for (int i = 0; i < offset; ++i) {
-                  futures[i].join();
-               }
+               futures.forEach(CompletableFuture::join);
             }
             if (trace) {
                log.tracef("Purging data container completed in %s",
@@ -122,15 +117,13 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       }
    }
 
-   private int addAndWaitIfFull(CompletableFuture future, CompletableFuture[] futures, int offset) {
-      futures[offset++] = future;
-      if (offset == futures.length) {
+   private void addAndWaitIfFull(CompletableFuture future, List<CompletableFuture> futures) {
+      futures.add(future);
+      if (futures.size() == MAX_ASYNC_EXPIRATIONS) {
          // Wait for them to complete
-         CompletableFuture.allOf(futures).join();
-         Arrays.fill(futures, null);
-         offset = 0;
+         futures.forEach(CompletableFuture::join);
+         futures.clear();
       }
-      return offset;
    }
 
    CompletableFuture<Void> handleLifespanExpireEntry(K key, V value, long lifespan) {
@@ -250,8 +243,8 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    }
 
    @Override
-   public CompletableFuture<Long> retrieveLastAccess(Object key, Object value) {
-      Long access = localLastAccess(key, value);
+   public CompletableFuture<Long> retrieveLastAccess(Object key, Object value, int segment) {
+      Long access = localLastAccess(key, value, segment);
 
       LocalizedCacheTopology topology = distributionManager.getCacheTopology();
       DistributionInfo info = topology.getDistribution(key);
@@ -261,7 +254,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       }
 
       // Need to gather last access times
-      RetrieveLastAccessCommand rlac = cf.buildRetrieveLastAccessCommand(key, value);
+      RetrieveLastAccessCommand rlac = cf.buildRetrieveLastAccessCommand(key, value, segment);
       rlac.setTopologyId(topology.getTopologyId());
 
       // In scattered cache read owners will only contain primary

@@ -12,7 +12,7 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.DataContainer;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
@@ -96,7 +96,7 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       sdi.enabled = false;
 
       // and check that the key actually has been evicted
-      assert !TestingUtil.extractComponent(cache, DataContainer.class).containsKey("a");
+      assert !TestingUtil.extractComponent(cache, InternalDataContainer.class).containsKey("a");
    }
 
    public static class SlowDownInterceptor extends CommandInterceptor implements Cloneable{

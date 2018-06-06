@@ -47,12 +47,12 @@ import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.RemovableCloseableIterator;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.impl.EntryFactory;
-import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.container.impl.EntryFactory;
+import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -100,7 +100,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    @Inject protected EntryFactory entryFactory;
    @Inject private TimeService timeService;
    @Inject private InternalEntryFactory iceFactory;
-   @Inject private DataContainer<K, V> dataContainer;
+   @Inject private InternalDataContainer<K, V> dataContainer;
    @Inject private GroupManager groupManager;
    @Inject private Cache<K, V> cache;
    @Inject private KeyPartitioner partitioner;
@@ -307,9 +307,9 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
    private Boolean loadInContext(InvocationContext ctx, Object key, FlagAffectedCommand cmd) {
       final AtomicReference<Boolean> isLoaded = new AtomicReference<>();
-      int segment = SegmentSpecificCommand.extractSegment(cmd);
-      InternalCacheEntry<K, V> entry = PersistenceUtil.loadAndStoreInDataContainer(dataContainer, segment,
-            persistenceManager, (K) key, ctx, timeService, isLoaded);
+      InternalCacheEntry<K, V> entry = PersistenceUtil.loadAndStoreInDataContainer(dataContainer,
+            SegmentSpecificCommand.extractSegment(cmd, key, partitioner), persistenceManager, (K) key, ctx, timeService,
+            isLoaded);
       Boolean isLoadedValue = isLoaded.get();
       if (trace) {
          log.tracef("Entry was loaded? %s", isLoadedValue);

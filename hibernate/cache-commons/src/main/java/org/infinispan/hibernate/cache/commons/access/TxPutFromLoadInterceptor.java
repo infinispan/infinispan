@@ -10,11 +10,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.hibernate.cache.commons.util.CacheCommandInitializer;
-import org.infinispan.hibernate.cache.commons.util.EndInvalidationCommand;
-import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
-
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -22,12 +17,16 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.DataContainer;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.hibernate.cache.commons.util.CacheCommandInitializer;
+import org.infinispan.hibernate.cache.commons.util.EndInvalidationCommand;
+import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.interceptors.impl.BaseRpcInterceptor;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -55,7 +54,7 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 
 	@Inject private RpcManager rpcManager;
 	@Inject private CacheCommandInitializer cacheCommandInitializer;
-	@Inject private DataContainer dataContainer;
+	@Inject private InternalDataContainer dataContainer;
 	@Inject private DistributionManager distributionManager;
 
 	private RpcOptions asyncUnordered;

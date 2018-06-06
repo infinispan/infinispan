@@ -62,7 +62,8 @@ public interface InternalExpirationManager<K, V> extends ExpirationManager<K, V>
     * If the entry is present and can expire via max idle but hasn't it will return a number > 0
     * @param key the key to retrieve the access time for
     * @param value the value to match if desired (this can be null)
+    * @param segment the segment for the given key
     * @return the last access time if available
     */
-   CompletableFuture<Long> retrieveLastAccess(Object key, Object value);
+   CompletableFuture<Long> retrieveLastAccess(Object key, Object value, int segment);
 }

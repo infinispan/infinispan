@@ -5,11 +5,12 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 
@@ -18,30 +19,33 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @author wburns
  * @since 9.3
  */
-public class UpdateLastAccessCommand extends BaseRpcCommand implements TopologyAffectedCommand {
+public class UpdateLastAccessCommand extends BaseRpcCommand implements TopologyAffectedCommand, SegmentSpecificCommand {
 
    private Object key;
    private long acessTime;
 
-   private DataContainer<Object, Object> container;
+   private InternalDataContainer<Object, Object> container;
    private int topologyId = -1;
+   private int segment;
 
    public static final byte COMMAND_ID = 82;
 
    // Only here for CommandIdUniquenessTest
-   private UpdateLastAccessCommand() { super(null); }
+   private UpdateLastAccessCommand() { this(null); }
 
    public UpdateLastAccessCommand(ByteString cacheName) {
       super(cacheName);
+      segment = -1;
    }
 
-   public UpdateLastAccessCommand(ByteString cacheName, Object key, long accessTime) {
+   public UpdateLastAccessCommand(ByteString cacheName, Object key, int segment, long accessTime) {
       super(cacheName);
       this.key = key;
+      this.segment = segment;
       this.acessTime = accessTime;
    }
 
-   public void inject(DataContainer container) {
+   public void inject(InternalDataContainer container) {
       this.container = container;
    }
 
@@ -58,12 +62,14 @@ public class UpdateLastAccessCommand extends BaseRpcCommand implements TopologyA
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
+      UnsignedNumeric.writeUnsignedInt(output, segment);
       UnsignedNumeric.writeUnsignedLong(output, acessTime);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
+      segment = UnsignedNumeric.readUnsignedInt(input);
       acessTime = UnsignedNumeric.readUnsignedLong(input);
    }
 
@@ -79,10 +85,15 @@ public class UpdateLastAccessCommand extends BaseRpcCommand implements TopologyA
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
-      InternalCacheEntry<Object, Object> ice = container.peek(key);
+      InternalCacheEntry<Object, Object> ice = container.peek(segment, key);
       if (ice != null) {
          ice.touch(acessTime);
       }
       return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public int getSegment() {
+      return segment;
    }
 }

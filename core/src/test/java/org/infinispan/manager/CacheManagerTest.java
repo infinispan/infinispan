@@ -41,6 +41,7 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.GlobalMarshaller;
@@ -520,7 +521,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    private DataContainer getDataContainer(Cache<String, String> cache) {
-      return TestingUtil.extractComponent(cache, DataContainer.class);
+      return TestingUtil.extractComponent(cache, InternalDataContainer.class);
    }
 
    public static class UnreliableCacheStore implements ExternalStore {

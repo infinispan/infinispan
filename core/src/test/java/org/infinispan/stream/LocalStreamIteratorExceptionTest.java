@@ -8,7 +8,7 @@ import static org.testng.AssertJUnit.fail;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.container.DataContainer;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -27,11 +27,11 @@ public class LocalStreamIteratorExceptionTest extends BaseSetupStreamIteratorTes
    public void ensureDataContainerExceptionPropagated() {
       Cache cache = cache(0, CACHE_NAME);
       // Extract real one to replace after
-      DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
+      InternalDataContainer dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
       try {
          Throwable t = new CacheException();
-         DataContainer mockContainer = when(mock(DataContainer.class).spliterator()).thenThrow(t).getMock();
-         TestingUtil.replaceComponent(cache, DataContainer.class, mockContainer, true);
+         InternalDataContainer mockContainer = when(mock(InternalDataContainer.class).spliterator()).thenThrow(t).getMock();
+         TestingUtil.replaceComponent(cache, InternalDataContainer.class, mockContainer, true);
 
          try {
             cache.entrySet().stream().iterator().hasNext();
@@ -40,7 +40,7 @@ public class LocalStreamIteratorExceptionTest extends BaseSetupStreamIteratorTes
             assertSame("We should have found the throwable as a cause", t, e);
          }
       } finally {
-         TestingUtil.replaceComponent(cache, DataContainer.class, dataContainer, true);
+         TestingUtil.replaceComponent(cache, InternalDataContainer.class, dataContainer, true);
       }
    }
 }

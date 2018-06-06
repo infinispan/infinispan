@@ -17,9 +17,9 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.NullCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.factories.annotations.ComponentName;
@@ -47,7 +47,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
 
    @Inject private Cache<K, V> cache;
    @Inject private CommandsFactory commandsFactory;
-   @Inject private DataContainer<K, V> dataContainer;
+   @Inject private InternalDataContainer<K, V> dataContainer;
    @Inject private RpcManager rpcManager;
    @Inject @ComponentName(STATE_TRANSFER_EXECUTOR)
    private ExecutorService stateTransferExecutor;

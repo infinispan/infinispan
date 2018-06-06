@@ -15,22 +15,23 @@ import java.util.Spliterators;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.IntConsumer;
+import java.util.function.ObjIntConsumer;
+import java.util.function.Predicate;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.FlattenSpliterator;
 import org.infinispan.commons.util.ConcatIterator;
+import org.infinispan.commons.util.FlattenSpliterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
-import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -43,7 +44,7 @@ import org.infinispan.remoting.transport.Address;
  * @since 9.3
  */
 @Listener
-public class DefaultSegmentedDataContainer<K, V> extends AbstractSegmentedDataContainer<K, V> {
+public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataContainer<K, V> {
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final boolean trace = log.isTraceEnabled();
@@ -70,7 +71,6 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractSegmentedDataCo
       }
       // Distributed is the only mode that allows for dynamic addition/removal of maps as others own all segments
       // in some fashion
-      cache.addListener(this);
    }
 
    @Stop(priority = 999)
@@ -104,12 +104,12 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractSegmentedDataCo
 
    @Override
    public Spliterator<InternalCacheEntry<K, V>> spliterator(IntSet segments) {
-      return new EntrySpliterator(spliteratorIncludingExpired(segments));
+      return filterExpiredEntries(spliteratorIncludingExpired(segments));
    }
 
    @Override
    public Spliterator<InternalCacheEntry<K, V>> spliterator() {
-      return new EntrySpliterator(spliteratorIncludingExpired());
+      return filterExpiredEntries(spliteratorIncludingExpired());
    }
 
    @Override
@@ -203,6 +203,42 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractSegmentedDataCo
    }
 
    @Override
+   public void forEach(IntSet segments, Consumer<? super InternalCacheEntry<K, V>> action) {
+      Predicate<InternalCacheEntry<K, V>> expiredPredicate = expiredIterationPredicate(timeService.wallClockTime());
+      BiConsumer<? super K, ? super InternalCacheEntry<K, V>> biConsumer = (k, ice) -> {
+         if (expiredPredicate.test(ice)) {
+            action.accept(ice);
+         }
+      };
+      segments.forEach((int s) -> {
+         ConcurrentMap<K, InternalCacheEntry<K, V>> map = maps.get(s);
+         if (map != null) {
+            map.forEach(biConsumer);
+         }
+      });
+   }
+
+   @Override
+   public void forEachIncludingExpired(ObjIntConsumer<? super InternalCacheEntry<K, V>> action) {
+      for (int i = 0; i < maps.length(); ++i) {
+         ConcurrentMap<K, InternalCacheEntry<K, V>> map = maps.get(i);
+         if (map != null) {
+            int segment = i;
+            map.forEach((k, ice) -> action.accept(ice, segment));
+         }
+      }
+   }
+
+   @Override
+   public void addSegments(IntSet segments) {
+      if (trace) {
+         log.tracef("Ensuring segments %s are started", segments);
+      }
+      // Without this we will get a boxing and unboxing from int to Integer and back to int
+      segments.forEach((IntConsumer) this::startNewMap);
+   }
+
+   @Override
    public void removeSegments(IntSet segments) {
       if (trace) {
          log.tracef("Removing segments: %s from container", segments);
@@ -245,33 +281,6 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractSegmentedDataCo
       if (maps.get(segment) == null) {
          // Just in case of concurrent starts - this shouldn't be possible
          maps.compareAndSet(segment, null, new ConcurrentHashMap<>());
-      }
-   }
-
-   private void startSegments(Set<Integer> segments) {
-      if (trace) {
-         log.tracef("Ensuring segments %s are started", segments);
-      }
-      if (segments instanceof IntSet) {
-         // Without this we will get a boxing and unboxing from int to Integer and back to int
-         ((IntSet) segments).forEach((IntConsumer) this::startNewMap);
-      } else {
-         segments.forEach(this::startNewMap);
-      }
-   }
-
-   /**
-    * Whenever a topology change occurs, we have to initialize all segments that we will own, since we could
-    * receive them from data rehash or conflict resolution
-    */
-   @TopologyChanged
-   public void onTopologyChange(TopologyChangedEvent<K, V> topologyChangedEvent) {
-      if (topologyChangedEvent.isPre()) {
-         ConsistentHash endCH = topologyChangedEvent.getWriteConsistentHashAtEnd();
-         if (endCH.getMembers().contains(localNode)) {
-            Set<Integer> segments = endCH.getSegmentsForOwner(localNode);
-            startSegments(segments);
-         }
       }
    }
 }

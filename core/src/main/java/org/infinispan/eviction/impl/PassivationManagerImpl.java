@@ -11,8 +11,8 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.PassivationManager;
@@ -34,7 +34,7 @@ public class PassivationManagerImpl implements PassivationManager {
    @Inject private PersistenceManager persistenceManager;
    @Inject private CacheNotifier notifier;
    @Inject private Configuration cfg;
-   @Inject private DataContainer<Object, Object> container;
+   @Inject private InternalDataContainer<Object, Object> container;
    @Inject private TimeService timeService;
    @Inject private MarshalledEntryFactory marshalledEntryFactory;
    @Inject private DistributionManager distributionManager;

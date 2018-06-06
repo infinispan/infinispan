@@ -45,7 +45,8 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    public CompletableFuture<Void> eval(K key, Consumer<WriteEntryView<K, V>> f) {
       log.tracef("Invoked eval(k=%s, %s)", key, params);
       Object keyEncoded = keyDataConversion.toStorage(key);
-      WriteOnlyKeyCommand<K, V> cmd = fmap.commandsFactory.buildWriteOnlyKeyCommand(keyEncoded, f, params, keyDataConversion, valueDataConversion);
+      WriteOnlyKeyCommand<K, V> cmd = fmap.commandsFactory.buildWriteOnlyKeyCommand(keyEncoded, f,
+            fmap.keyPartitioner.getSegment(keyEncoded), params, keyDataConversion, valueDataConversion);
       InvocationContext ctx = getInvocationContext(true, 1);
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());
@@ -58,7 +59,8 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
       log.tracef("Invoked eval(k=%s, v=%s, %s)", key, argument, params);
       Object keyEncoded = keyDataConversion.toStorage(key);
       Object argumentEncoded = valueDataConversion.toStorage(argument);
-      WriteOnlyKeyValueCommand<K, V, T> cmd = fmap.commandsFactory.buildWriteOnlyKeyValueCommand(keyEncoded, argumentEncoded, (BiConsumer) f, params, keyDataConversion, valueDataConversion);
+      WriteOnlyKeyValueCommand<K, V, T> cmd = fmap.commandsFactory.buildWriteOnlyKeyValueCommand(keyEncoded, argumentEncoded,
+            (BiConsumer) f, fmap.keyPartitioner.getSegment(keyEncoded), params, keyDataConversion, valueDataConversion);
       InvocationContext ctx = getInvocationContext(true, 1);
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());

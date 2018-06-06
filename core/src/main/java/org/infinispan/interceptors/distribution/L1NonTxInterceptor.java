@@ -14,7 +14,6 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
@@ -38,12 +37,13 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.EntryFactory;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.L1Manager;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.impl.BaseRpcInterceptor;
@@ -68,8 +68,9 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    @Inject protected ClusteringDependentLogic cdl;
    @Inject protected EntryFactory entryFactory;
    @Inject protected CommandsFactory commandsFactory;
-   @Inject protected DataContainer dataContainer;
+   @Inject protected InternalDataContainer dataContainer;
    @Inject protected StateTransferLock stateTransferLock;
+   @Inject protected KeyPartitioner keyPartitioner;
 
    private long l1Lifespan;
    private long replicationTimeout;
@@ -281,7 +282,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       //we also need to remove from L1 the keys that are not ours
       Iterator<VisitableCommand> subCommands = keys.stream()
             .filter(k -> !cdl.getCacheTopology().isWriteOwner(k))
-            .map(k -> removeFromL1Command(ctx, k, -1)).iterator();
+            .map(k -> removeFromL1Command(ctx, k, keyPartitioner.getSegment(k))).iterator();
       return invokeNextAndHandle(ctx, command, (InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable ex) -> {
          WriteCommand writeCommand = (WriteCommand) rCommand;
          if (ex != null) {
@@ -310,7 +311,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
          // may not have the value - if so we need to add it then now that we know we waited for the get response
          // to complete
          if (ctx.lookupEntry(key) == null) {
-            entryFactory.wrapEntryForWriting(ctx, key, SegmentSpecificCommand.UNKNOWN_SEGMENT, true, false);
+            entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key), true, false);
          }
       }
       return invokeNext(ctx, invalidateL1Command);

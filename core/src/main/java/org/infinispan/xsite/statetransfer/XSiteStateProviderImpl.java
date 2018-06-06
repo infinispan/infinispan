@@ -22,8 +22,8 @@ import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -55,7 +55,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
 
    private final ConcurrentMap<String, StatePushTask> runningStateTransfer;
 
-   @Inject private DataContainer<?, ?> dataContainer;
+   @Inject private InternalDataContainer<?, ?> dataContainer;
    @Inject private PersistenceManager persistenceManager;
    @Inject private ClusteringDependentLogic clusteringDependentLogic;
    @Inject private CommandsFactory commandsFactory;

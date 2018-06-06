@@ -25,6 +25,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -156,7 +157,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
 
    private void assertKeyVersionInDataContainer(Object key, Cache... owners) {
       for (Cache cache : owners) {
-         DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
+         DataContainer dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
          InternalCacheEntry entry = dataContainer.get(key);
          assertNotNull("Entry cannot be null in " + address(cache) + ".", entry);
          assertNotNull("Version cannot be null.", entry.getMetadata().version());

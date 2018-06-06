@@ -18,6 +18,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.statetransfer.CommitManager;
@@ -44,6 +45,7 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
    @Inject private CommandsFactory commandsFactory;
    @Inject private AsyncInterceptorChain interceptorChain;
    @Inject private CommitManager commitManager;
+   @Inject private KeyPartitioner keyPartitioner;
 
    private AtomicReference<String> sendingSite = new AtomicReference<>(null);
 
@@ -135,8 +137,9 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
    }
 
    private PutKeyValueCommand createPut(XSiteState state) {
-      return commandsFactory.buildPutKeyValueCommand(state.key(), state.value(), state.metadata(),
-                                                     STATE_TRANSFER_PUT_FLAGS);
+      Object key = state.key();
+      return commandsFactory.buildPutKeyValueCommand(key, state.value(), keyPartitioner.getSegment(key),
+            state.metadata(), STATE_TRANSFER_PUT_FLAGS);
    }
 
    private void safeRollback() {

@@ -53,7 +53,7 @@ public class MessageSentToLeaverTest extends AbstractInfinispanTest {
          Collection<Address>  addresses = cm1.getMembers();
 
          CommandsFactory cf = TestingUtil.extractCommandsFactory(c1);
-         PutKeyValueCommand cmd = cf.buildPutKeyValueCommand("k", "v2",
+         PutKeyValueCommand cmd = cf.buildPutKeyValueCommand("k", "v2", 0,
                new EmbeddedMetadata.Builder().build(), EnumUtil.EMPTY_BIT_SET);
 
          Map<Address,Response> responseMap = rpcManager.invokeRemotely(addresses, cmd, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));

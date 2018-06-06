@@ -8,7 +8,9 @@ import org.infinispan.container.impl.BoundedSegmentedDataContainer;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.DefaultDataContainer;
 import org.infinispan.container.impl.DefaultSegmentedDataContainer;
-import org.infinispan.container.impl.L1DefaultSegmentedDataContainer;
+import org.infinispan.container.impl.L1SegmentedDataContainer;
+import org.infinispan.container.impl.InternalDataContainerAdapter;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.offheap.BoundedOffHeapDataContainer;
 import org.infinispan.container.offheap.OffHeapDataContainer;
 import org.infinispan.eviction.EvictionStrategy;
@@ -21,7 +23,7 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
  * @author Vladimir Blagojevic
  * @since 4.0
  */
-@DefaultFactoryFor(classes = DataContainer.class)
+@DefaultFactoryFor(classes = InternalDataContainer.class)
 public class DataContainerFactory extends AbstractNamedCacheComponentFactory implements
          AutoInstantiableFactory {
 
@@ -29,7 +31,7 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
       if (configuration.dataContainer().dataContainer() != null) {
-         return (T) configuration.dataContainer().dataContainer();
+         return (T) new InternalDataContainerAdapter<>(configuration.dataContainer().dataContainer());
       } else {
          int level = configuration.locking().concurrencyLevel();
 
@@ -41,13 +43,13 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
          //handle case when < 0 value signifies unbounded container or when we are not removal based
          if (strategy.isExceptionBased() || !strategy.isEnabled()) {
             if (configuration.memory().storageType() == StorageType.OFF_HEAP) {
-               return (T) new OffHeapDataContainer(memoryConfiguration.addressCount());
+               return (T) new InternalDataContainerAdapter<>(new OffHeapDataContainer(memoryConfiguration.addressCount()));
             } else {
                ClusteringConfiguration clusteringConfiguration = configuration.clustering();
                if (clusteringConfiguration.cacheMode().needsStateTransfer()) {
                   int segments = clusteringConfiguration.hash().numSegments();
                   if (clusteringConfiguration.l1().enabled()) {
-                     return (T) new L1DefaultSegmentedDataContainer<>(segments);
+                     return (T) new L1SegmentedDataContainer<>(segments);
                   }
                   return (T) new DefaultSegmentedDataContainer<>(segments);
                } else {
@@ -58,8 +60,8 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
 
          DataContainer dataContainer;
          if (memoryConfiguration.storageType() == StorageType.OFF_HEAP) {
-            dataContainer = new BoundedOffHeapDataContainer(memoryConfiguration.addressCount(), thresholdSize,
-                  memoryConfiguration.evictionType());
+            dataContainer = new InternalDataContainerAdapter<>(new BoundedOffHeapDataContainer(memoryConfiguration.addressCount(), thresholdSize,
+                  memoryConfiguration.evictionType()));
          } else {
             ClusteringConfiguration clusteringConfiguration = configuration.clustering();
             if (clusteringConfiguration.cacheMode().needsStateTransfer()) {

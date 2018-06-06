@@ -21,11 +21,10 @@ import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.impl.KeyValueMetadataSizeCalculator;
-import org.infinispan.container.impl.SegmentedDataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.container.impl.KeyValueMetadataSizeCalculator;
 import org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -56,7 +55,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
    private final ConcurrentMap<GlobalTransaction, Long> pendingSize = new ConcurrentHashMap<>();
    private MemoryConfiguration memoryConfiguration;
    private Cache cache;
-   private DataContainer container;
+   private InternalDataContainer container;
    DistributionManager dm;
    private long maxSize;
    private long minSize;
@@ -82,7 +81,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
 
    @Inject
    public void inject(Configuration config, Cache cache,
-         DataContainer dataContainer, KeyValueMetadataSizeCalculator calculator, DistributionManager dm) {
+         InternalDataContainer dataContainer, KeyValueMetadataSizeCalculator calculator, DistributionManager dm) {
       this.memoryConfiguration = config.memory();
       this.cache = cache;
       this.container = dataContainer;
@@ -98,10 +97,8 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
          currentSize.set(minSize);
       }
 
-      if (container instanceof SegmentedDataContainer) {
-         listener = this::entriesRemoved;
-         ((SegmentedDataContainer) container).addRemovalListener(listener);
-      }
+      listener = this::entriesRemoved;
+      container.addRemovalListener(listener);
 
       // Local caches just remove the entry, so we have to listen for those events
       if (!cache.getCacheConfiguration().clustering().cacheMode().isClustered()) {
@@ -113,9 +110,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
 
    @Stop
    public void stop() {
-      if (container instanceof SegmentedDataContainer) {
-         ((SegmentedDataContainer) container).removeRemovalListener(listener);
-      }
+      container.removeRemovalListener(listener);
    }
 
    private void entriesRemoved(Iterable<InternalCacheEntry> entries) {

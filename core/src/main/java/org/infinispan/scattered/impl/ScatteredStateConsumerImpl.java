@@ -25,6 +25,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -256,29 +257,23 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       } else if (inboundTransfer.isCompletedSuccessfully()) {
          Set<Integer> finalCompletedSegments = completedSegments;
          log.tracef("Requesting values from segments %s, for in-memory keys", finalCompletedSegments);
-         // for all keys from given segment request values
-         ConsistentHash readCh = cacheTopology.getReadConsistentHash();
-         for (InternalCacheEntry ice : dataContainer) {
-            Object key = ice.getKey();
-            int segmentId = readCh.getSegment(key);
-            if (finalCompletedSegments.contains(segmentId)) {
-               // TODO: could the version be null in here?
-               if (ice.getMetadata() instanceof RemoteMetadata) {
-                  Address backup = ((RemoteMetadata) ice.getMetadata()).getAddress();
-                  retrieveEntry(ice.getKey(), backup);
-                  for (Address member : cacheTopology.getActualMembers()) {
-                     if (!member.equals(backup)) {
-                        invalidate(ice.getKey(), ice.getMetadata().version(), member);
-                     }
-                  }
-               } else {
-                  backupEntry(ice);
-                  for (Address member : nonBackupAddresses) {
+         dataContainer.forEach(SmallIntSet.from(finalCompletedSegments), ice -> {
+            // TODO: could the version be null in here?
+            if (ice.getMetadata() instanceof RemoteMetadata) {
+               Address backup = ((RemoteMetadata) ice.getMetadata()).getAddress();
+               retrieveEntry(ice.getKey(), backup);
+               for (Address member : cacheTopology.getActualMembers()) {
+                  if (!member.equals(backup)) {
                      invalidate(ice.getKey(), ice.getMetadata().version(), member);
                   }
                }
+            } else {
+               backupEntry(ice);
+               for (Address member : nonBackupAddresses) {
+                  invalidate(ice.getKey(), ice.getMetadata().version(), member);
+               }
             }
-         }
+         });
 
          // With passivation, some key could be activated here and we could miss it,
          // but then it should be broadcast-loaded in PrefetchInvalidationInterceptor
@@ -287,7 +282,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
             try {
                CollectionKeyFilter filter = new CollectionKeyFilter(new ReadOnlyDataContainerBackedKeySet(dataContainer));
                AdvancedCacheLoader.CacheLoaderTask task = (me, taskContext) -> {
-                  int segmentId = readCh.getSegment(me.getKey());
+                  int segmentId = keyPartitioner.getSegment(me.getKey());
                   if (finalCompletedSegments.contains(segmentId)) {
                      try {
                         InternalMetadata metadata = me.getMetadata();
@@ -504,7 +499,8 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       for (int i = 0; i < keys.size(); ++i) {
          Object key = keys.get(i);
          InternalCacheValue icv = values[i];
-         PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(key, icv.getValue(), icv.getMetadata(), STATE_TRANSFER_FLAGS);
+         PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(key, icv.getValue(),
+               keyPartitioner.getSegment(key), icv.getMetadata(), STATE_TRANSFER_FLAGS);
          try {
             interceptorChain.invoke(icf.createSingleKeyNonTxInvocationContext(), put);
          } catch (Exception e) {

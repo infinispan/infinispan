@@ -10,12 +10,14 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
+import java.util.function.ObjIntConsumer;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.EntrySizeCalculator;
 import org.infinispan.commons.util.FilterIterator;
+import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntrySizeCalculator;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -43,7 +45,7 @@ import net.jcip.annotations.ThreadSafe;
  * @since 4.0
  */
 @ThreadSafe
-public class DefaultDataContainer<K, V> extends AbstractSegmentedDataContainer<K, V> {
+public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K, V> {
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
@@ -183,19 +185,30 @@ public class DefaultDataContainer<K, V> extends AbstractSegmentedDataContainer<K
 
    @Override
    public Iterator<InternalCacheEntry<K, V>> iterator(IntSet segments) {
-      return new FilterIterator<>(iterator(),
-            ice -> segments.contains(keyPartitioner.getSegment(ice.getKey())));
+      return new FilterIterator<>(iterator(), ice -> segments.contains(keyPartitioner.getSegment(ice.getKey())));
    }
 
    @Override
    public Spliterator<InternalCacheEntry<K, V>> spliterator() {
-      return new EntrySpliterator(spliteratorIncludingExpired());
+      return filterExpiredEntries(spliteratorIncludingExpired());
+   }
+
+   @Override
+   public Spliterator<InternalCacheEntry<K, V>> spliterator(IntSet segments) {
+      return new FilterSpliterator<>(spliterator(),
+            ice -> segments.contains(keyPartitioner.getSegment(ice.getKey())));
    }
 
    @Override
    public Spliterator<InternalCacheEntry<K, V>> spliteratorIncludingExpired() {
       // Technically this spliterator is distinct, but it won't be set - we assume that is okay for now
       return entries.values().spliterator();
+   }
+
+   @Override
+   public Spliterator<InternalCacheEntry<K, V>> spliteratorIncludingExpired(IntSet segments) {
+      return new FilterSpliterator<>(spliteratorIncludingExpired(),
+            ice -> segments.contains(keyPartitioner.getSegment(ice.getKey())));
    }
 
    @Override
@@ -210,9 +223,19 @@ public class DefaultDataContainer<K, V> extends AbstractSegmentedDataContainer<K
    }
 
    @Override
+   public void forEachIncludingExpired(ObjIntConsumer<? super InternalCacheEntry<K, V>> action) {
+      iteratorIncludingExpired().forEachRemaining(ice -> action.accept(ice, keyPartitioner.getSegment(ice.getKey())));
+   }
+
+   @Override
    public long evictionSize() {
       Policy.Eviction<K, InternalCacheEntry<K, V>> evict = eviction();
       return evict.weightedSize().orElse(entries.size());
+   }
+
+   @Override
+   public void addSegments(IntSet segments) {
+      // Don't have to do anything here
    }
 
    @Override

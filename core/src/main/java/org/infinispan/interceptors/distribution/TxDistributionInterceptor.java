@@ -143,14 +143,14 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) throws Throwable {
       if (ctx.isOriginLocal() && command.isMaxIdle()) {
          Object key = command.getKey();
-         CompletableFuture<Long> completableFuture = expirationManager.retrieveLastAccess(key, null);
+         CompletableFuture<Long> completableFuture = expirationManager.retrieveLastAccess(key, null, command.getSegment());
          return asyncValue(completableFuture).thenApply(ctx, command, (rCtx, rCommand, max) -> {
             if (max == null) {
                // If there was no max value just remove the entry as normal
                return handleTxWriteCommand(ctx, command, command.getKey());
             }
             // If max was returned update our time with it, so we don't query again
-            UpdateLastAccessCommand ulac = cf.buildUpdateLastAccessCommand(key, (long) max);
+            UpdateLastAccessCommand ulac = cf.buildUpdateLastAccessCommand(key, command.getSegment(), (long) max);
             ulac.inject(dataContainer);
             // This command doesn't block
             ulac.invokeAsync().join();
@@ -594,8 +594,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          return cf;
       }
       return cf.thenRun(() -> {
-         int segment = SegmentSpecificCommand.extractSegment(command);
-         entryFactory.wrapEntryForWriting(ctx, key, segment, false, true);
+         entryFactory.wrapEntryForWriting(ctx, key, SegmentSpecificCommand.extractSegment(command, key, keyPartitioner),
+               false, true);
          MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(key);
          for (Mutation mutation : mutationsOnKey) {
             EntryView.ReadWriteEntryView readWriteEntryView =
@@ -619,7 +619,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       Iterator<List<Mutation>> mutationsIterator = mutations.iterator();
       for (; keysIterator.hasNext() && mutationsIterator.hasNext(); ) {
          Object key = keysIterator.next();
-         entryFactory.wrapEntryForWriting(ctx, key, SegmentSpecificCommand.UNKNOWN_SEGMENT, false, true);
+         entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key), false, true);
          MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(key);
          EntryView.ReadWriteEntryView readWriteEntryView = EntryViews.readWrite(cacheEntry, DataConversion.DEFAULT_KEY, DataConversion.DEFAULT_VALUE);
          for (Mutation mutation : mutationsIterator.next()) {

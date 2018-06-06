@@ -19,6 +19,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -64,7 +65,7 @@ public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
       cache = cm.getCache("test");
       tm = TestingUtil.extractComponent(cache, TransactionManager.class);
       treeCache = new TreeCacheImpl<Object, Object>(cache);
-      dc = TestingUtil.extractComponent(cache, DataContainer.class);
+      dc = TestingUtil.extractComponent(cache, InternalDataContainer.class);
       return cm;
    }
 
