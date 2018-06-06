@@ -11,8 +11,8 @@
    <threads>
       <thread-factory name="listener-factory" group-name="infinispan" thread-name-pattern="AsyncListenerThread" priority="5"/>
       <thread-factory name="persistence-factory" group-name="infinispan" thread-name-pattern="PersistenceThread" priority="5"/>
-      <blocking-bounded-queue-thread-pool name="infinispan-listener" thread-factory="listener-factory" max-threads="${test.property.asyncListenerMaxThreads:5}"/>
-      <blocking-bounded-queue-thread-pool name="infinispan-persistence" thread-factory="persistence-factory" max-threads="${test.property.persistenceMaxThreads:5}"/>
+      <blocking-bounded-queue-thread-pool name="infinispan-listener" thread-factory="listener-factory" max-threads="${StringPropertyReplacementTest.asyncListenerMaxThreads:5}"/>
+      <blocking-bounded-queue-thread-pool name="infinispan-persistence" thread-factory="persistence-factory" max-threads="${StringPropertyReplacementTest.persistenceMaxThreads:5}"/>
    </threads>
 
    <jgroups>
@@ -23,8 +23,8 @@
       <transport stack="tcp"/>
       <replicated-cache name="default" mode="SYNC">
          <locking
-               isolation="${test.property.IsolationLevel:REPEATABLE_READ}"
-               acquire-timeout="${test.property.LockAcquisitionTimeout:15000}"
+               isolation="${StringPropertyReplacementTest.IsolationLevel:REPEATABLE_READ}"
+               acquire-timeout="${StringPropertyReplacementTest.LockAcquisitionTimeout:15000}"
                write-skew="false"
                concurrency-level="500"/>
          <transaction

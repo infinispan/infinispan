@@ -14,12 +14,13 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.health.impl.ClusterHealthImpl;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -27,12 +28,10 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @Test(testName = "health.ClusterHealthImplTest", groups = "functional")
-public class ClusterHealthImplTest {
+public class ClusterHealthImplTest extends AbstractInfinispanTest {
 
    private static final String INTERNAL_CACHE_NAME = "internal_cache";
    private static final String CACHE_NAME = "test_cache";
-   private static final String CLUSTER_NAME = "testCluster";
-   private static final String NODE_NAME = "testNode";
    private EmbeddedCacheManager cacheManager;
    private DefaultCacheManager mockedCacheManager;
    private ClusterHealth clusterHealth;
@@ -40,10 +39,7 @@ public class ClusterHealthImplTest {
 
    @BeforeClass
    private void init() {
-      GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder().clusteredDefault();
-      globalConfigurationBuilder.transport().clusterName(CLUSTER_NAME).nodeName(NODE_NAME);
-
-      cacheManager = new DefaultCacheManager(globalConfigurationBuilder.build());
+      cacheManager = TestCacheManagerFactory.createClusteredCacheManager();
       internalCacheRegistry = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       clusterHealth = new ClusterHealthImpl(cacheManager);
    }
@@ -61,7 +57,7 @@ public class ClusterHealthImplTest {
       cacheManager.defineConfiguration(CACHE_NAME, new ConfigurationBuilder().build());
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    private void cleanAfterMethod() {
       cacheManager.administration().removeCache(CACHE_NAME);
       cacheManager.undefineConfiguration(CACHE_NAME);
@@ -70,7 +66,7 @@ public class ClusterHealthImplTest {
       internalCacheRegistry.unregisterInternalCache(INTERNAL_CACHE_NAME);
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    private void cleanUp() {
       if (cacheManager != null) {
          cacheManager.stop();
@@ -79,7 +75,7 @@ public class ClusterHealthImplTest {
    }
 
    public void testGetClusterName() throws Exception {
-      assertEquals(CLUSTER_NAME, clusterHealth.getClusterName());
+      assertEquals(cacheManager.getClusterName(), clusterHealth.getClusterName());
    }
 
    public void testCallingGetHealthStatusDoesNotCreateAnyCache() throws Exception {
@@ -150,7 +146,7 @@ public class ClusterHealthImplTest {
    }
 
    public void testGetNodeNames() throws Exception {
-      assertTrue(clusterHealth.getNodeNames().get(0).contains(NODE_NAME));
+      assertEquals(cacheManager.getAddress().toString(), clusterHealth.getNodeNames().get(0));
    }
 
    public void testGetNumberOfNodes() throws Exception {

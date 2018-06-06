@@ -1,6 +1,5 @@
 package org.infinispan.tools;
 
-import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -12,6 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.Version;
 import org.infinispan.commons.equivalence.AnyEquivalence;
@@ -22,14 +22,15 @@ import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.interceptors.FooInterceptor;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.ManagedConnectionFactoryConfiguration;
@@ -41,8 +42,6 @@ import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.rest.configuration.RestStoreConfiguration;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.tools.config.ConfigurationConverter;
 import org.infinispan.tools.customs.CustomDataContainer;
 import org.infinispan.tools.customs.CustomTransport;
@@ -68,33 +67,28 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
          baos.writeTo(outputStream);
       }
 
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml(SERIALIZED_CONFIG_FILE_NAME, true, false, false)) {
-
-         @Override
-         public void call() {
-            assertGlobalPropertiesConverted(cm);
-            assertDefaultConfigApplied(cm);
-            assertDataContainerConverted(cm);
-            assertIndexingConverted(cm);
-            assertTransactionConverted(cm);
-            assertLockingConverted(cm);
-            assertCompatibilityConverted(cm);
-            assertBackupsConverted(cm);
-            assertExpirationEvictionConverted(cm);
-            assertCustomInterceptorsConverted(cm);
-            assertDeadlockDetectionConverted(cm);
-            assertJmxStatisticsConverted(cm);
-            assertStoreAsBinaryConverted(cm);
-            assertClusteringConverted(cm);
-            assertPersistenceConverted(cm);
-            assertUnsafeConverted(cm);
-         }
-
-      });
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true);
+      ConfigurationBuilderHolder holder = parserRegistry.parseFile(SERIALIZED_CONFIG_FILE_NAME);
+      assertGlobalPropertiesConverted(holder);
+      assertDefaultConfigApplied(holder);
+      assertDataContainerConverted(holder);
+      assertIndexingConverted(holder);
+      assertTransactionConverted(holder);
+      assertLockingConverted(holder);
+      assertCompatibilityConverted(holder);
+      assertBackupsConverted(holder);
+      assertExpirationEvictionConverted(holder);
+      assertCustomInterceptorsConverted(holder);
+      assertDeadlockDetectionConverted(holder);
+      assertJmxStatisticsConverted(holder);
+      assertStoreAsBinaryConverted(holder);
+      assertClusteringConverted(holder);
+      assertPersistenceConverted(holder);
+      assertUnsafeConverted(holder);
    }
 
-   private void assertGlobalPropertiesConverted(EmbeddedCacheManager cm) {
-      GlobalConfiguration globalConfiguration = cm.getCacheManagerConfiguration();
+   private void assertGlobalPropertiesConverted(ConfigurationBuilderHolder holder) {
+      GlobalConfiguration globalConfiguration = holder.getGlobalConfigurationBuilder().build();
       assertEquals("infinispan-cluster", globalConfiguration.transport().clusterName());
       assertEquals("r1", globalConfiguration.transport().rackId());
       assertEquals("m1", globalConfiguration.transport().machineId());
@@ -136,20 +130,20 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals("%G %i", threadFactory.threadNamePattern());
       assertEquals(1, threadFactory.initialPriority());
       threadPool = gb.transport().remoteCommandThreadPool().threadPoolFactory();
-      assertEquals(TestCacheManagerFactory.REMOTE_EXEC_MAX_THREADS, threadPool.coreThreads()); // overriden by TestCacheManagerFactory
-      assertEquals(TestCacheManagerFactory.REMOTE_EXEC_MAX_THREADS, threadPool.maxThreads()); // overriden by TestCacheManagerFactory
-      assertEquals(TestCacheManagerFactory.REMOTE_EXEC_QUEUE_SIZE, threadPool.queueLength()); // overriden by TestCacheManagerFactory
-      assertEquals(TestCacheManagerFactory.KEEP_ALIVE, threadPool.keepAlive());  // overriden by TestCacheManagerFactory
+      assertEquals(2, threadPool.coreThreads());
+      assertEquals(30, threadPool.maxThreads());
+      assertEquals(100000, threadPool.queueLength());
+      assertEquals(10000, threadPool.keepAlive());
 
       threadFactory = gb.transport().transportThreadPool().threadFactory();
       assertEquals("infinispan", threadFactory.threadGroup().getName());
       assertEquals("%G %i", threadFactory.threadNamePattern());
       assertEquals(1, threadFactory.initialPriority());
       threadPool = gb.transport().transportThreadPool().threadPoolFactory();
-      assertEquals(TestCacheManagerFactory.TRANSPORT_EXEC_MAX_THREADS, threadPool.coreThreads()); // overriden by TestCacheManagerFactory
-      assertEquals(TestCacheManagerFactory.TRANSPORT_EXEC_MAX_THREADS, threadPool.maxThreads()); // overriden by TestCacheManagerFactory
-      assertEquals(TestCacheManagerFactory.TRANSPORT_EXEC_QUEUE_SIZE, threadPool.queueLength()); // overriden by TestCacheManagerFactory
-      assertEquals(TestCacheManagerFactory.KEEP_ALIVE, threadPool.keepAlive());  // overriden by TestCacheManagerFactory
+      assertEquals(25, threadPool.coreThreads());
+      assertEquals(25, threadPool.maxThreads());
+      assertEquals(10000, threadPool.queueLength());
+      assertEquals(60000, threadPool.keepAlive());
    }
 
    private void assertGlobalSerialization(GlobalConfiguration globalConfiguration) {
@@ -198,8 +192,8 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertNotNull(globalConfiguration.expirationThreadPool().threadPoolFactory());
    }
 
-   private void assertDataContainerConverted(EmbeddedCacheManager cm) {
-      Configuration config = cm.getCacheConfiguration("withDataContainer");
+   private void assertDataContainerConverted(ConfigurationBuilderHolder holder) {
+      Configuration config = holder.getNamedConfigurationBuilders().get("withDataContainer").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertTrue(config.dataContainer().dataContainer() instanceof CustomDataContainer);
 
@@ -209,45 +203,44 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(config.dataContainer().<byte[]>keyEquivalence() instanceof AnyEquivalence);
    }
 
-   private void assertDefaultConfigApplied(EmbeddedCacheManager cm) {
-      for (String cacheName : cm.getCacheNames()) {
-         Configuration config = cm.getCacheConfiguration(cacheName);
-         if (!cacheName.startsWith("transaction") && !cacheName.startsWith("tx")) {
-            assertFalse("Assertion failed for cache: " + cacheName, config.transaction().transactionMode().isTransactional());
+   private void assertDefaultConfigApplied(ConfigurationBuilderHolder holder) {
+      for (Map.Entry<String, ConfigurationBuilder> e : holder.getNamedConfigurationBuilders().entrySet()) {
+         Configuration config = e.getValue().build();
+         String name = e.getKey();
+         if (!name.startsWith("transaction") && !name.startsWith("tx")) {
+            assertFalse("Assertion failed for cache: " + e, config.transaction().transactionMode().isTransactional());
             assertEquals(123, config.transaction().reaperWakeUpInterval());
             assertEquals(3123, config.transaction().completedTxTimeout());
          }
 
-         if (!cacheName.startsWith("locking")) {
+         if (!name.startsWith("locking")) {
             assertEquals(1000, config.locking().lockAcquisitionTimeout());
             assertEquals(100, config.locking().concurrencyLevel());
          }
 
-         if (!cacheName.equals("jmxEnabled"))
-            assertFalse(config.jmxStatistics().enabled());
-         else
-            assertTrue(config.jmxStatistics().enabled());
+         boolean jmxEnabled = "jmxEnabled".equals(name);
+         assertEquals(jmxEnabled, config.jmxStatistics().enabled());
       }
    }
 
-   private void assertIndexingConverted(EmbeddedCacheManager cm) {
-      Configuration config = cm.getCacheConfiguration("withIndexingNotLocal");
+   private void assertIndexingConverted(ConfigurationBuilderHolder holder) {
+      Configuration config = holder.getNamedConfigurationBuilders().get("withIndexingNotLocal").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertEquals("ALL", config.indexing().index().name());
       assertEquals("test1", config.indexing().properties().get("test"));
 
-      config = cm.getCacheConfiguration("withIndexingLocalOnly");
+      config = holder.getNamedConfigurationBuilders().get("withIndexingLocalOnly").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertEquals("LOCAL", config.indexing().index().name());
       assertEquals("test1", config.indexing().properties().get("test"));
 
-      config = cm.getCacheConfiguration("withDisabledIndexing");
+      config = holder.getNamedConfigurationBuilders().get("withDisabledIndexing").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertEquals("NONE", config.indexing().index().name());
    }
 
-   private void assertTransactionConverted(EmbeddedCacheManager cm) {
-      Configuration config = cm.getCacheConfiguration("transactionalWithInvocationBatching");
+   private void assertTransactionConverted(ConfigurationBuilderHolder holder) {
+      Configuration config = holder.getNamedConfigurationBuilders().get("transactionalWithInvocationBatching").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertTrue(config.transaction().transactionMode().isTransactional());
       assertEquals("TRANSACTIONAL", config.transaction().transactionMode().name());
@@ -256,7 +249,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(config.transaction().autoCommit());
       assertTrue(config.invocationBatching().enabled());
 
-      config = cm.getCacheConfiguration("transactionalWithDisabledInvocationBatching");
+      config = holder.getNamedConfigurationBuilders().get("transactionalWithDisabledInvocationBatching").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertTrue(config.transaction().transactionMode().isTransactional());
       assertEquals("TRANSACTIONAL", config.transaction().transactionMode().name());
@@ -265,7 +258,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(config.transaction().autoCommit());
       assertFalse(config.invocationBatching().enabled());
 
-      config = cm.getCacheConfiguration("transactional");
+      config = holder.getNamedConfigurationBuilders().get("transactional").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertTrue(config.transaction().transactionMode().isTransactional());
       assertEquals("TRANSACTIONAL", config.transaction().transactionMode().name());
@@ -275,7 +268,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(config.transaction().recovery().enabled());
       assertEquals("transactional2", config.transaction().recovery().recoveryInfoCacheName());
 
-      config = cm.getCacheConfiguration("transactional2");
+      config = holder.getNamedConfigurationBuilders().get("transactional2").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertTrue(config.transaction().transactionMode().isTransactional());
       assertEquals("TRANSACTIONAL", config.transaction().transactionMode().name());
@@ -287,7 +280,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals(10000, config.transaction().cacheStopTimeout());
       assertTrue(config.transaction().transactionManagerLookup() instanceof org.infinispan.test.tx.TestLookup);
 
-      config = cm.getCacheConfiguration("transactional3");
+      config = holder.getNamedConfigurationBuilders().get("transactional3").build();
       assertTrue(config.clustering().cacheMode().isReplicated());
       assertTrue(config.transaction().transactionMode().isTransactional());
       assertEquals("TRANSACTIONAL", config.transaction().transactionMode().name());
@@ -298,7 +291,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals("TOTAL_ORDER", config.transaction().transactionProtocol().name());
       assertFalse(config.transaction().recovery().enabled());
 
-      config = cm.getCacheConfiguration("txSyncRepl");
+      config = holder.getNamedConfigurationBuilders().get("txSyncRepl").build();
       assertTrue(config.clustering().cacheMode().isReplicated());
       assertTrue(config.transaction().transactionMode().isTransactional());
       assertEquals("TRANSACTIONAL", config.transaction().transactionMode().name());
@@ -310,19 +303,19 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(config.transaction().transactionManagerLookup() instanceof org.infinispan.transaction.lookup.GenericTransactionManagerLookup);
    }
 
-   private void assertCompatibilityConverted(EmbeddedCacheManager cm) {
-      Configuration config = cm.getCacheConfiguration("withCompatibilityEnabled");
+   private void assertCompatibilityConverted(ConfigurationBuilderHolder holder) {
+      Configuration config = holder.getNamedConfigurationBuilders().get("withCompatibilityEnabled").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertTrue(config.compatibility().enabled());
       assertTrue(config.compatibility().marshaller() instanceof GenericJBossMarshaller);
 
-      config = cm.getCacheConfiguration("withoutCompatibility");
+      config = holder.getNamedConfigurationBuilders().get("withoutCompatibility").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertFalse(config.compatibility().enabled());
    }
 
-   private void assertBackupsConverted(EmbeddedCacheManager cm) {
-      Configuration config = cm.getCacheConfiguration("withSitesEnabled");
+   private void assertBackupsConverted(ConfigurationBuilderHolder holder) {
+      Configuration config = holder.getNamedConfigurationBuilders().get("withSitesEnabled").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertTrue(config.sites().backupFor().isBackupFor("test1", "test"));
       assertTrue(config.sites().hasInUseBackup("backupTest"));
@@ -354,7 +347,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals(BackupFailurePolicy.IGNORE, config.sites().getFailurePolicy("backupTest"));
       assertEquals(BackupFailurePolicy.CUSTOM, config.sites().getFailurePolicy("backupTest1"));
 
-      config = cm.getCacheConfiguration("withEmptyBackups");
+      config = holder.getNamedConfigurationBuilders().get("withEmptyBackups").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertTrue(config.sites().backupFor().isBackupFor("test1", "test"));
       assertFalse(config.sites().hasEnabledBackups());
@@ -362,27 +355,27 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals(0, config.sites().allBackups().size());
    }
 
-   private void assertLockingConverted(EmbeddedCacheManager cm) {
-      Configuration config = cm.getCacheConfiguration("lockingOverriding");
+   private void assertLockingConverted(ConfigurationBuilderHolder holder) {
+      Configuration config = holder.getNamedConfigurationBuilders().get("lockingOverriding").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertEquals("REPEATABLE_READ", config.locking().isolationLevel().name());
       assertEquals(1000, config.locking().concurrencyLevel());
       assertEquals(20000, config.locking().lockAcquisitionTimeout());
       assertTrue(config.locking().useLockStriping());
 
-      config = cm.getCacheConfiguration("lockingWithJDBCLoader");
+      config = holder.getNamedConfigurationBuilders().get("lockingWithJDBCLoader").build();
       assertEquals(1000, config.locking().lockAcquisitionTimeout());
       assertEquals(100, config.locking().concurrencyLevel());
       assertTrue(config.locking().supportsConcurrentUpdates());
 
-      config = cm.getCacheConfiguration("lockingWithStoreAsBinary");
+      config = holder.getNamedConfigurationBuilders().get("lockingWithStoreAsBinary").build();
       assertEquals("REPEATABLE_READ", config.locking().isolationLevel().name());
       assertEquals(20000, config.locking().lockAcquisitionTimeout());
       assertEquals(1000, config.locking().concurrencyLevel());
    }
 
-   private void assertExpirationEvictionConverted(EmbeddedCacheManager cm) {
-      Configuration config = cm.getCacheConfiguration("evictionCache");
+   private void assertExpirationEvictionConverted(ConfigurationBuilderHolder holder) {
+      Configuration config = holder.getNamedConfigurationBuilders().get("evictionCache").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertEquals(500, config.expiration().wakeUpInterval());
       assertEquals(1000, config.expiration().maxIdle());
@@ -392,7 +385,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals(EvictionType.COUNT, config.memory().evictionType());
       assertEquals(StorageType.OBJECT, config.memory().storageType());
 
-      config = cm.getCacheConfiguration("expirationCacheWithEnabledReaper");
+      config = holder.getNamedConfigurationBuilders().get("expirationCacheWithEnabledReaper").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertEquals(500, config.expiration().wakeUpInterval());
       assertEquals(1000, config.expiration().maxIdle());
@@ -400,8 +393,8 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(config.expiration().reaperEnabled());
    }
 
-   private void assertCustomInterceptorsConverted(EmbeddedCacheManager cm) {
-      Configuration config = cm.getCacheConfiguration("cacheWithCustomInterceptors");
+   private void assertCustomInterceptorsConverted(ConfigurationBuilderHolder holder) {
+      Configuration config = holder.getNamedConfigurationBuilders().get("cacheWithCustomInterceptors").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertEquals(6, config.customInterceptors().interceptors().size());
 
@@ -427,8 +420,8 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(config.customInterceptors().interceptors().get(0).interceptor() instanceof FooInterceptor);
    }
 
-   private void assertDeadlockDetectionConverted(EmbeddedCacheManager cm) {
-      Configuration config = cm.getCacheConfiguration("withDeadlockDetection");
+   private void assertDeadlockDetectionConverted(ConfigurationBuilderHolder holder) {
+      Configuration config = holder.getNamedConfigurationBuilders().get("withDeadlockDetection").build();
       assertFalse(config.jmxStatistics().enabled());
       assertTrue(config.clustering().cacheMode().isDistributed());
       assertTrue(config.clustering().cacheMode().isSynchronous());
@@ -436,11 +429,11 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertFalse(config.deadlockDetection().enabled());
       assertEquals(-1, config.deadlockDetection().spinDuration());
 
-      config = cm.getCacheConfiguration("lockingWithJDBCLoader");
+      config = holder.getNamedConfigurationBuilders().get("lockingWithJDBCLoader").build();
       assertFalse(config.deadlockDetection().enabled());
       assertEquals(-1, config.deadlockDetection().spinDuration());
 
-      config = cm.getCacheConfiguration("withDeadlockDetectionDisabled");
+      config = holder.getNamedConfigurationBuilders().get("withDeadlockDetectionDisabled").build();
       assertFalse(config.jmxStatistics().enabled());
       assertTrue(config.clustering().cacheMode().isDistributed());
       assertTrue(config.clustering().cacheMode().isSynchronous());
@@ -448,50 +441,50 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertFalse(config.deadlockDetection().enabled());
    }
 
-   private void assertJmxStatisticsConverted(EmbeddedCacheManager cm) {
-      Configuration config = cm.getCacheConfiguration("jmxEnabled");
+   private void assertJmxStatisticsConverted(ConfigurationBuilderHolder holder) {
+      Configuration config = holder.getNamedConfigurationBuilders().get("jmxEnabled").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertTrue(config.jmxStatistics().enabled());
    }
 
-   private void assertStoreAsBinaryConverted(EmbeddedCacheManager cm) {
-      Configuration config = cm.getCacheConfiguration("lockingWithStoreAsBinary");
+   private void assertStoreAsBinaryConverted(ConfigurationBuilderHolder holder) {
+      Configuration config = holder.getNamedConfigurationBuilders().get("lockingWithStoreAsBinary").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertEquals(StorageType.BINARY, config.memory().storageType());
 
-      config = cm.getCacheConfiguration("lockingWithStoreAsBinaryDisabled");
+      config = holder.getNamedConfigurationBuilders().get("lockingWithStoreAsBinaryDisabled").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertEquals(StorageType.OBJECT, config.memory().storageType());
 
-      config = cm.getCacheConfiguration("withoutStoreAsBinary");
+      config = holder.getNamedConfigurationBuilders().get("withoutStoreAsBinary").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertEquals(StorageType.OBJECT, config.memory().storageType());
 
-      config = cm.getCacheConfiguration("storeKeyValueBinary");
+      config = holder.getNamedConfigurationBuilders().get("storeKeyValueBinary").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertEquals(StorageType.BINARY, config.memory().storageType());
 
-      config = cm.getCacheConfiguration("lazyDeserializationCache");
+      config = holder.getNamedConfigurationBuilders().get("lazyDeserializationCache").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertEquals(StorageType.BINARY, config.memory().storageType());
    }
 
-   private void assertClusteringConverted(EmbeddedCacheManager cm) {
-      Configuration config = cm.getCacheConfiguration("transactional3");
+   private void assertClusteringConverted(ConfigurationBuilderHolder holder) {
+      Configuration config = holder.getNamedConfigurationBuilders().get("transactional3").build();
       assertTrue(config.clustering().cacheMode().isReplicated());
       assertTrue(config.clustering().cacheMode().isSynchronous());
 
-      config = cm.getCacheConfiguration("lockingSyncInval");
+      config = holder.getNamedConfigurationBuilders().get("lockingSyncInval").build();
       assertTrue(config.clustering().cacheMode().isInvalidation());
       assertTrue(config.clustering().cacheMode().isSynchronous());
 
-      config = cm.getCacheConfiguration("lockingAsyncInval");
+      config = holder.getNamedConfigurationBuilders().get("lockingAsyncInval").build();
       assertTrue(config.clustering().cacheMode().isInvalidation());
       assertFalse(config.clustering().cacheMode().isSynchronous());
       assertTrue(config.clustering().stateTransfer().fetchInMemoryState());
       assertTrue(config.clustering().stateTransfer().awaitInitialTransfer());
 
-      config = cm.getCacheConfiguration("syncRepl");
+      config = holder.getNamedConfigurationBuilders().get("syncRepl").build();
       assertTrue(config.clustering().cacheMode().isReplicated());
       assertTrue(config.clustering().cacheMode().isSynchronous());
       assertEquals(15000, config.clustering().sync().replTimeout());
@@ -499,26 +492,26 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertFalse(config.clustering().stateTransfer().fetchInMemoryState());
       assertTrue(config.clustering().stateTransfer().awaitInitialTransfer());
 
-      config = cm.getCacheConfiguration("asyncRepl");
+      config = holder.getNamedConfigurationBuilders().get("asyncRepl").build();
       assertTrue(config.clustering().cacheMode().isReplicated());
       assertFalse(config.clustering().cacheMode().isSynchronous());
       assertFalse(config.clustering().stateTransfer().fetchInMemoryState());
       assertTrue(config.clustering().stateTransfer().awaitInitialTransfer());
 
-      config = cm.getCacheConfiguration("asyncReplQueue");
+      config = holder.getNamedConfigurationBuilders().get("asyncReplQueue").build();
       assertTrue(config.clustering().cacheMode().isReplicated());
       assertFalse(config.clustering().cacheMode().isSynchronous());
       assertFalse(config.clustering().stateTransfer().fetchInMemoryState());
       assertTrue(config.clustering().stateTransfer().awaitInitialTransfer());
 
-      config = cm.getCacheConfiguration("txSyncRepl");
+      config = holder.getNamedConfigurationBuilders().get("txSyncRepl").build();
       assertTrue(config.clustering().cacheMode().isReplicated());
       assertTrue(config.clustering().cacheMode().isSynchronous());
       assertEquals(15000, config.clustering().remoteTimeout());
       assertFalse(config.clustering().stateTransfer().fetchInMemoryState());
       assertTrue(config.clustering().stateTransfer().awaitInitialTransfer());
 
-      config = cm.getCacheConfiguration("dist");
+      config = holder.getNamedConfigurationBuilders().get("dist").build();
       assertTrue(config.clustering().cacheMode().isDistributed());
       assertTrue(config.clustering().cacheMode().isSynchronous());
       assertEquals(120000, config.clustering().stateTransfer().timeout());
@@ -529,7 +522,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals(600000, config.clustering().l1().lifespan());
       assertEquals(1200, config.clustering().l1().cleanupTaskFrequency());
 
-      config = cm.getCacheConfiguration("dist_with_capacity_factors");
+      config = holder.getNamedConfigurationBuilders().get("dist_with_capacity_factors").build();
       assertTrue(config.clustering().cacheMode().isDistributed());
       assertTrue(config.clustering().cacheMode().isSynchronous());
       assertEquals(120000, config.clustering().stateTransfer().timeout());
@@ -540,7 +533,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(config.clustering().l1().enabled());
       assertEquals(610000, config.clustering().l1().lifespan());
 
-      config = cm.getCacheConfiguration("groups");
+      config = holder.getNamedConfigurationBuilders().get("groups").build();
       assertTrue(config.clustering().cacheMode().isDistributed());
       assertTrue(config.clustering().cacheMode().isSynchronous());
       assertTrue(config.clustering().stateTransfer().fetchInMemoryState());
@@ -549,14 +542,14 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals(1, config.clustering().hash().groups().groupers().size());
       assertTrue(config.clustering().hash().groups().groupers().get(0) instanceof org.infinispan.distribution.groups.KXGrouper);
 
-      config = cm.getCacheConfiguration("groupsDisabled");
+      config = holder.getNamedConfigurationBuilders().get("groupsDisabled").build();
       assertTrue(config.clustering().cacheMode().isDistributed());
       assertTrue(config.clustering().cacheMode().isSynchronous());
       assertTrue(config.clustering().stateTransfer().fetchInMemoryState());
       assertTrue(config.clustering().stateTransfer().awaitInitialTransfer());
       assertFalse(config.clustering().hash().groups().enabled());
 
-      config = cm.getCacheConfiguration("chunkSize");
+      config = holder.getNamedConfigurationBuilders().get("chunkSize").build();
       assertTrue(config.clustering().cacheMode().isDistributed());
       assertFalse(config.clustering().cacheMode().isSynchronous());
       assertTrue(config.clustering().stateTransfer().fetchInMemoryState());
@@ -568,7 +561,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals(600000, config.clustering().l1().lifespan());
       assertEquals(1200, config.clustering().l1().cleanupTaskFrequency());
 
-      config = cm.getCacheConfiguration("distAsync");
+      config = holder.getNamedConfigurationBuilders().get("distAsync").build();
       assertTrue(config.clustering().cacheMode().isDistributed());
       assertFalse(config.clustering().cacheMode().isSynchronous());
       assertEquals(120000, config.clustering().stateTransfer().timeout());
@@ -579,19 +572,19 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals(600000, config.clustering().l1().lifespan());
       assertEquals(1200, config.clustering().l1().cleanupTaskFrequency());
 
-      config = cm.getCacheConfiguration("localCache");
+      config = holder.getNamedConfigurationBuilders().get("localCache").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertTrue(config.clustering().cacheMode().isSynchronous());
 
-      config = cm.getCacheConfiguration("hashWithFactory");
+      config = holder.getNamedConfigurationBuilders().get("hashWithFactory").build();
       assertTrue(config.clustering().cacheMode().isDistributed());
       assertTrue(config.clustering().cacheMode().isSynchronous());
       assertTrue(config.clustering().hash().consistentHashFactory() instanceof org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory);
       assertFalse(config.clustering().l1().enabled());
    }
 
-   private void assertPersistenceConverted(EmbeddedCacheManager cm) {
-      Configuration config = cm.getCacheConfiguration("withClusterLoader");
+   private void assertPersistenceConverted(ConfigurationBuilderHolder holder) {
+      Configuration config = holder.getNamedConfigurationBuilders().get("withClusterLoader").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertFalse(config.persistence().usingAsyncStore());
       assertTrue(config.persistence().usingStores());
@@ -608,7 +601,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
 
 //-----------------------------------------------------------------------------------------
 
-      config = cm.getCacheConfiguration("withFileStore");
+      config = holder.getNamedConfigurationBuilders().get("withFileStore").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertTrue(config.persistence().usingAsyncStore());
       assertFalse(config.persistence().passivation());
@@ -630,7 +623,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
 
 //-----------------------------------------------------------------------------------------
 
-      config = cm.getCacheConfiguration("withFileStoreDisabledAsync");
+      config = holder.getNamedConfigurationBuilders().get("withFileStoreDisabledAsync").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertFalse(config.persistence().usingAsyncStore());
       assertFalse(config.persistence().passivation());
@@ -650,7 +643,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
 
 //--------------------------------------------------------------------------------------------
 
-      config = cm.getCacheConfiguration("withLoaderDefaults");
+      config = holder.getNamedConfigurationBuilders().get("withLoaderDefaults").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertFalse(config.persistence().usingAsyncStore());
       assertFalse(config.persistence().passivation());
@@ -668,7 +661,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
 
       //--------------------------------------------------------------------------------------------
 
-      config = cm.getCacheConfiguration("withClusterLoader1");
+      config = holder.getNamedConfigurationBuilders().get("withClusterLoader1").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertFalse(config.persistence().usingAsyncStore());
       assertFalse(config.persistence().passivation());
@@ -685,7 +678,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(clusterLoaderConfiguration.shared());
 
       //--------------------------------------------------------------------------------------------
-      config = cm.getCacheConfiguration("lockingWithJDBCLoader");
+      config = holder.getNamedConfigurationBuilders().get("lockingWithJDBCLoader").build();
       assertTrue(config.clustering().cacheMode().isClustered());
       assertTrue(config.clustering().cacheMode().isSynchronous());
       assertEquals(20000, config.clustering().sync().replTimeout());
@@ -706,7 +699,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals("${java.io.tmpdir}", singleFileStoreConfiguration.location());
 
       //--------------------------------------------------------------------------------------------
-      config = cm.getCacheConfiguration("jdbcStringBasedWithConnectionPool");
+      config = holder.getNamedConfigurationBuilders().get("jdbcStringBasedWithConnectionPool").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertFalse(config.persistence().usingAsyncStore());
       assertFalse(config.persistence().passivation());
@@ -736,7 +729,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals("org.h2.Driver", connectionPool.driverClass());
 
       //----------------------------------------------------------------------------------------------
-      config = cm.getCacheConfiguration("jdbcStringBasedWithDataSource");
+      config = holder.getNamedConfigurationBuilders().get("jdbcStringBasedWithDataSource").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertFalse(config.persistence().usingAsyncStore());
       assertFalse(config.persistence().passivation());
@@ -765,7 +758,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals("url", managedConnectionFactoryConfiguration.jndiUrl());
 
       //----------------------------------------------------------------------------------------------
-      config = cm.getCacheConfiguration("jdbcStringBasedWithSimpleConnection");
+      config = holder.getNamedConfigurationBuilders().get("jdbcStringBasedWithSimpleConnection").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertFalse(config.persistence().usingAsyncStore());
       assertFalse(config.persistence().passivation());
@@ -797,7 +790,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals("testValue", jdbcStringBasedStoreConfiguration.properties().getProperty("testName"));
 
       //----------------------------------------------------------------------------------------------
-      config = cm.getCacheConfiguration("withRemoteStore");
+      config = holder.getNamedConfigurationBuilders().get("withRemoteStore").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertFalse(config.persistence().usingAsyncStore());
       assertFalse(config.persistence().passivation());
@@ -844,7 +837,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertFalse(remoteConnectionPoolConfiguration.testWhileIdle());
 
       //-------------------------------------------------------------------------------------------
-      config = cm.getCacheConfiguration("withRestStore");
+      config = holder.getNamedConfigurationBuilders().get("withRestStore").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertFalse(config.persistence().usingAsyncStore());
       assertFalse(config.persistence().passivation());
@@ -873,7 +866,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(restConnectionPool.tcpNoDelay());
 
       //-------------------------------------------------------------------------------------------
-      config = cm.getCacheConfiguration("withLevelDBStore");
+      config = holder.getNamedConfigurationBuilders().get("withLevelDBStore").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertFalse(config.persistence().usingAsyncStore());
       assertTrue(config.persistence().passivation());
@@ -893,7 +886,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals("SNAPPY", rocksDBStoreConfiguration.compressionType().name());
 
       //-------------------------------------------------------------------------------------------
-      config = cm.getCacheConfiguration("withJpaStore");
+      config = holder.getNamedConfigurationBuilders().get("withJpaStore").build();
       assertFalse(config.clustering().cacheMode().isClustered());
       assertFalse(config.persistence().usingAsyncStore());
       assertTrue(config.persistence().passivation());
@@ -908,11 +901,11 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertFalse(jpaStoreConfiguration.storeMetadata());
    }
 
-   private void assertUnsafeConverted(EmbeddedCacheManager cm) {
-      Configuration config = cm.getCacheConfiguration("withUnsafe");
+   private void assertUnsafeConverted(ConfigurationBuilderHolder holder) {
+      Configuration config = holder.getNamedConfigurationBuilders().get("withUnsafe").build();
       assertTrue(config.unsafe().unreliableReturnValues());
 
-      config = cm.getCacheConfiguration("withUnsafeDisabled");
+      config = holder.getNamedConfigurationBuilders().get("withUnsafeDisabled").build();
       assertFalse(config.unsafe().unreliableReturnValues());
    }
 }

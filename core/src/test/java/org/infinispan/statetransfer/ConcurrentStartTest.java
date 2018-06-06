@@ -18,7 +18,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
@@ -117,8 +116,10 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
       gcb.transport().defaultTransport();
       TestCacheManagerFactory.amendGlobalConfiguration(gcb, new TransportFlags().withPortRange(index));
-      EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build(), false);
+      ConfigurationBuilder defaultCacheConfig = new ConfigurationBuilder();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.newDefaultCacheManager(false, gcb, defaultCacheConfig, false);
       registerCacheManager(cm);
+
       Configuration replCfg = new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_SYNC).build();
       cm.defineConfiguration(REPL_CACHE_NAME, replCfg);
       Configuration distCfg = new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).build();

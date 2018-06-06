@@ -5,9 +5,11 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.Properties;
 
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -19,35 +21,33 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  */
 @Test (groups = "functional", testName = "config.StringPropertyReplacementTest")
-public class StringPropertyReplacementTest extends SingleCacheManagerTest {
+public class StringPropertyReplacementTest extends AbstractInfinispanTest {
 
-
-   @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
-      System.setProperty("test.property.asyncListenerMaxThreads","2");
-      System.setProperty("test.property.persistenceMaxThreads","4");
-      System.setProperty("test.property.IsolationLevel","READ_COMMITTED");
-      System.setProperty("test.property.writeSkewCheck","true");
-      System.setProperty("test.property.SyncCommitPhase","true");
-      return TestCacheManagerFactory.fromXml("configs/string-property-replaced.xml");
+   protected ConfigurationBuilderHolder parse() throws Exception {
+      System.setProperty("StringPropertyReplacementTest.asyncListenerMaxThreads","2");
+      System.setProperty("StringPropertyReplacementTest.persistenceMaxThreads","4");
+      System.setProperty("StringPropertyReplacementTest.IsolationLevel","READ_COMMITTED");
+      System.setProperty("StringPropertyReplacementTest.writeSkewCheck","true");
+      System.setProperty("StringPropertyReplacementTest.SyncCommitPhase","true");
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true);
+      return parserRegistry.parseFile("configs/string-property-replaced.xml");
    }
 
-   public void testGlobalConfig() {
+   public void testGlobalConfig() throws Exception {
+      ConfigurationBuilderHolder holder = parse();
+      GlobalConfiguration gc = holder.getGlobalConfigurationBuilder().build();
       BlockingThreadPoolExecutorFactory listenerThreadPool =
-            cacheManager.getCacheManagerConfiguration().listenerThreadPool().threadPoolFactory();
+            gc.listenerThreadPool().threadPoolFactory();
       assertEquals(2, listenerThreadPool.maxThreads());
 
       BlockingThreadPoolExecutorFactory persistenceThreadPool =
-            cacheManager.getCacheManagerConfiguration().persistenceThreadPool().threadPoolFactory();
+            gc.persistenceThreadPool().threadPoolFactory();
       assertEquals(4, persistenceThreadPool.maxThreads());
 
-      Properties transportProps = cacheManager.getCacheManagerConfiguration().transport().properties();
-      // Should be "jgroups-tcp.xml", but gets overriden by test cache manager factory
-      assert transportProps.get("configurationFile") == null;
-   }
+      Properties transportProps = gc.transport().properties();
+      assertEquals("jgroups-tcp.xml", transportProps.get("configurationFile"));
 
-   public void testDefaultCache() {
-      org.infinispan.configuration.cache.Configuration configuration = cacheManager.getCache().getCacheConfiguration();
-      assert configuration.locking().isolationLevel().equals(IsolationLevel.READ_COMMITTED);
+      Configuration configuration = holder.getDefaultConfigurationBuilder().build();
+      assertEquals(IsolationLevel.READ_COMMITTED, configuration.locking().isolationLevel());
    }
 }

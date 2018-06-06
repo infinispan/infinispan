@@ -1,6 +1,8 @@
 package org.infinispan.test;
 
 import static java.util.Arrays.asList;
+import static org.infinispan.test.fwk.TestResourceTracker.getCurrentTestShortName;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -135,6 +137,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          TestingUtil.clearContent(cacheManagers);
          TestingUtil.killCacheManagers(cacheManagers);
       }
+
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         String nodeName = cm.getCacheManagerConfiguration().transport().nodeName();
+         assertTrue("Invalid node name for test " + getCurrentTestShortName() + ": " + nodeName,
+                    nodeName != null && nodeName.contains(getCurrentTestShortName()));
+      }
+
       cacheManagers.clear();
       listeners.clear();
    }

@@ -6,7 +6,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
-
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLStreamException;
 
@@ -20,9 +19,11 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.DefaultCacheManager;
@@ -40,18 +41,13 @@ import org.infinispan.util.logging.LogFactory;
  * @author Galder Zamarreño
  */
 public class TestCacheManagerFactory {
+   private static final int NAMED_EXECUTORS_THREADS_NO_QUEUE = 6;
+   private static final int NAMED_EXECUTORS_THREADS_WITH_QUEUE = 4;
+   private static final int NAMED_EXECUTORS_QUEUE_SIZE = 10;
+   private static final int NAMED_EXECUTORS_KEEP_ALIVE = 30000;
 
-   public static final int ASYNC_EXEC_MAX_THREADS = 4;
-   public static final int ASYNC_EXEC_QUEUE_SIZE = 10000;
-   public static final int REMOTE_EXEC_MAX_THREADS = 6;
-   public static final int REMOTE_EXEC_QUEUE_SIZE = 0;
-   public static final int STATE_TRANSFER_EXEC_MAX_THREADS = 4;
-   public static final int STATE_TRANSFER_EXEC_QUEUE_SIZE = 0;
-   public static final int TRANSPORT_EXEC_MAX_THREADS = 6;
-   public static final int TRANSPORT_EXEC_QUEUE_SIZE = 10000;
-   public static final int KEEP_ALIVE = 30000;
-
-   public static final String MARSHALLER = LegacyKeySupportSystemProperties.getProperty("infinispan.test.marshaller.class", "infinispan.marshaller.class");
+   private static final String MARSHALLER = LegacyKeySupportSystemProperties.getProperty(
+      "infinispan.test.marshaller.class", "infinispan.marshaller.class");
    private static final Log log = LogFactory.getLog(TestCacheManagerFactory.class);
 
    /**
@@ -117,7 +113,24 @@ public class TestCacheManagerFactory {
    public static EmbeddedCacheManager fromStream(InputStream is, boolean keepJmxDomainName, boolean defaultParsersOnly, boolean start) throws IOException {
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), defaultParsersOnly);
       ConfigurationBuilderHolder holder = parserRegistry.parse(is);
+
+      // The node name is set in each DefaultThreadFactory individually, override it here
+      String testShortName = TestResourceTracker.getCurrentTestShortName();
+      GlobalConfiguration gc = holder.getGlobalConfigurationBuilder().build();
+      updateNodeName(testShortName, gc.listenerThreadPool());
+      updateNodeName(testShortName, gc.expirationThreadPool());
+      updateNodeName(testShortName, gc.persistenceThreadPool());
+      updateNodeName(testShortName, gc.stateTransferThreadPool());
+      updateNodeName(testShortName, gc.asyncThreadPool());
+      updateNodeName(testShortName, gc.transport().transportThreadPool());
+
       return createClusteredCacheManager(start, holder, keepJmxDomainName);
+   }
+
+   private static void updateNodeName(String nodeName, ThreadPoolConfiguration threadPoolConfiguration) {
+      if (threadPoolConfiguration.threadFactory() instanceof DefaultThreadFactory) {
+         ((DefaultThreadFactory) threadPoolConfiguration.threadFactory()).setNode(nodeName);
+      }
    }
 
    public static EmbeddedCacheManager fromString(String config) throws IOException {
@@ -247,6 +260,7 @@ public class TestCacheManagerFactory {
       if (globalBuilder.transport().build().transport().transport() != null) {
          throw new IllegalArgumentException("Use TestCacheManagerFactory.createClusteredCacheManager(...) for clustered cache managers");
       }
+      amendTransport(globalBuilder);
       return newDefaultCacheManager(true, globalBuilder, builder, false);
    }
 
@@ -360,40 +374,39 @@ public class TestCacheManagerFactory {
    }
 
    private static void amendTransport(GlobalConfigurationBuilder builder, TransportFlags flags) {
-      org.infinispan.configuration.global.GlobalConfiguration gc = builder.build();
-      if (gc.transport().transport() != null) { //this is local
-         String testName = TestResourceTracker.getCurrentTestName();
-         String nextNodeName = TestResourceTracker.getNextNodeName();
+      String testName = TestResourceTracker.getCurrentTestName();
 
+      GlobalConfiguration gc = builder.build();
+      if (gc.transport().transport() != null) {
          // Remove any configuration file that might have been set.
          builder.transport().removeProperty(JGroupsTransport.CONFIGURATION_FILE);
 
-         builder
-               .transport()
-               .addProperty(JGroupsTransport.CONFIGURATION_STRING, getJGroupsConfig(testName, flags))
-               .nodeName(nextNodeName);
+         builder.transport().addProperty(JGroupsTransport.CONFIGURATION_STRING, getJGroupsConfig(testName, flags));
       }
    }
 
+   public static void setNodeName(GlobalConfigurationBuilder builder) {
+      String nextNodeName = TestResourceTracker.getNextNodeName();
+
+      // Set the node name even for local managers in order to set the name of the worker threads
+      builder.transport().nodeName(nextNodeName);
+   }
+
    public static void minimizeThreads(GlobalConfigurationBuilder builder) {
-      BlockingThreadPoolExecutorFactory executorFactory;
+      BlockingThreadPoolExecutorFactory executorFactoryNoQueue =
+         new BlockingThreadPoolExecutorFactory(NAMED_EXECUTORS_THREADS_NO_QUEUE, 0, 0, NAMED_EXECUTORS_KEEP_ALIVE);
+      BlockingThreadPoolExecutorFactory executorFactoryWithQueue =
+         new BlockingThreadPoolExecutorFactory(NAMED_EXECUTORS_THREADS_WITH_QUEUE, NAMED_EXECUTORS_THREADS_WITH_QUEUE,
+                                               NAMED_EXECUTORS_QUEUE_SIZE, NAMED_EXECUTORS_KEEP_ALIVE);
 
-      executorFactory = new BlockingThreadPoolExecutorFactory(ASYNC_EXEC_MAX_THREADS,
-            ASYNC_EXEC_MAX_THREADS, ASYNC_EXEC_QUEUE_SIZE, KEEP_ALIVE);
-      builder.asyncThreadPool().threadPoolFactory(executorFactory);
+      builder.transport().remoteCommandThreadPool().threadPoolFactory(executorFactoryNoQueue);
+      builder.stateTransferThreadPool().threadPoolFactory(executorFactoryNoQueue);
 
-      executorFactory = new BlockingThreadPoolExecutorFactory(STATE_TRANSFER_EXEC_MAX_THREADS,
-            STATE_TRANSFER_EXEC_MAX_THREADS, STATE_TRANSFER_EXEC_QUEUE_SIZE, KEEP_ALIVE);
-      builder.stateTransferThreadPool().threadPoolFactory(executorFactory);
-
-      executorFactory = new BlockingThreadPoolExecutorFactory(REMOTE_EXEC_MAX_THREADS,
-            REMOTE_EXEC_MAX_THREADS, REMOTE_EXEC_QUEUE_SIZE, KEEP_ALIVE);
-      builder.transport().remoteCommandThreadPool().threadPoolFactory(executorFactory);
-
-      executorFactory = new BlockingThreadPoolExecutorFactory(
-            TRANSPORT_EXEC_MAX_THREADS, TRANSPORT_EXEC_MAX_THREADS, TRANSPORT_EXEC_QUEUE_SIZE, KEEP_ALIVE);
-      builder.transport().transportThreadPool().threadPoolFactory(executorFactory);
-
+      builder.asyncThreadPool().threadPoolFactory(executorFactoryWithQueue);
+      builder.listenerThreadPool().threadPoolFactory(executorFactoryWithQueue);
+      builder.transport().transportThreadPool().threadPoolFactory(executorFactoryWithQueue);
+      // TODO Scheduled thread pools don't have a threads limit
+      // Timeout thread pool is not configurable at all
    }
 
    public static void amendMarshaller(GlobalConfigurationBuilder builder) {
@@ -408,7 +421,7 @@ public class TestCacheManagerFactory {
    }
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gc, ConfigurationBuilder c) {
-      gc.transport().nodeName(TestResourceTracker.getNextNodeName());
+      setNodeName(gc);
       GlobalConfiguration globalConfiguration = gc.build();
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(globalConfiguration, c.build(globalConfiguration), start);
       TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
@@ -416,6 +429,7 @@ public class TestCacheManagerFactory {
    }
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, ConfigurationBuilderHolder holder) {
+      setNodeName(holder.getGlobalConfigurationBuilder());
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(holder, start);
       TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
       return defaultCacheManager;
