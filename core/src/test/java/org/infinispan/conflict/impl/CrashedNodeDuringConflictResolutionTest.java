@@ -157,6 +157,7 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
          if (command instanceof StateRequestCommand) {
             StateRequestCommand src = (StateRequestCommand) command;
             if (src.getSegments().contains(segment)) {
+               log.debugf("Completing future and ignoring state request %s", command);
                future.complete(src);
                return;
             }
