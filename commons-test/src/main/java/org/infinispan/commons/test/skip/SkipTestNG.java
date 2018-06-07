@@ -10,6 +10,15 @@ import org.testng.SkipException;
  */
 public class SkipTestNG {
    /**
+    * Skip the test if a condition is true.
+    */
+   public static void skipIf(boolean skip, String message) {
+      if (skip) {
+         throw new SkipException(message);
+      }
+   }
+
+   /**
     * Use within a {@code @Test} method to skip that method on some OSes.
     * Use in a {@code @BeforeClass} method to skip all methods in a class on some OSes.
     */
