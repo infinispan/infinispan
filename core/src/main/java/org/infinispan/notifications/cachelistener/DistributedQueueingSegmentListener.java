@@ -1,16 +1,15 @@
 package org.infinispan.notifications.cachelistener;
 
 import java.lang.invoke.MethodHandles;
+import java.util.PrimitiveIterator;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
-import java.util.stream.Stream;
 
-import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.impl.ListenerInvocation;
@@ -33,9 +32,7 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    private final ToIntFunction<Object> intFunction;
    protected final InternalEntryFactory entryFactory;
 
-   private Stream<Integer> justCompletedSegments = Stream.empty();
-
-   private final Consumer<Integer> completeSegment = this::completeSegment;
+   private PrimitiveIterator.OfInt justCompletedSegments = null;
 
    public DistributedQueueingSegmentListener(InternalEntryFactory entryFactory, int numSegments, ToIntFunction<Object> intFunction) {
       this.entryFactory = entryFactory;
@@ -101,8 +98,13 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    @Override
    public void notifiedKey(K key) {
       // This relies on the fact that notifiedKey is immediately called after the entry has finished being iterated on
-      justCompletedSegments.forEach(completeSegment);
-      justCompletedSegments = Stream.empty();
+      PrimitiveIterator.OfInt iter = justCompletedSegments;
+      if (iter != null) {
+         while (iter.hasNext()) {
+            completeSegment(iter.nextInt());
+         }
+      }
+      justCompletedSegments = null;
    }
 
    private void completeSegment(int segment) {
@@ -118,8 +120,9 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
       }
    }
 
-   public void segmentCompleted(Set<Integer> segments) {
-      justCompletedSegments = segments.stream().filter(s -> queues.get(s) != null);
+   @Override
+   public void accept(Supplier<PrimitiveIterator.OfInt> segments) {
+      justCompletedSegments = segments.get();
    }
 
    @Override

@@ -270,7 +270,12 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       Map<Integer, Set<Map.Entry<Object, String>>> answer = generateEntriesPerSegment(keyPartitioner, returnQueue);
 
       for (Map.Entry<Integer, Set<Map.Entry<Object, String>>> entry : expected.entrySet()) {
-         assertEquals("Segment " + entry.getKey() + " had a mismatch", entry.getValue(), answer.get(entry.getKey()));
+         try {
+            assertEquals("Segment " + entry.getKey() + " had a mismatch", entry.getValue(), answer.get(entry.getKey()));
+         } catch (AssertionError e) {
+            log.fatal("TEST ENDED");
+            throw e;
+         }
       }
    }
 

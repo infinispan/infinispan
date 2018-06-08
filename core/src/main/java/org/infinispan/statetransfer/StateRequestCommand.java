@@ -5,19 +5,18 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.scattered.ScatteredStateProvider;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -52,7 +51,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
 
    private int topologyId;
 
-   private Set<Integer> segments;
+   private IntSet segments;
 
    private StateProvider stateProvider;
    private BiasManager biasManager;
@@ -65,7 +64,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
       super(cacheName);
    }
 
-   public StateRequestCommand(ByteString cacheName, Type type, Address origin, int topologyId, Set<Integer> segments) {
+   public StateRequestCommand(ByteString cacheName, Type type, Address origin, int topologyId, IntSet segments) {
       super(cacheName);
       this.type = type;
       setOrigin(origin);
@@ -151,7 +150,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
       this.topologyId = topologyId;
    }
 
-   public Set<Integer> getSegments() {
+   public IntSet getSegments() {
       return segments;
    }
 
@@ -173,7 +172,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
          case CANCEL_STATE_TRANSFER:
             output.writeObject(getOrigin());
          case CONFIRM_REVOKED_SEGMENTS:
-            MarshallUtil.marshallCollection(segments, output);
+            output.writeObject(segments);
             return;
          case GET_CACHE_LISTENERS:
             return;
@@ -194,7 +193,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
          case CANCEL_STATE_TRANSFER:
             setOrigin((Address) input.readObject());
          case CONFIRM_REVOKED_SEGMENTS:
-            segments = MarshallUtil.unmarshallCollectionUnbounded(input, SmallIntSet::new);
+            segments = (IntSet) input.readObject();
             return;
          case GET_CACHE_LISTENERS:
             return;

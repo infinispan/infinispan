@@ -626,7 +626,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int topologyId, Set<Integer> segments) {
+   public StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int topologyId, IntSet segments) {
       return new StateRequestCommand(cacheName, subtype, sender, topologyId, segments);
    }
 
@@ -714,7 +714,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <K> StreamRequestCommand<K> buildStreamRequestCommand(Object id, boolean parallelStream,
-           StreamRequestCommand.Type type, Set<Integer> segments, Set<K> keys, Set<K> excludedKeys,
+           StreamRequestCommand.Type type, IntSet segments, Set<K> keys, Set<K> excludedKeys,
            boolean includeLoader, boolean entryStream, Object terminalOperation) {
       return new StreamRequestCommand<>(cacheName, cache.getCacheManager().getAddress(), id, parallelStream, type,
               segments, keys, excludedKeys, includeLoader, entryStream, terminalOperation);
@@ -722,7 +722,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <R> StreamResponseCommand<R> buildStreamResponseCommand(Object identifier, boolean complete,
-           Set<Integer> lostSegments, R response) {
+           IntSet lostSegments, R response) {
       if (lostSegments.isEmpty()) {
          return new StreamResponseCommand<>(cacheName, cache.getCacheManager().getAddress(), identifier, complete,
                  response);

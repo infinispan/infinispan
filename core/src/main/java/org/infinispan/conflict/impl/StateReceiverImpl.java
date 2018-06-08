@@ -17,6 +17,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -122,7 +123,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    }
 
    InboundTransferTask createTransferTask(int segmentId, Address source, CacheTopology topology, long transferTimeout) {
-      return new InboundTransferTask(Collections.singleton(segmentId), source, topology.getTopologyId(),
+      return new InboundTransferTask(IntSets.immutableSet(segmentId), source, topology.getTopologyId(),
             rpcManager, commandsFactory, transferTimeout, cacheName, false);
    }
 

@@ -3,8 +3,8 @@ package org.infinispan.distribution.util;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Set;
 
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.util.AbstractDelegatingCollection;
 
@@ -24,9 +24,9 @@ public class ReadOnlySegmentAwareCollection<E> extends AbstractDelegatingCollect
 
    protected final Collection<E> set;
    protected final ConsistentHash ch;
-   protected final Set<Integer> allowedSegments;
+   protected final IntSet allowedSegments;
 
-   public ReadOnlySegmentAwareCollection(Collection<E> set, ConsistentHash ch, Set<Integer> allowedSegments) {
+   public ReadOnlySegmentAwareCollection(Collection<E> set, ConsistentHash ch, IntSet allowedSegments) {
       super();
       this.set = Collections.unmodifiableCollection(set);
       this.ch = ch;

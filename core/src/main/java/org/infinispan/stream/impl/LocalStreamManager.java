@@ -25,7 +25,7 @@ public interface LocalStreamManager<Original, K> {
     * @param operation the operation to perform
     * @param <R> the type of value from the operation
     */
-   <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
+   <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, IntSet segments,
            Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
          TerminalOperation<Original, R> operation);
 
@@ -41,7 +41,7 @@ public interface LocalStreamManager<Original, K> {
     * @param operation the operation to perform
     * @param <R> the type of value from the operation
     */
-   <R> void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
+   <R> void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream, IntSet segments,
            Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
          TerminalOperation<Original, R> operation);
 
@@ -57,7 +57,7 @@ public interface LocalStreamManager<Original, K> {
     * @param operation the operation to perform
     * @param <R> the type of value from the operation
     */
-   <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
+   <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, IntSet segments,
            Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
            KeyTrackingTerminalOperation<Original, K, R> operation);
 
@@ -72,7 +72,7 @@ public interface LocalStreamManager<Original, K> {
     * @param includeLoader whether or not a cache loader should be utilized
     * @param operation the operation to perform
     */
-   void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
+   void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream, IntSet segments,
            Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
            KeyTrackingTerminalOperation<Original, K, ?> operation);
 

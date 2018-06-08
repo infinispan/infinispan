@@ -2,6 +2,7 @@ package org.infinispan.stream.impl;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.PrimitiveIterator;
@@ -27,8 +28,7 @@ import java.util.stream.Collectors;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.RangeSet;
-import org.infinispan.commons.util.SmallIntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
@@ -78,7 +78,7 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
 
    @Override
    public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         IntSet segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
          boolean entryStream, TerminalOperation<Original, R> operation, ResultsCallback<R> callback,
          Predicate<? super R> earlyTerminatePredicate) {
       return commonRemoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
@@ -88,7 +88,7 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
 
    @Override
    public <R> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
-         ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
+         ConsistentHash ch, IntSet segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
          boolean includeLoader, boolean entryStream, TerminalOperation<Original, R> operation,
          ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate) {
       return commonRemoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
@@ -97,10 +97,10 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
    }
 
    private <R> Object commonRemoteStreamOperation(boolean parallelDistribution, boolean parallelStream,
-           ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
+           ConsistentHash ch, IntSet segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
            boolean includeLoader, boolean entryStream, SegmentAwareOperation operation, ResultsCallback<R> callback,
            StreamRequestCommand.Type type, Predicate<? super R> earlyTerminatePredicate) {
-      Map<Address, Set<Integer>> targets = determineTargets(ch, segments, callback);
+      Map<Address, IntSet> targets = determineTargets(ch, segments, callback);
       String id;
       if (!targets.isEmpty()) {
          id = localAddress.toString() + requestId.getAndIncrement();
@@ -111,9 +111,9 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
             submitAsyncTasks(id, targets, keysToExclude, parallelStream, keysToInclude, includeLoader, entryStream, type,
                     operation);
          } else {
-            for (Map.Entry<Address, Set<Integer>> targetInfo : targets.entrySet()) {
+            for (Map.Entry<Address, IntSet> targetInfo : targets.entrySet()) {
                // TODO: what if this throws exception?
-               Set<Integer> targetSegments = targetInfo.getValue();
+               IntSet targetSegments = targetInfo.getValue();
                Set<K> keysExcluded = determineExcludedKeys(keysToExclude, targetSegments);
                StreamRequestCommand<K> command = factory.buildStreamRequestCommand(id, parallelStream, type,
                      targetSegments, keysToInclude, keysExcluded, includeLoader, entryStream, operation);
@@ -131,7 +131,7 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
 
    @Override
    public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         IntSet segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
          boolean entryStream, KeyTrackingTerminalOperation<Original, K, R> operation,
          ResultsCallback<Collection<R>> callback) {
       return commonRemoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
@@ -140,10 +140,10 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
 
    @Override
    public Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
-           ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
+           ConsistentHash ch, IntSet segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
            boolean includeLoader, boolean entryStream, KeyTrackingTerminalOperation<Original, K, ?> operation,
            ResultsCallback<Collection<K>> callback) {
-      Map<Address, Set<Integer>> targets = determineTargets(ch, segments, callback);
+      Map<Address, IntSet> targets = determineTargets(ch, segments, callback);
       String id;
       if (!targets.isEmpty()) {
          id = localAddress.toString() + "-" + requestId.getAndIncrement();
@@ -154,9 +154,9 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
             submitAsyncTasks(id, targets, keysToExclude, parallelStream, keysToInclude, includeLoader, entryStream,
                     StreamRequestCommand.Type.TERMINAL_KEY_REHASH, operation);
          } else {
-            for (Map.Entry<Address, Set<Integer>> targetInfo : targets.entrySet()) {
+            for (Map.Entry<Address, IntSet> targetInfo : targets.entrySet()) {
                Address dest = targetInfo.getKey();
-               Set<Integer> targetSegments = targetInfo.getValue();
+               IntSet targetSegments = targetInfo.getValue();
                try {
                   // Keys to exclude is never empty since it utilizes a custom map solution
                   Set<K> keysExcluded = determineExcludedKeys(keysToExclude, targetSegments);
@@ -194,11 +194,11 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
       return id;
    }
 
-   private void submitAsyncTasks(String id, Map<Address, Set<Integer>> targets, Map<Integer, Set<K>> keysToExclude,
+   private void submitAsyncTasks(String id, Map<Address, IntSet> targets, Map<Integer, Set<K>> keysToExclude,
                                  boolean parallelStream, Set<K> keysToInclude, boolean includeLoader, boolean entryStream,
                                  StreamRequestCommand.Type type, Object operation) {
-      for (Map.Entry<Address, Set<Integer>> targetInfo : targets.entrySet()) {
-         Set<Integer> segments = targetInfo.getValue();
+      for (Map.Entry<Address, IntSet> targetInfo : targets.entrySet()) {
+         IntSet segments = targetInfo.getValue();
          Set<K> keysExcluded = determineExcludedKeys(keysToExclude, segments);
          Address dest = targetInfo.getKey();
          log.tracef("Submitting async task to %s for %s excluding keys %s", dest, id, keysExcluded);
@@ -266,19 +266,21 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
       }
    }
 
-   private Set<K> determineExcludedKeys(Map<Integer, Set<K>> keysToExclude, Set<Integer> segmentsToUse) {
+   private Set<K> determineExcludedKeys(Map<Integer, Set<K>> keysToExclude, IntSet segmentsToUse) {
       if (keysToExclude.isEmpty()) {
          return Collections.emptySet();
       }
 
-      // Special map only supports get operations
-      return segmentsToUse.stream().flatMap(s -> {
-         Set<K> keysForSegment = keysToExclude.get(s);
+      Set<K> excludedKeys = new HashSet<>();
+      for (PrimitiveIterator.OfInt segmentIterator = segmentsToUse.iterator(); segmentIterator.hasNext(); ) {
+         // We have to box for retrieving from the map - might as well show it
+         Integer segment = segmentIterator.nextInt();
+         Set<K> keysForSegment = keysToExclude.get(segment);
          if (keysForSegment != null) {
-            return keysForSegment.stream();
+            excludedKeys.addAll(keysForSegment);
          }
-         return null;
-      }).collect(Collectors.toSet());
+      }
+      return excludedKeys;
    }
 
    // TODO: we could have this method return a Stream etc. so it doesn't have to iterate upon keys multiple times (helps rehash and tx)
@@ -297,19 +299,21 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
       }).flatMap(Function.identity()).collect(Collectors.toSet());
    }
 
-   private Map<Address, Set<Integer>> determineTargets(ConsistentHash ch, Set<Integer> segments, ResultsCallback<?> callback) {
+   private Map<Address, IntSet> determineTargets(ConsistentHash ch, IntSet segments, ResultsCallback<?> callback) {
       if (segments == null) {
-         segments = new RangeSet(ch.getNumSegments());
+         segments = IntSets.immutableRangeSet(ch.getNumSegments());
       }
       // This has to be a concurrent hash map in case if a node completes operation while we are still iterating
       // over the map and submitting to others
-      Map<Address, Set<Integer>> targets = new ConcurrentHashMap<>();
-      for (Integer segment : segments) {
+      Map<Address, IntSet> targets = new ConcurrentHashMap<>();
+      int numSegments = ch.getNumSegments();
+      for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
+         int segment = iter.nextInt();
          Address owner = ch.locatePrimaryOwnerForSegment(segment);
          if (owner == null) {
-            callback.onSegmentsLost(Collections.singleton(segment));
+            callback.onSegmentsLost(IntSets.immutableSet(segment));
          } else if (!owner.equals(localAddress)) {
-            targets.computeIfAbsent(owner, t -> new SmallIntSet()).add(segment);
+            targets.computeIfAbsent(owner, t -> IntSets.mutableEmptySet(numSegments)).set(segment);
          }
       }
       return targets;
@@ -386,7 +390,7 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
    }
 
    @Override
-   public <R1> boolean receiveResponse(Object id, Address origin, boolean complete, Set<Integer> missingSegments,
+   public <R1> boolean receiveResponse(Object id, Address origin, boolean complete, IntSet missingSegments,
                                     R1 response) {
       log.tracef("Received response from %s with a completed response %s for id %s with %s suspected segments.", origin,
               complete, id, missingSegments);
@@ -561,15 +565,13 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
                         spliterator.forEachRemaining(s::onNext);
 
                         if (iteratorResponse.isComplete()) {
-                           Set<Integer> lostSegments = iteratorResponse.getSuspectedSegments();
+                           IntSet lostSegments = iteratorResponse.getSuspectedSegments();
                            if (lostSegments.isEmpty()) {
                               onSegmentsComplete.accept((Supplier<PrimitiveIterator.OfInt>) segments::iterator);
                            } else {
-                              onSegmentsLost.accept((Supplier<PrimitiveIterator.OfInt>)
-                                    () -> lostSegments.stream().mapToInt(Integer::intValue).iterator());
+                              onSegmentsLost.accept((Supplier<PrimitiveIterator.OfInt>) lostSegments::iterator);
 
                               if (lostSegments.size() != segments.size()) {
-                                 // TODO: need to convert response to return IntSet
                                  onSegmentsComplete.accept((Supplier<PrimitiveIterator.OfInt>)
                                        () -> segments.intStream()
                                              .filter(s -> !lostSegments.contains(s))
@@ -669,16 +671,16 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
 
    static class RequestTracker<R> {
       final ResultsCallback<R> callback;
-      final Map<Address, Set<Integer>> awaitingResponse;
+      final Map<Address, IntSet> awaitingResponse;
       final Lock completionLock = new ReentrantLock();
       final Condition completionCondition = completionLock.newCondition();
       final Predicate<? super R> earlyTerminatePredicate;
 
-      Set<Integer> missingSegments;
+      IntSet missingSegments;
 
       volatile Throwable throwable;
 
-      RequestTracker(ResultsCallback<R> callback, Map<Address, Set<Integer>> awaitingResponse,
+      RequestTracker(ResultsCallback<R> callback, Map<Address, IntSet> awaitingResponse,
                      Predicate<? super R> earlyTerminatePredicate) {
          this.callback = callback;
          this.awaitingResponse = awaitingResponse;
@@ -695,7 +697,7 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
        * @return Whether this was the last expected response
        */
       public boolean lastResult(Address origin, R result) {
-         Set<Integer> completedSegments = awaitingResponse.get(origin);
+         IntSet completedSegments = awaitingResponse.get(origin);
          if (missingSegments != null) {
             completedSegments.removeAll(missingSegments);
          }
@@ -710,10 +712,10 @@ public class ClusterStreamManagerImpl<Original, K> implements ClusterStreamManag
          }
       }
 
-      public void missingSegments(Set<Integer> segments) {
+      public void missingSegments(IntSet segments) {
          synchronized (this) {
             if (missingSegments == null) {
-               missingSegments = segments;
+               missingSegments = IntSets.mutableFrom(segments);
             } else {
                missingSegments.addAll(segments);
             }

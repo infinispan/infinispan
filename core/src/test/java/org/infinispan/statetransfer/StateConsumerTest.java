@@ -29,6 +29,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -160,7 +161,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
                                                           (StateRequestCommand.Type) invocation.getArguments()[0],
                                                           (Address) invocation.getArguments()[1],
                                                           (Integer) invocation.getArguments()[2],
-                                                          (Set) invocation.getArguments()[3]));
+                                                          (IntSet) invocation.getArguments()[3]));
 
       when(transport.getViewId()).thenReturn(1);
       when(rpcManager.getAddress()).thenReturn(addresses[0]);

@@ -19,6 +19,8 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -144,7 +146,7 @@ public class StateProviderImpl implements StateProvider {
       }
    }
 
-   public List<TransactionInfo> getTransactionsForSegments(Address destination, int requestTopologyId, Set<Integer> segments) throws InterruptedException {
+   public List<TransactionInfo> getTransactionsForSegments(Address destination, int requestTopologyId, IntSet segments) throws InterruptedException {
       if (trace) {
          log.tracef("Received request for transactions from node %s for cache %s, topology id %d, segments %s",
                     destination, cacheName, requestTopologyId, segments);
@@ -153,7 +155,7 @@ public class StateProviderImpl implements StateProvider {
       final CacheTopology cacheTopology = getCacheTopology(requestTopologyId, destination, true);
       final ConsistentHash readCh = cacheTopology.getReadConsistentHash();
 
-      Set<Integer> ownedSegments = readCh.getSegmentsForOwner(rpcManager.getAddress());
+      IntSet ownedSegments = IntSets.from(readCh.getSegmentsForOwner(rpcManager.getAddress()));
       if (!ownedSegments.containsAll(segments)) {
          segments.removeAll(ownedSegments);
          throw new IllegalArgumentException("Segments " + segments + " are not owned by " + rpcManager.getAddress());
@@ -205,7 +207,7 @@ public class StateProviderImpl implements StateProvider {
    private void collectTransactionsToTransfer(Address destination,
                                               List<TransactionInfo> transactionsToTransfer,
                                               Collection<? extends CacheTransaction> transactions,
-                                              Set<Integer> segments, CacheTopology cacheTopology) {
+                                              IntSet segments, CacheTopology cacheTopology) {
       int topologyId = cacheTopology.getTopologyId();
       Set<Address> members = new HashSet<>(cacheTopology.getMembers());
 
@@ -263,7 +265,7 @@ public class StateProviderImpl implements StateProvider {
    }
 
    @Override
-   public void startOutboundTransfer(Address destination, int requestTopologyId, Set<Integer> segments, boolean applyState)
+   public void startOutboundTransfer(Address destination, int requestTopologyId, IntSet segments, boolean applyState)
          throws InterruptedException {
       if (trace) {
          log.tracef("Starting outbound transfer to node %s for cache %s, topology id %d, segments %s", destination,
@@ -271,7 +273,8 @@ public class StateProviderImpl implements StateProvider {
       }
 
       // the destination node must already have an InboundTransferTask waiting for these segments
-      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, requestTopologyId,
+      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments,
+            this.configuration.clustering().hash().numSegments(), chunkSize, requestTopologyId,
             keyPartitioner, this::onTaskCompletion, chunks -> {},
             OutboundTransferTask::defaultMapEntryFromDataContainer, OutboundTransferTask::defaultMapEntryFromStore,
             dataContainer, persistenceManager, rpcManager, commandsFactory, entryFactory, timeout, cacheName, applyState, false);
@@ -292,7 +295,7 @@ public class StateProviderImpl implements StateProvider {
    }
 
    @Override
-   public void cancelOutboundTransfer(Address destination, int topologyId, Set<Integer> segments) {
+   public void cancelOutboundTransfer(Address destination, int topologyId, IntSet segments) {
       if (trace) {
          log.tracef("Cancelling outbound transfer to node %s for cache %s, topology id %d, segments %s", destination,
                     cacheName, topologyId, segments);

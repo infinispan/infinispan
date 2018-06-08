@@ -54,9 +54,8 @@ import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.IteratorMapper;
-import org.infinispan.commons.util.RangeSet;
-import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -472,13 +471,13 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
          int maxSegment = dm.getCacheTopology().getCurrentCH().getNumSegments();
          if (segmentsToFilter == null) {
             // We can't use RangeSet as we have to modify this IntSet
-            segmentsToUse = new SmallIntSet(maxSegment);
+            segmentsToUse = IntSets.mutableEmptySet(maxSegment);
             for (int i = 0; i < maxSegment; ++i) {
                segmentsToUse.set(i);
             }
          } else {
             // Need to make copy as we will modify this below
-            segmentsToUse = new SmallIntSet(segmentsToFilter);
+            segmentsToUse = IntSets.mutableCopyFrom(segmentsToFilter);
          }
 
          // TODO: we could optimize this array (make smaller) if we don't require all segments
@@ -491,7 +490,7 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
          completedHandler = completed -> {
             IntSet intSet;
             if (log.isTraceEnabled()) {
-               intSet = new SmallIntSet();
+               intSet = IntSets.mutableEmptySet(maxSegment);
             } else {
                intSet = null;
             }
@@ -629,7 +628,7 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
       Publisher<S> localPublisher;
 
       if (ch.getMembers().contains(localAddress)) {
-         Set<Integer> ownedSegments = ch.getSegmentsForOwner(localAddress);
+         IntSet ownedSegments = IntSets.from(ch.getSegmentsForOwner(localAddress));
          if (segmentsToFilter == null) {
             stayLocal = ownedSegments.size() == ch.getNumSegments();
          } else {
@@ -639,7 +638,9 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
          Publisher<S> innerPublisher = localPublisher(segmentsToFilter, ch,
                keysToExclude == null ? Collections.emptySet() :
                      (segmentsToFilter == null ? IntStream.range(0, ch.getNumSegments()) : segmentsToFilter.intStream())
-                           .mapToObj(i -> keysToExclude.apply(i).stream()).flatMap(Function.identity()).collect(Collectors.toSet()),
+                           .mapToObj(i -> keysToExclude.apply(i).stream())
+                           .flatMap(Function.identity())
+                           .collect(Collectors.toSet()),
                intermediateOperations, !stayLocal);
 
          localPublisher = publisherFunction.decorateLocal(ch, stayLocal, segmentsToFilter, innerPublisher);
@@ -697,19 +698,18 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
 
    private Map<Address, IntSet> determineTargets(ConsistentHash ch, IntSet segments) {
       if (segments == null) {
-         segments = new RangeSet(ch.getNumSegments());
+         segments = IntSets.immutableRangeSet(ch.getNumSegments());
       }
       Map<Address, IntSet> targets = new HashMap<>();
-      PrimitiveIterator.OfInt segmentIterator = segments.iterator();
-      while (segmentIterator.hasNext()) {
-         int segment = segmentIterator.nextInt();
+      for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
+         int segment = iter.nextInt();
          Address owner = ch.locatePrimaryOwnerForSegment(segment);
          if (owner == null || owner.equals(localAddress)) {
             continue;
          }
          IntSet targetSegments = targets.get(owner);
          if (targetSegments == null) {
-            targetSegments = new SmallIntSet();
+            targetSegments = IntSets.mutableEmptySet(ch.getNumSegments());
             targets.put(owner, targetSegments);
          }
          targetSegments.set(segment);
@@ -785,7 +785,7 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
 
    @Override
    public CacheStream<R> filterKeySegments(Set<Integer> segments) {
-      segmentsToFilter = SmallIntSet.from(segments);
+      segmentsToFilter = IntSets.from(segments);
       return this;
    }
 

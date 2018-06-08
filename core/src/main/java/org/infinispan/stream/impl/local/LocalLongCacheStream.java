@@ -19,13 +19,12 @@ import java.util.function.ObjLongConsumer;
 import java.util.function.Supplier;
 import java.util.stream.LongStream;
 
-import org.infinispan.BaseCacheStream;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.LongCacheStream;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.SmallIntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.CacheAware;
 import org.infinispan.stream.impl.intops.primitive.l.BoxedLongOperation;
@@ -261,12 +260,11 @@ public class LocalLongCacheStream extends AbstractLocalCacheStream<Long, LongStr
 
    @Override
    public LocalLongCacheStream filterKeySegments(Set<Integer> segments) {
-      segmentsToFilter = SmallIntSet.from(segments);
-      return this;
+      return filterKeySegments(IntSets.from(segments));
    }
 
    @Override
-   public BaseCacheStream filterKeySegments(IntSet segments) {
+   public LocalLongCacheStream filterKeySegments(IntSet segments) {
       segmentsToFilter = segments;
       return this;
    }

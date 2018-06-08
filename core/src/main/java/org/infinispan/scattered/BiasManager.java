@@ -1,13 +1,13 @@
 package org.infinispan.scattered;
 
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -35,7 +35,7 @@ public interface BiasManager {
     * Stop reading local data from this segment.
     * @param segments
     */
-   void revokeLocalBiasForSegments(Set<Integer> segments);
+   void revokeLocalBiasForSegments(IntSet segments);
 
    /**
     * Check if we can read local data and update last-read timestamp for this key.

@@ -34,10 +34,8 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.RangeSet;
-import org.infinispan.commons.util.SmallIntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -226,7 +224,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
 
    <R> R performOperation(Function<? super S2, ? extends R> function, boolean retryOnRehash, BinaryOperator<R> accumulator,
                           Predicate<? super R> earlyTerminatePredicate) {
-      ResultsAccumulator<R> remoteResults = new ResultsAccumulator<>(accumulator);
+      ResultsAccumulator<R> remoteResults = new ResultsAccumulator<>(accumulator, dm.getReadConsistentHash().getNumSegments());
       if (rehashAware) {
          return performOperationRehashAware(function, retryOnRehash, remoteResults, earlyTerminatePredicate);
       } else {
@@ -243,7 +241,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
               Collections.emptyMap(), includeLoader, toKeyFunction != null, op, remoteResults, earlyTerminatePredicate);
       try {
          R localValue = op.performOperation();
-         remoteResults.onCompletion(null, Collections.emptySet(), localValue);
+         remoteResults.onCompletion(null, IntSets.immutableEmptySet(), localValue);
          if (id != null) {
             try {
                if ((earlyTerminatePredicate == null || !earlyTerminatePredicate.test(localValue)) &&
@@ -287,18 +285,21 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
                localValue = op.performOperation();
                // TODO: we can do this more efficiently - since we drop all results locally
                if (dm.getReadConsistentHash().equals(ch)) {
-                  Set<Integer> ourSegments = ch.getPrimarySegmentsForOwner(localAddress);
+                  IntSet ourSegments;
                   if (segmentsToProcess != null) {
+                     ourSegments =  IntSets.mutableFrom(ch.getPrimarySegmentsForOwner(localAddress));
                      ourSegments.retainAll(segmentsToProcess);
+                  } else {
+                     ourSegments = IntSets.from(ch.getPrimarySegmentsForOwner(localAddress));
                   }
                   remoteResults.onCompletion(null, ourSegments, localValue);
                } else {
                   if (segmentsToProcess != null) {
-                     Set<Integer> ourSegments = ch.getPrimarySegmentsForOwner(localAddress);
+                     IntSet ourSegments = IntSets.mutableFrom(ch.getPrimarySegmentsForOwner(localAddress));
                      ourSegments.retainAll(segmentsToProcess);
                      remoteResults.onSegmentsLost(ourSegments);
                   } else {
-                     remoteResults.onSegmentsLost(ch.getPrimarySegmentsForOwner(localAddress));
+                     remoteResults.onSegmentsLost(IntSets.from(ch.getPrimarySegmentsForOwner(localAddress)));
                   }
                }
             } else {
@@ -319,7 +320,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
             csm.forgetOperation(id);
          }
          if (!remoteResults.lostSegments.isEmpty()) {
-            segmentsToProcess = SmallIntSet.from(remoteResults.lostSegments);
+            segmentsToProcess = remoteResults.lostSegments;
             remoteResults.lostSegments.clear();
             getLog().tracef("Found %s lost segments for identifier %s", segmentsToProcess, id);
             try {
@@ -332,9 +333,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
             }
          } else {
             // If we didn't lose any segments we don't need to process anymore
-            if (segmentsToProcess != null) {
-               segmentsToProcess = null;
-            }
+            segmentsToProcess = null;
             getLog().tracef("Finished rehash aware operation for id %s", id);
          }
       } while (segmentsToProcess != null && !segmentsToProcess.isEmpty());
@@ -346,22 +345,23 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
            Function<Supplier<Stream<Original>>, KeyTrackingTerminalOperation<Original, Object, ? extends T>> function) {
       final AtomicBoolean complete = new AtomicBoolean();
 
-      ConsistentHash segmentInfoCH = dm.getReadConsistentHash();
-      KeyTrackingConsumer<Object> results = new KeyTrackingConsumer<>(keyPartitioner, segmentInfoCH.getNumSegments());
-      IntSet segmentsToProcess = segmentsToFilter == null ?
-              new RangeSet(segmentInfoCH.getNumSegments()) : segmentsToFilter;
+      int numSegments = dm.getReadConsistentHash().getNumSegments();
+      KeyTrackingConsumer<Object> results = new KeyTrackingConsumer<>(keyPartitioner, numSegments);
+      IntSet segmentsToProcess = segmentsToFilter == null ? IntSets.immutableRangeSet(numSegments) : segmentsToFilter;
       do {
          CacheTopology cacheTopology = dm.getCacheTopology();
          ConsistentHash ch = cacheTopology.getReadConsistentHash();
          boolean localRun = ch.getMembers().contains(localAddress);
-         Set<Integer> segments;
+         IntSet segments;
          Set<Object> excludedKeys;
          if (localRun) {
-            segments = ch.getPrimarySegmentsForOwner(localAddress);
+            segments = IntSets.mutableFrom(ch.getPrimarySegmentsForOwner(localAddress));
             segments.retainAll(segmentsToProcess);
 
-            excludedKeys = segments.stream().flatMap(s -> results.referenceArray.get(s).stream()).collect(
-                    Collectors.toSet());
+            excludedKeys = new HashSet<>();
+            for (PrimitiveIterator.OfInt segmentIterator = segments.iterator(); segmentIterator.hasNext(); ) {
+               excludedKeys.addAll(results.referenceArray.get(segmentIterator.nextInt()));
+            }
          } else {
             // This null is okay as it is only referenced if it was a localRun
             segments = null;
@@ -381,7 +381,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
                   getLog().tracef("Found local values %s for id %s", localValue.size(), id);
                   results.onCompletion(null, segments, localValue);
                } else {
-                  Set<Integer> ourSegments = ch.getPrimarySegmentsForOwner(localAddress);
+                  IntSet ourSegments = IntSets.mutableFrom(ch.getPrimarySegmentsForOwner(localAddress));
                   ourSegments.retainAll(segmentsToProcess);
                   getLog().tracef("CH changed - making %s segments suspect for identifier %s", ourSegments, id);
                   results.onSegmentsLost(ourSegments);
@@ -402,7 +402,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
             csm.forgetOperation(id);
          }
          if (!results.lostSegments.isEmpty()) {
-            segmentsToProcess = SmallIntSet.from(results.lostSegments);
+            segmentsToProcess = IntSets.mutableCopyFrom(results.lostSegments);
             results.lostSegments.clear();
             getLog().tracef("Found %s lost segments for identifier %s", segmentsToProcess, id);
             try {
@@ -475,7 +475,8 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
    class KeyTrackingConsumer<K> implements ClusterStreamManager.ResultsCallback<Collection<K>>,
            KeyTrackingTerminalOperation.IntermediateCollector<Collection<K>> {
       final KeyPartitioner keyPartitioner;
-      final Set<Integer> lostSegments = new ConcurrentHashSet<>();
+
+      final IntSet lostSegments;
 
       final AtomicReferenceArray<Set<K>> referenceArray;
 
@@ -487,10 +488,11 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
             // We only allow 1 request per id
             referenceArray.set(i, new HashSet<>());
          }
+         lostSegments = IntSets.concurrentSet(numSegments);
       }
 
       @Override
-      public Set<Integer> onIntermediateResult(Address address, Collection<K> results) {
+      public void onIntermediateResult(Address address, Collection<K> results) {
          if (results != null) {
             getLog().tracef("Response from %s with results %s", address, results.size());
             results.forEach(key -> {
@@ -502,15 +504,14 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
                }
             });
          }
-         return null;
       }
 
       @Override
-      public void onCompletion(Address address, Set<Integer> completedSegments, Collection<K> results) {
+      public void onCompletion(Address address, IntSet completedSegments, Collection<K> results) {
          if (!completedSegments.isEmpty()) {
             getLog().tracef("Completing segments %s", completedSegments);
             // We null this out first so intermediate results don't add for no reason
-            completedSegments.forEach(s -> referenceArray.set(s, null));
+            completedSegments.forEach((int s) -> referenceArray.set(s, null));
          } else {
             getLog().tracef("No segments to complete from %s", address);
          }
@@ -518,11 +519,8 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       }
 
       @Override
-      public void onSegmentsLost(Set<Integer> segments) {
-         // Have to use for loop since ConcurrentHashSet doesn't support addAll
-         for (Integer segment : segments) {
-            lostSegments.add(segment);
-         }
+      public void onSegmentsLost(IntSet segments) {
+         lostSegments.addAll(segments);
       }
 
       @Override
@@ -533,15 +531,16 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
 
    static class ResultsAccumulator<R> implements ClusterStreamManager.ResultsCallback<R> {
       private final BinaryOperator<R> binaryOperator;
-      private final Set<Integer> lostSegments = new ConcurrentHashSet<>();
+      private final IntSet lostSegments;
       R currentValue;
 
-      ResultsAccumulator(BinaryOperator<R> binaryOperator) {
+      ResultsAccumulator(BinaryOperator<R> binaryOperator, int numSegments) {
          this.binaryOperator = binaryOperator;
+         this.lostSegments = IntSets.concurrentSet(numSegments);
       }
 
       @Override
-      public Set<Integer> onIntermediateResult(Address address, R results) {
+      public void onIntermediateResult(Address address, R results) {
          if (results != null) {
             synchronized (this) {
                if (currentValue != null) {
@@ -551,20 +550,16 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
                }
             }
          }
-         return null;
       }
 
       @Override
-      public void onCompletion(Address address, Set<Integer> completedSegments, R results) {
+      public void onCompletion(Address address, IntSet completedSegments, R results) {
          onIntermediateResult(address, results);
       }
 
       @Override
-      public void onSegmentsLost(Set<Integer> segments) {
-         // Have to use for loop since ConcurrentHashSet doesn't support addAll
-         for (Integer segment : segments) {
-            lostSegments.add(segment);
-         }
+      public void onSegmentsLost(IntSet segments) {
+         lostSegments.addAll(segments);
       }
    }
 
@@ -591,9 +586,11 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       }
       IntSet segments;
       if (usePrimary) {
-         segments = SmallIntSet.from(ch.getPrimarySegmentsForOwner(localAddress));
          if (targetSegments != null) {
+            segments = IntSets.mutableCopyFrom(ch.getPrimarySegmentsForOwner(localAddress));
             segments.retainAll(targetSegments);
+         } else {
+            segments = IntSets.from(ch.getPrimarySegmentsForOwner(localAddress));
          }
       } else {
          segments = targetSegments;
