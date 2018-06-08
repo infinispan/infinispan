@@ -320,9 +320,11 @@ public class BackupSenderImpl implements BackupSender {
             WriteCommand replicatedCommand;
             if (entry.isRemoved()) {
                replicatedCommand = commandsFactory.buildRemoveCommand(key, null, writeCommand.getFlagsBitSet());
-            } else {
+            } else if (entry.isChanged()) {
                replicatedCommand = commandsFactory.buildPutKeyValueCommand(key, entry.getValue(),
                      entry.getMetadata(), writeCommand.getFlagsBitSet());
+            } else {
+               continue;
             }
             filtered.add(replicatedCommand);
             filteredKeys.add(key);

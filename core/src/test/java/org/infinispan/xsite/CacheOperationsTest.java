@@ -9,6 +9,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -176,12 +178,12 @@ public class CacheOperationsTest extends AbstractTwoSitesTest {
       assertEquals(cache("NYC", "lonBackup", 1).get(remoteOwnedKey), "v_LON");
    }
 
-   public void testFunctional() {
+   public void testFunctional() throws Exception {
       testFunctional("LON");
       testFunctional("NYC");
    }
 
-   private void testFunctional(String site) {
+   private void testFunctional(String site) throws Exception {
       FunctionalMapImpl<Object, Object> fmap = FunctionalMapImpl.create(cache(site, 0).getAdvancedCache());
       WriteOnlyMap<Object, Object> wo = WriteOnlyMapImpl.create(fmap);
       ReadWriteMap<Object, Object> rw = ReadWriteMapImpl.create(fmap);
@@ -227,6 +229,19 @@ public class CacheOperationsTest extends AbstractTwoSitesTest {
             .forEach(ret -> assertEquals("none", ret));
       for (Object key : keys) {
          assertEquals(null, backup.get(key));
+      }
+
+      if (transactional) {
+         TransactionManager tm = cache(site, 0).getAdvancedCache().getTransactionManager();
+         tm.begin();
+         rw.eval(keys[0], "v4", MarshallableFunctions.setValueReturnPrevOrNull()).join();
+         //read-only evalMany
+         rw.evalMany(Util.asSet(keys[1], keys[2]), view -> view.find().orElse("none"))
+               .forEach(ret -> assertEquals("none", ret));
+         tm.commit();
+         assertEquals("v4", backup.get(keys[0]));
+         assertEquals(null, backup.get(keys[1]));
+         assertEquals(null, backup.get(keys[2]));
       }
    }
 
