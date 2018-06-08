@@ -3,10 +3,10 @@ package org.infinispan.interceptors.distribution;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Set;
 import java.util.function.Function;
 
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareCollection;
 import org.infinispan.interceptors.InvocationSuccessFunction;
@@ -22,13 +22,13 @@ class WriteOnlyManyHelper extends WriteManyCommandHelper<WriteOnlyManyCommand, C
    }
 
    @Override
-   public WriteOnlyManyCommand copyForPrimary(WriteOnlyManyCommand cmd, ConsistentHash ch, Set<Integer> segments) {
+   public WriteOnlyManyCommand copyForPrimary(WriteOnlyManyCommand cmd, ConsistentHash ch, IntSet segments) {
       return new WriteOnlyManyCommand(cmd)
             .withKeys(new ReadOnlySegmentAwareCollection(cmd.getAffectedKeys(), ch, segments));
    }
 
    @Override
-   public WriteOnlyManyCommand copyForBackup(WriteOnlyManyCommand cmd, ConsistentHash ch, Set<Integer> segments) {
+   public WriteOnlyManyCommand copyForBackup(WriteOnlyManyCommand cmd, ConsistentHash ch, IntSet segments) {
       WriteOnlyManyCommand copy = new WriteOnlyManyCommand(cmd)
             .withKeys(new ReadOnlySegmentAwareCollection(cmd.getAffectedKeys(), ch, segments));
       copy.setForwarded(true);

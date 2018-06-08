@@ -15,14 +15,14 @@ import java.util.function.UnaryOperator;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
-import org.infinispan.commons.util.RangeSet;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.PersistentUUID;
-import org.infinispan.commons.util.SmallIntSet;
 
 /**
  * Special implementation of {@link org.infinispan.distribution.ch.ConsistentHash} for replicated caches.
@@ -49,7 +49,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       this.members = Collections.unmodifiableList(new ArrayList<>(members));
       this.membersSet = Collections.unmodifiableSet(new HashSet<>(members));
       this.primaryOwners = primaryOwners;
-      segments = new RangeSet(primaryOwners.length);
+      segments = IntSets.immutableRangeSet(primaryOwners.length);
       segmentSize = Util.getSegmentSize(primaryOwners.length);
    }
 
@@ -93,7 +93,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       for (int i = 0; i < numPrimaryOwners; i++) {
          this.primaryOwners[i] = state.getIntProperty(String.format(STATE_PRIMARY_OWNERS, i));
       }
-      segments = new RangeSet(primaryOwners.length);
+      segments = IntSets.immutableRangeSet(primaryOwners.length);
       segmentSize = Util.getSegmentSize(primaryOwners.length);
    }
 
@@ -158,10 +158,10 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       if (index == -1) {
          throw new IllegalArgumentException("The node is not a member : " + owner);
       }
-      Set<Integer> primarySegments = new SmallIntSet(primaryOwners.length);
+      IntSet primarySegments = IntSets.mutableEmptySet(primaryOwners.length);
       for (int i = 0; i < primaryOwners.length; ++i) {
          if (primaryOwners[i] == index) {
-            primarySegments.add(i);
+            primarySegments.set(i);
          }
       }
       return primarySegments;

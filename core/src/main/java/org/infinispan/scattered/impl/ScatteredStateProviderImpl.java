@@ -1,6 +1,5 @@
 package org.infinispan.scattered.impl;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -9,6 +8,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.RemoteMetadata;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
@@ -61,9 +62,15 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
          otherMembers.remove(localAddress);
          otherMembers.remove(nextMember);
 
-         Set<Integer> oldSegments = cacheTopology.getCurrentCH().getMembers().contains(localAddress) ?
-               new HashSet<>(cacheTopology.getCurrentCH().getSegmentsForOwner(localAddress)) : Collections.emptySet();
-         oldSegments.retainAll(cacheTopology.getPendingCH().getSegmentsForOwner(localAddress));
+         IntSet oldSegments;
+         if (cacheTopology.getCurrentCH().getMembers().contains(localAddress)) {
+            oldSegments = IntSets.from(cacheTopology.getCurrentCH().getSegmentsForOwner(localAddress));
+            oldSegments.retainAll(cacheTopology.getPendingCH().getSegmentsForOwner(localAddress));
+         } else {
+            log.trace("Local address is not a member of currentCH, returning");
+            return CompletableFutures.completedNull();
+         }
+
          log.trace("Segments to replicate and invalidate: " + oldSegments);
          if (oldSegments.isEmpty()) {
             return CompletableFutures.completedNull();
@@ -73,8 +80,7 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
          AtomicInteger outboundInvalidations = new AtomicInteger(1);
          CompletableFuture<Void> outboundTaskFuture = new CompletableFuture<>();
          OutboundTransferTask outboundTransferTask = new OutboundTransferTask(nextMember, oldSegments,
-            chunkSize,
-            cacheTopology.getTopologyId(), keyPartitioner,
+            cacheTopology.getCurrentCH().getNumSegments(), chunkSize, cacheTopology.getTopologyId(), keyPartitioner,
             task -> {
                if (outboundInvalidations.decrementAndGet() == 0) {
                   outboundTaskFuture.complete(null);
@@ -154,11 +160,11 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
    }
 
    @Override
-   public void startKeysTransfer(Set<Integer> segments, Address origin) {
+   public void startKeysTransfer(IntSet segments, Address origin) {
       CacheTopology cacheTopology = distributionManager.getCacheTopology();
       Address localAddress = rpcManager.getAddress();
-      OutboundTransferTask outboundTransferTask = new OutboundTransferTask(origin, segments, chunkSize,
-         cacheTopology.getTopologyId(), keyPartitioner,
+      OutboundTransferTask outboundTransferTask = new OutboundTransferTask(origin, segments,
+         cacheTopology.getCurrentCH().getNumSegments(), chunkSize, cacheTopology.getTopologyId(), keyPartitioner,
          this::onTaskCompletion, list -> {},
          (ice, ef) -> {
             Metadata metadata = ice.getMetadata();

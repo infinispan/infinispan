@@ -2,9 +2,9 @@ package org.infinispan.statetransfer;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.factories.scopes.Scope;
@@ -40,7 +40,7 @@ public interface StateProvider {
     * @param segments
     * @return list transactions and locks for the given segments
     */
-   List<TransactionInfo> getTransactionsForSegments(Address destination, int topologyId, Set<Integer> segments) throws InterruptedException;
+   List<TransactionInfo> getTransactionsForSegments(Address destination, int topologyId, IntSet segments) throws InterruptedException;
 
    Collection<DistributedCallable> getClusterListenersToInstall();
 
@@ -56,7 +56,7 @@ public interface StateProvider {
     * @param segments
     * @param applyState
     */
-   void startOutboundTransfer(Address destination, int topologyId, Set<Integer> segments, boolean applyState) throws InterruptedException;
+   void startOutboundTransfer(Address destination, int topologyId, IntSet segments, boolean applyState) throws InterruptedException;
 
    /**
     * Cancel sending of cache entries that belong to the given set of segments. This is invoked in response to a
@@ -66,7 +66,7 @@ public interface StateProvider {
     * @param topologyId
     * @param segments    the segments that we have to cancel transfer for
     */
-   void cancelOutboundTransfer(Address destination, int topologyId, Set<Integer> segments);
+   void cancelOutboundTransfer(Address destination, int topologyId, IntSet segments);
 
    void start();
 

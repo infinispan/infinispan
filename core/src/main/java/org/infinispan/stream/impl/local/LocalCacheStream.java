@@ -27,7 +27,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.SmallIntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.CacheAware;
 import org.infinispan.stream.impl.intops.object.DistinctOperation;
@@ -74,8 +74,7 @@ public class LocalCacheStream<R> extends AbstractLocalCacheStream<R, Stream<R>, 
 
    @Override
    public LocalCacheStream<R> filterKeySegments(Set<Integer> segments) {
-      segmentsToFilter = SmallIntSet.from(segments);
-      return this;
+      return filterKeySegments(IntSets.from(segments));
    }
 
    @Override

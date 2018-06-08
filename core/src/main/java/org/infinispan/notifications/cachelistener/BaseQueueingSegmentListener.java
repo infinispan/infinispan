@@ -77,7 +77,8 @@ abstract class BaseQueueingSegmentListener<K, V, E extends Event<K, V>> implemen
    }
 
    @Override
-   public void segmentCompleted(Set<Integer> segments) {
+   public final void segmentCompleted(Set<Integer> segments) {
+      // Don't do anything here - should implement accept if segment completions are desired
    }
 
    protected boolean addEvent(K key, Object value) {

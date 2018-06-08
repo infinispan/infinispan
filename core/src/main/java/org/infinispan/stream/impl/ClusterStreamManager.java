@@ -36,9 +36,8 @@ public interface ClusterStreamManager<Original, K> {
        * {@link CacheStream#forEach(Consumer)} and {@link CacheStream#toArray()}.
        * @param address Which node this data came from
        * @param results The results obtained so far.
-       * @return the segments that completed with some value
        */
-      Set<Integer> onIntermediateResult(Address address, R results);
+      void onIntermediateResult(Address address, R results);
 
       /**
        * Essentially the same as {@link ClusterStreamManager.ResultsCallback#onIntermediateResult(Address address, Object)}
@@ -46,7 +45,7 @@ public interface ClusterStreamManager<Original, K> {
        * @param address Which node this data came from
        * @param results The last batch of results for this operator
        */
-      void onCompletion(Address address, Set<Integer> completedSegments, R results);
+      void onCompletion(Address address, IntSet completedSegments, R results);
 
       /**
        * Called back when a segment is found to have been lost that is no longer remote
@@ -54,7 +53,7 @@ public interface ClusterStreamManager<Original, K> {
        * This method may be invoked concurrently with any of the other methods
        * @param segments The segments that were requested but are now local
        */
-      void onSegmentsLost(Set<Integer> segments);
+      void onSegmentsLost(IntSet segments);
    }
 
    /**
@@ -74,7 +73,7 @@ public interface ClusterStreamManager<Original, K> {
     * @return the operation id to be used for further calls
     */
    <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         IntSet segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
          boolean entryStream, TerminalOperation<Original, R> operation, ResultsCallback<R> callback,
          Predicate<? super R> earlyTerminatePredicate);
 
@@ -95,7 +94,7 @@ public interface ClusterStreamManager<Original, K> {
     * @return the operation id to be used for further calls
     */
    <R> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         IntSet segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
          boolean entryStream, TerminalOperation<Original, R> operation, ResultsCallback<R> callback,
          Predicate<? super R> earlyTerminatePredicate);
 
@@ -115,7 +114,7 @@ public interface ClusterStreamManager<Original, K> {
     * @return the operation id to be used for further calls
     */
    <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         IntSet segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
          boolean entryStream, KeyTrackingTerminalOperation<Original, K, R> operation,
          ResultsCallback<Collection<R>> callback);
 
@@ -134,7 +133,7 @@ public interface ClusterStreamManager<Original, K> {
     * @return the operation id to be used for further calls
     */
    Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         IntSet segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
          boolean entryStream, KeyTrackingTerminalOperation<Original, K, ?> operation, ResultsCallback<Collection<K>> callback);
 
    /**
@@ -171,7 +170,7 @@ public interface ClusterStreamManager<Original, K> {
     * @param <R1> The type of the response
     * @return Whether or not the operation should continue operating, only valid if complete was false
     */
-   <R1> boolean receiveResponse(Object id, Address origin, boolean complete, Set<Integer> segments, R1 response);
+   <R1> boolean receiveResponse(Object id, Address origin, boolean complete, IntSet segments, R1 response);
 
    /**
     *

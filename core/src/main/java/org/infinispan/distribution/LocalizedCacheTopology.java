@@ -9,11 +9,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.util.ImmutableHopscotchHashSet;
-import org.infinispan.commons.util.ImmutableIntSet;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.RangeSet;
-import org.infinispan.commons.util.SmallIntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -74,7 +72,7 @@ public class LocalizedCacheTopology extends CacheTopology {
          this.numSegments = readCH.getNumSegments();
          this.distributionInfos = new DistributionInfo[numSegments];
          int maxOwners = 1;
-         IntSet localReadSegments = new SmallIntSet(numSegments);
+         IntSet localReadSegments = IntSets.mutableEmptySet(numSegments);
          for (int segmentId = 0; segmentId < numSegments; segmentId++) {
             Address primary = readCH.locatePrimaryOwnerForSegment(segmentId);
             List<Address> readOwners = readCH.locateOwnersForSegment(segmentId);
@@ -89,7 +87,7 @@ public class LocalizedCacheTopology extends CacheTopology {
          }
          this.maxOwners = maxOwners;
          this.allLocal = false;
-         this.localReadSegments = new ImmutableIntSet(localReadSegments);
+         this.localReadSegments = IntSets.immutableSet(localReadSegments);
       } else if (isReplicated) {
          this.numSegments = readCH.getNumSegments();
          // Writes must be broadcast to the entire cluster
@@ -109,7 +107,7 @@ public class LocalizedCacheTopology extends CacheTopology {
          }
          this.maxOwners = cacheTopology.getMembers().size();
          this.allLocal = readOwnersMap.containsKey(localAddress);
-         this.localReadSegments = new RangeSet(allLocal ? numSegments : 0);
+         this.localReadSegments = IntSets.immutableRangeSet(allLocal ? numSegments : 0);
       } else { // Invalidation/Local
          assert cacheMode.isInvalidation() || cacheMode == CacheMode.LOCAL;
          this.numSegments = 1;
@@ -121,7 +119,7 @@ public class LocalizedCacheTopology extends CacheTopology {
          };
          this.maxOwners = 1;
          this.allLocal = true;
-         this.localReadSegments = new RangeSet(numSegments);
+         this.localReadSegments = IntSets.immutableRangeSet(numSegments);
       }
    }
 
@@ -204,19 +202,19 @@ public class LocalizedCacheTopology extends CacheTopology {
             Object singleKey = keys.iterator().next();
             return getDistribution(singleKey).writeOwners();
          } else {
-            SmallIntSet segments = new SmallIntSet(numSegments);
+            IntSet segments = IntSets.mutableEmptySet(numSegments);
             // Expecting some overlap between keys
             Set<Address> owners = new HashSet<>(2 * maxOwners);
             for (Object key : keys) {
                int segment = keyPartitioner.getSegment(key);
                if (segments.add(segment)) {
-                  owners.addAll(getDistributionForSegment(segment).writeOwners());
+                  owners.addAll(getSegmentDistribution(segment).writeOwners());
                }
             }
             return owners;
          }
       } else {
-         return getDistributionForSegment(0).writeOwners();
+         return getSegmentDistribution(0).writeOwners();
       }
    }
 

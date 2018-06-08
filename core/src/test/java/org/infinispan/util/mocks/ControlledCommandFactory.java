@@ -328,7 +328,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int topologyId, Set<Integer> segments) {
+   public StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int topologyId, IntSet segments) {
       return actual.buildStateRequestCommand(subtype, sender, topologyId, segments);
    }
 
@@ -416,7 +416,7 @@ public class ControlledCommandFactory implements CommandsFactory {
 
    @Override
    public <K> StreamRequestCommand<K> buildStreamRequestCommand(Object id, boolean parallelStream,
-           StreamRequestCommand.Type type, Set<Integer> segments, Set<K> keys, Set<K> excludedKeys,
+           StreamRequestCommand.Type type, IntSet segments, Set<K> keys, Set<K> excludedKeys,
            boolean includeLoader, boolean entryStream, Object terminalOperation) {
       return actual.buildStreamRequestCommand(id, parallelStream, type, segments, keys, excludedKeys, includeLoader,
               entryStream, terminalOperation);
@@ -424,7 +424,7 @@ public class ControlledCommandFactory implements CommandsFactory {
 
    @Override
    public <R> StreamResponseCommand<R> buildStreamResponseCommand(Object identifier, boolean complete,
-                                                                  Set<Integer> lostSegments, R response) {
+         IntSet lostSegments, R response) {
       return actual.buildStreamResponseCommand(identifier, complete, lostSegments, response);
    }
 

@@ -15,12 +15,13 @@ import java.util.function.UnaryOperator;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
 import org.infinispan.commons.util.Immutables;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.PersistentUUID;
-import org.infinispan.commons.util.SmallIntSet;
 
 import net.jcip.annotations.Immutable;
 
@@ -109,10 +110,10 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
          throw new IllegalArgumentException("Node " + owner + " is not a member");
       }
 
-      Set<Integer> segments = new SmallIntSet(segmentOwners.length);
+      IntSet segments = IntSets.mutableEmptySet(segmentOwners.length);
       for (int segment = 0; segment < segmentOwners.length; segment++) {
          if (segmentOwners[segment].contains(owner)) {
-            segments.add(segment);
+            segments.set(segment);
          }
       }
       return segments;
@@ -127,10 +128,10 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
          throw new IllegalArgumentException("Node " + owner + " is not a member");
       }
 
-      SmallIntSet segments = new SmallIntSet(segmentOwners.length);
+      IntSet segments = IntSets.mutableEmptySet(segmentOwners.length);
       for (int segment = 0; segment < segmentOwners.length; segment++) {
          if (owner.equals(segmentOwners[segment].get(0))) {
-            segments.add(segment);
+            segments.set(segment);
          }
       }
       return segments;

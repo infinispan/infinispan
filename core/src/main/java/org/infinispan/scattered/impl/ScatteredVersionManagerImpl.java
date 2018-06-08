@@ -2,10 +2,8 @@ package org.infinispan.scattered.impl;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.PrimitiveIterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,10 +18,10 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import io.reactivex.Flowable;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.versioning.EntryVersion;
@@ -50,6 +48,8 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -353,8 +353,9 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    }
 
    @Override
-   public void setOwnedSegments(Set<Integer> segments) {
-      for (int segment : segments) {
+   public void setOwnedSegments(IntSet segments) {
+      for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
+         int segment = iter.nextInt();
          segmentVersions.set(segment, 0);
          ownerTopologyIds.set(segment, topologyId);
          if (!segmentStates.compareAndSet(segment, SegmentState.NOT_OWNED, SegmentState.OWNED)) {
@@ -362,14 +363,15 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
          }
       }
       if (log.isDebugEnabled()) {
-         log.debugf("Node %s is now owner of segments %s", rpcManager.getAddress(), sorted(segments));
+         log.debugf("Node %s is now owner of segments %s", rpcManager.getAddress(), segments);
          printTable();
       }
    }
 
    @Override
-   public void startKeyTransfer(Set<Integer> segments) {
-      for (int segment : segments) {
+   public void startKeyTransfer(IntSet segments) {
+      for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
+         int segment = iter.nextInt();
          if (!segmentStates.compareAndSet(segment, SegmentState.BLOCKED, SegmentState.KEY_TRANSFER)) {
             throw new IllegalStateException(String.format("Segment %d is in state %s", segment, segmentStates.get(segment)));
          }
@@ -387,12 +389,6 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
          }
       }
       log.debug(sb.toString());
-   }
-
-   private List<Integer> sorted(Set<Integer> segments) {
-      Integer[] array = segments.toArray(new Integer[segments.size()]);
-      Arrays.sort(array);
-      return Arrays.asList(array);
    }
 
    private void tryRegularInvalidations(boolean force) {

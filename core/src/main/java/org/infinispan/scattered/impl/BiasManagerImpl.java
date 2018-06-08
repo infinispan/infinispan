@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +20,8 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commons.util.ByRef;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
@@ -89,8 +90,8 @@ public class BiasManagerImpl implements BiasManager {
    public void onTopologyChange(TopologyChangedEvent event) {
       // Forget about remote nodes if we're no longer the primary owner
       ConsistentHash ch = event.getWriteConsistentHashAtEnd();
-      Set<Integer> localSegments = ch.getMembers().contains(rpcManager.getAddress()) ?
-            ch.getSegmentsForOwner(rpcManager.getAddress()) : Collections.emptySet();
+      IntSet localSegments = ch.getMembers().contains(rpcManager.getAddress()) ?
+            IntSets.from(ch.getSegmentsForOwner(rpcManager.getAddress())) : IntSets.immutableEmptySet();
       remoteBias.keySet().removeIf(key -> !localSegments.contains(keyPartitioner.getSegment(key)));
       // If we haven't been members of the last topology, then we probably had a split brain and we should just forget
       // all local biasses.
@@ -199,7 +200,7 @@ public class BiasManagerImpl implements BiasManager {
    }
 
    @Override
-   public void revokeLocalBiasForSegments(Set<Integer> segments) {
+   public void revokeLocalBiasForSegments(IntSet segments) {
       localBias.keySet().removeIf(key -> segments.contains(keyPartitioner.getSegment(key)));
    }
 
