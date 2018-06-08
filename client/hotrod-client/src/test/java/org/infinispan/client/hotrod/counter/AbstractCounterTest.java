@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.infinispan.client.hotrod.RemoteCounterManagerFactory;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.counter.api.CounterManager;
+import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.testng.annotations.BeforeMethod;
 
@@ -25,7 +26,7 @@ public abstract class AbstractCounterTest extends MultiHotRodServersTest {
    private static final int NUMBER_SERVERS = 3;
 
    @BeforeMethod(alwaysRun = true)
-   public void restoreServer() throws Throwable {
+   public void restoreServer() {
       if (servers.size() < NUMBER_SERVERS) {
          // Start Hot Rod servers
          while (servers.size() < NUMBER_SERVERS) {
@@ -38,6 +39,7 @@ public abstract class AbstractCounterTest extends MultiHotRodServersTest {
             blockUntilCacheStatusAchieved(manager(i).getCache(), ComponentStatus.RUNNING, 10000);
          }
       }
+      waitForClusterToForm(CounterModuleLifecycle.COUNTER_CACHE_NAME);
    }
 
    List<CounterManager> counterManagers() {
