@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.counter.api.CounterManager;
+import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
 import org.infinispan.server.hotrod.HotRodVersion;
 import org.infinispan.server.hotrod.counter.impl.StrongCounterImplTestStrategy;
@@ -93,6 +94,12 @@ public class StrongCounterAPITest extends HotRodMultiNodeTest implements StrongC
 
    private Collection<CounterManager> allTestCounterManager() {
       return clients().stream().map(TestCounterManager::new).collect(Collectors.toList());
+   }
+
+   @Override
+   protected void createCacheManagers() {
+      super.createCacheManagers();
+      waitForClusterToForm(CounterModuleLifecycle.COUNTER_CACHE_NAME);
    }
 
 }

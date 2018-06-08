@@ -12,6 +12,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.counter.api.CounterManager;
+import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
 import org.infinispan.server.hotrod.HotRodVersion;
@@ -111,6 +112,7 @@ public class CounterManagerOperationTest extends HotRodMultiNodeTest implements 
          EmbeddedCacheManager cm = createClusteredCacheManager(builder, hotRodCacheConfiguration());
          cacheManagers.add(cm);
       }
+      waitForClusterToForm(CounterModuleLifecycle.COUNTER_CACHE_NAME);
    }
 
    @Override
