@@ -8,8 +8,7 @@ GREP="grep"
 ROOT="/"
 MVN="mvn"
 
-MAVEN_OPTS="$MAVEN_OPTS -Xmx800m -XX:+HeapDumpOnOutOfMemoryError"
-export MAVEN_OPTS
+export MAVEN_OPTS=${MAVEN_OPTS:-"-Xmx800m -XX:+HeapDumpOnOutOfMemoryError"}
 
 #  Use the maximum available, or set MAX_FD != -1 to use that
 MAX_FD="maximum"
