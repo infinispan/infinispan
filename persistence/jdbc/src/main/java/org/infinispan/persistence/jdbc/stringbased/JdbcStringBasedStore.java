@@ -148,7 +148,7 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
 
       try {
          if (configuration.connectionFactory() instanceof ManagedConnectionFactory) {
-            log.tracef("Stopping mananged connection factory: %s", connectionFactory);
+            log.tracef("Stopping managed connection factory: %s", connectionFactory);
             connectionFactory.stop();
          }
       } catch (Throwable t) {
@@ -166,10 +166,17 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
 
    @Override
    public boolean isAvailable() {
+      if (tableManager == null || connectionFactory == null)
+         return false;
+
+      Connection connection = null;
       try {
-         return connectionFactory.getConnection().isValid(10);
+         connection = connectionFactory.getConnection();
+         return connection != null && connection.isValid(10);
       } catch (SQLException e) {
          return false;
+      } finally {
+         connectionFactory.releaseConnection(connection);
       }
    }
 
