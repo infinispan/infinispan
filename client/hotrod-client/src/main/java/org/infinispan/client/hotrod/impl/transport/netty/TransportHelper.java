@@ -22,14 +22,25 @@ class TransportHelper {
    private static final boolean USE_NATIVE_EPOLL;
 
    static {
-      if (Epoll.isAvailable()) {
-         USE_NATIVE_EPOLL = !EPOLL_DISABLED && IS_LINUX;
-      } else {
-         if (IS_LINUX) {
-            log.epollNotAvailable(Epoll.unavailabilityCause().toString());
+      boolean epoll;
+      try {
+         Class.forName("io.netty.channel.epoll.Epoll", true, TransportHelper.class.getClassLoader());
+         if (Epoll.isAvailable()) {
+            epoll = !EPOLL_DISABLED && IS_LINUX;
+         } else {
+            if (IS_LINUX) {
+               log.epollNotAvailable(Epoll.unavailabilityCause().toString());
+            }
+            epoll = false;
          }
-         USE_NATIVE_EPOLL = false;
+      } catch (ClassNotFoundException e) {
+         if (IS_LINUX) {
+            log.epollNotAvailable(e.getMessage());
+         }
+         epoll = false;
       }
+
+      USE_NATIVE_EPOLL = epoll;
    }
 
    static Class<? extends SocketChannel> socketChannel() {
