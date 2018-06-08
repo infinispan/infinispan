@@ -6,7 +6,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.SmallIntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
@@ -48,9 +48,9 @@ public abstract class AbstractRehashPublisherDecorator<S> implements PublisherDe
       Publisher<S> convertedPublisher = Flowable.fromPublisher(localPublisher).doOnComplete(() -> {
          IntSet ourSegments;
          if (onlyLocal) {
-            ourSegments = SmallIntSet.from(beginningCh.getSegmentsForOwner(localAddress));
+            ourSegments = IntSets.mutableCopyFrom(beginningCh.getSegmentsForOwner(localAddress));
          } else {
-            ourSegments = SmallIntSet.from(beginningCh.getPrimarySegmentsForOwner(localAddress));
+            ourSegments = IntSets.mutableCopyFrom(beginningCh.getPrimarySegmentsForOwner(localAddress));
          }
          ourSegments.retainAll(segmentsToFilter);
          // This will notify both completed and suspect of segments that may not even exist or were completed before

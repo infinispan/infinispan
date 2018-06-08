@@ -3,11 +3,9 @@ package org.infinispan.stream.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -19,7 +17,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
 public class StreamSegmentResponseCommand<R> extends StreamResponseCommand<R> {
    public static final byte COMMAND_ID = 49;
 
-   protected Set<Integer> missedSegments;
+   protected IntSet missedSegments;
 
    // Only here for CommandIdUniquenessTest
    protected StreamSegmentResponseCommand() { }
@@ -29,7 +27,7 @@ public class StreamSegmentResponseCommand<R> extends StreamResponseCommand<R> {
    }
 
    public StreamSegmentResponseCommand(ByteString cacheName, Address origin, Object id, boolean complete, R response,
-                                       Set<Integer> missedSegments) {
+         IntSet missedSegments) {
       super(cacheName, origin, id, complete, response);
       this.missedSegments = missedSegments;
    }
@@ -51,7 +49,7 @@ public class StreamSegmentResponseCommand<R> extends StreamResponseCommand<R> {
       output.writeObject(id);
       output.writeBoolean(complete);
       output.writeObject(response);
-      MarshallUtil.marshallCollection(missedSegments, output);
+      output.writeObject(missedSegments);
    }
 
    @Override
@@ -60,7 +58,7 @@ public class StreamSegmentResponseCommand<R> extends StreamResponseCommand<R> {
       id = input.readObject();
       complete = input.readBoolean();
       response = (R) input.readObject();
-      missedSegments = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
+      missedSegments = (IntSet) input.readObject();
    }
 
    @Override

@@ -43,7 +43,7 @@ public class TxClusterStreamManager<Original, K> implements ClusterStreamManager
 
    @Override
    public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         IntSet segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
          boolean entryStream, TerminalOperation<Original, R> operation, ResultsCallback<R> callback,
          Predicate<? super R> earlyTerminatePredicate) {
       TxExcludedKeys<K> txExcludedKeys = new TxExcludedKeys<>(keysToExclude, ctx, intFunction);
@@ -53,7 +53,7 @@ public class TxClusterStreamManager<Original, K> implements ClusterStreamManager
 
    @Override
    public <R> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
-         ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
+         ConsistentHash ch, IntSet segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
          boolean includeLoader, boolean entryStream, TerminalOperation<Original, R> operation,
          ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate) {
       TxExcludedKeys<K> txExcludedKeys = new TxExcludedKeys<>(keysToExclude, ctx, intFunction);
@@ -63,7 +63,7 @@ public class TxClusterStreamManager<Original, K> implements ClusterStreamManager
 
    @Override
    public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         IntSet segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
          boolean entryStream, KeyTrackingTerminalOperation<Original, K, R> operation,
          ResultsCallback<Collection<R>> callback) {
       TxExcludedKeys<K> txExcludedKeys = new TxExcludedKeys<>(keysToExclude, ctx, intFunction);
@@ -73,7 +73,7 @@ public class TxClusterStreamManager<Original, K> implements ClusterStreamManager
 
    @Override
    public Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
-           ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
+           ConsistentHash ch, IntSet segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
            boolean includeLoader, boolean entryStream, KeyTrackingTerminalOperation<Original, K, ?> operation,
          ResultsCallback<Collection<K>> callback) {
       TxExcludedKeys<K> txExcludedKeys = new TxExcludedKeys<>(keysToExclude, ctx, intFunction);
@@ -97,7 +97,7 @@ public class TxClusterStreamManager<Original, K> implements ClusterStreamManager
    }
 
    @Override
-   public <R1> boolean receiveResponse(Object id, Address origin, boolean complete, Set<Integer> segments, R1 response) {
+   public <R1> boolean receiveResponse(Object id, Address origin, boolean complete, IntSet segments, R1 response) {
       return manager.receiveResponse(id, origin, complete, segments, response);
    }
 

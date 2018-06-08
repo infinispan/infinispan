@@ -6,11 +6,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.PrimitiveIterator;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -25,11 +24,11 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.SmallIntSet;
-import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.RemoteMetadata;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.context.impl.FlagBitSets;
@@ -72,7 +71,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    @Inject protected ScatteredVersionManager svm;
 
    @GuardedBy("transferMapsLock")
-   protected Set<Integer> inboundSegments;
+   protected IntSet inboundSegments;
 
    protected AtomicLong chunkCounter = new AtomicLong();
 
@@ -111,11 +110,11 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
             // Failed key transfer could move segment to OWNED state concurrently with installing a new topology.
             // Therefore we cancel the transfers before installing the topology, preventing any unexpected segment
             // state updates. Cancelling moves the segments to NOT_OWNED state.
-            cancelTransfers(Collections.singleton(segment));
+            cancelTransfers(IntSets.immutableSet(segment));
             svm.unregisterSegment(segment);
          }
       }
-      Set<Integer> addedSegments = getOwnedSegments(newWriteCh);
+      IntSet addedSegments = getOwnedSegments(newWriteCh);
       if (previousWriteCh != null) {
          addedSegments.removeAll(getOwnedSegments(previousWriteCh));
       }
@@ -134,7 +133,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    }
 
    @Override
-   protected void handleSegments(boolean startRebalance, Set<Integer> addedSegments, Set<Integer> removedSegments) {
+   protected void handleSegments(boolean startRebalance, IntSet addedSegments, IntSet removedSegments) {
       if (!startRebalance) {
          log.trace("This is not a rebalance, not doing anything...");
          return;
@@ -145,7 +144,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       }
 
       synchronized (transferMapsLock) {
-         inboundSegments = new HashSet<>(addedSegments);
+         inboundSegments = IntSets.mutableFrom(addedSegments);
       }
       chunkCounter.set(0);
       if (trace)
@@ -180,7 +179,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       }));
    }
 
-   private void requestKeyTransfer(Set<Integer> segments) {
+   private void requestKeyTransfer(IntSet segments) {
       boolean isTransferringKeys = false;
 
       synchronized (transferMapsLock) {
@@ -214,12 +213,13 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    @Override
    protected void onTaskCompletion(InboundTransferTask inboundTransfer) {
       // a bit of overkill since we start these tasks for single segment
-      Set<Integer> completedSegments = Collections.emptySet();
+      IntSet completedSegments = IntSets.immutableEmptySet();
       if (trace) log.tracef("Inbound transfer finished %s: %s", inboundTransfer,
             inboundTransfer.isCompletedSuccessfully() ? "successfully" : "unsuccessfuly");
       synchronized (transferMapsLock) {
          // transferMapsLock is held when all the tasks are added so we see that all of them are done
-         for (int segment : inboundTransfer.getSegments()) {
+         for (PrimitiveIterator.OfInt iter = inboundTransfer.getSegments().iterator(); iter.hasNext(); ) {
+            int segment = iter.nextInt();
             List<InboundTransferTask> transfers = transfersBySegment.get(segment);
             if (transfers == null) {
                // It is possible that two task complete concurrently, one of them checks is all tasks
@@ -239,11 +239,11 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
                   svm.notifyKeyTransferFinished(segment, inboundTransfer.isCompletedSuccessfully(), inboundTransfer.isCancelled());
                   switch (completedSegments.size()) {
                      case 0:
-                        completedSegments = Collections.singleton(segment);
+                        completedSegments = IntSets.immutableSet(segment);
                         break;
                      case 1:
-                        completedSegments = new HashSet<>(completedSegments);
-                        // intentional no break
+                        completedSegments = IntSets.mutableCopyFrom(completedSegments);
+                        // Intentional falls through
                      default:
                         completedSegments.add(segment);
                   }
@@ -255,9 +255,9 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       if (completedSegments.isEmpty()) {
          log.tracef("Not requesting any values yet because no segments have been completed.");
       } else if (inboundTransfer.isCompletedSuccessfully()) {
-         Set<Integer> finalCompletedSegments = completedSegments;
+         IntSet finalCompletedSegments = completedSegments;
          log.tracef("Requesting values from segments %s, for in-memory keys", finalCompletedSegments);
-         dataContainer.forEach(SmallIntSet.from(finalCompletedSegments), ice -> {
+         dataContainer.forEach(finalCompletedSegments, ice -> {
             // TODO: could the version be null in here?
             if (ice.getMetadata() instanceof RemoteMetadata) {
                Address backup = ((RemoteMetadata) ice.getMetadata()).getAddress();

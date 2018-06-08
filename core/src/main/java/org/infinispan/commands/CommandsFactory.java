@@ -401,7 +401,7 @@ public interface CommandsFactory {
    /**
     * Builds a StateRequestCommand used for requesting transactions and locks and for starting or canceling transfer of cache entries.
     */
-   StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int topologyId, Set<Integer> segments);
+   StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int topologyId, IntSet segments);
 
    /**
     * Builds a StateResponseCommand used for pushing cache entries to another node in response to a StateRequestCommand.
@@ -527,7 +527,7 @@ public interface CommandsFactory {
    GetKeysInGroupCommand buildGetKeysInGroupCommand(long flagsBitSet, Object groupName);
 
    <K> StreamRequestCommand<K> buildStreamRequestCommand(Object id, boolean parallelStream, StreamRequestCommand.Type type,
-           Set<Integer> segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
+           IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
          Object terminalOperation);
 
    /**
@@ -540,7 +540,7 @@ public interface CommandsFactory {
     * @param <R> type of response
     * @return the command to send back the response
     */
-   <R> StreamResponseCommand<R> buildStreamResponseCommand(Object identifier, boolean complete, Set<Integer> lostSegments,
+   <R> StreamResponseCommand<R> buildStreamResponseCommand(Object identifier, boolean complete, IntSet lostSegments,
            R response);
 
    <K> StreamIteratorRequestCommand<K> buildStreamIteratorRequestCommand(Object id, boolean parallelStream,

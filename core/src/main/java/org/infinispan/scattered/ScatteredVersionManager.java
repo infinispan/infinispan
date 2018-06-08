@@ -1,9 +1,9 @@
 package org.infinispan.scattered;
 
-import org.infinispan.container.versioning.EntryVersion;
-
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.container.versioning.EntryVersion;
 
 /**
  * Manages versions of entries and states of segments.
@@ -62,12 +62,12 @@ public interface ScatteredVersionManager<K> {
     * Move the segment from {@link SegmentState#NOT_OWNED} to {@link SegmentState#OWNED} without transferring data.
     * @param segments
     */
-   void setOwnedSegments(Set<Integer> segments);
+   void setOwnedSegments(IntSet segments);
 
    /**
     * Move the segments from {@link SegmentState#BLOCKED} to {@link SegmentState#KEY_TRANSFER} state.
     */
-   void startKeyTransfer(Set<Integer> segments);
+   void startKeyTransfer(IntSet segments);
 
    /**
     * All key + version data from given segment have been received, or the key transfer failed.

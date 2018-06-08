@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -24,14 +23,16 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.TestAddress;
@@ -176,7 +177,7 @@ public class StateProviderTest {
       stateProvider.onTopologyUpdate(this.cacheTopology, false);
 
       log.debug("ch1: " + ch1);
-      Set<Integer> segmentsToRequest = ch1.getSegmentsForOwner(members1.get(0));
+      IntSet segmentsToRequest = IntSets.from(ch1.getSegmentsForOwner(members1.get(0)));
       List<TransactionInfo> transactions = stateProvider.getTransactionsForSegments(members1.get(0), 1, segmentsToRequest);
       assertEquals(0, transactions.size());
 
@@ -189,7 +190,7 @@ public class StateProviderTest {
 
       verifyNoMoreInteractions(stateTransferLock);
 
-      stateProvider.startOutboundTransfer(F, 1, Collections.singleton(0), true);
+      stateProvider.startOutboundTransfer(F, 1, IntSets.immutableSet(0), true);
 
       assertTrue(stateProvider.isStateTransferInProgress());
 
@@ -202,7 +203,7 @@ public class StateProviderTest {
 
       assertFalse(stateProvider.isStateTransferInProgress());
 
-      stateProvider.startOutboundTransfer(D, 1, Collections.singleton(0), true);
+      stateProvider.startOutboundTransfer(D, 1, IntSets.immutableSet(0), true);
 
       assertTrue(stateProvider.isStateTransferInProgress());
 
@@ -287,7 +288,7 @@ public class StateProviderTest {
       stateProvider.onTopologyUpdate(this.cacheTopology, false);
 
       log.debug("ch1: " + ch1);
-      Set<Integer> segmentsToRequest = ch1.getSegmentsForOwner(members1.get(0));
+      IntSet segmentsToRequest = IntSets.from(ch1.getSegmentsForOwner(members1.get(0)));
       List<TransactionInfo> transactions = stateProvider.getTransactionsForSegments(members1.get(0), 1, segmentsToRequest);
       assertEquals(0, transactions.size());
 
@@ -300,7 +301,7 @@ public class StateProviderTest {
 
       verifyNoMoreInteractions(stateTransferLock);
 
-      stateProvider.startOutboundTransfer(F, 1, Collections.singleton(0), true);
+      stateProvider.startOutboundTransfer(F, 1, IntSets.immutableSet(0), true);
 
       assertTrue(stateProvider.isStateTransferInProgress());
 
@@ -314,7 +315,7 @@ public class StateProviderTest {
 
       assertFalse(stateProvider.isStateTransferInProgress());
 
-      stateProvider.startOutboundTransfer(E, 1, Collections.singleton(0), true);
+      stateProvider.startOutboundTransfer(E, 1, IntSets.immutableSet(0), true);
 
       assertTrue(stateProvider.isStateTransferInProgress());
 

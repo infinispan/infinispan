@@ -2,8 +2,8 @@ package org.infinispan.distribution.util;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
-import java.util.Set;
 
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.distribution.ch.ConsistentHash;
 
 /**
@@ -18,7 +18,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
  */
 public class ReadOnlySegmentAwareEntryIterator<K, V> extends ReadOnlySegmentAwareIterator<Entry<K, V>> {
 
-   public ReadOnlySegmentAwareEntryIterator(Iterator<Entry<K, V>> iter, ConsistentHash ch, Set<Integer> allowedSegments) {
+   public ReadOnlySegmentAwareEntryIterator(Iterator<Entry<K, V>> iter, ConsistentHash ch, IntSet allowedSegments) {
       super(iter, ch, allowedSegments);
    }
 

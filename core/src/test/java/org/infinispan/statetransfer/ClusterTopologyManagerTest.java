@@ -2,7 +2,6 @@ package org.infinispan.statetransfer;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anySet;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
@@ -447,7 +446,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
          log.debugf("Blocking the GET_TRANSACTIONS(%d) command on the %s", topologyId, c2);
          checkpoint.awaitStrict("LEAVE", 10, TimeUnit.SECONDS);
          return invocation.callRealMethod();
-      }).when(spyStateProvider).getTransactionsForSegments(any(Address.class), anyInt(), anySet());
+      }).when(spyStateProvider).getTransactionsForSegments(any(Address.class), anyInt(), any());
       TestingUtil.replaceComponent(c2, StateProvider.class, spyStateProvider, true);
 
       long startTime = System.currentTimeMillis();

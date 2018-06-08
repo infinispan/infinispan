@@ -1,7 +1,8 @@
 package org.infinispan.stream.impl;
 
-import java.util.Set;
 import java.util.Spliterator;
+
+import org.infinispan.commons.util.IntSet;
 
 /**
  * Iterator response returned when an iterator batch is sent back which contains the iterator, if any segments
@@ -27,5 +28,5 @@ public interface IteratorResponse<V> {
     * The segments that were lost during the iteration process
     * @return the segments that need to be re-queried
     */
-   Set<Integer> getSuspectedSegments();
+   IntSet getSuspectedSegments();
 }

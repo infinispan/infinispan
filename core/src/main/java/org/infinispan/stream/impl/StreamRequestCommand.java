@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
@@ -28,7 +29,7 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyA
    private Object id;
    private Type type;
    private boolean parallelStream;
-   private Set<Integer> segments;
+   private IntSet segments;
    private Set<K> keys;
    private Set<K> excludedKeys;
    private boolean includeLoader;
@@ -67,7 +68,7 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyA
    }
 
    public StreamRequestCommand(ByteString cacheName, Address origin, Object id, boolean parallelStream, Type type,
-                               Set<Integer> segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
+         IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
                                boolean entryStream, Object terminalOperation) {
       super(cacheName);
       setOrigin(origin);
@@ -120,7 +121,7 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyA
       output.writeObject(id);
       output.writeBoolean(parallelStream);
       MarshallUtil.marshallEnum(type, output);
-      MarshallUtil.marshallCollection(segments, output);
+      output.writeObject(segments);
       MarshallUtil.marshallCollection(keys, output);
       MarshallUtil.marshallCollection(excludedKeys, output);
       output.writeBoolean(includeLoader);
@@ -134,7 +135,7 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyA
       id = input.readObject();
       parallelStream = input.readBoolean();
       type = MarshallUtil.unmarshallEnum(input, ordinal -> Type.CACHED_VALUES[ordinal]);
-      segments = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
+      segments = (IntSet) input.readObject();
       keys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
       excludedKeys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
       includeLoader = input.readBoolean();

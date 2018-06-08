@@ -1,16 +1,5 @@
 package org.infinispan.distribution.ch.impl;
 
-import net.jcip.annotations.Immutable;
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.marshall.Ids;
-import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
-import org.infinispan.commons.util.SmallIntSet;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.globalstate.ScopedPersistentState;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.topology.ClusterCacheStatus;
-import org.infinispan.topology.PersistentUUID;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -27,6 +16,19 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
+
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.globalstate.ScopedPersistentState;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.ClusterCacheStatus;
+import org.infinispan.topology.PersistentUUID;
+
+import net.jcip.annotations.Immutable;
 
 /**
  * CH used by scattered caches. Allows no owners for segments (until the CH is balanced).
@@ -113,10 +115,10 @@ public class ScatteredConsistentHash extends AbstractConsistentHash {
          throw new IllegalArgumentException("Node " + owner + " is not a member");
       }
 
-      SmallIntSet segments = new SmallIntSet();
+      IntSet segments = IntSets.mutableEmptySet(segmentOwners.length);
       for (int segment = 0; segment < segmentOwners.length; segment++) {
          if (Objects.equals(segmentOwners[segment], owner)) {
-            segments.add(segment);
+            segments.set(segment);
          }
       }
       return segments;

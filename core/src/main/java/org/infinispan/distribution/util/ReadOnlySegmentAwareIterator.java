@@ -2,8 +2,8 @@ package org.infinispan.distribution.util;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.Set;
 
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.distribution.ch.ConsistentHash;
 
 /**
@@ -19,11 +19,11 @@ import org.infinispan.distribution.ch.ConsistentHash;
 public class ReadOnlySegmentAwareIterator<E> implements Iterator<E> {
    protected final Iterator<E> iter;
    protected final ConsistentHash ch;
-   protected final Set<Integer> allowedSegments;
+   protected final IntSet allowedSegments;
 
    protected E next;
 
-   public ReadOnlySegmentAwareIterator(Iterator<E> iter, ConsistentHash ch, Set<Integer> allowedSegments) {
+   public ReadOnlySegmentAwareIterator(Iterator<E> iter, ConsistentHash ch, IntSet allowedSegments) {
       super();
       this.iter = iter;
       this.ch = ch;

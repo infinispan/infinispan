@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 import java.util.stream.BaseStream;
 
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.SmallIntSet;
+import org.infinispan.commons.util.IntSets;
 
 /**
  * Interface that defines the base methods of all streams returned from a {@link Cache}.  This interface
@@ -141,12 +141,12 @@ public interface BaseCacheStream<T, S extends BaseStream<T, S>> extends BaseStre
       void segmentCompleted(Set<Integer> segments);
 
       /**
-       * Invoked each time a given number of segments have completed and the terminal opearation has consumed all
+       * Invoked each time a given number of segments have completed and the terminal operation has consumed all
        * entries in the given segment
        * @param segments The segments that were completed
        */
       default void accept(Supplier<PrimitiveIterator.OfInt> segments) {
-         segmentCompleted(SmallIntSet.of(segments.get()));
+         segmentCompleted(IntSets.from(segments.get()));
       }
    }
 }

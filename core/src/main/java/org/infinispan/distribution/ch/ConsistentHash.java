@@ -8,7 +8,8 @@ import java.util.Set;
 import java.util.function.UnaryOperator;
 
 import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.util.SmallIntSet;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
@@ -105,7 +106,7 @@ public interface ConsistentHash {
    default Set<Address> locateAllOwners(Collection<Object> keys) {
       // Use a HashSet assuming most of the time the number of keys is small.
       HashSet<Address> owners = new HashSet<>();
-      SmallIntSet segments = new SmallIntSet(getNumSegments());
+      IntSet segments = IntSets.mutableEmptySet(getNumSegments());
       for (Object key : keys) {
          int segment = getSegment(key);
          if (segments.add(segment)) {

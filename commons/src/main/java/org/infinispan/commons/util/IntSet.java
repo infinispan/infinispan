@@ -9,16 +9,18 @@ import java.util.Spliterators;
 import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * A set that represents primitive ints. This interface describes methods that can be used without having to box an int.
+ * This set does not support negative numbers.
  * @author wburns
  * @since 9.2
  */
 public interface IntSet extends Set<Integer> {
 
    /**
-    * Adds the given int to this set and returns whether the int was present before
+    * Adds the given int to this set and returns {@code true} if it was set or {@code false} if it was already present
     * @param i the int value to add
     * @return whether this int was already present
     */
@@ -66,7 +68,7 @@ public interface IntSet extends Set<Integer> {
    boolean removeAll(IntSet set);
 
    /**
-    * Modifies this set to only remove all ints that are not present in the provided IntSet
+    * Modifies this set to remove all ints that are not present in the provided IntSet
     * @param c the ints this set should kep
     * @return if this set removed any ints
     */
@@ -84,6 +86,11 @@ public interface IntSet extends Set<Integer> {
     * @return the stream
     */
    IntStream intStream();
+
+   @Override
+   default Stream<Integer> stream() {
+      return Set.super.stream();
+   }
 
    /**
     * Performs the given action for each int of the {@code IntSet}

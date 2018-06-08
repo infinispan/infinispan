@@ -12,10 +12,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.util.FlattenSpliterator;
 import org.infinispan.commons.util.ConcatIterator;
+import org.infinispan.commons.util.FlattenSpliterator;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.SmallIntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.InternalCacheEntry;
 
 /**
@@ -143,9 +143,9 @@ public class L1SegmentedDataContainer<K, V> extends DefaultSegmentedDataContaine
             // If we don't have a map for a segment we have to later go through the unowned segments and remove
             // those entries separately
             if (extraSegments == null) {
-               extraSegments = new SmallIntSet(segments.size());
+               extraSegments = IntSets.mutableEmptySet(segments.size());
             }
-            extraSegments.add(segment);
+            extraSegments.set(segment);
          }
       }
 
