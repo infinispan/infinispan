@@ -167,7 +167,11 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
    @Override
    public boolean isAvailable() {
       try {
-         return connectionFactory.getConnection().isValid(10);
+         if (tableManager == null || connectionFactory == null)
+            return false;
+
+         Connection c = connectionFactory.getConnection();
+         return c != null && c.isValid(10);
       } catch (SQLException e) {
          return false;
       }
