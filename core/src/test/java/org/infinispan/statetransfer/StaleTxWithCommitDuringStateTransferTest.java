@@ -1,7 +1,6 @@
 package org.infinispan.statetransfer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
@@ -75,7 +74,7 @@ public class StaleTxWithCommitDuringStateTransferTest extends MultipleCacheManag
          checkpoint.trigger("post_get_transactions_" + topologyId + "_from_" + source);
          checkpoint.awaitStrict("resume_get_transactions_" + topologyId + "_from_" + source, 10, SECONDS);
          return result;
-      }).when(spyProvider).getTransactionsForSegments(any(Address.class), anyInt(), anySet());
+      }).when(spyProvider).getTransactionsForSegments(any(Address.class), anyInt(), any());
       TestingUtil.replaceComponent(cache0, StateProvider.class, spyProvider, true);
 
       // Start a transaction on cache 0, which will block on cache 1

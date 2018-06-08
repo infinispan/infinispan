@@ -1,6 +1,5 @@
 package org.infinispan.statetransfer;
 
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -8,7 +7,8 @@ import java.util.concurrent.TimeUnit;
 import net.jcip.annotations.GuardedBy;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.SmallIntSet;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -33,10 +33,10 @@ public class InboundTransferTask {
    private static final boolean trace = log.isTraceEnabled();
 
    @GuardedBy("segments")
-   private final SmallIntSet segments;
+   private final IntSet segments;
 
    @GuardedBy("segments")
-   private final SmallIntSet unfinishedSegments;
+   private final IntSet unfinishedSegments;
 
    private final Address source;
 
@@ -61,7 +61,7 @@ public class InboundTransferTask {
 
    private final RpcOptions rpcOptions;
 
-   public InboundTransferTask(Set<Integer> segments, Address source, int topologyId, RpcManager rpcManager,
+   public InboundTransferTask(IntSet segments, Address source, int topologyId, RpcManager rpcManager,
                               CommandsFactory commandsFactory, long timeout, String cacheName, boolean applyState) {
       if (segments == null || segments.isEmpty()) {
          throw new IllegalArgumentException("segments must not be null or empty");
@@ -70,8 +70,8 @@ public class InboundTransferTask {
          throw new IllegalArgumentException("Source address cannot be null");
       }
 
-      this.segments = new SmallIntSet(segments);
-      this.unfinishedSegments = new SmallIntSet(segments);
+      this.segments = IntSets.mutableCopyFrom(segments);
+      this.unfinishedSegments = IntSets.mutableCopyFrom(segments);
       this.source = source;
       this.topologyId = topologyId;
       this.rpcManager = rpcManager;
@@ -82,15 +82,23 @@ public class InboundTransferTask {
       this.rpcOptions = new RpcOptions(DeliverOrder.NONE, timeout, TimeUnit.MILLISECONDS);
    }
 
-   public SmallIntSet getSegments() {
+   /**
+    * Returns a copy of segments currently tied to this task
+    * @return copy of segments
+    */
+   public IntSet getSegments() {
       synchronized (segments) {
-         return new SmallIntSet(segments);
+         return IntSets.mutableCopyFrom(segments);
       }
    }
 
-   public SmallIntSet getUnfinishedSegments() {
+   /**
+    * Returns a copy of the unfinished segments
+    * @return
+    */
+   public IntSet getUnfinishedSegments() {
       synchronized (segments) {
-         return new SmallIntSet(unfinishedSegments);
+         return IntSets.mutableCopyFrom(unfinishedSegments);
       }
    }
 
@@ -113,7 +121,7 @@ public class InboundTransferTask {
 
    private CompletableFuture<Void> startTransfer(StateRequestCommand.Type type) {
       if (!isCancelled) {
-         Set<Integer> segmentsCopy = getSegments();
+         IntSet segmentsCopy = getSegments();
          if (segmentsCopy.isEmpty()) {
             log.tracef("Segments list is empty, skipping source %s", source);
             completionFuture.complete(null);
@@ -155,7 +163,7 @@ public class InboundTransferTask {
     *
     * @param cancelledSegments the segments to be cancelled
     */
-   public void cancelSegments(Set<Integer> cancelledSegments) {
+   public void cancelSegments(IntSet cancelledSegments) {
       if (isCancelled) {
          throw new IllegalArgumentException("The task is already cancelled.");
       }
@@ -190,8 +198,10 @@ public class InboundTransferTask {
       if (!isCancelled) {
          isCancelled = true;
 
-         Set<Integer> segmentsCopy = getUnfinishedSegments();
-         unfinishedSegments.clear();
+         IntSet segmentsCopy = getUnfinishedSegments();
+         synchronized (segments) {
+            unfinishedSegments.clear();
+         }
          if (trace) {
             log.tracef("Cancelling inbound state transfer from %s with unfinished segments %s", source, segmentsCopy);
          }
@@ -206,7 +216,7 @@ public class InboundTransferTask {
       return isCancelled;
    }
 
-   private void sendCancelCommand(Set<Integer> cancelledSegments) {
+   private void sendCancelCommand(IntSet cancelledSegments) {
       StateRequestCommand.Type requestType = applyState ? StateRequestCommand.Type.CANCEL_STATE_TRANSFER : StateRequestCommand.Type.CANCEL_CONSISTENCY_CHECK;
       StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(requestType, rpcManager.getAddress(),
             topologyId, cancelledSegments);

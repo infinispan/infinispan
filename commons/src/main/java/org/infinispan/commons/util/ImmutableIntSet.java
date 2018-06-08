@@ -5,7 +5,6 @@ import java.util.PrimitiveIterator;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
-import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
 
 /**
@@ -13,27 +12,14 @@ import java.util.stream.IntStream;
  *
  * @author Dan Berindei
  * @since 9.2
+ * @deprecated since 9.3 This class will no longer be public, please use {@link IntSets#immutableSet(IntSet)}
  */
-public class ImmutableIntSet implements IntSet {
+@Deprecated
+public class ImmutableIntSet extends AbstractImmutableIntSet {
    private final IntSet set;
 
    public ImmutableIntSet(IntSet set) {
       this.set = set;
-   }
-
-   @Override
-   public boolean add(int i) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void set(int i) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public boolean remove(int i) {
-      throw new UnsupportedOperationException();
    }
 
    @Override
@@ -49,16 +35,6 @@ public class ImmutableIntSet implements IntSet {
    @Override
    public boolean containsAll(IntSet set) {
       return this.set.containsAll(set);
-   }
-
-   @Override
-   public boolean removeAll(IntSet set) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public boolean retainAll(IntSet c) {
-      throw new UnsupportedOperationException();
    }
 
    @Override
@@ -97,38 +73,8 @@ public class ImmutableIntSet implements IntSet {
    }
 
    @Override
-   public boolean add(Integer integer) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public boolean remove(Object o) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
    public boolean containsAll(Collection<?> c) {
       return set.containsAll(c);
-   }
-
-   @Override
-   public boolean addAll(Collection<? extends Integer> c) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public boolean retainAll(Collection<?> c) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public boolean removeAll(Collection<?> c) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void clear() {
-      throw new UnsupportedOperationException();
    }
 
    @Override
@@ -149,11 +95,6 @@ public class ImmutableIntSet implements IntSet {
    @Override
    public Spliterator.OfInt intSpliterator() {
       return set.intSpliterator();
-   }
-
-   @Override
-   public boolean removeIf(IntPredicate filter) {
-      throw new UnsupportedOperationException();
    }
 
    private class ImmutableIterator implements PrimitiveIterator.OfInt {

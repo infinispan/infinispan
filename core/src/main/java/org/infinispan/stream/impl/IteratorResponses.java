@@ -12,6 +12,8 @@ import java.util.Spliterators;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -48,17 +50,17 @@ public abstract class IteratorResponses implements IteratorResponse {
     * based on if the iterator is exhausted (see {@link IteratorResponsesExternalizer}
     */
    static class RemoteResponse extends IteratorResponses {
-      private final Set<Integer> suspectedSegments;
+      private final IntSet suspectedSegments;
       private final long batchSize;
 
-      RemoteResponse(Iterator<Object> iterator, Set<Integer> suspectedSegments, long batchSize) {
+      RemoteResponse(Iterator<Object> iterator, IntSet suspectedSegments, long batchSize) {
          super(iterator, null);
          this.suspectedSegments = suspectedSegments;
          this.batchSize = batchSize;
       }
 
       @Override
-      public Set<Integer> getSuspectedSegments() {
+      public IntSet getSuspectedSegments() {
          return suspectedSegments;
       }
    }
@@ -70,8 +72,8 @@ public abstract class IteratorResponses implements IteratorResponse {
       }
 
       @Override
-      public Set<Integer> getSuspectedSegments() {
-         return Collections.emptySet();
+      public IntSet getSuspectedSegments() {
+         return IntSets.immutableEmptySet();
       }
 
       @Override
@@ -81,9 +83,9 @@ public abstract class IteratorResponses implements IteratorResponse {
    }
 
    private static class LastResponse extends IteratorResponses {
-      private final Set<Integer> suspectedSegments;
+      private final IntSet suspectedSegments;
 
-      LastResponse(Spliterator<Object> spliterator, Set<Integer> suspectedSegments) {
+      LastResponse(Spliterator<Object> spliterator, IntSet suspectedSegments) {
          super(null, spliterator);
          this.suspectedSegments = suspectedSegments;
       }
@@ -94,7 +96,7 @@ public abstract class IteratorResponses implements IteratorResponse {
       }
 
       @Override
-      public Set<Integer> getSuspectedSegments() {
+      public IntSet getSuspectedSegments() {
          return suspectedSegments;
       }
 
@@ -149,12 +151,8 @@ public abstract class IteratorResponses implements IteratorResponse {
          output.writeBoolean(completed);
          if (completed) {
             // The final response will show all of the suspected segments if there are any
-            Set<Integer> segments = resp.getSuspectedSegments();
-            // This set is written to from other threads - so we have to synchronize to guarantee read visibility
             // The hasNext call above should have unregistered LocalStreamManagerImpl.SegmentListener
-            synchronized (segments) {
-               output.writeObject(segments);
-            }
+            output.writeObject(resp.getSuspectedSegments());
          }
       }
 
@@ -176,7 +174,7 @@ public abstract class IteratorResponses implements IteratorResponse {
          }
          boolean complete = input.readBoolean();
          if (complete) {
-            return new LastResponse(spliterator, (Set<Integer>) input.readObject());
+            return new LastResponse(spliterator, (IntSet) input.readObject());
          } else {
             return new BatchResponse(spliterator);
          }

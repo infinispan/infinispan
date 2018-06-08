@@ -24,18 +24,21 @@ import org.infinispan.commons.io.UnsignedNumeric;
  *
  * @author Dan Berindei
  * @since 9.0
+ * @deprecated since 9.3 This class will no longer be public. Please use {@link IntSets} methods such as
+ * {@link IntSets#mutableEmptySet()}, {@link IntSets#mutableCopyFrom(Set)}
  */
+@Deprecated
 public class SmallIntSet implements IntSet {
    private final BitSet bitSet;
 
    public static SmallIntSet of(int i1) {
-      SmallIntSet set = new SmallIntSet();
+      SmallIntSet set = new SmallIntSet(i1 + 1);
       set.set(i1);
       return set;
    }
 
    public static SmallIntSet of(int i1, int i2) {
-      SmallIntSet set = new SmallIntSet();
+      SmallIntSet set = new SmallIntSet(Math.max(i1, i2) + 1);
       set.set(i1);
       set.set(i2);
       return set;
@@ -50,7 +53,7 @@ public class SmallIntSet implements IntSet {
    }
 
    public static SmallIntSet of(int... elements) {
-      SmallIntSet set = new SmallIntSet();
+      SmallIntSet set = new SmallIntSet(elements.length);
       for (int i : elements) {
          set.set(i);
       }
@@ -96,7 +99,7 @@ public class SmallIntSet implements IntSet {
          this.bitSet = new BitSet();
          ((IntSet) set).forEach((IntConsumer) bitSet::set);
       } else {
-         bitSet = new BitSet(set.size());
+         bitSet = new BitSet();
          set.forEach(bitSet::set);
       }
    }
@@ -314,13 +317,12 @@ public class SmallIntSet implements IntSet {
 
    @Override
    public boolean addAll(Collection<? extends Integer> c) {
-      boolean modified = false;
       if (c instanceof IntSet) {
          return addAll((IntSet) c);
-      } else {
-         for (Integer integer : c) {
-            modified |= add(integer);
-         }
+      }
+      boolean modified = false;
+      for (Integer integer : c) {
+         modified |= add(integer);
       }
       return modified;
    }
@@ -470,8 +472,9 @@ public class SmallIntSet implements IntSet {
    public static void writeTo(ObjectOutput output, SmallIntSet set) throws IOException {
       UnsignedNumeric.writeUnsignedInt(output, set.capacity());
       UnsignedNumeric.writeUnsignedInt(output, set.size());
-      for (int element : set) {
-         UnsignedNumeric.writeUnsignedInt(output, element);
+      BitSet bitSet = set.bitSet;
+      for (int i = bitSet.nextSetBit(0); i >= 0; i = bitSet.nextSetBit(i + 1)) {
+         UnsignedNumeric.writeUnsignedInt(output, i);
       }
    }
 

@@ -1,10 +1,8 @@
 package org.infinispan.stream.impl;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
+import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
@@ -20,6 +18,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
@@ -60,6 +59,7 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
    @Inject private CommandsFactory factory;
    @Inject private IteratorHandler iteratorHandler;
    private boolean hasLoader;
+   private int maxSegment;
 
    private Address localAddress;
 
@@ -67,29 +67,31 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
    private ByteString cacheName;
 
    class SegmentListener {
-      private final Set<Integer> segments;
+      private final IntSet segments;
       private final SegmentAwareOperation op;
-      private final Set<Integer> segmentsLost;
+      private final IntSet segmentsLost;
 
-      SegmentListener(Set<Integer> segments, SegmentAwareOperation op) {
-         this.segments = new HashSet<>(segments);
+      SegmentListener(IntSet segments, SegmentAwareOperation op) {
+         this.segments = segments;
          this.op = op;
-         this.segmentsLost = Collections.synchronizedSet(new HashSet<>());
+         this.segmentsLost = IntSets.concurrentSet(maxSegment);
       }
 
-      public void localSegments(Set<Integer> localSegments) {
-         segments.forEach(s -> {
-            if (!localSegments.contains(s)) {
+      public void localSegments(IntSet localSegments) {
+         for (PrimitiveIterator.OfInt segmentIterator = segments.iterator(); segmentIterator.hasNext(); ) {
+            int segment = segmentIterator.nextInt();
+            if (!localSegments.contains(segment)) {
                if (trace) {
-                  log.tracef("Could not process segment %s", s);
+                  log.tracef("Could not process segment %s", segment);
                }
-               segmentsLost.add(s);
+               segmentsLost.add(segment);
             }
-         });
+         }
       }
 
-      public void lostSegments(Set<Integer> lostSegments) {
-         for (Integer segment : lostSegments) {
+      public void lostSegments(IntSet lostSegments) {
+         for (PrimitiveIterator.OfInt segmentIterator = lostSegments.iterator(); segmentIterator.hasNext(); ) {
+            int segment = segmentIterator.nextInt();
             if (segments.contains(segment)) {
                if (trace) {
                   log.tracef("Lost segment %s", segment);
@@ -127,6 +129,7 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
    public void start() {
       cacheName = ByteString.fromString(cache.getName());
       hasLoader = cache.getCacheConfiguration().persistence().usingStores();
+      this.maxSegment = cache.getCacheConfiguration().clustering().hash().numSegments();
       localAddress = rpc.getAddress();
       cache.addListener(this);
    }
@@ -155,7 +158,7 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
                log.tracef("After segments %s ", endHash.getSegmentsForOwner(localAddress));
             }
             // we don't care about newly added segments, since that means our run wouldn't include them anyways
-            Set<Integer> beforeSegments = new HashSet<>(startHash.getSegmentsForOwner(localAddress));
+            IntSet beforeSegments = IntSets.mutableFrom(startHash.getSegmentsForOwner(localAddress));
             // Now any that were there before but aren't there now should be added - we don't care about new segments
             // since our current request shouldn't be working on it - it will have to retrieve it later
             beforeSegments.removeAll(endHash.getSegmentsForOwner(localAddress));
@@ -194,7 +197,7 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
    }
 
    private Stream<Original> getStream(CacheSet<Original> cacheEntrySet, boolean parallelStream,
-         boolean entryStream, Set<Integer> segments, Set<K> keysToInclude, Set<K> keysToExclude) {
+         boolean entryStream, IntSet segments, Set<K> keysToInclude, Set<K> keysToExclude) {
       Stream<Original> stream = (parallelStream ? cacheEntrySet.parallelStream() : cacheEntrySet.stream())
               .filterKeys(keysToInclude).filterKeySegments(segments);
       if (!keysToExclude.isEmpty()) {
@@ -210,7 +213,7 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
    }
 
    private Stream<Original> getRehashStream(CacheSet<Original> cacheEntrySet, Object requestId,
-         SegmentListener listener, boolean parallelStream, boolean entryStream, Set<Integer> segments,
+         SegmentListener listener, boolean parallelStream, boolean entryStream, IntSet segments,
          Set<K> keysToInclude, Set<K> keysToExclude) {
       LocalizedCacheTopology topology = dm.getCacheTopology();
       if (trace) {
@@ -219,17 +222,15 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
       ConsistentHash readCH = topology.getCurrentCH();
       ConsistentHash pendingCH = topology.getPendingCH();
       if (pendingCH != null) {
-         Set<Integer> lostSegments = new HashSet<>();
-         Iterator<Integer> iterator = segments.iterator();
+         IntSet lostSegments = IntSets.mutableEmptySet(topology.getCurrentCH().getNumSegments());
+         PrimitiveIterator.OfInt iterator = segments.iterator();
          while (iterator.hasNext()) {
-            Integer segment = iterator.next();
-            // This is to ensure we only unbox the value once, as below will twice most times (happy path)
-            int intSegment = segment;
+            int segment = iterator.nextInt();
             // If the segment is not owned by both CHs we can't use it during rehash
-            if (!pendingCH.isSegmentLocalToNode(localAddress, intSegment)
-                    || !readCH.isSegmentLocalToNode(localAddress, intSegment)) {
+            if (!pendingCH.isSegmentLocalToNode(localAddress, segment)
+                    || !readCH.isSegmentLocalToNode(localAddress, segment)) {
                iterator.remove();
-               lostSegments.add(segment);
+               lostSegments.set(segment);
             }
          }
          if (!lostSegments.isEmpty()) {
@@ -241,7 +242,7 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
             log.tracef("Currently in the middle of a rehash for id %s", requestId);
          }
       } else {
-         Set<Integer> ourSegments = topology.getLocalReadSegments();
+         IntSet ourSegments = topology.getLocalReadSegments();
          if (segments.retainAll(ourSegments)) {
             if (trace) {
                log.tracef("We found to be missing some segments requested for id %s", requestId);
@@ -271,7 +272,7 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
    }
 
    @Override
-   public <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
+   public <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, IntSet segments,
          Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
          TerminalOperation<Original, R> operation) {
       if (trace) {
@@ -283,7 +284,7 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
       operation.handleInjection(registry);
       R value = operation.performOperation();
       StreamResponseCommand<R> command =
-         factory.buildStreamResponseCommand(requestId, true, Collections.emptySet(), value);
+         factory.buildStreamResponseCommand(requestId, true, IntSets.immutableEmptySet(), value);
       CompletionStage<ValidResponse> completableFuture =
          rpc.invokeCommand(origin, command, SingleResponseCollector.validOnly(), rpc.getSyncRpcOptions());
       handleResponseError(completableFuture, requestId, origin);
@@ -291,7 +292,7 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
 
    @Override
    public <R> void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream,
-           Set<Integer> segments, Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
+           IntSet segments, Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
            TerminalOperation<Original, R> operation) {
       if (trace) {
          log.tracef("Received rehash aware operation request for id %s from %s for segments %s", requestId, origin,
@@ -339,7 +340,7 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
    }
 
    @Override
-   public <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
+   public <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, IntSet segments,
            Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
            KeyTrackingTerminalOperation<Original, K, R> operation) {
       if (trace) {
@@ -353,7 +354,7 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
       Collection<R> value = operation.performOperation(new NonRehashIntermediateCollector<>(origin, requestId,
               parallelStream));
       StreamResponseCommand<Collection<R>> command =
-         factory.buildStreamResponseCommand(requestId, true, Collections.emptySet(), value);
+         factory.buildStreamResponseCommand(requestId, true, IntSets.immutableEmptySet(), value);
       CompletionStage<ValidResponse> completableFuture =
          rpc.invokeCommand(origin, command, SingleResponseCollector.validOnly(), rpc.getSyncRpcOptions());
       handleResponseError(completableFuture, requestId, origin);
@@ -361,7 +362,7 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
 
    @Override
    public void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream,
-         Set<Integer> segments, Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
+         IntSet segments, Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, boolean entryStream,
          KeyTrackingTerminalOperation<Original, K, ?> operation) {
       if (trace) {
          log.tracef("Received key rehash aware operation request for id %s from %s for segments %s", requestId, origin,
@@ -417,7 +418,8 @@ public class LocalStreamManagerImpl<Original, K, V> implements LocalStreamManage
       }
       CacheSet<Original> originalSet = toOriginalSet(includeLoader, entryStream);
 
-      SegmentListener listener = new SegmentListener(segments, i -> true);
+      // Have to make a copy of segments as we will remove from it below
+      SegmentListener listener = new SegmentListener(IntSets.mutableCopyFrom(segments), i -> true);
 
       if (changeListener.putIfAbsent(requestId, listener) != null) {
          throw new IllegalStateException("Iterator was already created for id " + requestId);

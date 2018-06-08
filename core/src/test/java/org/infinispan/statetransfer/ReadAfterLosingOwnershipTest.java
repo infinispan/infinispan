@@ -5,13 +5,13 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
@@ -181,7 +181,7 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
       final CountDownLatch wait = new CountDownLatch(1);
 
       @Override
-      public void beforeInvalidation(Set<Integer> removedSegments, Set<Integer> staleL1Segments) {
+      public void beforeInvalidation(IntSet removedSegments, IntSet staleL1Segments) {
          log.debugf("Before invalidation: removedSegments=%s, staleL1Segments=%s", removedSegments, staleL1Segments);
          if (!removedSegments.contains(0)) {
             //it only matters when it looses the segment 0 and the key is moved to the new owner

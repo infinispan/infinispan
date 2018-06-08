@@ -1,5 +1,6 @@
 package org.infinispan.commons.util;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -79,6 +80,13 @@ public class RangeSetTest {
       assertEquals(1, array[1]);
       assertEquals(2, array[2]);
       assertEquals(3, array[3]);
+   }
+
+   @Test
+   public void toIntArray() throws Exception {
+      RangeSet rs = new RangeSet(4);
+      int[] array = rs.toIntArray();
+      assertArrayEquals(new int[]{0, 1, 2, 3}, array);
    }
 
    @Test(expected = UnsupportedOperationException.class)

@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.PrimitiveIterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -15,7 +14,8 @@ import java.util.function.Consumer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.SmallIntSet;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
@@ -59,7 +59,7 @@ public class OutboundTransferTask implements Runnable {
 
    private final Address destination;
 
-   private final Set<Integer> segments = new CopyOnWriteArraySet<>();
+   private final IntSet segments;
 
    private final int chunkSize;
 
@@ -97,7 +97,7 @@ public class OutboundTransferTask implements Runnable {
 
    private InternalEntryFactory entryFactory;
 
-   public OutboundTransferTask(Address destination, Set<Integer> segments, int chunkSize,
+   public OutboundTransferTask(Address destination, IntSet segments, int segmentCount, int chunkSize,
                                int topologyId, KeyPartitioner keyPartitioner,
                                Consumer<OutboundTransferTask> onCompletion, Consumer<List<StateChunk>> onChunkReplicated,
                                BiFunction<InternalCacheEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromDataContainer,
@@ -119,7 +119,7 @@ public class OutboundTransferTask implements Runnable {
       this.mapEntryFromDataContainer = mapEntryFromDataContainer;
       this.mapEntryFromStore = mapEntryFromStore;
       this.destination = destination;
-      this.segments.addAll(segments);
+      this.segments = IntSets.concurrentCopyFrom(segments, segmentCount);
       this.chunkSize = chunkSize;
       this.topologyId = topologyId;
       this.keyPartitioner = keyPartitioner;
@@ -154,7 +154,7 @@ public class OutboundTransferTask implements Runnable {
       return destination;
    }
 
-   public Set<Integer> getSegments() {
+   public IntSet getSegments() {
       return segments;
    }
 
@@ -165,6 +165,7 @@ public class OutboundTransferTask implements Runnable {
    //todo [anistor] check thread interrupt status in loops to implement faster cancellation
    public void run() {
       try {
+         // TODO: need to change to SDC.forEachSegment
          // send data container entries
          for (InternalCacheEntry ice : dataContainer) {
             Object key = ice.getKey();  //todo [anistor] should we check for expired entries?
@@ -241,7 +242,8 @@ public class OutboundTransferTask implements Runnable {
       }
 
       if (isLast) {
-         for (int segmentId : segments) {
+         for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
+            int segmentId = iter.nextInt();
             List<InternalCacheEntry> entries = entriesBySegment.get(segmentId);
             if (entries == null) {
                chunks.add(new StateChunk(segmentId, Collections.emptyList(), true));
@@ -281,7 +283,7 @@ public class OutboundTransferTask implements Runnable {
     *
     * @param cancelledSegments segments to cancel.
     */
-   public void cancelSegments(Set<Integer> cancelledSegments) {
+   public void cancelSegments(IntSet cancelledSegments) {
       if (segments.removeAll(cancelledSegments)) {
          if (trace) {
             log.tracef("Cancelling outbound transfer to node %s, segments %s (remaining segments %s)",
@@ -313,7 +315,7 @@ public class OutboundTransferTask implements Runnable {
       return "OutboundTransferTask{" +
             "topologyId=" + topologyId +
             ", destination=" + destination +
-            ", segments=" + new SmallIntSet(segments) +
+            ", segments=" + segments +
             ", chunkSize=" + chunkSize +
             ", timeout=" + timeout +
             ", cacheName='" + cacheName + '\'' +

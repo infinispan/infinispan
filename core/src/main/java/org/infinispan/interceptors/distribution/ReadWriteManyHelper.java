@@ -3,10 +3,10 @@ package org.infinispan.interceptors.distribution;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Set;
 import java.util.function.Function;
 
 import org.infinispan.commands.functional.ReadWriteManyCommand;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareCollection;
 import org.infinispan.interceptors.InvocationSuccessFunction;
@@ -22,12 +22,12 @@ class ReadWriteManyHelper extends WriteManyCommandHelper<ReadWriteManyCommand, C
    }
 
    @Override
-   public ReadWriteManyCommand copyForPrimary(ReadWriteManyCommand cmd, ConsistentHash ch, Set<Integer> segments) {
+   public ReadWriteManyCommand copyForPrimary(ReadWriteManyCommand cmd, ConsistentHash ch, IntSet segments) {
       return new ReadWriteManyCommand(cmd).withKeys(new ReadOnlySegmentAwareCollection(cmd.getAffectedKeys(), ch, segments));
    }
 
    @Override
-   public ReadWriteManyCommand copyForBackup(ReadWriteManyCommand cmd, ConsistentHash ch, Set<Integer> segments) {
+   public ReadWriteManyCommand copyForBackup(ReadWriteManyCommand cmd, ConsistentHash ch, IntSet segments) {
       ReadWriteManyCommand copy = new ReadWriteManyCommand(cmd).withKeys(
             new ReadOnlySegmentAwareCollection(cmd.getAffectedKeys(), ch, segments));
       copy.setForwarded(true);

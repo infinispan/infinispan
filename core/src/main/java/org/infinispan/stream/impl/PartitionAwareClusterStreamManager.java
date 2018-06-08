@@ -65,7 +65,7 @@ public class PartitionAwareClusterStreamManager<Original, K> extends ClusterStre
 
    @Override
    public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         IntSet segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
          boolean entryStream, TerminalOperation<Original, R> operation, ResultsCallback<R> callback,
          Predicate<? super R> earlyTerminatePredicate) {
       checkPartitionStatus();
@@ -75,7 +75,7 @@ public class PartitionAwareClusterStreamManager<Original, K> extends ClusterStre
 
    @Override
    public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-         Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+         IntSet segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
          boolean entryStream, KeyTrackingTerminalOperation<Original, K, R> operation, ResultsCallback<Collection<R>> callback) {
       checkPartitionStatus();
       return super.remoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
@@ -84,7 +84,7 @@ public class PartitionAwareClusterStreamManager<Original, K> extends ClusterStre
 
    @Override
    public <R> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
-         ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
+         ConsistentHash ch, IntSet segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
          boolean includeLoader, boolean entryStream, TerminalOperation<Original, R> operation, ResultsCallback<R> callback,
          Predicate<? super R> earlyTerminatePredicate) {
       checkPartitionStatus();
@@ -94,7 +94,7 @@ public class PartitionAwareClusterStreamManager<Original, K> extends ClusterStre
 
    @Override
    public Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
-           ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
+           ConsistentHash ch, IntSet segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
            boolean includeLoader, boolean entryStream, KeyTrackingTerminalOperation<Original, K, ?> operation,
            ResultsCallback<Collection<K>> callback) {
       checkPartitionStatus();
