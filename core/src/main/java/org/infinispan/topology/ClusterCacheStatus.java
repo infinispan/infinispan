@@ -541,8 +541,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          actualMembers = newCurrentMembers;
          if (pendingCH != null) {
             newPhase = currentTopology.getPhase();
-            newPendingCH = consistentHashFactory.updateMembers(pendingCH, newCurrentMembers, getCapacityFactors());
-            actualMembers = pruneInvalidMembers(pendingCH.getMembers());
+            List<Address> newPendingMembers = pruneInvalidMembers(pendingCH.getMembers());
+            newPendingCH = consistentHashFactory.updateMembers(pendingCH, newPendingMembers, getCapacityFactors());
+            actualMembers = pruneInvalidMembers(newPendingMembers);
          }
       }
       // Losing members during state transfer could lead to a state where we have more than two topologies
