@@ -1246,10 +1246,10 @@
                                 <configuration>
                                     <skip>${skipTests}</skip>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="kill-server">
+                                        <ant antfile="${basedir}/../src/main/ant/infinispan-server.xml" target="kill-server">
                                             <property name="hotrod.port" value="11322" />
                                         </ant>
-                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="start-server">
+                                        <ant antfile="${basedir}/../src/main/ant/infinispan-server.xml" target="start-server">
                                             <property name="server.dist" value="${server.old.dist}" />
                                             <property name="port.offset" value="100" />
                                             <property name="management.port" value="10090" />
@@ -1269,7 +1269,7 @@
                                 <configuration>
                                     <skip>${skipTests}</skip>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="kill-server">
+                                        <ant antfile="${basedir}/../src/main/ant/infinispan-server.xml" target="kill-server">
                                             <property name="hotrod.port" value="11322" />
                                         </ant>
                                     </target>
@@ -1305,10 +1305,10 @@
                                 <configuration>
                                     <skip>${skipTests}</skip>
                                     <target>
-                                        <ant antfile="../src/main/ant/infinispan-server.xml" target="kill-server">
+                                        <ant antfile="${basedir}/../src/main/ant/infinispan-server.xml" target="kill-server">
                                             <property name="hotrod.port" value="11422" />
                                         </ant>
-                                        <ant antfile="../src/main/ant/infinispan-server.xml" target="start-server">
+                                        <ant antfile="${basedir}/../src/main/ant/infinispan-server.xml" target="start-server">
                                             <property name="server.dist" value="${server2.old.dist}" />
                                             <property name="port.offset" value="200" />
                                             <property name="management.port" value="10190" />
@@ -1328,10 +1328,10 @@
                                 <configuration>
                                     <skip>${skipTests}</skip>
                                     <target>
-                                        <ant antfile="../src/main/ant/infinispan-server.xml" target="kill-server">
+                                        <ant antfile="${basedir}/../src/main/ant/infinispan-server.xml" target="kill-server">
                                             <property name="hotrod.port" value="11522" />
                                         </ant>
-                                        <ant antfile="../src/main/ant/infinispan-server.xml" target="start-server">
+                                        <ant antfile="${basedir}/../src/main/ant/infinispan-server.xml" target="start-server">
                                             <property name="server.dist" value="${server3.old.dist}" />
                                             <property name="port.offset" value="300" />
                                             <property name="management.port" value="10290" />
@@ -1351,7 +1351,7 @@
                                 <configuration>
                                     <skip>${skipTests}</skip>
                                     <target>
-                                        <ant antfile="../src/main/ant/infinispan-server.xml" target="kill-server">
+                                        <ant antfile="${basedir}/../src/main/ant/infinispan-server.xml" target="kill-server">
                                             <property name="hotrod.port" value="11422" />
                                         </ant>
                                     </target>
@@ -1366,7 +1366,7 @@
                                 <configuration>
                                     <skip>${skipTests}</skip>
                                     <target>
-                                        <ant antfile="../src/main/ant/infinispan-server.xml" target="kill-server">
+                                        <ant antfile="${basedir}/../src/main/ant/infinispan-server.xml" target="kill-server">
                                             <property name="hotrod.port" value="11522" />
                                         </ant>
                                     </target>
@@ -1415,10 +1415,10 @@
                                 <configuration>
                                     <skip>${skipTests}</skip>
                                     <target>
-                                        <ant antfile="../src/main/ant/infinispan-server.xml" target="kill-server">
+                                        <ant antfile="${basedir}/../src/main/ant/infinispan-server.xml" target="kill-server">
                                             <property name="hotrod.port" value="11222" />
                                         </ant>
-                                        <ant antfile="../src/main/ant/infinispan-server.xml" target="start-server">
+                                        <ant antfile="${basedir}/../src/main/ant/infinispan-server.xml" target="start-server">
                                             <property name="server.dist" value="${server1.dist}" />
                                             <property name="port.offset" value="0" />
                                             <property name="management.port" value="9990" />
@@ -1438,7 +1438,7 @@
                                 <configuration>
                                     <skip>${skipTests}</skip>
                                     <target>
-                                        <ant antfile="../src/main/ant/infinispan-server.xml" target="kill-server">
+                                        <ant antfile="${basedir}/../src/main/ant/infinispan-server.xml" target="kill-server">
                                             <property name="hotrod.port" value="11222" />
                                         </ant>
                                     </target>
