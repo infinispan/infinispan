@@ -28,6 +28,7 @@
 
     <target name="start-server" depends="-check.skipped" unless="tests.skipped">
         <echo>Starting Infinispan server from ${server.dist}</echo>
+
         <exec dir="${server.dist}/bin" executable="chmod" osfamily="unix">
             <arg value="+x"/>
             <arg value="../bin"/>
@@ -53,60 +54,97 @@
         <echo message="Infinispan server started"/>
     </target>
 
+    <macrodef name="checkoutput">
+        <attribute name="run-property"/>
+        <attribute name="exitcode-property"/>
+        <attribute name="output-property"/>
+
+        <sequential>
+            <echo>@{run-property}: ${@{output-property}} --- ${@{exitcode-property}}</echo>
+            <condition property="@{run-property}" value="true" else="false">
+                <and>
+                    <equals arg1="${@{exitcode-property}}" arg2="0"/>
+                    <isset property="@{output-property}"/>
+                    <not>
+                        <equals arg1="${@{output-property}}" arg2=""/>
+                    </not>
+                </and>
+            </condition>
+        </sequential>
+    </macrodef>
     <target name="-do.kinit" depends="-check.skipped" unless="tests.skipped">
-        <exec executable="bash" output="ps.pid" resultproperty="ps.result" failifexecutionfails="false" failonerror="false" osfamily="unix">
+        <exec executable="bash" outputproperty="ps.pid" resultproperty="ps.result" failifexecutionfails="false"
+              failonerror="false" osfamily="unix">
             <arg value="-c"/>
-            <arg value="ps -eaf | grep jboss-modules.jar | grep -v -w grep | awk '{print $$2;}'"/>
+            <!-- Use \- to exclude the awk command -->
+            <arg value="ps -eaf | awk '/jboss\-modules.jar/ {print $$2;}'"/>
+            <redirector>
+                <outputfilterchain>
+                    <prefixlines prefix=" "/>
+                    <striplinebreaks/>
+                    <trim/>
+                </outputfilterchain>
+            </redirector>
         </exec>
-        <echo>ps.pid: ps.pid --- ${ps.result}</echo>
-        <condition property="run.ps" value="true" else="false">
-            <and>
-                <equals arg1="${ps.result}" arg2="0"/>
-                <length file="ps.pid" when="greater" length="0"/>
-            </and>
-        </condition>
+        <checkoutput run-property="run.ps" exitcode-property="ps.result" output-property="ps.pid"/>
+
         <exec executable="bash" outputproperty="lsof.pid" resultproperty="lsof.result" failifexecutionfails="false" failonerror="false" osfamily="unix">
             <arg value="-c"/>
             <arg value="lsof -t -i TCP:${hotrod.port}"/>
+            <redirector>
+                <outputfilterchain>
+                    <prefixlines prefix=" "/>
+                    <striplinebreaks/>
+                    <trim/>
+                </outputfilterchain>
+            </redirector>
         </exec>
-        <echo>lsof.pid: ${lsof.pid} --- ${lsof.result}</echo>
-        <condition property="run.lsof" value="true" else="false">
-            <and>
-                <equals arg1="${lsof.result}" arg2="0"/>
-                <isset property="lsof.pid"/>
-                <not>
-                    <equals arg1="${lsof.pid}" arg2=""/>
-                </not>
-            </and>
-        </condition>
+        <checkoutput run-property="run.lsof" exitcode-property="lsof.result" output-property="lsof.pid"/>
+
         <!--jps/jstat are not supported in IBM JDK we should add failifexecutionfails parameter to not fail when jps command does not exist -->
-        <exec executable="${server.jvm}/bin/jps" output="jps.pid" resultproperty="jps.result" failifexecutionfails="false" failonerror="false"/>
-        <echo>jps.pid: jps.pid --- ${jps.result}</echo>
-        <condition property="run.jps" value="true" else="false">
-            <and>
-                <equals arg1="${jps.result}" arg2="0"/>
-                <length file="jps.pid" when="greater" length="0"/>
-            </and>
-        </condition>
-        <exec executable="cmd" output="cmd.pid" resultproperty="cmd.result" failifexecutionfails="false" failonerror="false" osfamily="windows">
-            <arg value="/C"/>
-            <arg value="netstat -aon | findstr LISTENING | findstr :${hotrod.port}"/>
+        <exec executable="${server.jvm}/bin/jps" outputproperty="jps.pid" resultproperty="jps.result"
+              failifexecutionfails="false" failonerror="false">
+            <redirector>
+                <outputfilterchain>
+                    <linecontains>
+                        <contains value="jboss-modules.jar"/>
+                    </linecontains>
+                    <tokenfilter>
+                        <replaceregex pattern=" .*" replace=" "/>
+                    </tokenfilter>
+                    <striplinebreaks/>
+                </outputfilterchain>
+            </redirector>
         </exec>
-        <echo>cmd.pid: cmd.pid --- ${cmd.result}</echo>
-        <condition property="run.cmd" value="true" else="false">
-            <and>
-                <equals arg1="${cmd.result}" arg2="0"/>
-                <length file="cmd.pid" when="greater" length="0"/>
-            </and>
-        </condition>
-        <fail message="Not yet supported on UNIX/WINDOWS favour without working ps/lsof/jps/netstat">
+        <checkoutput run-property="run.jps" exitcode-property="jps.result" output-property="jps.pid"/>
+
+        <exec executable="netstat" outputproperty="cmd.pid" resultproperty="cmd.result" failifexecutionfails="false"
+              failonerror="false" osfamily="windows">
+            <arg value="-aon"/>
+            <redirector>
+                <outputfilterchain>
+                    <linecontains>
+                        <contains value="LISTENING"/>
+                        <contains value=":${hotrod.port}"/>
+                    </linecontains>
+                    <tokenfilter>
+                        <replaceregex pattern=".*LISTENING([ \t]+)([0-9]+)" replace="\2" flags="gi"/>
+                        <ignoreblank/>
+                    </tokenfilter>
+                    <striplinebreaks/>
+                </outputfilterchain>
+            </redirector>
+        </exec>
+        <checkoutput run-property="run.cmd" exitcode-property="cmd.result" output-property="cmd.pid"/>
+
+        <fail message="Build requires either ps/jps/lsof (UNIX) or netstat (WINDOWS) in order to stop running servers">
             <condition>
                 <not>
                     <or>
-                        <istrue value="${run.ps}"/>
-                        <istrue value="${run.lsof}"/>
-                        <istrue value="${run.jps}"/>
-                        <istrue value="${run.cmd}"/>
+                        <equals arg1="${ps.result}" arg2="0"/>
+                        <equals arg1="${lsof.result}" arg2="0"/>
+                        <equals arg1="${jps.result}" arg2="0"/>
+                        <equals arg1="${cmd.result}" arg2="0"/>
                     </or>
                 </not>
             </condition>
@@ -114,66 +152,27 @@
     </target>
 
     <target name="-do.ps" if="${run.ps}">
-        <echo>this target will be called only when property $${run.ps} is set</echo>
-        <loadfile srcfile="ps.pid" property="ppid" failonerror="false">
-            <filterchain>
-                <prefixlines prefix=" " />
-                <striplinebreaks />
-                <trim />
-            </filterchain>
-        </loadfile>
         <exec executable="kill" osfamily="unix">
-            <arg line="-9 ${ppid}"/>
+            <arg line="-9 ${ps.pid}"/>
         </exec>
-        <delete file="ps.pid"/>
     </target>
 
     <target name="-do.lsof" if="${run.lsof}">
-        <echo>this target will be called only when property $${run.lsof} is set</echo>
         <exec executable="kill" osfamily="unix">
             <arg line="-9 ${lsof.pid}"/>
         </exec>
     </target>
 
     <target name="-do.jps" if="${run.jps}">
-        <echo>this target will be called only when property $${run.jps} is set</echo>
-        <loadfile srcfile="jps.pid" property="jpid" failonerror="false">
-            <filterchain>
-                <linecontains>
-                    <contains value="jboss-modules.jar"/>
-                </linecontains>
-                <tokenfilter>
-                    <deletecharacters chars="jboss-modules.jar"/>
-                    <ignoreblank/>
-                </tokenfilter>
-                <striplinebreaks/>
-            </filterchain>
-        </loadfile>
         <exec executable="kill" osfamily="unix">
-            <arg line="-9 ${jpid}"/>
+            <arg line="-9 ${jps.pid}"/>
         </exec>
-        <delete file="jps.pid"/>
     </target>
 
     <target name="-do.cmd" if="${run.cmd}">
-        <echo>this target will be called only when property $${run.cmd} is set</echo>
-        <loadfile srcfile="cmd.pid" property="cpid" failonerror="false">
-            <filterchain>
-                <linecontains>
-                    <contains value="LISTENING"/>
-                    <contains value=":${hotrod.port}"/>
-                </linecontains>
-                <tokenfilter>
-                    <replaceregex pattern=".*LISTENING([ \t]+)([0-9]+)" replace="\2" flags="gi"/>
-                    <ignoreblank/>
-                </tokenfilter>
-                <striplinebreaks/>
-            </filterchain>
-        </loadfile>
         <exec executable="taskkill" osfamily="windows">
-            <arg line="/F /T /PID ${cpid}"/>
+            <arg line="/F /T /PID ${cmd.pid}"/>
         </exec>
-        <delete file="cmd.pid"/>
     </target>
 
     <target name="kill-server" depends="-do.kinit, -do.ps, -do.lsof, -do.jps, -do.cmd"/>
