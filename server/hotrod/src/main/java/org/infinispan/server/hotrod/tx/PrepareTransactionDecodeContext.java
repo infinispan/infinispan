@@ -12,7 +12,6 @@ import javax.transaction.xa.XAResource;
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.cache.impl.DecoratedCache;
-import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.context.Flag;
@@ -113,21 +112,19 @@ public class PrepareTransactionDecodeContext extends TransactionDecodeContext {
    }
 
    public <K, V> AdvancedCache<K, V> decorateCache(AdvancedCache<K, V> cache) {
-      if (cache instanceof EncoderCache && ((EncoderCache) cache).getDelegate() instanceof CacheImpl) {
-         return decorateEncoderCache((EncoderCache<K, V>) cache);
-      } else if (cache instanceof CacheImpl) {
-         return withTransaction((CacheImpl<K, V>) cache);
+      return cache.transform(this::transform);
+   }
+
+
+   private <K, V> AdvancedCache<K, V> transform(AdvancedCache<K, V> cache) {
+      if (cache instanceof CacheImpl) {
+         return withTransaction(cache);
       } else {
-         throw new IllegalArgumentException("Unable to decorate cache");
+         return cache;
       }
    }
 
-   private <K, V> AdvancedCache<K, V> decorateEncoderCache(EncoderCache<K, V> cache) {
-      AdvancedCache<K, V> txCache = withTransaction((CacheImpl<K, V>) cache.getDelegate());
-      return cache.withCache(txCache);
-   }
-
-   private <K, V> AdvancedCache<K, V> withTransaction(CacheImpl<K, V> cache) {
+   private <K, V> AdvancedCache<K, V> withTransaction(AdvancedCache<K, V> cache) {
       return new DecoratedCache<K, V>(cache, Flag.FORCE_WRITE_LOCK) {
          @Override
          protected InvocationContext readContext(int size) {
