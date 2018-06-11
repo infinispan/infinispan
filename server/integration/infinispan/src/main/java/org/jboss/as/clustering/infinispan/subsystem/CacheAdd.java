@@ -22,10 +22,16 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import static org.infinispan.query.impl.IndexPropertyInspector.getDataCacheName;
+import static org.infinispan.query.impl.IndexPropertyInspector.getLockingCacheName;
+import static org.infinispan.query.impl.IndexPropertyInspector.getMetadataCacheName;
+import static org.infinispan.query.impl.IndexPropertyInspector.hasInfinispanDirectory;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Properties;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -44,12 +50,14 @@ import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.naming.ManagedReferenceInjector;
 import org.jboss.as.naming.ServiceBasedNamingStore;
 import org.jboss.as.naming.deployment.ContextNames;
 import org.jboss.as.naming.service.BinderService;
 import org.jboss.dmr.ModelNode;
+import org.jboss.dmr.Property;
 import org.jboss.logging.Logger;
 import org.jboss.msc.inject.Injector;
 import org.jboss.msc.service.Service;
@@ -81,6 +89,56 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
         this.populate(operation, model);
     }
 
+    private String getConfigurationKey() {
+        switch (mode) {
+            case DIST_ASYNC:
+            case DIST_SYNC:
+                return ModelKeys.DISTRIBUTED_CACHE_CONFIGURATION;
+            case REPL_ASYNC:
+            case REPL_SYNC:
+                return ModelKeys.REPLICATED_CACHE_CONFIGURATION;
+            case INVALIDATION_ASYNC:
+            case INVALIDATION_SYNC:
+                return ModelKeys.INVALIDATION_CACHE_CONFIGURATION;
+            case LOCAL:
+                return ModelKeys.LOCAL_CACHE_CONFIGURATION;
+            default:
+                throw new IllegalArgumentException("Unknown cache mode " + mode);
+        }
+    }
+
+    /**
+     * Extract indexing information for the cache from the model.
+     *
+     * @return a {@link Properties} with the indexing properties or empty if the cache is not indexed
+     */
+    private Properties extractIndexingProperties(OperationContext context, ModelNode operation, String cacheConfiguration) {
+        Properties properties = new Properties();
+        PathAddress cacheAddress = getCacheAddressFromOperation(operation);
+        Resource cacheConfigResource = context.readResourceFromRoot(cacheAddress.subAddress(0, 2), true)
+              .getChild(PathElement.pathElement(ModelKeys.CONFIGURATIONS, ModelKeys.CONFIGURATIONS_NAME))
+              .getChild(PathElement.pathElement(getConfigurationKey(), cacheConfiguration));
+
+        PathElement indexingPathElement = PathElement.pathElement(ModelKeys.INDEXING, ModelKeys.INDEXING_NAME);
+
+        if (cacheConfigResource == null || !cacheConfigResource.hasChild(indexingPathElement)) {
+            return properties;
+        }
+
+        Resource indexingResource = cacheConfigResource.getChild(indexingPathElement);
+        if (indexingResource == null) return properties;
+
+        ModelNode indexingModel = indexingResource.getModel();
+        boolean hasProperties = indexingModel.hasDefined(ModelKeys.INDEXING_PROPERTIES);
+
+        if (!hasProperties) return properties;
+
+        ModelNode modelNode = indexingResource.getModel().get(ModelKeys.INDEXING_PROPERTIES);
+        List<Property> modelProperties = modelNode.asPropertyList();
+        modelProperties.forEach(p -> properties.put(p.getName(), p.getValue().asString()));
+        return properties;
+    }
+
     @Override
     protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
         // Because we use child resources in a read-only manner to configure the cache, replace the local model with the full model
@@ -110,13 +168,16 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
            log.warnf("Ignoring start mode [%s] of cache service [%s], as EAGER is the only supported mode", startMode, cacheName);
            startMode = StartMode.EAGER;
         }
+
+        Properties indexingProperties = extractIndexingProperties(context, operation, configuration);
+
         final ServiceController.Mode initialMode = startMode.getMode();
 
         ServiceTarget target = context.getServiceTarget();
 
         Collection<ServiceController<?>> controllers = new ArrayList<>(2);
         // now install the corresponding cache service (starts a configured cache)
-        controllers.add(this.installCacheService(target, containerName, cacheName, initialMode, configuration));
+        controllers.add(this.installCacheService(target, containerName, cacheName, initialMode, configuration, indexingProperties));
 
         // install a name service entry for the cache
         ModelNode resolvedValue = CacheConfigurationResource.JNDI_NAME.resolveModelAttribute(context, cacheModel);
@@ -159,7 +220,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
     }
 
     ServiceController<?> installCacheService(ServiceTarget target, String containerName, String cacheName, ServiceController.Mode initialMode,
-            String configurationName) {
+                                             String configurationName, Properties indexingProperties) {
 
         final InjectedValue<EmbeddedCacheManager> container = new InjectedValue<>();
         final CacheDependencies cacheDependencies = new CacheDependencies(container);
@@ -173,6 +234,14 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
         builder.addDependency(DeployedCacheStoreFactoryService.SERVICE_NAME, DeployedCacheStoreFactory.class, cacheDependencies.getDeployedCacheStoreFactoryInjector());
         builder.addDependency(ServerTaskRegistryService.SERVICE_NAME, ServerTaskRegistry.class, cacheDependencies.getDeployedTaskRegistryInjector());
         builder.addDependency(DeployedMergePolicyFactoryService.SERVICE_NAME, DeployedMergePolicyFactory.class, cacheDependencies.getDeployedMergePolicyRegistryInjector());
+
+        boolean hasInfinispanDirectory = hasInfinispanDirectory(indexingProperties);
+
+        if (hasInfinispanDirectory) {
+            builder.addDependency(CacheServiceName.CACHE.getServiceName(containerName, getDataCacheName(indexingProperties)));
+            builder.addDependency(CacheServiceName.CACHE.getServiceName(containerName, getMetadataCacheName(indexingProperties)));
+            builder.addDependency(CacheServiceName.CACHE.getServiceName(containerName, getLockingCacheName(indexingProperties)));
+        }
 
         return builder.install();
     }
