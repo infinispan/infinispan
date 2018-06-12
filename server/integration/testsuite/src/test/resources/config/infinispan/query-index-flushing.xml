@@ -1,0 +1,51 @@
+<subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}">
+    <cache-container name="clustered" default-cache="default" statistics="true">
+        <transport/>
+        <global-state>
+            <persistent-location path="globalState" relative-to="jboss.server.temp.dir"/>
+        </global-state>
+        <distributed-cache name="default"/>
+        <replicated-cache-configuration name="indexed-repl">
+            <indexing index="LOCAL" auto-config="true">
+                <property name="default.indexBase">${jboss.server.temp.dir}</property>
+            </indexing>
+        </replicated-cache-configuration>
+
+        <!-- Uses NRT index manager with explicitly configured indexing caches -->
+        <replicated-cache name="nrt_custom_index_caches" start="EAGER">
+            <transaction mode="NONE"/>
+            <file-store preload="true" purge="false" shared="false" fetch-state="false" passivation="false"
+                        path="mycache_persistence">
+                <write-behind/>
+            </file-store>
+            <indexing index="ALL">
+                <property name="default.directory_provider">infinispan</property>
+                <property name="default.indexmanager">near-real-time</property>
+                <property name="default.exclusive_index_use">true</property>
+                <property name="default.metadata_cachename">myindex_metadata</property>
+                <property name="default.data_cachename">myindex_data</property>
+                <property name="default.locking_cachename">myindex_lock</property>
+                <property name="default.reader.strategy">shared</property>
+            </indexing>
+        </replicated-cache>
+        <!-- Indexing caches for 'nrt_custom_index_caches' -->
+        <local-cache name="myindex_metadata" start="EAGER">
+            <file-store preload="true" purge="false" shared="false" fetch-state="false" passivation="false"
+                        path="myindex_persistence"/>
+            <indexing index="NONE"/>
+        </local-cache>
+        <local-cache name="myindex_data" start="EAGER">
+            <file-store preload="true" purge="false" shared="false" fetch-state="false" passivation="false"
+                        path="myindex_persistence"/>
+            <indexing index="NONE"/>
+        </local-cache>
+        <local-cache name="myindex_lock" start="EAGER">
+            <file-store preload="true" purge="false" shared="false" fetch-state="false" passivation="false"
+                        path="myindex_persistence"/>
+            <indexing index="NONE"/>
+        </local-cache>
+
+        <!--  Uses implicitly created indexing caches (with NRT) due to auto-config  -->
+        <replicated-cache name="nrt_auto_config" configuration="indexed-repl"/>
+    </cache-container>
+</subsystem>
