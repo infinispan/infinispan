@@ -3,6 +3,7 @@ package org.infinispan.persistence;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Map;
@@ -16,6 +17,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -51,7 +53,7 @@ public class WriteBehindFaultToleranceTest extends AbstractInfinispanTest {
       DummyInMemoryStore store = (DummyInMemoryStore) TestingUtil.extractField(AdvancedAsyncCacheWriter.class, asyncWriter, "actual");
       store.setAvailable(true);
       cache.put(1, 1);
-      TestingUtil.sleepThread(AVAILABILITY_INTERVAL * 5);
+      eventually(() -> store.load(1) != null);
       assertEquals(1, store.size());
 
       PersistenceManager pm = TestingUtil.extractComponent(cache, PersistenceManager.class);
@@ -60,12 +62,11 @@ public class WriteBehindFaultToleranceTest extends AbstractInfinispanTest {
 
       TestingUtil.sleepThread(AVAILABILITY_INTERVAL * 5);
       // PM & AsyncWriter should still be available as the async modification queue is not full
+      assertTrue(asyncWriter.isAvailable());
       assertFalse(TestingUtil.extractField(asyncWriter, "delegateAvailable"));
       assertTrue(pm.isAvailable());
 
       // Add entries >= modification queue size so that store is no longer available
-      assertTrue(asyncWriter.isAvailable());
-      assertTrue(pm.isAvailable());
       cache.putAll(intMap(0, 10));
       assertEquals(1, store.size());
 
@@ -100,14 +101,17 @@ public class WriteBehindFaultToleranceTest extends AbstractInfinispanTest {
       DummyInMemoryStore store = (DummyInMemoryStore) TestingUtil.extractField(AdvancedAsyncCacheWriter.class, asyncWriter, "actual");
       assertTrue(store.isAvailable());
       cache.put(1, 1);
-      TestingUtil.sleepThread(100);
+      eventually(() -> store.load(1) != null);
+      assertEquals(1, store.size());
 
       store.setAvailable(false);
       assertFalse(store.isAvailable());
       cache.put(1, 2); // Should fail on the store, but complete in-memory
       TestingUtil.sleepThread(1000); // Sleep to ensure async write is attempted
       store.setAvailable(true);
-      assertEquals(1, store.load(1).getValue());
+      MarshalledEntry entry = store.load(1);
+      assertNotNull(entry);
+      assertEquals(1, entry.getValue());
       assertEquals(2, cache.get(1));
    }
 }
