@@ -37,6 +37,33 @@
                     </memory>
                 </replicated-cache>
                 <replicated-cache name="namedCache"/>
+                <replicated-cache
+                        name="default-sync-tx-cache"
+                        remote-timeout="60000">
+                    <locking isolation="REPEATABLE_READ"/>
+                    <transaction locking="PESSIMISTIC" mode="NON_XA" />
+                    <state-transfer
+                            enabled="true"
+                            timeout="60000" />
+                </replicated-cache>
+                <replicated-cache
+                        name="default-xa-tx-cache"
+                        remote-timeout="60000">
+                    <locking isolation="REPEATABLE_READ"/>
+                    <transaction locking="PESSIMISTIC" mode="NON_DURABLE_XA" />
+                    <state-transfer
+                            enabled="true"
+                            timeout="60000" />
+                </replicated-cache>
+                <replicated-cache
+                        name="default-full-xa-tx-cache"
+                        remote-timeout="60000">
+                    <locking isolation="REPEATABLE_READ"/>
+                    <transaction locking="PESSIMISTIC" mode="FULL_XA" />
+                    <state-transfer
+                            enabled="true"
+                            timeout="60000" />
+                </replicated-cache>
             </cache-container>
             <cache-container name="security"/>
         </subsystem>

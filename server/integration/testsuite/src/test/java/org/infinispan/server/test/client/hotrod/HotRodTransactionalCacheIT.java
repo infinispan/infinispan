@@ -33,9 +33,9 @@ public class HotRodTransactionalCacheIT {
 
    private static final String TEST_CACHE_XML_CONFIG =
          "<infinispan><cache-container>" +
-               "  <distributed-cache-configuration name=\"test\">" +
+               "  <distributed-cache-configuration name=\"%s\">" +
                "    <locking isolation=\"REPEATABLE_READ\"/>" +
-               "    <transaction locking=\"PESSIMISTIC\" mode=\"NON_XA\" />" +
+               "    <transaction locking=\"PESSIMISTIC\" mode=\"%s\" />" +
                "  </distributed-cache-configuration>" +
                "</cache-container></infinispan>";
 
@@ -53,9 +53,40 @@ public class HotRodTransactionalCacheIT {
    }
 
    @Test
-   public void testCommitAndRollback() throws Exception {
-      remoteCacheManager.administration().createCache("test", new XMLStringConfiguration(TEST_CACHE_XML_CONFIG));
-      RemoteCache<String, String> cache = remoteCacheManager.getCache("test");
+   public void testCommitAndRollbackWithUserDefinedSyncMode() throws Exception {
+      createCache("user-sync-tx-cache", "NON_XA");
+      doTest("user-sync-tx-cache");
+   }
+
+   @Test
+   public void testCommitAndRollbackWithUserDefinedXaMode() throws Exception {
+      createCache("user-xa-tx-cache", "NON_DURABLE_XA");
+      doTest("user-xa-tx-cache");
+   }
+
+   @Test
+   public void testCommitAndRollbackWithUserDefinedFullXaMode() throws Exception {
+      createCache("user-full-xa-tx-cache", "FULL_XA");
+      doTest("user-full-xa-tx-cache");
+   }
+
+   @Test
+   public void testCommitAndRollbackWithServerDefinedSyncMode() throws Exception {
+      doTest("default-sync-tx-cache");
+   }
+
+   @Test
+   public void testCommitAndRollbackWithServerDefinedXaMode() throws Exception {
+      doTest("default-xa-tx-cache");
+   }
+
+   @Test
+   public void testCommitAndRollbackWithServerDefinedFullXaMode() throws Exception {
+      doTest("default-full-xa-tx-cache");
+   }
+
+   private void doTest(String cacheName) throws Exception {
+      RemoteCache<String, String> cache = remoteCacheManager.getCache(cacheName);
       TransactionManager tm = cache.getTransactionManager();
       tm.begin();
       cache.put("k", "v1");
@@ -73,6 +104,11 @@ public class HotRodTransactionalCacheIT {
 
       assertEquals("v1", cache.get("k"));
       assertNull(cache.get("k2"));
+   }
+
+   private void createCache(String cacheName, String transactionMode) {
+      String xml = String.format(TEST_CACHE_XML_CONFIG, cacheName, transactionMode);
+      remoteCacheManager.administration().createCache(cacheName, new XMLStringConfiguration(xml));
    }
 
    private Configuration createRemoteCacheManagerConfiguration() {

@@ -61,7 +61,7 @@ public class PrepareTransactionDecodeContext extends TransactionDecodeContext {
          this.tx = tx;
          this.localTxInvocationContext = new LocalTxInvocationContext(localTransaction);
          serverTransactionTable.createLocalTx(xid, tx);
-         transactionTable.enlist(tx, localTransaction);
+         transactionTable.enlistClientTransaction(tx, localTransaction);
          return true;
       }
    }

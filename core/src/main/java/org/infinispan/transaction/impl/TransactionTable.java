@@ -243,6 +243,19 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       }
    }
 
+   public void enlistClientTransaction(Transaction transaction, LocalTransaction localTransaction) {
+      if (!localTransaction.isEnlisted()) {
+         SynchronizationAdapter sync = new SynchronizationAdapter(localTransaction, this);
+         try {
+            transaction.registerSynchronization(sync);
+         } catch (Exception e) {
+            log.failedSynchronizationRegistration(e);
+            throw new CacheException(e);
+         }
+         ((SyncLocalTransaction) localTransaction).setEnlisted(true);
+      }
+   }
+
    public void failureCompletingTransaction(Transaction tx) {
       final LocalTransaction localTransaction = localTransactions.get(tx);
       if (localTransaction != null) {

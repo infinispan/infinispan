@@ -96,6 +96,11 @@ public class XaTransactionTable extends TransactionTable {
    }
 
    @Override
+   public void enlistClientTransaction(Transaction transaction, LocalTransaction localTransaction) {
+      enlist(transaction, localTransaction);
+   }
+
+   @Override
    public int getLocalTxCount() {
       return xid2LocalTx.size();
    }
