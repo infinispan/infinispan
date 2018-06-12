@@ -227,7 +227,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
          assertNull(nonOwnerCache.get(key));
          assertIsNotInL1(nonOwnerCache, key);
       } finally {
-         crm.revertRpcManager(nonOwnerCache);
+         crm.revertRpcManager();
       }
    }
 

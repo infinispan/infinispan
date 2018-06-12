@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.AbstractMap;
 import java.util.Arrays;
@@ -56,8 +57,10 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    private static final Log log = LogFactory.getLog(ControlledRpcManager.class);
-   static final int TIMEOUT_SECONDS = 10;
+   private static final int TIMEOUT_SECONDS = 10;
+
    private final AtomicInteger count = new AtomicInteger(1);
+   private final Cache<?, ?> cache;
 
    private volatile boolean stopped = false;
    private final Set<Class<? extends ReplicableCommand>> excludedCommands =
@@ -65,21 +68,23 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    private final BlockingQueue<InternalRequest> queuedRequests = new LinkedBlockingDeque<>();
    private final ScheduledExecutorService executor;
 
-   public ControlledRpcManager(RpcManager realOne) {
+   protected ControlledRpcManager(RpcManager realOne, Cache<?, ?> cache) {
       super(realOne);
+      this.cache = cache;
       executor = Executors.newScheduledThreadPool(
          0, r -> new Thread(r, "ControlledRpc-" + count.getAndIncrement() + "," + realOne.getAddress()));
    }
 
    public static ControlledRpcManager replaceRpcManager(Cache<?, ?> cache) {
       RpcManager rpcManager = TestingUtil.extractComponent(cache, RpcManager.class);
-      ControlledRpcManager controlledRpcManager = new ControlledRpcManager(rpcManager);
+      ControlledRpcManager controlledRpcManager = new ControlledRpcManager(rpcManager, cache);
       log.tracef("Installing ControlledRpcManager on %s", controlledRpcManager.getAddress());
       TestingUtil.replaceComponent(cache, RpcManager.class, controlledRpcManager, true);
       return controlledRpcManager;
    }
 
-   public void revertRpcManager(Cache cache) {
+   public void revertRpcManager() {
+      stopBlocking();
       log.tracef("Restoring regular RpcManager on %s", getAddress());
       RpcManager rpcManager = TestingUtil.extractComponent(cache, RpcManager.class);
       assertSame(this, rpcManager);
@@ -96,12 +101,12 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    }
 
    public void stopBlocking() {
+      log.debug("Stopping intercepting RPC calls");
       stopped = true;
       executor.shutdownNow();
       if (!queuedRequests.isEmpty()) {
          List<ReplicableCommand> commands = queuedRequests.stream().map(r -> r.command).collect(Collectors.toList());
-         log.error("Stopped intercepting RPCs, but there are " + queuedRequests.size() +
-                                    " blocked requests in the queue: " + commands);
+         fail("Stopped intercepting RPCs, but there are " + queuedRequests.size() + " blocked requests in the queue: " + commands);
       }
    }
 
@@ -119,7 +124,9 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    public <T extends ReplicableCommand> BlockedRequest expectCommand(Class<T> expectedCommandClass,
                                                                      Consumer<T> checker)
       throws InterruptedException {
+      log.tracef("Waiting for command %s", expectedCommandClass);
       InternalRequest request = queuedRequests.poll(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      log.tracef("Fetched command %s", request != null ? request.command : null);
       assertNotNull("Timed out waiting for invocation", request);
       assertTrue("Expecting a " + expectedCommandClass.getName() + ", got " + request.getCommand(),
                  expectedCommandClass.isInstance(request.getCommand()));
@@ -406,6 +413,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       }
 
       void fail(Throwable t) {
+         log.tracef("Failing execution of %s, currently %s", command, resultFuture);
          lock.lock();
          try {
             throwIfFailed();
@@ -414,9 +422,14 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
                throw new IllegalStateException("Trying to fail a request after it has already finished");
             }
 
+            // unblock the thread waiting for the request to be sent, not just response
+            sent = true;
+            queueCondition.signalAll();
+
             resultFuture.completeExceptionally(t);
          } finally {
             lock.unlock();
+            log.tracef("Result future is %s", resultFuture);
          }
       }
 

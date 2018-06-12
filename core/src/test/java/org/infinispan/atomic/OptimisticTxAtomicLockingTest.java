@@ -8,9 +8,9 @@ import org.testng.annotations.Test;
  * @since 5.3
  */
 @Test(groups = "functional", testName = "atomic.OptimisticTxAtomicLocking")
-public class OptimisticTxAtomicLocking extends BaseAtomicMapLockingTest {
+public class OptimisticTxAtomicLockingTest extends BaseAtomicMapLockingTest {
 
-   public OptimisticTxAtomicLocking() {
+   public OptimisticTxAtomicLockingTest() {
       super(false, VersionedPrepareCommand.class);
    }
 }

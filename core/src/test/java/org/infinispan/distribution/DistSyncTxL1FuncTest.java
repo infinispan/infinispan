@@ -219,7 +219,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
          Exceptions.expectExecutionException(RemoteException.class, TestException.class, futureGet);
       } finally {
          removeAllBlockingInterceptorsFromCache(nonOwnerCache);
-         controlledRpcManager.revertRpcManager(nonOwnerCache);
+         controlledRpcManager.revertRpcManager();
       }
    }
 
@@ -383,8 +383,8 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
          removeAllBlockingInterceptorsFromCache(ownerCache);
          removeAllBlockingInterceptorsFromCache(backupOwnerCache);
 
-         crm.revertRpcManager(ownerCache);
-         crm2.revertRpcManager(backupOwnerCache);
+         crm.revertRpcManager();
+         crm2.revertRpcManager();
       }
    }
 }
