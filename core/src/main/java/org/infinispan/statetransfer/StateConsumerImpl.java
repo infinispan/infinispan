@@ -496,7 +496,7 @@ public class StateConsumerImpl implements StateConsumer {
       if (waitingForState.get()) {
          if (hasActiveTransfers()) {
             if (trace)
-               log.tracef("notifyEndOfStateTransferIfNeeded: no active transfers");
+               log.tracef("No end of state transfer notification, active transfers still exist");
             return false;
          }
          if (waitingForState.compareAndSet(true, false)) {
@@ -506,11 +506,11 @@ public class StateConsumerImpl implements StateConsumer {
             stateTransferFuture.complete(null);
          }
          if (trace)
-            log.tracef("notifyEndOfStateTransferIfNeeded: waitingForState already set to false by another thread");
+            log.tracef("No end of state transfer notification, waitingForState already set to false by another thread");
          return false;
       }
       if (trace)
-         log.tracef("notifyEndOfStateTransferIfNeeded: waitingForState already set to false by another thread");
+         log.tracef("No end of state transfer notification, waitingForState already set to false by another thread");
       return true;
    }
 
@@ -1023,9 +1023,10 @@ public class StateConsumerImpl implements StateConsumer {
                   if (trace) {
                      log.tracef("Removing inbound transfers from node %s for segments %s", source, inboundTransfer.getSegments());
                   }
+                  SmallIntSet unfinishedSegments = inboundTransfer.getUnfinishedSegments();
                   inboundTransfer.cancel();
-                  transfersBySegment.keySet().removeAll(inboundTransfer.getSegments());
-                  addedSegments.addAll(inboundTransfer.getUnfinishedSegments());
+                  addedSegments.addAll(unfinishedSegments);
+                  transfersBySegment.keySet().removeAll(unfinishedSegments);
                }
             }
          }
