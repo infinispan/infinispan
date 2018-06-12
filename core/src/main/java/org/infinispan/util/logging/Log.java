@@ -1804,4 +1804,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Maximum startup attempts exceeded for store %s", id = 527)
    PersistenceException storeStartupAttemptsExceeded(String storeName, @Cause Throwable t);
+
+   @Message(value = "Cannot acquire lock as this partition is DEGRADED", id = 528)
+   AvailabilityException degradedModeLockUnavailable();
 }

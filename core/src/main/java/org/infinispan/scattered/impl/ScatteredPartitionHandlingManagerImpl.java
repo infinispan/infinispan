@@ -10,10 +10,10 @@ public class ScatteredPartitionHandlingManagerImpl extends PartitionHandlingMana
    private static final boolean trace = log.isTraceEnabled();
 
    @Override
-   public void doCheck(Object key, boolean isWrite) {
+   public void doCheck(Object key, boolean isWrite, long flagBitSet) {
       AvailabilityMode availabilityMode = getAvailabilityMode();
       if (trace) log.tracef("Checking availability for key=%s, status=%s", key, availabilityMode);
-      if (isOperationAllowed(isWrite))
+      if (isOperationAllowed(isWrite, flagBitSet))
          return;
       // If the partition is degraded, we cannot allow writes even to the keys which we are primary owner
       // since the other partition may be available (thinking that we are dead) and it can also modify

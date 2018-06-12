@@ -37,7 +37,7 @@ public class AvailablePartitionHandlingManager implements PartitionHandlingManag
    public void checkWrite(Object key) {/*no-op*/}
 
    @Override
-   public void checkRead(Object key) {/*no-op*/}
+   public void checkRead(Object key, long flagBitSet) {/*no-op*/}
 
    @Override
    public void checkClear() {/*no-op*/}
