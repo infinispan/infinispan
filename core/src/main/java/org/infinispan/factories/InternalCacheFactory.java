@@ -318,7 +318,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       public V get(Object key) {
          V value = cache.get(key);
          if (!EnumUtil.containsAny(bitFlags, FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_OWNERSHIP_CHECK)) {
-            manager.checkRead(key);
+            manager.checkRead(key, bitFlags);
          }
          return value;
       }

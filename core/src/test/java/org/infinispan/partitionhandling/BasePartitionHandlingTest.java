@@ -2,7 +2,6 @@ package org.infinispan.partitionhandling;
 
 import static org.infinispan.test.Exceptions.expectException;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -23,6 +22,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.conflict.EntryMergePolicy;
+import org.infinispan.context.Flag;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
@@ -31,6 +31,7 @@ import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TEST_PING;
@@ -362,15 +363,13 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          return caches;
       }
 
+      public void assertExceptionWithForceLock(Object key) {
+         cachesInThisPartition().forEach(c -> Exceptions.expectException(AvailabilityException.class,
+               () -> c.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK).get(key)));
+      }
+
       public void assertKeyNotAvailableForWrite(Object key) {
-         for (Cache<Object, Object> c : cachesInThisPartition()) {
-            try {
-               c.put(key, key);
-               fail();
-            } catch (AvailabilityException ae) {
-               //expected!
-            }
-         }
+         cachesInThisPartition().forEach(c -> Exceptions.expectException(AvailabilityException.class, () -> c.put(key, key)));
       }
 
       public void assertKeysNotAvailableForWrite(Object ... keys) {

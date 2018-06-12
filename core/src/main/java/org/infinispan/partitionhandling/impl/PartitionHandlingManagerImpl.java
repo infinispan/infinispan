@@ -1,5 +1,7 @@
 package org.infinispan.partitionhandling.impl;
 
+import static org.infinispan.commons.util.EnumUtil.EMPTY_BIT_SET;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,9 +16,11 @@ import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
@@ -89,24 +93,24 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
 
    @Override
    public void checkWrite(Object key) {
-      doCheck(key, true);
+      doCheck(key, true, EMPTY_BIT_SET);
    }
 
    @Override
-   public void checkRead(Object key) {
-      doCheck(key, false);
+   public void checkRead(Object key, long flagBitSet) {
+      doCheck(key, false, flagBitSet);
    }
 
    @Override
    public void checkClear() {
-      if (!isOperationAllowed(true)) {
+      if (!isOperationAllowed(true, EMPTY_BIT_SET)) {
          throw log.clearDisallowedWhilePartitioned();
       }
    }
 
    @Override
    public void checkBulkRead() {
-      if (!isOperationAllowed(false)) {
+      if (!isOperationAllowed(false, EMPTY_BIT_SET)) {
          throw log.partitionDegraded();
       }
    }
@@ -240,7 +244,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       return stableTopology != null && cacheTopology.getActualMembers().containsAll(stableTopology.getActualMembers()) && cacheTopology.getPhase() != CacheTopology.Phase.CONFLICT_RESOLUTION;
    }
 
-   protected void doCheck(Object key, boolean isWrite) {
+   protected void doCheck(Object key, boolean isWrite, long flagBitSet) {
       if (trace) log.tracef("Checking availability for key=%s, status=%s", key, availabilityMode);
       if (availabilityMode == AvailabilityMode.AVAILABLE)
          return;
@@ -248,7 +252,8 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
       Collection<Address> owners = cacheTopology.getDistribution(key).writeOwners();
       List<Address> actualMembers = cacheTopology.getActualMembers();
-      if (!actualMembers.containsAll(owners) && !isOperationAllowed(isWrite)) {
+      boolean operationAllowed = isOperationAllowed(isWrite, flagBitSet);
+      if (!actualMembers.containsAll(owners) && !operationAllowed) {
          if (trace) log.tracef("Partition is in %s mode, PartitionHandling is set to to %s, access is not allowed for key %s", availabilityMode, partitionHandling, key);
          throw log.degradedModeKeyUnavailable(key);
       } else {
@@ -256,10 +261,20 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       }
    }
 
-   protected boolean isOperationAllowed(boolean isWrite) {
-      return availabilityMode == AvailabilityMode.AVAILABLE ||
-            partitionHandling == PartitionHandling.ALLOW_READ_WRITES ||
-            (!isWrite && partitionHandling != PartitionHandling.DENY_READ_WRITES);
+   protected boolean isOperationAllowed(boolean isWrite, long flagBitSet) {
+      if (availabilityMode == AvailabilityMode.AVAILABLE)
+         return true;
+
+      switch (partitionHandling) {
+         case ALLOW_READ_WRITES:
+            return true;
+         case ALLOW_READS:
+            if (EnumUtil.containsAny(flagBitSet, FlagBitSets.FORCE_WRITE_LOCK))
+               throw log.degradedModeLockUnavailable();
+            return !isWrite;
+         default:
+            return false;
+      }
    }
 
    private interface TransactionInfo {
