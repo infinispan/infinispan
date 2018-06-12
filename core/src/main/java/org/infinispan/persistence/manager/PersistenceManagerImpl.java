@@ -589,6 +589,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public void writeBatchToAllNonTxStores(Iterable<MarshalledEntry> entries, AccessMode accessMode, long flags) {
+      if (!entries.iterator().hasNext())
+         return;
+
       storesMutex.readLock().lock();
       try {
          checkStoreAvailability();
@@ -604,6 +607,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public void deleteBatchFromAllNonTxStores(Iterable<Object> keys, AccessMode accessMode, long flags) {
+      if (!keys.iterator().hasNext())
+         return;
+
       storesMutex.readLock().lock();
       try {
          checkStoreAvailability();
