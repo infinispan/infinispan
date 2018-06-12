@@ -47,6 +47,33 @@
                     </memory>
                 </distributed-cache>
                 <distributed-cache name="streamingTestCache" />
+                <distributed-cache
+                        name="default-sync-tx-cache"
+                        remote-timeout="60000">
+                    <locking isolation="REPEATABLE_READ"/>
+                    <transaction locking="PESSIMISTIC" mode="NON_XA" />
+                    <state-transfer
+                            enabled="true"
+                            timeout="60000" />
+                </distributed-cache>
+                <distributed-cache
+                        name="default-xa-tx-cache"
+                        remote-timeout="60000">
+                    <locking isolation="REPEATABLE_READ"/>
+                    <transaction locking="PESSIMISTIC" mode="NON_DURABLE_XA" />
+                    <state-transfer
+                            enabled="true"
+                            timeout="60000" />
+                </distributed-cache>
+                <distributed-cache
+                        name="default-full-xa-tx-cache"
+                        remote-timeout="60000">
+                    <locking isolation="REPEATABLE_READ"/>
+                    <transaction locking="PESSIMISTIC" mode="FULL_XA" />
+                    <state-transfer
+                            enabled="true"
+                            timeout="60000" />
+                </distributed-cache>
             </cache-container>
             <cache-container name="security"/>
         </subsystem>
