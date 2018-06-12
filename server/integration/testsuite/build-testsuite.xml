@@ -242,6 +242,7 @@
         <transform in="standalone.xml" out="testsuite/standalone-query-programmatic-search-mapping-provider.xml" modifyInfinispan="${infinispan.parts}/query-programmatic-search-mapping-provider.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-off-heap.xml" modifyInfinispan="${infinispan.parts}/off-heap.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-expiration.xml" modifyInfinispan="${infinispan.parts}/expiration.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-query-index-flushing.xml" modifyInfinispan="${infinispan.parts}/query-index-flushing.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-cachecontainer.xml"
                    modifyInfinispan="${infinispan.parts}/cachecontainer.xml"
                    modifyThreads="${other.parts}/cachecontainer-thread-pools.xml"
