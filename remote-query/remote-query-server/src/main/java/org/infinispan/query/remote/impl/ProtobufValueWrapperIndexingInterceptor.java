@@ -27,7 +27,7 @@ public final class ProtobufValueWrapperIndexingInterceptor implements EntityInde
 
    @Override
    public IndexingOverride onDelete(ProtobufValueWrapper entity) {
-      return isIndexed(entity) ? IndexingOverride.APPLY_DEFAULT : IndexingOverride.SKIP;
+      return IndexingOverride.APPLY_DEFAULT;
    }
 
    @Override
@@ -36,6 +36,9 @@ public final class ProtobufValueWrapperIndexingInterceptor implements EntityInde
    }
 
    private boolean isIndexed(ProtobufValueWrapper entity) {
+      if (entity == null) {
+         return false;
+      }
       Descriptor messageDescriptor = entity.getMessageDescriptor();
       // lack of message descriptor means scalar type, which we do not currently index!
       if (messageDescriptor == null) {
