@@ -116,8 +116,6 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       // Because of the majority check in onAbruptLeave, we assume that at most one partition was able to evolve
       // and install new cache topologies. The other(s) would have entered degraded mode, and they would keep
       // the original topology.
-      // One scenario not covered is if two partitions started separately and they have completely different topologies.
-      // In that case, there is no way to prevent the two partitions from having inconsistent data.
       int maxTopologyId = 0;
       int maxRebalanceId = 0;
       CacheTopology maxStableTopology = null;
@@ -178,7 +176,6 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       if (maxActiveTopology != null) {
          log.debugf("One of the partitions is available, using that partition's topology");
          mergedTopology = maxActiveTopology;
-         actualMembers.retainAll(mergedTopology.getMembers());
          mergedAvailabilityMode = AvailabilityMode.AVAILABLE;
       } else if (!degradedTopologies.isEmpty()) {
          log.debugf("No active partitions, so all the partitions must be in degraded mode.");
@@ -204,7 +201,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       // confirmation status (yet).
       AvailabilityMode newAvailabilityMode = computeAvailabilityAfterMerge(context, maxStableTopology, actualMembers);
       if (mergedTopology != null) {
-         boolean resolveConflicts = context.resolveConflictsOnMerge() && !degradedTopologies.isEmpty() && newAvailabilityMode == AvailabilityMode.AVAILABLE;
+         boolean resolveConflicts = context.resolveConflictsOnMerge() && actualMembers.size() > 1 && newAvailabilityMode == AvailabilityMode.AVAILABLE;
          if (resolveConflicts) {
             // Record all distinct read owners and hashes
             Set<ConsistentHash> distinctHashes = new HashSet<>();
@@ -228,7 +225,9 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
             context.queueConflictResolution(mergedTopology, new HashSet<>(preferredHash.getMembers()));
             return;
          }
+
          // There's no pendingCH, therefore the topology is in stable phase
+         actualMembers.retainAll(mergedTopology.getMembers());
          mergedTopology = new CacheTopology(maxTopologyId + 1, mergedTopology.getRebalanceId(),
                                             mergedTopology.getCurrentCH(), null,
                                             CacheTopology.Phase.NO_REBALANCE, actualMembers,
