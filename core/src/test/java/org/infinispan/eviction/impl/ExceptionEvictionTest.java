@@ -152,6 +152,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
             memoryConfigurationBuilder.evictionType(EvictionType.MEMORY).size(convertAmountForStorage(SIZE) + 16);
             break;
          case OFF_HEAP:
+            memoryConfigurationBuilder.addressCount(1 << 7);
             // Each entry takes up 63 bytes total for our tests, however tests that add expiration require 16 more
             memoryConfigurationBuilder.evictionType(EvictionType.MEMORY).size(24 +
                   // If we are running optimistic transactions we have to store version so it is larger than pessimistic
