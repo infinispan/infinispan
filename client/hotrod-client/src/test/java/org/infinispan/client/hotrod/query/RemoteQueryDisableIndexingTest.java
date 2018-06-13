@@ -58,6 +58,16 @@ public class RemoteQueryDisableIndexingTest extends AbstractQueryDslTest {
    protected RemoteCache<Object, Object> remoteCache;
    protected Cache<Object, Object> cache;
 
+   protected final String notIndexedProtoSchemaFile;
+
+   protected RemoteQueryDisableIndexingTest(String notIndexedProtoSchemaFile) {
+      this.notIndexedProtoSchemaFile = notIndexedProtoSchemaFile;
+   }
+
+   public RemoteQueryDisableIndexingTest() {
+      this(NOT_INDEXED_PROTO_SCHEMA);
+   }
+
    @BeforeClass
    protected void populateCache() {
       getCacheForWrite().put("notIndexed1", new NotIndexed("testing 123"));
@@ -107,13 +117,13 @@ public class RemoteQueryDisableIndexingTest extends AbstractQueryDslTest {
    protected void initProtoSchema(RemoteCacheManager remoteCacheManager) throws IOException {
       //initialize server-side serialization context
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA);
+      metadataCache.put("not_indexed.proto", notIndexedProtoSchemaFile);
       RemoteQueryTestUtils.checkSchemaErrors(metadataCache);
 
       //initialize client-side serialization context
       SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
       MarshallerRegistration.registerMarshallers(serCtx);
-      serCtx.registerProtoFiles(FileDescriptorSource.fromString("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA));
+      serCtx.registerProtoFiles(FileDescriptorSource.fromString("not_indexed.proto", notIndexedProtoSchemaFile));
       serCtx.registerMarshaller(new NotIndexedMarshaller());
    }
 
