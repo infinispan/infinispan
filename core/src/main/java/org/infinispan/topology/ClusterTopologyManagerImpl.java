@@ -89,22 +89,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    public static final int INITIAL_CONNECTION_ATTEMPTS = 10;
    public static final int CLUSTER_RECOVERY_ATTEMPTS = 10;
 
-   private enum ClusterManagerStatus {
-      INITIALIZING,
-      REGULAR_MEMBER,
-      COORDINATOR,
-      RECOVERING_CLUSTER,
-      STOPPING;
-
-      boolean isRunning() {
-         return this != STOPPING;
-      }
-
-      boolean isCoordinator() {
-         return this == COORDINATOR || this == RECOVERING_CLUSTER;
-      }
-   }
-
    private static final Log log = LogFactory.getLog(ClusterTopologyManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -195,6 +179,11 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       if (viewHandlingExecutor != null) {
          viewHandlingExecutor.shutdownNow();
       }
+   }
+
+   @Override
+   public ClusterManagerStatus getStatus() {
+      return clusterManagerStatus;
    }
 
    @Override

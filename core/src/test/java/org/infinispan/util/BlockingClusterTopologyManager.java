@@ -175,4 +175,9 @@ public class BlockingClusterTopologyManager implements ClusterTopologyManager {
          latch.unblockOnce();
       }
    }
+
+   @Override
+   public ClusterManagerStatus getStatus() {
+      return delegate.getStatus();
+   }
 }
