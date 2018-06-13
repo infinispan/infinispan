@@ -37,11 +37,11 @@ import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.RebalanceType;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * Keeps track of a cache's status: members, current/pending consistent hashes, and rebalance status
@@ -959,7 +959,10 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    public boolean resolveConflictsOnMerge() {
       // It doesn't make sense to resolve conflicts if we are not going to rebalance the cache as entries on "old" owners
       // will not be deleted when no rebalance occurs.
-      return resolveConflictsOnMerge && clusterTopologyManager.isRebalancingEnabled() && rebalancingEnabled;
+      return resolveConflictsOnMerge &&
+            cacheManager.getStatus().allowInvocations() &&
+            clusterTopologyManager.isRebalancingEnabled() &&
+            rebalancingEnabled;
    }
 
    @Override

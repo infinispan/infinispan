@@ -13,6 +13,23 @@ import org.infinispan.remoting.transport.Address;
  */
 @Scope(Scopes.GLOBAL)
 public interface ClusterTopologyManager {
+
+   enum ClusterManagerStatus {
+      INITIALIZING,
+      REGULAR_MEMBER,
+      COORDINATOR,
+      RECOVERING_CLUSTER,
+      STOPPING;
+
+      boolean isRunning() {
+         return this != STOPPING;
+      }
+
+      boolean isCoordinator() {
+         return this == COORDINATOR || this == RECOVERING_CLUSTER;
+      }
+   }
+
    /**
     * Signals that a new member is joining the cache.
     *
@@ -73,4 +90,6 @@ public interface ClusterTopologyManager {
     * that contain topology id; had we started with topology id 1, newer versions would not be recognized properly.
     */
    void setInitialCacheTopologyId(String cacheName, int topologyId);
+
+   ClusterManagerStatus getStatus();
 }
