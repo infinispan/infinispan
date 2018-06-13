@@ -147,13 +147,6 @@ public class PersistenceUtil {
       if (trace) {
          log.tracef("Loaded %s for key %s from persistence.", loaded, key);
       }
-      if (loaded == null) {
-         return null;
-      }
-      InternalMetadata metadata = loaded.getMetadata();
-      if (metadata != null && metadata.isExpired(timeService.wallClockTime())) {
-         return null;
-      }
       return loaded;
    }
 
