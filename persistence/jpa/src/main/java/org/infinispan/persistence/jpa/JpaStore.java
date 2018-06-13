@@ -326,10 +326,6 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    @Override
    public void deleteBatch(Iterable<Object> keys) {
-      // ISPN-9139 if no keys to remove return in order to avoid postgres issues
-      if (!keys.iterator().hasNext())
-         return;
-
       EntityManager em = emf.createEntityManager();
       try {
          EntityTransaction txn = em.getTransaction();
