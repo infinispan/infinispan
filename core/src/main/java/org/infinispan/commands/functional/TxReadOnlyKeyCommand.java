@@ -85,8 +85,9 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
          entry.updatePreviousValue();
       }
       if (f != null) {
-         ret = snapshot(f.apply(rw));
+         ret = f.apply(rw);
       }
+      ret = snapshot(ret);
       return StatisticsMode.isSkip(params) ? ret : StatsEnvelope.create(ret, entry.isNull());
    }
 

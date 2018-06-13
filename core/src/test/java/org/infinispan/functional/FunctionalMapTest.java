@@ -47,7 +47,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
@@ -582,12 +581,10 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
    }
 
    public void testDistReturnViewFromReadWriteEvalOnNonOwner() {
-      SkipTestNG.skipIf(transactional,"Unstable, see ISPN-9276");
       doReturnViewFromReadWriteEval(supplyKeyForCache(0, DIST), rw(fmapD1), rw(fmapD2));
    }
 
    public void testDistReturnViewFromReadWriteEvalOnOwner() {
-      SkipTestNG.skipIf(transactional,"Unstable, see ISPN-9276");
       doReturnViewFromReadWriteEval(supplyKeyForCache(1, DIST), rw(fmapD1), rw(fmapD2));
    }
 
