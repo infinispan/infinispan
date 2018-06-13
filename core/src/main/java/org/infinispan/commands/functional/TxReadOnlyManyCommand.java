@@ -133,8 +133,9 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
             ro = rw;
          }
          if (f != null) {
-            ret = snapshot(f.apply(ro));
+            ret = f.apply(ro);
          }
+         ret = snapshot(ret);
          retvals.add(skipStats ? ret : StatsEnvelope.create(ret, entry.isNull()));
       }
       return retvals.stream();
