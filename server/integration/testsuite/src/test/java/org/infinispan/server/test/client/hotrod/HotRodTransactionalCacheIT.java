@@ -72,17 +72,17 @@ public class HotRodTransactionalCacheIT {
 
    @Test
    public void testCommitAndRollbackWithServerDefinedSyncMode() throws Exception {
-      doTest("default-sync-tx-cache");
+      doTest("SyncTxCache");
    }
 
    @Test
    public void testCommitAndRollbackWithServerDefinedXaMode() throws Exception {
-      doTest("default-xa-tx-cache");
+      doTest("XaTxCache");
    }
 
    @Test
    public void testCommitAndRollbackWithServerDefinedFullXaMode() throws Exception {
-      doTest("default-full-xa-tx-cache");
+      doTest("FullXaTxCache");
    }
 
    private void doTest(String cacheName) throws Exception {
