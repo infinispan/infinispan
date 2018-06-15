@@ -83,18 +83,35 @@
             </plugin>
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
+                <configuration>
+                    <target>
+                        <ant antfile="build.xml" inheritRefs="true">
+                            <target name="trim-server" />
+                        </ant>
+                    </target>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>trim-server</id>
+                        <id>trim-thin-server</id>
                         <goals>
                             <goal>run</goal>
                         </goals>
                         <phase>package</phase>
                         <configuration>
                             <target>
-                                <ant antfile="build.xml" inheritRefs="true">
-                                    <target name="trim-server" />
-                                </ant>
+                                <property name="server.dir" value="${project.build.directory}/${server.output.dir.prefix}-${infinispan.brand.version}"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>trim-fat-server</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <property name="server.dir" value="${project.build.directory}/distribution/${server.output.dir.prefix}-${infinispan.brand.version}"/>
                             </target>
                         </configuration>
                     </execution>
