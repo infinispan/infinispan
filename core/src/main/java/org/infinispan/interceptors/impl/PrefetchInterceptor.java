@@ -67,6 +67,7 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.RemoteMetadata;
+import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.context.Flag;
@@ -107,6 +108,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
    @Inject protected CommandsFactory commandsFactory;
    @Inject protected RpcManager rpcManager;
    @Inject protected Cache<K, V> cache;
+   @Inject protected EntryFactory entryFactory;
 
    protected int numSegments;
 
@@ -233,6 +235,10 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
          if (maxValue == null) {
             return;
          }
+         // The put below could fail updating the context if the data container got the updated value while we were
+         // prefetching that. Also, we need to call RepeatableReadEntry.updatePreviousValue() to get return value
+         // from the main command correct.
+         entryFactory.wrapExternalEntry(ctx1, cmd.getKey(), maxValue.toInternalCacheEntry(cmd.getKey()), true, true);
          PutKeyValueCommand putKeyValueCommand =
                commandsFactory.buildPutKeyValueCommand(cmd.getKey(), maxValue.getValue(), segment, maxValue.getMetadata(),
                                                        STATE_TRANSFER_FLAGS);
@@ -338,6 +344,12 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
          }
          if (map.isEmpty()) {
             return CompletableFutures.completedNull();
+         }
+         // The put below could fail updating the context if the data container got the updated value while we were
+         // prefetching that. Also, we need to call RepeatableReadEntry.updatePreviousValue() to get return value
+         // from the main command correct.
+         for (Map.Entry<Object, InternalCacheValue> entry : map.entrySet()) {
+            entryFactory.wrapExternalEntry(ctx, entry.getKey(), entry.getValue().toInternalCacheEntry(entry.getKey()), true, true);
          }
          PutMapCommand putMapCommand = commandsFactory.buildPutMapCommand(map, null, STATE_TRANSFER_FLAGS);
          putMapCommand.setTopologyId(topologyId);
