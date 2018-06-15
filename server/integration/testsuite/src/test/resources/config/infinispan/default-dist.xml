@@ -47,8 +47,9 @@
                     </memory>
                 </distributed-cache>
                 <distributed-cache name="streamingTestCache" />
+                <!-- note: don't use default word in the cache name -->
                 <distributed-cache
-                        name="default-sync-tx-cache"
+                        name="SyncTxCache"
                         remote-timeout="60000">
                     <locking isolation="REPEATABLE_READ"/>
                     <transaction locking="PESSIMISTIC" mode="NON_XA" />
@@ -57,7 +58,7 @@
                             timeout="60000" />
                 </distributed-cache>
                 <distributed-cache
-                        name="default-xa-tx-cache"
+                        name="XaTxCache"
                         remote-timeout="60000">
                     <locking isolation="REPEATABLE_READ"/>
                     <transaction locking="PESSIMISTIC" mode="NON_DURABLE_XA" />
@@ -66,7 +67,7 @@
                             timeout="60000" />
                 </distributed-cache>
                 <distributed-cache
-                        name="default-full-xa-tx-cache"
+                        name="FullXaTxCache"
                         remote-timeout="60000">
                     <locking isolation="REPEATABLE_READ"/>
                     <transaction locking="PESSIMISTIC" mode="FULL_XA" />

@@ -37,8 +37,9 @@
                     </memory>
                 </replicated-cache>
                 <replicated-cache name="namedCache"/>
+                <!-- note: don't use default word in the cache name -->
                 <replicated-cache
-                        name="default-sync-tx-cache"
+                        name="SyncTxCache"
                         remote-timeout="60000">
                     <locking isolation="REPEATABLE_READ"/>
                     <transaction locking="PESSIMISTIC" mode="NON_XA" />
@@ -47,7 +48,7 @@
                             timeout="60000" />
                 </replicated-cache>
                 <replicated-cache
-                        name="default-xa-tx-cache"
+                        name="XaTxCache"
                         remote-timeout="60000">
                     <locking isolation="REPEATABLE_READ"/>
                     <transaction locking="PESSIMISTIC" mode="NON_DURABLE_XA" />
@@ -56,7 +57,7 @@
                             timeout="60000" />
                 </replicated-cache>
                 <replicated-cache
-                        name="default-full-xa-tx-cache"
+                        name="FullXaTxCache"
                         remote-timeout="60000">
                     <locking isolation="REPEATABLE_READ"/>
                     <transaction locking="PESSIMISTIC" mode="FULL_XA" />
