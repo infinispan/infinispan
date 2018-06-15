@@ -2,6 +2,7 @@ package org.infinispan.scattered.statetransfer;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.util.Collections;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
@@ -14,6 +15,7 @@ import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.FlagBitSets;
@@ -87,8 +89,9 @@ public class PrefetchTest extends MultipleCacheManagersTest {
       ControlledRpcManager controlledRpcManager = ControlledRpcManager.replaceRpcManager(cache(2));
       // ignore ClusteredGetAllCommands that are used to fetch values for value transfer
       // ignore InvalidateVersionCommand invalidating
-      // ignore replicating the write to other nodes
-      controlledRpcManager.excludeCommands(ClusteredGetAllCommand.class, InvalidateVersionsCommand.class, PutKeyValueCommand.class);
+      // ignore PutKeyValueCommand replicating the write to other nodes
+      // ignore PutMapCommand that backs up the entry after reconciliation
+      controlledRpcManager.excludeCommands(ClusteredGetAllCommand.class, InvalidateVersionsCommand.class, PutKeyValueCommand.class, PutMapCommand.class);
 
       if (invokePhase > 0) {
          // unblock key-transfer
@@ -104,7 +107,12 @@ public class PrefetchTest extends MultipleCacheManagersTest {
       beforeInterceptor.suspend(true);
 
       Future<Object> future = fork(() -> cache(2).put("key", "v1"));
-      ControlledRpcManager.SentRequest remotePrefetch = controlledRpcManager.expectCommand(ClusteredGetCommand.class).send();
+      ControlledRpcManager.BlockedRequest blockedPrefetch = controlledRpcManager.expectCommand(ClusteredGetCommand.class);
+      if (invokePhase > 0) {
+         // When we have the remote metadata we should target only single owner
+         assertEquals(Collections.singleton(address(0)), blockedPrefetch.getTargets());
+      }
+      ControlledRpcManager.SentRequest remotePrefetch = blockedPrefetch.send();
 
       if (receivePhase > 0 && invokePhase == 0) {
          // block the value-transfer
