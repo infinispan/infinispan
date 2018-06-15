@@ -27,7 +27,6 @@ import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
@@ -63,11 +62,12 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
-import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.RemoteMetadata;
 import org.infinispan.container.impl.EntryFactory;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.context.Flag;
@@ -109,11 +109,11 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
    @Inject protected RpcManager rpcManager;
    @Inject protected Cache<K, V> cache;
    @Inject protected EntryFactory entryFactory;
+   @Inject protected InternalDataContainer dataContainer;
 
    protected int numSegments;
 
-   private final InvocationSuccessFunction handleLocallyLookedUpEntry = this::handleLocallyLookedUpEntry;
-   private final Function<Map<Address, Response>, InternalCacheValue> handleRemotelyPrefetchedEntry = this::handleRemotelyPrefetchedEntry;
+   private final InvocationSuccessFunction handleRemotelyPrefetchedEntry = this::handleRemotelyPrefetchedEntry;
 
    @Start
    public void start() {
@@ -136,8 +136,7 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
       }
    }
 
-   private <C extends VisitableCommand & TopologyAffectedCommand & SegmentSpecificCommand> Object
-         prefetchKeyIfNeededAndInvokeNext(InvocationContext ctx, C command, Object key, boolean isWrite) {
+   private Object prefetchKeyIfNeededAndInvokeNext(InvocationContext ctx, DataCommand command, Object key, boolean isWrite) {
       int segment = command.getSegment();
       switch (svm.getSegmentState(segment)) {
          case NOT_OWNED:
@@ -151,7 +150,10 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
             }
          case KEY_TRANSFER:
          case VALUE_TRANSFER:
-            return asyncInvokeNext(ctx, command, lookupLocalAndRetrieveRemote(ctx, key, command, segment).toCompletableFuture());
+            InvocationStage nextStage = lookupLocalAndRetrieveRemote(ctx, key, command, segment);
+            if (nextStage != null) {
+               return asyncInvokeNext(ctx, command, nextStage);
+            }
          case OWNED:
             break;
          default:
@@ -196,74 +198,51 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
                nil -> makeStage(prefetchKeysIfNeededAndInvokeNext(ctx, command, keys, true)).toCompletableFuture()));
       }
       if (transferedKeys != null) {
-         return asyncInvokeNext(ctx, command, retrieveRemoteValues(ctx, transferedKeys, command.getTopologyId()).toCompletableFuture());
+         return asyncInvokeNext(ctx, command, retrieveRemoteValues(ctx, command, transferedKeys));
       } else {
          return invokeNext(ctx, command);
       }
    }
 
-   private InvocationStage lookupLocalAndRetrieveRemote(InvocationContext ctx, Object key, TopologyAffectedCommand command, int segment) {
+   private InvocationStage lookupLocalAndRetrieveRemote(InvocationContext ctx, Object key, DataCommand cmd, int segment) {
+      // We need to lookup the dataContainer directly as GetCacheEntryCommand won't return entry with null value
+      InternalCacheEntry entry = dataContainer.get(segment, key);
       if (trace) {
-         log.tracef("Locally prefetching entry for key %s", key);
+         log.tracef("Locally prefetched entry %s", entry);
       }
-      GetCacheEntryCommand getCacheEntryCommand = commandsFactory.buildGetCacheEntryCommand(key, segment, EnumUtil.bitSetOf(Flag.CACHE_MODE_LOCAL));
-      getCacheEntryCommand.setTopologyId(command.getTopologyId());
-      return makeStage(invokeNextThenApply(ctx, getCacheEntryCommand, handleLocallyLookedUpEntry));
-   }
-
-   private Object handleLocallyLookedUpEntry(InvocationContext ctx1, VisitableCommand command1, Object rv) {
-      GetCacheEntryCommand cmd = (GetCacheEntryCommand) command1;
-      if (trace) {
-         log.tracef("Locally prefetched entry %s", rv);
-      }
-      CacheEntry entry = (CacheEntry) rv;
       Metadata metadata = entry != null ? entry.getMetadata() : null;
-      CompletionStage<InternalCacheValue> future;
-      int segment = cmd.getSegment();
       if (metadata != null && metadata.version() != null && svm.isVersionActual(segment, metadata.version())) {
+         entryFactory.wrapExternalEntry(ctx, key, entry, true, true);
          return null;
       } else if ((metadata instanceof RemoteMetadata) &&
             svm.getSegmentState(segment) == ScatteredVersionManager.SegmentState.VALUE_TRANSFER) {
          // The RemoteMetadata is valid only during value transfer - in blocked state there shouldn't be any such
          // entry and during key transfer we could see metadata pointing to a node with outdated information.
          Address backup = ((RemoteMetadata) metadata).getAddress();
-         future = retrieveRemoteValue(Collections.singleton(backup), cmd.getKey(), segment, cmd);
+         return retrieveRemoteValue(ctx, Collections.singleton(backup), key, segment, cmd);
       } else {
-         future = retrieveRemoteValue(null, cmd.getKey(), segment, cmd);
+         return retrieveRemoteValue(ctx, null, key, segment, cmd);
       }
-      return asyncValue(future.thenAccept(maxValue -> {
-         if (maxValue == null) {
-            return;
-         }
-         // The put below could fail updating the context if the data container got the updated value while we were
-         // prefetching that. Also, we need to call RepeatableReadEntry.updatePreviousValue() to get return value
-         // from the main command correct.
-         entryFactory.wrapExternalEntry(ctx1, cmd.getKey(), maxValue.toInternalCacheEntry(cmd.getKey()), true, true);
-         PutKeyValueCommand putKeyValueCommand =
-               commandsFactory.buildPutKeyValueCommand(cmd.getKey(), maxValue.getValue(), segment, maxValue.getMetadata(),
-                                                       STATE_TRANSFER_FLAGS);
-         putKeyValueCommand.setTopologyId(cmd.getTopologyId());
-         invokeNext(ctx1, putKeyValueCommand);
-      }));
    }
 
-   private CompletionStage<InternalCacheValue> retrieveRemoteValue(Collection<Address> targets, Object key, int segment,
-                                                                   TopologyAffectedCommand topologyAffectedCommand) {
+   private InvocationStage retrieveRemoteValue(InvocationContext ctx, Collection<Address> targets, Object key, int segment,
+                                                                   DataCommand dataCommand) {
       if (trace) {
          log.tracef("Prefetching entry for key %s from %s", key, targets);
       }
       ClusteredGetCommand command = commandsFactory.buildClusteredGetCommand(key, segment, FlagBitSets.SKIP_OWNERSHIP_CHECK);
-      command.setTopologyId(topologyAffectedCommand.getTopologyId());
+      command.setTopologyId(dataCommand.getTopologyId());
       CompletionStage<Map<Address, Response>> remoteInvocation =
             targets != null ?
             rpcManager.invokeCommand(targets, command, MapResponseCollector.ignoreLeavers(targets.size()),
                                      rpcManager.getSyncRpcOptions()) :
             rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(),
                                           rpcManager.getSyncRpcOptions());
-      return remoteInvocation.thenApply(handleRemotelyPrefetchedEntry);
+      return makeStage(asyncValue(remoteInvocation).thenApply(ctx, dataCommand, handleRemotelyPrefetchedEntry));
    }
 
-   private InternalCacheValue handleRemotelyPrefetchedEntry(Map<Address, Response> responseMap) {
+   private Object handleRemotelyPrefetchedEntry(InvocationContext ctx, VisitableCommand command, Object rv) {
+      Map<Address, Response> responseMap = (Map<Address, Response>) rv;
       EntryVersion maxVersion = null;
       InternalCacheValue maxValue = null;
       for (Response response : responseMap.values()) {
@@ -292,20 +271,32 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
       if (trace) {
          log.tracef("Prefetched value is %s", maxValue);
       }
-      return maxValue;
+      DataCommand dataCommand = (DataCommand) command;
+      if (maxValue == null) {
+         return null;
+      }
+      // The put below could fail updating the context if the data container got the updated value while we were
+      // prefetching that (then the version would not be higher than the on in DC).
+      // We need to call RepeatableReadEntry.updatePreviousValue() (through wrapExternalEntry) to get return value
+      // from the main comman d correct.
+      entryFactory.wrapExternalEntry(ctx, dataCommand.getKey(), maxValue.toInternalCacheEntry(dataCommand.getKey()), true, true);
+      PutKeyValueCommand putKeyValueCommand = commandsFactory.buildPutKeyValueCommand(
+            dataCommand.getKey(), maxValue.getValue(), dataCommand.getSegment(), maxValue.getMetadata(), STATE_TRANSFER_FLAGS);
+      putKeyValueCommand.setTopologyId(dataCommand.getTopologyId());
+      return invokeNext(ctx, putKeyValueCommand);
    }
 
    // TODO: this is not completely aligned with single-entry prefetch
-   private InvocationStage retrieveRemoteValues(InvocationContext ctx, List<?> keys, int topologyId) {
+   private <C extends TopologyAffectedCommand & VisitableCommand> InvocationStage retrieveRemoteValues(InvocationContext ctx, C originCommand, List<?> keys) {
       if (trace) {
          log.tracef("Prefetching entries for keys %s using broadcast", keys);
       }
       ClusteredGetAllCommand command = commandsFactory.buildClusteredGetAllCommand(keys, FlagBitSets.SKIP_OWNERSHIP_CHECK, null);
-      command.setTopologyId(topologyId);
-      return asyncValue(
-            rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(),
-                                          rpcManager.getSyncRpcOptions())
-                      .thenCompose(responseMap -> {
+      command.setTopologyId(originCommand.getTopologyId());
+      CompletionStage<Map<Address, Response>> rpcFuture = rpcManager.invokeCommandOnAll(command, MapResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
+      return makeStage(asyncValue(rpcFuture).thenApply(ctx, originCommand, (rCtx, rCommand, rv) -> {
+         TopologyAffectedCommand topologyAffectedCommand = (TopologyAffectedCommand) rCommand;
+         Map<Address, Response> responseMap = (Map<Address, Response>) rv;
          InternalCacheValue[] maxValues = new InternalCacheValue[keys.size()];
          for (Response response : responseMap.values()) {
             if (!response.isSuccessful()) {
@@ -349,11 +340,11 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
          // prefetching that. Also, we need to call RepeatableReadEntry.updatePreviousValue() to get return value
          // from the main command correct.
          for (Map.Entry<Object, InternalCacheValue> entry : map.entrySet()) {
-            entryFactory.wrapExternalEntry(ctx, entry.getKey(), entry.getValue().toInternalCacheEntry(entry.getKey()), true, true);
+            entryFactory.wrapExternalEntry(rCtx, entry.getKey(), entry.getValue().toInternalCacheEntry(entry.getKey()), true, true);
          }
          PutMapCommand putMapCommand = commandsFactory.buildPutMapCommand(map, null, STATE_TRANSFER_FLAGS);
-         putMapCommand.setTopologyId(topologyId);
-         return makeStage(invokeNext(ctx, putMapCommand)).toCompletableFuture();
+         putMapCommand.setTopologyId(topologyAffectedCommand.getTopologyId());
+         return invokeNext(rCtx, putMapCommand);
       }));
    }
 

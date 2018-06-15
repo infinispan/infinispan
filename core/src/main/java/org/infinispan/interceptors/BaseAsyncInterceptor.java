@@ -225,6 +225,18 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
    }
 
    /**
+    * Suspend the invocation until {@code invocationStage} completes, then if successful invoke the next interceptor.
+    *
+    * <p>If {@code invocationStage} completes exceptionally, skip the next interceptor and continue with the exception.</p>
+    *
+    * <p>You need to wrap the result with {@link #makeStage(Object)} if you need to add another handler.</p>
+    */
+   public final Object asyncInvokeNext(InvocationContext ctx, VisitableCommand command,
+                                       InvocationStage invocationStage) {
+      return invocationStage.thenApply(ctx, command, invokeNextFunction);
+   }
+
+   /**
     * Suspend invocation until all {@code delays} complete, then if successful invoke the next interceptor.
     * If the list is empty or null, invoke the next interceptor immediately.
     *
