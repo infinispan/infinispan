@@ -2,6 +2,7 @@ package org.infinispan.spring.provider;
 
 import java.util.Collection;
 
+import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.springframework.util.Assert;
 
@@ -19,14 +20,22 @@ import org.springframework.util.Assert;
 public class SpringRemoteCacheManager implements org.springframework.cache.CacheManager {
 
    private final RemoteCacheManager nativeCacheManager;
+   private volatile long readTimeout;
+   private volatile long writeTimeout;
 
    /**
     * @param nativeCacheManager the underlying cache manager
     */
-   public SpringRemoteCacheManager(final RemoteCacheManager nativeCacheManager) {
+   public SpringRemoteCacheManager(final RemoteCacheManager nativeCacheManager, long readTimeout, long writeTimeout) {
       Assert.notNull(nativeCacheManager,
                      "A non-null instance of EmbeddedCacheManager needs to be supplied");
       this.nativeCacheManager = nativeCacheManager;
+      this.readTimeout = readTimeout;
+      this.writeTimeout = writeTimeout;
+   }
+
+   public SpringRemoteCacheManager(final RemoteCacheManager nativeCacheManager) {
+      this(nativeCacheManager, 0, 0);
    }
 
    /**
@@ -34,7 +43,8 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
     */
    @Override
    public SpringCache getCache(final String name) {
-      return new SpringCache(this.nativeCacheManager.getCache(name));
+      RemoteCache<Object, Object> nativeCache = this.nativeCacheManager.getCache(name);
+      return new SpringCache(nativeCache, readTimeout, writeTimeout);
    }
 
    /**
@@ -56,6 +66,22 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
     */
    public RemoteCacheManager getNativeCacheManager() {
       return this.nativeCacheManager;
+   }
+
+   public long getReadTimeout() {
+      return this.readTimeout;
+   }
+
+   public long getWriteTimeout() {
+      return this.readTimeout;
+   }
+
+   public void setReadTimeout(final long readTimeout) {
+      this.readTimeout = readTimeout;
+   }
+
+   public void setWriteTimeout(final long writeTimeout) {
+      this.writeTimeout = writeTimeout;
    }
 
    /**

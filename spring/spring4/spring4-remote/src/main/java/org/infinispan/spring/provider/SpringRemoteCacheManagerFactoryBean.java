@@ -4,6 +4,7 @@ import java.util.Properties;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.spring.AbstractRemoteCacheManagerFactory;
+import org.infinispan.spring.ConfigurationPropertiesOverrides;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -70,9 +71,20 @@ public class SpringRemoteCacheManagerFactoryBean extends AbstractRemoteCacheMana
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       clientBuilder.withProperties(configurationPropertiesToUse);
+      long readTimeout;
+      if (configurationPropertiesToUse.containsKey(ConfigurationPropertiesOverrides.OPERATION_READ_TIMEOUT))
+         readTimeout = Long.parseLong(configurationPropertiesToUse.getProperty(ConfigurationPropertiesOverrides.OPERATION_READ_TIMEOUT));
+      else
+         readTimeout = 0;
+      long writeTimeout;
+      if (configurationPropertiesToUse.containsKey(ConfigurationPropertiesOverrides.OPERATION_WRITE_TIMEOUT))
+         writeTimeout = Long.parseLong(configurationPropertiesToUse.getProperty(ConfigurationPropertiesOverrides.OPERATION_WRITE_TIMEOUT));
+      else
+         writeTimeout = 0;
+
       final RemoteCacheManager nativeRemoteCacheManager = new RemoteCacheManager(
             clientBuilder.build(), this.startAutomatically);
-      this.springRemoteCacheManager = new SpringRemoteCacheManager(nativeRemoteCacheManager);
+      this.springRemoteCacheManager = new SpringRemoteCacheManager(nativeRemoteCacheManager, readTimeout, writeTimeout);
       this.logger.info("Finished creating new instance of RemoteCacheManager");
    }
 

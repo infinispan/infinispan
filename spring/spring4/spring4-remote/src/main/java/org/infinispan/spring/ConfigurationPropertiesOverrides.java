@@ -26,6 +26,8 @@ import java.util.Properties;
  *
  */
 public class ConfigurationPropertiesOverrides {
+   public static final String OPERATION_READ_TIMEOUT = "infinispan.spring.operation.read.timeout";
+   public static final String OPERATION_WRITE_TIMEOUT = "infinispan.spring.operation.write.timeout";
 
    private final Properties overridingProperties = new Properties();
 
@@ -110,6 +112,14 @@ public class ConfigurationPropertiesOverrides {
    public void setForceReturnValues(final boolean forceReturnValues) {
       this.overridingProperties.setProperty(FORCE_RETURN_VALUES,
                                             Boolean.toString(forceReturnValues));
+   }
+
+   public void setReadTimeout(long readTimeout) {
+      this.overridingProperties.setProperty(OPERATION_READ_TIMEOUT, Long.toString(readTimeout));
+   }
+
+   public void setWriteTimeout(long writeTimeout) {
+      this.overridingProperties.setProperty(OPERATION_WRITE_TIMEOUT, Long.toString(writeTimeout));
    }
 
    /**

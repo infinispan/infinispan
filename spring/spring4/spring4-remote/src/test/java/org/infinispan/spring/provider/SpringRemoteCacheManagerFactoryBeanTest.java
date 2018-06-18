@@ -454,4 +454,27 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
                   .getNativeCacheManager().getConfiguration().properties().get(FORCE_RETURN_VALUES));
       objectUnderTest.destroy();
    }
+
+   /**
+    * Test method for
+    * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#setForceReturnValues(boolean)}
+    * .
+    *
+    * @throws Exception
+    */
+   @Test
+   public final void setReadTimeoutShouldOverrideDefaultReadTimeout() throws Exception {
+      final long expectedReadTimeout = 500;
+      final SpringRemoteCacheManagerFactoryBean objectUnderTest = new SpringRemoteCacheManagerFactoryBean();
+      objectUnderTest.setReadTimeout(expectedReadTimeout);
+      objectUnderTest.afterPropertiesSet();
+
+      final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
+
+      assertEquals("setReadTimeout(" + expectedReadTimeout
+                  + ") should have overridden property 'readTimeout'. However, it didn't.",
+            expectedReadTimeout, remoteCacheManager.getReadTimeout());
+
+      objectUnderTest.destroy();
+   }
 }

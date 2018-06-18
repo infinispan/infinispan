@@ -1,5 +1,6 @@
 package org.infinispan.spring.provider;
 
+import static org.junit.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import org.springframework.test.annotation.DirtiesContext;
@@ -67,6 +68,7 @@ public class SpringRemoteCacheManagerFactoryBeanContextTest extends
                   + SPRING_REMOTE_CACHE_MANAGER_CONFIGURED_USING_CONFIGURATION_PROPERTIES_BEAN_NAME
                   + "\". However, it doesn't.",
             springRemoteCacheManagerConfiguredUsingConfigurationProperties);
+      assertEquals(500, springRemoteCacheManagerConfiguredUsingConfigurationProperties.getReadTimeout());
    }
 
    @Test
