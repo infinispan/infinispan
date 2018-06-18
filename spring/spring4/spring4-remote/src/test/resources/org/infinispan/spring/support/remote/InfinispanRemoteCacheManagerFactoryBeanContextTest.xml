@@ -29,6 +29,9 @@
                 <prop
                         key="infinispan.client.hotrod.tcp_no_delay">false
                 </prop>
+                <prop
+                        key="infinispan.spring.operation.read.timeout">500
+                </prop>
             </props>
         </property>
     </bean>
@@ -38,6 +41,8 @@
             class="org.infinispan.spring.support.remote.InfinispanRemoteCacheManagerFactoryBean"
             p:keySizeEstimate="768"
             p:forceReturnValues="true"
-            p:startAutomatically="false"/>
+            p:startAutomatically="false"
+            p:readTimeout="500"
+            p:writeTimeout="700"/>
 
 </beans>
