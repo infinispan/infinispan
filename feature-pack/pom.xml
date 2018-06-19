@@ -24,7 +24,9 @@
     <properties>
         <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
         <feature-pack.root>${project.build.directory}/feature-pack</feature-pack.root>
-        <feature-pack.modules>${feature-pack.root}/modules/system/add-ons/${infinispan.module.slot.prefix}</feature-pack.modules>
+        <feature-pack.modules>${feature-pack.root}/modules</feature-pack.modules>
+        <feature-pack.add-on.modules>${feature-pack.modules}/system/add-ons/${infinispan.module.slot.prefix}</feature-pack.add-on.modules>
+        <feature-pack.base.modules>${feature-pack.modules}/system/layers/base</feature-pack.base.modules>
     </properties>
 
     <dependencies>
@@ -60,16 +62,35 @@
                     <artifactId>maven-resources-plugin</artifactId>
                     <executions>
                         <execution>
-                            <id>copy-modules</id>
+                            <id>copy-add-on-modules</id>
                             <phase>generate-resources</phase>
                             <goals>
                                 <goal>copy-resources</goal>
                             </goals>
                             <configuration>
-                                <outputDirectory>${feature-pack.modules}</outputDirectory>
+                                <outputDirectory>${feature-pack.add-on.modules}</outputDirectory>
                                 <resources>
                                     <resource>
                                         <directory>src/main/resources/modules</directory>
+                                        <filtering>true</filtering>
+                                        <excludes>
+                                            <exclude>system/layers/base/**</exclude>
+                                        </excludes>
+                                    </resource>
+                                </resources>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>copy-base-modules</id>
+                            <phase>generate-resources</phase>
+                            <goals>
+                                <goal>copy-resources</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>${feature-pack.base.modules}</outputDirectory>
+                                <resources>
+                                    <resource>
+                                        <directory>src/main/resources/modules/system/layers/base</directory>
                                         <filtering>true</filtering>
                                     </resource>
                                 </resources>
