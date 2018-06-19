@@ -5,6 +5,7 @@ import static org.infinispan.commons.util.Util.toStr;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.infinispan.commands.write.WriteCommand;
@@ -26,10 +28,11 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * Base class for local and remote transaction. Impl note: The aggregated modification list and lookedUpEntries are not
@@ -43,11 +46,11 @@ import org.infinispan.util.logging.LogFactory;
 public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    protected final GlobalTransaction tx;
-   private static Log log = LogFactory.getLog(AbstractCacheTransaction.class);
+   private static final Log log = LogFactory.getLog(AbstractCacheTransaction.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final int INITIAL_LOCK_CAPACITY = 4;
 
-   protected volatile boolean hasLocalOnlyModifications;
+   volatile boolean hasLocalOnlyModifications;
    protected volatile List<WriteCommand> modifications;
 
    protected Map<Object, CacheEntry> lookedUpEntries;
@@ -58,8 +61,16 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    /** Holds all the keys that were actually locked on the local node. */
    private final AtomicReference<Set<Object>> lockedKeys = new AtomicReference<>();
 
-   /** Holds all the locks for which the local node is a secondary data owner. */
-   private final AtomicReference<Set<Object>> backupKeyLocks = new AtomicReference<>();
+   /**
+    * Holds all the locks for which the local node is a secondary data owner.
+    * <p>
+    * A {@link CompletableFuture} is created for each key and it is completed when the backup lock is release for that
+    * key. A transaction, before acquiring the locks, must wait for all the backup locks (i.e. the {@link
+    * CompletableFuture}) is released, for all transaction created in the previous topology.
+    */
+   @GuardedBy("this")
+   private Map<Object, CompletableFuture<Void>> backupKeyLocks;
+   //should we merge the locked and backup locked keys in a single map?
 
    protected final int topologyId;
 
@@ -77,7 +88,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    private volatile Flag stateTransferFlag;
 
    private final CompletableFuture<Void> txCompleted;
-   private volatile CompletableFuture<Void> backupLockReleased;
 
    public final boolean isMarkedForRollback() {
       return isMarkedForRollback;
@@ -92,7 +102,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       this.topologyId = topologyId;
       this.txCreationTime = txCreationTime;
       txCompleted = new CompletableFuture<>();
-      backupLockReleased = new CompletableFuture<>();
    }
 
    @Override
@@ -114,7 +123,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       if (modifications instanceof ImmutableListCopy)
          return modifications;
       else if (modifications == null)
-         return Collections.<WriteCommand>emptyList();
+         return Collections.emptyList();
       else
          return Immutables.immutableListCopy(modifications);
    }
@@ -201,10 +210,11 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public void addBackupLockForKey(Object key) {
-      // we need a synchronized collection to be able to get a valid snapshot from another thread during state transfer
-      final Set<Object> keys = backupKeyLocks.updateAndGet((value) -> value == null ? Collections.synchronizedSet(new HashSet<>(INITIAL_LOCK_CAPACITY)) : value);
-      keys.add(key);
+   public synchronized void addBackupLockForKey(Object key) {
+      if (backupKeyLocks == null) {
+         backupKeyLocks = new HashMap<>();
+      }
+      backupKeyLocks.put(key, new CompletableFuture<>());
    }
 
    public void registerLockedKey(Object key) {
@@ -221,9 +231,8 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public Set<Object> getBackupLockedKeys() {
-      final Set<Object> keys = backupKeyLocks.get();
-      return keys == null ? Collections.emptySet() : keys;
+   public synchronized Set<Object> getBackupLockedKeys() {
+      return backupKeyLocks == null ? Collections.emptySet() : new HashSet<>(backupKeyLocks.keySet());
    }
 
    @Override
@@ -240,9 +249,8 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public Object findAnyLockedOrBackupLocked(Collection<Object> keys) {
       Set<Object> lockedKeysCopy = getLockedKeys();
-      Set<Object> backupKeyLocksCopy = getBackupLockedKeys();
       for (Object key : keys) {
-         if (lockedKeysCopy.contains(key) || backupKeyLocksCopy.contains(key)) {
+         if (lockedKeysCopy.contains(key) || containsBackupLock(key)) {
             return key;
          }
       }
@@ -323,10 +331,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    public abstract void setStateTransferFlag(Flag stateTransferFlag);
 
-   protected final void internalSetStateTransferFlag(Flag stateTransferFlag) {
-      this.stateTransferFlag = stateTransferFlag;
-   }
-
    @Override
    public long getCreationTime() {
       return txCreationTime;
@@ -341,36 +345,78 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    public CompletableFuture<Void> getReleaseFutureForKey(Object key) {
       if (getLockedKeys().contains(key)) {
          return txCompleted;
-      } else if (getBackupLockedKeys().contains(key)) {
-         return backupLockReleased;
+      } else {
+         return findBackupLock(key);
       }
-      return null;
    }
 
    @Override
-   public KeyValuePair<Object, CompletableFuture<Void>> getReleaseFutureForKeys(Collection<Object> keys) {
+   public Map<Object, CompletableFuture<Void>> getReleaseFutureForKeys(Collection<Object> keys) {
       Set<Object> locked = getLockedKeys();
-      Set<Object> backupLocked = getBackupLockedKeys();
-      Object backupKey = null;
+      Map<Object, CompletableFuture<Void>> result = null;
       for (Object key : keys) {
          if (locked.contains(key)) {
-            return new KeyValuePair<>(key, txCompleted);
-         } else if (backupLocked.contains(key)) {
-            backupKey = key;
+            return Collections.singletonMap(key, txCompleted);
+         } else {
+            CompletableFuture<Void> cf = findBackupLock(key);
+            if (cf != null) {
+               if (result == null) {
+                  result = new HashMap<>();
+               }
+               result.put(key, cf);
+            }
          }
       }
-      return backupKey == null ? null : new KeyValuePair<>(backupKey, backupLockReleased);
+      return result == null ? Collections.emptyMap() : result;
    }
 
    @Override
-   public void cleanupBackupLocks() {
-      backupKeyLocks.getAndUpdate((value) -> {
-         if (value != null) {
-            backupLockReleased.complete(null);
-            backupLockReleased = new CompletableFuture<>();
-            value.clear();
+   public synchronized void cleanupBackupLocks() {
+      if (backupKeyLocks != null) {
+         for (CompletableFuture<Void> cf : backupKeyLocks.values()) {
+            cf.complete(null);
          }
-         return value;
-      });
+         backupKeyLocks.clear();
+      }
+   }
+
+   @Override
+   public synchronized void removeBackupLocks(Collection<?> keys) {
+      if (backupKeyLocks != null) {
+         for (Object key : keys) {
+            CompletableFuture<Void> cf = backupKeyLocks.remove(key);
+            if (cf != null) {
+               cf.complete(null);
+            }
+         }
+      }
+   }
+
+   public synchronized void removeBackupLock(Object key) {
+      if (backupKeyLocks != null) {
+         CompletableFuture<Void> cf = backupKeyLocks.remove(key);
+         if (cf != null) {
+            cf.complete(null);
+         }
+      }
+   }
+
+   @Override
+   public synchronized void forEachBackupLock(Consumer<Object> consumer) {
+      if (backupKeyLocks != null) {
+         backupKeyLocks.keySet().forEach(consumer);
+      }
+   }
+
+   final void internalSetStateTransferFlag(Flag stateTransferFlag) {
+      this.stateTransferFlag = stateTransferFlag;
+   }
+
+   private synchronized boolean containsBackupLock(Object key) {
+      return backupKeyLocks != null && backupKeyLocks.containsKey(key);
+   }
+
+   private synchronized CompletableFuture<Void> findBackupLock(Object key) {
+      return backupKeyLocks == null ? null : backupKeyLocks.get(key);
    }
 }

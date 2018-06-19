@@ -230,14 +230,13 @@ public class StateProviderImpl implements StateProvider {
                }
             }
          }
-         Set<Object> backupLockedKeys = tx.getBackupLockedKeys();
-         synchronized (backupLockedKeys) {
-            for (Object key : backupLockedKeys) {
-               if (segments.contains(keyPartitioner.getSegment(key))) {
-                  filteredLockedKeys.add(key);
-               }
+         //avoids the warning about synchronizing in a local variable.
+         //and allows us to change the CacheTransaction internals without having to worry about it
+         tx.forEachBackupLock(key -> {
+            if (segments.contains(keyPartitioner.getSegment(key))) {
+               filteredLockedKeys.add(key);
             }
-         }
+         });
          if (filteredLockedKeys.isEmpty()) {
             if (trace) log.tracef("Skipping transaction %s because the state requestor %s doesn't own any key",
                     tx, destination);

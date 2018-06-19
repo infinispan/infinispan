@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
@@ -12,7 +13,6 @@ import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.util.KeyValuePair;
 
 /**
  * Defines the state a infinispan transaction should have.
@@ -67,6 +67,12 @@ public interface CacheTransaction {
 
    int getTopologyId();
 
+   /**
+    * testing purpose only!
+    *
+    * @deprecated Since 9.3, please use {@link #forEachBackupLock(Consumer)}
+    */
+   @Deprecated
    Set<Object> getBackupLockedKeys();
 
    void addBackupLockForKey(Object key);
@@ -184,10 +190,30 @@ public interface CacheTransaction {
    /**
     * Same as {@link #getReleaseFutureForKey(Object)} but it returns a pair with the key and the future.
     */
-   KeyValuePair<Object, CompletableFuture<Void>> getReleaseFutureForKeys(Collection<Object> keys);
+   Map<Object, CompletableFuture<Void>> getReleaseFutureForKeys(Collection<Object> keys);
 
    /**
     * It cleans up the backup locks for this transaction.
     */
    void cleanupBackupLocks();
+
+   /**
+    * It cleans up the backup lock for the {@code keys}.
+    *
+    * @param keys The keys to clean up the backup lock.
+    */
+   void removeBackupLocks(Collection<?> keys);
+
+   /**
+    * It cleans up the backup for {@code key}.
+    *
+    * @param key The key to clean up the backup lock.
+    */
+   void removeBackupLock(Object key);
+
+   /**
+    * Invokes the {@link Consumer} with each backup lock.
+    * @param consumer The backup lock {@link Consumer}
+    */
+   void forEachBackupLock(Consumer<Object> consumer);
 }
