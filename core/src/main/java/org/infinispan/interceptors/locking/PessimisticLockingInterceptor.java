@@ -88,6 +88,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       final TxInvocationContext txContext = (TxInvocationContext) ctx;
       Object key = command.getKey();
       txContext.addAffectedKey(key);
+      txContext.getCacheTransaction().removeBackupLock(key);
       return lockOrRegisterBackupLock(txContext, key, getLockTimeoutMillis(command));
    }
 
@@ -104,8 +105,10 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    private KeyAwareLockPromise acquireLocalLocks(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys)
          throws InterruptedException {
-      ((TxInvocationContext<?>) ctx).addAllAffectedKeys(keys);
-      return lockAllOrRegisterBackupLock((TxInvocationContext<?>) ctx, keys, getLockTimeoutMillis(command));
+      final TxInvocationContext<?> txContext = (TxInvocationContext) ctx;
+      txContext.addAllAffectedKeys(keys);
+      txContext.getCacheTransaction().removeBackupLocks(keys);
+      return lockAllOrRegisterBackupLock(txContext, keys, getLockTimeoutMillis(command));
    }
 
    @Override
@@ -201,6 +204,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
                "There's no advancedCache.unlock so this must have originated remotely.");
          return false;
       }
+      ((TxInvocationContext<?>) ctx).getCacheTransaction().removeBackupLocks(command.getKeys());
 
       lockAllOrRegisterBackupLock(txInvocationContext, command.getKeys(), getLockTimeoutMillis(command)).lock();
       return true;

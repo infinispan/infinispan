@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -210,7 +209,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
       final Collection<PendingTransaction> pendingTransactions = getTransactionWithLockedKey(transactionTopologyId, key, globalTransaction);
       if (trace)
          log.tracef("Checking for pending locks: %s", pendingTransactions);
-      final PendingTransaction lockOwner = waitForTransactionsToComplete(pendingTransactions, expectedEndTime);
+      final KeyValuePair<CacheTransaction, Object> lockOwner = waitForTransactionsToComplete(pendingTransactions, expectedEndTime);
 
       // Then try to acquire a lock
       if (trace) {
@@ -235,7 +234,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
       if (trace)
          log.tracef("Checking for pending locks: %s", pendingTransactions);
 
-      final PendingTransaction lockOwner = waitForTransactionsToComplete(pendingTransactions, expectedEndTime);
+      final KeyValuePair<CacheTransaction, Object> lockOwner = waitForTransactionsToComplete(pendingTransactions, expectedEndTime);
 
       // Then try to acquire a lock
       if (trace) {
@@ -249,22 +248,24 @@ public class DefaultPendingLockManager implements PendingLockManager {
       return timeService.remainingTime(expectedEndTime, TimeUnit.MILLISECONDS);
    }
 
-   private static void timeout(PendingTransaction lockOwner, GlobalTransaction thisGlobalTransaction) {
+   private static void timeout(KeyValuePair<CacheTransaction, Object> lockOwner, GlobalTransaction thisGlobalTransaction) {
       throw new TimeoutException(format("Could not acquire lock on %s in behalf of transaction %s. Current owner %s.",
-                                        lockOwner.key, thisGlobalTransaction,
-                                        lockOwner.cacheTransaction.getGlobalTransaction()));
+                                        lockOwner.getValue(), thisGlobalTransaction,
+                                        lockOwner.getKey().getGlobalTransaction()));
    }
 
-   private PendingTransaction waitForTransactionsToComplete(Collection<PendingTransaction> transactionsToCheck,
+   //cache-tx and key if it timed out, otherwise null
+   private KeyValuePair<CacheTransaction, Object> waitForTransactionsToComplete(Collection<PendingTransaction> transactionsToCheck,
                                                             long expectedEndTime) throws InterruptedException {
       if (transactionsToCheck.isEmpty()) {
          return null;
       }
       for (PendingTransaction tx : transactionsToCheck) {
-         long remaining;
-         if ((remaining = timeService.remainingTime(expectedEndTime, TimeUnit.MILLISECONDS)) > 0) {
-            if (!CompletableFutures.await(tx.keyReleased, remaining, TimeUnit.MILLISECONDS)) {
-               return tx;
+         for (Map.Entry<Object, CompletableFuture<Void>> entry : tx.keyReleased.entrySet()) {
+            long remaining = timeService.remainingTime(expectedEndTime, TimeUnit.MILLISECONDS);
+            //CF.get(time) return TimeoutException when remaining is <= 0.
+            if (!CompletableFutures.await(entry.getValue(), remaining, TimeUnit.MILLISECONDS)) {
+               return new KeyValuePair<>(tx.cacheTransaction, entry.getKey());
             }
          }
       }
@@ -283,7 +284,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
                !transaction.getGlobalTransaction().equals(globalTransaction)) {
             CompletableFuture<Void> keyReleasedFuture = transaction.getReleaseFutureForKey(key);
             if (keyReleasedFuture != null) {
-               pendingTransactions.add(new PendingTransaction(transaction, key, keyReleasedFuture));
+               pendingTransactions.add(new PendingTransaction(transaction, Collections.singletonMap(key, keyReleasedFuture)));
             }
          }
       });
@@ -300,9 +301,9 @@ public class DefaultPendingLockManager implements PendingLockManager {
       forEachTransaction(transaction -> {
          if (transaction.getTopologyId() < transactionTopologyId &&
                !transaction.getGlobalTransaction().equals(globalTransaction)) {
-            KeyValuePair<Object, CompletableFuture<Void>> keyReleaseFuture = transaction.getReleaseFutureForKeys(keys);
+            Map<Object, CompletableFuture<Void>> keyReleaseFuture = transaction.getReleaseFutureForKeys(keys);
             if (keyReleaseFuture != null) {
-               pendingTransactions.add(new PendingTransaction(transaction, keyReleaseFuture.getKey(), keyReleaseFuture.getValue()));
+               pendingTransactions.add(new PendingTransaction(transaction, keyReleaseFuture));
             }
          }
       });
@@ -340,21 +341,32 @@ public class DefaultPendingLockManager implements PendingLockManager {
 
    private static class PendingTransaction {
       private final CacheTransaction cacheTransaction;
-      private final Object key;
-      private final CompletableFuture<Void> keyReleased;
+      private final Map<Object, CompletableFuture<Void>> keyReleased;
 
-      private PendingTransaction(CacheTransaction cacheTransaction, Object key, CompletableFuture<Void> keyReleased) {
+      private PendingTransaction(CacheTransaction cacheTransaction, Map<Object, CompletableFuture<Void>> keyReleased) {
          this.cacheTransaction = cacheTransaction;
-         this.key = key;
-         this.keyReleased = Objects.requireNonNull(keyReleased);
+         this.keyReleased = keyReleased;
       }
 
       @Override
       public String toString() {
          return "PendingTransaction{" +
                "gtx=" + cacheTransaction.getGlobalTransaction().globalId() +
-               ", key=" + key +
+               ", keys=" + keyReleased.keySet() +
                '}';
+      }
+
+      void afterCompleted(Runnable runnable) {
+         keyReleased.values().forEach(voidCompletableFuture -> voidCompletableFuture.thenRun(runnable));
+      }
+
+      KeyValuePair<CacheTransaction, Object> findUnreleasedKey() {
+         for (Map.Entry<Object, CompletableFuture<Void>> entry : keyReleased.entrySet()) {
+            if (!entry.getValue().isDone()) {
+               return new KeyValuePair<>(cacheTransaction, entry.getKey());
+            }
+         }
+         return null;
       }
    }
 
@@ -363,7 +375,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
       private final Collection<PendingTransaction> pendingTransactions;
       private final long expectedEndTime;
       private final CompletableFuture<Void> notifier;
-      private volatile PendingTransaction timedOutTransaction;
+      private volatile KeyValuePair<CacheTransaction, Object> timedOutTransaction;
 
       private PendingLockPromiseImpl(Collection<PendingTransaction> pendingTransactions, long expectedEndTime) {
          this.pendingTransactions = pendingTransactions;
@@ -377,9 +389,10 @@ public class DefaultPendingLockManager implements PendingLockManager {
             return true;
          }
          for (PendingTransaction transaction : pendingTransactions) {
-            if (!transaction.keyReleased.isDone()) {
+            KeyValuePair<CacheTransaction, Object> waiting = transaction.findUnreleasedKey();
+            if (waiting != null) {
                if (timeService.remainingTime(expectedEndTime, TimeUnit.MILLISECONDS) <= 0) {
-                  timedOutTransaction = transaction;
+                  timedOutTransaction = waiting;
                }
                return timedOutTransaction != null;
             }
@@ -421,13 +434,13 @@ public class DefaultPendingLockManager implements PendingLockManager {
          }
       }
 
-      private PendingTransaction getPendingTransaction() {
+      private KeyValuePair<CacheTransaction, Object> getPendingTransaction() {
          return timedOutTransaction;
       }
 
       private void registerListenerInCacheTransactions() {
          for (PendingTransaction transaction : pendingTransactions) {
-            transaction.keyReleased.thenRun(this);
+            transaction.afterCompleted(this);
          }
       }
 

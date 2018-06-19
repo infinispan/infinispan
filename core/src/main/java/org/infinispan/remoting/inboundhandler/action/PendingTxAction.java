@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -68,10 +69,17 @@ public class PendingTxAction extends BaseLockingAction implements PendingLockLis
          return ActionStatus.READY;
       }
 
+      //remove backup locks here for the key in which we are going to acquire the "real" locks.
       RemoteLockCommand command = state.getCommand();
       if (command instanceof PrepareCommand && ((PrepareCommand) command).isRetriedCommand()) {
+         //we could skip the check if "is-retried". if it is the first time, there is no backup locks acquired in any case.
          //clear the backup locks
          context.getCacheTransaction().cleanupBackupLocks();
+         keysToLock.removeAll(context.getLockedKeys());
+      }
+      if (command instanceof LockControlCommand) {
+         //the lock command is only issued if the transaction doesn't have the lock for the keys.
+         context.getCacheTransaction().removeBackupLocks(((LockControlCommand) command).getKeys());
          keysToLock.removeAll(context.getLockedKeys());
       }
 
