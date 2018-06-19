@@ -43,7 +43,6 @@ public class ProtostreamTextTranscoder implements Transcoder {
       throw log.unsupportedContent(content);
    }
 
-
    @Override
    public Set<MediaType> getSupportedMediaTypes() {
       return supported;

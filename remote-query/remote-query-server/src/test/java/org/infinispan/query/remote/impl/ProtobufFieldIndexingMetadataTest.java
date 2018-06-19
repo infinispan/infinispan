@@ -51,7 +51,7 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
-   public void testProtobufFieldIndexingMetadata() throws Exception {
+   public void testProtobufFieldIndexingMetadata() {
       SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("user_definition.proto", PROTO_DEFINITIONS));
       ProtobufFieldIndexingMetadata userIndexedFieldProvider = new ProtobufFieldIndexingMetadata(serCtx.getMessageDescriptor("User"));
@@ -71,7 +71,7 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
    }
 
    @Test(expectedExceptions = DescriptorParserException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: Annotation 'IndexedField' cannot be used together with 'Field' on field test.User.age")
-   public void testIndexedFieldAndField() throws Exception {
+   public void testIndexedFieldAndField() {
       String testProto = "package test;\n" +
             "/* @Indexed */ message User {\n" +
             "   /* @IndexedField(index=false, store=false) @Field(store=Store.NO, index=Index.NO) */ " +
@@ -83,7 +83,7 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
    }
 
    @Test(expectedExceptions = DescriptorParserException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: Annotation 'IndexedField' cannot be used together with 'SortableField' on field test.User1.age")
-   public void testIndexedFieldAndSortableField() throws Exception {
+   public void testIndexedFieldAndSortableField() {
       String testProto = "package test;\n" +
             "/* @Indexed */ message User1 {\n" +
             "   /* @IndexedField(index=false, store=false) @SortableField */ " +
@@ -95,7 +95,7 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
    }
 
    @Test(expectedExceptions = DescriptorParserException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: Annotation 'IndexedField' cannot be used together with 'Analyzer' on field test.User2.name")
-   public void testIndexedFieldAndAnalyzer() throws Exception {
+   public void testIndexedFieldAndAnalyzer() {
       String testProto = "package test;\n" +
             "/* @Indexed */" +
             "message User2 {\n" +
@@ -108,7 +108,7 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
    }
 
    @Test(expectedExceptions = DescriptorParserException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: Cannot specify an analyzer for field test.User3.name unless the field is analyzed.")
-   public void testAnalyzerForNotAnalyzedField() throws Exception {
+   public void testAnalyzerForNotAnalyzedField() {
       String testProto = "package test;\n" +
             "/* @Indexed */ message User3 {\n" +
             "   /* @Field(store=Store.NO, index=Index.YES, analyze=Analyze.NO, analyzer=@Analyzer(definition=\"standard\")) */" +

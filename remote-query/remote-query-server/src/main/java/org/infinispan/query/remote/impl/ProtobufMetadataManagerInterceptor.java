@@ -1,6 +1,5 @@
 package org.infinispan.query.remote.impl;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -112,7 +111,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
                   .addProtoFile(key, (String) command.getValue());
             try {
                serializationContext.registerProtoFiles(source);
-            } catch (IOException | DescriptorParserException e) {
+            } catch (DescriptorParserException e) {
                throw log.failedToParseProtoFile(key, e);
             }
          }
@@ -131,7 +130,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          }
          try {
             serializationContext.registerProtoFiles(source);
-         } catch (IOException | DescriptorParserException e) {
+         } catch (DescriptorParserException e) {
             throw log.failedToParseProtoFile(e);
          }
          return null;
@@ -146,7 +145,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
                   .addProtoFile(key, (String) command.getNewValue());
             try {
                serializationContext.registerProtoFiles(source);
-            } catch (IOException | DescriptorParserException e) {
+            } catch (DescriptorParserException e) {
                throw log.failedToParseProtoFile(key, e);
             }
          }
@@ -238,7 +237,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
             try {
                serializationContext.registerProtoFiles(source);
-            } catch (IOException | DescriptorParserException e) {
+            } catch (DescriptorParserException e) {
                throw log.failedToParseProtoFile((String) key, e);
             }
 
@@ -294,7 +293,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
          try {
             serializationContext.registerProtoFiles(source);
-         } catch (IOException | DescriptorParserException e) {
+         } catch (DescriptorParserException e) {
             throw log.failedToParseProtoFile(e);
          }
 
@@ -402,7 +401,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
             try {
                serializationContext.registerProtoFiles(source);
-            } catch (IOException | DescriptorParserException e) {
+            } catch (DescriptorParserException e) {
                throw log.failedToParseProtoFile((String) key, e);
             }
 

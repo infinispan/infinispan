@@ -24,7 +24,7 @@ public class HotRodServerStartStopTest extends MultipleCacheManagersTest {
 
    @AfterMethod
    @Override
-   protected void clearContent() throws Throwable {
+   protected void clearContent() {
    }
 
    @Override

@@ -49,7 +49,7 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
 
    @AfterMethod
    @Override
-   protected void clearContent() throws Throwable {
+   protected void clearContent() {
       // the base method cleans only the data container without invoking the interceptor stack...
       cache(0).clear();
    }

@@ -5,7 +5,6 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.config.Configuration;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 
 /**
@@ -16,7 +15,7 @@ import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
  */
 public class ProtoStreamMarshaller extends BaseProtoStreamMarshaller {
 
-   private final SerializationContext serializationContext = ProtobufUtil.newSerializationContext(Configuration.builder().build());
+   private final SerializationContext serializationContext = ProtobufUtil.newSerializationContext();
 
    public ProtoStreamMarshaller() {
    }

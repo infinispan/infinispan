@@ -7,7 +7,6 @@ import java.util.Map;
 import org.infinispan.commons.CacheException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.config.Configuration;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 
 /**
@@ -18,7 +17,7 @@ class IckleFilterConverterUtils {
    // This marshaller is able to handle primitive/scalar types only
    private static final BaseProtoStreamMarshaller paramMarshaller = new BaseProtoStreamMarshaller() {
 
-      private final SerializationContext serializationContext = ProtobufUtil.newSerializationContext(Configuration.builder().build());
+      private final SerializationContext serializationContext = ProtobufUtil.newSerializationContext();
 
       @Override
       protected SerializationContext getSerializationContext() {
@@ -54,5 +53,4 @@ class IckleFilterConverterUtils {
       }
       return namedParams;
    }
-
 }

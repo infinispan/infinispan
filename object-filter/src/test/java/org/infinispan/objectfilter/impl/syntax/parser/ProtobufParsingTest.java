@@ -9,7 +9,6 @@ import java.io.IOException;
 import org.infinispan.objectfilter.test.model.MarshallerRegistration;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.junit.Test;
 
@@ -24,13 +23,13 @@ public class ProtobufParsingTest extends AbstractParsingTest<Descriptor> {
    }
 
    private static ObjectPropertyHelper<Descriptor> createPropertyHelper() throws IOException {
-      SerializationContext serCtx = ProtobufUtil.newSerializationContext(Configuration.builder().build());
+      SerializationContext serCtx = ProtobufUtil.newSerializationContext();
       MarshallerRegistration.registerMarshallers(serCtx);
       return new ProtobufPropertyHelper(serCtx, null);
    }
 
    @Test
-   public void testParsingResult() throws Exception {
+   public void testParsingResult() {
       String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name is not null";
       IckleParsingResult<Descriptor> result = IckleParser.parse(queryString, propertyHelper);
 
@@ -45,7 +44,7 @@ public class ProtobufParsingTest extends AbstractParsingTest<Descriptor> {
 
    @Test
    @Override
-   public void testInvalidDateLiteral() throws Exception {
+   public void testInvalidDateLiteral() {
       // protobuf does not have a Date type, but keep this empty test here just as a reminder
    }
 }

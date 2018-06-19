@@ -42,7 +42,7 @@ public class PersonMarshaller implements MessageMarshaller<Person> {
       writer.writeInt("age", person.getAge());
       writer.writeCollection("favouriteNumbers", person.getFavouriteNumbers(), Integer.class);
       writer.writeString("license", person.getLicense());
-      writer.writeEnum("gender", person.getGender(), Person.Gender.class);
+      writer.writeEnum("gender", person.getGender());
       if (person.getLastUpdate() != null) {
          writer.writeLong("lastUpdate", person.getLastUpdate().getTime());
       }

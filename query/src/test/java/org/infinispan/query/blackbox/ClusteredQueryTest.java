@@ -71,7 +71,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
    @AfterMethod
    @Override
-   protected void clearContent() throws Throwable {
+   protected void clearContent() {
       // Leave it be
    }
 
