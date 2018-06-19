@@ -58,7 +58,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       if (trace) log.tracef("Adding modification %s. Mod list is %s", mod, modifications);
       if (modifications == null) {
          // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
-         modifications = Collections.synchronizedList(new LinkedList<WriteCommand>());
+         modifications = Collections.synchronizedList(new LinkedList<>());
       }
       if (mod.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          hasLocalOnlyModifications = true;
