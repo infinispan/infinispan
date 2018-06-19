@@ -125,13 +125,13 @@ public interface CacheTransaction {
     * @deprecated  since 9.1 Use {@link MVCCEntry#isRead()} instead
     */
    @Deprecated
-   boolean keyRead(Object key);
+   default boolean keyRead(Object key) { return false; }
 
    /**
     * @deprecated since 9.1 Use {@link MVCCEntry#setRead()} instead
     */
    @Deprecated
-   void addReadKey(Object key);
+   default void addReadKey(Object key) {}
 
    boolean isMarkedForRollback();
 

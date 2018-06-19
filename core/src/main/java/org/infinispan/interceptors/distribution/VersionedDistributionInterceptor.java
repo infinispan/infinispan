@@ -124,12 +124,8 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
    }
 
    private void checkAndAddReadVersion(AbstractCacheTransaction tx, Object key, EntryVersion version) {
-      EntryVersion lastVersion = tx.getLookedUpRemoteVersion(key);
       // TODO: should we check the write skew configuration here?
       // TODO: version seen or looked up remote version?
-      if (lastVersion != null && lastVersion.compareTo(version) != InequalVersionComparisonResult.EQUAL) {
-         throw log.writeSkewOnRead(key, key, lastVersion, version);
-      }
       EntryVersion lastVersionSeen = tx.getVersionsRead().get(key);
       if (lastVersionSeen != null && lastVersionSeen.compareTo(version) != InequalVersionComparisonResult.EQUAL) {
          throw log.writeSkewOnRead(key, key, lastVersionSeen, version);

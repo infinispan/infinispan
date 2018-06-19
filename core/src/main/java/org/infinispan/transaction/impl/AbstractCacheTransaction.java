@@ -291,16 +291,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public void addReadKey(Object key) {
-      // No-op
-   }
-
-   @Override
-   public boolean keyRead(Object key) {
-      return false;
-   }
-
-   @Override
    public void addVersionRead(Object key, EntryVersion version) {
       if (version == null) {
          return;
