@@ -14,6 +14,16 @@
     </resources>
 
     <dependencies>
+        <!-- for java.beans -->
+        <module name="java.datatransfer"/>
+        <module name="java.desktop"/>
+        <module name="java.logging"/>
+        <module name="java.management"/>
+        <module name="java.prefs"/>
+        <module name="java.security.sasl"/>
+        <module name="java.xml"/>
+        <module name="jdk.jconsole"/>
+
         <module name="org.aesh" export="true"/>
         <module name="org.jboss.modules"/>
         <module name="org.jboss.stdio"/>
@@ -31,8 +41,5 @@
         <module name="org.jboss.vfs"/>
         <module name="org.wildfly.embedded"/>
         <module name="org.wildfly.security.elytron-private"/>
-        <module name="javax.api"/>
-        <module name="ibm.jdk" />
-        <module name="sun.jdk" />
     </dependencies>
 </module>

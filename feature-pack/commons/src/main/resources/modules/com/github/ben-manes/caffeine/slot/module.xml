@@ -4,8 +4,4 @@
     <resources>
         <artifact name="${com.github.ben-manes.caffeine:caffeine}" />
     </resources>
-
-    <dependencies>
-        <module name="sun.jdk" />
-    </dependencies>
 </module>

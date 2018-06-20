@@ -5,6 +5,7 @@
     </resources>
 
     <dependencies>
+        <module name="jdk.scripting.nashorn"/>
         <module name="javax.api"/>
         <module name="javax.transaction.api"/>
         <module name="org.apache.xerces" services="import"/>
@@ -16,7 +17,7 @@
         <module name="org.jboss.logging"/>
         <module name="org.jboss.marshalling" services="import" slot="@infinispan.module.slot@"/>
         <module name="org.jgroups" slot="@infinispan.module.slot@"/>
-        <module name="sun.jdk"/>
+        <module name="sun.scripting"/>
 
         <!-- The CacheStore modules are listed as dependencies so that people can use them even
           when they aren't directly exposed to the deployment !-->

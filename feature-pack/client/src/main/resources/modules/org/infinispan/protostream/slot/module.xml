@@ -7,6 +7,5 @@
 
     <dependencies>
         <module name="org.jboss.logging"/>
-        <module name="sun.jdk"/>
     </dependencies>
 </module>
