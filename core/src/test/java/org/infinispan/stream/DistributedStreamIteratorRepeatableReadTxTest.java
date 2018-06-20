@@ -1,24 +1,23 @@
 package org.infinispan.stream;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
-
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.CollectionKeyFilter;
@@ -34,15 +33,13 @@ import org.testng.annotations.Test;
  * @author wburns
  * @since 8.0
  */
-@Test(groups = {"functional", "smoke"}, testName = "stream.DistributedStreamIteratorTxTest")
-public class DistributedStreamIteratorTxTest extends DistributedStreamIteratorTest {
-   public DistributedStreamIteratorTxTest() {
+@Test(groups = {"functional", "smoke"}, testName = "stream.DistributedStreamIteratorRepeatableReadTxTest")
+public class DistributedStreamIteratorRepeatableReadTxTest extends DistributedStreamIteratorTest {
+   public DistributedStreamIteratorRepeatableReadTxTest() {
       super(true, CacheMode.DIST_SYNC);
    }
 
-   public void testFilterWithExistingTransaction() throws NotSupportedException,
-         SystemException, SecurityException, IllegalStateException, RollbackException,
-         HeuristicMixedException, HeuristicRollbackException {
+   public void testFilterWithExistingTransaction() throws Exception {
       Map<Object, String> values = putValueInEachCache(3);
 
       Cache<Object, String> cache = cache(0, CACHE_NAME);
@@ -130,6 +127,27 @@ public class DistributedStreamIteratorTxTest extends DistributedStreamIteratorTe
                assertEquals(entry.getValue().substring(2, 7), results.get(entry.getKey()));
             }
          }
+      } finally {
+         tm.rollback();
+      }
+   }
+
+   public void testStreamWithMissedKeyInTransaction() throws Exception {
+      AdvancedCache<Object, String> cache = advancedCache(0, CACHE_NAME);
+      TransactionManager tm = TestingUtil.extractComponent(cache, TransactionManager.class);
+
+      tm.begin();
+      try {
+         Object localMissingKey = new MagicKey("key1", cache);
+         Object remoteMissingKey = new MagicKey("key2", cache(1, CACHE_NAME));
+
+         assertFalse(cache.containsKey(localMissingKey));
+         assertFalse(cache.containsKey(remoteMissingKey));
+         Iterator<CacheEntry<Object, String>> iterator = cache.getAdvancedCache().cacheEntrySet().stream().iterator();
+         Map<Object, String> results = mapFromIterator(iterator);
+         assertEquals(Collections.emptyMap(), results);
+         // size() also uses streams internally
+         assertEquals(0, cache.size());
       } finally {
          tm.rollback();
       }

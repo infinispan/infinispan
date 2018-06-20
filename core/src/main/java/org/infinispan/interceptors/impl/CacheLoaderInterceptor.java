@@ -198,8 +198,8 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          return invokeNext(ctx, command);
       }
 
-      final Predicate<? super K> keyFilter = new GroupFilter<>(command.getGroupName(), groupManager).and(k ->
-            !ctx.getLookedUpEntries().keySet().contains(k));
+      final Predicate<? super K> keyFilter = new GroupFilter<>(command.getGroupName(), groupManager)
+                                                .and(k -> ctx.lookupEntry(k) == null);
 
       Publisher<MarshalledEntry<K, V>> publisher = persistenceManager.publishEntries(keyFilter, true, false,
             PersistenceManager.AccessMode.BOTH);

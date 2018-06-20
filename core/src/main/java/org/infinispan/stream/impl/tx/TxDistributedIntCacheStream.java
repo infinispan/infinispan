@@ -1,16 +1,15 @@
 package org.infinispan.stream.impl.tx;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.AbstractCacheStream;
 import org.infinispan.stream.impl.DistributedCacheStream;
 import org.infinispan.stream.impl.DistributedDoubleCacheStream;
@@ -29,8 +28,8 @@ public class TxDistributedIntCacheStream<Original, K, V> extends DistributedIntC
    private final ConsistentHash hash;
    private final Function<? super CacheEntry<K, V>, ? extends Original> toOriginalFunction;
 
-   TxDistributedIntCacheStream(AbstractCacheStream stream, Address localAddress, ConsistentHash hash,
-         LocalTxInvocationContext ctx, Function<? super CacheEntry<K, V>, ? extends Original> toOriginalFunction) {
+   TxDistributedIntCacheStream(AbstractCacheStream stream, ConsistentHash hash, LocalTxInvocationContext ctx,
+                               Function<? super CacheEntry<K, V>, ? extends Original> toOriginalFunction) {
       super(stream);
       this.ctx = ctx;
       this.hash = hash;
@@ -42,10 +41,13 @@ public class TxDistributedIntCacheStream<Original, K, V> extends DistributedIntC
            Set<Object> excludedKeys, boolean primaryOnly) {
       return () -> {
          Supplier<Stream<Original>> supplier = super.supplierForSegments(ch, targetSegments, excludedKeys, primaryOnly);
-         Set<Original> set = ctx.getLookedUpEntries().values().stream()
-                                  .filter(e -> !isPrimaryOwner(ch, e))
-                                  .map(e -> toOriginalFunction.apply((CacheEntry<K, V>) e))
-                                  .collect(Collectors.toSet());
+         Set<Original> set = new HashSet<>();
+         ctx.forEachEntry((key, entry) -> {
+            if (!isPrimaryOwner(ch, key) && !entry.isRemoved() && !entry.isNull()) {
+               Original apply = toOriginalFunction.apply((CacheEntry<K, V>) entry);
+               set.add(apply);
+            }
+         });
          Stream<Original> suppliedStream = supplier.get();
          if (!set.isEmpty()) {
             return Stream.concat(set.stream(), suppliedStream);
@@ -56,16 +58,16 @@ public class TxDistributedIntCacheStream<Original, K, V> extends DistributedIntC
 
    @Override
    protected <R> DistributedCacheStream<Original, R> cacheStream() {
-      return new TxDistributedCacheStream<Original, R, K, V>(this, localAddress, hash, ctx, toOriginalFunction);
+      return new TxDistributedCacheStream<>(this, localAddress, hash, ctx, toOriginalFunction);
    }
 
    @Override
    protected DistributedLongCacheStream<Original> longCacheStream() {
-      return new TxDistributedLongCacheStream<Original, K, V>(this, localAddress, hash, ctx, toOriginalFunction);
+      return new TxDistributedLongCacheStream<>(this, localAddress, hash, ctx, toOriginalFunction);
    }
 
    @Override
    protected DistributedDoubleCacheStream<Original> doubleCacheStream() {
-      return new TxDistributedDoubleCacheStream<Original, K, V>(this, localAddress, hash, ctx, toOriginalFunction);
+      return new TxDistributedDoubleCacheStream<>(this, localAddress, hash, ctx, toOriginalFunction);
    }
 }

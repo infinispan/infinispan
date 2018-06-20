@@ -3,6 +3,7 @@ package org.infinispan.hibernate.cache.commons.access;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -95,6 +96,18 @@ class SessionInvocationContext implements InvocationContext {
    @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
       return cacheEntry == null ? Collections.emptyMap() : Collections.singletonMap(key, cacheEntry);
+   }
+
+   @Override
+   public void forEachEntry(BiConsumer<Object, CacheEntry> consumer) {
+      if (cacheEntry != null) {
+         consumer.accept(key, cacheEntry);
+      }
+   }
+
+   @Override
+   public int lookedUpEntriesSize() {
+      return cacheEntry != null ? 1 : 0;
    }
 
    @Override

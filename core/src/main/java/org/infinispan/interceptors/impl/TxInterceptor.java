@@ -630,6 +630,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       private final TxInvocationContext<LocalTransaction> ctx;
       // We store all the not yet seen context entries here.  We rely on the fact that the cache entry reference is updated
       // if a change occurs in between iterations to see updates.
+      // TODO Dan: Only true with REPEATABLE_READ isolation level, not true with READ_COMMITTED
       private final Deque<CacheEntry> contextEntries;
       private final Set<Object> seenContextKeys = new HashSet<>();
       private final CloseableIterator<E> realIterator;
@@ -641,7 +642,8 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
                                                TxInvocationContext<LocalTransaction> ctx) {
          this.realIterator = realIterator;
          this.ctx = ctx;
-         contextEntries = new ArrayDeque<>(ctx.getLookedUpEntries().values());
+         contextEntries = new ArrayDeque<>(ctx.lookedUpEntriesSize());
+         ctx.forEachEntry((key, entry) -> contextEntries.add(entry));
       }
 
       @Override
@@ -673,48 +675,42 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       protected abstract Object getKey(E value);
 
       protected E getNextFromIterator() {
-         E returnedValue = null;
          // We first have to exhaust all of our context entries
-         CacheEntry<K, V> entry;
-         while (returnedValue == null && !contextEntries.isEmpty() &&
-                 (entry = contextEntries.poll()) != null) {
-            seenContextKeys.add(entry.getKey());
-            if (!ctx.isEntryRemovedInContext(entry.getKey()) && !entry.isNull()) {
-               returnedValue = fromEntry(entry);
-            }
-         }
-         if (returnedValue == null) {
-            while (realIterator.hasNext()) {
-               E iteratedEntry = realIterator.next();
-               Object key = getKey(iteratedEntry);
-               CacheEntry<K, V> contextEntry;
-               // If the value was in the context then we ignore the stored value since we use the context value
-               if ((contextEntry = ctx.lookupEntry(key)) != null) {
-                  if (seenContextKeys.add(contextEntry.getKey()) && !contextEntry.isRemoved() && !contextEntry.isNull()) {
-                     break;
-                  }
-               } else {
-                  seenContextKeys.add(key);
-                  // We have to add any entry we read from the iterator as if it was read from the context
-                  // otherwise if the reader adds this entry to the context we will see it again
-                  return iteratedEntry;
-               }
+         CacheEntry entry;
+         while ((entry = contextEntries.poll()) != null) {
+            if (!entry.isRemoved() && !entry.isNull()) {
+               seenContextKeys.add(entry.getKey());
+               return (E) fromEntry(entry);
             }
          }
 
-         if (returnedValue == null) {
-            // We do a last check to make sure no additional values were added to our context while iterating
-            for (CacheEntry<K, V> lookedUpEntry : ctx.getLookedUpEntries().values()) {
-               if (seenContextKeys.add(lookedUpEntry.getKey()) && !lookedUpEntry.isRemoved() && !lookedUpEntry.isNull()) {
-                  if (returnedValue == null) {
-                     returnedValue = fromEntry(lookedUpEntry);
-                  } else {
-                     contextEntries.add(lookedUpEntry);
-                  }
+         while (realIterator.hasNext()) {
+            E iteratedEntry = realIterator.next();
+            Object key = getKey(iteratedEntry);
+            CacheEntry contextEntry;
+            // If the value was in the context then we ignore the stored value since we use the context value
+            if ((contextEntry = ctx.lookupEntry(key)) != null) {
+               if (seenContextKeys.add(contextEntry.getKey()) && !contextEntry.isRemoved() && !contextEntry.isNull()) {
+                  // The entry was wrapped in the context after we took the initial context snapshot
+                  // Skip the rest of the iterator for now and handle it in the "last check" loop below
+                  break;
                }
+            } else {
+               // We have to add any entry we read from the iterator as if it was read from the context
+               // otherwise if the reader adds this entry to the context we will see it again
+               // TODO Dan: what about memory usage?
+               seenContextKeys.add(key);
+               return iteratedEntry;
             }
          }
-         return returnedValue;
+
+         // We do a last check to make sure no additional values were added to our context while iterating
+         ctx.forEachEntry((key, lookedUpEntry) -> {
+            if (seenContextKeys.add(key) && !lookedUpEntry.isRemoved() && !lookedUpEntry.isNull()) {
+               contextEntries.add(lookedUpEntry);
+            }
+         });
+         return (E) contextEntries.poll();
       }
    }
 
@@ -774,7 +770,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       public CloseableSpliterator<K> spliterator() {
          Spliterator<K> parentSpliterator = super.spliterator();
          long estimateSize =
-            parentSpliterator.estimateSize() + rCtx.getLookedUpEntries().size();
+            parentSpliterator.estimateSize() + rCtx.lookedUpEntriesSize();
          // This is an overestimate for size if we have looked up entries that don't map to
          // this node
          return new IteratorAsSpliterator.Builder<>(innerIterator())
@@ -854,7 +850,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
          Spliterator<CacheEntry<K, V>> parentSpliterator = super.spliterator();
          long estimateSize =
-            parentSpliterator.estimateSize() + rCtx.getLookedUpEntries().size();
+            parentSpliterator.estimateSize() + rCtx.lookedUpEntriesSize();
          // This is an overestimate for size if we have looked up entries that don't map to
          // this node
          return new IteratorAsSpliterator.Builder<>(innerIterator())
