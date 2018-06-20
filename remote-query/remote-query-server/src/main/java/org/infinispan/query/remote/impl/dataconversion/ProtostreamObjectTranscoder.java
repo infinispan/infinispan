@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.ProtobufUtil;
@@ -35,7 +36,8 @@ public class ProtostreamObjectTranscoder implements Transcoder {
             return ProtobufUtil.fromWrappedByteArray(ctx, (byte[]) content);
          }
          if (destinationType.match(APPLICATION_PROTOSTREAM)) {
-            return ProtobufUtil.toWrappedByteArray(ctx, content);
+            Object decoded = StandardConversions.decodeObjectContent(content, contentType);
+            return ProtobufUtil.toWrappedByteArray(ctx, decoded);
          }
       } catch (IOException e) {
          throw log.errorTranscoding(e);
