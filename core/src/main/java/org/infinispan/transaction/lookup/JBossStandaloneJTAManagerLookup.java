@@ -15,7 +15,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * JTA standalone TM lookup.
+ * JTA standalone TM lookup (JBoss AS 7 and earlier, and WildFly 8, 9, and 10).
  *
  * @author Jason T. Greene
  * @since 4.0
@@ -44,9 +44,7 @@ public class JBossStandaloneJTAManagerLookup implements TransactionManagerLookup
       try {
          manager = Util.loadClass("com.arjuna.ats.jta.TransactionManager", classLoader).getMethod("transactionManager");
          user = Util.loadClass("com.arjuna.ats.jta.UserTransaction", classLoader).getMethod("userTransaction");
-      } catch (SecurityException e) {
-         throw new RuntimeException(e);
-      } catch (NoSuchMethodException e) {
+      } catch (SecurityException | NoSuchMethodException e) {
          throw new RuntimeException(e);
       }
    }
