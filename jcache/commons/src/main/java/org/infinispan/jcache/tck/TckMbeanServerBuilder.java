@@ -9,8 +9,6 @@ import javax.management.Notification;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 
-import com.sun.jmx.mbeanserver.JmxMBeanServer;
-
 /**
  * MBean Server builder instance for the TCK.
  *
@@ -21,8 +19,7 @@ public class TckMbeanServerBuilder extends MBeanServerBuilder {
 
    @Override
    public MBeanServer newMBeanServer(String defaultDomain, MBeanServer outer, MBeanServerDelegate delegate) {
-      MBeanServerDelegate decorator = new TckMbeanServerDelegate(delegate);
-      return JmxMBeanServer.newMBeanServer(defaultDomain, outer, decorator, false);
+      return new MBeanServerBuilder().newMBeanServer(defaultDomain, outer, new TckMbeanServerDelegate(delegate));
    }
 
    public class TckMbeanServerDelegate extends MBeanServerDelegate {

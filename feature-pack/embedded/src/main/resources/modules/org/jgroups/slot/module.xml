@@ -11,6 +11,5 @@
         <module name="org.jgroups.azure" optional="true" slot="@infinispan.module.slot@"/>
         <module name="org.jgroups.kubernetes" optional="true" slot="@infinispan.module.slot@"/>
         <module name="org.wildfly.security.elytron-private" optional="true" services="import"/>
-        <module name="sun.jdk"/>
     </dependencies>
 </module>

@@ -10,6 +10,7 @@
     </resources>
 
     <dependencies>
+        <module name="jdk.scripting.nashorn" services="export" export="true"/>
         <module name="javax.api"/>
         <module name="javax.transaction.api"/>
         <module name="org.infinispan.core" slot="@infinispan.module.slot@"/>
@@ -17,5 +18,6 @@
         <module name="org.infinispan.tasks.api" export="true" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.query" slot="@infinispan.module.slot@"/>
         <module name="org.jboss.logging"/>
+        <module name="sun.scripting" services="export" export="true"/>
     </dependencies>
 </module>
