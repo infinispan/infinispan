@@ -160,7 +160,7 @@
       <infinispan.brand.name>Infinispan</infinispan.brand.name>
       <infinispan.brand.prefix>infinispan</infinispan.brand.prefix>
       <infinispan.brand.version>${project.version}</infinispan.brand.version>
-      <infinispan.codename>WIP</infinispan.codename>
+      <infinispan.codename>Estrella Galicia</infinispan.codename>
       <infinispan.module.slot.prefix>ispn</infinispan.module.slot.prefix>
       <infinispan.base.version>9.3</infinispan.base.version>
       <infinispan.module.slot>${infinispan.module.slot.prefix}-${infinispan.base.version}</infinispan.module.slot>
