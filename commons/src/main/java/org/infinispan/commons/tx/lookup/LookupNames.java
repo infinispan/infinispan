@@ -56,6 +56,7 @@ public final class LookupNames {
             "getTransactionManager"),
       WEBSPHERE_6("com.ibm.ejs.jts.jta.TransactionManagerFactory", "WebSphere 5.0", "getTransactionManager"),
       WEBSPHERE_4("com.ibm.ejs.jts.jta.JTSXA", "WebSphere 4.0", "getTransactionManager"),
+      WILDFLY("org.wildfly.transaction.client.ContextTransactionManager", "Wildfly 11 and later", "getInstance"),
       JBOSS_TM("com.arjuna.ats.jta.TransactionManager", "JBoss Standalone TM", "transactionManager");
 
       private final String factoryClazz;
