@@ -2,7 +2,6 @@ package org.infinispan.interceptors.impl;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -190,11 +189,10 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
          modifiedKeys.addAll(modification.getAffectedKeys());
       }
 
-      Map<Object, CacheEntry> entries = ctx.getLookedUpEntries();
       long changeAmount = 0;
       for (Object key : modifiedKeys) {
          if (dm == null || dm.getCacheTopology().isWriteOwner(key)) {
-            CacheEntry entry = entries.get(key);
+            CacheEntry entry = ctx.lookupEntry(key);
             if (entry.isRemoved()) {
                // Need to subtract old value here
                InternalCacheEntry containerEntry = container.peek(key);

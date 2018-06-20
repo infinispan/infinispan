@@ -106,7 +106,7 @@ public class TxClusterStreamManager<Original, K> implements ClusterStreamManager
          Supplier<Map.Entry<Address, IntSet>> segments, Set<K> keysToInclude, IntFunction<Set<K>> keysToExclude,
          boolean includeLoader, boolean entryStream, Iterable<IntermediateOperation> intermediateOperations) {
 
-      if (ctx.getLookedUpEntries().isEmpty()) {
+      if (ctx.lookedUpEntriesSize() != 0) {
          return manager.remoteIterationPublisher(parallelStream, segments, keysToInclude, keysToExclude, includeLoader,
                entryStream, intermediateOperations);
       } else {
@@ -130,7 +130,7 @@ public class TxClusterStreamManager<Original, K> implements ClusterStreamManager
 
    Set<K>[] generateContextSet(LocalTxInvocationContext ctx) {
       Set<K>[] set = new Set[maxSegments];
-      ctx.getLookedUpEntries().forEach((k, v) -> {
+      ctx.forEachEntry((k, entry) -> {
          int segment = intFunction.applyAsInt(k);
          Set<K> innerSet = set[segment];
          if (innerSet == null) {
@@ -153,14 +153,10 @@ public class TxClusterStreamManager<Original, K> implements ClusterStreamManager
 
       Map<Integer, Set<K>> contextToMap(LocalTxInvocationContext ctx, ToIntFunction<Object> intFunction) {
          Map<Integer, Set<K>> contextMap = new HashMap<>();
-         ctx.getLookedUpEntries().forEach((k, v) -> {
-            Integer segment = intFunction.applyAsInt(k);
-            Set<K> innerSet = contextMap.get(segment);
-            if (innerSet == null) {
-               innerSet = new HashSet<K>();
-               contextMap.put(segment, innerSet);
-            }
-            innerSet.add((K) k);
+         ctx.forEachEntry((key, entry) -> {
+            Integer segment = intFunction.applyAsInt(key);
+            Set<K> innerSet = contextMap.computeIfAbsent(segment, k -> new HashSet<K>());
+            innerSet.add((K) key);
          });
          return contextMap;
       }

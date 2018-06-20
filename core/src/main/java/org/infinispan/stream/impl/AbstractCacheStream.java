@@ -38,7 +38,6 @@ import org.infinispan.commons.util.RangeSet;
 import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -421,8 +420,8 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       } while (!complete.get());
    }
 
-   protected boolean isPrimaryOwner(ConsistentHash ch, CacheEntry e) {
-      return localAddress.equals(ch.locatePrimaryOwnerForSegment(keyPartitioner.getSegment(e.getKey())));
+   protected boolean isPrimaryOwner(ConsistentHash ch, Object key) {
+      return localAddress.equals(ch.locatePrimaryOwnerForSegment(keyPartitioner.getSegment(key)));
    }
 
    static class AtomicReferenceArrayToMap<R> extends AbstractMap<Integer, R> {

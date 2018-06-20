@@ -3,9 +3,7 @@ package org.infinispan.interceptors.impl;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.DataCommand;
@@ -58,13 +56,9 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.distribution.group.impl.GroupFilter;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.filter.CollectionKeyFilter;
-import org.infinispan.filter.CompositeKeyFilter;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.InvocationSuccessAction;
@@ -149,10 +143,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private final InvocationSuccessFunction prepareHandler = this::prepareHandler;
    private final InvocationSuccessAction applyAndFixVersion = this::applyAndFixVersion;
    private final InvocationSuccessAction applyAndFixVersionForMany = this::applyAndFixVersionForMany;
-
-   protected Log getLog() {
-      return log;
-   }
 
    @Start
    public void start() {
@@ -416,15 +406,17 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    public Object visitGetKeysInGroupCommand(final InvocationContext ctx, GetKeysInGroupCommand command)
          throws Throwable {
       if (command.isGroupOwner()) {
-         final KeyFilter<Object> keyFilter = new CompositeKeyFilter<>(new GroupFilter<>(command.getGroupName(), groupManager),
-               new CollectionKeyFilter<>(ctx.getLookedUpEntries().keySet()));
-         dataContainer.executeTask(keyFilter, (o, internalCacheEntry) -> {
+         dataContainer.forEach(internalCacheEntry -> {
+            Object key = internalCacheEntry.getKey();
+            if (!command.getGroupName().equals(groupManager.getGroup(key)) || ctx.lookupEntry(key) != null)
+               return;
+
             // Don't wrap tombstones into context; we want to be able to eventually read these values from
             // cache store and the filter in CacheLoaderInterceptor ignores keys already in context
             if (internalCacheEntry.getValue() != null) {
                synchronized (ctx) {
                   //the process can be made in multiple threads, so we need to synchronize in the context.
-                  entryFactory.wrapExternalEntry(ctx, internalCacheEntry.getKey(), internalCacheEntry, true, false);
+                  entryFactory.wrapExternalEntry(ctx, key, internalCacheEntry, true, false);
                }
             }
          });
@@ -434,13 +426,12 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       if (ctx.isInTxScope() && useRepeatableRead) {
          return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
             TxInvocationContext txCtx = (TxInvocationContext) rCtx;
-            for (Map.Entry<Object, CacheEntry> keyEntry : txCtx.getLookedUpEntries().entrySet()) {
-               CacheEntry cacheEntry = keyEntry.getValue();
-               cacheEntry.setSkipLookup(true);
-               if (isVersioned && ((MVCCEntry) cacheEntry).isRead()) {
-                  addVersionRead(txCtx, cacheEntry, keyEntry.getKey());
+            ctx.forEachEntry((key, entry) -> {
+               entry.setSkipLookup(true);
+               if (isVersioned && ((MVCCEntry) entry).isRead()) {
+                  addVersionRead(txCtx, entry, key);
                }
-            }
+            });
          });
       } else {
          return invokeNext(ctx, command);
@@ -575,21 +566,16 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          commitEntryIfNeeded(ctx, command,
                              singleKeyCtx.getCacheEntry(), stateTransferFlag);
       } else {
-         Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
-         Iterator<Map.Entry<Object, CacheEntry>> it = entries.iterator();
-         final Log log = getLog();
-         while (it.hasNext()) {
-            Map.Entry<Object, CacheEntry> e = it.next();
-            CacheEntry entry = e.getValue();
+         ctx.forEachEntry((key, entry) -> {
             if (!commitEntryIfNeeded(ctx, command, entry, stateTransferFlag)) {
                if (trace) {
                   if (entry == null)
-                     log.tracef("Entry for key %s is null : not calling commitUpdate", toStr(e.getKey()));
+                     log.tracef("Entry for key %s is null : not calling commitUpdate", toStr(key));
                   else
-                     log.tracef("Entry for key %s is not changed(%s): not calling commitUpdate", toStr(e.getKey()), entry);
+                     log.tracef("Entry for key %s is not changed(%s): not calling commitUpdate", toStr(key), entry);
                }
             }
-         }
+         });
       }
    }
 

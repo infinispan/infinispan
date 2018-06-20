@@ -14,7 +14,6 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.distribution.group.impl.GroupFilter;
 import org.infinispan.distribution.group.impl.GroupManager;
 
 /**
@@ -52,12 +51,11 @@ public class GetKeysInGroupCommand extends AbstractTopologyAffectedCommand imple
       final KeyValueCollector collector = ctx.isOriginLocal() ?
             new LocalContextKeyValueCollector() :
             new RemoteContextKeyValueCollector();
-      final GroupFilter<Object> filter = new GroupFilter<>(getGroupName(), groupManager);
-      for (CacheEntry entry : ctx.getLookedUpEntries().values()) {
-         if (!entry.isRemoved() && filter.accept(entry.getKey()) && entry.getValue() != null) {
+      ctx.forEachEntry((key, entry) -> {
+         if (getGroupName().equals(groupManager.getGroup(key)) && !entry.isRemoved() && !entry.isNull()) {
             collector.addCacheEntry(entry);
          }
-      }
+      });
       return collector.getResult();
    }
 
