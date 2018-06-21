@@ -99,14 +99,14 @@ class SessionInvocationContext implements InvocationContext {
    }
 
    @Override
-   public void forEachEntry(BiConsumer<Object, CacheEntry> consumer) {
+   public void forEachEntry(BiConsumer<Object, CacheEntry> action) {
       if (cacheEntry != null) {
-         consumer.accept(key, cacheEntry);
+         action.accept(key, cacheEntry);
       }
    }
 
    @Override
-   public int lookedUpEntriesSize() {
+   public int lookedUpEntriesCount() {
       return cacheEntry != null ? 1 : 0;
    }
 

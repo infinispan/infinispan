@@ -66,8 +66,8 @@ public class TxDistributedCacheStream<Original, R, K, V> extends DistributedCach
          // Now we have to add entries that aren't mapped to our local segments since we are excluding those
          // remotely via {@link TxClusterStreamManager} using the same hash
          List<Original> contextEntries = new ArrayList<>();
-         ctx.forEachEntry((key, entry) -> {
-            if (!isPrimaryOwner(ch, key) && !entry.isRemoved() && !entry.isNull()) {
+         ctx.forEachValue((key, entry) -> {
+            if (!isPrimaryOwner(ch, key)) {
                contextEntries.add(toOriginalFunction.apply((CacheEntry<K, V>) entry));
             }
          });

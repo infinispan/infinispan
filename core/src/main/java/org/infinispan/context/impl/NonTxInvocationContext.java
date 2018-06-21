@@ -58,14 +58,14 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    }
 
    @Override
-   public void forEachEntry(BiConsumer<Object, CacheEntry> consumer) {
+   public void forEachEntry(BiConsumer<Object, CacheEntry> action) {
       if (lookedUpEntries != null) {
-         lookedUpEntries.forEach(consumer);
+         lookedUpEntries.forEach(action);
       }
    }
 
    @Override
-   public int lookedUpEntriesSize() {
+   public int lookedUpEntriesCount() {
       return lookedUpEntries != null ? lookedUpEntries.size() : 0;
    }
 
