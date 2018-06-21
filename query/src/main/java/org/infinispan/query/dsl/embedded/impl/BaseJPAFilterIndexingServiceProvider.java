@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentMap;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheEntryListenerInvocation;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -53,7 +52,8 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
    private ClusteringDependentLogic clusteringDependentLogic;
 
    @Inject
-   protected void injectDependencies(CacheNotifier cacheNotifier, ClusteringDependentLogic clusteringDependentLogic, EncoderRegistry encoderRegistry) {
+   @SuppressWarnings("unused")
+   protected void injectDependencies(CacheNotifier cacheNotifier, ClusteringDependentLogic clusteringDependentLogic) {
       this.cacheNotifier = (CacheNotifierImpl) cacheNotifier;
       this.clusteringDependentLogic = clusteringDependentLogic;
    }
@@ -65,16 +65,18 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
    @Override
    public void stop() {
       Collection<FilteringListenerInvocation<?, ?>> invocations = filteringInvocations.values();
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryActivated.class).removeAll(invocations);
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryCreated.class).removeAll(invocations);
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryInvalidated.class).removeAll(invocations);
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryLoaded.class).removeAll(invocations);
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryModified.class).removeAll(invocations);
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryPassivated.class).removeAll(invocations);
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryRemoved.class).removeAll(invocations);
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryVisited.class).removeAll(invocations);
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntriesEvicted.class).removeAll(invocations);
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryExpired.class).removeAll(invocations);
+      if (cacheNotifier != null) {
+         cacheNotifier.getListenerCollectionForAnnotation(CacheEntryActivated.class).removeAll(invocations);
+         cacheNotifier.getListenerCollectionForAnnotation(CacheEntryCreated.class).removeAll(invocations);
+         cacheNotifier.getListenerCollectionForAnnotation(CacheEntryInvalidated.class).removeAll(invocations);
+         cacheNotifier.getListenerCollectionForAnnotation(CacheEntryLoaded.class).removeAll(invocations);
+         cacheNotifier.getListenerCollectionForAnnotation(CacheEntryModified.class).removeAll(invocations);
+         cacheNotifier.getListenerCollectionForAnnotation(CacheEntryPassivated.class).removeAll(invocations);
+         cacheNotifier.getListenerCollectionForAnnotation(CacheEntryRemoved.class).removeAll(invocations);
+         cacheNotifier.getListenerCollectionForAnnotation(CacheEntryVisited.class).removeAll(invocations);
+         cacheNotifier.getListenerCollectionForAnnotation(CacheEntriesEvicted.class).removeAll(invocations);
+         cacheNotifier.getListenerCollectionForAnnotation(CacheEntryExpired.class).removeAll(invocations);
+      }
       filteringInvocations.clear();
    }
 
