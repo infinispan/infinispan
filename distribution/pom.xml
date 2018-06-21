@@ -114,13 +114,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-feature-pack-wf-modules</artifactId>
-         <version>${project.version}</version>
-         <type>zip</type>
-      </dependency>
-
-      <dependency>
          <groupId>javax.cache</groupId>
          <artifactId>cache-api</artifactId>
          <scope>provided</scope>
@@ -322,23 +315,6 @@
             </dependencies>
          </plugin>
          <plugin>
-            <groupId>org.wildfly.build</groupId>
-            <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>provision-modules</id>
-                  <goals>
-                     <goal>build</goal>
-                  </goals>
-                  <phase>compile</phase>
-                  <configuration>
-                     <config-file>wildfly-provisioning.xml</config-file>
-                     <server-name>wildfly-modules</server-name>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-assembly-plugin</artifactId>
             <executions>
@@ -356,20 +332,6 @@
                         <descriptor>src/main/assemblies/src.xml</descriptor>
                      </descriptors>
                      <finalName>${infinispan.brand.prefix}-${infinispan.brand.version}</finalName>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>assemble-modules</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>single</goal>
-                  </goals>
-                  <configuration>
-                     <appendAssemblyId>false</appendAssemblyId>
-                     <finalName>${infinispan.brand.prefix}-wildfly-modules-${project.version}</finalName>
-                     <descriptors>
-                        <descriptor>src/main/assemblies/wildfly.xml</descriptor>
-                     </descriptors>
                   </configuration>
                </execution>
                <execution>
