@@ -7,6 +7,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -22,6 +23,7 @@ import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.spi.StoreUnavailableException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.Exceptions;
@@ -49,6 +51,8 @@ public class WriteBehindFaultToleranceTest extends AbstractInfinispanTest {
    @Test
    public void testBlockingOnStoreAvailabilityChange() {
       Cache<Object, Object> cache = createManagerAndGetCache(false, 1);
+      PollingPersistenceManager pm = new PollingPersistenceManager();
+      TestingUtil.replaceComponent(cache, PersistenceManager.class, pm, true);
       AdvancedAsyncCacheWriter asyncWriter = TestingUtil.getFirstWriter(cache);
       DummyInMemoryStore store = (DummyInMemoryStore) TestingUtil.extractField(AdvancedAsyncCacheWriter.class, asyncWriter, "actual");
       store.setAvailable(true);
@@ -56,11 +60,12 @@ public class WriteBehindFaultToleranceTest extends AbstractInfinispanTest {
       eventually(() -> store.load(1) != null);
       assertEquals(1, store.size());
 
-      PersistenceManager pm = TestingUtil.extractComponent(cache, PersistenceManager.class);
       store.setAvailable(false);
       assertFalse(store.isAvailable());
 
-      TestingUtil.sleepThread(AVAILABILITY_INTERVAL * 5);
+      int pollCount = pm.pollCount.get();
+      // Wait until the stores availability has been checked before asserting that the pm is still available
+      eventually(() -> pm.pollCount.get() > pollCount);
       // PM & AsyncWriter should still be available as the async modification queue is not full
       assertTrue(asyncWriter.isAvailable());
       assertFalse(TestingUtil.extractField(asyncWriter, "delegateAvailable"));
@@ -70,22 +75,18 @@ public class WriteBehindFaultToleranceTest extends AbstractInfinispanTest {
       cache.putAll(intMap(0, 10));
       assertEquals(1, store.size());
 
-      TestingUtil.sleepThread(AVAILABILITY_INTERVAL * 5);
+      eventually(() -> !pm.isAvailable());
       // PM and writer should not be available as the async modification queue is now oversubscribed and the delegate is still unavailable
       assertFalse(asyncWriter.isAvailable());
-      assertFalse(pm.isAvailable());
       Exceptions.expectException(StoreUnavailableException.class, () -> cache.putAll(intMap(10, 20)));
       assertEquals(1, store.size());
 
       // Make the delegate available and ensure that the initially queued modifications exist in the store
       store.setAvailable(true);
       assertTrue(store.isAvailable());
-      TestingUtil.sleepThread(AVAILABILITY_INTERVAL * 5);
       assertTrue(asyncWriter.isAvailable());
-      assertTrue(pm.isAvailable());
-
-      TestingUtil.sleepThread(AVAILABILITY_INTERVAL * 5);
-      assertEquals(10, store.size());
+      eventually(pm::isAvailable);
+      eventually(() -> 10 == store.size());
       // Ensure that only the initial map entries are stored and that the second putAll operation truly failed
       assertFalse(store.contains(10));
    }
@@ -113,5 +114,14 @@ public class WriteBehindFaultToleranceTest extends AbstractInfinispanTest {
       assertNotNull(entry);
       assertEquals(1, entry.getValue());
       assertEquals(2, cache.get(1));
+   }
+
+   static class PollingPersistenceManager extends PersistenceManagerImpl {
+      final AtomicInteger pollCount = new AtomicInteger();
+      @Override
+      protected void pollStoreAvailability() {
+         super.pollStoreAvailability();
+         pollCount.incrementAndGet();
+      }
    }
 }
