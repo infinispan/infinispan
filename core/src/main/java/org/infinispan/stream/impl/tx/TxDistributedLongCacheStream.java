@@ -46,8 +46,8 @@ public class TxDistributedLongCacheStream<Original, K, V> extends DistributedLon
       return () -> {
          Supplier<Stream<Original>> supplier = super.supplierForSegments(ch, targetSegments, excludedKeys, primaryOnly);
          List<Original> contextEntries = new ArrayList<>();
-         ctx.forEachEntry((key, entry) -> {
-            if (!isPrimaryOwner(ch, key) && !entry.isRemoved() && !entry.isNull()) {
+         ctx.forEachValue((key, entry) -> {
+            if (!isPrimaryOwner(ch, key)) {
                contextEntries.add(toOriginalFunction.apply((CacheEntry<K, V>) entry));
             }
          });

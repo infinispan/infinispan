@@ -106,7 +106,7 @@ public class TxClusterStreamManager<Original, K> implements ClusterStreamManager
          Supplier<Map.Entry<Address, IntSet>> segments, Set<K> keysToInclude, IntFunction<Set<K>> keysToExclude,
          boolean includeLoader, boolean entryStream, Iterable<IntermediateOperation> intermediateOperations) {
 
-      if (ctx.lookedUpEntriesSize() != 0) {
+      if (ctx.lookedUpEntriesCount() != 0) {
          return manager.remoteIterationPublisher(parallelStream, segments, keysToInclude, keysToExclude, includeLoader,
                entryStream, intermediateOperations);
       } else {

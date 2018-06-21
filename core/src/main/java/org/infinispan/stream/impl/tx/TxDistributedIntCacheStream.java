@@ -42,8 +42,8 @@ public class TxDistributedIntCacheStream<Original, K, V> extends DistributedIntC
       return () -> {
          Supplier<Stream<Original>> supplier = super.supplierForSegments(ch, targetSegments, excludedKeys, primaryOnly);
          Set<Original> set = new HashSet<>();
-         ctx.forEachEntry((key, entry) -> {
-            if (!isPrimaryOwner(ch, key) && !entry.isRemoved() && !entry.isNull()) {
+         ctx.forEachValue((key, entry) -> {
+            if (!isPrimaryOwner(ch, key)) {
                Original apply = toOriginalFunction.apply((CacheEntry<K, V>) entry);
                set.add(apply);
             }

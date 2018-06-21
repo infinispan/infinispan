@@ -47,8 +47,8 @@ public class TxDistributedDoubleCacheStream<Original, K, V> extends DistributedD
          Supplier<Stream<Original>> supplier = super.supplierForSegments(ch, targetSegments, excludedKeys, primaryOnly);
          Stream<Original> suppliedStream = supplier.get();
          List<Original> contextEntries = new ArrayList<>();
-         ctx.forEachEntry((key, entry) -> {
-            if (!isPrimaryOwner(ch, key) && !entry.isRemoved() && !entry.isNull()) {
+         ctx.forEachValue((key, entry) -> {
+            if (!isPrimaryOwner(ch, key)) {
                contextEntries.add(toOriginalFunction.apply((CacheEntry<K, V>) entry));
             }
          });

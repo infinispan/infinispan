@@ -29,16 +29,41 @@ public interface EntryLookup {
     *
     * @return a map of looked up entries.
     *
-    * @deprecated Since 9.3, please use {@link #forEachEntry(BiConsumer)} or {@link #lookedUpEntriesSize()} instead.
+    * @deprecated Since 9.3, please use {@link #forEachEntry(BiConsumer)} or {@link #lookedUpEntriesCount()} instead.
     */
    @Deprecated
    Map<Object, CacheEntry> getLookedUpEntries();
 
-   default void forEachEntry(BiConsumer<Object, CacheEntry> consumer) {
-      getLookedUpEntries().forEach(consumer);
+   /**
+    * Execute an action for each value in the context.
+    *
+    * Entries that do not have a value (because the key was removed, or it doesn't exist in the cache).
+    *
+    * @since 9.3
+    */
+   default void forEachValue(BiConsumer<Object, CacheEntry> action) {
+      forEachEntry((key, entry) -> {
+         if (!entry.isRemoved() && !entry.isNull()) {
+            action.accept(key, entry);
+         }
+      });
    }
 
-   default int lookedUpEntriesSize() {
+   /**
+    * Execute an action for each entry in the context.
+    *
+    * Includes invalid entries, which have a {@code null} value and may also report a {@code null} key.
+    *
+    * @since 9.3
+    */
+   default void forEachEntry(BiConsumer<Object, CacheEntry> action) {
+      getLookedUpEntries().forEach(action);
+   }
+
+   /**
+    * @return The number of entries wrapped in the context, including invalid entries.
+    */
+   default int lookedUpEntriesCount() {
       return getLookedUpEntries().size();
    }
 

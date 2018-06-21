@@ -51,8 +51,8 @@ public class GetKeysInGroupCommand extends AbstractTopologyAffectedCommand imple
       final KeyValueCollector collector = ctx.isOriginLocal() ?
             new LocalContextKeyValueCollector() :
             new RemoteContextKeyValueCollector();
-      ctx.forEachEntry((key, entry) -> {
-         if (getGroupName().equals(groupManager.getGroup(key)) && !entry.isRemoved() && !entry.isNull()) {
+      ctx.forEachValue((key, entry) -> {
+         if (getGroupName().equals(groupManager.getGroup(key))) {
             collector.addCacheEntry(entry);
          }
       });

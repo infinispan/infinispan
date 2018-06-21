@@ -642,7 +642,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
                                                TxInvocationContext<LocalTransaction> ctx) {
          this.realIterator = realIterator;
          this.ctx = ctx;
-         contextEntries = new ArrayDeque<>(ctx.lookedUpEntriesSize());
+         contextEntries = new ArrayDeque<>(ctx.lookedUpEntriesCount());
          ctx.forEachEntry((key, entry) -> contextEntries.add(entry));
       }
 
@@ -705,8 +705,8 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
          }
 
          // We do a last check to make sure no additional values were added to our context while iterating
-         ctx.forEachEntry((key, lookedUpEntry) -> {
-            if (seenContextKeys.add(key) && !lookedUpEntry.isRemoved() && !lookedUpEntry.isNull()) {
+         ctx.forEachValue((key, lookedUpEntry) -> {
+            if (seenContextKeys.add(key)) {
                contextEntries.add(lookedUpEntry);
             }
          });
@@ -770,7 +770,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       public CloseableSpliterator<K> spliterator() {
          Spliterator<K> parentSpliterator = super.spliterator();
          long estimateSize =
-            parentSpliterator.estimateSize() + rCtx.lookedUpEntriesSize();
+            parentSpliterator.estimateSize() + rCtx.lookedUpEntriesCount();
          // This is an overestimate for size if we have looked up entries that don't map to
          // this node
          return new IteratorAsSpliterator.Builder<>(innerIterator())
@@ -850,7 +850,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
          Spliterator<CacheEntry<K, V>> parentSpliterator = super.spliterator();
          long estimateSize =
-            parentSpliterator.estimateSize() + rCtx.lookedUpEntriesSize();
+            parentSpliterator.estimateSize() + rCtx.lookedUpEntriesCount();
          // This is an overestimate for size if we have looked up entries that don't map to
          // this node
          return new IteratorAsSpliterator.Builder<>(innerIterator())
