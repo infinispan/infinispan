@@ -492,7 +492,7 @@ public final class AtomicKeySetImpl<K> implements MergeOnStore {
          Object group = input.readObject();
          ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName1);
          InvocationContextFactory icf = cr.getComponent(InvocationContextFactory.class);
-         InvocationContext ctx = icf.createInvocationContext(false, -1);
+         InvocationContext ctx = icf.createNonTxInvocationContext();
          AsyncInterceptorChain chain = cr.getComponent(AsyncInterceptorChain.class);
          GetKeysInGroupCommand cmd = cr.getCommandsFactory().buildGetKeysInGroupCommand(0, group);
          Map<Object, Object> map = (Map<Object, Object>) chain.invoke(ctx, cmd);
