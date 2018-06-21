@@ -24,7 +24,6 @@ import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.CompositeKeyValueFilterConverter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.KeyValueFilterConverter;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 /**
@@ -43,8 +42,7 @@ public class DistributedStreamIteratorRepeatableReadTxTest extends DistributedSt
       Map<Object, String> values = putValueInEachCache(3);
 
       Cache<Object, String> cache = cache(0, CACHE_NAME);
-      TransactionManager tm = TestingUtil.extractComponent(cache,
-            TransactionManager.class);
+      TransactionManager tm = tm(cache);
       tm.begin();
       try {
          Object key = "filtered-key";
@@ -65,8 +63,7 @@ public class DistributedStreamIteratorRepeatableReadTxTest extends DistributedSt
       Map<Object, String> values = putValuesInCache();
 
       Cache<Object, String> cache = cache(0, CACHE_NAME);
-      TransactionManager tm = TestingUtil.extractComponent(cache,
-            TransactionManager.class);
+      TransactionManager tm = tm(cache);
       tm.begin();
       try {
          Object key = "converted-key";
@@ -95,8 +92,7 @@ public class DistributedStreamIteratorRepeatableReadTxTest extends DistributedSt
 
 
       Cache<Object, String> cache = cache(0, CACHE_NAME);
-      TransactionManager tm = TestingUtil.extractComponent(cache,
-            TransactionManager.class);
+      TransactionManager tm = tm(cache);
       tm.begin();
       try {
          Iterator<Map.Entry<Object, String>> iter = values.entrySet().iterator();
@@ -134,7 +130,7 @@ public class DistributedStreamIteratorRepeatableReadTxTest extends DistributedSt
 
    public void testStreamWithMissedKeyInTransaction() throws Exception {
       AdvancedCache<Object, String> cache = advancedCache(0, CACHE_NAME);
-      TransactionManager tm = TestingUtil.extractComponent(cache, TransactionManager.class);
+      TransactionManager tm = tm(cache);
 
       tm.begin();
       try {

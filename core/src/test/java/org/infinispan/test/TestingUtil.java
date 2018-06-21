@@ -1194,7 +1194,7 @@ public class TestingUtil {
    }
 
    public static TransactionManager getTransactionManager(Cache cache) {
-      return cache == null ? null : extractComponent(cache, TransactionManager.class);
+      return cache == null ? null : cache.getAdvancedCache().getTransactionManager();
    }
 
    /**

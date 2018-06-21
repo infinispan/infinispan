@@ -2,12 +2,10 @@ package org.infinispan.multimap.impl;
 
 import static java.lang.String.format;
 import static org.infinispan.functional.FunctionalTestUtils.await;
-import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Map;
-
 import javax.transaction.TransactionManager;
 
 import org.infinispan.multimap.api.embedded.MultimapCache;
@@ -28,7 +26,7 @@ public class MultimapTestUtils {
 
    public static TransactionManager getTransactionManager(MultimapCache multimapCache) {
       EmbeddedMultimapCache embeddedMultimapCache = (EmbeddedMultimapCache) multimapCache;
-      return embeddedMultimapCache == null ? null : extractComponent(embeddedMultimapCache.getCache(), TransactionManager.class);
+      return embeddedMultimapCache == null ? null : embeddedMultimapCache.getCache().getAdvancedCache().getTransactionManager();
    }
 
    public static void putValuesOnMultimapCache(MultimapCache<String, Person> multimapCache, String key, Person... values) {
