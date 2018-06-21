@@ -166,7 +166,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       }
    }
 
-   private void pollStoreAvailability() {
+   protected void pollStoreAvailability() {
       storesMutex.writeLock().lock();
       try {
          boolean availabilityChanged = false;
