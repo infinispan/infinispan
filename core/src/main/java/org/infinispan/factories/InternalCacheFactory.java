@@ -18,6 +18,8 @@ import org.infinispan.cache.impl.StatsCollectingCache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
@@ -37,6 +39,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.cluster.impl.ClusterEventManagerStub;
@@ -54,8 +57,8 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteAdminOperations;
 
 /**
- * An internal factory for constructing Caches.  Used by the {@link org.infinispan.manager.DefaultCacheManager}, this
- * is not intended as public API.
+ * An internal factory for constructing Caches.  Used by the {@link org.infinispan.manager.DefaultCacheManager}, this is
+ * not intended as public API.
  * <p/>
  * This is a special instance of a {@link AbstractComponentFactory} which contains bootstrap information for the {@link
  * ComponentRegistry}.
@@ -77,7 +80,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
     * @throws CacheConfigurationException if there are problems with the cfg
     */
    public Cache<K, V> createCache(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
-         String cacheName) throws CacheConfigurationException {
+                                  String cacheName) throws CacheConfigurationException {
       try {
          if (configuration.simpleCache()) {
             return createSimpleCache(configuration, globalComponentRegistry, cacheName);
@@ -92,7 +95,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    }
 
    private AdvancedCache<K, V> createAndWire(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
-         String cacheName) throws Exception {
+                                             String cacheName) throws Exception {
       StreamingMarshaller marshaller = globalComponentRegistry.getOrCreateComponent(StreamingMarshaller.class);
 
       final BiFunction<DataConversion, DataConversion, AdvancedCache<K, V>> actualBuilder = (kc, kv) -> new CacheImpl<>(cacheName);
@@ -116,7 +119,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
 
       AdvancedCache<K, V> cache = buildEncodingCache(usedBuilder, configuration);
 
-      bootstrap(cacheName, cache, configuration, globalComponentRegistry);
+      bootstrap(cacheName, cache, configuration, globalComponentRegistry, marshaller);
       if (marshaller != null) {
          componentRegistry.wireDependencies(marshaller);
       }
@@ -137,7 +140,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    }
 
    private AdvancedCache<K, V> createSimpleCache(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
-         String cacheName) {
+                                                 String cacheName) {
       AdvancedCache<K, V> cache;
 
       JMXStatisticsConfiguration jmxStatistics = configuration.jmxStatistics();
@@ -179,11 +182,25 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
     * Bootstraps this factory with a Configuration and a ComponentRegistry.
     */
    private void bootstrap(String cacheName, AdvancedCache<?, ?> cache, Configuration configuration,
-         GlobalComponentRegistry globalComponentRegistry) {
+                          GlobalComponentRegistry globalComponentRegistry, StreamingMarshaller globalMarshaller) {
       this.configuration = configuration;
 
       // injection bootstrap stuff
       componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader());
+
+      EncoderRegistry encoderRegistry = globalComponentRegistry.getComponent(EncoderRegistry.class);
+
+      // Wraps the compatibility marshaller so that it can be used as a transcoder
+      if (configuration.compatibility().enabled() && configuration.compatibility().marshaller() != null) {
+         Marshaller marshaller = configuration.compatibility().marshaller();
+         componentRegistry.wireDependencies(marshaller);
+         if (!encoderRegistry.isConversionSupported(MediaType.APPLICATION_OBJECT, marshaller.mediaType())) {
+            encoderRegistry.registerTranscoder(new TranscoderMarshallerAdapter(marshaller));
+         }
+      }
+
+      // Wraps the GlobalMarshaller so that it can be used as a transcoder
+      encoderRegistry.registerTranscoder(new TranscoderMarshallerAdapter(globalMarshaller));
 
       /*
          --------------------------------------------------------------------------------------------------------------
@@ -222,7 +239,8 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
 
    private static abstract class AbstractGetAdvancedCache<K, V, T extends AbstractGetAdvancedCache<K, V, T>> extends AbstractDelegatingAdvancedCache<K, V> {
 
-      @Inject protected ComponentRegistry componentRegistry;
+      @Inject
+      protected ComponentRegistry componentRegistry;
 
       public AbstractGetAdvancedCache(AdvancedCache<K, V> cache, AdvancedCacheWrapper<K, V> wrapper) {
          super(cache, wrapper);
@@ -238,9 +256,10 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       }
 
       /**
-       * This is to be extended when an entry is injected via component registry and you have to do it manually
-       * when a new delegating cache is created due to methods like {@link AdvancedCache#withFlags(Flag...)}.
-       * This method will call {@link #wireRealCache()} at the very end - so all methods should be initialized before.
+       * This is to be extended when an entry is injected via component registry and you have to do it manually when a
+       * new delegating cache is created due to methods like {@link AdvancedCache#withFlags(Flag...)}. This method will
+       * call {@link #wireRealCache()} at the very end - so all methods should be initialized before.
+       *
        * @param cache
        */
       protected void internalWire(T cache) {
@@ -281,7 +300,8 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    }
 
    private static class PartitionHandlingCache<K, V> extends AbstractGetAdvancedCache<K, V, PartitionHandlingCache<K, V>> {
-      @Inject private PartitionHandlingManager manager;
+      @Inject
+      private PartitionHandlingManager manager;
 
       // We store the flags as bits passed from AdvancedCache.withFlags etc.
       private final long bitFlags;
@@ -360,7 +380,8 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
 
    private static class StatsCache<K, V> extends AbstractGetAdvancedCache<K, V, StatsCache<K, V>> {
 
-      @Inject private TimeService timeService;
+      @Inject
+      private TimeService timeService;
       private CacheMgmtInterceptor interceptor;
 
       public StatsCache(AbstractGetAdvancedCache<K, V, ?> cache) {
@@ -414,7 +435,8 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
 
    private static class GetReplCache<K, V> extends AbstractGetAdvancedCache<K, V, GetReplCache<K, V>> {
 
-      @Inject private CacheNotifier<K, V> cacheNotifier;
+      @Inject
+      private CacheNotifier<K, V> cacheNotifier;
 
       // The hasListeners is commented out until EncoderCache can properly pass down the addListener invocation
       // to the next delegate in the chain. Otherwise we miss listener additions and don't fire events properly.

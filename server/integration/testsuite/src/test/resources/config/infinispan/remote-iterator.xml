@@ -1,0 +1,14 @@
+        <subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}" >
+            <cache-container name="local" default-cache="default">
+                 <modules>
+                    <module name="deployment.filter-marshaller.jar"/>
+                </modules>
+                <local-cache name="default">
+                     <encoding>
+                        <key media-type="application/x-protostream"/>
+                        <value media-type="application/x-protostream"/>
+                     </encoding>
+                </local-cache>
+            </cache-container>
+            <cache-container name="security"/>
+        </subsystem>

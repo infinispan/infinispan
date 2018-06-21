@@ -17,9 +17,7 @@ import org.apache.commons.httpclient.methods.PutMethod;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
@@ -99,15 +97,14 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
       // 1. Put with REST
       EntityEnclosingMethod put = new PutMethod(cacheFactory.getRestUrl() + "/" + key);
       put.setRequestEntity(new ByteArrayRequestEntity(
-            "<hey>ho</hey>".getBytes(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+            "<hey>ho</hey>".getBytes(), MediaType.TEXT_PLAIN_TYPE));
       HttpClient restClient = cacheFactory.getRestClient();
       restClient.executeMethod(put);
       assertEquals(HttpStatus.SC_OK, put.getStatusCode());
       assertEquals("", put.getResponseBodyAsString().trim());
 
       // 2. Get with Embedded (given a marshaller, it can unmarshall the result)
-      assertEquals("<hey>ho</hey>",
-            cacheFactory.getEmbeddedCache().getAdvancedCache().withEncoding(IdentityEncoder.class, UTF8Encoder.class).get(key));
+      assertEquals("<hey>ho</hey>", cacheFactory.getEmbeddedCache().get(key));
 
       // 3. Get with Memcached (given a marshaller, it can unmarshall the result)
       assertEquals("<hey>ho</hey>",

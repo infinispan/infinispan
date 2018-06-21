@@ -129,4 +129,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Expects a STRONG counter for '%s'", id = 28023)
    CounterException invalidWeakCounter(String name);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Not wrapping custom marshaller with media type '%s' since the format is already supported by the server", id = 28024)
+   void skippingMarshallerWrapping(String mediaType);
 }

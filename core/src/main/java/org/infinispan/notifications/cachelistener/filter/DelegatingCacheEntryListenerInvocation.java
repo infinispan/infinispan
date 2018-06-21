@@ -50,8 +50,8 @@ public abstract class DelegatingCacheEntryListenerInvocation<K, V> implements Ca
    }
 
    @Override
-   public void invokeNoChecks(EventWrapper<K, V, CacheEntryEvent<K, V>> event, boolean skipQueue, boolean skipConverter) {
-      invocation.invokeNoChecks(event, skipQueue, skipConverter);
+   public void invokeNoChecks(EventWrapper<K, V, CacheEntryEvent<K, V>> event, boolean skipQueue, boolean skipConverter, boolean needsTransform) {
+      invocation.invokeNoChecks(event, skipQueue, skipConverter, needsTransform);
    }
 
    @Override
@@ -102,5 +102,10 @@ public abstract class DelegatingCacheEntryListenerInvocation<K, V> implements Ca
    @Override
    public DataConversion getValueDataConversion() {
       return invocation.getValueDataConversion();
+   }
+
+   @Override
+   public boolean useStorageFormat() {
+      return invocation.useStorageFormat();
    }
 }

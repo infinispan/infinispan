@@ -60,7 +60,7 @@ public abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x {
       // This is not quite correct, as the ownership of segments on the 1.0/1.1 clients is not exactly
       // the same as on the server. But the difference appears only for (numSegment*numOwners/MAX_INT)
       // of the keys (at the "segment borders"), so it's still much better than having no hash information.
-      // The idea here is to be able to be compatible with clients running version 1.0 of the protocol.
+      // The idea here is to be able to support clients running version 1.0 of the protocol.
       // With time, users should migrate to version 1.2 capable clients.
       DistributionManager distManager = cache.getDistributionManager();
       ConsistentHash ch = distManager.getReadConsistentHash();

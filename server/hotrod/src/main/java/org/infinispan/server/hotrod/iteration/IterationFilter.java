@@ -7,13 +7,14 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -23,52 +24,49 @@ import org.infinispan.metadata.Metadata;
  */
 
 public class IterationFilter<K, V, C> extends AbstractKeyValueFilterConverter<K, V, C> {
-   final boolean compat;
    final Optional<KeyValueFilterConverter<K, V, C>> providedFilter;
-   final Optional<Marshaller> marshaller;
-   final boolean binary;
+   private final MediaType requestType;
+   private final MediaType storageMediaType;
+   private transient Transcoder applyBefore, applyAfter;
 
-   protected Marshaller filterMarshaller;
-
-   public IterationFilter(boolean compat, Optional<KeyValueFilterConverter<K, V, C>> providedFilter,
-                          Optional<Marshaller> marshaller, boolean binary) {
-      this.compat = compat;
+   public IterationFilter(MediaType storageMediaType, MediaType requestType, Optional<KeyValueFilterConverter<K, V, C>> providedFilter) {
+      this.storageMediaType = storageMediaType;
+      this.requestType = requestType;
       this.providedFilter = providedFilter;
-      this.marshaller = marshaller;
-      this.binary = binary;
    }
 
    @Override
    public C filterAndConvert(K key, V value, Metadata metadata) {
       if (providedFilter.isPresent()) {
          KeyValueFilterConverter<K, V, C> f = providedFilter.get();
-         if (!compat && !binary) {
-            try {
-               K unmarshalledKey = (K) filterMarshaller.objectFromByteBuffer((byte[]) key);
-               V unmarshalledValue = (V) filterMarshaller.objectFromByteBuffer((byte[]) value);
-               C result = f.filterAndConvert(unmarshalledKey, unmarshalledValue, metadata);
-               if (result != null) {
-                  return (C) filterMarshaller.objectToByteBuffer(result);
-               } else {
-                  return null;
-               }
-            } catch (IOException | ClassNotFoundException | InterruptedException e) {
-               throw new CacheException(e);
-            }
-         } else {
-            return f.filterAndConvert(key, value, metadata);
+         Object keyTranscoded = key;
+         Object valueTranscoded = value;
+         if (applyBefore != null) {
+            keyTranscoded = applyBefore.transcode(key, storageMediaType, f.format());
+            valueTranscoded = applyBefore.transcode(value, storageMediaType, f.format());
          }
+
+         C result = f.filterAndConvert((K) keyTranscoded, (V) valueTranscoded, metadata);
+         if (result == null) return null;
+         if (applyAfter == null) return result;
+         return (C) applyAfter.transcode(result, f.format(), requestType);
       } else {
          return (C) value;
       }
    }
 
    @Inject
-   public void injectDependencies(Cache cache) {
-      filterMarshaller = compat ? cache.getCacheConfiguration().compatibility().marshaller() :
-            marshaller.orElseGet(() -> MarshallerBuilder.genericFromInstance(providedFilter));
-      providedFilter.ifPresent(kvfc -> cache.getAdvancedCache().getComponentRegistry().wireDependencies(kvfc));
-
+   public void injectDependencies(Cache cache, EncoderRegistry encoderRegistry) {
+      providedFilter.ifPresent(kvfc -> {
+         cache.getAdvancedCache().getComponentRegistry().wireDependencies(kvfc);
+         MediaType filterFormat = kvfc.format();
+         if (filterFormat != null && !filterFormat.equals(storageMediaType)) {
+            applyBefore = encoderRegistry.getTranscoder(filterFormat, storageMediaType);
+         }
+         if (filterFormat != null && !filterFormat.equals(requestType)) {
+            applyAfter = encoderRegistry.getTranscoder(filterFormat, requestType);
+         }
+      });
    }
 
    public static class IterationFilterExternalizer extends AbstractExternalizer<IterationFilter> {
@@ -79,40 +77,27 @@ public class IterationFilter<K, V, C> extends AbstractKeyValueFilterConverter<K,
 
       @Override
       public void writeObject(ObjectOutput output, IterationFilter object) throws IOException {
-         output.writeBoolean(object.compat);
-         output.writeBoolean(object.binary);
          if (object.providedFilter.isPresent()) {
             output.writeBoolean(true);
             output.writeObject(object.providedFilter.get());
          } else {
             output.writeBoolean(false);
          }
-         Class<?> marshallerClass = MarshallerBuilder.toClass(object);
-         if (marshallerClass != null) {
-            output.writeBoolean(true);
-            output.writeObject(marshallerClass);
-         } else {
-            output.writeBoolean(false);
-         }
+         output.writeObject(object.storageMediaType);
+         output.writeObject(object.requestType);
       }
 
       @Override
       public IterationFilter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         boolean compat = input.readBoolean();
-         boolean binary = input.readBoolean();
-
          Optional<KeyValueFilterConverter> filter;
          if (input.readBoolean()) {
             filter = Optional.of((KeyValueFilterConverter) input.readObject());
          } else {
             filter = Optional.empty();
          }
-
-         Optional<Class<Marshaller>> marshallerClass = input.readBoolean() ? Optional.of((Class) input.readObject()) :
-               Optional.empty();
-
-         return new IterationFilter(compat, filter,
-               Optional.ofNullable(MarshallerBuilder.fromClass(marshallerClass, filter)), binary);
+         MediaType storeType = (MediaType) input.readObject();
+         MediaType requestType = (MediaType) input.readObject();
+         return new IterationFilter(storeType, requestType, filter);
       }
    }
 }

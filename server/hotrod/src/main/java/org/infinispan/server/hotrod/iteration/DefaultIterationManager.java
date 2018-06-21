@@ -1,9 +1,10 @@
 package org.infinispan.server.hotrod.iteration;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.filter.CacheFilters.filterAndConvert;
 
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashSet;
@@ -12,27 +13,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.BaseCacheStream;
-import org.infinispan.Cache;
 import org.infinispan.CacheStream;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.dataconversion.CompatModeEncoder;
-import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
+import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
-import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.hotrod.CacheDecodeContext;
 import org.infinispan.server.hotrod.OperationStatus;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.KeyValuePair;
@@ -77,78 +75,73 @@ class IterationState {
    final Iterator<CacheEntry<Object, Object>> iterator;
    final CacheStream<CacheEntry<Object, Object>> stream;
    final int batch;
-   final CompatInfo compatInfo;
    final boolean metadata;
+   final Function<Object, Object> resultFunction;
 
    IterationState(IterationSegmentsListener listener, Iterator<CacheEntry<Object, Object>> iterator, CacheStream<CacheEntry<Object, Object>> stream,
-                  int batch, CompatInfo compatInfo, boolean metadata) {
+                  int batch, boolean metadata, Function<Object, Object> resultFunction) {
       this.listener = listener;
       this.iterator = iterator;
       this.stream = stream;
       this.batch = batch;
-      this.compatInfo = compatInfo;
       this.metadata = metadata;
+      this.resultFunction = resultFunction;
    }
 }
 
-
-class CompatInfo {
-   final boolean enabled;
-   final Encoder valueEncoder;
-
-   CompatInfo(boolean enabled, Encoder valueEncoder) {
-      this.enabled = enabled;
-      this.valueEncoder = valueEncoder;
-   }
-
-   static CompatInfo create(CompatibilityModeConfiguration config) {
-      return new CompatInfo(config.enabled(), config.enabled() ?
-            new CompatModeEncoder(config.marshaller()) : IdentityEncoder.INSTANCE);
-   }
-}
 
 public class DefaultIterationManager implements IterationManager {
-   private final EmbeddedCacheManager cacheManager;
 
-   volatile Optional<Marshaller> marshaller = Optional.empty();
-
-   static final Log log = LogFactory.getLog(DefaultIterationManager.class, Log.class);
+   private static final Log log = LogFactory.getLog(DefaultIterationManager.class, Log.class);
 
    private final Map<String, IterationState> iterationStateMap = CollectionFactory.makeConcurrentMap();
    private final Map<String, KeyValueFilterConverterFactory> filterConverterFactoryMap =
          CollectionFactory.makeConcurrentMap();
 
-   public DefaultIterationManager(EmbeddedCacheManager cacheManager) {
-      this.cacheManager = cacheManager;
-   }
-
    @Override
-   public String start(Cache cache, Optional<BitSet> segments, Optional<KeyValuePair<String, List<byte[]>>> namedFactory, int batch, boolean metadata) {
-      String iterationId = UUID.randomUUID().toString();
-      AdvancedCache<Object, Object> advancedCache = cache.getAdvancedCache();
-      CompatibilityModeConfiguration compatibilityConfig = advancedCache.getCacheConfiguration().compatibility();
+   public String start(CacheDecodeContext cdc, Optional<BitSet> segments, Optional<KeyValuePair<String, List<byte[]>>> namedFactory, int batch, boolean metadata) {
+      String iterationId = Util.threadLocalRandomUUID().toString();
 
-      AdvancedCache<Object, Object> iterationCache = compatibilityConfig.enabled() ?
-            (AdvancedCache<Object, Object>) advancedCache.withEncoding(IdentityEncoder.class) : advancedCache;
+      AdvancedCache advancedCache = cdc.cache().getAdvancedCache();
+      MediaType requestValueType = cdc.getHeader().getValueMediaType();
+      DataConversion valueDataConversion = advancedCache.getValueDataConversion();
+      Function<Object, Object> unmarshaller = p -> valueDataConversion.convert(p, requestValueType, APPLICATION_OBJECT);
 
-      CacheStream<CacheEntry<Object, Object>> stream = iterationCache.cacheEntrySet().stream();
-      segments.map(bitSet -> stream.filterKeySegments(bitSet.stream().boxed().collect(Collectors.toSet())));
+      MediaType storageMediaType = advancedCache.getValueDataConversion().getStorageMediaType();
 
       IterationSegmentsListener segmentListener = new IterationSegmentsListener();
-      CompatInfo compatInfo = CompatInfo.create(compatibilityConfig);
-
+      CacheStream<CacheEntry<Object, Object>> stream;
       Stream<CacheEntry<Object, Object>> filteredStream;
-      if (namedFactory.isPresent()) {
+      Function<Object, Object> resultTransformer = Function.identity();
+      AdvancedCache iterationCache = advancedCache;
+      if (!namedFactory.isPresent()) {
+         stream = advancedCache.cacheEntrySet().stream();
+         segments.map(bitSet -> stream.filterKeySegments(bitSet.stream().boxed().collect(Collectors.toSet())));
+         filteredStream = stream.segmentCompletionListener(segmentListener);
+      } else {
+
          KeyValueFilterConverterFactory factory = getFactory(namedFactory.get().getKey());
          List<byte[]> params = namedFactory.get().getValue();
-         KeyValuePair<KeyValueFilterConverter, Boolean> filter = buildFilter(factory, params.toArray(new byte[params.size()][]));
-         IterationFilter iterationFilter = new IterationFilter(compatInfo.enabled, Optional.of(filter.getKey()), marshaller, filter.getValue());
-         filteredStream = filterAndConvert(stream.segmentCompletionListener(segmentListener), iterationFilter);
-      } else {
-         filteredStream = stream.segmentCompletionListener(segmentListener);
-      }
 
-      IterationState iterationState = new IterationState(segmentListener, filteredStream.iterator(), stream, batch, compatInfo, metadata);
+         KeyValuePair<KeyValueFilterConverter, Boolean> filter = buildFilter(factory, params.toArray(new byte[params.size()][]), unmarshaller);
+         KeyValueFilterConverter customFilter = filter.getKey();
+         MediaType filterMediaType = customFilter.format();
+
+         if (filterMediaType != null && filterMediaType.equals(storageMediaType)) {
+            iterationCache = advancedCache.withEncoding(IdentityEncoder.class).withMediaType(filterMediaType.toString(), filterMediaType.toString());
+         }
+         stream = iterationCache.cacheEntrySet().stream();
+         segments.map(bitSet -> stream.filterKeySegments(bitSet.stream().boxed().collect(Collectors.toSet())));
+         IterationFilter iterationFilter = new IterationFilter(storageMediaType, requestValueType, Optional.of(filter.getKey()));
+         filteredStream = filterAndConvert(stream.segmentCompletionListener(segmentListener), iterationFilter);
+         if (filterMediaType != null && !storageMediaType.equals(requestValueType)) {
+            resultTransformer = valueDataConversion::fromStorage;
+         }
+      }
+      Iterator<CacheEntry<Object, Object>> iterator = filteredStream.iterator();
+
+      IterationState iterationState = new IterationState(segmentListener, iterator, stream, batch, metadata, resultTransformer);
+
       iterationStateMap.put(iterationId, iterationState);
       return iterationId;
    }
@@ -161,14 +154,14 @@ public class DefaultIterationManager implements IterationManager {
       return factory;
    }
 
-   private KeyValuePair<KeyValueFilterConverter, Boolean> buildFilter(KeyValueFilterConverterFactory factory, byte[][] params) {
+   private KeyValuePair<KeyValueFilterConverter, Boolean> buildFilter(KeyValueFilterConverterFactory factory, byte[][] params, Function<Object, Object> unmarshallParam) {
       if (factory instanceof ParamKeyValueFilterConverterFactory) {
          ParamKeyValueFilterConverterFactory paramFactory = (ParamKeyValueFilterConverterFactory) factory;
          Object[] unmarshallParams;
          if (paramFactory.binaryParam()) {
             unmarshallParams = params;
          } else {
-            unmarshallParams = unmarshallParams(params, factory);
+            unmarshallParams = Arrays.stream(params).map(unmarshallParam).toArray();
          }
          return new KeyValuePair<>(paramFactory.getFilterConverter(unmarshallParams),
                paramFactory.binaryParam());
@@ -176,21 +169,6 @@ public class DefaultIterationManager implements IterationManager {
          return new KeyValuePair<>(factory.getFilterConverter(), false);
       }
    }
-
-   private Object[] unmarshallParams(byte[][] params, Object factory) {
-      Marshaller m = marshaller.orElseGet(() -> MarshallerBuilder.genericFromInstance(Optional.of(factory)));
-      try {
-         Object[] objectParams = new Object[params.length];
-         int i = 0;
-         for (byte[] param : params) {
-            objectParams[i++] = m.objectFromByteBuffer(param);
-         }
-         return objectParams;
-      } catch (IOException | ClassNotFoundException e) {
-         throw new CacheException(e);
-      }
-   }
-
 
    @Override
    public IterableIterationResult next(String cacheName, String iterationId) {
@@ -202,10 +180,10 @@ public class DefaultIterationManager implements IterationManager {
             entries.add(iterationState.iterator.next());
          }
          return new IterableIterationResult(iterationState.listener.getFinished(entries.isEmpty()), OperationStatus.Success,
-               entries, iterationState.compatInfo, iterationState.metadata);
+               entries, iterationState.metadata, iterationState.resultFunction);
       } else {
          return new IterableIterationResult(Collections.emptySet(), OperationStatus.InvalidIteration,
-               Collections.emptyList(), null, false);
+               Collections.emptyList(), false, Function.identity());
       }
    }
 
@@ -235,8 +213,4 @@ public class DefaultIterationManager implements IterationManager {
       return iterationStateMap.size();
    }
 
-   @Override
-   public void setMarshaller(Optional<Marshaller> marshaller) {
-      this.marshaller = marshaller;
-   }
 }

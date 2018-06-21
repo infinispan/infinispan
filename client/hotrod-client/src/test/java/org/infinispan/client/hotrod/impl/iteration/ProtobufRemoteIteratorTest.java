@@ -4,7 +4,6 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -18,6 +17,7 @@ import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -26,10 +26,12 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.testng.annotations.Test;
 
 /**
@@ -45,6 +47,8 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
+      cfgBuilder.encoding().key().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
+      cfgBuilder.encoding().value().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
       createHotRodServers(NUM_NODES, cfgBuilder);
       waitForClusterToForm();
 
@@ -53,26 +57,20 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
       metadataCache.put("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
-      ProtoStreamMarshaller marshaller = new CustomProtoStreamMarshaller();
-
-      servers.forEach(s -> s.setMarshaller(marshaller));
+      // Register extra marshallers in the ProtobufMetadataManager. In standalone servers this can be done with a deployment jar.
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         MarshallerRegistration.registerMarshallers(ProtobufMetadataManagerImpl.getSerializationContextInternal(cm));
+      }
 
       //initialize client-side serialization context
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(client(0)));
 
    }
 
-   public static class CustomProtoStreamMarshaller extends ProtoStreamMarshaller {
-
-      public CustomProtoStreamMarshaller() throws IOException {
-         MarshallerRegistration.registerMarshallers(getSerializationContext());
-      }
-   }
-
    @Override
    protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(int serverPort) {
       return super.createHotRodClientConfigurationBuilder(serverPort)
-              .marshaller(new ProtoStreamMarshaller());
+            .marshaller(new ProtoStreamMarshaller());
    }
 
    public void testSimpleIteration() {
@@ -133,7 +131,7 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
 
       assertEquals(4, keys.size());
       assertForAll(keys, key -> key >= lowerId && key <= higherId);
-      assertForAll(entries,e -> e.getValue() instanceof AccountPB);
+      assertForAll(entries, e -> e.getValue() instanceof AccountPB);
 
       Query projectionsQuery = queryFactory.from(AccountPB.class).select("id", "description").having("id").between(lowerId, higherId).build();
       Set<Entry<Integer, Object[]>> entriesWithProjection = extractEntries(remoteCache.retrieveEntriesByQuery(projectionsQuery, null, 10));

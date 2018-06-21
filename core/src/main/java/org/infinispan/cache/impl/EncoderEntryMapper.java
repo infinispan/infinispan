@@ -10,8 +10,8 @@ import java.util.Set;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.util.InjectiveFunction;
-import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -54,21 +54,11 @@ public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements Inje
    }
 
    @Override
-   @SuppressWarnings("unchecked")
    public T apply(T e) {
-      return apply(e, false);
-   }
-
-   public T apply(T e, boolean ignoreStorageFormatFilterable) {
-      boolean keyFilterable = !ignoreStorageFormatFilterable && keyDataConversion.isStorageFormatFilterable();
-      boolean valueFilterable = !ignoreStorageFormatFilterable && valueDataConversion.isStorageFormatFilterable();
       K key = e.getKey();
-      Object unwrapped = keyDataConversion.getWrapper().unwrap(key);
-      Object newKey = keyFilterable ? unwrapped : keyDataConversion.fromStorage(key);
       V value = e.getValue();
-
-      Object unwrappedValue = valueDataConversion.getWrapper().unwrap(value);
-      Object newValue = valueFilterable ? unwrappedValue : valueDataConversion.fromStorage(value);
+      Object newKey = keyDataConversion.fromStorage(key);
+      Object newValue = valueDataConversion.fromStorage(value);
       if (key != newKey || value != newValue) {
          if (e instanceof CacheEntry) {
             CacheEntry<K, V> ce = (CacheEntry<K, V>) e;

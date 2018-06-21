@@ -49,6 +49,10 @@ public final class DataConversion {
    private MediaType requestMediaType;
    private MediaType storageMediaType;
 
+   public MediaType getRequestMediaType() {
+      return requestMediaType;
+   }
+
    private Short encoderId;
    private Byte wrapperId;
    private Encoder encoder;
@@ -85,6 +89,7 @@ public final class DataConversion {
       this.encoderClass = encoder.getClass();
       this.wrapperClass = wrapper.getClass();
       this.isKey = isKey;
+      this.storageMediaType = MediaType.APPLICATION_UNKNOWN;
    }
 
    public DataConversion withRequestMediaType(MediaType requestMediaType) {
@@ -125,14 +130,25 @@ public final class DataConversion {
       if (!embeddedMode && configuration.indexing().index().isEnabled() && contentTypeConfiguration.mediaType() == null) {
          return MediaType.APPLICATION_PROTOSTREAM;
       }
-      // Assume octet-stream for server
-      if (!embeddedMode) return MediaType.APPLICATION_OCTET_STREAM;
-
-      return null;
+      return MediaType.APPLICATION_UNKNOWN;
    }
 
    public boolean isConversionSupported(MediaType mediaType) {
       return storageMediaType == null || encoderRegistry.isConversionSupported(storageMediaType, mediaType);
+   }
+
+   public Object convert(Object o, MediaType from, MediaType to) {
+      if (o == null) return null;
+      if (encoderRegistry == null) return o;
+      Transcoder transcoder = encoderRegistry.getTranscoder(from, to);
+      return transcoder.transcode(o, from, to);
+   }
+
+   public Object convertToRequestFormat(Object o, MediaType contentType) {
+      if (o == null) return null;
+      if (requestMediaType == null) return fromStorage(o);
+      Transcoder transcoder = encoderRegistry.getTranscoder(contentType, requestMediaType);
+      return transcoder.transcode(o, contentType, requestMediaType);
    }
 
    @Inject
@@ -241,7 +257,7 @@ public final class DataConversion {
    }
 
    public boolean isStorageFormatFilterable() {
-      return encoder.isStorageFormatFilterable();
+      return storageMediaType != null && storageMediaType.equals(MediaType.APPLICATION_OBJECT);
    }
 
    @Override
@@ -252,7 +268,8 @@ public final class DataConversion {
       return isKey == that.isKey &&
             Objects.equals(encoder, that.encoder) &&
             Objects.equals(wrapper, that.wrapper) &&
-            Objects.equals(transcoder, that.transcoder);
+            Objects.equals(transcoder, that.transcoder) &&
+            Objects.equals(requestMediaType, that.requestMediaType);
    }
 
    @Override

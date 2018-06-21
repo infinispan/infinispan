@@ -231,7 +231,7 @@ public abstract class AbstractEncoder1x implements VersionedEncoder {
          // This is not quite correct, as the ownership of segments on the 1.0/1.1/1.2 clients is not exactly
          // the same as on the server. But the difference appears only for (numSegment*numOwners/MAX_INT)
          // of the keys (at the "segment borders"), so it's still much better than having no hash information.
-         // The idea here is to be able to be compatible with clients running version 1.0 of the protocol.
+         // The idea here is to be able to support clients running version 1.0 of the protocol.
          // TODO Need a check somewhere on startup, this only works with the default key partitioner
          int numSegments = ch.getNumSegments();
          KeyPartitioner keyPartitioner = ((PartitionerConsistentHash) ch).getKeyPartitioner();

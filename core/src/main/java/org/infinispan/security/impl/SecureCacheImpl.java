@@ -118,6 +118,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public <C> void addStorageFormatFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
+      authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
+      delegate.addStorageFormatFilteredListener(listener, filter, converter, filterAnnotations);
+   }
+
+   @Override
    public void start() {
       authzManager.checkPermission(subject, AuthorizationPermission.LIFECYCLE);
       delegate.start();

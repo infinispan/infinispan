@@ -23,12 +23,13 @@ import java.util.Map.Entry;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.arquillian.core.RunningServer;
+import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
@@ -43,24 +44,21 @@ import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.GenderMarshaller;
 import org.infinispan.protostream.sampledomain.marshallers.UserMarshaller;
-import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
-import org.infinispan.server.test.category.HotRodSingleNode;
+import org.infinispan.query.remote.client.ProtostreamSerializationContextInitializer;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
-import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
+import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 /**
@@ -72,7 +70,7 @@ import org.junit.runner.RunWith;
  * @since 8.0
  */
 @RunWith(Arquillian.class)
-@Category(HotRodSingleNode.class)
+@WithRunningServer(@RunningServer(name = "remote-iterator-local"))
 public class HotRodCustomMarshallerIteratorIT {
 
    private static final String FILTER_MARSHALLER_DEPLOYMENT_JAR = "filter-marshaller.jar";
@@ -84,28 +82,29 @@ public class HotRodCustomMarshallerIteratorIT {
 
    private RemoteCache<Integer, User> remoteCache;
 
-   @InfinispanResource("container1")
+   @InfinispanResource("remote-iterator-local")
    RemoteInfinispanServer server1;
 
-   @Deployment(testable = false)
-   @TargetsContainer("container1")
-   public static Archive<?> deploy() throws IOException {
+   @BeforeClass
+   public static void deploy() throws IOException {
       String protoFile = Util.getResourceAsString("/sample_bank_account/bank.proto", HotRodCustomMarshallerIteratorIT.class.getClassLoader());
 
-      return ShrinkWrap.create(JavaArchive.class, FILTER_MARSHALLER_DEPLOYMENT_JAR)
+      JavaArchive archive = ShrinkWrap.create(JavaArchive.class, FILTER_MARSHALLER_DEPLOYMENT_JAR)
             // Add custom marshaller classes
-            .addClasses(CustomProtoStreamMarshaller.class, ProtoStreamMarshaller.class, BaseProtoStreamMarshaller.class)
             .addClasses(HotRodClientException.class, UserMarshaller.class, GenderMarshaller.class, User.class, Address.class)
             // Add marshaller dependencies
             .add(new StringAsset(protoFile), "/sample_bank_account/bank.proto")
-            .add(new StringAsset("Dependencies: org.infinispan.protostream"), "META-INF/MANIFEST.MF")
-            // Register marshaller
-            .addAsServiceProvider(Marshaller.class, CustomProtoStreamMarshaller.class)
+            .add(new StringAsset("Dependencies: org.infinispan.protostream, org.infinispan.remote-query.client"), "META-INF/MANIFEST.MF")
+            .addClass(ServerCtxInitializer.class)
+            .addAsServiceProvider(ProtostreamSerializationContextInitializer.class, ServerCtxInitializer.class)
             // Add custom filterConverter classes
             .addClasses(CustomFilterFactory.class, CustomFilterFactory.CustomFilter.class, ParamCustomFilterFactory.class,
                   ParamCustomFilterFactory.ParamCustomFilter.class)
             // Register custom filterConverterFactories
             .addAsServiceProviderAndClasses(KeyValueFilterConverterFactory.class, ParamCustomFilterFactory.class, CustomFilterFactory.class);
+
+      File deployment = new File(System.getProperty("server1.dist"), "/standalone/deployments/" + FILTER_MARSHALLER_DEPLOYMENT_JAR);
+      archive.as(ZipExporter.class).exportTo(deployment, true);
    }
 
    @Before
@@ -186,7 +185,15 @@ public class HotRodCustomMarshallerIteratorIT {
       return entryMap;
    }
 
-   // Custom filter and marshaller
+   public static class ServerCtxInitializer implements ProtostreamSerializationContextInitializer {
+
+      @Override
+      public void init(SerializationContext serializationContext) throws IOException {
+         serializationContext.registerProtoFiles(FileDescriptorSource.fromResources(ServerCtxInitializer.class.getClassLoader(), "/sample_bank_account/bank.proto"));
+         serializationContext.registerMarshaller(new UserMarshaller());
+         serializationContext.registerMarshaller(new GenderMarshaller());
+      }
+   }
 
    public static class CustomProtoStreamMarshaller extends ProtoStreamMarshaller {
       public CustomProtoStreamMarshaller() throws IOException {

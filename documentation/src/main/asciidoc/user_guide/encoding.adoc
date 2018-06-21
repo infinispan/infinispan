@@ -176,3 +176,164 @@ Object value = compressingCache.withEncoding(IdentityEncoder.class).get("2979317
 // value is a byte[] which is the compressed value
 ----
 
+
+==== MediaType[[encoding:media_type]]
+
+A Cache can optionally be configured with a `org.infinispan.commons.dataconversion.MediaType` for keys and values. By describing the data format of the cache, {brandname} is able to convert data on the fly during cache operations.
+
+NOTE: The MediaType configuration is more suitable when storing binary data. When using server mode, it's common to have a MediaType configured and clients such as REST or Hot Rod reading and writing in different formats.
+
+The data conversion between MediaType formats are handled by instances of `org.infinispan.commons.dataconversion.Transcoder`
+
+[source,java]
+----
+public interface Transcoder {
+
+   /**
+    * Transcodes content between two different {@link MediaType}.
+    *
+    * @param content         Content to transcode.
+    * @param contentType     The {@link MediaType} of the content.
+    * @param destinationType The target {@link MediaType} to convert.
+    * @return the transcoded content.
+    */
+   Object transcode(Object content, MediaType contentType, MediaType destinationType);
+
+   /**
+    * @return all the {@link MediaType} handled by this Transcoder.
+    */
+   Set<MediaType> getSupportedMediaTypes();
+}
+----
+
+===== Configuration
+
+Declarative:
+
+[source,xml]
+----
+<cache>
+   <encoding>
+      <key media-type="application/x-java-object; type=java.lang.Integer"/>
+      <value media-type="application/xml; charset=UTF-8"/>
+   </encoding>
+</cache>
+----
+
+Programmatic:
+
+[source,java]
+----
+ConfigurationBuilder cfg = new ConfigurationBuilder();
+
+cfg.encoding().key().mediaType("text/plain");
+cfg.encoding().value().mediaType("application/json");
+
+----
+
+===== Overriding the MediaType programmatically
+
+It's possible to decorate the Cache with a different MediaType, allowing cache operations to be executed sending and receiving different data formats.
+
+
+Example:
+
+[source,java]
+----
+DefaultCacheManager cacheManager = new DefaultCacheManager();
+
+// The cache will store POJO for keys and values
+ConfigurationBuilder cfg = new ConfigurationBuilder();
+cfg.encoding().key().mediaType("application/x-java-object");
+cfg.encoding().key().mediaType("application/x-java-object");
+
+cacheManager.defineConfiguration("mycache", cfg.build());
+
+Cache<Integer, Person> cache = cacheManager.getCache("mycache");
+
+cache.put(1, new Person("John","Doe"));
+
+// Wraps cache using 'application/x-java-object' for keys but JSON for values.
+cache.getAdvancedCache().withMediaType("application/x-java-object", "application/json");
+
+byte[] json = cache.get(1);
+
+----
+
+Will return the value in JSON format:
+
+[source,json]
+----
+{
+   "_type":"org.infinispan.sample.Person",
+   "name":"John",
+   "surname":"Doe"
+}
+----
+
+
+CAUTION: Most Transcoders are installed when server mode is used; when using library mode, an extra dependency, _org.infinispan:infinispan-server-core_ should be added to the project.
+
+===== Transcoders and Encoders
+
+Usually there will be none or only one data conversion involved in a cache operation:
+
+ * No conversion by default on caches using in embedded or server mode;
+ * _Encoder_ based conversion for embedded caches without MediaType configured, but using OFF_HEAP or BINARY;
+ * _Transcoder_ based conversion for caches used in server mode with multiple REST and Hot Rod clients sending
+and receiving data in different formats. Those caches will have MediaType configured describing the storage.
+
+But it's possible to have both encoders and transcoders being used simultaneously for advanced use cases.
+
+Consider an example, a cache that stores marshalled objects (with jboss marshaller) content but for security reasons a transparent encryption layer should be added in order to avoid storing "plain" data to an external store.
+Clients should be able to read and write data in multiple formats.
+
+This can be achieved by configuring the cache with the the MediaType that describes the storage regardless of the encoding layer:
+
+[source,java]
+----
+ConfigurationBuilder cfg = new ConfigurationBuilder();
+cfg.encoding().key().mediaType("application/x-jboss-marshalling");
+cfg.encoding().key().mediaType("application/x-jboss-marshalling");
+----
+
+
+The transparent encryption can be added by decorating the cache with a special _Encoder_ that encrypts/decrypts with storing/retrieving, for example:
+
+[source,java]
+----
+public class Scrambler implements Encoder {
+
+   Object toStorage(Object content) {
+      // Encrypt data
+   }
+
+   Object fromStorage(Object content) {
+      // Decrypt data
+   }
+
+   MediaType getStorageFormat() {
+      return "application/scrambled";
+   }
+
+}
+----
+
+To make sure all data written to the cache will be stored encrypted, it's necessary to decorate the cache with the Encoder above and perform all cache operations in this decorated cache:
+
+
+[source,java]
+----
+Cache<?,?> secureStorageCache = cache.getAdvancedCache().withEncoding(Scrambler.class).put(k,v);
+----
+
+
+The capability of reading data in multiple formats can be added by decorating the cache with the desired MediaType:
+
+[source,java]
+----
+// Obtain a stream of values in XML format from the secure cache
+secureStorageCache.getAdvancedCache().withMediaType("application/xml","application/xml").values().stream();
+----
+
+Internally, {brandname} will first apply the encoder _fromStorage_ operation to obtain the entries, that will be in "application/x-jboss-marshalling" format and then apply a successive conversion to "application/xml" by using the adequate Transcoder.

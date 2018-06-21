@@ -1,8 +1,5 @@
 package org.infinispan.server.hotrod;
 
-import static org.infinispan.server.core.ExternalizerIds.BINARY_CONVERTER;
-import static org.infinispan.server.core.ExternalizerIds.BINARY_FILTER;
-import static org.infinispan.server.core.ExternalizerIds.BINARY_FILTER_CONVERTER;
 import static org.infinispan.server.core.ExternalizerIds.CACHE_XID;
 import static org.infinispan.server.core.ExternalizerIds.CLIENT_ADDRESS;
 import static org.infinispan.server.core.ExternalizerIds.ITERATION_FILTER;
@@ -25,9 +22,6 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.server.hotrod.ClientListenerRegistry.UnmarshallConverterExternalizer;
-import org.infinispan.server.hotrod.ClientListenerRegistry.UnmarshallFilterConverterExternalizer;
-import org.infinispan.server.hotrod.ClientListenerRegistry.UnmarshallFilterExternalizer;
 import org.infinispan.server.hotrod.event.KeyValueWithPreviousEventConverterExternalizer;
 import org.infinispan.server.hotrod.iteration.IterationFilter;
 import org.infinispan.server.hotrod.tx.CacheXid;
@@ -57,10 +51,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
       Map<Integer, AdvancedExternalizer<?>> externalizers = globalCfg.serialization().advancedExternalizers();
       externalizers.put(SERVER_ADDRESS, new ServerAddress.Externalizer());
-      externalizers.put(BINARY_FILTER, new UnmarshallFilterExternalizer());
-      externalizers.put(BINARY_CONVERTER, new UnmarshallConverterExternalizer());
       externalizers.put(KEY_VALUE_VERSION_CONVERTER, new KeyValueVersionConverter.Externalizer());
-      externalizers.put(BINARY_FILTER_CONVERTER, new UnmarshallFilterConverterExternalizer());
       externalizers.put(KEY_VALUE_WITH_PREVIOUS_CONVERTER, new KeyValueWithPreviousEventConverterExternalizer());
       externalizers.put(ITERATION_FILTER, new IterationFilter.IterationFilterExternalizer());
       externalizers.put(TX_STATE, TxState.EXTERNALIZER);

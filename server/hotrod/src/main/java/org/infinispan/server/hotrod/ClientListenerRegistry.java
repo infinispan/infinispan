@@ -1,11 +1,8 @@
 package org.infinispan.server.hotrod;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
+
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -26,15 +23,16 @@ import java.util.stream.Collectors;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.threads.DefaultThreadFactory;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -45,15 +43,12 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
-import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
-import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.KeyValuePair;
 
@@ -63,18 +58,16 @@ import io.netty.channel.Channel;
  * @author Galder Zamarreño
  */
 class ClientListenerRegistry {
-   private final HotRodServerConfiguration configuration;
+   private final EncoderRegistry encoderRegistry;
 
-   ClientListenerRegistry(HotRodServerConfiguration configuration) {
-      this.configuration = configuration;
+   ClientListenerRegistry(EncoderRegistry encoderRegistry) {
+      this.encoderRegistry = encoderRegistry;
    }
 
    private final static Log log = LogFactory.getLog(ClientListenerRegistry.class, Log.class);
    private final static boolean isTrace = log.isTraceEnabled();
 
    private final ConcurrentMap<WrappedByteArray, Object> eventSenders = new ConcurrentHashMap<>();
-
-   volatile private Optional<Marshaller> marshaller = Optional.empty();
    private final ConcurrentMap<String, CacheEventFilterFactory> cacheEventFilterFactories = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
    private final ConcurrentMap<String, CacheEventConverterFactory> cacheEventConverterFactories = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
    private final ConcurrentMap<String, CacheEventFilterConverterFactory> cacheEventFilterConverterFactories = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
@@ -84,8 +77,14 @@ class ClientListenerRegistry {
          new DefaultThreadFactory(null, 1, "add-listener-thread-%t", null, null));
 
    void setEventMarshaller(Optional<Marshaller> eventMarshaller) {
-      // Set a custom marshaller or reset to default if none
-      marshaller = eventMarshaller;
+      eventMarshaller.ifPresent(m -> {
+         TranscoderMarshallerAdapter adapter = new TranscoderMarshallerAdapter(m);
+         if (encoderRegistry.isConversionSupported(MediaType.APPLICATION_OBJECT, m.mediaType())) {
+            log.skippingMarshallerWrapping(m.mediaType().toString());
+         } else {
+            encoderRegistry.registerTranscoder(adapter);
+         }
+      });
    }
 
    void addCacheEventFilterFactory(String name, CacheEventFilterFactory factory) {
@@ -124,10 +123,8 @@ class ClientListenerRegistry {
                           KeyValuePair<String, List<byte[]>> converterFactory,
                           boolean useRawData, int listenerInterests) {
       ClientEventType eventType = ClientEventType.createType(converterFactory != null, useRawData, h.version);
-      Object clientEventSender = getClientEventSender(includeState, ch, h.version, cache, listenerId, eventType, h.messageId);
       List<byte[]> binaryFilterParams = filterFactory != null ? filterFactory.getValue() : Collections.emptyList();
       List<byte[]> binaryConverterParams = converterFactory != null ? converterFactory.getValue() : Collections.emptyList();
-      boolean compatEnabled = cache.getCacheConfiguration().compatibility().enabled();
 
       CacheEventFilter<byte[], byte[]> filter;
       CacheEventConverter<byte[], byte[], byte[]> converter;
@@ -135,32 +132,33 @@ class ClientListenerRegistry {
          if (converterFactory != null) {
             if (filterFactory.getKey().equals(converterFactory.getKey())) {
                List<byte[]> binaryParams = binaryFilterParams.isEmpty() ? binaryConverterParams : binaryFilterParams;
-               CacheEventFilterConverter<byte[], byte[], byte[]> filterConverter = getFilterConverter(
-                     filterFactory.getKey(), compatEnabled, useRawData, binaryParams);
+               CacheEventFilterConverter<byte[], byte[], byte[]> filterConverter = getFilterConverter(cache.getValueDataConversion(), h.getValueMediaType(),
+                     filterFactory.getKey(), useRawData, binaryParams);
                filter = filterConverter;
                converter = filterConverter;
             } else {
-               filter = getFilter(filterFactory.getKey(), compatEnabled, useRawData, binaryFilterParams);
-               converter = getConverter(converterFactory.getKey(), compatEnabled, useRawData, binaryConverterParams);
+               filter = getFilter(cache.getValueDataConversion(), h.getValueMediaType(), filterFactory.getKey(), useRawData, binaryFilterParams);
+               converter = getConverter(cache.getValueDataConversion(), h.getValueMediaType(), converterFactory.getKey(), useRawData, binaryConverterParams);
             }
          } else {
-            filter = getFilter(filterFactory.getKey(), compatEnabled, useRawData, binaryFilterParams);
+            filter = getFilter(cache.getValueDataConversion(), h.getValueMediaType(), filterFactory.getKey(), useRawData, binaryFilterParams);
             converter = null;
          }
       } else if (converterFactory != null) {
          filter = null;
-         converter = getConverter(converterFactory.getKey(), compatEnabled, useRawData, binaryConverterParams);
+         converter = getConverter(cache.getValueDataConversion(), h.getValueMediaType(), converterFactory.getKey(), useRawData, binaryConverterParams);
       } else {
          filter = null;
          converter = null;
       }
+      Object clientEventSender = getClientEventSender(includeState, ch, h.version, cache, listenerId, eventType, h.messageId);
 
       eventSenders.put(new WrappedByteArray(listenerId), clientEventSender);
 
       if (includeState) {
          // If state included, do it async
          CompletableFuture<Void> cf = CompletableFuture.runAsync(() ->
-               addCacheListener(cache, clientEventSender, filter, converter, listenerInterests), addListenerExecutor);
+               addCacheListener(cache, clientEventSender, filter, converter, listenerInterests, useRawData), addListenerExecutor);
 
          cf.whenComplete((t, cause) -> {
             Response resp;
@@ -176,14 +174,14 @@ class ClientListenerRegistry {
             ch.writeAndFlush(resp);
          });
       } else {
-         addCacheListener(cache, clientEventSender, filter, converter, listenerInterests);
+         addCacheListener(cache, clientEventSender, filter, converter, listenerInterests, useRawData);
          ch.writeAndFlush(decoder.createSuccessResponse(h, null));
       }
    }
 
    private void addCacheListener(AdvancedCache<byte[], byte[]> cache, Object clientEventSender,
                                  CacheEventFilter<byte[], byte[]> filter, CacheEventConverter<byte[], byte[], byte[]> converter,
-                                 int listenerInterests) {
+                                 int listenerInterests, boolean useRawData) {
       Set<Class<? extends Annotation>> filterAnnotations;
       if (listenerInterests == 0x00) {
          filterAnnotations = new HashSet<>(Arrays.asList(
@@ -201,73 +199,49 @@ class ClientListenerRegistry {
             filterAnnotations.add(CacheEntryExpired.class);
       }
 
-      cache.addFilteredListener(clientEventSender, filter, converter, filterAnnotations);
+      if (useRawData) {
+         cache.addStorageFormatFilteredListener(clientEventSender, filter, converter, filterAnnotations);
+      } else {
+         cache.addFilteredListener(clientEventSender, filter, converter, filterAnnotations);
+      }
    }
 
-   CacheEventFilter<byte[], byte[]> getFilter(String name, Boolean compatEnabled, Boolean useRawData, List<byte[]> binaryParams) {
-      KeyValuePair<CacheEventFilterFactory, Marshaller> factory =
-            findFactory(name, compatEnabled, cacheEventFilterFactories, "key/value filter", useRawData);
-      List<? extends Object> params = unmarshallParams(binaryParams, factory.getValue(), useRawData);
-      return factory.getKey().getFilter(params.toArray());
+   private CacheEventFilter<byte[], byte[]> getFilter(DataConversion valueDataConversion, MediaType requestMedia, String name, Boolean useRawData, List<byte[]> binaryParams) {
+      CacheEventFilterFactory factory = findFactory(name, cacheEventFilterFactories, "key/value filter");
+      List<?> params = unmarshallParams(valueDataConversion, requestMedia, binaryParams, useRawData);
+      return factory.getFilter(params.toArray());
    }
 
-   CacheEventConverter<byte[], byte[], byte[]> getConverter(String name, boolean compatEnabled, Boolean useRawData, List<byte[]> binaryParams) {
-      KeyValuePair<CacheEventConverterFactory, Marshaller> factory =
-            findConverterFactory(name, compatEnabled, cacheEventConverterFactories, "converter", useRawData);
-      List<? extends Object> params = unmarshallParams(binaryParams, factory.getValue(), useRawData);
-      return factory.getKey().getConverter(params.toArray());
+   private CacheEventConverter<byte[], byte[], byte[]> getConverter(DataConversion valueDataConversion, MediaType requestMedia, String name, Boolean useRawData, List<byte[]> binaryParams) {
+      CacheEventConverterFactory factory = findConverterFactory(name, cacheEventConverterFactories);
+      List<?> params = unmarshallParams(valueDataConversion, requestMedia, binaryParams, useRawData);
+      return factory.getConverter(params.toArray());
    }
 
-   CacheEventFilterConverter<byte[], byte[], byte[]> getFilterConverter(String name, boolean compatEnabled, boolean useRawData, List<byte[]> binaryParams) {
-      KeyValuePair<CacheEventFilterConverterFactory, Marshaller> factory =
-            findFactory(name, compatEnabled, cacheEventFilterConverterFactories, "converter", useRawData);
-      List<? extends Object> params = unmarshallParams(binaryParams, factory.getValue(), useRawData);
-      return factory.getKey().getFilterConverter(params.toArray());
+   private CacheEventFilterConverter<byte[], byte[], byte[]> getFilterConverter(DataConversion valueDataConversion, MediaType requestMedia, String name, boolean useRawData, List<byte[]> binaryParams) {
+      CacheEventFilterConverterFactory factory = findFactory(name, cacheEventFilterConverterFactories, "converter");
+      List<?> params = unmarshallParams(valueDataConversion, requestMedia, binaryParams, useRawData);
+      return factory.getFilterConverter(params.toArray());
    }
 
-   KeyValuePair<CacheEventConverterFactory, Marshaller> findConverterFactory(String name, boolean compatEnabled,
-                                                                             ConcurrentMap<String, CacheEventConverterFactory> factories, String factoryType, boolean useRawData) {
+   private CacheEventConverterFactory findConverterFactory(String name, ConcurrentMap<String, CacheEventConverterFactory> factories) {
       if (name.equals("___eager-key-value-version-converter"))
-         return new KeyValuePair<>(KeyValueVersionConverterFactory.SINGLETON, new GenericJBossMarshaller());
+         return KeyValueVersionConverterFactory.SINGLETON;
       else
-         return findFactory(name, compatEnabled, factories, factoryType, useRawData);
+         return findFactory(name, factories, "converter");
    }
 
-   <T> KeyValuePair<T, Marshaller> findFactory(String name, boolean compatEnabled,
-                                               ConcurrentMap<String, T> factories, String factoryType, boolean useRawData) {
+   private <T> T findFactory(String name, ConcurrentMap<String, T> factories, String factoryType) {
 
       T factory = factories.get(name);
       if (factory == null) throw log.missingCacheEventFactory(factoryType, name);
 
-      Marshaller m = marshaller.orElse(new GenericJBossMarshaller(factory.getClass().getClassLoader()));
-      if (useRawData || compatEnabled)
-         return new KeyValuePair<>(factory, m);
-      else
-         return new KeyValuePair<>(createFactory(factory, m), m);
+      return factory;
    }
 
-   <T> T createFactory(T factory, Marshaller marshaller) {
-      if (factory instanceof CacheEventConverterFactory) {
-         return (T) new UnmarshallConverterFactory((CacheEventConverterFactory) factory, marshaller);
-      } else if (factory instanceof CacheEventFilterFactory) {
-         return (T) new UnmarshallFilterFactory((CacheEventFilterFactory) factory, marshaller);
-      } else if (factory instanceof CacheEventFilterConverterFactory) {
-         return (T) new UnmarshallFilterConverterFactory((CacheEventFilterConverterFactory) factory, marshaller);
-      } else {
-         throw new IllegalArgumentException("Unsupported factory: " + factory);
-      }
-   }
-
-   private List<? extends Object> unmarshallParams(List<byte[]> binaryParams, Marshaller marshaller, boolean useRawData) {
-      if (!useRawData) {
-         return binaryParams.stream().map(bp -> {
-            try {
-               return marshaller.objectFromByteBuffer(bp);
-            } catch (IOException | ClassNotFoundException e) {
-               throw new CacheException(e);
-            }
-         }).collect(Collectors.toList());
-      } else return binaryParams;
+   private List<?> unmarshallParams(DataConversion valueDataConversion, MediaType requestMedia, List<byte[]> binaryParams, boolean useRawData) {
+      if (useRawData) return binaryParams;
+      return binaryParams.stream().map(bp -> valueDataConversion.convert(bp, requestMedia, APPLICATION_OBJECT)).collect(Collectors.toList());
    }
 
    boolean removeClientListener(byte[] listenerId, Cache cache) {
@@ -301,10 +275,8 @@ class ClientListenerRegistry {
    private class StatefulClientEventSender extends BaseClientEventSender {
       private final long messageId;
 
-      protected StatefulClientEventSender(Cache cache, Channel ch, byte[] listenerId, byte version,
-                                          ClientEventType targetEventType, DataConversion keyDataConversion,
-                                          DataConversion valueDataConversion, long messageId) {
-         super(cache, ch, listenerId, version, targetEventType, keyDataConversion, valueDataConversion);
+      StatefulClientEventSender(Cache cache, Channel ch, byte[] listenerId, byte version, ClientEventType targetEventType, long messageId) {
+         super(cache, ch, listenerId, version, targetEventType);
          this.messageId = messageId;
       }
 
@@ -314,12 +286,11 @@ class ClientListenerRegistry {
       }
    }
 
-   @Listener(clustered = true, includeCurrentState = false)
+   @Listener(clustered = true)
    private class StatelessClientEventSender extends BaseClientEventSender {
 
-      protected StatelessClientEventSender(Cache cache, Channel ch, byte[] listenerId, byte version, ClientEventType targetEventType,
-                                           DataConversion keyDataConversion, DataConversion valueDataConversion) {
-         super(cache, ch, listenerId, version, targetEventType, keyDataConversion, valueDataConversion);
+      StatelessClientEventSender(Cache cache, Channel ch, byte[] listenerId, byte version, ClientEventType targetEventType) {
+         super(cache, ch, listenerId, version, targetEventType);
       }
    }
 
@@ -328,23 +299,18 @@ class ClientListenerRegistry {
       protected final byte[] listenerId;
       protected final byte version;
       protected final ClientEventType targetEventType;
-      private final DataConversion keyDataConversion;
-      private final DataConversion valueDataConversion;
       protected final Cache cache;
 
       BlockingQueue<Object> eventQueue = new LinkedBlockingQueue<>(100);
 
       private final Runnable writeEventsIfPossible = this::writeEventsIfPossible;
 
-      protected BaseClientEventSender(Cache cache, Channel ch, byte[] listenerId, byte version, ClientEventType targetEventType,
-                                      DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      BaseClientEventSender(Cache cache, Channel ch, byte[] listenerId, byte version, ClientEventType targetEventType) {
          this.cache = cache;
          this.ch = ch;
          this.listenerId = listenerId;
          this.version = version;
          this.targetEventType = targetEventType;
-         this.keyDataConversion = keyDataConversion;
-         this.valueDataConversion = valueDataConversion;
       }
 
       boolean hasChannel(Channel channel) {
@@ -379,13 +345,6 @@ class ClientListenerRegistry {
             }
             Object k = event.getKey();
             Object v = event.getValue();
-            if (keyDataConversion.isStorageFormatFilterable()) {
-               k = keyDataConversion.fromStorage(k);
-            }
-            if (valueDataConversion.isStorageFormatFilterable()) {
-               v = valueDataConversion.fromStorage(v);
-            }
-
             sendEvent((byte[]) k, (byte[]) v, version, event);
          }
       }
@@ -485,220 +444,15 @@ class ClientListenerRegistry {
       }
    }
 
-   Object getClientEventSender(boolean includeState, Channel ch, byte version,
-                               Cache cache, byte[] listenerId, ClientEventType eventType, long messageId) {
-      DataConversion keyDataConversion = cache.getAdvancedCache().getKeyDataConversion();
-      DataConversion valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
+   private Object getClientEventSender(boolean includeState, Channel ch, byte version,
+                                       Cache cache, byte[] listenerId, ClientEventType eventType, long messageId) {
       if (includeState) {
-         return new StatefulClientEventSender(cache, ch, listenerId, version, eventType, keyDataConversion, valueDataConversion, messageId);
+         return new StatefulClientEventSender(cache, ch, listenerId, version, eventType, messageId);
       } else {
-         return new StatelessClientEventSender(cache, ch, listenerId, version, eventType, keyDataConversion, valueDataConversion);
+         return new StatelessClientEventSender(cache, ch, listenerId, version, eventType);
       }
    }
 
-   private class UnmarshallFilterFactory implements CacheEventFilterFactory {
-      private final CacheEventFilterFactory filterFactory;
-      private final Marshaller marshaller;
-
-      private UnmarshallFilterFactory(CacheEventFilterFactory filterFactory, Marshaller marshaller) {
-         this.filterFactory = filterFactory;
-         this.marshaller = marshaller;
-      }
-
-      @Override
-      public <K, V> CacheEventFilter<K, V> getFilter(Object[] params) {
-         return (CacheEventFilter<K, V>) new UnmarshallFilter(filterFactory.getFilter(params), marshaller);
-      }
-   }
-
-   class UnmarshallConverterFactory implements CacheEventConverterFactory {
-      private final CacheEventConverterFactory converterFactory;
-      private final Marshaller marshaller;
-
-      UnmarshallConverterFactory(CacheEventConverterFactory converterFactory, Marshaller marshaller) {
-         this.converterFactory = converterFactory;
-         this.marshaller = marshaller;
-      }
-
-      @Override
-      public <K, V, C> CacheEventConverter<K, V, C> getConverter(Object[] params) {
-         return (CacheEventConverter<K, V, C>) new UnmarshallConverter(converterFactory.getConverter(params), marshaller);
-      }
-   }
-
-   class UnmarshallFilterConverterFactory implements CacheEventFilterConverterFactory {
-      private final CacheEventFilterConverterFactory filterConverterFactory;
-      private final Marshaller marshaller;
-
-      UnmarshallFilterConverterFactory(CacheEventFilterConverterFactory filterConverterFactory, Marshaller marshaller) {
-         this.filterConverterFactory = filterConverterFactory;
-         this.marshaller = marshaller;
-      }
-
-      @Override
-      public <K, V, C> CacheEventFilterConverter<K, V, C> getFilterConverter(Object[] params) {
-         return (CacheEventFilterConverter<K, V, C>) new UnmarshallFilterConverter(filterConverterFactory.getFilterConverter(params), marshaller);
-      }
-   }
-
-   static class UnmarshallFilter implements CacheEventFilter<byte[], byte[]> {
-      private final CacheEventFilter<Object, Object> filter;
-      private final Marshaller marshaller;
-
-      UnmarshallFilter(CacheEventFilter<Object, Object> filter, Marshaller marshaller) {
-         this.filter = filter;
-         this.marshaller = marshaller;
-      }
-
-
-      @Override
-      public boolean accept(byte[] key, byte[] oldValue, Metadata oldMetadata, byte[] newValue, Metadata newMetadata, EventType eventType) {
-         Object unmarshalledKey;
-         Object unmarshalledPrevValue;
-         Object unmarshalledValue;
-         try {
-            unmarshalledKey = marshaller.objectFromByteBuffer(key);
-            unmarshalledPrevValue = oldValue != null ? marshaller.objectFromByteBuffer(oldValue) : null;
-            unmarshalledValue = newValue != null ? marshaller.objectFromByteBuffer(newValue) : null;
-         } catch (IOException | ClassNotFoundException e) {
-            throw new CacheException(e);
-         }
-         return filter.accept(unmarshalledKey, unmarshalledPrevValue, oldMetadata, unmarshalledValue, newMetadata, eventType);
-      }
-   }
-
-   static class UnmarshallFilterExternalizer extends AbstractExternalizer<UnmarshallFilter> {
-      @Override
-      public void writeObject(ObjectOutput output, UnmarshallFilter obj) throws IOException {
-         output.writeObject(obj.filter);
-         output.writeObject(obj.marshaller.getClass());
-      }
-
-      @Override
-      public UnmarshallFilter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         CacheEventFilter<Object, Object> filter = (CacheEventFilter<Object, Object>) input.readObject();
-         Class<? extends Marshaller> marshallerClass = (Class<? extends Marshaller>) input.readObject();
-         // See if the marshaller can be constructed
-         Marshaller marshaller = constructMarshaller(filter, marshallerClass);
-         return new UnmarshallFilter(filter, marshaller);
-      }
-
-      @Override
-      public Set<Class<? extends UnmarshallFilter>> getTypeClasses() {
-         return Collections.singleton(UnmarshallFilter.class);
-      }
-   }
-
-   private static <T> Marshaller constructMarshaller(T t, Class<? extends Marshaller> marshallerClass) {
-      Constructor<? extends Marshaller> constructor = findClassloaderConstructor(marshallerClass);
-      try {
-         if (constructor != null) {
-            return constructor.newInstance(t.getClass().getClassLoader());
-         } else {
-            return marshallerClass.newInstance();
-         }
-      } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-         throw new CacheException(e);
-      }
-   }
-
-   private static Constructor<? extends Marshaller> findClassloaderConstructor(Class<? extends Marshaller> clazz) {
-      try {
-         return clazz.getConstructor(ClassLoader.class);
-      } catch (NoSuchMethodException e) {
-         return null;
-      }
-   }
-
-   static class UnmarshallConverter implements CacheEventConverter<byte[], byte[], byte[]> {
-      private final CacheEventConverter<Object, Object, Object> converter;
-      private final Marshaller marshaller;
-
-      UnmarshallConverter(CacheEventConverter<Object, Object, Object> converter, Marshaller marshaller) {
-         this.converter = converter;
-         this.marshaller = marshaller;
-      }
-
-      @Override
-      public byte[] convert(byte[] key, byte[] oldValue, Metadata oldMetadata, byte[] newValue, Metadata newMetadata, EventType eventType) {
-         try {
-            Object unmarshalledKey = marshaller.objectFromByteBuffer(key);
-            Object unmarshalledPrevValue = oldValue != null ? marshaller.objectFromByteBuffer(oldValue) : null;
-            Object unmarshalledValue = newValue != null ? marshaller.objectFromByteBuffer(newValue) : null;
-            Object converted = converter.convert(unmarshalledKey, unmarshalledPrevValue, oldMetadata, unmarshalledValue, newMetadata, eventType);
-            return marshaller.objectToByteBuffer(converted);
-         } catch (IOException | ClassNotFoundException | InterruptedException e) {
-            throw new CacheException(e);
-         }
-      }
-   }
-
-   static class UnmarshallConverterExternalizer extends AbstractExternalizer<UnmarshallConverter> {
-      @Override
-      public void writeObject(ObjectOutput output, UnmarshallConverter obj) throws IOException {
-         output.writeObject(obj.converter);
-         output.writeObject(obj.marshaller.getClass());
-      }
-
-      @Override
-      public UnmarshallConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         CacheEventConverter<Object, Object, Object> converter = (CacheEventConverter<Object, Object, Object>) input.readObject();
-         Class<? extends Marshaller> marshallerClass = (Class<? extends Marshaller>) input.readObject();
-         Marshaller marshaller = constructMarshaller(converter, marshallerClass);
-         return new UnmarshallConverter(converter, marshaller);
-      }
-
-      @Override
-      public Set<Class<? extends UnmarshallConverter>> getTypeClasses() {
-         return Collections.singleton(UnmarshallConverter.class);
-      }
-   }
-
-   static class UnmarshallFilterConverter extends AbstractCacheEventFilterConverter<byte[], byte[], byte[]> {
-      private final CacheEventFilterConverter<Object, Object, Object> filterConverter;
-      private final Marshaller marshaller;
-
-      UnmarshallFilterConverter(CacheEventFilterConverter<Object, Object, Object> filterConverter, Marshaller marshaller) {
-         this.filterConverter = filterConverter;
-         this.marshaller = marshaller;
-      }
-
-      @Override
-      public byte[] filterAndConvert(byte[] key, byte[] oldValue, Metadata oldMetadata, byte[] newValue, Metadata newMetadata, EventType eventType) {
-         try {
-            Object unmarshalledKey = marshaller.objectFromByteBuffer(key);
-            Object unmarshalledPrevValue = oldValue != null ? marshaller.objectFromByteBuffer(oldValue) : null;
-            Object unmarshalledValue = newValue != null ? marshaller.objectFromByteBuffer(newValue) : null;
-            Object converted = filterConverter.filterAndConvert(unmarshalledKey, unmarshalledPrevValue,
-                  oldMetadata, unmarshalledValue, newMetadata, eventType);
-            return marshaller.objectToByteBuffer(converted);
-         } catch (IOException | ClassNotFoundException | InterruptedException e) {
-            throw new CacheException(e);
-         }
-      }
-   }
-
-   static class UnmarshallFilterConverterExternalizer extends AbstractExternalizer<UnmarshallFilterConverter> {
-      @Override
-      public void writeObject(ObjectOutput output, UnmarshallFilterConverter obj) throws IOException {
-         output.writeObject(obj.filterConverter);
-         output.writeObject(obj.marshaller.getClass());
-      }
-
-      @Override
-      public UnmarshallFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         CacheEventFilterConverter<Object, Object, Object> filterConverter =
-               (CacheEventFilterConverter<Object, Object, Object>) input.readObject();
-         Class<? extends Marshaller> marshallerClass = (Class<? extends Marshaller>) input.readObject();
-         Marshaller marshaller = constructMarshaller(filterConverter, marshallerClass);
-         return new UnmarshallFilterConverter(filterConverter, marshaller);
-      }
-
-      @Override
-      public Set<Class<? extends UnmarshallFilterConverter>> getTypeClasses() {
-         return Collections.singleton(UnmarshallFilterConverter.class);
-      }
-   }
 }
 
 enum ClientEventType {

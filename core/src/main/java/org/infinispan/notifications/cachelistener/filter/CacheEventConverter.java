@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener.filter;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -21,4 +22,9 @@ public interface CacheEventConverter<K, V, C> {
     * @return The converted value to be used in the event
     */
    public C convert(K key, V oldValue, Metadata oldMetadata, V newValue, Metadata newMetadata, EventType eventType);
+
+   default MediaType format() {
+      return MediaType.APPLICATION_OBJECT;
+   }
+
 }

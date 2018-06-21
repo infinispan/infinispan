@@ -2,6 +2,7 @@ package org.infinispan.server.core.dataconversion;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 
@@ -43,7 +44,7 @@ public class XMLTranscoder extends OneToManyTranscoder {
    }
 
    public XMLTranscoder() {
-      super(APPLICATION_XML, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN);
+      super(APPLICATION_XML, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_UNKNOWN);
       XStreamHolder.XStream.addPermission(ExternallyMarshallable::isAllowed);
    }
 
@@ -60,14 +61,14 @@ public class XMLTranscoder extends OneToManyTranscoder {
             String xmlString = XStreamHolder.XStream.toXML(inputText);
             return xmlString.getBytes(destinationType.getCharset());
          }
-         if (contentType.match(APPLICATION_OCTET_STREAM)) {
+         if (contentType.match(APPLICATION_OCTET_STREAM) || contentType.match(APPLICATION_UNKNOWN)) {
             String inputText = StandardConversions.convertTextToObject(content, contentType);
             if (isWellFormed(inputText.getBytes())) return inputText.getBytes();
             String xmlString = XStreamHolder.XStream.toXML(inputText);
             return xmlString.getBytes(destinationType.getCharset());
          }
       }
-      if (destinationType.match(APPLICATION_OCTET_STREAM)) {
+      if (destinationType.match(APPLICATION_OCTET_STREAM) || destinationType.match(APPLICATION_UNKNOWN)) {
          return StandardConversions.convertTextToOctetStream(content, contentType);
       }
       if (destinationType.match(TEXT_PLAIN)) {

@@ -21,12 +21,12 @@ public class HotRodHeader {
       return op;
    }
 
-   public String getKeyMediaType() {
-      return keyType == null ? MediaType.MATCH_ALL_TYPE : keyType.getTypeSubtype();
+   public MediaType getKeyMediaType() {
+      return keyType == null ? MediaType.MATCH_ALL : keyType;
    }
 
-   public String getValueMediaType() {
-      return valueType == null ? MediaType.MATCH_ALL_TYPE : valueType.getTypeSubtype();
+   public MediaType getValueMediaType() {
+      return valueType == null ? MediaType.MATCH_ALL : valueType;
    }
 
    public byte getVersion() {

@@ -473,6 +473,11 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    }
 
    @Override
+   public <C> void addStorageFormatFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
+      cache.addStorageFormatFilteredListener(listener, filter, converter, filterAnnotations);
+   }
+
+   @Override
    public CompletableFuture<V> getAsync(K key) {
       return cache.getAsync(key);
    }

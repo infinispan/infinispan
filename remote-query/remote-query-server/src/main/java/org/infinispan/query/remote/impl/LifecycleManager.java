@@ -1,5 +1,6 @@
 package org.infinispan.query.remote.impl;
 
+import java.util.Collection;
 import java.util.Map;
 
 import javax.management.MBeanServer;
@@ -10,6 +11,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.ContentTypeConfiguration;
@@ -34,6 +36,8 @@ import org.infinispan.objectfilter.Matcher;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
+import org.infinispan.query.remote.client.ProtostreamSerializationContextInitializer;
+import org.infinispan.query.remote.impl.dataconversion.ProtostreamBinaryTranscoder;
 import org.infinispan.query.remote.impl.dataconversion.ProtostreamJsonTranscoder;
 import org.infinispan.query.remote.impl.dataconversion.ProtostreamObjectTranscoder;
 import org.infinispan.query.remote.impl.dataconversion.ProtostreamTextTranscoder;
@@ -84,12 +88,28 @@ public final class LifecycleManager implements ModuleLifecycle {
       ProtobufMetadataManagerImpl protobufMetadataManager = new ProtobufMetadataManagerImpl();
       gcr.registerComponent(protobufMetadataManager, ProtobufMetadataManager.class);
       registerProtobufMetadataManagerMBean(protobufMetadataManager, gcr, cacheManager.getName());
+      ClassLoader classLoader = cacheManager.getCacheManagerConfiguration().classLoader();
+      processContextInitializers(classLoader, protobufMetadataManager);
 
       SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
       EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
       encoderRegistry.registerTranscoder(new ProtostreamJsonTranscoder(serCtx));
       encoderRegistry.registerTranscoder(new ProtostreamTextTranscoder(serCtx));
       encoderRegistry.registerTranscoder(new ProtostreamObjectTranscoder(serCtx));
+      encoderRegistry.registerTranscoder(new ProtostreamBinaryTranscoder());
+   }
+
+   private void processContextInitializers(ClassLoader classLoader, ProtobufMetadataManagerImpl metadataManager) {
+      Collection<ProtostreamSerializationContextInitializer> initializers =
+            ServiceFinder.load(ProtostreamSerializationContextInitializer.class, classLoader);
+
+      initializers.forEach(initCtx -> {
+         try {
+            initCtx.init(metadataManager.getSerializationContext());
+         } catch (Exception e) {
+            throw log.errorInitializingSerCtx(e);
+         }
+      });
    }
 
    private void registerProtobufMetadataManagerMBean(ProtobufMetadataManager protobufMetadataManager, GlobalComponentRegistry gcr, String cacheManagerName) {

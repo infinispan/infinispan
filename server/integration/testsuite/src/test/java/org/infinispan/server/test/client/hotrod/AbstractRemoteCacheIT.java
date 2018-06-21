@@ -4,7 +4,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
-import static org.infinispan.server.test.util.ITestUtils.isLocalMode;
 import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -58,6 +57,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConvert
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -98,39 +98,53 @@ public abstract class AbstractRemoteCacheIT {
     public static void release() {
         if (remoteCacheManager != null) {
             remoteCacheManager.stop();
+            remoteCacheManager = null;
         }
     }
 
-    protected static Archive<?> createFilterArchive() {
+   protected static Archive<?> createPojoArchive() {
+      return ShrinkWrap.create(JavaArchive.class, "pojo.jar")
+            .addClasses(Person.class, Id.class);
+   }
+
+
+   protected static Archive<?> createFilterArchive() {
         return ShrinkWrap.create(JavaArchive.class, "filter.jar")
                 .addClasses(StaticCacheEventFilterFactory.class, DynamicCacheEventFilterFactory.class,
-                        CustomPojoEventFilterFactory.class, Person.class)
+                        CustomPojoEventFilterFactory.class)
                 .addAsServiceProvider(CacheEventFilterFactory.class,
                         StaticCacheEventFilterFactory.class, DynamicCacheEventFilterFactory.class,
-                        CustomPojoEventFilterFactory.class);
+                        CustomPojoEventFilterFactory.class)
+              .add(new StringAsset("Dependencies: deployment.pojo.jar"), "META-INF/MANIFEST.MF");
     }
 
     protected static Archive<?> createConverterArchive() {
         return ShrinkWrap.create(JavaArchive.class, "converter.jar")
                 .addClasses(StaticCacheEventConverterFactory.class, DynamicCacheEventConverterFactory.class,
-                        CustomPojoEventConverterFactory.class, Person.class, CustomEvent.class)
+                        CustomPojoEventConverterFactory.class, CustomEvent.class)
                 .addAsServiceProvider(CacheEventConverterFactory.class,
                         StaticCacheEventConverterFactory.class, DynamicCacheEventConverterFactory.class,
-                        CustomPojoEventConverterFactory.class);
+                        CustomPojoEventConverterFactory.class)
+              .add(new StringAsset("Dependencies: deployment.pojo.jar"), "META-INF/MANIFEST.MF");
+
     }
 
     protected static Archive<?> createFilterConverterArchive() {
         return ShrinkWrap.create(JavaArchive.class, "filter-converter.jar")
                 .addClasses(FilterConverterFactory.class, CustomEvent.class,
-                        CustomPojoFilterConverterFactory.class, Person.class, Id.class)
+                        CustomPojoFilterConverterFactory.class)
                 .addAsServiceProvider(CacheEventFilterConverterFactory.class, FilterConverterFactory.class,
-                        CustomPojoFilterConverterFactory.class);
+                        CustomPojoFilterConverterFactory.class)
+              .add(new StringAsset("Dependencies: deployment.pojo.jar"), "META-INF/MANIFEST.MF");
+
     }
 
     protected static Archive<?> createKeyValueFilterConverterArchive() {
         return ShrinkWrap.create(JavaArchive.class, "key-value-filter-converter.jar")
                 .addClasses(TestKeyValueFilterConverterFactory.class, SampleEntity.class, Summary.class, SampleEntity.SampleEntityExternalizer.class, Summary.SummaryExternalizer.class)
-                .addAsServiceProvider(KeyValueFilterConverterFactory.class, TestKeyValueFilterConverterFactory.class);
+                .addAsServiceProvider(KeyValueFilterConverterFactory.class, TestKeyValueFilterConverterFactory.class)
+              .add(new StringAsset("Dependencies: deployment.pojo.jar"), "META-INF/MANIFEST.MF");
+
     }
 
     private Configuration createRemoteCacheManagerConfiguration(int... hotrodPortOverrides) {
@@ -168,8 +182,12 @@ public abstract class AbstractRemoteCacheIT {
 
     private long numEntriesOnServer(int serverIndex) {
         return getServers().get(serverIndex).
-                getCacheManager(isLocalMode() ? "local" : "clustered").
-                getCache(testCache).getNumberOfEntries();
+              getCacheManager(getCacheManagerName()).
+              getCache(testCache).getNumberOfEntries();
+    }
+
+    protected String getCacheManagerName() {
+        return "clustered";
     }
 
     @Test

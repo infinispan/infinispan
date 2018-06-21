@@ -95,14 +95,6 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
       }
       ClientListener clientListener = extractClientListener();
 
-      boolean usesRawData = clientListener.useRawData();
-      boolean usesFilter = !(clientListener.converterFactoryName().equals("") && clientListener.filterFactoryName().equals(""));
-      boolean customDataFormat = dataFormat != null && dataFormat.hasCustomFormat();
-
-      if (customDataFormat && usesFilter && !usesRawData) {
-         throw log.clientListenerMustUseRawDataWithCustomDataFormat();
-      }
-
       channel.pipeline().get(HeaderDecoder.class).registerOperation(channel, this);
 
       listenerNotifier.addDispatcher(ClientEventDispatcher.create(this,

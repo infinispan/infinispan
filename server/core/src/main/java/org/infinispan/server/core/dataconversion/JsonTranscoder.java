@@ -3,6 +3,7 @@ package org.infinispan.server.core.dataconversion;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 
 import java.io.IOException;
@@ -50,12 +51,12 @@ public class JsonTranscoder extends OneToManyTranscoder {
    }
 
    public JsonTranscoder() {
-      super(APPLICATION_JSON, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN);
+      super(APPLICATION_JSON, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_UNKNOWN);
    }
 
    @Override
    public Object transcode(Object content, MediaType contentType, MediaType destinationType) {
-      if (destinationType.match(APPLICATION_OCTET_STREAM)) {
+      if (destinationType.match(APPLICATION_OCTET_STREAM) || destinationType.match(APPLICATION_UNKNOWN)) {
          return StandardConversions.convertTextToOctetStream(content, contentType);
       }
       if (destinationType.match(APPLICATION_JSON)) {

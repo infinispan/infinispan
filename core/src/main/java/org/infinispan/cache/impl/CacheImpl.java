@@ -907,6 +907,10 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       notifier.addListener(listenerHolder, filter, converter, null);
    }
 
+   <C> void addListener(ListenerHolder listenerHolder, KeyFilter<? super K> filter) {
+      notifier.addListener(listenerHolder, filter);
+   }
+
 
    @Override
    public void addListener(Object listener, KeyFilter<? super K> filter) {
@@ -934,6 +938,13 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
                                        CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
                                        Set<Class<? extends Annotation>> filterAnnotations) {
       notifier.addFilteredListener(listener, filter, converter, filterAnnotations);
+   }
+
+   @Override
+   public <C> void addStorageFormatFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter,
+                                                    CacheEventConverter<? super K, ? super V, C> converter,
+                                                    Set<Class<? extends Annotation>> filterAnnotations) {
+      notifier.addStorageFormatFilteredListener(listener, filter, converter, filterAnnotations);
    }
 
    <C> void addFilteredListener(ListenerHolder listener,

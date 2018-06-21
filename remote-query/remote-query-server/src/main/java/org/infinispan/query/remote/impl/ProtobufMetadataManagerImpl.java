@@ -138,6 +138,11 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       serCtx.registerMarshaller(marshaller);
    }
 
+   @Override
+   public void unregisterMarshaller(BaseMarshaller<?> marshaller) {
+      serCtx.unregisterMarshaller(marshaller);
+   }
+
    @ManagedOperation(description = "Registers a Protobuf definition file", displayName = "Register a Protofile")
    @Override
    public void registerProtofile(@Parameter(name = "fileName", description = "the name of the .proto file") String fileName,

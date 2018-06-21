@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener.filter;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -24,4 +25,9 @@ public interface CacheEventFilterConverter<K, V, C> extends CacheEventFilter<K, 
     */
    public C filterAndConvert(K key, V oldValue, Metadata oldMetadata, V newValue, Metadata newMetadata,
                              EventType eventType);
+
+   @Override
+   default MediaType format() {
+      return MediaType.APPLICATION_OBJECT;
+   }
 }

@@ -56,9 +56,9 @@ import org.testng.annotations.Test;
 public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
    /**
-    * Cache with no MediaType configuration, assumes K and V are application/octet-stream.
+    * Cache with no MediaType configuration, assumes K and V are application/unknown.
     */
-   private static final String BYTES_CACHE_NAME = "bytesCache";
+   private static final String DEFAULT_CACHE_NAME = "defaultCache";
 
    /**
     * Cache that will hold marshalled entries, configured to use application/x-jboss-marshalling for K and V.
@@ -75,7 +75,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
    private HttpClient restClient;
    private EmbeddedCacheManager cacheManager;
 
-   private RemoteCache<byte[], byte[]> bytesRemoteCache;
+   private RemoteCache<byte[], byte[]> defaultRemoteCache;
    private RemoteCache<Object, Object> defaultMarshalledRemoteCache;
    private RemoteCache<String, String> stringRemoteCache;
 
@@ -83,7 +83,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
    protected void setup() throws Exception {
       cacheManager = TestCacheManagerFactory.createServerModeCacheManager();
 
-      cacheManager.defineConfiguration(BYTES_CACHE_NAME, getBytesCacheConfiguration().build());
+      cacheManager.defineConfiguration(DEFAULT_CACHE_NAME, getDefaultCacheConfiguration().build());
       cacheManager.defineConfiguration(MARSHALLED_CACHE_NAME, getMarshalledCacheConfiguration().build());
       cacheManager.defineConfiguration(STRING_CACHE_NAME, getStringsCacheConfiguration().build());
 
@@ -95,12 +95,12 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       hotRodServer = startHotRodServer(cacheManager);
 
-      bytesRemoteCache = createRemoteCacheManager(IdentityMarshaller.INSTANCE).getCache(BYTES_CACHE_NAME);
+      defaultRemoteCache = createRemoteCacheManager(IdentityMarshaller.INSTANCE).getCache(DEFAULT_CACHE_NAME);
       defaultMarshalledRemoteCache = createRemoteCacheManager(null).getCache(MARSHALLED_CACHE_NAME);
       stringRemoteCache = createRemoteCacheManager(new UTF8StringMarshaller()).getCache(STRING_CACHE_NAME);
    }
 
-   private ConfigurationBuilder getBytesCacheConfiguration() {
+   private ConfigurationBuilder getDefaultCacheConfiguration() {
       return new ConfigurationBuilder();
    }
 
@@ -307,11 +307,11 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       byte[] value = new byte[]{10, 20};
 
 
-      bytesRemoteCache.put(key, value);
-      assertArrayEquals(bytesRemoteCache.get(key), value);
+      defaultRemoteCache.put(key, value);
+      assertArrayEquals(defaultRemoteCache.get(key), value);
 
       // Read via Rest
-      Object bytesFromRest = new RestRequest().cache(BYTES_CACHE_NAME)
+      Object bytesFromRest = new RestRequest().cache(DEFAULT_CACHE_NAME)
             .key("0x1326", APPLICATION_OCTET_STREAM.withParameter("encoding", "hex").toString())
             .accept(APPLICATION_OCTET_STREAM)
             .read();
@@ -322,13 +322,13 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       byte[] newKey = new byte[]{0, 0, 0, 1};
 
       // Write via rest
-      new RestRequest().cache(BYTES_CACHE_NAME)
+      new RestRequest().cache(DEFAULT_CACHE_NAME)
             .key("0x00000001", MediaType.APPLICATION_OCTET_STREAM.withParameter("encoding", "hex").toString())
             .value(value)
             .write();
 
       // Read via Hot Rod
-      assertEquals(bytesRemoteCache.get(newKey), value);
+      assertEquals(defaultRemoteCache.get(newKey), value);
    }
 
    @Test
@@ -340,14 +340,14 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       byte[] key = new GenericJBossMarshaller().objectToByteBuffer(objectKey);
       byte[] value = {12};
 
-      // Write <byte[], byte[]> via Hot Rod (the HR client is configured with the default marshaller)
-      bytesRemoteCache.put(key, value);
-      assertEquals(value, bytesRemoteCache.get(key));
+      // Write <byte[], byte[]> via Hot Rod (the HR client is configured with a no-op marshaller)
+      defaultRemoteCache.put(key, value);
+      assertEquals(value, defaultRemoteCache.get(key));
 
       String restKey = StandardConversions.bytesToHex(key);
 
       // Read via Rest
-      Object bytesFromRest = new RestRequest().cache(BYTES_CACHE_NAME)
+      Object bytesFromRest = new RestRequest().cache(DEFAULT_CACHE_NAME)
             .key(restKey, customKeyType).accept(APPLICATION_OCTET_STREAM)
             .read();
 
@@ -444,7 +444,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
    @AfterClass
    protected void teardown() {
-      bytesRemoteCache.getRemoteCacheManager().stop();
+      defaultRemoteCache.getRemoteCacheManager().stop();
       defaultMarshalledRemoteCache.getRemoteCacheManager().stop();
       stringRemoteCache.getRemoteCacheManager().stop();
       if (restServer != null) {

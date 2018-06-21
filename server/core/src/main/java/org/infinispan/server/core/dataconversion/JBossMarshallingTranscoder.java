@@ -4,6 +4,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JBOSS_
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.StandardConversions.convertTextToObject;
 import static org.infinispan.commons.dataconversion.StandardConversions.decodeObjectContent;
@@ -33,7 +34,7 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
    private final Transcoder jsonObjectTranscoder;
 
    public JBossMarshallingTranscoder(EncoderRegistry encoderRegistry) {
-      super(APPLICATION_JBOSS_MARSHALLING, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_OBJECT, APPLICATION_JSON);
+      super(APPLICATION_JBOSS_MARSHALLING, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_OBJECT, APPLICATION_JSON, APPLICATION_UNKNOWN);
       encoder = encoderRegistry.getEncoder(GenericJbossMarshallerEncoder.class, null);
       jsonObjectTranscoder = encoderRegistry.getTranscoder(APPLICATION_JSON, APPLICATION_OBJECT);
    }
@@ -54,12 +55,15 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
          if (contentType.match(APPLICATION_JSON)) {
             decoded = jsonObjectTranscoder.transcode(content, contentType, MediaType.APPLICATION_OBJECT);
          }
+         if (contentType.match(APPLICATION_UNKNOWN)) {
+            return content;
+         }
          return encoder.toStorage(decoded);
       }
       if (destinationType.match(MediaType.APPLICATION_OCTET_STREAM)) {
          try {
             Object unmarshalled = encoder.fromStorage(content);
-            if(unmarshalled instanceof byte[]) {
+            if (unmarshalled instanceof byte[]) {
                return unmarshalled;
             }
             return StandardConversions.convertJavaToOctetStream(unmarshalled, MediaType.APPLICATION_OBJECT);
@@ -80,6 +84,13 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
          Object fromStorage = encoder.fromStorage(content);
          Object result = jsonObjectTranscoder.transcode(fromStorage, MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_JSON);
          return StandardConversions.convertTextToOctetStream(result, MediaType.APPLICATION_JSON);
+      }
+      if (destinationType.equals(APPLICATION_UNKNOWN)) {
+         try {
+            return StandardConversions.convertJavaToOctetStream(content, MediaType.APPLICATION_OBJECT);
+         } catch (IOException | InterruptedException e) {
+            throw logger.unsupportedContent(content);
+         }
       }
 
       throw logger.unsupportedContent(content);
