@@ -230,7 +230,7 @@
       <version.javax.cache>1.0.0</version.javax.cache>
       <version.jboss.logging>3.3.1.Final</version.jboss.logging>
       <version.jboss.marshalling>2.0.5.Final</version.jboss.marshalling>
-      <version.jgroups>4.0.11.Final</version.jgroups>
+      <version.jgroups>4.0.12.Final</version.jgroups>
       <version.jta>1.0.1.Final</version.jta>
       <version.lucene>5.5.5</version.lucene>
       <version.maven-compiler-plugin>3.7.0-jboss-1</version.maven-compiler-plugin> <!-- MCOMPILER-320 -->
