@@ -10,11 +10,17 @@
             </filterset>
             <regexpmapper from="(.*)/slot/(.*)" to="\1/${infinispan.module.slot}/\2" />
         </move>
-        <replace dir="${feature-pack.dir}" includes="**/main/**" token="@lucene.module.slot@" value="${version.lucene}"/>
-        <replace dir="${feature-pack.dir}" includes="**/main/**" token="@hibernate.search.module.slot@" value="${version.hibernate.search}"/>
+        <move todir="${feature-pack.dir}" filtering="true">
+            <fileset dir="${feature-pack.dir}"/>
+            <regexpmapper from="(.*)/product-slot/(.*)" to="\1/${infinispan.module.slot.prefix}/\2" />
+        </move>
+        <replace dir="${feature-pack.dir}" includes="**/5.5/**" token="@lucene.module.slot@" value="${version.lucene.module.slot}"/>
+        <replace dir="${feature-pack.dir}" includes="**/main/**" token="@lucene.module.slot@" value="${version.lucene.module.slot}"/>
+        <replace dir="${feature-pack.dir}" includes="**/main/**" token="@hibernate.search.module.slot@" value="${version.hibernate.search.module.slot}"/>
         <delete includeemptydirs="true">
             <fileset dir="${feature-pack.dir}">
                 <include name="**/slot" />
+                <include name="**/product-slot" />
             </fileset>
         </delete>
     </target>

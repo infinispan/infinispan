@@ -1,18 +1,16 @@
 <project name="dist-dir" basedir="." default="clean">
 
-   <property name="output.dir" value="${project.build.directory}/${server.output.dir.prefix}-${infinispan.brand.version}" />
-
    <target name="trim-server" depends="trim-modules, trim-as" />
 
    <target name="trim-modules">
       <delete includeemptydirs="true" verbose="true">
-         <fileset dir="${output.dir}/modules/system/layers/base" includesfile="trim-modules.txt" excludesfile="retain-modules.txt"/>
+         <fileset dir="${server.dir}/modules/system/layers/base" includesfile="trim-modules.txt" excludesfile="retain-modules.txt"/>
       </delete>
    </target>
 
    <target name="trim-as">
       <delete>
-         <fileset dir="${output.dir}/bin">
+         <fileset dir="${server.dir}/bin">
             <include name="appclient.*" />
             <include name="run.*" />
             <include name="wsconsume.*" />
@@ -22,10 +20,10 @@
             <include name="jboss-cli.ps1" />
          </fileset>
       </delete>
-      <delete dir="${output.dir}/appclient" />
-      <delete dir="${output.dir}/welcome-content" />
+      <delete dir="${server.dir}/appclient" />
+      <delete dir="${server.dir}/welcome-content" />
       <delete>
-         <fileset dir="${output.dir}/docs/schema" excludesfile="keep-schemas.txt"/>
+         <fileset dir="${server.dir}/docs/schema" excludesfile="keep-schemas.txt"/>
       </delete>
    </target>
 

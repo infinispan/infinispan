@@ -1,1 +1,4 @@
 org/jboss/as/clustering/common/**
+org/jboss/ws/api/**
+org/jboss/ws/jaxws-client/**
+org/jboss/ws/cxf/jbossws-cxf-client/**
