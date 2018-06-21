@@ -4,7 +4,6 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;

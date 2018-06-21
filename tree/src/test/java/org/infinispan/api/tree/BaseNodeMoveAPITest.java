@@ -63,7 +63,7 @@ public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager();
       cm.defineConfiguration("test", createConfigurationBuilder().build());
       cache = cm.getCache("test");
-      tm = TestingUtil.extractComponent(cache, TransactionManager.class);
+      tm = tm();
       treeCache = new TreeCacheImpl<Object, Object>(cache);
       dc = TestingUtil.extractComponent(cache, InternalDataContainer.class);
       return cm;
