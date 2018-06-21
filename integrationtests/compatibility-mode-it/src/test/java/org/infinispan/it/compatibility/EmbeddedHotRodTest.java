@@ -22,7 +22,6 @@ import org.infinispan.client.hotrod.event.EventLogListener.DynamicCacheEventFilt
 import org.infinispan.client.hotrod.event.EventLogListener.DynamicFilteredEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticCacheEventFilterFactory;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -57,7 +56,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
    }
 
    private Cache<Integer, String> getEmbeddedCache() {
-      return (Cache<Integer, String>) cacheFactory.getEmbeddedCache().getAdvancedCache().withEncoding(IdentityEncoder.class);
+      return cacheFactory.getEmbeddedCache().getAdvancedCache();
    }
 
    public void testEmbeddedPutHotRodGet() {

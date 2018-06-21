@@ -1,6 +1,5 @@
 package org.infinispan.server.hotrod;
 
-import static java.lang.String.format;
 import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
 import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterManager;
 
@@ -34,6 +33,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.Marshaller;
@@ -56,6 +56,7 @@ import org.infinispan.filter.NamedFactory;
 import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
@@ -192,6 +193,11 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          return bytes;
       }
 
+      @Override
+      public MediaType format() {
+         return null;
+      }
+
       public static final class ToEmptyBytesKeyValueFilterConverterExternalizer implements Externalizer<ToEmptyBytesKeyValueFilterConverter> {
 
          @Override
@@ -210,7 +216,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       // These are also initialized by super.startInternal, but we need them before
       this.configuration = configuration;
       this.cacheManager = cacheManager;
-      this.iterationManager = new DefaultIterationManager(cacheManager);
+      this.iterationManager = new DefaultIterationManager();
 
       // populate the sasl factories based on the required mechs
       setupSasl();
@@ -218,7 +224,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       // Initialize query-specific stuff
       List<QueryFacade> queryFacades = loadQueryFacades();
       queryFacade = queryFacades.size() > 0 ? queryFacades.get(0) : null;
-      clientListenerRegistry = new ClientListenerRegistry(configuration);
+      clientListenerRegistry = new ClientListenerRegistry(cacheManager.getGlobalComponentRegistry().getComponent(EncoderRegistry.class));
       clientCounterNotificationManager = new ClientCounterManagerNotificationManager(asCounterManager(cacheManager));
 
       addKeyValueFilterConverterFactory(ToEmptyBytesKeyValueFilterConverter.class.getName(), new ToEmptyBytesFactory());
@@ -376,7 +382,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          InternalCacheRegistry icr = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
          if (icr.isPrivateCache(cacheName)) {
             throw new RequestParsingException(
-                  format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'", cacheName),
+                  String.format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'", cacheName),
                   cdc.header.version, cdc.header.messageId);
          } else if (icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.PROTECTED)) {
             // We want to make sure the cache access is checked everytime, so don't store it as a "known" cache. More
@@ -384,7 +390,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
             cache = getCacheInstance(cdc, cacheName, cacheManager, true, false);
          } else if (!cacheName.isEmpty() && !cacheManager.getCacheNames().contains(cacheName)) {
             throw new CacheNotFoundException(
-                  format("Cache with name '%s' not found amongst the configured caches", cacheName),
+                  String.format("Cache with name '%s' not found amongst the configured caches", cacheName),
                   cdc.header.version, cdc.header.messageId);
          } else {
             cache = getCacheInstance(cdc, cacheName, cacheManager, true, true);
@@ -404,7 +410,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    public CacheInfo getCacheInfo(CacheDecodeContext cdc) {
       // Fetching persistence manager would require security action, and would be too expensive
       AdvancedCache<byte[], byte[]> cache = cdc.cache();
-      CacheInfo info = cacheInfo.get(cache.getName() + cdc.getHeader().getKeyMediaType() + cdc.getHeader().getValueMediaType());
+      CacheInfo info = cacheInfo.get(cache.getName() + cdc.getHeader().getKeyMediaType().getTypeSubtype() + cdc.getHeader().getValueMediaType().getTypeSubtype());
 
       if (info == null) {
          AdvancedCache<byte[], byte[]> localNonBlocking = SecurityActions.anonymizeSecureCache(cache)
@@ -417,7 +423,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          PersistenceManager pm = cr.getComponent(PersistenceManager.class);
          boolean hasIndexing = SecurityActions.getCacheConfiguration(cache).indexing().index().isEnabled();
          info = new CacheInfo(localNonBlocking, pm.isEnabled(), hasIndexing);
-         cacheInfo.put(cache.getName() + cdc.getHeader().getKeyMediaType() + cdc.getHeader().getValueMediaType(), info);
+         cacheInfo.put(cache.getName() + cdc.getHeader().getKeyMediaType().getTypeSubtype() + cdc.getHeader().getValueMediaType().getTypeSubtype(), info);
       }
       return info;
    }
@@ -440,7 +446,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          knownCacheConfigurations.put(cacheName, cacheConfiguration);
          knownCacheRegistries.put(cacheName, SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache()));
          if (cdc != null) {
-            cache = cache.withMediaType(cdc.header.getKeyMediaType(), cdc.header.getValueMediaType());
+            cache = cache.withMediaType(cdc.header.getKeyMediaType().toString(), cdc.header.getValueMediaType().toString());
          }
          if (addToKnownCaches) {
             knownCaches.put(scopedCacheKey, cache);
@@ -513,7 +519,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       this.marshaller = marshaller;
       Optional<Marshaller> optMarshaller = Optional.ofNullable(marshaller);
       clientListenerRegistry.setEventMarshaller(optMarshaller);
-      iterationManager.setMarshaller(optMarshaller);
    }
 
    public void addKeyValueFilterConverterFactory(String name, KeyValueFilterConverterFactory factory) {
@@ -532,8 +537,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       String keyType = MATCH_ALL.getTypeSubtype();
       String valueType = MATCH_ALL.getTypeSubtype();
       if (cdc != null) {
-         keyType = cdc.getHeader().getKeyMediaType();
-         valueType = cdc.getHeader().getValueMediaType();
+         keyType = cdc.getHeader().getKeyMediaType().getTypeSubtype();
+         valueType = cdc.getHeader().getValueMediaType().getTypeSubtype();
       }
       return cacheName + "|" + keyType + "|" + valueType;
    }

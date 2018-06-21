@@ -1,0 +1,47 @@
+        <subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}" >
+            <cache-container
+                name="local"
+                default-cache="default">
+                <modules>
+                    <module name="deployment.pojo.jar"/>
+                    <module name="deployment.filter.jar"/>
+                    <module name="deployment.converter.jar"/>
+                    <module name="deployment.filter-converter.jar"/>
+                    <module name="deployment.key-value-filter-converter.jar"/>
+                </modules>
+                <local-cache
+                    name="default"
+                    batching="false"
+                    >
+                </local-cache>
+                <local-cache-configuration name="compatibilityCacheConfiguration">
+                    <compatibility enabled="true"/>
+                </local-cache-configuration>
+                <local-cache name="compatibilityCache" configuration="compatibilityCacheConfiguration"/>
+                <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
+                <local-cache
+                    name="memcachedCache"
+                    batching="false"
+                    >
+                    <encoding>
+                        <value media-type="text/plain"/>
+                    </encoding>
+                </local-cache>
+                <local-cache name="namedCache" />
+                <local-cache name="restNamedCache" />
+                <local-cache name="restNamedCacheText">
+                    <encoding>
+                        <value media-type="text/plain"/>
+                    </encoding>
+                </local-cache>
+                <local-cache name="offHeapCache">
+                    <memory>
+                        <off-heap/>
+                    </memory>
+                </local-cache>
+                <local-cache name="compatibilityCache">
+                    <compatibility enabled="true"/>
+                </local-cache>
+            </cache-container>
+            <cache-container name="security"/>
+        </subsystem>

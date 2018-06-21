@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener.filter;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -22,4 +23,11 @@ public interface CacheEventFilter<K, V> {
     * @return Whether or not to notify the listener
     */
    public boolean accept(K key, V oldValue, Metadata oldMetadata, V newValue, Metadata newMetadata, EventType eventType);
+
+   /**
+    * @return The desired data format to be used in the accept operation. If null, the filter will receive data as it's stored.
+    */
+   default MediaType format() {
+      return MediaType.APPLICATION_OBJECT;
+   }
 }

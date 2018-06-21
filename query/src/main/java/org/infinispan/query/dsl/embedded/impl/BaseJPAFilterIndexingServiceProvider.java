@@ -259,7 +259,7 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
                   conversionDone = true;
                }
 
-               invocation.invokeNoChecks(new EventWrapper<>(event.getKey(), event), false, filterAndConvert);
+               invocation.invokeNoChecks(new EventWrapper<>(event.getKey(), event), false, filterAndConvert, true);
             }
          }
       }
@@ -308,7 +308,7 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
       }
 
       @Override
-      public void invokeNoChecks(EventWrapper<K, V, CacheEntryEvent<K, V>> event, boolean skipQueue, boolean skipConverter) {
+      public void invokeNoChecks(EventWrapper<K, V, CacheEntryEvent<K, V>> event, boolean skipQueue, boolean skipConverter, boolean needsConvert) {
       }
 
       @Override
@@ -359,6 +359,11 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
       @Override
       public DataConversion getValueDataConversion() {
          return valueDataConversion;
+      }
+
+      @Override
+      public boolean useStorageFormat() {
+         return true;
       }
    }
 

@@ -1032,6 +1032,11 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       }
    }
 
+   @Override
+   public <C> void addStorageFormatFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
+      throw new UnsupportedOperationException();
+   }
+
    private boolean canFire(Object listener) {
       for (Method m : listener.getClass().getMethods()) {
          for (Class<? extends Annotation> annotation : FIRED_EVENTS) {

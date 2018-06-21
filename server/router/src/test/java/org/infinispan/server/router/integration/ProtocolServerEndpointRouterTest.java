@@ -6,7 +6,6 @@ import java.net.InetAddress;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.commons.dataconversion.GenericJbossMarshallerEncoder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.router.Router;
@@ -83,9 +82,8 @@ public class ProtocolServerEndpointRouterTest {
         hotrod2Client.getCache().put("test", "hotrod2");
 
         //then
-        // Cache storage is marshalled when written via Hot Rod client, so use the appropriate encoder
-        Cache hotrod1Cache = hotrodServer1.getCacheManager().getCache().getAdvancedCache().withEncoding(GenericJbossMarshallerEncoder.class);
-        Cache hotrod2Cache = hotrodServer2.getCacheManager().getCache().getAdvancedCache().withEncoding(GenericJbossMarshallerEncoder.class);
+        Cache<String, String> hotrod1Cache = hotrodServer1.getCacheManager().getCache();
+        Cache<String, String> hotrod2Cache = hotrodServer2.getCacheManager().getCache();
         assertThat(hotrod1Cache.size()).isEqualTo(1);
         assertThat(hotrod2Cache.size()).isEqualTo(1);
         assertThat(hotrod1Cache.get("test")).isEqualTo("hotrod1");

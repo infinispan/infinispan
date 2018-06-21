@@ -16,7 +16,7 @@ public class TextBinaryTranscoderTest extends AbstractTranscoderTest {
    @BeforeClass(alwaysRun = true)
    public void setUp() {
       dataSrc = " !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
-      transcoder = DefaultTranscoder.INSTANCE;
+      transcoder = new DefaultTranscoder();
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
 

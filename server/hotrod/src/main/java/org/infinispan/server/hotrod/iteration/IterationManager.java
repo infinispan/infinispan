@@ -4,9 +4,8 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.Optional;
 
-import org.infinispan.Cache;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
+import org.infinispan.server.hotrod.CacheDecodeContext;
 import org.infinispan.util.KeyValuePair;
 
 /**
@@ -14,7 +13,7 @@ import org.infinispan.util.KeyValuePair;
  * @since 9.0
  */
 public interface IterationManager {
-   String start(Cache cache, Optional<BitSet> segments,
+   String start(CacheDecodeContext cdc, Optional<BitSet> segments,
                 Optional<KeyValuePair<String, List<byte[]>>> filterConverterFactory, int batch, boolean metadata);
 
    IterableIterationResult next(String cacheName, String iterationId);
@@ -24,8 +23,6 @@ public interface IterationManager {
    void addKeyValueFilterConverterFactory(String name, KeyValueFilterConverterFactory factory);
 
    void removeKeyValueFilterConverterFactory(String name);
-
-   void setMarshaller(Optional<Marshaller> maybeMarshaller);
 
    int activeIterations();
 }

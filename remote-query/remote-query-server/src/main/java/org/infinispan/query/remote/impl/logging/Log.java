@@ -58,4 +58,7 @@ public interface Log extends BasicLogger {
          " 'option indexed_by_default = false;' to your schema file to disable indexing of message types" +
          " that do not have indexing annotations.", id = 28012)
    void legacyIndexingIsDeprecated(String typeName, String fileName);
+
+   @Message(value = "Error during execution of protostream serialization context initializer", id = 28013)
+   CacheException errorInitializingSerCtx(@Cause Throwable cause);
 }

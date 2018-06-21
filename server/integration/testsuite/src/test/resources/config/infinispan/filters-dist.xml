@@ -1,0 +1,59 @@
+<subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}" >
+            <cache-container
+                name="clustered"
+                default-cache="default">
+                 <modules>
+                    <module name="deployment.pojo.jar"/>
+                    <module name="deployment.filter.jar"/>
+                    <module name="deployment.converter.jar"/>
+                    <module name="deployment.filter-converter.jar"/>
+                    <module name="deployment.key-value-filter-converter.jar"/>
+                </modules>
+                <transport
+                    lock-timeout="240000"/>
+                <distributed-cache
+                    name="default"
+                    segments="1"
+                    owners="2"
+                    batching="false"
+                    l1-lifespan="0"
+                    remote-timeout="60000" >
+                    <state-transfer
+                        enabled="true"
+                        timeout="600000" />
+                </distributed-cache>
+                <distributed-cache-configuration
+                        name="compatibilityCacheConfiguration"
+                        segments="1"
+                        owners="2"
+                        batching="false"
+                        l1-lifespan="0"
+                        remote-timeout="60000" >
+                    <state-transfer
+                            enabled="true"
+                            timeout="600000" />
+                    <compatibility enabled="true"/>
+                </distributed-cache-configuration>
+                <distributed-cache name="compatibilityCache" configuration="compatibilityCacheConfiguration"/>
+                <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
+                <distributed-cache
+                    name="memcachedCache"
+                    segments="1"
+                    owners="2"
+                    batching="false"
+                    l1-lifespan="0"
+                    remote-timeout="60000" >
+                    <state-transfer
+                        enabled="true"
+                        timeout="600000" />
+                </distributed-cache>
+                <distributed-cache name="namedCache" />
+                <distributed-cache name="offHeapCache">
+                    <memory>
+                        <off-heap/>
+                    </memory>
+                </distributed-cache>
+                <distributed-cache name="streamingTestCache" />
+            </cache-container>
+            <cache-container name="security"/>
+        </subsystem>

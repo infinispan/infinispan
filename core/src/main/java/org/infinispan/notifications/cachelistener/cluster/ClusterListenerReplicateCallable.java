@@ -55,11 +55,12 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
    private final Set<Class<? extends Annotation>> filterAnnotations;
    private final DataConversion keyDataConversion;
    private final DataConversion valueDataConversion;
+   private final boolean useStorageFormat;
 
    public ClusterListenerReplicateCallable(UUID identifier, Address origin, CacheEventFilter<K, V> filter,
                                            CacheEventConverter<K, V, ?> converter, boolean sync,
                                            Set<Class<? extends Annotation>> filterAnnotations,
-                                           DataConversion keyDataConversion, DataConversion valueDataConversion) {
+                                           DataConversion keyDataConversion, DataConversion valueDataConversion, boolean useStorageFormat) {
       this.identifier = identifier;
       this.origin = origin;
       this.filter = filter;
@@ -68,6 +69,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
       this.filterAnnotations = filterAnnotations;
       this.keyDataConversion = keyDataConversion;
       this.valueDataConversion = valueDataConversion;
+      this.useStorageFormat = useStorageFormat;
 
       if (trace)
          log.tracef("Created clustered listener replicate callable for: %s", filterAnnotations);
@@ -114,7 +116,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
                if (!alreadyInstalled) {
                   RemoteClusterListener listener = new RemoteClusterListener(identifier, origin, distExecutor, cacheNotifier,
                         cacheManagerNotifier, eventManager, sync);
-                  ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion);
+                  ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion, useStorageFormat);
                   cacheNotifier.addFilteredListener(listenerHolder, filter, converter, filterAnnotations);
                   cacheManagerNotifier.addListener(listener);
                   // It is possible the member is now gone after registered, if so we have to remove just to be sure
@@ -164,6 +166,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
          MarshallUtil.marshallCollection(object.filterAnnotations, output);
          DataConversion.writeTo(output, object.keyDataConversion);
          DataConversion.writeTo(output, object.valueDataConversion);
+         output.writeBoolean(object.useStorageFormat);
       }
 
       @Override
@@ -182,8 +185,9 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
          Set<Class<? extends Annotation>> listenerAnnots = MarshallUtil.unmarshallCollection(input, HashSet::new);
          DataConversion keyDataConversion = DataConversion.readFrom(input);
          DataConversion valueDataConversion = DataConversion.readFrom(input);
+         boolean raw = input.readBoolean();
          return new ClusterListenerReplicateCallable(id, address, filter, converter, sync, listenerAnnots,
-               keyDataConversion, valueDataConversion);
+               keyDataConversion, valueDataConversion, raw);
       }
 
       @Override

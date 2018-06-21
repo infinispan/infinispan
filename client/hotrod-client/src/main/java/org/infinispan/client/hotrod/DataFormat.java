@@ -41,11 +41,15 @@ public final class DataFormat {
    }
 
    public MediaType getKeyType() {
-      return keyType;
+      if (keyType != null) return keyType;
+      Marshaller marshaller = resolveKeyMarshaller();
+      return marshaller == null ? null : marshaller.mediaType();
    }
 
    public MediaType getValueType() {
-      return valueType;
+      if (valueType != null) return valueType;
+      Marshaller marshaller = resolveValueMarshaller();
+      return marshaller == null ? null : marshaller.mediaType();
    }
 
    public void initialize(RemoteCacheManager remoteCacheManager) {

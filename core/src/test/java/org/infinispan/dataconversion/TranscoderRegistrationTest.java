@@ -11,6 +11,8 @@ import org.infinispan.commons.dataconversion.DefaultTranscoder;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.core.EncoderRegistryImpl;
 import org.testng.Assert;
@@ -26,7 +28,7 @@ public class TranscoderRegistrationTest {
       EncoderRegistry encoderRegistry = new EncoderRegistryImpl();
       TestTranscoder t1 = new TestTranscoder(MediaType.APPLICATION_JSON, MediaType.APPLICATION_OBJECT);
       TestTranscoder t2 = new TestTranscoder(MediaType.APPLICATION_XML, MediaType.APPLICATION_OBJECT);
-      DefaultTranscoder t3 = DefaultTranscoder.INSTANCE;
+      DefaultTranscoder t3 = new DefaultTranscoder(new GenericJBossMarshaller(), new JavaSerializationMarshaller());
 
       encoderRegistry.registerTranscoder(t3);
       encoderRegistry.registerTranscoder(t2);

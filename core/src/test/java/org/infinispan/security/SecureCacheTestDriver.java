@@ -844,4 +844,9 @@ public class SecureCacheTestDriver {
       cache.withMediaType(APPLICATION_OBJECT_TYPE, APPLICATION_OBJECT_TYPE);
    }
 
+   @TestCachePermission(AuthorizationPermission.LISTEN)
+   public void testAddStorageFormatFilteredListener_Object_CacheEventFilter_CacheEventConverter_Set(SecureCache<String, String> cache) {
+      cache.addStorageFormatFilteredListener(listener, keyValueFilter, converter, Collections.emptySet());
+   }
+
 }

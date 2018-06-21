@@ -1,6 +1,5 @@
 package org.infinispan.marshaller.protostuff;
 
-import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.it.compatibility.CompatibilityCacheFactory;
 import org.infinispan.marshaller.test.AbstractCompatibilityTest;
@@ -21,11 +20,5 @@ public class ProtostuffCompatibilityTest extends AbstractCompatibilityTest {
       Transcoder transcoder = new ProtostuffTranscoder(marshaller);
       cacheFactory = new CompatibilityCacheFactory<>("protoCache", marshaller, CacheMode.LOCAL, transcoder);
       cacheFactory.setup();
-      cacheFactory.registerEncoder(new ProtostuffEncoder());
-   }
-
-   @Override
-   protected Class<? extends Encoder> getEncoderClass() {
-      return ProtostuffEncoder.class;
    }
 }

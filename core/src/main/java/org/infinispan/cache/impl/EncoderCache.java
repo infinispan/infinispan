@@ -29,13 +29,14 @@ import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.compat.BiFunctionMapper;
 import org.infinispan.compat.FunctionMapper;
-import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ForwardingCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.ListenerHolder;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
@@ -715,7 +716,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       EncoderEntryMapper<K, V, Map.Entry<K, V>> entryMapper = EncoderEntryMapper.newEntryMapper(keyDataConversion,
             valueDataConversion, entryFactory);
       return new WriteableCacheSetMapper<>(super.entrySet(), entryMapper,
-            e -> new EntryWrapper<>(e, entryMapper.apply(e, true)), this::toEntry, this::keyToStorage);
+            e -> new EntryWrapper<>(e, entryMapper.apply(e)), this::toEntry, this::keyToStorage);
    }
 
    Map.Entry<K, V> toEntry(Object o) {
@@ -817,7 +818,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public void addListener(Object listener) {
-      ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion);
+      ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion, false);
       Cache unwrapped = super.unwrapCache(this.cache);
       if (unwrapped instanceof CacheImpl) {
          ((CacheImpl) unwrapped).addListener(listenerHolder);
@@ -827,24 +828,44 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    @Override
+   public void addListener(Object listener, KeyFilter<? super K> filter) {
+      ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion, false);
+      Cache unwrapped = super.unwrapCache(this.cache);
+      if (unwrapped instanceof CacheImpl) {
+         ((CacheImpl) unwrapped).addListener(listenerHolder, filter);
+      } else {
+         super.addListener(listener, filter);
+      }
+   }
+
+   @Override
    public <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter,
                                CacheEventConverter<? super K, ? super V, C> converter) {
-      ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion);
+      ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion, false);
       Cache unwrapped = super.unwrapCache(this.cache);
       if (unwrapped instanceof CacheImpl) {
          ((CacheImpl) unwrapped).addListener(listenerHolder, filter, converter);
       } else {
          super.addListener(listener);
       }
-
    }
 
-   @Override
    public <C> void addFilteredListener(Object listener,
                                        CacheEventFilter<? super K, ? super V> filter,
                                        CacheEventConverter<? super K, ? super V, C> converter,
                                        Set<Class<? extends Annotation>> filterAnnotations) {
-      ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion);
+      ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion, false);
+      Cache unwrapped = super.unwrapCache(this.cache);
+      if (unwrapped instanceof CacheImpl) {
+         ((CacheImpl) unwrapped).addFilteredListener(listenerHolder, filter, converter, filterAnnotations);
+      } else {
+         super.addFilteredListener(listener, filter, converter, filterAnnotations);
+      }
+   }
+
+   @Override
+   public <C> void addStorageFormatFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
+      ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion, true);
       Cache unwrapped = super.unwrapCache(this.cache);
       if (unwrapped instanceof CacheImpl) {
          ((CacheImpl) unwrapped).addFilteredListener(listenerHolder, filter, converter, filterAnnotations);

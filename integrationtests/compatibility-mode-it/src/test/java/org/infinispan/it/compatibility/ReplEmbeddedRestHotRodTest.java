@@ -1,7 +1,6 @@
 package org.infinispan.it.compatibility;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
@@ -50,19 +49,18 @@ public class ReplEmbeddedRestHotRodTest extends AbstractInfinispanTest {
       // 1. Put with REST
       EntityEnclosingMethod put = new PutMethod(cacheFactory1.getRestUrl() + "/" + key);
       put.setRequestEntity(new ByteArrayRequestEntity(
-            "<hey>ho</hey>".getBytes(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+            "<hey>ho</hey>".getBytes(), MediaType.TEXT_PLAIN_TYPE));
       HttpClient restClient = cacheFactory1.getRestClient();
       restClient.executeMethod(put);
       assertEquals(HttpStatus.SC_OK, put.getStatusCode());
       assertEquals("", put.getResponseBodyAsString().trim());
 
       // 2. Get with Embedded
-      Cache embeddedCache = cacheFactory2.getEmbeddedCache().getAdvancedCache().withEncoding(IdentityEncoder.class);
-      assertArrayEquals("<hey>ho</hey>".getBytes(), (byte[]) embeddedCache.get(key));
+      Cache embeddedCache = cacheFactory2.getEmbeddedCache().getAdvancedCache();
+      assertEquals("<hey>ho</hey>", embeddedCache.get(key));
 
       // 3. Get with Hot Rod
-      assertArrayEquals("<hey>ho</hey>".getBytes(), (byte[])
-            cacheFactory2.getHotRodCache().get(key));
+      assertEquals("<hey>ho</hey>", cacheFactory2.getHotRodCache().get(key));
    }
 
    public void testEmbeddedPutRestHotRodGet() throws Exception {

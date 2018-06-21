@@ -1,0 +1,49 @@
+<subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}" >
+            <cache-container
+                    name="clustered"
+                    default-cache="default">
+                 <modules>
+                    <module name="deployment.pojo.jar"/>
+                    <module name="deployment.filter.jar"/>
+                    <module name="deployment.converter.jar"/>
+                    <module name="deployment.filter-converter.jar"/>
+                    <module name="deployment.key-value-filter-converter.jar"/>
+                </modules>
+                <transport
+                    lock-timeout="240000"/>
+                <replicated-cache
+                    name="default"
+                    batching="false"
+                    remote-timeout="60000">
+                    <state-transfer
+                        enabled="true"
+                        timeout="60000" />
+                </replicated-cache>
+                <replicated-cache-configuration
+                        name="compatibilityCacheConfiguration"
+                        batching="false"
+                        remote-timeout="60000">
+                    <state-transfer
+                            enabled="true"
+                            timeout="60000"/>
+                    <compatibility enabled="true"/>
+                </replicated-cache-configuration>
+                <replicated-cache name="compatibilityCache" configuration="compatibilityCacheConfiguration"/>
+                <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
+                <replicated-cache
+                    name="memcachedCache"
+                    batching="false"
+                    remote-timeout="60000">
+                    <state-transfer
+                        enabled="true"
+                        timeout="60000" />
+                </replicated-cache>
+                <replicated-cache name="offHeapCache">
+                    <memory>
+                        <off-heap/>
+                    </memory>
+                </replicated-cache>
+                <replicated-cache name="namedCache"/>
+            </cache-container>
+            <cache-container name="security"/>
+        </subsystem>

@@ -73,4 +73,11 @@ public interface FilteringListenable<K, V> extends Listenable {
    <C> void addFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
          Set<Class<? extends Annotation>> filterAnnotations);
 
+   /**
+    * Same as {@link #addFilteredListener(Object, CacheEventFilter, CacheEventConverter, Set)}, but assumes the filter
+    * and/or the converter will be done in the same data format as it's stored in the cache.
+    */
+   <C> void addStorageFormatFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+                                Set<Class<? extends Annotation>> filterAnnotations);
+
 }

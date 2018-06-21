@@ -503,6 +503,13 @@ public class MyKeyValueFilterConverterFactory implements KeyValueFilterConverter
          // returning null will case the entry to be filtered out
          // return SampleEntity2 will convert from the cache type SampleEntity1
       }
+
+      @Override
+      public MediaType format() {
+         // returns the MediaType that data should be presented to this converter.
+         // When ommitted, the server will use "application/x-java-object".
+         // Returning null will cause the filter/converter to be done in the storage format.
+      }
    }
 }
 ----
@@ -1035,22 +1042,19 @@ cache.addClientListener(new CustomEventPrintListener(), new Object[]{1}, null);
 
 ==== Event Marshalling
 
-Hot Rod servers store data as byte arrays, but in spite of that,
+Hot Rod servers can store data in different formats, but in spite of that,
 Java Hot Rod client users can still develop `CacheEventConverter` or `CacheEventFilter`
-instances that worked on typed objects. The way this is done is by making the
-Hot Rod server use the same marshaller as the one used by the Java Hot Rod client.
-This is enabled by default.
-
-However, users are free to plug a custom `org.infinispan.commons.marshall.Marshaller`
-implementation in order to marshall objects using alternative techniques to the one
-used by default by the Hot Rod Java client. For example, a user might want to
-marshall objects using Google Protocol Buffers.
+instances that work on typed objects. By default, filters and converter will use data as POJO
+(application/x-java-object) but it is possible to override the desired format by overriding the
+method `format()` from the filter/converter. If the format returns `null`, the filter/converter will receive
+data as it's stored.
 
 As indicated in the <<marshalling_data,Marshalling data>> section, Hot Rod
 Java clients can be configured to use a different `org.infinispan.commons.marshall.Marshaller`
 instance. If doing this and deploying `CacheEventConverter` or `CacheEventFilter` instances,
-the same marshaller instance needs to be deployed in the server so that callback parameters
-of `CacheEventConverter` or `CacheEventFilter` instances can be correctly unmarshalled.
+to be able to present filters/converter with Java Objects rather than marshalled content,
+the server needs to be able to convert between objects and the binary format produced
+by the marshaller.
 
 To deploy a Marshaller instance server-side, follow a similar method to the one
 used to deploy `CacheEventConverter` or `CacheEventFilter` instances:
@@ -1062,10 +1066,37 @@ marshaller class implementation.
 3. Deploy the JAR file in the {brandname} Server.
 
 Note that the Marshaller could be deployed in either a separate jar, or in the
-same jar as the `CacheEventConverter` and/or `CacheEventFilter` instances. Also, currently
-deployment of a single `org.infinispan.commons.marshall.Marshaller` instance
-is supported. If multiple marshaller instances are deployed, warning messages
-will be displayed as reminder indicating which marshaller instance will be used.
+same jar as the `CacheEventConverter` and/or `CacheEventFilter` instances.
+
+===== Protostream marshallers deployment
+
+If a cache stores protobuf content, as it happens when using protostream marshaller in the Hot Rod client,
+it's not necessary to deploy a custom marshaller since the format is already support by the server: there are
+transcoders from protobuf format to most common formats like JSON and POJO.
+
+When using filters/converters with those caches, and it's desirable to use filter/converters with Java Objects rather binary prototobuf data, it's necessary to deploy the extra protostream marshallers so that the server can unmarshall the data before filtering/converting. To do so, follow these steps:
+
+1. Create a jar and include an implementation of the interface `org.infinispan.query.remote.client.ProtostreamSerializationContextInitializer`, adding extra marshallers and
+optionally extra protobuf files to the cache manager's Serialization context.
+2. Create a `META-INF/services/org.infinispan.query.remote.client.ProtostreamSerializationContextInitializer` file
+within the JAR file containing the fully qualified class name of the `ProtostreamSerializationContextInitializer` class implementation.
+3. Create a  META-INF/MANIFEST.MF with `Dependencies: org.infinispan.protostream, org.infinispan.remote-query.client`
+4. Deploy the JAR file in the {brandname} Server in the `standalone/deployments` folder
+5. Configure this deployment in the desired cache manager:
+
+[source,xml]
+----
+<cache-container name="local" default-cache="default">
+   <modules>
+     <module name="deployment.my-file.jar"/>
+   </modules>
+   ...
+</cache-container>
+----
+
+WARNING: The deployment must be available during the server startup!
+
+
 
 ==== Listener State Handling
 
@@ -1310,7 +1341,7 @@ RemoteCache<String, JsonNode> jsonNodeCache = remoteCache.withDataFormat(jsonNod
 ---- 
 
 IMPORTANT: The data conversions happen in the server, and if it doesn't support converting from the storage format to the request format and vice versa, an error will be returned.
-For mote details on server data format configuration and supported conversions, see <<server-rest:data-format,here.>>
+For more details on server data format configuration and supported conversions, see <<encoding:media_type,here.>>
 
 WARNING: Using different marshallers and formats for the key, with `.keyMarshaller()` and `.keyType()` may interfere with the client intelligence routing mechanism, causing it 
 contact the server that is not the owner of the key during Hot Rod operations. This will not result in errors but can result in extra hops inside the cluster to execute the operation.

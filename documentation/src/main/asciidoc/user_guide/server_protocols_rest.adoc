@@ -47,7 +47,7 @@ HTTP PUT and POST methods are used to place data in the cache, with URLs to addr
 
 ====== Configuration
 
-Each cache exposed via REST stores data in a configurable data format defined by a https://en.wikipedia.org/wiki/Media_type[MediaType].
+Each cache exposed via REST stores data in a configurable data format defined by a https://en.wikipedia.org/wiki/Media_type[MediaType]. More details in the configuration <<encoding:media_type,here.>>
 
 An example of storage configuration is as follows:
 

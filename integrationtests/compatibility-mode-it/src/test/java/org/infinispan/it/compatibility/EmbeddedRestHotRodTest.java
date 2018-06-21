@@ -74,19 +74,17 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       // 1. Put with REST
       EntityEnclosingMethod put = new PutMethod(cacheFactory.getRestUrl() + "/" + key);
       put.setRequestEntity(new ByteArrayRequestEntity(
-            "<hey>ho</hey>".getBytes(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+            "<hey>ho</hey>".getBytes(), MediaType.TEXT_PLAIN_TYPE));
       HttpClient restClient = cacheFactory.getRestClient();
       restClient.executeMethod(put);
       assertEquals(HttpStatus.SC_OK, put.getStatusCode());
       assertEquals("", put.getResponseBodyAsString().trim());
 
       // 2. Get with Embedded
-      assertArrayEquals("<hey>ho</hey>".getBytes(), (byte[])
-            cacheFactory.getEmbeddedCache().get(key));
+      assertEquals("<hey>ho</hey>", cacheFactory.getEmbeddedCache().get(key));
 
       // 3. Get with Hot Rod
-      assertArrayEquals("<hey>ho</hey>".getBytes(), (byte[])
-            cacheFactory.getHotRodCache().get(key));
+      assertEquals("<hey>ho</hey>", cacheFactory.getHotRodCache().get(key));
    }
 
    public void testEmbeddedPutRestHotRodGet() throws Exception {

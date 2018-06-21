@@ -1,6 +1,5 @@
 package org.infinispan.marshaller.kryo;
 
-import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.it.compatibility.CompatibilityCacheFactory;
 import org.infinispan.marshaller.test.AbstractCompatibilityTest;
@@ -22,11 +21,5 @@ public class KryoCompatibilityTest extends AbstractCompatibilityTest {
       Transcoder transcoder = new KryoTranscoder(marshaller);
       cacheFactory = new CompatibilityCacheFactory<>("KryoCache", marshaller, CacheMode.LOCAL, transcoder);
       cacheFactory.setup();
-      cacheFactory.registerEncoder(new KryoEncoder());
-   }
-
-   @Override
-   protected Class<? extends Encoder> getEncoderClass() {
-      return KryoEncoder.class;
    }
 }

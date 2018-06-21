@@ -22,7 +22,7 @@ public class TextObjectTranscoderTest extends AbstractTranscoderTest {
       Address address = new Address();
       address.setCity("London");
       dataSrc.setAddress(address);
-      transcoder = DefaultTranscoder.INSTANCE;
+      transcoder = new DefaultTranscoder();
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
 

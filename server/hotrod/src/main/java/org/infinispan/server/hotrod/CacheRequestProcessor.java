@@ -507,7 +507,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          } else {
             optionBitSet = Optional.empty();
          }
-         String iterationId = server.getIterationManager().start(cdc.cache(), optionBitSet,
+         String iterationId = server.getIterationManager().start(cdc, optionBitSet,
                iterationStart.getFactory(), iterationStart.getBatch(), iterationStart.isMetadata());
          HotRodHeader h = cdc.header;
          writeResponse(new IterationStartResponse(h.version, h.messageId, h.cacheName,

@@ -21,7 +21,7 @@ import org.infinispan.notifications.impl.ListenerInvocation;
 public interface CacheEntryListenerInvocation<K, V> extends ListenerInvocation<Event<K, V>> {
    void invoke(EventWrapper<K, V, CacheEntryEvent<K, V>> event, boolean isLocalNodePrimaryOwner);
 
-   void invokeNoChecks(EventWrapper<K, V, CacheEntryEvent<K, V>> wrappedEvent, boolean skipQueue, boolean skipConverter);
+   void invokeNoChecks(EventWrapper<K, V, CacheEntryEvent<K, V>> wrappedEvent, boolean skipQueue, boolean skipConverter, boolean needsTransform);
 
    boolean isClustered();
 
@@ -42,5 +42,10 @@ public interface CacheEntryListenerInvocation<K, V> extends ListenerInvocation<E
    DataConversion getKeyDataConversion();
 
    DataConversion getValueDataConversion();
+
+   /**
+    * @return true if the filter/converter should be done in the storage format
+    */
+   boolean useStorageFormat();
 
 }

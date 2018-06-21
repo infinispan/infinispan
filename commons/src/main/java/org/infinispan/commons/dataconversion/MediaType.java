@@ -43,6 +43,7 @@ public final class MediaType {
    public static final String APPLICATION_ZIP_TYPE = "application/zip";
    public static final String APPLICATION_JBOSS_MARSHALLING_TYPE = "application/x-jboss-marshalling";
    public static final String APPLICATION_PROTOSTREAM_TYPE = "application/x-protostream";
+   public static final String APPLICATION_UNKNOWN_TYPE = "application/unknown";
    public static final String WWW_FORM_URLENCODED_TYPE = "application/x-www-form-urlencoded";
    public static final String IMAGE_GIF_TYPE = "image/gif";
    public static final String IMAGE_JPEG_TYPE = "image/jpeg";
@@ -72,6 +73,7 @@ public final class MediaType {
    public static MediaType APPLICATION_PROTOSTUFF = fromString(APPLICATION_PROTOSTUFF_TYPE);
    public static MediaType APPLICATION_KRYO = fromString(APPLICATION_KRYO_TYPE);
    public static MediaType APPLICATION_INFINISPAN_BINARY = fromString(APPLICATION_INFINISPAN_BINARY_TYPE);
+   public static MediaType APPLICATION_UNKNOWN = fromString(APPLICATION_UNKNOWN_TYPE);
    public static MediaType MATCH_ALL = fromString(MATCH_ALL_TYPE);
 
    private static final String INVALID_TOKENS = "()<>@,;:/[]?=\\\"";

@@ -785,6 +785,10 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
       // TODO: Customise this generated block
    }
 
+   @Override
+   public <C> void addStorageFormatFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
+   }
+
    public static <T> T await(CompletableFuture<T> cf) {
       try {
          return cf.get();

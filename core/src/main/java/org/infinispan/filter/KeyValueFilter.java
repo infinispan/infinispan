@@ -1,5 +1,6 @@
 package org.infinispan.filter;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.metadata.Metadata;
 
 import net.jcip.annotations.ThreadSafe;
@@ -22,4 +23,12 @@ public interface KeyValueFilter<K, V> {
     * @return true if the given key is accepted by this filter.
     */
    boolean accept(K key, V value, Metadata metadata);
+
+   /**
+    * @return The desired data format to be used in the {@link #accept(Object, Object, Metadata)} operation.
+    * If null, the filter will receive data as it's stored.
+    */
+   default MediaType format() {
+      return MediaType.APPLICATION_OBJECT;
+   }
 }

@@ -197,6 +197,10 @@
         <transform in="standalone.xml" out="testsuite/standalone-rocksdb-local.xml" modifyInfinispan="${infinispan.parts}/rocksdb-local.xml" filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-rocksdb-dist.xml" modifyInfinispan="${infinispan.parts}/rocksdb-dist.xml" filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-rocksdb-repl.xml" modifyInfinispan="${infinispan.parts}/rocksdb-repl.xml" filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-filters-repl.xml" modifyInfinispan="${infinispan.parts}/filters-repl.xml" filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-filters-dist.xml" modifyInfinispan="${infinispan.parts}/filters-dist.xml" filtering="true"/>
+        <transform in="standalone.xml" out="testsuite/standalone-filters-local.xml" modifyInfinispan="${infinispan.parts}/filters-local.xml" filtering="true"/>
+        <transform in="standalone.xml" out="testsuite/standalone-remote-iterator-local.xml" modifyInfinispan="${infinispan.parts}/remote-iterator.xml" filtering="true"/>
         <transform in="examples/standalone-rcs-local.xml" out="testsuite/standalone-rcs-local.xml"
                    modifyInfinispan="${infinispan.parts}/rcs-local.xml"
                    infinispanServerEndpoint="${infinispan.parts}/all-endpoints-local.xml"

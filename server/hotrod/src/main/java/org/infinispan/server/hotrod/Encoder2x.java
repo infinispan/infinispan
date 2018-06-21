@@ -445,12 +445,8 @@ class Encoder2x implements VersionedEncoder {
                      buf.writeByte(0);
                   }
                }
-               Object key = cacheEntry.getKey();
+               Object key = r.iterationResult.getResultFunction().apply(cacheEntry.getKey());
                Object value = cacheEntry.getValue();
-               if (r.iterationResult.isCompatEnabled()) {
-                  key = r.iterationResult.unbox(key);
-                  value = r.iterationResult.unbox(value);
-               }
                ExtendedByteBuf.writeRangedBytes((byte[]) key, buf);
                if (value instanceof Object[]) {
                   for (Object o : (Object[]) value) {

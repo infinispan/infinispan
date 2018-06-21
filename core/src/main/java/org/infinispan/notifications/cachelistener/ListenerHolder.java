@@ -10,11 +10,17 @@ public class ListenerHolder {
    private final Object listener;
    private final DataConversion keyDataConversion;
    private final DataConversion valueDataConversion;
+   private final boolean filterOnStorageFormat;
 
-   public ListenerHolder(Object listener, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+   public ListenerHolder(Object listener, DataConversion keyDataConversion, DataConversion valueDataConversion, boolean filterOnStorageFormat) {
       this.listener = listener;
       this.keyDataConversion = keyDataConversion;
       this.valueDataConversion = valueDataConversion;
+      this.filterOnStorageFormat = filterOnStorageFormat;
+   }
+
+   public boolean isFilterOnStorageFormat() {
+      return filterOnStorageFormat;
    }
 
    public Object getListener() {

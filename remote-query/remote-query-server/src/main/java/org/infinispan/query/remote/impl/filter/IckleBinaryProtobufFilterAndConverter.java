@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -65,6 +66,11 @@ public final class IckleBinaryProtobufFilterAndConverter<K, V> extends AbstractK
       } catch (IOException e) {
          throw new RuntimeException(e);
       }
+   }
+
+   @Override
+   public MediaType format() {
+      return MediaType.APPLICATION_PROTOSTREAM;
    }
 
    public static final class Externalizer extends AbstractExternalizer<IckleBinaryProtobufFilterAndConverter> {
