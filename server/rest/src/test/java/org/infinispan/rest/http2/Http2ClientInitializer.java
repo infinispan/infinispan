@@ -16,6 +16,8 @@ package org.infinispan.rest.http2;
 
 import static io.netty.handler.logging.LogLevel.INFO;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -25,6 +27,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpClientUpgradeHandler;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http2.DefaultHttp2Connection;
@@ -48,13 +51,15 @@ public class Http2ClientInitializer extends CommunicationInitializer {
 
     private final SslContext sslCtx;
     private final int maxContentLength;
+    private final String sniName;
     private HttpToHttp2ConnectionHandler connectionHandler;
     private Http2ResponseHandler responseHandler;
     private Http2SettingsHandler settingsHandler;
 
-    public Http2ClientInitializer(SslContext sslCtx, int maxContentLength) {
+    public Http2ClientInitializer(SslContext sslCtx, int maxContentLength, String sniName) {
         this.sslCtx = sslCtx;
         this.maxContentLength = maxContentLength;
+        this.sniName = sniName;
     }
 
     @Override
@@ -93,7 +98,7 @@ public class Http2ClientInitializer extends CommunicationInitializer {
      */
     private void configureSsl(SocketChannel ch) {
         ChannelPipeline pipeline = ch.pipeline();
-        pipeline.addLast(sslCtx.newHandler(ch.alloc()));
+        pipeline.addLast(sslCtx.newHandler(ch.alloc(), sniName, -1));
         // We must wait for the handshake to finish and the protocol to be negotiated before configuring
         // the HTTP/2 components of the pipeline.
         pipeline.addLast(new ApplicationProtocolNegotiationHandler("") {
@@ -139,6 +144,15 @@ public class Http2ClientInitializer extends CommunicationInitializer {
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             DefaultFullHttpRequest upgradeRequest =
                     new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/");
+
+            SocketAddress address = ctx.channel().remoteAddress();
+            String host = address.toString();
+            if (address instanceof InetSocketAddress) {
+                host = ((InetSocketAddress) address).getHostName();
+            }
+            // OpenShift uses Host header to figure out the destination Pod.
+            upgradeRequest.headers().add(HttpHeaderNames.HOST, host);
+
             ctx.writeAndFlush(upgradeRequest);
 
             ctx.fireChannelActive();

@@ -9,6 +9,7 @@
       <bundle>mvn:org.infinispan/infinispan-client-hotrod/${project.version}</bundle>
       <bundle>wrap:mvn:io.netty/netty-buffer/${version.netty}</bundle>
       <bundle>wrap:mvn:io.netty/netty-codec/${version.netty}</bundle>
+      <bundle>wrap:mvn:io.netty/netty-codec-http/${version.netty}</bundle>
       <bundle>wrap:mvn:io.netty/netty-common/${version.netty}</bundle>
       <bundle>wrap:mvn:io.netty/netty-handler/${version.netty}</bundle>
       <bundle>wrap:mvn:io.netty/netty-resolver/${version.netty}</bundle>

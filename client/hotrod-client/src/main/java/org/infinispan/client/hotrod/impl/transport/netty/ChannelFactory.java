@@ -6,6 +6,7 @@ import static org.infinispan.client.hotrod.impl.Util.await;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,6 +29,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
@@ -43,6 +45,9 @@ import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.transport.netty.singleport.CustomProtocolUpgradeCodec;
+import org.infinispan.client.hotrod.impl.transport.netty.singleport.SinglePortAdapter;
+import org.infinispan.client.hotrod.impl.transport.netty.singleport.SslHandlerFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
@@ -66,6 +71,7 @@ import net.jcip.annotations.ThreadSafe;
 public class ChannelFactory {
 
    public static final String DEFAULT_CLUSTER_NAME = "___DEFAULT-CLUSTER___";
+   private static final Collection<Integer> SINGLE_PORT_PORTS = Arrays.asList(80, 8080, 8081, 443, 8443, 8444);
    private static final Log log = LogFactory.getLog(ChannelFactory.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final CompletableFuture<ClusterSwitchStatus> NOT_SWITCHED_FUTURE = completedFuture(ClusterSwitchStatus.NOT_SWITCHED);
@@ -178,8 +184,26 @@ public class ChannelFactory {
       if (maxConnections < 0) {
          maxConnections = Integer.MAX_VALUE;
       }
-      ChannelInitializer channelInitializer = new ChannelInitializer(bootstrap, address, operationsFactory, configuration, this);
-      bootstrap.handler(channelInitializer);
+
+      SslHandlerFactory sslHandlerFactoryForChannelInitializer = null;
+      SslHandlerFactory sslHandlerFactoryForSinglePortAdapter = null;
+
+      if (configuration.security().ssl().enabled()) {
+         if (isSinglePort()) {
+            sslHandlerFactoryForSinglePortAdapter = alloc -> SslHandlerHelper.createSslHandler(configuration, alloc, "HR");
+         } else {
+            sslHandlerFactoryForChannelInitializer = alloc -> SslHandlerHelper.createSslHandler(configuration, alloc);
+         }
+      }
+
+      ChannelInitializer channelInitializer = new ChannelInitializer(bootstrap, address, operationsFactory, configuration, this, sslHandlerFactoryForChannelInitializer);
+      if (isSinglePort()) {
+         CustomProtocolUpgradeCodec hotRodUpgradeCodec = new CustomProtocolUpgradeCodec("HR", channelInitializer);
+         SinglePortAdapter singlePortAdapter = new SinglePortAdapter(sslHandlerFactoryForSinglePortAdapter, hotRodUpgradeCodec);
+         bootstrap.handler(singlePortAdapter);
+      } else {
+         bootstrap.handler(channelInitializer);
+      }
       ChannelPool pool = new ChannelPool(bootstrap.config().group().next(), address, channelInitializer, configuration.connectionPool().exhaustedAction(),
             configuration.connectionPool().maxWait(), maxConnections, configuration.connectionPool().maxPendingRequests());
       channelInitializer.setChannelPool(pool);
@@ -586,6 +610,20 @@ public class ChannelFactory {
 
    public Configuration getConfiguration() {
       return configuration;
+   }
+
+   public boolean isSinglePort() {
+      switch (configuration.getSinglePort()) {
+         case AUTO:
+         return configuration.servers().stream()
+                  .map(server -> Integer.toString(server.port()))
+                  .filter(port -> SINGLE_PORT_PORTS.contains(port))
+                  .findFirst().isPresent();
+         case ENABLED:
+            return true;
+         default:
+            return false;
+      }
    }
 
    public enum ClusterSwitchStatus {

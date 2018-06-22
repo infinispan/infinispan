@@ -42,7 +42,7 @@ public class NettyHttpClient {
    }
 
    public static NettyHttpClient newHttp2ClientWithHttp11Upgrade() {
-      return new NettyHttpClient(null, new Http2ClientInitializer(null, Integer.MAX_VALUE));
+      return new NettyHttpClient(null, new Http2ClientInitializer(null, Integer.MAX_VALUE, null));
    }
 
    public static NettyHttpClient newHttp11Client() {
@@ -50,8 +50,12 @@ public class NettyHttpClient {
    }
 
    public static NettyHttpClient newHttp2ClientWithALPN(String keystorePath, String keystorePassword) throws Exception {
+      return newHttp2ClientWithALPN(keystorePath, keystorePassword, null);
+   }
+
+   public static NettyHttpClient newHttp2ClientWithALPN(String keystorePath, String keystorePassword, String sniName) throws Exception {
       SslContext sslContext = NettyTruststoreUtil.createTruststoreContext(keystorePath, keystorePassword.toCharArray(), ApplicationProtocolNames.HTTP_2);
-      return new NettyHttpClient(sslContext, new Http2ClientInitializer(sslContext, Integer.MAX_VALUE));
+      return new NettyHttpClient(sslContext, new Http2ClientInitializer(sslContext, Integer.MAX_VALUE, sniName));
    }
 
    public void start(String host, int port) throws Exception {

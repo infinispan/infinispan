@@ -27,6 +27,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SASL_MEC
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SASL_PROPERTIES_PREFIX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_WHITELIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SINGLE_PORT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SNI_HOST_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SO_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SSL_CONTEXT;
@@ -125,6 +126,7 @@ public class ConfigurationTest {
       OPTIONS.put(SASL_PROPERTIES_PREFIX + ".C", c -> c.security().authentication().saslProperties().get("C"));
       OPTIONS.put(JAVA_SERIAL_WHITELIST, Configuration::serialWhitelist);
       OPTIONS.put(NEAR_CACHE_MODE, c -> c.nearCache().mode());
+      OPTIONS.put(SINGLE_PORT, c-> c.getSinglePort().name());
       OPTIONS.put(NEAR_CACHE_MAX_ENTRIES, c -> c.nearCache().maxEntries());
       OPTIONS.put(NEAR_CACHE_NAME_PATTERN, c -> c.nearCache().cacheNamePattern().pattern());
 
@@ -201,6 +203,7 @@ public class ConfigurationTest {
             .valueSizeEstimate(1024)
             .maxRetries(0)
             .tcpKeepAlive(true)
+            .singlePort(SinglePortMode.ENABLED)
             .security()
             .ssl()
             .enable()
@@ -283,6 +286,7 @@ public class ConfigurationTest {
       p.setProperty(SASL_PROPERTIES_PREFIX + ".C", "3");
       p.setProperty(JAVA_SERIAL_WHITELIST, ".*Person.*,.*Employee.*");
       p.setProperty(NEAR_CACHE_MODE, NearCacheMode.INVALIDATED.name());
+      p.setProperty(SINGLE_PORT, SinglePortMode.ENABLED.name());
       p.setProperty(NEAR_CACHE_MAX_ENTRIES, "10000");
       p.setProperty(NEAR_CACHE_NAME_PATTERN, "near.*");
       p.setProperty(CLUSTER_PROPERTIES_PREFIX + ".siteA", "hostA1:11222; hostA2:11223");
@@ -559,6 +563,7 @@ public class ConfigurationTest {
       assertEqualsConfig(ProtocolVersion.PROTOCOL_VERSION_13, PROTOCOL_VERSION, configuration);
       assertEqualsConfig(Arrays.asList(".*Person.*", ".*Employee.*"), JAVA_SERIAL_WHITELIST, configuration);
       assertEqualsConfig(NearCacheMode.INVALIDATED, NEAR_CACHE_MODE, configuration);
+      assertEqualsConfig(SinglePortMode.ENABLED.name(), SINGLE_PORT, configuration);
       assertEqualsConfig(10_000, NEAR_CACHE_MAX_ENTRIES, configuration);
       assertEqualsConfig("near.*", NEAR_CACHE_NAME_PATTERN, configuration);
       assertEquals(2, configuration.clusters().size());

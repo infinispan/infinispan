@@ -55,11 +55,12 @@ public class Configuration {
    private final StatisticsConfiguration statistics;
    private final TransactionConfiguration transaction;
    private final Features features;
+   private final SinglePortMode singlePort;
 
    Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory, ClassLoader classLoader,
                  ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate,
                  Marshaller marshaller, Class<? extends Marshaller> marshallerClass,
-                 ProtocolVersion protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
+                 ProtocolVersion protocolVersion, List<ServerConfiguration> servers, SinglePortMode singlePort, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
                  int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
                  List<ClusterConfiguration> clusters, List<String> serialWhitelist, int batchSize,
                  TransactionConfiguration transaction, StatisticsConfiguration statistics, Features features) {
@@ -89,6 +90,7 @@ public class Configuration {
       this.batchSize = batchSize;
       this.transaction = transaction;
       this.statistics = statistics;
+      this.singlePort = singlePort;
       this.features = features;
    }
 
@@ -327,6 +329,8 @@ public class Configuration {
       }
       properties.setProperty(ConfigurationProperties.SERVER_LIST, servers.toString());
 
+      properties.setProperty(ConfigurationProperties.SINGLE_PORT, singlePort.name());
+
       properties.setProperty(ConfigurationProperties.USE_SSL, Boolean.toString(security.ssl().enabled()));
 
       if (security.ssl().keyStoreFileName() != null)
@@ -382,5 +386,9 @@ public class Configuration {
          properties.setProperty(ConfigurationProperties.NEAR_CACHE_NAME_PATTERN, nearCache.cacheNamePattern().pattern());
 
       return properties;
+   }
+
+   public SinglePortMode getSinglePort() {
+      return singlePort;
    }
 }

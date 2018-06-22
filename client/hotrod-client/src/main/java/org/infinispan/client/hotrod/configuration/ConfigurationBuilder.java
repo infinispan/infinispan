@@ -80,6 +80,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private final StatisticsConfigurationBuilder statistics;
    private final List<ClusterConfigurationBuilder> clusters = new ArrayList<>();
    private Features features;
+   private SinglePortMode singlePort = SinglePortMode.AUTO;
 
    public ConfigurationBuilder() {
       this.classLoader = new WeakReference<>(Thread.currentThread().getContextClassLoader());
@@ -319,6 +320,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       return this;
    }
 
+   public ConfigurationBuilder singlePort(SinglePortMode singlePortMode) {
+      this.singlePort = singlePortMode;
+      return this;
+   }
+
    @Override
    public StatisticsConfigurationBuilder statistics() {
       return statistics;
@@ -382,6 +388,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
       this.batchSize(typed.getIntProperty(ConfigurationProperties.BATCH_SIZE, batchSize, true));
       transaction.withTransactionProperties(properties);
+      this.singlePort(typed.getEnumProperty(ConfigurationProperties.SINGLE_PORT, SinglePortMode.class, SinglePortMode.AUTO));
       nearCache.withProperties(properties);
 
       Map<String, String> xsiteProperties = typed.entrySet().stream()
@@ -435,7 +442,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       }
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
-            consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive,
+            consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, marshallerClass, protocolVersion, servers, singlePort, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive,
             valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize, transaction.create(), statistics.create(), features);
    }
 
@@ -473,6 +480,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       }
       this.clusters.clear();
       template.clusters().forEach(cluster -> this.addCluster(cluster.getClusterName()).read(cluster));
+      this.singlePort = template.getSinglePort();
       this.socketTimeout = template.socketTimeout();
       this.security.read(template.security());
       this.tcpNoDelay = template.tcpNoDelay();

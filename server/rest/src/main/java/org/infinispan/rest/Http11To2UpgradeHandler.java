@@ -75,14 +75,7 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
          pipeline.addLast(new org.infinispan.rest.cors.CorsHandler(corsRules, true));
       }
       pipeline.addLast(new HttpContentCompressor(configuration.getCompressionLevel()));
-      pipeline.addLast(new HttpServerUpgradeHandler(httpCodec, protocol -> {
-         if (AsciiString.contentEquals(Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME, protocol)) {
-            return new Http2ServerUpgradeCodec(getHttp11To2ConnectionHandler());
-         } else {
-            // if we don't understand the protocol, we don't want to upgrade
-            return null;
-         }
-      }));
+      pipeline.addLast(new HttpServerUpgradeHandler(httpCodec, this::upgradeCodecForHttp11));
 
       pipeline.addLast(new HttpObjectAggregator(maxContentLength()));
       pipeline.addLast("rest-handler", getHttp1Handler());
@@ -142,5 +135,14 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
                ApplicationProtocolNames.HTTP_1_1);
       }
       return null;
+   }
+
+   protected HttpServerUpgradeHandler.UpgradeCodec upgradeCodecForHttp11(CharSequence protocol) {
+      if (AsciiString.contentEquals(Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME, protocol)) {
+         return new Http2ServerUpgradeCodec(getHttp11To2ConnectionHandler());
+      } else {
+         // if we don't understand the protocol, we don't want to upgrade
+         return null;
+      }
    }
 }

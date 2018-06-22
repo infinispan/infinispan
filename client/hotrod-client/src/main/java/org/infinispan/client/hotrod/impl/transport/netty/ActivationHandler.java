@@ -14,12 +14,12 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
  * Its task is to complete {@link ChannelRecord}.
  */
 @Sharable
-class ActivationHandler extends ChannelInboundHandlerAdapter {
+public class ActivationHandler extends ChannelInboundHandlerAdapter {
    static final String NAME = "activation-handler";
    static final ActivationHandler INSTANCE = new ActivationHandler();
    private static final Log log = LogFactory.getLog(ActivationHandler.class);
    private static final boolean trace = log.isTraceEnabled();
-   static final Object ACTIVATION_EVENT = new Object();
+   public static final Object ACTIVATION_EVENT = new Object();
 
    @Override
    public void channelActive(ChannelHandlerContext ctx) throws Exception {

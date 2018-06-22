@@ -2387,6 +2387,12 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-server-router</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring5-common</artifactId>
             <type>test-jar</type>
             <scope>test</scope>

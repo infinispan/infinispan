@@ -45,7 +45,7 @@ public class SinglePortRouterBuilder extends AbstractRouterBuilder {
             }
             SslConfigurationBuilder sslConfigurationBuilder = new SslConfigurationBuilder(null);
             if (sslContext != null) {
-                sslConfigurationBuilder.sslContext(sslContext);
+                sslConfigurationBuilder.sslContext(sslContext).enable();
             }
             else if (keystorePath != null) {
                 sslConfigurationBuilder.keyStoreFileName(keystorePath).keyStorePassword(keystorePassword).enable();

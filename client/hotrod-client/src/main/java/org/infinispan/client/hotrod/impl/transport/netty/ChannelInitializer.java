@@ -1,18 +1,13 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
-import java.io.File;
 import java.net.SocketAddress;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
-import javax.net.ssl.SNIHostName;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
@@ -21,22 +16,16 @@ import javax.security.sasl.SaslException;
 
 import org.infinispan.client.hotrod.configuration.AuthenticationConfiguration;
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.configuration.SslConfiguration;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.singleport.SslHandlerFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.SaslUtils;
-import org.infinispan.commons.util.SslContextFactory;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.handler.ssl.ClientAuth;
-import io.netty.handler.ssl.JdkSslContext;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 
@@ -50,15 +39,17 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
    private final OperationsFactory operationsFactory;
    private final Configuration configuration;
    private final ChannelFactory channelFactory;
+   private final SslHandlerFactory sslHandlerFactory;
    private ChannelPool channelPool;
    private volatile boolean isFirstPing = true;
 
-   ChannelInitializer(Bootstrap bootstrap, SocketAddress unresolvedAddress, OperationsFactory operationsFactory, Configuration configuration, ChannelFactory channelFactory) {
+   ChannelInitializer(Bootstrap bootstrap, SocketAddress unresolvedAddress, OperationsFactory operationsFactory, Configuration configuration, ChannelFactory channelFactory, SslHandlerFactory sslHandlerFactory) {
       this.bootstrap = bootstrap;
       this.unresolvedAddress = unresolvedAddress;
       this.operationsFactory = operationsFactory;
       this.configuration = configuration;
       this.channelFactory = channelFactory;
+      this.sslHandlerFactory = sslHandlerFactory;
    }
 
    CompletableFuture<Channel> createChannel() {
@@ -73,8 +64,10 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       if (trace) {
          log.tracef("Created channel %s", channel);
       }
-      if (configuration.security().ssl().enabled()) {
-         initSsl(channel);
+
+      if (sslHandlerFactory != null) {
+         SslHandler sslHandler = sslHandlerFactory.getSslHandler(channel.alloc());
+         channel.pipeline().addFirst(sslHandler, SslHandshakeExceptionHandler.INSTANCE);
       }
 
       AuthenticationConfiguration authentication = configuration.security().authentication();
@@ -86,8 +79,6 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
          channel.pipeline().addLast("idle-state-handler",
                new IdleStateHandler(0, 0, configuration.connectionPool().minEvictableIdleTime(), TimeUnit.MILLISECONDS));
       }
-      ChannelRecord channelRecord = new ChannelRecord(unresolvedAddress, channelPool);
-      channel.attr(ChannelRecord.KEY).set(channelRecord);
       if (isFirstPing) {
          isFirstPing = false;
          channel.pipeline().addLast(InitialPingHandler.NAME, new InitialPingHandler(operationsFactory.newPingOperation(false)));
@@ -100,52 +91,6 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
          channel.pipeline().addLast(IdleStateHandlerProvider.NAME,
                new IdleStateHandlerProvider(configuration.connectionPool().minIdle(), channelPool));
       }
-   }
-
-   private void initSsl(Channel channel) {
-      SslConfiguration ssl = configuration.security().ssl();
-      SslContext nettySslContext;
-      SSLContext jdkSslContext = ssl.sslContext();
-      if (jdkSslContext == null) {
-         SslContextBuilder builder = SslContextBuilder.forClient();
-         try {
-            if (ssl.keyStoreFileName() != null) {
-               builder.keyManager(SslContextFactory.getKeyManagerFactory(
-                     ssl.keyStoreFileName(),
-                     ssl.keyStoreType(),
-                     ssl.keyStorePassword(),
-                     ssl.keyStoreCertificatePassword(),
-                     ssl.keyAlias(),
-                     configuration.classLoader()));
-            }
-            if (ssl.trustStoreFileName() != null) {
-               builder.trustManager(SslContextFactory.getTrustManagerFactory(
-                     ssl.trustStoreFileName(),
-                     ssl.trustStoreType(),
-                     ssl.trustStorePassword(),
-                     configuration.classLoader()));
-            }
-            if (ssl.trustStorePath() != null) {
-               builder.trustManager(new File(ssl.trustStorePath()));
-            }
-            if (ssl.protocol() != null) {
-               builder.protocols(ssl.protocol());
-            }
-            nettySslContext = builder.build();
-         } catch (Exception e) {
-            throw new CacheConfigurationException(e);
-         }
-      } else {
-         nettySslContext = new JdkSslContext(jdkSslContext, true, ClientAuth.NONE);
-      }
-      SslHandler sslHandler = nettySslContext.newHandler(channel.alloc(), ssl.sniHostName(), -1);
-      if (ssl.sniHostName() != null) {
-         SSLParameters sslParameters = sslHandler.engine().getSSLParameters();
-         sslParameters.setServerNames(Collections.singletonList(new SNIHostName(ssl.sniHostName())));
-         sslHandler.engine().setSSLParameters(sslParameters);
-      }
-      channel.pipeline().addFirst(sslHandler,
-            SslHandshakeExceptionHandler.INSTANCE);
    }
 
    private void initAuthentication(Channel channel, AuthenticationConfiguration authentication) throws PrivilegedActionException, SaslException {
@@ -193,12 +138,14 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       this.channelPool = channelPool;
    }
 
-   private static class ActivationFuture extends CompletableFuture<Channel> implements ChannelFutureListener, BiConsumer<Channel, Throwable> {
+   private class ActivationFuture extends CompletableFuture<Channel> implements ChannelFutureListener, BiConsumer<Channel, Throwable> {
       @Override
       public void operationComplete(ChannelFuture future) throws Exception {
          if (future.isSuccess()) {
             Channel channel = future.channel();
-            ChannelRecord.of(channel).whenComplete(this);
+            ChannelRecord channelRecord = new ChannelRecord(unresolvedAddress, channelPool);
+            channel.attr(ChannelRecord.KEY).set(channelRecord);
+            channelRecord.whenComplete(this);
          } else {
             completeExceptionally(future.cause());
          }

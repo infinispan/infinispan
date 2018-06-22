@@ -1,8 +1,8 @@
 package org.infinispan.rest.http2;
 
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -12,6 +12,7 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpScheme;
+import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http2.HttpConversionUtil;
 import io.netty.handler.ssl.SslContext;
 
@@ -20,25 +21,16 @@ import io.netty.handler.ssl.SslContext;
  */
 public class Http11ResponseHandler extends SimpleChannelInboundHandler<FullHttpResponse> implements CommunicationHandler {
 
-    private final Queue<FullHttpResponse> responses = new LinkedBlockingQueue<>();
-
-    private final Semaphore semaphore = new Semaphore(1);
+    private BlockingQueue<FullHttpResponse> responses = new LinkedBlockingQueue<>();
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, FullHttpResponse msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, FullHttpResponse msg) {
         responses.add(msg);
-        semaphore.release();
-        System.out.println("Released");
+        ctx.close();
     }
 
     public Queue<FullHttpResponse> getResponses() {
-        try {
-            System.out.println("Getting responses");
-            semaphore.acquireUninterruptibly();
-            return responses;
-        } finally {
-            semaphore.release();
-        }
+        return responses;
     }
 
     @Override
@@ -47,9 +39,8 @@ public class Http11ResponseHandler extends SimpleChannelInboundHandler<FullHttpR
         request.headers().set(HttpConversionUtil.ExtensionHeaderNames.SCHEME.text(), scheme.name());
         request.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
         request.headers().set(HttpHeaderNames.ACCEPT_ENCODING, HttpHeaderValues.TEXT_PLAIN);
+        HttpUtil.setContentLength(request, request.content().readableBytes());
 
         channel.writeAndFlush(request);
-        semaphore.acquireUninterruptibly();
-        System.out.println("Acquired");
     }
 }

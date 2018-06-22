@@ -82,6 +82,7 @@ public class ConfigurationProperties {
    public static final String STATISTICS = ICH + "statistics";
    // Transaction properties
    public static final String TRANSACTION_MANAGER_LOOKUP = ICH + "transaction.transaction_manager_lookup";
+   public static final String SINGLE_PORT = "infinispan.client.hotrod.single_port";
    public static final String TRANSACTION_MODE = ICH + "transaction.transaction_mode";
    public static final String TRANSACTION_TIMEOUT = ICH + "transaction.timeout";
    // Near cache properties
