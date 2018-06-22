@@ -53,8 +53,6 @@
       <module name="org.jboss.msc"/>
       <module name="org.jboss.staxmapper"/>
       <module name="org.jboss.threads"/>
-
-      <module name="sun.jdk" services="import"/>
    </dependencies>
 </module>
 

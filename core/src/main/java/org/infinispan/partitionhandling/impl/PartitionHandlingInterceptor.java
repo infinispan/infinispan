@@ -159,7 +159,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
       if (performPartitionCheck(rCtx, dataCommand)) {
          // We do the availability check after the read, because the cache may have entered degraded mode
          // while we were reading from a remote node.
-         partitionHandlingManager.checkRead(dataCommand.getKey());
+         partitionHandlingManager.checkRead(dataCommand.getKey(), dataCommand.getFlagsBitSet());
       }
    }
 
@@ -218,7 +218,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
          // We do the availability check after the read, because the cache may have entered degraded mode
          // while we were reading from a remote node.
          for (Object key : getAllCommand.getKeys()) {
-            partitionHandlingManager.checkRead(key);
+            partitionHandlingManager.checkRead(key, getAllCommand.getFlagsBitSet());
          }
 
          // Scattered cache throws AllOwnersLostException instead of returning map with only a subset of keys

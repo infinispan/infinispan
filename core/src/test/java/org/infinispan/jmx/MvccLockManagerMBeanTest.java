@@ -5,12 +5,10 @@ import static org.infinispan.test.TestingUtil.getCacheObjectName;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import javax.transaction.TransactionManager;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
@@ -61,7 +59,7 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
    }
 
    public void testNumberOfLocksHeld() throws Exception {
-      EmbeddedTransactionManager tm = (EmbeddedTransactionManager) TestingUtil.extractComponent(cache, TransactionManager.class);
+      EmbeddedTransactionManager tm = (EmbeddedTransactionManager) tm();
       tm.begin();
       cache.put("key", "value");
       tm.getTransaction().runPrepare();
@@ -71,7 +69,7 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
    }
 
    public void testNumberOfLocksAvailable() throws Exception {
-      EmbeddedTransactionManager tm = (EmbeddedTransactionManager) TestingUtil.extractComponent(cache, TransactionManager.class);
+      EmbeddedTransactionManager tm = (EmbeddedTransactionManager) tm();
       int initialAvailable = getAttrValue("NumberOfLocksAvailable");
       tm.begin();
       cache.put("key", "value");

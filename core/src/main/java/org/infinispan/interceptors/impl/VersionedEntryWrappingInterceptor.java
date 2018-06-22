@@ -34,11 +34,6 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
    private final InvocationSuccessFunction prepareHandler = this::prepareHandler;
 
    @Override
-   protected Log getLog() {
-      return log;
-   }
-
-   @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       VersionedPrepareCommand versionedPrepareCommand = (VersionedPrepareCommand) command;
       if (ctx.isOriginLocal()) {

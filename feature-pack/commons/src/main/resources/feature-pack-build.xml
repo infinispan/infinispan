@@ -1,7 +1,7 @@
 <build xmlns="urn:wildfly:feature-pack-build:1.1">
     <dependencies>
         <!-- TODO make commons standalone so that it does not require on full wildfly-feature-pack-->
-        <!-- Modules required: javax.transaction.api, sun.jdk, org.jboss.logging, javax.api-->
+        <!-- Modules required: javax.transaction.api, org.jboss.logging, javax.api-->
         <artifact name="org.wildfly:wildfly-feature-pack" />
     </dependencies>
 </build>

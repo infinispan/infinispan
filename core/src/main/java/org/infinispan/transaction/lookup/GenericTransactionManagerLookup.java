@@ -64,7 +64,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
          return tm;
       if (lookupFailed) {
          if (!noJBossTM) {
-            // First try an embedded JBossTM instance
+            // First try an embedded JBossTM/Wildly instance
             tryEmbeddedJBossTM();
          }
 
@@ -82,6 +82,14 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
    }
 
    private void tryEmbeddedJBossTM() {
+      try {
+         WildflyTransactionManagerLookup lookup = new WildflyTransactionManagerLookup();
+         lookup.init(globalCfg);
+         tm = lookup.getTransactionManager();
+         return;
+      } catch (Exception e) {
+         //ignore. lets try JBossStandalone
+      }
       try {
          JBossStandaloneJTAManagerLookup jBossStandaloneJTAManagerLookup = new JBossStandaloneJTAManagerLookup();
          jBossStandaloneJTAManagerLookup.init(globalCfg);

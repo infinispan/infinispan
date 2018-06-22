@@ -1,28 +1,41 @@
+:tx: link:{javaeedocroot}/javax/transaction/Transaction.html[Transaction]
+:tm: link:{javaeedocroot}/javax/transaction/TransactionManager.html[TransactionManager]
+:sync: link:{javaeedocroot}/javax/transaction/Synchronization.html[Synchronization]
+:xa: link:{javaeedocroot}/javax/transaction/xa/XAResource.html[XAResource]
+:tm-lookup: link:{javadocroot}/org/infinispan/transaction/lookup/TransactionManagerLookup.html[TransactionManagerLookup]
+:embedded-tm-lookup: link:{javadocroot}/org/infinispan/transaction/lookup/EmbeddedTransactionManagerLookup.html[EmbeddedTransactionManagerLookup]
+:jboss-tm-lookup: link:{javadocroot}/org/infinispan/transaction/lookup/JBossStandaloneJTAManagerLookup.html[JBossStandaloneJTAManagerLookup]
+:wildfly-tm-lookup: link:{javadocroot}/org/infinispan/transaction/lookup/WildflyTransactionManagerLookup.html[WildflyTransactionManagerLookup]
+:generic-tm-lookup: link:{javadocroot}/org/infinispan/transaction/lookup/GenericTransactionManagerLookup.html[GenericTransactionManagerLookup]
+
 == Transactions
 {brandname} can be configured to use and to participate in JTA compliant transactions.
 Alternatively, if transaction support is disabled, it is equivalent to using autocommit in JDBC calls, where modifications are potentially replicated after every change (if replication is enabled).
 
 On every cache operation {brandname} does the following:
 
-. Retrieves the current link:{javaeedocroot}/javax/transaction/Transaction.html[Transaction] associated with the thread
-. If not already done, registers link:{javaeedocroot}/javax/transaction/xa/XAResource.html[XAResource] with the transaction manager to be notified when a transaction commits or is rolled back.
+. Retrieves the current {tx} associated with the thread
+. If not already done, registers {xa} with the transaction manager to be notified when a transaction commits or is rolled back.
 
-In order to do this, the cache has to be provided with a reference to the environment's link:{javaeedocroot}/javax/transaction/TransactionManager.html[TransactionManager].
-This is usually done by configuring the cache with the class name of an implementation of the link:{javadocroot}/org/infinispan/transaction/lookup/TransactionManagerLookup.html[TransactionManagerLookup] interface.
+In order to do this, the cache has to be provided with a reference to the environment's {tm}.
+This is usually done by configuring the cache with the class name of an implementation of the {tm-lookup} interface.
 When the cache starts, it will create an instance of this class and invoke its `getTransactionManager()` method, which returns a reference to the `TransactionManager`.
 
 {brandname} ships with several transaction manager lookup classes:
 
 .Transaction manager lookup implementations
-*  link:{javadocroot}/org/infinispan/transaction/lookup/EmbeddedTransactionManagerLookup.html[EmbeddedTransactionManagerLookup]:
+*  {embedded-tm-lookup}:
 This provides with a basic transaction manager which should only be used for embedded mode when no other implementation is available.
 This implementation has some severe limitations to do with concurrent transactions and recovery.
 
-*  link:{javadocroot}/org/infinispan/transaction/lookup/JBossStandaloneJTAManagerLookup.html[JBossStandaloneJTAManagerLookup]:
-If you're running {brandname} in a standalone environment, this should be your default choice for transaction manager.
+* {jboss-tm-lookup}:
+If you're running {brandname} in a standalone environment, or in JBoss AS 7 and earlier, and WildFly 8, 9, and 10, this should be your default choice for transaction manager.
 It's a fully fledged transaction manager based on link:http://narayana.io/[JBoss Transactions] which overcomes all the deficiencies of the `EmbeddedTransactionManager`.
 
-*  link:{javadocroot}/org/infinispan/transaction/lookup/GenericTransactionManagerLookup.html[GenericTransactionManagerLookup]:
+* {wildfly-tm-lookup}:
+If you're running {brandname} in Wildfly 11 or later, this should be your default choice for transaction manager.
+
+* {generic-tm-lookup}:
 This is a lookup class that locate transaction managers in the most popular Java EE application servers.
 If no transaction manager can be found, it defaults on the `EmbeddedTransactionManager`.
 
@@ -104,7 +117,7 @@ Default is `OPTIMISTIC`.
 ** `NONE` - non transactional cache
 ** `FULL_XA` - XA transactional cache with recovery enabled. Check section <<tx:recovery>> for more details about recovery.
 ** `NON_DURABLE_XA` - XA transactional cache with recovery disabled.
-** `NON_XA` - transactional cache with integration via link:{javaeedocroot}/javax/transaction/Synchronization.html[Synchronization] instead of XA.
+** `NON_XA` - transactional cache with integration via {sync} instead of XA.
 Check section <<tx:sync-enlist>> for details.
 ** `BATCH`-  transactional cache using batch to group operations. Check section <<tx:batching>> for details.
 * `notifications` - enables/disables triggering transactional events in cache listeners. Default is `true`.
@@ -298,10 +311,10 @@ NOTE: deadlock detection only runs on an a per cache basis: deadlocks that sprea
 If a link:{javadocroot}/org/infinispan/commons/CacheException.html[CacheException] (or a subclass of it) is thrown by a cache method within the scope of a JTA transaction, then the transaction is automatically marked for rollback.
 
 === Enlisting Synchronizations [[tx:sync-enlist]]
-By default {brandname} registers itself as a first class participant in distributed transactions through link:{javaeedocroot}/javax/transaction/xa/XAResource.html[XAResource].
+By default {brandname} registers itself as a first class participant in distributed transactions through {xa}.
 There are situations where {brandname} is not required to be a participant in the transaction, but only to be notified by its lifecycle (prepare, complete): e.g. in the case {brandname} is used as a 2nd level cache in Hibernate.
 
-{brandname} allows transaction enlistment through link:{javaeedocroot}/javax/transaction/Synchronization.html[Synchronisation].
+{brandname} allows transaction enlistment through {sync}.
 To enable it just use `NON_XA` transaction mode.
 
 ``Synchronization``s have the advantage that they allow `TransactionManager` to optimize 2PC with a 1PC where only one other resource is enlisted with that transaction (link:https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.0/html/development_guide/java_transaction_api_jta#about_the_lrco_optimization_for_single_phase_commit_1pc[last resource commit optimization]).
@@ -395,7 +408,7 @@ This cache can be specified through the `recovery-cache` configuration attribut
 If not specified infinispan will configure a local cache for you.
 
 It is possible (though not mandated) to share same recovery cache between all the {brandname} caches that have recovery enabled.
-If the default recovery cache is overridden, then the specified recovery cache must use a link:{javadocroot}/org/infinispan/transaction/lookup/class-use/TransactionManagerLookup.html[TransactionManagerLookup] that returns a different transaction manager than the one used by the cache itself.
+If the default recovery cache is overridden, then the specified recovery cache must use a {tm-lookup} that returns a different transaction manager than the one used by the cache itself.
 
 ==== Integration with the transaction manager
 Even though this is transaction manager specific, generally a transaction manager would need a reference to a `XAResource` implementation in order to invoke `XAResource.recover()` on it.

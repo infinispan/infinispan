@@ -2,7 +2,6 @@ package org.infinispan.partitionhandling;
 
 import static org.infinispan.test.Exceptions.expectException;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -23,6 +22,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.conflict.EntryMergePolicy;
+import org.infinispan.context.Flag;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
@@ -31,6 +31,7 @@ import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TEST_PING;
@@ -42,7 +43,6 @@ import org.jgroups.JChannel;
 import org.jgroups.MergeView;
 import org.jgroups.View;
 import org.jgroups.protocols.DISCARD;
-import org.jgroups.protocols.Discovery;
 import org.jgroups.protocols.TP;
 import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.stack.Protocol;
@@ -58,7 +58,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    protected int numberOfOwners = 2;
    protected volatile Partition[] partitions;
    protected PartitionHandling partitionHandling = PartitionHandling.DENY_READ_WRITES;
-   protected EntryMergePolicy mergePolicy = null;
+   protected EntryMergePolicy<String, String> mergePolicy = null;
 
    public BasePartitionHandlingTest() {
       this.cacheMode = CacheMode.DIST_SYNC;
@@ -82,6 +82,14 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    protected BasePartitionHandlingTest partitionHandling(PartitionHandling partitionHandling) {
       this.partitionHandling = partitionHandling;
       return this;
+   }
+
+   protected String[] parameterNames() {
+      return new String[]{ null, "tx", "locking", "TO", "isolation", "bias", "triangle", null };
+   }
+
+   protected Object[] parameterValues() {
+      return new Object[]{ cacheMode, transactional, lockingMode, totalOrder, isolationLevel, biasAcquisition, useTriangle, partitionHandling};
    }
 
    protected ConfigurationBuilder cacheConfiguration() {
@@ -142,6 +150,18 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
    }
 
+   protected void disableDiscoveryProtocol(JChannel c) {
+      ((TEST_PING)c.getProtocolStack().findProtocol(TEST_PING.class)).suspend();
+   }
+
+   protected void enableDiscoveryProtocol(JChannel c) {
+      try {
+         c.getProtocolStack().findProtocol(TEST_PING.class).start();
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
+   }
+
    public class Partition {
 
       private final List<Address> allMembers;
@@ -166,14 +186,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
 
       private void disableDiscovery() {
-         for (JChannel c : channels) {
-            for (Protocol p : c.getProtocolStack().getProtocols()) {
-               if (p instanceof Discovery) {
-                  if (!(p instanceof TEST_PING)) throw new IllegalStateException("TEST_PING required for this test.");
-                  ((TEST_PING) p).suspend();
-               }
-            }
-         }
+         channels.forEach(BasePartitionHandlingTest.this::disableDiscoveryProtocol);
       }
 
       private void assertPartitionFormed() {
@@ -287,18 +300,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
 
       public void enableDiscovery() {
-         for (JChannel c : channels) {
-            for (Protocol p : c.getProtocolStack().getProtocols()) {
-               if (p instanceof Discovery) {
-                  try {
-                     log.tracef("About to start discovery: %s", p);
-                     p.start();
-                  } catch (Exception e) {
-                     throw new RuntimeException(e);
-                  }
-               }
-            }
-         }
+         channels.forEach(BasePartitionHandlingTest.this::enableDiscoveryProtocol);
          log.trace("Discovery started.");
       }
 
@@ -362,15 +364,13 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          return caches;
       }
 
+      public void assertExceptionWithForceLock(Object key) {
+         cachesInThisPartition().forEach(c -> Exceptions.expectException(AvailabilityException.class,
+               () -> c.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK).get(key)));
+      }
+
       public void assertKeyNotAvailableForWrite(Object key) {
-         for (Cache<Object, Object> c : cachesInThisPartition()) {
-            try {
-               c.put(key, key);
-               fail();
-            } catch (AvailabilityException ae) {
-               //expected!
-            }
-         }
+         cachesInThisPartition().forEach(c -> Exceptions.expectException(AvailabilityException.class, () -> c.put(key, key)));
       }
 
       public void assertKeysNotAvailableForWrite(Object ... keys) {
@@ -459,7 +459,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       return channel(cache(i));
    }
 
-   private JChannel channel(Cache<?, ?> cache) {
+   protected JChannel channel(Cache<?, ?> cache) {
       return extractJGroupsTransport(cache.getAdvancedCache().getRpcManager().getTransport()).getChannel();
    }
 

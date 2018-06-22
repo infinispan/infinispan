@@ -8,7 +8,7 @@ class Server:
 		doc = ET.parse(path)
 		self.path = path
 		self.extensions = []
-		extensions = doc.findall('{0}extensions/{0}extension'.format("{urn:jboss:domain:6.0}"))
+		extensions = doc.findall('{0}extensions/{0}extension'.format("{urn:jboss:domain:7.0}"))
 		for extension in extensions:
 			self.extensions.append(extension.get('module'))
 

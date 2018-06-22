@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 
-<server xmlns="urn:jboss:domain:6.0">
+<server xmlns="urn:jboss:domain:7.0">
     <extensions>
         <extension module="org.infinispan.extension:ispn-${infinispan.core.schema.version}"/>
         <extension module="org.infinispan.server.endpoint:ispn-${infinispan.core.schema.version}"/>

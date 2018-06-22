@@ -3,6 +3,7 @@ package org.infinispan.context;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.remoting.transport.Address;
@@ -104,6 +105,18 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
    @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
       return cacheEntry == null ? Collections.emptyMap() : Collections.singletonMap(key, cacheEntry);
+   }
+
+   @Override
+   public void forEachEntry(BiConsumer<Object, CacheEntry> action) {
+      if (cacheEntry != null) {
+         action.accept(key, cacheEntry);
+      }
+   }
+
+   @Override
+   public int lookedUpEntriesCount() {
+      return cacheEntry != null ? 1 : 0;
    }
 
    @Override

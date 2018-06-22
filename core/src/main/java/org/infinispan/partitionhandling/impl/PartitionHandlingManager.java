@@ -21,7 +21,7 @@ public interface PartitionHandlingManager {
 
    void checkWrite(Object key);
 
-   void checkRead(Object key);
+   void checkRead(Object key, long flagBitSet);
 
    void checkClear();
 

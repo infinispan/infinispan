@@ -60,7 +60,8 @@ public class TestResourceTracker {
 
    public static String getCurrentTestShortName() {
       String currentTestName = TestResourceTracker.getCurrentTestName();
-      return currentTestName.substring(currentTestName.lastIndexOf(".") + 1);
+      int endIndex = currentTestName.contains("[") ? currentTestName.lastIndexOf("[") : currentTestName.length();
+      return currentTestName.substring(currentTestName.lastIndexOf(".") + 1, endIndex);
    }
 
    public static String getCurrentTestName() {

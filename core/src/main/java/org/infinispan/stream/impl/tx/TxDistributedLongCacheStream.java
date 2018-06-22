@@ -1,9 +1,10 @@
 package org.infinispan.stream.impl.tx;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.commons.util.IntSet;
@@ -44,13 +45,15 @@ public class TxDistributedLongCacheStream<Original, K, V> extends DistributedLon
            Set<Object> excludedKeys, boolean primaryOnly) {
       return () -> {
          Supplier<Stream<Original>> supplier = super.supplierForSegments(ch, targetSegments, excludedKeys, primaryOnly);
-         Set<Original> set = ctx.getLookedUpEntries().values().stream()
-                                  .filter(e -> !isPrimaryOwner(ch, e))
-                                  .map(e -> toOriginalFunction.apply((CacheEntry<K, V>) e))
-                                  .collect(Collectors.toSet());
+         List<Original> contextEntries = new ArrayList<>();
+         ctx.forEachValue((key, entry) -> {
+            if (!isPrimaryOwner(ch, key)) {
+               contextEntries.add(toOriginalFunction.apply((CacheEntry<K, V>) entry));
+            }
+         });
          Stream<Original> suppliedStream = supplier.get();
-         if (!set.isEmpty()) {
-            return Stream.concat(set.stream(), suppliedStream);
+         if (!contextEntries.isEmpty()) {
+            return Stream.concat(contextEntries.stream(), suppliedStream);
          }
          return suppliedStream;
       };
@@ -58,16 +61,16 @@ public class TxDistributedLongCacheStream<Original, K, V> extends DistributedLon
 
    @Override
    protected <R> DistributedCacheStream<Original, R> cacheStream() {
-      return new TxDistributedCacheStream<Original, R, K, V>(this, localAddress, hash, ctx, toOriginalFunction);
+      return new TxDistributedCacheStream<>(this, localAddress, hash, ctx, toOriginalFunction);
    }
 
    @Override
    protected DistributedIntCacheStream<Original> intCacheStream() {
-      return new TxDistributedIntCacheStream<Original, K, V>(this, localAddress, hash, ctx, toOriginalFunction);
+      return new TxDistributedIntCacheStream<>(this, hash, ctx, toOriginalFunction);
    }
 
    @Override
    protected DistributedDoubleCacheStream<Original> doubleCacheStream() {
-      return new TxDistributedDoubleCacheStream<Original, K, V>(this, localAddress, hash, ctx, toOriginalFunction);
+      return new TxDistributedDoubleCacheStream<>(this, localAddress, hash, ctx, toOriginalFunction);
    }
 }

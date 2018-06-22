@@ -3,6 +3,7 @@ package org.infinispan.context.impl;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -54,6 +55,18 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
       return (Map<Object, CacheEntry>)
             (lookedUpEntries == null ?
                    Collections.emptyMap() : lookedUpEntries);
+   }
+
+   @Override
+   public void forEachEntry(BiConsumer<Object, CacheEntry> action) {
+      if (lookedUpEntries != null) {
+         lookedUpEntries.forEach(action);
+      }
+   }
+
+   @Override
+   public int lookedUpEntriesCount() {
+      return lookedUpEntries != null ? lookedUpEntries.size() : 0;
    }
 
    @Override

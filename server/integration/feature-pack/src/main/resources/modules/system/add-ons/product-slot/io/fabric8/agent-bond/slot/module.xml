@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.5" name="io.fabric8.agent-bond" slot="@infinispan.module.slot@">
+    <resources>
+        <artifact name="${io.fabric8:agent-bond-agent}" />
+    </resources>
+
+    <dependencies>
+        <module name="javax.api"/>
+    </dependencies>
+</module>
