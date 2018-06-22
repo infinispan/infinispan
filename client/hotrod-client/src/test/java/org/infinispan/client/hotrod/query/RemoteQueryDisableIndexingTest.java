@@ -38,7 +38,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * Test the disabling of indexing for message types that are annotated {@code @Indexed(false)}. Non-indexing querying
+ * Test the disabling of indexing for message types that are annotated {@code @Indexed(false)}. Non-indexed querying
  * should still work.
  *
  * @author anistor@redhat.com

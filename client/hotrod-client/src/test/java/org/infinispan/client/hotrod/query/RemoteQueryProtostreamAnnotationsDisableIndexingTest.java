@@ -4,7 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -14,12 +13,9 @@ import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.protostream.FileDescriptorSource;
-import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoMessage;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -29,22 +25,26 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * Tests for remote queries over HotRod using protostream annotations on a local cache using indexing in RAM.
+ * Tests for remote queries over HotRod using protostream annotations on a local cache using indexing in RAM. Indexing
+ * is disabled for the searched entity. Non-indexed querying should still work.
  *
- * @author Adrian Nistor
+ * @author anistor@redhat.com
+ * @since 9.4
  */
-@Test(testName = "client.hotrod.query.RemoteQueryWithProtostreamAnnotationsTest", groups = "functional")
-public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServerTest {
+@Test(groups = "functional", testName = "client.hotrod.query.RemoteQueryProtostreamAnnotationsDisableIndexingTest")
+public class RemoteQueryProtostreamAnnotationsDisableIndexingTest extends SingleHotRodServerTest {
 
-   @ProtoDoc("@Indexed")
-   @ProtoMessage(name = "Memo")
+   @ProtoDoc("@Indexed(false)")
    public static class Memo {
 
-      private int id;
+      @ProtoField(number = 10, required = true)
+      public int id;
 
-      private String text;
+      @ProtoField(number = 20)
+      public String text;
 
-      private Author author;
+      @ProtoField(number = 30)
+      public Author author;
 
       public Memo(int id, String text) {
          this.id = id;
@@ -52,36 +52,6 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
       }
 
       public Memo() {
-      }
-
-      @ProtoDoc("@Field(index = Index.NO, store = Store.NO)")
-      @ProtoField(number = 10, required = true)
-      public int getId() {
-         return id;
-      }
-
-      public void setId(int id) {
-         this.id = id;
-      }
-
-      @ProtoDoc("@IndexedField")
-      @ProtoField(number = 20)
-      public String getText() {
-         return text;
-      }
-
-      public void setText(String text) {
-         this.text = text;
-      }
-
-      @ProtoDoc("@IndexedField")
-      @ProtoField(number = 30)
-      public Author getAuthor() {
-         return author;
-      }
-
-      public void setAuthor(Author author) {
-         this.author = author;
       }
 
       @Override
@@ -92,9 +62,11 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
 
    public static class Author {
 
-      private int id;
+      @ProtoField(number = 1, required = true)
+      public int id;
 
-      private String name;
+      @ProtoField(number = 2)
+      public String name;
 
       public Author(int id, String name) {
          this.id = id;
@@ -102,22 +74,6 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
       }
 
       public Author() {
-      }
-
-      public int getId() {
-         return id;
-      }
-
-      public void setId(int id) {
-         this.id = id;
-      }
-
-      public String getName() {
-         return name;
-      }
-
-      public void setName(String name) {
-         this.name = name;
       }
 
       @Override
@@ -147,51 +103,16 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
    @BeforeClass
    protected void registerProtobufSchema() throws Exception {
       //initialize client-side serialization context
-      String authorSchemaFile = "/* @Indexed */\n" +
-            "message Author {\n" +
-            "   required int32 id = 1;\n" +
-            "   /* @IndexedField */\n" +
-            "   required string name = 2;\n" +
-            "}";
       SerializationContext serializationContext = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
-      serializationContext.registerProtoFiles(FileDescriptorSource.fromString("author.proto", authorSchemaFile));
-      serializationContext.registerMarshaller(new MessageMarshaller<Author>() {
-         @Override
-         public Author readFrom(ProtoStreamReader reader) throws IOException {
-            int id = reader.readInt("id");
-            String name = reader.readString("name");
-            Author author = new Author();
-            author.setId(id);
-            author.setName(name);
-            return author;
-         }
-
-         @Override
-         public void writeTo(ProtoStreamWriter writer, Author author) throws IOException {
-            writer.writeInt("id", author.getId());
-            writer.writeString("name", author.getName());
-         }
-
-         @Override
-         public Class<Author> getJavaClass() {
-            return Author.class;
-         }
-
-         @Override
-         public String getTypeName() {
-            return "Author";
-         }
-      });
-
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
-      String memoSchemaFile = protoSchemaBuilder.fileName("memo.proto")
+      String protoSchemaFile = protoSchemaBuilder.fileName("memo.proto")
             .addClass(Memo.class)
+            .addClass(Author.class)
             .build(serializationContext);
 
       //initialize server-side serialization context
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("author.proto", authorSchemaFile);
-      metadataCache.put("memo.proto", memoSchemaFile);
+      metadataCache.put("memo.proto", protoSchemaFile);
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
    }
 
@@ -229,27 +150,27 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
 
    private Memo createMemo1() {
       Memo memo = new Memo(1, "Lorem ipsum");
-      memo.setAuthor(new Author(1, "Tom"));
+      memo.author = new Author(1, "Tom");
       return memo;
    }
 
    private Memo createMemo2() {
       Memo memo = new Memo(2, "Sed ut perspiciatis unde omnis iste natus error");
-      memo.setAuthor(new Author(2, "Adrian"));
+      memo.author = new Author(2, "Adrian");
       return memo;
    }
 
    private void assertMemo1(Memo memo) {
       assertNotNull(memo);
-      assertEquals(1, memo.getId());
-      assertEquals("Lorem ipsum", memo.getText());
-      assertEquals(1, memo.getAuthor().getId());
+      assertEquals(1, memo.id);
+      assertEquals("Lorem ipsum", memo.text);
+      assertEquals(1, memo.author.id);
    }
 
    private void assertMemo2(Memo memo) {
       assertNotNull(memo);
-      assertEquals(2, memo.getId());
-      assertEquals("Sed ut perspiciatis unde omnis iste natus error", memo.getText());
-      assertEquals(2, memo.getAuthor().getId());
+      assertEquals(2, memo.id);
+      assertEquals("Sed ut perspiciatis unde omnis iste natus error", memo.text);
+      assertEquals(2, memo.author.id);
    }
 }
