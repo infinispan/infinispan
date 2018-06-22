@@ -55,7 +55,7 @@ public class RoutingTable {
         //Unfortunately there is no nice way to do a cast here, so we need to un-generify this.
         Stream unGenerifiedStream = routes.stream()
                 .filter(r -> sourceType.isAssignableFrom(r.getRouteSource().getClass()))
-                .filter(r -> destinationType.isAssignableFrom(r.getRouteDesitnation().getClass()));
+                .filter(r -> destinationType.isAssignableFrom(r.getRouteDestination().getClass()));
 
         return unGenerifiedStream;
     }

@@ -150,7 +150,6 @@ public class CacheResource implements ResourceHandler {
          if (request.method() == POST && cache.containsKey(key)) {
             return responseBuilder.status(HttpResponseStatus.CONFLICT.code()).entity("An entry already exists").build();
          } else {
-            Object oldData = null;
             ContentSource contents = request.contents();
             if (contents == null) throw new NoDataFoundException();
             byte[] data = request.contents().rawContent();

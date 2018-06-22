@@ -22,7 +22,7 @@ public class ChannelInboundHandlerDelegatorInitializer extends ChannelInitialize
    }
 
    @Override
-   protected void initChannel(Channel channel) throws Exception {
+   protected void initChannel(Channel channel) {
       channel.pipeline().addLast(new HttpRequestDecoder());
       channel.pipeline().addLast(new HttpResponseEncoder());
       channel.pipeline().addLast(new HttpObjectAggregator(1024*100));

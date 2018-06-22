@@ -76,6 +76,11 @@ public class RestEndpointRouter implements EndpointRouter {
    }
 
    @Override
+   public String getHost() {
+      return ip.getHostAddress();
+   }
+
+   @Override
    public InetAddress getIp() {
       return ip;
    }

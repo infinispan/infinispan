@@ -6,6 +6,8 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
+import org.infinispan.rest.http2.NettyHttpClient;
+import org.infinispan.server.router.Router;
 
 public class RestTestingUtil {
 
@@ -29,5 +31,17 @@ public class RestTestingUtil {
         }
         nettyRestServer.start(configuration.build(), cacheManager);
         return nettyRestServer;
+    }
+
+    public static void killHttpClient(NettyHttpClient client) {
+        if (client != null) {
+            client.stop();
+        }
+    }
+
+    public static void killRouter(Router router) {
+        if (router != null) {
+            router.stop();
+        }
     }
 }

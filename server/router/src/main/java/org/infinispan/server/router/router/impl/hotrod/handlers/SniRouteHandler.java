@@ -53,7 +53,7 @@ public class SniRouteHandler extends SniHandler {
                     .filter(r -> r.getRouteSource().getSniHostName().equals(this.hostname()))
                     .findAny();
 
-            HotRodServerRouteDestination routeDestination = route.orElseThrow(() -> logger.noRouteFound()).getRouteDesitnation();
+            HotRodServerRouteDestination routeDestination = route.orElseThrow(() -> logger.noRouteFound()).getRouteDestination();
             ChannelInitializer<Channel> channelInitializer = routeDestination.getHotrodServer().getInitializer();
 
             ctx.pipeline().addLast(channelInitializer);

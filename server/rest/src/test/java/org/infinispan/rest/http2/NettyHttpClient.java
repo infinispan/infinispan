@@ -1,7 +1,8 @@
 package org.infinispan.rest.http2;
 
-import java.util.Queue;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.IllegalLifecycleStateException;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -13,7 +14,6 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.SslContext;
-import org.infinispan.IllegalLifecycleStateException;
 
 /**
  * HTTP/2 client based on Netty.
@@ -27,7 +27,7 @@ import org.infinispan.IllegalLifecycleStateException;
  * </p>
  *
  * @author Sebastian Łaskawiec
- * @see https://github.com/fstab/http2-examples/tree/master/multiplexing-examples/netty-client/src/main/java/de/consol/labs/h2c/examples/client/netty
+ * @link https://github.com/fstab/http2-examples/tree/master/multiplexing-examples/netty-client/src/main/java/de/consol/labs/h2c/examples/client/netty
  */
 public class NettyHttpClient {
 
@@ -44,7 +44,7 @@ public class NettyHttpClient {
    }
 
    public static NettyHttpClient newHttp2ClientWithHttp11Upgrade() {
-      return new NettyHttpClient(null, new Http2ClientInitializer(null, Integer.MAX_VALUE));
+      return new NettyHttpClient(null, new Http2ClientInitializer(null, Integer.MAX_VALUE, null));
    }
 
    public static NettyHttpClient newHttp11Client() {
@@ -52,8 +52,12 @@ public class NettyHttpClient {
    }
 
    public static NettyHttpClient newHttp2ClientWithALPN(String keystorePath, String keystorePassword) throws Exception {
+      return newHttp2ClientWithALPN(keystorePath, keystorePassword, null);
+   }
+
+   public static NettyHttpClient newHttp2ClientWithALPN(String keystorePath, String keystorePassword, String sniName) throws Exception {
       SslContext sslContext = NettyTruststoreUtil.createTruststoreContext(keystorePath, keystorePassword.toCharArray(), ApplicationProtocolNames.HTTP_2);
-      return new NettyHttpClient(sslContext, new Http2ClientInitializer(sslContext, Integer.MAX_VALUE));
+      return new NettyHttpClient(sslContext, new Http2ClientInitializer(sslContext, Integer.MAX_VALUE, sniName));
    }
 
    public void start(String host, int port) throws Exception {
@@ -82,8 +86,8 @@ public class NettyHttpClient {
       }
    }
 
-   public Queue<FullHttpResponse> getResponses() {
-      return initializer.getCommunicationHandler().getResponses();
+   public FullHttpResponse getResponse() throws InterruptedException {
+      return initializer.getCommunicationHandler().getResponse();
    }
 
    public void sendRequest(FullHttpRequest request) {

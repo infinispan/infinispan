@@ -86,9 +86,7 @@ public class BenchmarkHttpClient {
       for (int i = 0; i < numberOfGets; ++i) {
          executorCompletionService.take().get();
       }
-      if (http2) {
-         nettyHttpClient.getResponses();
-      }
+      nettyHttpClient.getResponse();
    }
 
    public void performPuts(int numberOfInserts) throws Exception {
@@ -117,9 +115,7 @@ public class BenchmarkHttpClient {
       for (int i = 0; i < numberOfInserts; ++i) {
          executorCompletionService.take().get();
       }
-      if (http2) {
-         nettyHttpClient.getResponses();
-      }
+      nettyHttpClient.getResponse();
    }
 
    public void start(String address, int port, int threads, boolean http2) throws Exception {

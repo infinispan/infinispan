@@ -13,8 +13,8 @@ import org.infinispan.server.router.routes.SniRouteSource;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.handler.ssl.SslContext;
-import io.netty.util.DomainMappingBuilder;
 import io.netty.util.DomainNameMapping;
+import io.netty.util.DomainNameMappingBuilder;
 
 /**
  * Initializer for SNI Handlers.
@@ -37,9 +37,9 @@ public class SniHandlerInitializer extends ChannelInitializer<Channel> {
     }
 
     @Override
-    protected void initChannel(Channel channel) throws Exception {
+    protected void initChannel(Channel channel)  {
         SslContext defaultContext = SslUtils.INSTANCE.toNettySslContext(Optional.empty());
-        DomainMappingBuilder<SslContext> domainMappingBuilder = new DomainMappingBuilder<>(defaultContext);
+        DomainNameMappingBuilder<SslContext> domainMappingBuilder = new DomainNameMappingBuilder<>(defaultContext);
 
         routingTable.streamRoutes(SniRouteSource.class, RouteDestination.class)
                 .map(r -> r.getRouteSource())
