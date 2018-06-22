@@ -1,5 +1,7 @@
 <project name="dist-dir" basedir="." default="clean">
 
+   <property name="server.dir" value="${project.build.directory}/${server.output.dir.prefix}-${infinispan.brand.version}" />
+
    <target name="trim-server" depends="trim-modules, trim-as" />
 
    <target name="trim-modules">
