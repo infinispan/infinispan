@@ -99,6 +99,19 @@
          <artifactId>infinispan-lucene-directory</artifactId>
          <scope>test</scope>
       </dependency>
+      <!-- The wildfly-provision-plugin tries to access /target folders of other modules and this does no work for parallel builds.
+      Adding an anchor here to make sure deps are available -->
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-query</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-feature-pack-server</artifactId>
+         <type>zip</type>
+         <scope>test</scope>
+      </dependency>
       <dependency>
          <groupId>com.h2database</groupId>
          <artifactId>h2</artifactId>
