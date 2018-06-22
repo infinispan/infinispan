@@ -7,6 +7,7 @@ import org.infinispan.rest.RestServer;
 import org.infinispan.rest.TestClass;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.authentication.impl.VoidAuthenticator;
+import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
@@ -75,8 +76,16 @@ public class RestServerHelper {
       return restServer.getPort();
    }
 
+   public RestServerConfiguration getConfiguration() {
+      return restServer.getConfiguration();
+   }
+
    public EmbeddedCacheManager getCacheManager() {
       return cacheManager;
+   }
+
+   public String getBasePath() {
+      return String.format("/%s/%s", restServer.getConfiguration().contextPath(), cacheManager.getCacheManagerConfiguration().defaultCacheName().get());
    }
 
    public RestServerHelper withKeyStore(String keyStorePath, String secret, String type) {

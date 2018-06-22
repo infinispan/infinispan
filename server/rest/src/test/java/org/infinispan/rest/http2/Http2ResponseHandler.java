@@ -4,7 +4,7 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,11 +26,11 @@ import io.netty.util.internal.PlatformDependent;
  */
 public class Http2ResponseHandler extends SimpleChannelInboundHandler<FullHttpResponse> implements  CommunicationHandler {
 
-    private final TimeUnit TIMEOUT_UNITS = TimeUnit.MINUTES;
+    private final TimeUnit TIMEOUT_UNITS = TimeUnit.SECONDS;
     private final int TIMEOUT = 15;
 
     private final Map<Integer, Entry<ChannelFuture, ChannelPromise>> streamidPromiseMap;
-    private final Queue<FullHttpResponse> responses = new LinkedBlockingQueue<>();
+    private final BlockingQueue<FullHttpResponse> responses = new LinkedBlockingQueue<>();
 
     //Netty uses stream ids to separate concurrent conversations. It seems to be an implementation details but this counter
     //get always incremented by 2
@@ -94,9 +94,9 @@ public class Http2ResponseHandler extends SimpleChannelInboundHandler<FullHttpRe
     }
 
     @Override
-    public Queue<FullHttpResponse> getResponses() {
+    public FullHttpResponse getResponse() throws InterruptedException {
         awaitResponses(TIMEOUT, TIMEOUT_UNITS);
-        return responses;
+        return responses.take();
     }
 
     @Override

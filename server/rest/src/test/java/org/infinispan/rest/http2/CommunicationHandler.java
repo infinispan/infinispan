@@ -5,17 +5,15 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.ssl.SslContext;
 
-import java.util.Queue;
-
 /**
  * Handles communication for both HTTP/2 and HTTP/1.1
  */
 public interface CommunicationHandler {
 
     /**
-     * @return Gets queued HTTP responses.
+     * @return Gets the next available HTTP response.
      */
-    Queue<FullHttpResponse> getResponses();
+    FullHttpResponse getResponse() throws InterruptedException;
 
     /**
      * Sends a message through the communication channel.

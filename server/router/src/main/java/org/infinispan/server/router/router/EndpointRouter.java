@@ -1,7 +1,6 @@
 package org.infinispan.server.router.router;
 
 import java.net.InetAddress;
-import java.util.Optional;
 
 import org.infinispan.server.router.RoutingTable;
 
@@ -32,12 +31,17 @@ public interface EndpointRouter {
     void stop();
 
     /**
-     * Gets {@link EndpointRouter} IP address. This may return {@link Optional#empty()} if the {@link EndpointRouter} is stopped.
+     * Gets the {@link EndpointRouter}'s host.
+     */
+    String getHost();
+
+    /**
+     * Gets the {@link EndpointRouter}'s IP address.
      */
     InetAddress getIp();
 
     /**
-     * Gets {@link EndpointRouter} port. This may return {@link Optional#empty()} if the {@link EndpointRouter} is stopped.
+     * Gets the {@link EndpointRouter}'s port.
      */
     Integer getPort();
 
