@@ -11,6 +11,10 @@
    <name>Infinispan Distribution</name>
    <packaging>pom</packaging>
 
+   <properties>
+      <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
