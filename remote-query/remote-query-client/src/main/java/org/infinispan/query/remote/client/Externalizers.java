@@ -15,7 +15,7 @@ import org.infinispan.protostream.WrappedMessage;
  * @author anistor@redhat.com
  * @since 9.1
  */
-final class Externalizers {
+public final class Externalizers {
 
    private Externalizers() {
    }

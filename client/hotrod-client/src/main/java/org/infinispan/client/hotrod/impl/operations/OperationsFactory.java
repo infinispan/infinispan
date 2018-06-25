@@ -213,9 +213,9 @@ public class OperationsFactory implements HotRodConstants {
             codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg);
    }
 
-   public QueryOperation newQueryOperation(RemoteQuery remoteQuery) {
+   public QueryOperation newQueryOperation(RemoteQuery remoteQuery, DataFormat dataFormat) {
       return new QueryOperation(
-            codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, remoteQuery);
+            codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, remoteQuery, dataFormat);
    }
 
    public SizeOperation newSizeOperation() {

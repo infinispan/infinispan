@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.query.dsl.IndexedQueryMode;
@@ -40,13 +41,14 @@ public final class QueryFacadeImpl implements QueryFacade {
          authorizationManager.checkPermission(AuthorizationPermission.BULK_READ);
       }
       RemoteQueryManager remoteQueryManager = SecurityActions.getRemoteQueryManager(cache);
-      BaseRemoteQueryEngine queryEngine = remoteQueryManager.getQueryEngine();
+      MediaType requestMediaType = cache.getValueDataConversion().getRequestMediaType();
+      BaseRemoteQueryEngine queryEngine = remoteQueryManager.getQueryEngine(cache);
       if (queryEngine == null) {
          throw log.queryingNotEnabled(cache.getName());
       }
 
       try {
-         QueryRequest request = remoteQueryManager.decodeQueryRequest(query);
+         QueryRequest request = remoteQueryManager.decodeQueryRequest(query, requestMediaType);
 
          long startOffset = request.getStartOffset() == null ? -1 : request.getStartOffset();
          int maxResults = request.getMaxResults() == null ? -1 : request.getMaxResults();
@@ -60,7 +62,7 @@ public final class QueryFacadeImpl implements QueryFacade {
 
          // execute query and make the response object
          QueryResponse response = makeResponse(q);
-         return remoteQueryManager.encodeQueryResponse(response);
+         return remoteQueryManager.encodeQueryResponse(response, requestMediaType);
       } catch (Exception e) {
          if (log.isDebugEnabled()) {
             log.debugf(e, "Error executing remote query : %s", e.getMessage());

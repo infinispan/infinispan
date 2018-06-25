@@ -17,6 +17,7 @@
       <module name="org.infinispan.commons" slot="@infinispan.module.slot@" export="true"/>
       <module name="org.infinispan.core" slot="@infinispan.module.slot@" export="true" services="export"/>
       <module name="org.infinispan.query" slot="@infinispan.module.slot@" export="true" services="import" optional="true" />
+      <module name="org.infinispan.remote-query.client" slot="@infinispan.module.slot@" export="true"/>
       <module name="org.infinispan.lucene-directory" slot="@infinispan.module.slot@" export="true" services="import" optional="true" />
       <module name="org.infinispan.tasks" services="import" slot="@infinispan.module.slot@"/>
       <module name="org.jboss.logging" />

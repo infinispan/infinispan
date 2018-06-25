@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -35,8 +36,8 @@ public final class QueryOperation extends RetryOnFailureOperation<QueryResponse>
    private final RemoteQuery remoteQuery;
 
    public QueryOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicInteger topologyId,
-                         int flags, Configuration cfg, RemoteQuery remoteQuery) {
-      super(QUERY_REQUEST, QUERY_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null);
+                         int flags, Configuration cfg, RemoteQuery remoteQuery, DataFormat dataFormat) {
+      super(QUERY_REQUEST, QUERY_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat);
       this.remoteQuery = remoteQuery;
    }
 

@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.metadata.Metadata;
@@ -33,7 +34,7 @@ public final class IckleProtobufFilterAndConverter extends IckleFilterAndConvert
    @Override
    protected void injectDependencies(Cache cache) {
       RemoteQueryManager remoteQueryManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RemoteQueryManager.class);
-      matcherImplClass = remoteQueryManager.getMatcher().getClass();
+      matcherImplClass = remoteQueryManager.getMatcherClass(MediaType.APPLICATION_PROTOSTREAM);
       super.injectDependencies(cache);
    }
 

@@ -302,12 +302,12 @@ public final class DataConversion {
       return Objects.hash(encoderClass, wrapperClass, isKey);
    }
 
-   public static DataConversion newKeyDataConversion(Class<? extends Encoder> encoderClass, Class<? extends Wrapper> wrapperClass, MediaType requestType) {
-      return new DataConversion(encoderClass, wrapperClass, requestType, null, true);
+   public static DataConversion newKeyDataConversion(Class<? extends Encoder> encoderClass, Class<? extends Wrapper> wrapperClass, MediaType storageType) {
+      return new DataConversion(encoderClass, wrapperClass, null, storageType, true);
    }
 
-   public static DataConversion newValueDataConversion(Class<? extends Encoder> encoderClass, Class<? extends Wrapper> wrapperClass, MediaType requestType) {
-      return new DataConversion(encoderClass, wrapperClass, requestType, null, false);
+   public static DataConversion newValueDataConversion(Class<? extends Encoder> encoderClass, Class<? extends Wrapper> wrapperClass, MediaType storageType) {
+      return new DataConversion(encoderClass, wrapperClass, null, storageType, false);
    }
 
    private static boolean isDefault(DataConversion dataConversion) {
