@@ -15,6 +15,7 @@ import javax.management.ObjectName;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -30,7 +31,6 @@ import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.config.Configuration;
-import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.MarshallerRegistration;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
@@ -113,7 +113,8 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
             .locking().isolationLevel(IsolationLevel.READ_COMMITTED).useLockStriping(false)
             .clustering().cacheMode(cacheMode).sync()
             .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false)
-            .compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller())
+            .encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
+            .encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
             .customInterceptors().addInterceptor()
             .interceptor(new ProtobufMetadataManagerInterceptor()).after(PessimisticLockingInterceptor.class);
       if (globalConfiguration.security().authorization().enabled()) {

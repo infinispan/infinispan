@@ -7,10 +7,10 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -32,11 +32,11 @@ import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.objectfilter.Matcher;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.ProtobufMetadataManager;
-import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
+import org.infinispan.query.remote.client.Externalizers.QueryRequestExternalizer;
 import org.infinispan.query.remote.client.ProtostreamSerializationContextInitializer;
+import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.impl.dataconversion.ProtostreamBinaryTranscoder;
 import org.infinispan.query.remote.impl.dataconversion.ProtostreamJsonTranscoder;
 import org.infinispan.query.remote.impl.dataconversion.ProtostreamObjectTranscoder;
@@ -82,6 +82,8 @@ public final class LifecycleManager implements ModuleLifecycle {
       EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
       encoderRegistry.registerWrapper(ProtobufWrapper.INSTANCE);
       initProtobufMetadataManager((DefaultCacheManager) cacheManager, gcr);
+      ClassWhiteList classWhiteList = cacheManager.getClassWhiteList();
+      classWhiteList.addClasses(QueryRequest.class, QueryRequestExternalizer.class);
    }
 
    private void initProtobufMetadataManager(DefaultCacheManager cacheManager, GlobalComponentRegistry gcr) {
@@ -95,7 +97,7 @@ public final class LifecycleManager implements ModuleLifecycle {
       EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
       encoderRegistry.registerTranscoder(new ProtostreamJsonTranscoder(serCtx));
       encoderRegistry.registerTranscoder(new ProtostreamTextTranscoder(serCtx));
-      encoderRegistry.registerTranscoder(new ProtostreamObjectTranscoder(serCtx));
+      encoderRegistry.registerTranscoder(new ProtostreamObjectTranscoder(serCtx, classLoader));
       encoderRegistry.registerTranscoder(new ProtostreamBinaryTranscoder());
    }
 
@@ -194,22 +196,10 @@ public final class LifecycleManager implements ModuleLifecycle {
 
    private RemoteQueryManager buildQueryManager(Configuration cfg, SerializationContext ctx, ComponentRegistry cr) {
       ContentTypeConfiguration valueEncoding = cfg.encoding().valueDataType();
-      boolean compatEnabled = cfg.compatibility().enabled();
-      if (!compatEnabled) {
-         if (valueEncoding != null) {
-            if (!valueEncoding.isEncodingChanged() || valueEncoding.mediaType() != null && valueEncoding.mediaType().equals(MediaType.APPLICATION_PROTOSTREAM)) {
-               return new ProtobufRemoteQueryManager(ctx, cr);
-            }
-         }
-         return new GenericCompatRemoteQueryManager(cr);
-
-      } else {
-         Marshaller compatMarshaller = cfg.compatibility().marshaller();
-         if (compatMarshaller instanceof BaseProtoStreamMarshaller) {
-            return new ProtostreamCompatRemoteQueryManager(cr);
-         }
-         return new GenericCompatRemoteQueryManager(cr);
-      }
+      MediaType valueStorageMediaType = valueEncoding.mediaType();
+      boolean isObjectStorage = valueStorageMediaType != null && valueStorageMediaType.match(MediaType.APPLICATION_OBJECT);
+      if (isObjectStorage) return new ObjectRemoteQueryManager(cr);
+      return new ProtobufRemoteQueryManager(ctx, cr);
    }
 
    @Override
@@ -230,8 +220,6 @@ public final class LifecycleManager implements ModuleLifecycle {
 
          RemoteQueryManager remoteQueryManager = buildQueryManager(cfg, serCtx, cr);
 
-         Matcher matcher = remoteQueryManager.getMatcher();
-         cr.registerComponent(matcher, matcher.getClass());
          cr.registerComponent(remoteQueryManager, RemoteQueryManager.class);
       }
    }

@@ -1,5 +1,7 @@
 package org.infinispan.query.remote.impl.filter;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -9,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.metadata.Metadata;
@@ -35,7 +38,7 @@ public final class IckleContinuousQueryProtobufCacheEventFilterConverter extends
    @Override
    protected void injectDependencies(Cache cache) {
       remoteQueryManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RemoteQueryManager.class);
-      matcherImplClass = remoteQueryManager.getMatcher().getClass();
+      matcherImplClass = remoteQueryManager.getMatcherClass(APPLICATION_PROTOSTREAM);
       super.injectDependencies(cache);
    }
 
@@ -61,9 +64,9 @@ public final class IckleContinuousQueryProtobufCacheEventFilterConverter extends
    }
 
    protected Object makeFilterResult(ContinuousQueryResult.ResultType resultType, Object key, Object value, Object[] projection) {
-      key = remoteQueryManager.getKeyEncoder().fromStorage(key);
+      key = remoteQueryManager.convertKey(key, MediaType.APPLICATION_PROTOSTREAM);
       if (value != null) {
-         value = remoteQueryManager.getValueEncoder().fromStorage(value);
+         value = remoteQueryManager.convertValue(value, MediaType.APPLICATION_PROTOSTREAM);
       }
       Object result = new ContinuousQueryResult(resultType, (byte[]) key, (byte[]) value, projection);
       return remoteQueryManager.encodeFilterResult(result);

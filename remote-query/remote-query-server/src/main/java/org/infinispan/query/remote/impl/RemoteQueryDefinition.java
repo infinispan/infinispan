@@ -17,6 +17,6 @@ public class RemoteQueryDefinition extends QueryDefinition {
 
    @Override
    protected QueryEngine getQueryEngine(AdvancedCache<?, ?> cache) {
-      return cache.getComponentRegistry().getComponent(RemoteQueryManager.class).getQueryEngine();
+      return cache.getComponentRegistry().getComponent(RemoteQueryManager.class).getQueryEngine(cache);
    }
 }

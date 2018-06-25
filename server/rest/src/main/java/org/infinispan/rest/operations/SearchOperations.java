@@ -35,7 +35,7 @@ public class SearchOperations extends AbstractOperations {
       String queryString = query.getQuery();
       try {
          RemoteQueryManager remoteQueryManager = cache.getComponentRegistry().getComponent(RemoteQueryManager.class);
-         RemoteQueryResult remoteQueryResult = remoteQueryManager.executeQuery(queryString, query.getStartOffset(), query.getMaxResults(), query.getQueryMode());
+         RemoteQueryResult remoteQueryResult = remoteQueryManager.executeQuery(queryString, query.getStartOffset(), query.getMaxResults(), query.getQueryMode(), cache);
          int totalResults = remoteQueryResult.getTotalResults();
          List<Object> results = remoteQueryResult.getResults();
          String[] projections = remoteQueryResult.getProjections();

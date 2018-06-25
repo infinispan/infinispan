@@ -71,7 +71,7 @@ public final class RemoteQuery extends BaseQuery {
       if (results == null) {
          validateNamedParameters();
 
-         QueryOperation op = cache.getOperationsFactory().newQueryOperation(this);
+         QueryOperation op = cache.getOperationsFactory().newQueryOperation(this, cache.getDataFormat());
          QueryResponse response = await(op.execute());
          totalResults = (int) response.getTotalResults();
          results = unwrapResults(response.getProjectionSize(), response.getResults());

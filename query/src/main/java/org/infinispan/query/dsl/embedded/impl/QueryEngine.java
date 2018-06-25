@@ -146,6 +146,10 @@ public class QueryEngine<TypeMetadata> {
       return searchFactory;
    }
 
+   public Class<? extends Matcher> getMatcherClass() {
+      return matcherImplClass;
+   }
+
    protected BaseQuery buildQuery(QueryFactory queryFactory, IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults) {
       return buildQuery(queryFactory, parsingResult, namedParameters, startOffset, maxResults, IndexedQueryMode.FETCH);
    }
