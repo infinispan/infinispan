@@ -22,6 +22,7 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-hibernate-cache-commons</artifactId>
+         <version>${project.version}</version>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>

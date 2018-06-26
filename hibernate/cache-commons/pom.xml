@@ -22,13 +22,13 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-hibernate-cache-spi</artifactId>
+         <version>${project.version}</version>
       </dependency>
       <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-core</artifactId>
          <version>${version.hibernate.core}</version>
       </dependency>
-
       <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-testing</artifactId>
