@@ -27,6 +27,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.StreamingRemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
 import org.infinispan.client.hotrod.filter.Filters;
@@ -426,7 +427,18 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       byte[][] marshalledFilterParams = marshallParams(filterFactoryParams);
       byte[][] marshalledConverterParams = marshallParams(converterFactoryParams);
       AddClientListenerOperation op = operationsFactory.newAddClientListenerOperation(
-            listener, marshalledFilterParams, marshalledConverterParams, dataFormat);
+            listener, marshalledFilterParams, marshalledConverterParams, dataFormat, null);
+      // No timeout: transferring initial state can take a while, socket timeout setting is not applicable here
+      await(op.execute());
+   }
+
+   @Override
+   public void addClientListener(Object listener, Object[] filterFactoryParams, Object[] converterFactoryParams, ClientListener overrides) {
+      assertRemoteCacheManagerIsStarted();
+      byte[][] marshalledFilterParams = marshallParams(filterFactoryParams);
+      byte[][] marshalledConverterParams = marshallParams(converterFactoryParams);
+      AddClientListenerOperation op = operationsFactory.newAddClientListenerOperation(
+         listener, marshalledFilterParams, marshalledConverterParams, dataFormat, overrides);
       // No timeout: transferring initial state can take a while, socket timeout setting is not applicable here
       await(op.execute());
    }

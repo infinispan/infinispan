@@ -37,19 +37,22 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
    private final ClientListenerNotifier listenerNotifier;
    private final byte[][] filterFactoryParams;
    private final byte[][] converterFactoryParams;
+   private final ClientListener overrides;
 
    protected AddClientListenerOperation(Codec codec, ChannelFactory channelFactory,
                                         String cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
                                         ClientListenerNotifier listenerNotifier, Object listener,
-                                        byte[][] filterFactoryParams, byte[][] converterFactoryParams, DataFormat dataFormat) {
+                                        byte[][] filterFactoryParams, byte[][] converterFactoryParams, DataFormat dataFormat,
+                                        ClientListener overrides) {
       this(codec, channelFactory, cacheName, topologyId, flags, cfg, generateListenerId(),
-            listenerNotifier, listener, filterFactoryParams, converterFactoryParams, dataFormat);
+            listenerNotifier, listener, filterFactoryParams, converterFactoryParams, dataFormat, overrides);
    }
 
    private AddClientListenerOperation(Codec codec, ChannelFactory channelFactory,
                                       String cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
                                       byte[] listenerId, ClientListenerNotifier listenerNotifier, Object listener,
-                                      byte[][] filterFactoryParams, byte[][] converterFactoryParams, DataFormat dataFormat) {
+                                      byte[][] filterFactoryParams, byte[][] converterFactoryParams, DataFormat dataFormat,
+                                      ClientListener overrides) {
       super(ADD_CLIENT_LISTENER_REQUEST, ADD_CLIENT_LISTENER_RESPONSE, codec, channelFactory, RemoteCacheManager.cacheNameBytes(cacheName), topologyId, flags, cfg, dataFormat);
       this.listenerId = listenerId;
       this.listenerNotifier = listenerNotifier;
@@ -57,11 +60,12 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
       this.filterFactoryParams = filterFactoryParams;
       this.converterFactoryParams = converterFactoryParams;
       this.cacheNameString = cacheName;
+      this.overrides = overrides;
    }
 
    public AddClientListenerOperation copy() {
       return new AddClientListenerOperation(codec, channelFactory, cacheNameString, header.topologyId(), flags, cfg,
-            listenerId, listenerNotifier, listener, filterFactoryParams, converterFactoryParams, dataFormat);
+            listenerId, listenerNotifier, listener, filterFactoryParams, converterFactoryParams, dataFormat, overrides);
    }
 
    private static byte[] generateListenerId() {
@@ -74,6 +78,9 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
    }
 
    private ClientListener extractClientListener() {
+      if (overrides != null)
+         return overrides;
+
       ClientListener l = ReflectionUtil.getAnnotation(listener.getClass(), ClientListener.class);
       if (l == null)
          throw log.missingClientListenerAnnotation(listener.getClass().getName());
