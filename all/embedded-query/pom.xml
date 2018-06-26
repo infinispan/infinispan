@@ -63,7 +63,7 @@
                            <exclude>org.infinispan:infinispan-embedded</exclude>
                            <exclude>net.jcip:jcip-annotations:jar:</exclude>
                            <exclude>org.jboss.marshalling:jboss-marshalling-osgi</exclude>
-                           <exclude>org.jboss.spec.javax.transaction:jboss-transaction-api_1.1_spec:jar:</exclude>
+                           <exclude>org.jboss.spec.javax.transaction:jboss-transaction-api_1.2_spec:jar:</exclude>
                            <exclude>org.osgi:org.osgi.core:jar:</exclude>
                            <exclude>org.osgi:org.osgi.compendium:jar:</exclude>
                            <exclude>javax.persistence:javax.persistence-api:jar:</exclude>

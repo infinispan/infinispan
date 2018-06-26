@@ -113,7 +113,7 @@
          <mkdir dir="@{dir}/lib" />
          <copy todir="@{dir}/lib">
             <file file="${javax.cache:cache-api:jar}" />
-            <file file="${org.jboss.spec.javax.transaction:jboss-transaction-api_1.1_spec:jar}" />
+            <file file="${org.jboss.spec.javax.transaction:jboss-transaction-api_1.2_spec:jar}" />
             <mapper type="flatten" />
          </copy>
       </sequential>
