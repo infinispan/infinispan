@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 5.3
  */
-@Test(groups = "functional", testName = "atomic.OptimisticTxAtomicLocking")
+@Test(groups = "functional", testName = "atomic.OptimisticTxAtomicLockingTest")
 public class OptimisticTxAtomicLockingTest extends BaseAtomicMapLockingTest {
 
    public OptimisticTxAtomicLockingTest() {
