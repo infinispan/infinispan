@@ -64,7 +64,8 @@ pipeline {
 
         stage('Tag') {
             steps {
-                // Only tag once everything is good
+                // Commit and tag once everything is good
+                sh "$MAVEN_HOME/bin/mvn -B -v scm:checkin -Dmessage=\"Releasing version ${version}\""
                 sh "$MAVEN_HOME/bin/mvn -B -V scm:tag"
             }
         }
