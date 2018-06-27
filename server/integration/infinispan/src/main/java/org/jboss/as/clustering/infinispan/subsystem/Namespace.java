@@ -42,13 +42,14 @@ public enum Namespace {
     INFINISPAN_SERVER_9_0("infinispan:server:core", 9, 0),
     INFINISPAN_SERVER_9_1("infinispan:server:core", 9, 1),
     INFINISPAN_SERVER_9_2("infinispan:server:core", 9, 2),
-    INFINISPAN_SERVER_9_3("infinispan:server:core", 9, 3);
+    INFINISPAN_SERVER_9_3("infinispan:server:core", 9, 3),
+    INFINISPAN_SERVER_9_4("infinispan:server:core", 9, 4);
     private static final String URN_PATTERN = "urn:%s:%d.%d";
 
     /**
      * The current namespace version.
      */
-    public static final Namespace CURRENT = INFINISPAN_SERVER_9_3;
+    public static final Namespace CURRENT = INFINISPAN_SERVER_9_4;
 
     private final int major;
     private final int minor;

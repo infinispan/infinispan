@@ -199,7 +199,7 @@ The subsystem declaration is enclosed in the following XML element:
 [source,xml]
 ----
 
-<subsystem xmlns="urn:infinispan:server:core:9.2" default-cache-container="clustered">
+<subsystem xmlns="urn:infinispan:server:core:9.4" default-cache-container="clustered">
   ...
 </subsystem>
 
@@ -329,7 +329,7 @@ we define the "default" cache as follows in our domain.xml configuration:
 
 [source,xml,options="nowrap"]
 ----
-  <subsystem xmlns="urn:infinispan:server:core:9.2">
+  <subsystem xmlns="urn:infinispan:server:core:9.4">
       <cache-container name="clustered" default-cache="default" statistics="true">
           <transport lock-timeout="60000"/>
           <global-state/>
