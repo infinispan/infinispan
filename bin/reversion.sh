@@ -100,6 +100,8 @@ if [ "$OLDSCHEMAVERSION" != "$NEWSCHEMAVERSION" ] && [ "$PROCESS_SCHEMAS" = true
     
     # Set master schema version
     sed -i "s/<infinispan.base.version>$OLDSCHEMAVERSION<\/infinispan.base.version>/<infinispan.base.version>$NEWSCHEMAVERSION<\/infinispan.base.version>/g" pom.xml
+    # Set the codename to WIP
+    sed -E -i "s/<infinispan.codename>[^<]+<\/infinispan.codename>/<infinispan.codename>WIP<\/infinispan.codename>/g" pom.xml
     git add pom.xml
     
     # Create new unified configuration

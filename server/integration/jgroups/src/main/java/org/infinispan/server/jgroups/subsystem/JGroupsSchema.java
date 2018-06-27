@@ -32,8 +32,9 @@ enum JGroupsSchema {
     INFINISPAN_SERVER_JGROUPS_9_0("infinispan:server:jgroups", 9, 0),
     INFINISPAN_SERVER_JGROUPS_9_2("infinispan:server:jgroups", 9, 2),
     INFINISPAN_SERVER_JGROUPS_9_3("infinispan:server:jgroups", 9, 3),
+    INFINISPAN_SERVER_JGROUPS_9_4("infinispan:server:jgroups", 9, 4),
     ;
-    public static final JGroupsSchema CURRENT = INFINISPAN_SERVER_JGROUPS_9_3;
+    public static final JGroupsSchema CURRENT = INFINISPAN_SERVER_JGROUPS_9_4;
 
     private static final String URN_PATTERN = "urn:%s:%d.%d";
 
@@ -48,9 +49,7 @@ enum JGroupsSchema {
     }
 
     /**
-     * Indicates whether this version of the schema is greater than or equal to the version of the specified schema.
-     * @param a schema
-     * @return true, if this version of the schema is greater than or equal to the version of the specified schema, false otherwise.
+     * @return true, if this version of the schema is greater than or equal to the version of any of the specified schemas, false otherwise.
      */
     public boolean since(JGroupsSchema... schemas) {
         for(JGroupsSchema schema : schemas) {
