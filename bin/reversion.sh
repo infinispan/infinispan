@@ -34,6 +34,23 @@ function rewriteXML() {
     git add $XML
 }
 
+function copyXMLs() {
+    SEPARATOR=$1
+    OLDMAJOR=$2
+    OLDMINOR=$3
+    NEWMAJOR=$4
+    NEWMINOR=$5
+
+    for XML in $(find . -name "*${OLDSCHEMAMAJOR}${SEPARATOR}${OLDSCHEMAMINOR}.xml" -print); do
+       if ! git check-ignore -q $XML; then
+          NEWXML=${XML/${OLDMAJOR}${SEPARATOR}${OLDMINOR}/${NEWMAJOR}${SEPARATOR}${NEWMINOR}}
+          echo Adding $NEWXML
+          cp $XML $NEWXML
+          rewriteXML $NEWXML $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
+       fi
+    done
+}
+
 while test $# -gt 0; do
     case "$1" in
             -h|--help)
@@ -103,13 +120,13 @@ if [ "$OLDSCHEMAVERSION" != "$NEWSCHEMAVERSION" ] && [ "$PROCESS_SCHEMAS" = true
     # Set the codename to WIP
     sed -E -i "s/<infinispan.codename>[^<]+<\/infinispan.codename>/<infinispan.codename>WIP<\/infinispan.codename>/g" pom.xml
     git add pom.xml
-    
-    # Create new unified configuration
-    cp core/src/test/resources/configs/unified/$OLDSCHEMAVERSION.xml core/src/test/resources/configs/unified/$NEWSCHEMAVERSION.xml
-    rewriteXML core/src/test/resources/configs/unified/$NEWSCHEMAVERSION.xml $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
+
+    # Create new test configurations
+    copyXMLs . $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
+    copyXMLs _ $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
 
     # Update the distribution configurations
-    CONFIGS=`find distribution/src/main/release/common/configs/config-samples -name '*.xml'`
+    CONFIGS=$(find distribution/src/main/release/common/configs/config-samples -name '*.xml')
     for CONFIG in $CONFIGS; do
          rewriteXML $CONFIG $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
     done
@@ -124,6 +141,7 @@ if [ "$OLDSCHEMAVERSION" != "$NEWSCHEMAVERSION" ] && [ "$PROCESS_SCHEMAS" = true
     echo "- org.infinispan.server.jgroups.subsystem.SubsystemParsingTestCase"
     echo "- org.jboss.as.clustering.infinispan.subsystem.Namespace"
     echo "- org.jboss.as.clustering.infinispan.subsystem.SubsystemParsingTestCase"
+    echo "- org.infinispan.server.endpoint.subsystem.Namespace"
     echo "- org.infinispan.server.endpoint.EndpointSubsystemTestCase"
 fi
 
