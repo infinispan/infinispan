@@ -13,6 +13,10 @@
    <name>Integration tests - AS Lucene Directory</name>
    <description>Integration tests - Wildfly Lucene directory integration</description>
 
+   <properties>
+      <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -22,6 +26,12 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-commons-test</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-feature-pack-wf-modules</artifactId>
+         <type>zip</type>
          <scope>test</scope>
       </dependency>
       <dependency>
