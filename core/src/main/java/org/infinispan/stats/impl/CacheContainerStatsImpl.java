@@ -559,6 +559,27 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
 
    @Override
    @ManagedAttribute(
+         description = "Amount in bytes of memory used in a given cache container for entries with eviction",
+         displayName = "Container memory used by eviction",
+         displayType = DisplayType.SUMMARY
+   )
+   public long getDataMemoryUsed() {
+      return calculateDataMemoryUsed();
+   }
+
+   protected long calculateDataMemoryUsed() {
+      long totalMemoryUsed = 0;
+      for (Stats stats : getEnabledStats()) {
+         long memoryUsed = stats.getDataMemoryUsed();
+         if (memoryUsed > 0) {
+            totalMemoryUsed += memoryUsed;
+         }
+      }
+      return totalMemoryUsed;
+   }
+
+   @Override
+   @ManagedAttribute(
          description = "Amount in bytes of off-heap memory used by this cache container",
          displayName = "Off-Heap memory used",
          displayType = DisplayType.SUMMARY

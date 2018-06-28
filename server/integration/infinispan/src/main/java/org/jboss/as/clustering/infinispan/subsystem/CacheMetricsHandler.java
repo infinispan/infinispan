@@ -90,6 +90,7 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         MISSES(MetricKeys.MISSES, ModelType.LONG, true),
         NUMBER_OF_ENTRIES(MetricKeys.NUMBER_OF_ENTRIES, ModelType.INT, true),
         NUMBER_OF_ENTRIES_IN_MEMORY(MetricKeys.NUMBER_OF_ENTRIES_IN_MEMORY, ModelType.INT, true),
+        DATA_MEMORY_USED(MetricKeys.DATA_MEMORY_USED, ModelType.LONG, true),
         OFF_HEAP_MEMORY_USED(MetricKeys.OFF_HEAP_MEMORY_USED, ModelType.LONG, true),
         MINIMUM_REQUIRED_NODES(MetricKeys.MINIMUM_REQUIRED_NODES, ModelType.INT, true),
         READ_WRITE_RATIO(MetricKeys.READ_WRITE_RATIO, ModelType.DOUBLE, true),
@@ -258,6 +259,11 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
                 case NUMBER_OF_ENTRIES_IN_MEMORY: {
                     CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
                     result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getNumberOfEntriesInMemory() : 0);
+                    break;
+                }
+                case DATA_MEMORY_USED: {
+                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
+                    result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getDataMemoryUsed() : 0);
                     break;
                 }
                 case OFF_HEAP_MEMORY_USED: {

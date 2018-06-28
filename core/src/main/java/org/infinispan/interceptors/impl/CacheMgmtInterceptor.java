@@ -43,6 +43,7 @@ import org.infinispan.container.offheap.OffHeapMemoryAllocator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.functional.impl.StatsEnvelope;
@@ -644,6 +645,18 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    )
    public int getNumberOfEntriesInMemory() {
       return dataContainer.size();
+   }
+
+   @ManagedAttribute(
+         description = "Amount of memory in bytes allocated for use in eviction for data in the cache",
+         displayName = "Memory Used by data in the cache",
+         displayType = DisplayType.SUMMARY
+   )
+   public long getDataMemoryUsed() {
+      if (cacheConfiguration.memory().isEvictionEnabled() && cacheConfiguration.memory().evictionType() == EvictionType.MEMORY) {
+         return dataContainer.evictionSize();
+      }
+      return 0;
    }
 
    @ManagedAttribute(

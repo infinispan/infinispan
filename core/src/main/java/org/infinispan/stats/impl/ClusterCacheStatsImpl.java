@@ -10,6 +10,7 @@ import static org.infinispan.stats.impl.StatKeys.AVERAGE_WRITE_TIME_NANOS;
 import static org.infinispan.stats.impl.StatKeys.CACHE_LOADER_LOADS;
 import static org.infinispan.stats.impl.StatKeys.CACHE_LOADER_MISSES;
 import static org.infinispan.stats.impl.StatKeys.CACHE_WRITER_STORES;
+import static org.infinispan.stats.impl.StatKeys.DATA_MEMORY_USED;
 import static org.infinispan.stats.impl.StatKeys.EVICTIONS;
 import static org.infinispan.stats.impl.StatKeys.HITS;
 import static org.infinispan.stats.impl.StatKeys.INVALIDATIONS;
@@ -65,7 +66,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    private static String[] LONG_ATTRIBUTES = new String[]{EVICTIONS, HITS, MISSES, OFF_HEAP_MEMORY_USED, REMOVE_HITS,
          REMOVE_MISSES, INVALIDATIONS, PASSIVATIONS, ACTIVATIONS, CACHE_LOADER_LOADS, CACHE_LOADER_MISSES, CACHE_WRITER_STORES,
-         STORES};
+         STORES, DATA_MEMORY_USED};
 
    private static final Log log = LogFactory.getLog(ClusterCacheStatsImpl.class);
 
@@ -305,10 +306,21 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       return getStores();
    }
 
+
+   @Override
+   @ManagedAttribute(
+         description = "Amount in bytes of memory used across the cluster for entries in this cache with eviction",
+         displayName = "Cluster wide memory used by eviction",
+         displayType = DisplayType.SUMMARY
+   )
+   public long getDataMemoryUsed() {
+      return getStatAsLong(DATA_MEMORY_USED);
+   }
+
    @Override
    @ManagedAttribute(
          description = "Amount in bytes of off-heap memory used across the cluster for this cache",
-         displayName = "Cluster wide off-sheap memory used",
+         displayName = "Cluster wide off-heap memory used",
          displayType = DisplayType.SUMMARY
    )
    public long getOffHeapMemoryUsed() {
@@ -463,6 +475,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
             map.put(NUMBER_OF_ENTRIES_IN_MEMORY, numberOfEntriesInMemory);
          }
 
+         map.put(DATA_MEMORY_USED, stats.getDataMemoryUsed());
          map.put(OFF_HEAP_MEMORY_USED, stats.getOffHeapMemoryUsed());
          map.put(REQUIRED_MIN_NODES, stats.getRequiredMinimumNumberOfNodes());
          map.put(STORES, stats.getStores());

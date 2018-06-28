@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.eviction.EvictionType;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "stats.ClusteredStatsTest")
@@ -17,8 +18,8 @@ public class ClusteredStatsTest extends SingleStatsTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new ClusteredStatsTest().withStorage(StorageType.OBJECT),
-            new ClusteredStatsTest().withStorage(StorageType.OFF_HEAP)
+            new ClusteredStatsTest().withStorage(StorageType.OBJECT).withEvictionType(EvictionType.COUNT),
+            new ClusteredStatsTest().withStorage(StorageType.OFF_HEAP).withEvictionType(EvictionType.COUNT),
       };
    }
 
