@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.math.BigInteger;
 import java.nio.channels.ClosedChannelException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -965,7 +966,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
                                        int extraSpace) {
       byte[] data = entry.getValue();
       byte[] dataSize = String.valueOf(data.length).getBytes();
-      byte[] key = k.getBytes();
+      byte[] key = k.getBytes(StandardCharsets.UTF_8);
 
       byte[] flags;
       Metadata metadata = entry.getMetadata();
