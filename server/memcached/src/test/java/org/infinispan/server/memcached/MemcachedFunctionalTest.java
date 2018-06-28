@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.net.SocketAddress;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -605,8 +605,8 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 
    public void testBufferOverflowCausesUnknownException() throws Exception {
       List<String> keys = Files.readAllLines(
-            Paths.get(getClass().getClassLoader().getResource("keys.txt").toURI()),
-            Charset.defaultCharset()
+         Paths.get(getClass().getClassLoader().getResource("keys.txt").toURI()),
+         StandardCharsets.UTF_8
       );
 
       for (String key : keys) {
