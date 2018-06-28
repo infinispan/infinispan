@@ -28,7 +28,6 @@ import org.infinispan.commons.util.EvictionListener;
 import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.PeekableMap;
-import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -38,7 +37,6 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.L1Metadata;
 import org.infinispan.util.CoreImmutables;
@@ -67,18 +65,12 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    @Inject protected ActivationManager activator;
    @Inject protected PassivationManager passivator;
    @Inject protected Cache<K, V> cache;
-   protected KeyPartitioner keyPartitioner;
+   @Inject protected KeyPartitioner keyPartitioner;
 
    protected final List<Consumer<Iterable<InternalCacheEntry<K, V>>>> listeners = new CopyOnWriteArrayList<>();
 
    protected abstract ConcurrentMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment);
    protected abstract int getSegmentForKey(Object key);
-
-   @Start
-   public void start() {
-      HashConfiguration hashConfiguration = cache.getCacheConfiguration().clustering().hash();
-      keyPartitioner = hashConfiguration.keyPartitioner();
-   }
 
    @Override
    public InternalCacheEntry<K, V> get(int segment, Object k) {

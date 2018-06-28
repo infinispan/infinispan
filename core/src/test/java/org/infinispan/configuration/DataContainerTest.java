@@ -12,6 +12,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.DefaultDataContainer;
+import org.infinispan.container.impl.DefaultSegmentedDataContainer;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.container.impl.InternalDataContainerAdapter;
 import org.infinispan.eviction.ActivationManager;
@@ -23,6 +24,8 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.assertEquals;
 
 @Test(testName = "config.DataContainerTest", groups = "functional")
 public class DataContainerTest extends AbstractInfinispanTest {
@@ -131,6 +134,22 @@ public class DataContainerTest extends AbstractInfinispanTest {
          cache.put("name", "Pete");
 
          Assert.assertTrue(checkLoggedOperations(dataContainer.getLoggedOperations(), "put(name, Pete", "compute(name,"));
+      } finally {
+         TestingUtil.killCacheManagers(cm);
+      }
+   }
+
+   @Test
+   public void testInternalDataContainer() {
+      DefaultSegmentedDataContainer container = new DefaultSegmentedDataContainer(1);
+      ConfigurationBuilder configuration = new ConfigurationBuilder();
+      configuration.dataContainer().dataContainer(container);
+
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(configuration);
+
+      try {
+         AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
+         assertEquals(container, cache.getDataContainer());
       } finally {
          TestingUtil.killCacheManagers(cm);
       }
