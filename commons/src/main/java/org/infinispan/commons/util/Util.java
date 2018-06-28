@@ -20,6 +20,8 @@ import java.lang.reflect.Modifier;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileLock;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -33,7 +35,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import javax.naming.Context;
@@ -1103,14 +1104,12 @@ public final class Util {
       return length == 0 ? EMPTY_STRING_ARRAY : new String[length];
    }
 
-   public static void renameTempFile(File tempFile, File lockFile, File dstFile, BiConsumer<File, File> renameFailed)
+   public static void renameTempFile(File tempFile, File lockFile, File dstFile)
          throws IOException {
       FileLock lock = null;
       try (FileOutputStream lockFileOS = new FileOutputStream(lockFile)) {
          lock = lockFileOS.getChannel().lock();
-         if (!tempFile.renameTo(dstFile)) {
-            renameFailed.accept(tempFile, dstFile);
-         }
+         Files.move(tempFile.toPath(), dstFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
       } finally {
          if (lock != null && lock.isValid()) {
             lock.release();

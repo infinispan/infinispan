@@ -53,10 +53,6 @@ public class PersistedCounterConfigurationStorage implements CounterConfiguratio
       return ConvertUtil.configToParsedConfig(entry.getKey(), entry.getValue());
    }
 
-   private static void renameFailed(File tmpFile, File dstFile) {
-      throw log.cannotRenamePersistentFile(tmpFile.getAbsolutePath(), dstFile);
-   }
-
    @Override
    public Map<String, CounterConfiguration> loadAll() {
       try {
@@ -97,7 +93,12 @@ public class PersistedCounterConfigurationStorage implements CounterConfiguratio
       try (FileOutputStream f = new FileOutputStream(temp)) {
          serializer.serializeConfigurations(f, convertToList());
       }
-      renameTempFile(temp, getFileLock(), getPersistentFile(), PersistedCounterConfigurationStorage::renameFailed);
+      File persistentFile = getPersistentFile();
+      try {
+         renameTempFile(temp, getFileLock(), persistentFile);
+      } catch (Exception e) {
+          throw log.cannotRenamePersistentFile(temp.getAbsolutePath(), persistentFile, e);
+      }
    }
 
    private void doLoadAll() throws XMLStreamException, IOException {
