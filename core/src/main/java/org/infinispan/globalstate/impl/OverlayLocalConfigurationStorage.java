@@ -76,10 +76,6 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
       }
    }
 
-   private static void renameFailed(File tmpFile, File dstFile) {
-      throw log.cannotRenamePersistentFile(tmpFile.getAbsolutePath(), dstFile);
-   }
-
    private void storeAll() {
       try {
          File sharedDirectory = new File(globalConfiguration.globalState().sharedPersistentLocation());
@@ -92,8 +88,12 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
          try (FileOutputStream f = new FileOutputStream(temp)) {
             parserRegistry.serialize(f, null, configurationMap);
          }
-         renameTempFile(temp, getPersistentFileLock(), getPersistentFile(),
-               OverlayLocalConfigurationStorage::renameFailed);
+         File persistentFile = getPersistentFile();
+         try {
+            renameTempFile(temp, getPersistentFileLock(), persistentFile);
+         } catch (Exception e) {
+             throw log.cannotRenamePersistentFile(temp.getAbsolutePath(), persistentFile, e);
+         }
       } catch (Exception e) {
          throw log.errorPersistingGlobalConfiguration(e);
       }

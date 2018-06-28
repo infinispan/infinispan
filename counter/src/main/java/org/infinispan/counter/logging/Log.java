@@ -95,7 +95,7 @@ public interface Log extends BasicLogger {
    CounterConfigurationException invalidSameLowerAndUpperBound(long lower, long upper);
 
    @Message(value = "Cannot rename file %s to %s", id = 28025)
-   CounterConfigurationException cannotRenamePersistentFile(String absolutePath, File persistentFile);
+   CounterConfigurationException cannotRenamePersistentFile(String absolutePath, File persistentFile, @Cause Throwable cause);
 
    @Message(value = "Error while persisting counter's configurations", id = 28026)
    CounterConfigurationException errorPersistingCountersConfiguration(@Cause Throwable cause);
