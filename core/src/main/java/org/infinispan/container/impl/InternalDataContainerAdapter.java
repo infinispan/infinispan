@@ -9,6 +9,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.util.FilterIterator;
 import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
@@ -36,9 +37,10 @@ public class InternalDataContainerAdapter<K, V> extends AbstractDelegatingDataCo
    protected final List<Consumer<Iterable<InternalCacheEntry<K, V>>>> listeners = new CopyOnWriteArrayList<>();
 
    @Inject
-   private KeyPartitioner keyPartitioner;
+   private Cache<K, V> cache;
    @Inject
    private ComponentRegistry registry;
+   private KeyPartitioner keyPartitioner;
 
    public InternalDataContainerAdapter(DataContainer<K, V> container) {
       this.container = container;
@@ -51,6 +53,9 @@ public class InternalDataContainerAdapter<K, V> extends AbstractDelegatingDataCo
 
    @Start
    public void start() {
+      // This can't be injected due to circular dependency with DistributionManager
+      keyPartitioner = cache.getCacheConfiguration().clustering().hash().keyPartitioner();
+
       registry.registerComponent(container, SUB_COMPONENT_NAME, false);
    }
 
