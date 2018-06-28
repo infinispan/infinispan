@@ -46,6 +46,13 @@ public interface Stats {
    long getOffHeapMemoryUsed();
 
    /**
+    * Provides how much memory the current eviction algorithm estimates is in use for data. This method will return a
+    * number 0 or greater if memory eviction is in use. If memory eviction is not enabled this method will always return 0.
+    * @return memory in use or 0 if memory eviction is not enabled
+    */
+   long getDataMemoryUsed();
+
+   /**
     * @return Number of put operations on the cache.
     */
    long getStores();

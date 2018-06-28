@@ -10,6 +10,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.offheap.OffHeapMemoryAllocator;
 import org.infinispan.context.Flag;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.AbstractNamedCacheComponentFactory;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
@@ -294,6 +295,18 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
    @Override
    public long getTotalNumberOfEntries() {
       return stores.longValue();
+   }
+
+   @ManagedAttribute(
+         description = "Amount of memory in bytes allocated for use in eviction for data in the cache",
+         displayName = "Memory Used by data in the cache",
+         displayType = DisplayType.SUMMARY
+   )
+   public long getDataMemoryUsed() {
+      if (configuration.memory().isEvictionEnabled() && configuration.memory().evictionType() == EvictionType.MEMORY) {
+         return dataContainer.evictionSize();
+      }
+      return 0;
    }
 
    @ManagedAttribute(

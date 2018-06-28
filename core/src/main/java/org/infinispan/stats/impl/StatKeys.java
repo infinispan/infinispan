@@ -20,6 +20,7 @@ class StatKeys {
    static final String MISSES = "misses";
    static final String NUMBER_OF_ENTRIES = "numberOfEntries";
    static final String NUMBER_OF_ENTRIES_IN_MEMORY = "numberOfEntriesInMemory";
+   static final String DATA_MEMORY_USED = "dataMemoryUsed";
    static final String OFF_HEAP_MEMORY_USED = "offHeapMemoryUsed";
    static final String RETRIEVALS = "retrievals";
    static final String STORES = "stores";

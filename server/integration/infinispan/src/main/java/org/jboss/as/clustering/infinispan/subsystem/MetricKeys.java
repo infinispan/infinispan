@@ -64,6 +64,7 @@ public class MetricKeys {
     public static final String MISSES = "misses";
     public static final String NUMBER_OF_ENTRIES = "number-of-entries";
     public static final String NUMBER_OF_ENTRIES_IN_MEMORY = "number-of-entries-in-memory";
+    public static final String DATA_MEMORY_USED = "data-memory-used";
     public static final String OFF_HEAP_MEMORY_USED = "off-heap-memory-used";
     public static final String MINIMUM_REQUIRED_NODES = "minimum-required-nodes";
     public static final String READ_WRITE_RATIO = "read-write-ratio";

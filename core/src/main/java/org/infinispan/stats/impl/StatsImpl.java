@@ -6,6 +6,7 @@ import static org.infinispan.stats.impl.StatKeys.AVERAGE_REMOVE_TIME;
 import static org.infinispan.stats.impl.StatKeys.AVERAGE_REMOVE_TIME_NANOS;
 import static org.infinispan.stats.impl.StatKeys.AVERAGE_WRITE_TIME;
 import static org.infinispan.stats.impl.StatKeys.AVERAGE_WRITE_TIME_NANOS;
+import static org.infinispan.stats.impl.StatKeys.DATA_MEMORY_USED;
 import static org.infinispan.stats.impl.StatKeys.EVICTIONS;
 import static org.infinispan.stats.impl.StatKeys.HITS;
 import static org.infinispan.stats.impl.StatKeys.MISSES;
@@ -39,7 +40,7 @@ import net.jcip.annotations.Immutable;
 public class StatsImpl implements Stats {
 
    private static String[] Attributes = new String[]{TIME_SINCE_RESET, TIME_SINCE_START, NUMBER_OF_ENTRIES, NUMBER_OF_ENTRIES_IN_MEMORY,
-         OFF_HEAP_MEMORY_USED, RETRIEVALS, STORES, HITS, MISSES, REMOVE_HITS, REMOVE_MISSES, EVICTIONS, AVERAGE_READ_TIME,
+         OFF_HEAP_MEMORY_USED, DATA_MEMORY_USED, RETRIEVALS, STORES, HITS, MISSES, REMOVE_HITS, REMOVE_MISSES, EVICTIONS, AVERAGE_READ_TIME,
          AVERAGE_REMOVE_TIME, AVERAGE_WRITE_TIME, AVERAGE_READ_TIME_NANOS, AVERAGE_REMOVE_TIME_NANOS, AVERAGE_WRITE_TIME_NANOS, REQUIRED_MIN_NODES};
 
    private final Map<String, Long> statsMap = new HashMap<>();
@@ -55,6 +56,7 @@ public class StatsImpl implements Stats {
          statsMap.put(TIME_SINCE_START, mgmtInterceptor.getTimeSinceStart());
          statsMap.put(NUMBER_OF_ENTRIES, (long) mgmtInterceptor.getNumberOfEntries());
          statsMap.put(NUMBER_OF_ENTRIES_IN_MEMORY, (long) mgmtInterceptor.getNumberOfEntriesInMemory());
+         statsMap.put(DATA_MEMORY_USED, mgmtInterceptor.getDataMemoryUsed());
          statsMap.put(OFF_HEAP_MEMORY_USED, mgmtInterceptor.getOffHeapMemoryUsed());
          statsMap.put(RETRIEVALS, mgmtInterceptor.getHits() + mgmtInterceptor.getMisses());
          statsMap.put(STORES, mgmtInterceptor.getStores());
@@ -84,6 +86,7 @@ public class StatsImpl implements Stats {
          statsMap.put(TIME_SINCE_START, other.getTimeSinceStart());
          statsMap.put(NUMBER_OF_ENTRIES, (long) other.getCurrentNumberOfEntries());
          statsMap.put(NUMBER_OF_ENTRIES_IN_MEMORY, (long) other.getCurrentNumberOfEntriesInMemory());
+         statsMap.put(DATA_MEMORY_USED, other.getDataMemoryUsed());
          statsMap.put(OFF_HEAP_MEMORY_USED, other.getOffHeapMemoryUsed());
          statsMap.put(RETRIEVALS, other.getHits() + other.getMisses());
          statsMap.put(STORES, other.getStores());
@@ -128,6 +131,11 @@ public class StatsImpl implements Stats {
    @Override
    public long getTotalNumberOfEntries() {
       return statsMap.get(STORES);
+   }
+
+   @Override
+   public long getDataMemoryUsed() {
+      return statsMap.get(DATA_MEMORY_USED);
    }
 
    @Override
