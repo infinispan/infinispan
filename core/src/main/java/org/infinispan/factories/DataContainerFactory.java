@@ -30,8 +30,12 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
    @Override
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
-      if (configuration.dataContainer().dataContainer() != null) {
-         return (T) new InternalDataContainerAdapter<>(configuration.dataContainer().dataContainer());
+      DataContainer customDataContainer = configuration.dataContainer().dataContainer();
+      if (customDataContainer != null) {
+         if (customDataContainer instanceof InternalDataContainer) {
+            return (T) customDataContainer;
+         }
+         return (T) new InternalDataContainerAdapter<>(customDataContainer);
       } else {
          int level = configuration.locking().concurrencyLevel();
 

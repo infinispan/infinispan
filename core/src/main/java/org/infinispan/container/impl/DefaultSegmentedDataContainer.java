@@ -28,7 +28,6 @@ import org.infinispan.commons.util.FlattenSpliterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.notifications.Listener;
@@ -59,9 +58,6 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    @Start
    public void start() {
       localNode = cache.getCacheManager().getAddress();
-
-      // This can't be injected due to circular dependency with DistributionManager
-      keyPartitioner = cache.getAdvancedCache().getComponentRegistry().getComponent(KeyPartitioner.class);
 
       // Local (invalidation), replicated and scattered cache we just instantiate all the maps immediately
       // Scattered needs this for backups as they can be for any segment
