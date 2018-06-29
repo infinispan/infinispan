@@ -22,6 +22,7 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.Marsha
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.configuration.XMLStringConfiguration;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -106,12 +107,14 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
 
    public void cacheCreateWithXMLConfigurationTest(Method m) {
       String cacheName = m.getName();
-      String xml = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"><expiration interval=\"10000\" lifespan=\"10\" max-idle=\"10\"/></distributed-cache></cache-container></infinispan>", cacheName);
+      String xml = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"><encoding><key media-type=\"text/plain\"/><value media-type=\"application/json\"/></encoding><expiration interval=\"10000\" lifespan=\"10\" max-idle=\"10\"/></distributed-cache></cache-container></infinispan>", cacheName);
       client(0).administration().getOrCreateCache(cacheName, new XMLStringConfiguration(xml));
       Configuration configuration = manager(0).getCache(cacheName).getCacheConfiguration();
       assertEquals(10000, configuration.expiration().wakeUpInterval());
       assertEquals(10, configuration.expiration().lifespan());
       assertEquals(10, configuration.expiration().maxIdle());
+      assertEquals(MediaType.TEXT_PLAIN, configuration.encoding().keyDataType().mediaType());
+      assertEquals(MediaType.APPLICATION_JSON, configuration.encoding().valueDataType().mediaType());
    }
 
    public void cacheCreateWithXMLConfigurationAndGetCacheTest(Method m) {
