@@ -1608,7 +1608,7 @@ language and platform-neutral encoding. Google's link:http://code.google.com/p/p
 elected as an encoding format for both over-the-wire and storage due to its efficiency, robustness, good multi-language
 support and support for schema evolution.
 
-==== Storing Protobuf encoded entities
+==== Storing Protobuf encoded entities[[storing.protobuf]]
 Remote clients that want to be able to index and query their stored entities must do so using the Protobuf encoding
 format. This is _key_ for the search capability to work. But it's also possible to store Protobuf entities just for
 gaining the benefit of platform independence and not enable indexing if you do not need it.

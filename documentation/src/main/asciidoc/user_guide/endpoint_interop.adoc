@@ -1,0 +1,163 @@
+==  Embedded/Remote Interoperability[[endpoint.interop]]
+
+
+{brandname} offers the possibility to store and retrieve data in a local embedded way, and also remotely thanks to multiple endpoints offered.
+
+When configuring the cache with the <<encoding:media_type, MediaType>> of the data to be stored, users can read and write data in multiple formats taking advantage of the internal support for data conversion.
+
+Depending on the level of interoperability required of a single cache being accessed from multiple endpoints by different clients, a specific storage format must be configured, clients may need to use different strategies when interacting with cache or even custom classes may be required to be deployed in the server.
+
+
+=== Planning for interoperability
+
+In general REST clients are better suited to deal with text formats such as JSON, XML or plain text instead of binary, although the REST endpoint does support <<rest.key_content_type, representing binary values in hexadecimal or base64 format>>.
+
+Java Hot Rod clients usually deal with objects representing the entities stored in the cache, and through the marshalling operation, will have those entities mapped to/from bytes to be sent across the wire.
+
+Similarly, non-java Hot Rod clients (C++/C#/Javascript) are also better suited to deal with native objects in those languages. The caveat is, if they must interoperate with Java clients, a platform independent format must be chosen.
+
+
+=== Basic Interoperability between REST/Hot Rod using text
+
+If querying/indexing is not required, and the cache will store only text, it's enough to configure the cache keys and values MediaType with `text/plain; charset=UTF-8` (or any other charset) or another text based format such as JSON and XML (optionally carrying a custom charset).
+
+The Hot Rod client must be configured with a `org.infinispan.commons.marshall.StringMarshaller`, and the REST clients must send the correct headers when writing:
+
+ Content-Type: text/plain; charset=UTF-8
+
+and reading:
+
+ Accept: text/plain; charset=UTF-8 (or any other charset)
+
+In summary:
+
+|===
+|REST clients|Java Hot Rod clients|Query|Non Java Hot Rod clients|Custom objects|Avoid Class deployment
+|[green]*Y*|[green]*Y* |[red]*N*|[red]*N*|[red]*N* |[green]*Y*
+|===
+
+
+=== Interoperability between REST/Hot Rod using custom Java objects
+
+If the storage is done using a marshalled, custom java object (this is the default behaviour when using the Java Hot Rod client) and no query is required, it's necessary to configure the cache with the MediaType of the marshalled storage.
+
+By default, the Java Hot Rod client uses JBoss marshalling format to send data to the server and the entries get stored in this format. To configure the MediaType for keys and values when using the default marshaller in the Hot Rod client:
+
+[source,xml]
+----
+<distributed-cache name="my-cache">
+   <encoding>
+      <key media-type="application/x-jboss-marshalling"/>
+      <value media-type="application/x-jboss-marshalling"/>
+   </encoding>
+</distributed-cache>
+----
+
+If the protostream marshaller is used, the media type should be `application/x-protostream`, and for the UTF8Marshaller, `text/plain` should be used.
+
+TIP: When only Hot Rod clients are used to interact with a certain cache, it's not mandatory to configure the MediaType
+
+Since REST clients will probably deal with a text friendly format, it's recommended to use as keys `java.lang.String` or any primitive, otherwise they will need to handle byte[] as the key using one of the <<rest.key_content_type,supported binary encoding>> (Base64 or Hex).
+
+The values can be read from REST in XML or JSON format, but the <<entities.deploy,classes must be available in the server>>.
+
+|===
+|REST clients|Java Hot Rod clients|Query|Non Java Hot Rod clients|Custom objects|Avoid Class deployment
+|[green]*Y*|[green]*Y*|[red]*N*|[red]*N*|[green]*Y* |[red]*N*
+|===
+
+
+=== Interoperability between Java and non-Java clients
+
+When dealing with clients in java and non-java, from both REST and Hot Rod endpoints, the recommended configuration is to store data as protobuf. Protobuf storage also allows data to be queried from all endpoints/clients.
+
+If a cache is indexed, {brandname} will automatically configure `application/x-protostream` storage for both keys and values, otherwise keys and values should be configured with:
+
+[source,xml]
+----
+<distributed-cache name="my-cache">
+   <encoding>
+      <key media-type="application/x-protostream"/>
+      <value media-type="application/x-protostream"/>
+   </encoding>
+</distributed-cache>
+----
+
+TIP: The `application/x-protostream` format is the same as protobuf. A protobuf schema must be registered in the server describing the entities and extra marshallers need to be provided for Java and non-Java clients. More details in <<storing.protobuf, storing protobuf entities>>.
+
+Both Java and non-Java Hot Rod clients should interop well since protobuf is a platform neutral format and REST clients can deal with JSON data only, due to the protobuf/JSON data conversion supported by {brandname}. For an example of how REST clients can read/write and query protobuf data, see https://blog.infinispan.org/2018/02/restful-queries-coming-to-infinispan-92.html
+
+|===
+|REST clients|Java Hot Rod clients|Query|Non Java Hot Rod clients|Custom objects|Avoid Class deployment
+|[green]*Y*|[green]*Y*|[green]*Y*|[green]*Y*|[green]*Y* |[green]*Y*
+|===
+
+
+=== Interoperability between deployed code and remote endpoints[[embedded.remote.interop]]
+
+{brandname} allows deployment of custom code such as scripts, tasks, listeners, filters, converters and merge policies. Those artifacts, when
+ reading and writing data from the cache that is written by remote clients, can be faced with a binary storage when expecting do deal with custom objects instead.
+
+There are two strategies of handling this scenario: either converting data on demand or storing data as plain objects.
+
+==== On demand conversion
+
+If the data is stored in a binary format (protobuf, JBoss marshalled, etc), the deployed code can <<mediatype.override,convert the data on-demand>>.
+
+The advantage of this approach is that storage can still be binary, that is optimal for remote clients.
+
+Still, entities classes must be available in the server to allow such conversion.
+
+In addition, if the binary storage is protobuf, <<protostream.deployment, deployment of extra protostream marshallers are required>>.
+
+
+==== Store data as POJOs
+
+Storing java objects in the server is not recommended, since it will cause all data sent by remote clients to be deserialized before storing, and serialized again during reads to be sent across the wire.
+
+With this limitation in mind, it's possible to store java objects in the server by configuring the cache with "application/x-java-object" for keys and values:
+
+[source,xml]
+----
+<distributed-cache name="my-cache">
+   <encoding>
+      <key media-type="application/x-java-object"/>
+      <value media-type="application/x-java-object"/>
+   </encoding>
+</distributed-cache>
+----
+
+Hot Rod clients will need to use a marshaller that is supported by {brandname}, either JBoss marshaller or standard Java serialization, and the classes must be <<entities.deploy, deployed in the server>>.
+
+REST clients need to use a format that can be converted to/from java objects, currently JSON or XML.
+
+Querying and indexing will work provided that the entities are <<query.library,annotated>>.
+
+|===
+|REST clients|Java Hot Rod clients|Query|Non Java Hot Rod clients|Custom objects|Avoid Class deployment
+|[green]*Y*|[green]*Y*|[green]*Y*|[red]*N*|[green]*Y* |[red]*N*|
+|===
+
+=== Deploying entities to the server[[entities.deploy]]
+
+In case deployment of entity classes are needed in the server, follow the steps:
+
+* Create a jar with the entities and their dependencies
+* Copy the jar in the `deployments` folder of the server
+* In the cache manager configuration section, add a module configuration:
+
+[source,xml]
+----
+<cache-container name="local" default-cache="default">
+   <modules>
+     <module name="deployment.my-entities.jar"/>
+   </modules>
+   ...
+</cache-container>
+----
+
+WARNING: Entities must be visible to the server during startup!
+
+=== Demos
+
+Please refer to https://github.com/infinispan-demos/endpoint-interop to try out the interoperability support using the {brandname} docker image.

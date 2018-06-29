@@ -47,7 +47,6 @@ public interface Encoder {
 | Embedded/Server | Default | IdentityEncoder | Passthrough  encoder, no conversion done
 | Embedded | StorageType.OFF_HEAP  | GlobalMarshallerEncoder | Uses {brandname} internal marshaller to convert to byte[]. May delegate to the configured marshaller in the cache manager.
 | Embedded | <<store.binary,StorageType.BINARY>> | BinaryEncoder | Uses infinispan internal marshaller to convert to byte[], except for primitives and String.
-| Server |  <<compat.mode, Compatibility Mode>> | CompatModeEncoder | Uses the configured compatibility mode marshaller to unmarshall byte[] to its deserialized form, storing data as POJOs
 | Server | StorageType.OFF_HEAP  | IdentityEncoder | Just store byte[] directly as received by remote clients
 |==============================================================================
 
@@ -231,7 +230,7 @@ cfg.encoding().value().mediaType("application/json");
 
 ----
 
-===== Overriding the MediaType programmatically
+===== Overriding the MediaType programmatically[[mediatype.override]]
 
 It's possible to decorate the Cache with a different MediaType, allowing cache operations to be executed sending and receiving different data formats.
 
