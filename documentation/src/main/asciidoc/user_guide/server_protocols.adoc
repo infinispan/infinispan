@@ -1,4 +1,4 @@
-== Client/Server
+== Client/Server[[client.server]]
 {brandname} offers two alternative access methods: embedded mode and client-server mode.
 
 * In Embedded mode the {brandname} libraries co-exist with the user application in the same JVM as shown in the following diagram

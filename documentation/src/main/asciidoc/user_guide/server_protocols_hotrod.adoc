@@ -1068,7 +1068,7 @@ marshaller class implementation.
 Note that the Marshaller could be deployed in either a separate jar, or in the
 same jar as the `CacheEventConverter` and/or `CacheEventFilter` instances.
 
-===== Protostream marshallers deployment
+===== Protostream marshallers deployment[[protostream.deployment]]
 
 If a cache stores protobuf content, as it happens when using protostream marshaller in the Hot Rod client,
 it's not necessary to deploy a custom marshaller since the format is already support by the server: there are
