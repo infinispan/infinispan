@@ -36,6 +36,10 @@
                                queue-length="42"
                                max-threads="43"
                                keepalive-time="44"/>
+        <modules>
+            <module name="module1"/>
+            <module name="module2" slot="slot2"/>
+        </modules>
         <local-cache-configuration name="local-template">
         </local-cache-configuration>
         <local-cache name="local-instance" configuration="local-template"/>
