@@ -15,6 +15,7 @@ import javax.xml.stream.XMLStreamException;
 import org.infinispan.Version;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
@@ -474,6 +475,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       configuration.jmxStatistics().attributes().write(writer, JMXStatisticsConfiguration.ENABLED, Attribute.STATISTICS);
       configuration.unsafe().attributes().write(writer);
       writeBackup(writer, configuration);
+      writeEncoding(writer, configuration);
       configuration.sites().backupFor().attributes().write(writer, Element.BACKUP_FOR.getLocalName());
       configuration.locking().attributes().write(writer, Element.LOCKING.getLocalName());
       writeTransaction(writer, configuration);
@@ -490,6 +492,25 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          configuration.clustering().stateTransfer().attributes().write(writer, Element.STATE_TRANSFER.getLocalName());
       }
       writePartitionHandling(writer, configuration);
+   }
+
+   private void writeEncoding(XMLExtendedStreamWriter writer, Configuration configuration) throws XMLStreamException {
+      MediaType keyDataType = configuration.encoding().keyDataType().mediaType();
+      MediaType valueDataType = configuration.encoding().valueDataType().mediaType();
+      if(keyDataType != null || valueDataType != null) {
+         writer.writeStartElement(Element.ENCODING);
+         if(keyDataType != null) {
+            writer.writeStartElement(Element.KEY_DATA_TYPE);
+            writer.writeAttribute(Attribute.MEDIA_TYPE, keyDataType.toString());
+            writer.writeEndElement();
+         }
+         if(valueDataType != null) {
+            writer.writeStartElement(Element.VALUE_DATA_TYPE);
+            writer.writeAttribute(Attribute.MEDIA_TYPE, valueDataType.toString());
+            writer.writeEndElement();
+         }
+         writer.writeEndElement();
+      }
    }
 
    private void writePartitionHandling(XMLExtendedStreamWriter writer, Configuration configuration) throws XMLStreamException {
