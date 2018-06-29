@@ -167,23 +167,23 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     writeThreadPoolElements(Element.TRANSPORT_THREAD_POOL, ThreadPoolResource.TRANSPORT, writer, container);
                 }
 
-               // write modules
-               if (container.hasDefined(ModelKeys.MODULES)) {
-                  writer.writeStartElement(Element.MODULES.getLocalName());
-                  ModelNode modules = container.get(ModelKeys.MODULES, ModelKeys.MODULES_NAME, ModelKeys.MODULE);
-                  for (ModelNode moduleNode : modules.asList()) {
-                     if (moduleNode.isDefined()) {
-                        ModelNode modelNode = moduleNode.get(0);
-                        writer.writeStartElement(Element.MODULE.getLocalName());
-                        writeAttribute(writer, modelNode, CacheContainerModuleResource.NAME);
-                        if (modelNode.hasDefined(ModelKeys.SLOT)) {
-                           writeAttribute(writer, modelNode, CacheContainerModuleResource.SLOT);
-                        }
-                        writer.writeEndElement();
-                     }
-                  }
-                  writer.writeEndElement();
-               }
+                // write modules
+                if (container.hasDefined(ModelKeys.MODULES)) {
+                   writer.writeStartElement(Element.MODULES.getLocalName());
+                   ModelNode modules = container.get(ModelKeys.MODULES, ModelKeys.MODULES_NAME, ModelKeys.MODULE);
+                   for (ModelNode moduleNode : modules.asList()) {
+                      if (moduleNode.isDefined()) {
+                         ModelNode modelNode = moduleNode.get(0);
+                         writer.writeStartElement(Element.MODULE.getLocalName());
+                         writeAttribute(writer, modelNode, CacheContainerModuleResource.NAME);
+                         if (modelNode.hasDefined(ModelKeys.SLOT)) {
+                            writeAttribute(writer, modelNode, CacheContainerModuleResource.SLOT);
+                         }
+                         writer.writeEndElement();
+                      }
+                   }
+                   writer.writeEndElement();
+                }
 
                 ModelNode configurations = container.get(ModelKeys.CONFIGURATIONS, ModelKeys.CONFIGURATIONS_NAME);
 
