@@ -2,12 +2,13 @@ package org.infinispan.server.core.dataconversion.json;
 
 import java.util.Collection;
 
-import org.codehaus.jackson.map.MapperConfig;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.jsontype.NamedType;
-import org.codehaus.jackson.map.jsontype.TypeIdResolver;
-import org.codehaus.jackson.type.JavaType;
 import org.infinispan.commons.configuration.ClassWhiteList;
+
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.cfg.MapperConfig;
+import com.fasterxml.jackson.databind.jsontype.NamedType;
+import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
 
 /**
  * Builder that can produce {@link SecureTypeIdResolver} from an existing TypeIdResolver.

@@ -3,12 +3,13 @@ package org.infinispan.rest.search;
 import java.io.IOException;
 import java.util.Optional;
 
-import org.codehaus.jackson.JsonParser.Feature;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.rest.InfinispanRequest;
 import org.infinispan.rest.InfinispanResponse;
+
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -21,7 +22,7 @@ public class InfinispanSearchResponse extends InfinispanResponse {
 
    static {
       mapper.registerSubtypes(ProjectedResult.class, QueryResult.class);
-      mapper.configure(Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
+      mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
    }
 
    private InfinispanSearchResponse(InfinispanRequest request) {

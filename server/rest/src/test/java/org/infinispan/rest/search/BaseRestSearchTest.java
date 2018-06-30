@@ -17,10 +17,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.ObjectNode;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
@@ -41,6 +37,11 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Base class for query over Rest tests.
@@ -144,14 +145,14 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    @Test(dataProvider = "HttpMethodProvider")
    public void testSimpleQuery(HttpMethod method) throws Exception {
       JsonNode queryResult = query("from org.infinispan.rest.search.entity.Person p where p.surname = 'Cage'", method);
-      assertEquals(queryResult.get("total_results").getIntValue(), 1);
+      assertEquals(queryResult.get("total_results").intValue(), 1);
 
       ArrayNode hits = ArrayNode.class.cast(queryResult.get("hits"));
       assertEquals(hits.size(), 1);
 
       JsonNode result = hits.iterator().next();
       JsonNode firstHit = result.get(HIT);
-      assertEquals(firstHit.get("id").getIntValue(), 2);
+      assertEquals(firstHit.get("id").intValue(), 2);
       assertEquals(firstHit.get("name").asText(), "Luke");
       assertEquals(firstHit.get("surname").asText(), "Cage");
    }
@@ -160,7 +161,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    public void testMultiResultQuery(HttpMethod method) throws Exception {
       JsonNode results = query("from org.infinispan.rest.search.entity.Person p where p.gender = 'MALE'", method);
 
-      assertEquals(results.get(TOTAL_RESULTS).getIntValue(), 3);
+      assertEquals(results.get(TOTAL_RESULTS).intValue(), 3);
 
       ArrayNode hits = ArrayNode.class.cast(results.get("hits"));
       assertEquals(hits.size(), 3);
@@ -170,7 +171,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    public void testProjections(HttpMethod method) throws Exception {
       JsonNode results = query("Select name, surname from org.infinispan.rest.search.entity.Person", method);
 
-      assertEquals(results.get(TOTAL_RESULTS).getIntValue(), 4);
+      assertEquals(results.get(TOTAL_RESULTS).intValue(), 4);
 
       List<JsonNode> names = results.findValues("name");
       List<JsonNode> surnames = results.findValues("surname");
@@ -187,15 +188,15 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    public void testGrouping(HttpMethod method) throws Exception {
       JsonNode results = query("select p.gender, count(p.name) from org.infinispan.rest.search.entity.Person p group by p.gender order by p.gender", method);
 
-      assertEquals(results.get(TOTAL_RESULTS).getIntValue(), 2);
+      assertEquals(results.get(TOTAL_RESULTS).intValue(), 2);
 
       ArrayNode hits = ArrayNode.class.cast(results.get("hits"));
 
       JsonNode males = hits.get(0);
-      assertEquals(males.path(HIT).path("name").getIntValue(), 3);
+      assertEquals(males.path(HIT).path("name").intValue(), 3);
 
       JsonNode females = hits.get(1);
-      assertEquals(females.path(HIT).path("name").getIntValue(), 1);
+      assertEquals(females.path(HIT).path("name").intValue(), 1);
    }
 
    @Test(dataProvider = "HttpMethodProvider")
@@ -203,7 +204,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       String q = "select p.name from org.infinispan.rest.search.entity.Person p order by p.name desc";
       JsonNode results = query(q, method, 2, 2, CACHE_NAME);
 
-      assertEquals(results.get("total_results").getIntValue(), 4);
+      assertEquals(results.get("total_results").intValue(), 4);
       ArrayNode hits = ArrayNode.class.cast(results.get("hits"));
       assertEquals(hits.size(), 2);
 
@@ -240,7 +241,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       ResponseAssertion.assertThat(fromBrowser).hasContentType(APPLICATION_JSON_TYPE);
 
       JsonNode person = MAPPER.readTree(fromBrowser.getContentAsString());
-      assertEquals(person.get("id").getIntValue(), 2);
+      assertEquals(person.get("id").intValue(), 2);
    }
 
    @Test

@@ -7,9 +7,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.codehaus.jackson.map.ObjectMapper;
 import org.infinispan.server.websocket.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Json Object implementation. This is the only link between POJOs and particular JSON library implementation.

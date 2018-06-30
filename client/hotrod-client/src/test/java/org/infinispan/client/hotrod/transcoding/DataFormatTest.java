@@ -25,8 +25,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.TextNode;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -48,6 +46,9 @@ import org.infinispan.marshall.core.ExternallyMarshallable;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 /**
  * Tests for the Hot Rod client using multiple data formats when interacting with the server.
