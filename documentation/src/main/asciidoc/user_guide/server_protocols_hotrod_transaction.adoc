@@ -110,7 +110,7 @@ same as above but forcing (or not) a return value for write operations.
 * `getCache(String cacheName, TransactionManager transactionManager)`:
 it returns a {rc} overriding the configured {tm} only.
 
-* `getCache(String cacheName, boolean forceReturnValue, TransactionManager transactionManager)
+* `getCache(String cacheName, boolean forceReturnValue, TransactionManager transactionManager)`:
 same as above but forcing (or not) a return value for write operations.
 
 * `getCache(String cacheName, TransactionMode transactionMode, TransactionManager transactionManager)`:
