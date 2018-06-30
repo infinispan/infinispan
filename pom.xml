@@ -278,7 +278,7 @@
       <version.hibernate_dep.jandex>2.0.3.Final</version.hibernate_dep.jandex>
       <version.hibernate_dep.javassist>3.22.0-GA</version.hibernate_dep.javassist>
       <version.howl>1.0.1-1</version.howl>
-      <version.jackson>1.9.13</version.jackson>
+      <version.jackson>2.9.5</version.jackson>
       <version.jacoco>0.7.5.201505241946</version.jacoco>
       <version.javax.cache>1.1.0</version.javax.cache>
       <version.javax.cache.cache-tests>${version.javax.cache}</version.javax.cache.cache-tests>
@@ -654,13 +654,18 @@
             <version>${version.avro}</version>
          </dependency>
          <dependency>
-            <groupId>org.codehaus.jackson</groupId>
-            <artifactId>jackson-core-asl</artifactId>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
             <version>${version.jackson}</version>
          </dependency>
          <dependency>
-            <groupId>org.codehaus.jackson</groupId>
-            <artifactId>jackson-mapper-asl</artifactId>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${version.jackson}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
             <version>${version.jackson}</version>
          </dependency>
          <dependency>

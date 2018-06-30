@@ -3,13 +3,14 @@ package org.infinispan.client.hotrod.query;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.testng.AssertJUnit.assertEquals;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Test remote queries against Infinispan Directory provider.

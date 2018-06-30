@@ -5,7 +5,7 @@ import static org.infinispan.rest.JSONConstants.TOTAL_RESULTS;
 
 import java.util.List;
 
-import org.codehaus.jackson.annotate.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * @since 9.2

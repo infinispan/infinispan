@@ -8,8 +8,9 @@
         <module name="javax.api"/>
         <module name="javax.transaction.api"/>
         <module name="org.antlr.antlr-runtime" slot="@infinispan.module.slot@"/>
-        <module name="org.codehaus.jackson.jackson-core-asl"/>
-        <module name="org.codehaus.jackson.jackson-mapper-asl"/>
+        <module name="com.fasterxml.jackson.core.jackson-core" slot="@infinispan.module.slot@"/>
+        <module name="com.fasterxml.jackson.core.jackson-annotations" slot="@infinispan.module.slot@"/>
+        <module name="com.fasterxml.jackson.core.jackson-databind" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.core" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.commons" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.server" slot="@infinispan.module.slot@"/>

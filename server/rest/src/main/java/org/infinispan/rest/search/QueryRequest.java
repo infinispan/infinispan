@@ -5,8 +5,9 @@ import static org.infinispan.rest.JSONConstants.OFFSET;
 import static org.infinispan.rest.JSONConstants.QUERY_MODE;
 import static org.infinispan.rest.JSONConstants.QUERY_STRING;
 
-import org.codehaus.jackson.annotate.JsonProperty;
 import org.infinispan.query.dsl.IndexedQueryMode;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @since 9.2
