@@ -285,6 +285,18 @@ import org.infinispan.commons.util.Util;
  *       <td>10000</td>
  *       <td>{@link #batchSize(int)}</td>
  *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.transaction.transaction_manager_lookup</b></td>
+ *       <td>String (class name)</td>
+ *       <td>{@link TransactionConfigurationBuilder#defaultTransactionManagerLookup()}</td>
+ *       <td>{@link TransactionConfigurationBuilder#transactionManagerLookup(TransactionManagerLookup)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.transaction.transaction_mode</b></td>
+ *       <td>String ({@link TransactionMode} enum name)</td>
+ *       <td>{@link TransactionMode#NONE NONE}</td>
+ *       <td>{@link TransactionConfigurationBuilder#transactionMode(TransactionMode)}</td>
+ *    </tr>
  * </table>
  *
  * @author Tristan Tarrant
