@@ -19,9 +19,6 @@ import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ObjectNode;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -39,6 +36,10 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Base class for Json reading/writing/querying across multiple endpoints.
@@ -112,7 +113,7 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       JsonNode jsonNode = new ObjectMapper().readTree(json);
       JsonNode description = jsonNode.get("description");
       JsonNode rank = jsonNode.get("rank");
-      return new CryptoCurrency(description.asText(), rank.getIntValue());
+      return new CryptoCurrency(description.asText(), rank.intValue());
    }
 
    @Test

@@ -1,11 +1,15 @@
 package org.infinispan.server.core.dataconversion.json;
 
-import org.codehaus.jackson.annotate.JsonTypeInfo;
-import org.codehaus.jackson.map.jsontype.TypeIdResolver;
-import org.codehaus.jackson.type.JavaType;
+import java.io.IOException;
+
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.DatabindContext;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
 
 /**
  * Jackson TypeIdResolver that checks the serialization whitelist before deserializing JSON types.
@@ -40,8 +44,13 @@ public class SecureTypeIdResolver implements TypeIdResolver {
    }
 
    @Override
-   public JavaType typeFromId(String id) {
-      JavaType javaType = internalTypeIdResolver.typeFromId(id);
+   public String idFromBaseType() {
+      return internalTypeIdResolver.idFromBaseType();
+   }
+
+   @Override
+   public JavaType typeFromId(DatabindContext context, String id) throws IOException {
+      JavaType javaType = internalTypeIdResolver.typeFromId(context, id);
       Class<?> clazz = javaType.getRawClass();
       String className = clazz.getName();
       if (!classWhiteList.isSafeClass(className)) {
@@ -49,6 +58,12 @@ public class SecureTypeIdResolver implements TypeIdResolver {
       }
       return javaType;
    }
+
+   @Override
+   public String getDescForKnownTypeIds() {
+      return internalTypeIdResolver.getDescForKnownTypeIds();
+   }
+
 
    @Override
    public JsonTypeInfo.Id getMechanism() {

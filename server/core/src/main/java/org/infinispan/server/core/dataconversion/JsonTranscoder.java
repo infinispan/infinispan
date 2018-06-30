@@ -11,9 +11,6 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Optional;
 
-import org.codehaus.jackson.annotate.JsonTypeInfo;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.JavaType;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -22,6 +19,10 @@ import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.server.core.dataconversion.json.SecureTypeResolverBuilder;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @since 9.2

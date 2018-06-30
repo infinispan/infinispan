@@ -1,8 +1,7 @@
 package org.infinispan.cli.interpreter.result;
 
-import org.codehaus.jackson.annotate.JsonTypeInfo;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.ObjectMapper.DefaultTyping;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * JsonResult. Returns the data formatted as JSON.
@@ -12,7 +11,7 @@ import org.codehaus.jackson.map.ObjectMapper.DefaultTyping;
  */
 public class JsonResult implements Result {
    private Object o;
-   private ObjectMapper jsonMapper = new ObjectMapper().enableDefaultTyping(DefaultTyping.NON_FINAL, JsonTypeInfo.As.WRAPPER_OBJECT);
+   private ObjectMapper jsonMapper = new ObjectMapper().enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.WRAPPER_OBJECT);
 
    public JsonResult(Object o) {
       this.o = o;

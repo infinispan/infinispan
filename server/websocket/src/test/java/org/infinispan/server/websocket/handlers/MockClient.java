@@ -1,6 +1,5 @@
 package org.infinispan.server.websocket.handlers;
 
-import org.codehaus.jackson.node.ObjectNode;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -10,6 +9,8 @@ import org.infinispan.server.websocket.json.JsonObject;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.websocket.MockChannel;
 import org.infinispan.websocket.MockChannelHandlerContext;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Mock client for testing.
@@ -41,7 +42,7 @@ public class MockClient {
    }
 
    public void put(String key, ObjectNode value) {
-      callHandler(putHandler, toPut(key, value.getTextValue(), "application/json"));
+      callHandler(putHandler, toPut(key, value.textValue(), "application/json"));
    }
 
    public void get(String key) {
