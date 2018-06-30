@@ -2,7 +2,6 @@ package org.infinispan.rest.search;
 
 import static org.testng.Assert.assertEquals;
 
-import org.codehaus.jackson.JsonNode;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
@@ -12,6 +11,8 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.testng.annotations.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * Tests for search over rest for indexed caches.

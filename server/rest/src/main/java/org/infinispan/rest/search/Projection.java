@@ -4,7 +4,7 @@ import static org.infinispan.rest.JSONConstants.HIT;
 
 import java.util.Map;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @since 9.2

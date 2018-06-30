@@ -2,8 +2,8 @@ package org.infinispan.rest.search;
 
 import static org.infinispan.rest.JSONConstants.TOTAL_RESULTS;
 
-import org.codehaus.jackson.annotate.JsonCreator;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @since 9.2

@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.codehaus.jackson.map.ObjectMapper;
 import org.infinispan.query.dsl.IndexedQueryMode;
 import org.infinispan.rest.InfinispanErrorResponse;
 import org.infinispan.rest.InfinispanRequest;
@@ -19,6 +18,8 @@ import org.infinispan.rest.InfinispanResponse;
 import org.infinispan.rest.operations.SearchOperations;
 import org.infinispan.rest.operations.exceptions.NoCacheFoundException;
 import org.infinispan.rest.operations.exceptions.NoDataFoundException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
