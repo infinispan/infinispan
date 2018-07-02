@@ -234,6 +234,7 @@ This approach can be used for both the global and the cache level configuration.
 GlobalConfiguration objects are constructed using GlobalConfigurationBuilder while Configuration objects are built using ConfigurationBuilder.
 Let's look at some examples on configuring both global and cache level options with this API:
 
+===== Configuring the transport
 One of the most commonly configured global option is the transport layer, where you indicate how an {brandname} node will discover the others:
 
 [source,java]
@@ -247,6 +248,22 @@ GlobalConfiguration globalConfig = new GlobalConfigurationBuilder().transport()
 
 ----
 
+===== Using a custom JChannel
+If you want to construct the JGroups link:http://www.jgroups.org/manual4/index.html#JChannel[JChannel] by yourself, you can do so.
+
+NOTE: The JChannel must not be already connected.
+
+[source,java]
+----
+GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+JChannel jchannel = new JChannel();
+// Configure the jchannel to your needs.
+JGroupsTransport transport = new JGroupsTransport(jchannel);
+global.transport().transport(transport);
+new DefaultCacheManager(global.build());
+----
+
+===== Enabling JMX MBeans and statistics
 Sometimes you might also want to enable collection of link:{javadocroot}/jmxComponents.html[global JMX statistics]
 at cache manager level or get information about the transport. To enable global JMX statistics simply do:
 
@@ -273,6 +290,8 @@ GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
     .mBeanServerLookup(new JBossMBeanServerLookup())
   .build();
 ----
+
+===== Configuring the thread pools
 
 Some of the {brandname} features are powered by a group of the thread pool executors which can also be tweaked at this global level. For example:
 
@@ -310,6 +329,8 @@ Configuration config = new ConfigurationBuilder()
            .build();
 ----
 
+===== Configuring transactions and locking
+
 An application might also want to interact with an {brandname} cache within the boundaries of JTA and to do that you need to configure the transaction layer and optionally tweak the locking settings. When interacting with transactional caches, you might want to enable recovery to deal with transactions that finished with an heuristic outcome and if you do that, you will often want to enable JMX management and statistics gathering too:
 
 [source,java]
@@ -325,6 +346,8 @@ Configuration config = new ConfigurationBuilder()
   .jmxStatistics()
   .build();
 ----
+
+===== Configuring cache stores
 
 Configuring {brandname} with chained cache stores is simple too:
 
