@@ -1,5 +1,6 @@
 package org.infinispan.util;
 
+import org.infinispan.commons.util.AbstractDelegatingCollection;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableSpliterator;
