@@ -205,13 +205,13 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
 
    @Override
    public <K, V> RemoteCache<K, V> getCache(String cacheName, TransactionMode transactionMode,
-         TransactionManager transactionManager) {
+                                            TransactionManager transactionManager) {
       return createRemoteCache(cacheName, configuration.forceReturnValues(), transactionMode, transactionManager);
    }
 
    @Override
    public <K, V> RemoteCache<K, V> getCache(String cacheName, boolean forceReturnValue, TransactionMode transactionMode,
-         TransactionManager transactionManager) {
+                                            TransactionManager transactionManager) {
       return createRemoteCache(cacheName, forceReturnValue, transactionMode, transactionManager);
    }
 
@@ -233,7 +233,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
          if (marshaller == null) {
             Class<? extends Marshaller> clazz = configuration.marshallerClass();
             if (clazz == GenericJBossMarshaller.class && !configuration.serialWhitelist().isEmpty())
-               marshaller = new GenericJBossMarshaller(configuration.serialWhitelist());
+               marshaller = new GenericJBossMarshaller(configuration.getClassWhiteList());
             else
                marshaller = Util.getInstance(clazz);
          }
@@ -243,7 +243,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
 
       codec = CodecFactory.getCodec(configuration.version());
 
-      listenerNotifier = new ClientListenerNotifier(codec, marshaller, channelFactory, configuration.serialWhitelist());
+      listenerNotifier = new ClientListenerNotifier(codec, marshaller, channelFactory, configuration.getClassWhiteList());
       ExecutorFactory executorFactory = configuration.asyncExecutorFactory().factory();
       if (executorFactory == null) {
          executorFactory = Util.getInstance(configuration.asyncExecutorFactory().factoryClass());
@@ -321,7 +321,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    }
 
    private <K, V> RemoteCache<K, V> createRemoteCache(String cacheName, boolean forceReturnValueOverride,
-         TransactionMode transactionModeOverride, TransactionManager transactionManagerOverride) {
+                                                      TransactionMode transactionModeOverride, TransactionManager transactionManagerOverride) {
       synchronized (cacheName2RemoteCache) {
          RemoteCacheKey key = new RemoteCacheKey(cacheName, forceReturnValueOverride);
          if (!cacheName2RemoteCache.containsKey(key)) {
@@ -457,7 +457,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    }
 
    private <K, V> TransactionalRemoteCacheImpl<K, V> createRemoteTransactionalCache(String cacheName,
-         boolean forceReturnValues, TransactionMode transactionMode, TransactionManager transactionManager) {
+                                                                                    boolean forceReturnValues, TransactionMode transactionMode, TransactionManager transactionManager) {
       return new TransactionalRemoteCacheImpl<>(this, cacheName, forceReturnValues, transactionManager,
             getTransactionTable(transactionMode));
    }

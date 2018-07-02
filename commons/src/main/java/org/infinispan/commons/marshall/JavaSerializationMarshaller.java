@@ -3,13 +3,13 @@ package org.infinispan.commons.marshall;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Collections;
 
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
@@ -21,6 +21,16 @@ import org.infinispan.commons.io.ByteBufferImpl;
  * @since 5.3
  */
 public class JavaSerializationMarshaller extends AbstractMarshaller {
+
+   private final ClassWhiteList whiteList;
+
+   public JavaSerializationMarshaller() {
+      this(new ClassWhiteList(Collections.emptyList()));
+   }
+
+   public JavaSerializationMarshaller(ClassWhiteList whiteList) {
+      this.whiteList = whiteList;
+   }
 
    @Override
    protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException {
@@ -35,12 +45,9 @@ public class JavaSerializationMarshaller extends AbstractMarshaller {
 
    @Override
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {
-      InputStream bais = new ByteArrayInputStream(buf);
-      ObjectInput in = new ObjectInputStream(bais);
-      Object o = in.readObject();
-      in.close();
-      bais.close();
-      return o;
+      try (ObjectInputStream ois = new CheckedInputStream(new ByteArrayInputStream(buf), whiteList)) {
+         return ois.readObject();
+      }
    }
 
    @Override

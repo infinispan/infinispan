@@ -56,9 +56,12 @@ import org.infinispan.util.logging.LogFactory;
 public class ScriptingManagerImpl implements ScriptingManager {
    private static final Log log = LogFactory.getLog(ScriptingManagerImpl.class, Log.class);
 
-   @Inject private EmbeddedCacheManager cacheManager;
-   @Inject private TaskManager taskManager;
-   @Inject private InternalCacheRegistry internalCacheRegistry;
+   @Inject
+   private EmbeddedCacheManager cacheManager;
+   @Inject
+   private TaskManager taskManager;
+   @Inject
+   private InternalCacheRegistry internalCacheRegistry;
 
    private ScriptEngineManager scriptEngineManager;
    private ConcurrentMap<String, ScriptEngine> scriptEnginesByExtension = CollectionFactory.makeConcurrentMap(2);
@@ -92,8 +95,9 @@ public class ScriptingManagerImpl implements ScriptingManager {
       GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
 
       ConfigurationBuilder cfg = new ConfigurationBuilder();
+      GenericJBossMarshaller marshaller = new GenericJBossMarshaller(cacheManager.getClassWhiteList());
       cfg.compatibility().enable()
-            .marshaller(new GenericJBossMarshaller()).customInterceptors().addInterceptor().interceptor(new ScriptingInterceptor()).before(CacheMgmtInterceptor.class);
+            .marshaller(marshaller).customInterceptors().addInterceptor().interceptor(new ScriptingInterceptor()).before(CacheMgmtInterceptor.class);
       if (globalConfiguration.security().authorization().enabled()) {
          globalConfiguration.security().authorization().roles().put(SCRIPT_MANAGER_ROLE, new CacheRoleImpl(SCRIPT_MANAGER_ROLE, AuthorizationPermission.ALL));
          cfg.security().authorization().enable().role(SCRIPT_MANAGER_ROLE);

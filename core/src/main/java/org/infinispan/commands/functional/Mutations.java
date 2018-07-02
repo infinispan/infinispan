@@ -13,13 +13,15 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 
 /**
  * Helper class for marshalling, also hiding implementations of {@link Mutation} from the interface.
  */
 final class Mutations {
-   private Mutations() {}
+   private Mutations() {
+   }
 
    // No need to occupy externalizer ids when we have a limited set of options
    static <K, V, T, R> void writeTo(ObjectOutput output, Mutation<K, V, R> mutation) throws IOException {
@@ -87,8 +89,9 @@ final class Mutations {
          GlobalConfiguration globalConfiguration = registry.getGlobalComponentRegistry().getGlobalConfiguration();
          EncoderRegistry encoderRegistry = registry.getComponent(EncoderRegistry.class);
          Configuration configuration = registry.getComponent(Configuration.class);
-         keyDataConversion.injectDependencies(globalConfiguration, encoderRegistry, configuration);
-         valueDataConversion.injectDependencies(globalConfiguration, encoderRegistry, configuration);
+         EmbeddedCacheManager cacheManager = registry.getComponent(EmbeddedCacheManager.class);
+         keyDataConversion.injectDependencies(globalConfiguration, encoderRegistry, configuration, cacheManager);
+         valueDataConversion.injectDependencies(globalConfiguration, encoderRegistry, configuration, cacheManager);
       }
    }
 

@@ -11,15 +11,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.Collections;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.marshall.core.ExternallyMarshallable;
 import org.infinispan.server.core.logging.Log;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -27,6 +29,8 @@ import org.xml.sax.XMLReader;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.XStreamException;
+import com.thoughtworks.xstream.security.ForbiddenClassException;
+import com.thoughtworks.xstream.security.NoTypePermission;
 
 /**
  * Basic XML transcoder supporting conversions from XML to commons formats.
@@ -44,8 +48,13 @@ public class XMLTranscoder extends OneToManyTranscoder {
    }
 
    public XMLTranscoder() {
+      this(new ClassWhiteList(Collections.emptyList()));
+   }
+
+   public XMLTranscoder(ClassWhiteList whiteList) {
       super(APPLICATION_XML, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_UNKNOWN);
-      XStreamHolder.XStream.addPermission(ExternallyMarshallable::isAllowed);
+      XStreamHolder.XStream.addPermission(NoTypePermission.NONE);
+      XStreamHolder.XStream.addPermission(type -> whiteList.isSafeClass(type.getName()));
    }
 
    @Override
@@ -53,7 +62,8 @@ public class XMLTranscoder extends OneToManyTranscoder {
       if (destinationType.match(APPLICATION_XML)) {
          if (contentType.match(APPLICATION_OBJECT)) {
             Object decoded = StandardConversions.decodeObjectContent(content, contentType);
-            return XStreamHolder.XStream.toXML(decoded);
+            String xmlString = XStreamHolder.XStream.toXML(decoded);
+            return xmlString.getBytes(destinationType.getCharset());
          }
          if (contentType.match(TEXT_PLAIN)) {
             String inputText = StandardConversions.convertTextToObject(content, contentType);
@@ -80,8 +90,10 @@ public class XMLTranscoder extends OneToManyTranscoder {
                   new InputStreamReader(new ByteArrayInputStream((byte[]) content)) :
                   new StringReader(content.toString());
             return XStreamHolder.XStream.fromXML(xmlReader);
+         } catch (ForbiddenClassException e) {
+            throw logger.errorDeserializing(e.getMessage());
          } catch (XStreamException e) {
-            throw logger.errorDuringTranscoding(e);
+            throw new CacheException(e);
          }
       }
       throw logger.unsupportedDataFormat(contentType);

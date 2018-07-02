@@ -1,10 +1,8 @@
 package org.infinispan.commons.marshall.jboss;
 
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.jboss.marshalling.Unmarshaller;
-
-import java.io.IOException;
 import java.util.List;
+
+import org.infinispan.commons.configuration.ClassWhiteList;
 
 /**
  * A marshaller that makes use of <a href="http://www.jboss.org/jbossmarshalling">JBoss Marshalling</a>
@@ -29,30 +27,23 @@ public final class GenericJBossMarshaller extends AbstractJBossMarshaller {
             new DefaultContextClassResolver(classLoader != null ? classLoader : this.getClass().getClassLoader()));
    }
 
+   /**
+    * @deprecated Use {@link #GenericJBossMarshaller(ClassWhiteList)} instead
+    */
+   @Deprecated
    public GenericJBossMarshaller(List<String> whitelist) {
-      super();
-      baseCfg.setClassResolver(
-         new CheckedClassResolver(whitelist, this.getClass().getClassLoader()));
+      this(new ClassWhiteList(whitelist));
    }
 
-   private static final class CheckedClassResolver extends DefaultContextClassResolver {
+   public GenericJBossMarshaller(ClassWhiteList classWhiteList) {
+      super();
+      baseCfg.setClassResolver(
+            new CheckedClassResolver(classWhiteList, this.getClass().getClassLoader()));
+   }
 
-      private final List<String> whitelist;
-
-      CheckedClassResolver(List<String> whitelist, ClassLoader defaultClassLoader) {
-         super(defaultClassLoader);
-         this.whitelist = whitelist;
-      }
-
-      @Override
-      public Class<?> resolveClass(Unmarshaller unmarshaller, String name, long serialVersionUID) throws IOException, ClassNotFoundException {
-         boolean safeClass = MarshallUtil.isSafeClass(name, whitelist);
-         if (!safeClass)
-            throw log.classNotInWhitelist(name);
-
-         return super.resolveClass(unmarshaller, name, serialVersionUID);
-      }
-
+   public GenericJBossMarshaller(ClassLoader classLoader, ClassWhiteList classWhiteList) {
+      super();
+      baseCfg.setClassResolver(new CheckedClassResolver(classWhiteList, classLoader));
    }
 
 }

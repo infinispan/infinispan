@@ -1,6 +1,8 @@
 package org.infinispan.cli.interpreter.codec;
 
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.kohsuke.MetaInfServices;
+
 /**
  *
  * NoneCodec. This codec leaves keys/values as is without applying any transformation
@@ -15,6 +17,10 @@ public class NoneCodec extends AbstractCodec {
    @Override
    public String getName() {
       return "none";
+   }
+
+   @Override
+   public void setWhiteList(ClassWhiteList whiteList) {
    }
 
    @Override

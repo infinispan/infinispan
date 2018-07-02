@@ -6,7 +6,6 @@ import java.io.IOException;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 
 /**
  * Encoder that read/write marshalled content and store them unmarshalled.
@@ -18,11 +17,7 @@ public class CompatModeEncoder implements Encoder {
    protected final Marshaller marshaller;
 
    public CompatModeEncoder(Marshaller marshaller) {
-      this(marshaller, CompatModeEncoder.class.getClassLoader());
-   }
-
-   public CompatModeEncoder(Marshaller marshaller, ClassLoader classLoader) {
-      this.marshaller = marshaller == null ? new GenericJBossMarshaller(classLoader) : marshaller;
+      this.marshaller = marshaller;
    }
 
    @Override

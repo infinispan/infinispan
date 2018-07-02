@@ -151,7 +151,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                AbstractClientEvent cacheEvent;
                try {
                   cacheEvent = codec.readCacheEvent(in, listenerNotifier::getCacheDataFormat,
-                        receivedOpCode, configuration.serialWhitelist(), ctx.channel().remoteAddress());
+                        receivedOpCode, configuration.getClassWhiteList(), ctx.channel().remoteAddress());
                } catch (Signal signal) {
                   throw signal;
                } catch (Throwable t) {
@@ -204,7 +204,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
          operation.exceptionCaught(ctx, cause);
       } else {
          TransportException transportException = log.errorFromUnknownOperation(ctx.channel(), cause, ctx.channel().remoteAddress());
-         for (HotRodOperation<?> op: incomplete.values()) {
+         for (HotRodOperation<?> op : incomplete.values()) {
             try {
                op.exceptionCaught(ctx, transportException);
             } catch (Throwable t) {
@@ -220,7 +220,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
 
    @Override
    public void channelInactive(ChannelHandlerContext ctx) {
-      for (HotRodOperation<?> op: incomplete.values()) {
+      for (HotRodOperation<?> op : incomplete.values()) {
          try {
             op.channelInactive(ctx.channel());
          } catch (Throwable t) {

@@ -4,11 +4,11 @@ import java.nio.charset.Charset;
 
 import org.infinispan.cli.interpreter.Interpreter;
 import org.infinispan.cli.interpreter.logging.Log;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
 /**
- *
  * MemcachedCodec.
  *
  * @author Tristan Tarrant
@@ -33,6 +33,10 @@ public class MemcachedCodec extends AbstractCodec {
    }
 
    @Override
+   public void setWhiteList(ClassWhiteList whiteList) {
+   }
+
+   @Override
    public Object encodeKey(Object key) {
       return key;
    }
@@ -41,7 +45,7 @@ public class MemcachedCodec extends AbstractCodec {
    public Object encodeValue(Object value) throws CodecException {
       if (value != null) {
          if (value instanceof String) {
-            return ((String)value).getBytes(UTF8);
+            return ((String) value).getBytes(UTF8);
          } else if (value instanceof byte[]) {
             return value;
          } else {

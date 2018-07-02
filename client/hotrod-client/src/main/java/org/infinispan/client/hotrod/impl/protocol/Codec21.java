@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
 import java.net.SocketAddress;
-import java.util.List;
 import java.util.function.Function;
 
 import org.infinispan.client.hotrod.DataFormat;
@@ -12,6 +11,7 @@ import org.infinispan.client.hotrod.event.impl.ExpiredEventImpl;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.configuration.ClassWhiteList;
 
 import io.netty.buffer.ByteBuf;
 
@@ -32,11 +32,11 @@ public class Codec21 extends Codec20 {
    @Override
    public void writeClientListenerParams(ByteBuf buf, ClientListener clientListener, byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
       super.writeClientListenerParams(buf, clientListener, filterFactoryParams, converterFactoryParams);
-      buf.writeByte((short)(clientListener.useRawData() ? 1 : 0));
+      buf.writeByte((short) (clientListener.useRawData() ? 1 : 0));
    }
 
    @Override
-   public AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> listenerDataFormat, short eventTypeId, List<String> whitelist, SocketAddress serverAddress) {
+   public AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> listenerDataFormat, short eventTypeId, ClassWhiteList whitelist, SocketAddress serverAddress) {
       short status = buf.readUnsignedByte();
       buf.readUnsignedByte(); // ignore, no topology expected
       ClientEvent.Type eventType;

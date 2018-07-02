@@ -6,6 +6,7 @@ import static org.jboss.logging.Logger.Level.WARN;
 import java.net.SocketAddress;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.server.core.dataconversion.TranscodingException;
 import org.jboss.logging.BasicLogger;
@@ -97,4 +98,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot create clustered caches in non-clustered servers", id = 5034)
    UnsupportedOperationException cannotCreateClusteredCache();
+
+   @Message(value = "Class '%s' blocked by deserialization white list. Include the class name in the server cache manager white list to authorize.", id = 5035)
+   CacheException errorDeserializing(String className);
 }

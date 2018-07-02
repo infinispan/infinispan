@@ -91,20 +91,22 @@ public class StandardConversionsTest {
       byte[] textStream = value.getBytes(UTF_8);
       byte[] randomBytes = new byte[]{23, 23, 34, 1, -1, -123};
 
+      JavaSerializationMarshaller marshaller = new JavaSerializationMarshaller();
+
       MediaType stringType = APPLICATION_OBJECT.withParameter("type", "java.lang.String");
-      Object result = StandardConversions.convertOctetStreamToJava(textStream, stringType);
+      Object result = StandardConversions.convertOctetStreamToJava(textStream, stringType, marshaller);
       assertEquals(value, result);
 
       MediaType byteArrayType = APPLICATION_OBJECT.withParameter("type", "ByteArray");
-      Object result2 = StandardConversions.convertOctetStreamToJava(textStream, byteArrayType);
+      Object result2 = StandardConversions.convertOctetStreamToJava(textStream, byteArrayType, marshaller);
       assertArrayEquals(textStream, (byte[]) result2);
 
-      Object result3 = StandardConversions.convertOctetStreamToJava(randomBytes, byteArrayType);
+      Object result3 = StandardConversions.convertOctetStreamToJava(randomBytes, byteArrayType, marshaller);
       assertArrayEquals(randomBytes, (byte[]) result3);
 
       thrown.expect(EncodingException.class);
       MediaType doubleType = APPLICATION_OBJECT.withParameter("type", "java.lang.Double");
-      StandardConversions.convertOctetStreamToJava(randomBytes, doubleType);
+      StandardConversions.convertOctetStreamToJava(randomBytes, doubleType, marshaller);
       System.out.println(thrown);
    }
 
@@ -137,19 +139,19 @@ public class StandardConversionsTest {
       byte[] binary = new byte[]{1, 2, 3};
 
       MediaType stringType = APPLICATION_OBJECT.withParameter("type", "java.lang.String");
-      byte[] result = StandardConversions.convertJavaToOctetStream(string, stringType);
+      byte[] result = StandardConversions.convertJavaToOctetStream(string, stringType, marshaller);
       assertArrayEquals(string.getBytes(UTF_8), result);
 
       MediaType doubleType = APPLICATION_OBJECT.withParameter("type", "java.lang.Double");
-      result = StandardConversions.convertJavaToOctetStream(number, doubleType);
+      result = StandardConversions.convertJavaToOctetStream(number, doubleType, marshaller);
       assertArrayEquals(marshaller.objectToByteBuffer(number), result);
 
       MediaType customType = APPLICATION_OBJECT.withParameter("type", complex.getClass().getName());
-      result = StandardConversions.convertJavaToOctetStream(complex, customType);
+      result = StandardConversions.convertJavaToOctetStream(complex, customType, marshaller);
       assertArrayEquals(marshaller.objectToByteBuffer(complex), result);
 
       MediaType byteArrayType = APPLICATION_OBJECT.withParameter("type", "ByteArray");
-      result = StandardConversions.convertJavaToOctetStream(binary, byteArrayType);
+      result = StandardConversions.convertJavaToOctetStream(binary, byteArrayType, marshaller);
       assertArrayEquals(result, binary);
    }
 

@@ -12,6 +12,7 @@ import java.util.Set;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -45,7 +46,7 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
       List<Integer> finished = new ArrayList<>();
 
       @Override
-      public boolean track(byte[] key, short status, List<String> whitelist) {
+      public boolean track(byte[] key, short status, ClassWhiteList whitelist) {
          return true;
       }
 
@@ -77,10 +78,10 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
    protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(int serverPort) {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       clientBuilder.addServer()
-              .host("localhost")
-              .port(serverPort)
-              .maxRetries(maxRetries())
-              .balancingStrategy(new PreferredServerBalancingStrategy(new InetSocketAddress("localhost", serverPort)));
+            .host("localhost")
+            .port(serverPort)
+            .maxRetries(maxRetries())
+            .balancingStrategy(new PreferredServerBalancingStrategy(new InetSocketAddress("localhost", serverPort)));
       return clientBuilder;
    }
 
