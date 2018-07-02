@@ -19,7 +19,7 @@ import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.KeyTrackingTerminalOperation;
 import org.infinispan.stream.impl.TerminalOperation;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
-import org.infinispan.util.AbstractDelegatingMap;
+import org.infinispan.commons.util.AbstractDelegatingMap;
 
 /**
  * This is a delegating cluster stream manager that sends all calls to the underlying cluster stream manager.  However
