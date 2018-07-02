@@ -118,6 +118,10 @@ public class CompatibilityCacheFactory<K, V> {
       return this;
    }
 
+   void addRegexWhiteList(String regex) {
+      cacheManager.getClassWhiteList().addRegexps(regex);
+   }
+
    private void createRestMemcachedCaches() throws Exception {
       createRestCache();
       createMemcachedCache();

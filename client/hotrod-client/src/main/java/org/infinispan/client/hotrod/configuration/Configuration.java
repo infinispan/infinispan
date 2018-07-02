@@ -14,6 +14,7 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.TypedProperties;
 
@@ -49,6 +50,8 @@ public class Configuration {
    private final List<ClusterConfiguration> clusters;
    private final List<String> serialWhitelist;
    private final int batchSize;
+   private final ClassWhiteList classWhiteList;
+
    private final TransactionConfiguration transaction;
 
    Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory, ClassLoader classLoader,
@@ -80,6 +83,7 @@ public class Configuration {
       this.nearCache = nearCache;
       this.clusters = clusters;
       this.serialWhitelist = serialWhitelist;
+      this.classWhiteList = new ClassWhiteList(serialWhitelist);
       this.batchSize = batchSize;
       this.transaction = transaction;
    }
@@ -144,7 +148,7 @@ public class Configuration {
    }
 
    public Class<? extends ConsistentHash> consistentHashImpl(int version) {
-      return consistentHashImpl[version-1];
+      return consistentHashImpl[version - 1];
    }
 
    public boolean forceReturnValues() {
@@ -220,6 +224,10 @@ public class Configuration {
       return serialWhitelist;
    }
 
+   public ClassWhiteList getClassWhiteList() {
+      return classWhiteList;
+   }
+
    public int batchSize() {
       return batchSize;
    }
@@ -247,7 +255,7 @@ public class Configuration {
       if (asyncExecutorFactory().factoryClass() != null) {
          properties.setProperty(ConfigurationProperties.ASYNC_EXECUTOR_FACTORY, asyncExecutorFactory().factoryClass().getName());
          TypedProperties aefProps = asyncExecutorFactory().properties();
-         for(String key : Arrays.asList(ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_POOL_SIZE, ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE)) {
+         for (String key : Arrays.asList(ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_POOL_SIZE, ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE)) {
             if (aefProps.containsKey(key)) {
                properties.setProperty(key, aefProps.getProperty(key));
             }
@@ -289,7 +297,7 @@ public class Configuration {
       properties.setProperty("testWhileIdle", Boolean.toString(connectionPool().testWhileIdle()));
 
       StringBuilder servers = new StringBuilder();
-      for(ServerConfiguration server : servers()) {
+      for (ServerConfiguration server : servers()) {
          if (servers.length() > 0) {
             servers.append(";");
          }
@@ -317,7 +325,7 @@ public class Configuration {
       if (security.ssl().sniHostName() != null)
          properties.setProperty(ConfigurationProperties.SNI_HOST_NAME, security.ssl().sniHostName());
 
-      if(security.ssl().protocol() != null)
+      if (security.ssl().protocol() != null)
          properties.setProperty(ConfigurationProperties.SSL_PROTOCOL, security.ssl().protocol());
 
       if (security.ssl().sslContext() != null)

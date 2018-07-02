@@ -3,6 +3,7 @@ package org.infinispan.cli.interpreter.codec;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.infinispan.cli.interpreter.logging.Log;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
@@ -27,6 +28,10 @@ public class RestCodec extends AbstractCodec {
    @Override
    public String getName() {
       return "rest";
+   }
+
+   @Override
+   public void setWhiteList(ClassWhiteList whiteList) {
    }
 
    @Override

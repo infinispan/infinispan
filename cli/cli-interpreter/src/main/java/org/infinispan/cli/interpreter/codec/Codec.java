@@ -1,11 +1,14 @@
 package org.infinispan.cli.interpreter.codec;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.metadata.Metadata;
 
 public interface Codec {
 
    String getName();
+
+   void setWhiteList(ClassWhiteList whiteList);
 
    Object encodeKey(Object key) throws CodecException;
 

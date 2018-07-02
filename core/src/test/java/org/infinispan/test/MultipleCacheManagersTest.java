@@ -19,6 +19,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -84,11 +85,11 @@ import org.testng.annotations.Factory;
  * @author Mircea.Markus@jboss.com
  */
 @TestSelector(filters = {
-   MultipleCacheManagersTest.CacheModeFilter.class,
-   MultipleCacheManagersTest.TransactionalModeFilter.class,
-   MultipleCacheManagersTest.TotalOrderFilter.class,
-   MultipleCacheManagersTest.LockingModeFilter.class,
-   MultipleCacheManagersTest.IsolationLevelFilter.class,
+      MultipleCacheManagersTest.CacheModeFilter.class,
+      MultipleCacheManagersTest.TransactionalModeFilter.class,
+      MultipleCacheManagersTest.TotalOrderFilter.class,
+      MultipleCacheManagersTest.LockingModeFilter.class,
+      MultipleCacheManagersTest.IsolationLevelFilter.class,
 })
 public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
@@ -138,7 +139,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       listeners.clear();
    }
 
-   @AfterMethod(alwaysRun=true)
+   @AfterMethod(alwaysRun = true)
    protected void clearContent() throws Throwable {
       if (cleanupAfterTest()) {
          log.debug("*** Test method complete; clearing contents on all caches.");
@@ -262,7 +263,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected void createCluster(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder, int count) {
-      for (int i = 0; i < count; i++) addClusterEnabledCacheManager(new GlobalConfigurationBuilder().read(globalBuilder.build()), builder);
+      for (int i = 0; i < count; i++)
+         addClusterEnabledCacheManager(new GlobalConfigurationBuilder().read(globalBuilder.build()), builder);
    }
 
    protected void defineConfigurationOnAllManagers(String cacheName, ConfigurationBuilder b) {
@@ -271,7 +273,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
-   protected  <K, V> List<Cache<K, V>> getCaches(String cacheName) {
+   protected <K, V> List<Cache<K, V>> getCaches(String cacheName) {
       List<Cache<K, V>> caches = new ArrayList<>();
       List<EmbeddedCacheManager> managers = new ArrayList<>(cacheManagers);
       for (EmbeddedCacheManager cm : managers) {
@@ -313,7 +315,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected TransactionManager tm(int i, String cacheName) {
-      return cache(i, cacheName ).getAdvancedCache().getTransactionManager();
+      return cache(i, cacheName).getAdvancedCache().getTransactionManager();
    }
 
    protected TransactionManager tm(int i) {
@@ -347,13 +349,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster,
+                                                            GlobalConfigurationBuilder globalConfigurationBuilder,
                                                             ConfigurationBuilder defaultConfigBuilder,
                                                             boolean serverMode, String... cacheNames) {
       List<Cache<K, V>> caches = new ArrayList<>(numMembersInCluster);
       for (int i = 0; i < numMembersInCluster; i++) {
          EmbeddedCacheManager cm;
          if (serverMode) {
-            GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
             globalConfigurationBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
             globalConfigurationBuilder.transport().defaultTransport();
             cm = addClusterEnabledCacheManager(globalConfigurationBuilder, defaultConfigBuilder);
@@ -372,6 +374,12 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
       waitForClusterToForm(cacheNames);
       return caches;
+   }
+
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster,
+                                                            ConfigurationBuilder defaultConfigBuilder,
+                                                            boolean serverMode, String... cacheNames) {
+      return createClusteredCaches(numMembersInCluster, new GlobalConfigurationBuilder(), defaultConfigBuilder, serverMode, cacheNames);
    }
 
    protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster,
@@ -401,12 +409,12 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @return A list with size numMembersInCluster containing a list of cacheNames.length caches
     */
    protected <K, V> List<List<Cache<K, V>>> createClusteredCaches(int numMembersInCluster,
-         ConfigurationBuilder defaultConfigBuilder, String... cacheNames) {
+                                                                  ConfigurationBuilder defaultConfigBuilder, String... cacheNames) {
       return createClusteredCaches(numMembersInCluster, defaultConfigBuilder, new TransportFlags(), cacheNames);
    }
 
    protected <K, V> List<List<Cache<K, V>>> createClusteredCaches(int numMembersInCluster,
-         ConfigurationBuilder defaultConfigBuilder, TransportFlags transportFlags, String... cacheNames) {
+                                                                  ConfigurationBuilder defaultConfigBuilder, TransportFlags transportFlags, String... cacheNames) {
       List<List<Cache<K, V>>> allCaches = new ArrayList<>(numMembersInCluster);
       for (int i = 0; i < numMembersInCluster; i++) {
          EmbeddedCacheManager cm = addClusterEnabledCacheManager(defaultConfigBuilder, transportFlags);
@@ -512,10 +520,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       List<Consumer<MultipleCacheManagersTest>[]> allModifiers;
       try {
          Consumer<MultipleCacheManagersTest>[] cacheModeModifiers =
-            getModifiers(InCacheMode.class, InCacheMode::value, MultipleCacheManagersTest::cacheMode);
+               getModifiers(InCacheMode.class, InCacheMode::value, MultipleCacheManagersTest::cacheMode);
          Consumer<MultipleCacheManagersTest>[] transactionModifiers =
-            getModifiers(InTransactionMode.class, InTransactionMode::value,
-                         (t, m) -> t.transactional(m.isTransactional()));
+               getModifiers(InTransactionMode.class, InTransactionMode::value,
+                     (t, m) -> t.transactional(m.isTransactional()));
          allModifiers = asList(cacheModeModifiers, transactionModifiers);
       } catch (Exception e) {
          return new Object[]{new FactoryError(e.getMessage())};
@@ -549,8 +557,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       for (Method m : getClass().getMethods()) {
          if (m.getAnnotation(Factory.class) != null && m.getDeclaringClass() != MultipleCacheManagersTest.class) {
             throw new IllegalStateException("Test " + getClass().getName() +
-                                                  " extends MultipleCacheManagersTest and declares its own @Factory method: " +
-                                                  m.getName());
+                  " extends MultipleCacheManagersTest and declares its own @Factory method: " +
+                  m.getName());
          }
       }
    }
@@ -571,7 +579,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       Mode[] classModes = classModes(annotationClass, methodRetriever);
       Set<Mode> methodModes = methodModes(annotationClass, methodRetriever);
       if (classModes == null && methodModes == null) {
-         return new Consumer[] { t -> {} }; // no modifications
+         return new Consumer[]{t -> {
+         }}; // no modifications
       }
       Set<Mode> allModes = new HashSet<>();
       if (classModes != null) {
@@ -579,12 +588,12 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
       if (methodModes != null && !allModes.containsAll(methodModes)) {
          throw new IllegalStateException(
-            "Test methods cannot declare cache mode/transaction filters that the test class hasn't declared");
+               "Test methods cannot declare cache mode/transaction filters that the test class hasn't declared");
       }
       // if there are only method-level annotations, add a version without setting mode at all
       return allModes.stream()
-                     .map(mode -> (Consumer<MultipleCacheManagersTest>) t -> applier.accept(t, mode))
-                     .toArray(Consumer[]::new);
+            .map(mode -> (Consumer<MultipleCacheManagersTest>) t -> applier.accept(t, mode))
+            .toArray(Consumer[]::new);
    }
 
    protected <Mode, A extends Annotation> Set<Mode> methodModes(Class<A> annotationClass, Function<A, Mode[]> modeRetriever) {
@@ -676,11 +685,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected String[] parameterNames() {
-      return new String[]{ null, "tx", "locking", "TO", "isolation", "bias", "triangle" };
+      return new String[]{null, "tx", "locking", "TO", "isolation", "bias", "triangle"};
    }
 
    protected Object[] parameterValues() {
-      return new Object[]{ cacheMode, transactional, lockingMode, totalOrder, isolationLevel, biasAcquisition, useTriangle };
+      return new Object[]{cacheMode, transactional, lockingMode, totalOrder, isolationLevel, biasAcquisition, useTriangle};
    }
 
    protected static <T> T[] concat(T[] a1, T... a2) {
@@ -700,7 +709,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected <A, B> AdvancedCache<A, B> advancedCache(int i) {
-      return this.<A,B>cache(i).getAdvancedCache();
+      return this.<A, B>cache(i).getAdvancedCache();
    }
 
    protected <A, B> AdvancedCache<A, B> advancedCache(int i, String cacheName) {
@@ -792,7 +801,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          boolean aNodeIsLocked = false;
          for (int i = 0; i < caches(cacheName).size(); i++) {
             final boolean isLocked = lockManager(i, cacheName).isLocked(key);
-            if (isLocked) log.trace(key + " is locked on cache index " + i + " by " + lockManager(i, cacheName).getOwner(key));
+            if (isLocked)
+               log.trace(key + " is locked on cache index " + i + " by " + lockManager(i, cacheName).getOwner(key));
             aNodeIsLocked = aNodeIsLocked || isLocked;
          }
          return !aNodeIsLocked;
@@ -830,11 +840,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       Configuration c = getCache(0, cacheName).getCacheConfiguration();
       if (c.clustering().cacheMode().isInvalidation()) {
          return getCache(0, cacheName); //for replicated caches only the coordinator acquires lock
-      }  else if (!c.clustering().cacheMode().isClustered()) {
+      } else if (!c.clustering().cacheMode().isClustered()) {
          throw new IllegalStateException("This is not a clustered cache!");
       } else {
          Address address = getCache(0, cacheName).getAdvancedCache().getDistributionManager().getCacheTopology()
-                                                 .getDistribution(key).primary();
+               .getDistribution(key).primary();
          for (Cache<K, V> cache : this.<K, V>caches(cacheName)) {
             if (cache.getAdvancedCache().getRpcManager().getTransport().getAddress().equals(address)) {
                return cache;
@@ -880,7 +890,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
             int remoteTxCount = transactionTable.getRemoteTxCount();
             if (localTxCount != 0 || remoteTxCount != 0) {
                log.tracef("Local tx=%s, remote tx=%s, for cache %s ", transactionTable.getLocalGlobalTransaction(),
-                          transactionTable.getRemoteGlobalTransaction(), address(cache));
+                     transactionTable.getRemoteGlobalTransaction(), address(cache));
                return false;
             }
          }
@@ -994,7 +1004,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
-   public static class LockingModeFilter extends FilterByProperty<LockingMode>  {
+   public static class LockingModeFilter extends FilterByProperty<LockingMode> {
       public LockingModeFilter() {
          super("test.infinispan.lockingMode", test -> test.lockingMode);
       }

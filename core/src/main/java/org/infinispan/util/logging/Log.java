@@ -1799,12 +1799,12 @@ public interface Log extends BasicLogger {
    @Message(value = "Conflict resolution cancelled for cache %s with topology %s", id = 525)
    void cancelledConflictResolution(String cacheName, CacheTopology currentTopology);
 
-   @Message(value = "Deserialization of class '%s' is not allowed", id = 526)
-   CacheException errorDeserializing(Class<?> rawClass);
-
    @Message(value = "Maximum startup attempts exceeded for store %s", id = 527)
    PersistenceException storeStartupAttemptsExceeded(String storeName, @Cause Throwable t);
 
    @Message(value = "Cannot acquire lock as this partition is DEGRADED", id = 528)
    AvailabilityException degradedModeLockUnavailable();
+
+   @Message(value = "Class '%s' blocked by deserialization white list. Include the class name in the server white list to authorize.", id = 529)
+   CacheException errorDeserializing(String className);
 }

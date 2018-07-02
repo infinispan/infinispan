@@ -1,5 +1,6 @@
 package org.infinispan.commons.dataconversion;
 
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 
 /**
@@ -9,10 +10,8 @@ import org.infinispan.commons.marshall.JavaSerializationMarshaller;
  */
 public class JavaCompatEncoder extends CompatModeEncoder {
 
-   public static final JavaCompatEncoder INSTANCE = new JavaCompatEncoder();
-
-   private JavaCompatEncoder() {
-      super(new JavaSerializationMarshaller());
+   public JavaCompatEncoder(ClassWhiteList classWhiteList) {
+      super(new JavaSerializationMarshaller(classWhiteList));
    }
 
    @Override

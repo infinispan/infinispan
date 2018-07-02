@@ -3,7 +3,7 @@ package org.infinispan.server.core.dataconversion.json;
 import org.codehaus.jackson.annotate.JsonTypeInfo;
 import org.codehaus.jackson.map.jsontype.TypeIdResolver;
 import org.codehaus.jackson.type.JavaType;
-import org.infinispan.marshall.core.ExternallyMarshallable;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -17,9 +17,11 @@ public class SecureTypeIdResolver implements TypeIdResolver {
    protected final static Log logger = LogFactory.getLog(SecureTypeIdResolver.class, Log.class);
 
    private TypeIdResolver internalTypeIdResolver;
+   private final ClassWhiteList classWhiteList;
 
-   SecureTypeIdResolver(TypeIdResolver typeIdResolver) {
+   SecureTypeIdResolver(TypeIdResolver typeIdResolver, ClassWhiteList classWhiteList) {
       this.internalTypeIdResolver = typeIdResolver;
+      this.classWhiteList = classWhiteList;
    }
 
    @Override
@@ -40,9 +42,10 @@ public class SecureTypeIdResolver implements TypeIdResolver {
    @Override
    public JavaType typeFromId(String id) {
       JavaType javaType = internalTypeIdResolver.typeFromId(id);
-      Class<?> rawClass = javaType.getRawClass();
-      if (!ExternallyMarshallable.isAllowed(rawClass)) {
-         throw logger.errorDeserializing(rawClass);
+      Class<?> clazz = javaType.getRawClass();
+      String className = clazz.getName();
+      if (!classWhiteList.isSafeClass(className)) {
+         throw logger.errorDeserializing(className);
       }
       return javaType;
    }

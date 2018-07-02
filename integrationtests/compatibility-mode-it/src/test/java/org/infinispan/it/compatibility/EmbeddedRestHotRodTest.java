@@ -61,6 +61,7 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
    protected void setup() throws Exception {
       cacheFactory = new CompatibilityCacheFactory<String, Object>(CacheMode.LOCAL).setup();
       dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+      cacheFactory.addRegexWhiteList("org.infinispan.*Person");
    }
 
    @AfterClass

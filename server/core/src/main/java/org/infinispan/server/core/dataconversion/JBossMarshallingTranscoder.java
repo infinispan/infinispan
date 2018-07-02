@@ -12,13 +12,11 @@ import static org.infinispan.commons.dataconversion.StandardConversions.decodeOc
 
 import java.io.IOException;
 
-import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.GenericJbossMarshallerEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.dataconversion.Transcoder;
-import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -30,13 +28,13 @@ import org.infinispan.util.logging.LogFactory;
 public class JBossMarshallingTranscoder extends OneToManyTranscoder {
 
    protected final static Log logger = LogFactory.getLog(JBossMarshallingTranscoder.class, Log.class);
-   private final Encoder encoder;
    private final Transcoder jsonObjectTranscoder;
+   private final GenericJBossMarshaller marshaller;
 
-   public JBossMarshallingTranscoder(EncoderRegistry encoderRegistry) {
+   public JBossMarshallingTranscoder(JsonTranscoder jsonObjectTranscoder, GenericJBossMarshaller marshaller) {
       super(APPLICATION_JBOSS_MARSHALLING, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_OBJECT, APPLICATION_JSON, APPLICATION_UNKNOWN);
-      encoder = encoderRegistry.getEncoder(GenericJbossMarshallerEncoder.class, null);
-      jsonObjectTranscoder = encoderRegistry.getTranscoder(APPLICATION_JSON, APPLICATION_OBJECT);
+      this.jsonObjectTranscoder = jsonObjectTranscoder;
+      this.marshaller = marshaller;
    }
 
    @Override
@@ -58,42 +56,58 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
          if (contentType.match(APPLICATION_UNKNOWN)) {
             return content;
          }
-         return encoder.toStorage(decoded);
+         return marshall(decoded);
       }
       if (destinationType.match(MediaType.APPLICATION_OCTET_STREAM)) {
          try {
-            Object unmarshalled = encoder.fromStorage(content);
+            Object unmarshalled = unmarshall(content);
             if (unmarshalled instanceof byte[]) {
                return unmarshalled;
             }
-            return StandardConversions.convertJavaToOctetStream(unmarshalled, MediaType.APPLICATION_OBJECT);
+            return StandardConversions.convertJavaToOctetStream(unmarshalled, MediaType.APPLICATION_OBJECT, marshaller);
          } catch (IOException | InterruptedException e) {
             throw logger.unsupportedContent(content);
          }
       }
       if (destinationType.match(MediaType.TEXT_PLAIN)) {
-         String fromStorage = encoder.fromStorage(content).toString();
-         return fromStorage.getBytes(destinationType.getCharset());
+         String unmarshalled = unmarshall(content).toString();
+         return unmarshalled.getBytes(destinationType.getCharset());
       }
       if (destinationType.match(MediaType.APPLICATION_OBJECT)) {
-         return encoder.fromStorage(content);
+         return unmarshall(content);
       }
       if (destinationType.match(MediaType.APPLICATION_JSON)) {
          // A more efficient way would be to read the jboss marshalling binary payload and convert it directly to json
          // For now it will unmarshall as Java Object first.
-         Object fromStorage = encoder.fromStorage(content);
-         Object result = jsonObjectTranscoder.transcode(fromStorage, MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_JSON);
+         Object unmarshalled = unmarshall(content);
+         Object result = jsonObjectTranscoder.transcode(unmarshalled, MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_JSON);
          return StandardConversions.convertTextToOctetStream(result, MediaType.APPLICATION_JSON);
       }
       if (destinationType.equals(APPLICATION_UNKNOWN)) {
          try {
-            return StandardConversions.convertJavaToOctetStream(content, MediaType.APPLICATION_OBJECT);
+            return StandardConversions.convertJavaToOctetStream(content, MediaType.APPLICATION_OBJECT, marshaller);
          } catch (IOException | InterruptedException e) {
             throw logger.unsupportedContent(content);
          }
       }
 
       throw logger.unsupportedContent(content);
+   }
+
+   private byte[] marshall(Object o) {
+      try {
+         return marshaller.objectToByteBuffer(o);
+      } catch (InterruptedException | IOException e) {
+         throw logger.errorTranscoding(e);
+      }
+   }
+
+   private Object unmarshall(Object o) {
+      try {
+         return o instanceof byte[] ? marshaller.objectFromByteBuffer((byte[]) o) : o;
+      } catch (IOException | ClassNotFoundException e) {
+         throw logger.errorTranscoding(e);
+      }
    }
 
 }

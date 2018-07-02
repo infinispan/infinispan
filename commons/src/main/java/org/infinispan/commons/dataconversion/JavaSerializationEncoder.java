@@ -1,5 +1,6 @@
 package org.infinispan.commons.dataconversion;
 
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 
 /**
@@ -9,10 +10,8 @@ import org.infinispan.commons.marshall.JavaSerializationMarshaller;
  */
 public class JavaSerializationEncoder extends MarshallerEncoder {
 
-   public static final JavaSerializationEncoder INSTANCE = new JavaSerializationEncoder();
-
-   private JavaSerializationEncoder() {
-      super(new JavaSerializationMarshaller());
+   public JavaSerializationEncoder(ClassWhiteList classWhiteList) {
+      super(new JavaSerializationMarshaller(classWhiteList));
    }
 
    @Override

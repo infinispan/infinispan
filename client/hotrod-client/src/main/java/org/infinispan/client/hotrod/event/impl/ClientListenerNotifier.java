@@ -18,6 +18,7 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
@@ -39,9 +40,9 @@ public class ClientListenerNotifier {
    private final Codec codec;
    private final Marshaller marshaller;
    private final ChannelFactory channelFactory;
-   private final List<String> whitelist;
+   private final ClassWhiteList whitelist;
 
-   public ClientListenerNotifier(Codec codec, Marshaller marshaller, ChannelFactory channelFactory, List<String> whitelist) {
+   public ClientListenerNotifier(Codec codec, Marshaller marshaller, ChannelFactory channelFactory, ClassWhiteList whitelist) {
       this.codec = codec;
       this.marshaller = marshaller;
       this.channelFactory = channelFactory;
@@ -189,7 +190,7 @@ public class ClientListenerNotifier {
       return codec;
    }
 
-   public List<String> whitelist() {
+   public ClassWhiteList whitelist() {
       return whitelist;
    }
 

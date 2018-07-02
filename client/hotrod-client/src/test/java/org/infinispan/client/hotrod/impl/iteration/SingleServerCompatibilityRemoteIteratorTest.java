@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl.iteration;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -21,7 +22,9 @@ public class SingleServerCompatibilityRemoteIteratorTest extends SingleServerRem
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cb = HotRodTestingUtil.hotRodCacheConfiguration();
       cb.compatibility().enable();
-      return TestCacheManagerFactory.createServerModeCacheManager(cb);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createServerModeCacheManager(cb);
+      cacheManager.getClassWhiteList().addClasses(AccountHS.class);
+      return cacheManager;
    }
 
 }

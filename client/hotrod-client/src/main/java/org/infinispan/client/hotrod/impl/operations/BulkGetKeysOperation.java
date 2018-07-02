@@ -49,7 +49,7 @@ public class BulkGetKeysOperation<K> extends RetryOnFailureOperation<Set<K>> {
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       while (buf.readUnsignedByte() == 1) { //there's more!
-         result.add(codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller()));
+         result.add(codec.readUnmarshallByteArray(buf, status, cfg.getClassWhiteList(), channelFactory.getMarshaller()));
          decoder.checkpoint();
       }
       complete(result);

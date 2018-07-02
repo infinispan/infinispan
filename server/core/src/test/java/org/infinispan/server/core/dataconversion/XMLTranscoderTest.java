@@ -1,12 +1,14 @@
 package org.infinispan.server.core.dataconversion;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.singletonList;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.junit.Assert.assertArrayEquals;
 import static org.testng.Assert.assertEquals;
 
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.test.data.Address;
 import org.infinispan.test.data.Person;
 import org.testng.annotations.BeforeClass;
@@ -16,7 +18,7 @@ import org.testng.annotations.Test;
 public class XMLTranscoderTest {
 
    private Person person;
-   private XMLTranscoder xmlTranscoder = new XMLTranscoder();
+   private XMLTranscoder xmlTranscoder = new XMLTranscoder(new ClassWhiteList(singletonList(".*")));
 
    @BeforeClass(alwaysRun = true)
    public void setUp() {
@@ -27,7 +29,7 @@ public class XMLTranscoderTest {
    }
 
    public void testObjectToXML() {
-      String xmlString = (String) xmlTranscoder.transcode(person, APPLICATION_OBJECT, APPLICATION_XML);
+      String xmlString = new String((byte[]) xmlTranscoder.transcode(person, APPLICATION_OBJECT, APPLICATION_XML));
       Object transcodedBack = xmlTranscoder.transcode(xmlString, APPLICATION_XML, APPLICATION_OBJECT);
       assertEquals(person, transcodedBack, "Must be an equal objects");
    }
