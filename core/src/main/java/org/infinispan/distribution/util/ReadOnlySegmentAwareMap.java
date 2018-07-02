@@ -7,8 +7,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.util.AbstractDelegatingCollection;
-import org.infinispan.util.AbstractDelegatingMap;
+import org.infinispan.commons.util.AbstractDelegatingCollection;
+import org.infinispan.commons.util.AbstractDelegatingMap;
 
 /**
  * Map implementation that shows a read only view of the provided entry by only allowing
