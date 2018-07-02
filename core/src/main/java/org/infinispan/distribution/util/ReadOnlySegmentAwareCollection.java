@@ -6,7 +6,7 @@ import java.util.Iterator;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.util.AbstractDelegatingCollection;
+import org.infinispan.commons.util.AbstractDelegatingCollection;
 
 /**
  * Set implementation that shows a read only view of the provided set by only allowing
