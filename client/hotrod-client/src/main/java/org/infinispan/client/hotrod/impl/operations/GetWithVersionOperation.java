@@ -54,7 +54,7 @@ public class GetWithVersionOperation<V> extends AbstractKeyOperation<VersionedVa
       if (trace) {
          log.tracef("Received version: %d", version);
       }
-      V value = codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller());
+      V value = codec.readUnmarshallByteArray(buf, status, cfg.getClassWhiteList(), channelFactory.getMarshaller());
       complete(new VersionedValueImpl<V>(version, value));
    }
 }

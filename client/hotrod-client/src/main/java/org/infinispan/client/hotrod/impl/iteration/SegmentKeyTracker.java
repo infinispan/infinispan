@@ -2,7 +2,6 @@ package org.infinispan.client.hotrod.impl.iteration;
 
 import java.util.BitSet;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.stream.IntStream;
@@ -12,6 +11,7 @@ import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
 
@@ -40,7 +40,7 @@ class SegmentKeyTracker implements KeyTracker {
       segmentStream.forEach(i -> keysPerSegment.set(i, new HashSet<>()));
    }
 
-   public boolean track(byte[] key, short status, List<String> whitelist) {
+   public boolean track(byte[] key, short status, ClassWhiteList whitelist) {
       int segment = HotRodConstants.hasCompatibility(status) ?
             segmentConsistentHash.getSegment(dataFormat.keyToObj(key, status, whitelist)) :
             segmentConsistentHash.getSegment(key);

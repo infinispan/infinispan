@@ -5,7 +5,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +23,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.Marshaller;
 
 import io.netty.buffer.ByteBuf;
@@ -86,7 +86,7 @@ public class Codec10 implements Codec {
       //todo change once TX support is added
       buf.writeByte(params.txMarker);
       if (trace) getLog().tracef("Wrote header for message %d. Operation code: %#04x. Flags: %#x",
-         params.messageId, params.opCode, flagInt);
+            params.messageId, params.opCode, flagInt);
       return params;
    }
 
@@ -147,7 +147,7 @@ public class Codec10 implements Codec {
    }
 
    @Override
-   public AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> dataFormatFunction, short eventTypeId, List<String> whitelist, SocketAddress serverAddress) {
+   public AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> dataFormatFunction, short eventTypeId, ClassWhiteList whitelist, SocketAddress serverAddress) {
       return null;  // No events sent in Hot Rod 1.x protocol
    }
 
@@ -157,7 +157,7 @@ public class Codec10 implements Codec {
    }
 
    @Override
-   public Object returnPossiblePrevValue(ByteBuf buf, short status, int flags, List<String> whitelist, Marshaller marshaller) {
+   public Object returnPossiblePrevValue(ByteBuf buf, short status, int flags, ClassWhiteList whitelist, Marshaller marshaller) {
       if (hasForceReturn(flags)) {
          return CodecUtils.readUnmarshallByteArray(buf, status, whitelist, marshaller);
       } else {
@@ -175,7 +175,7 @@ public class Codec10 implements Codec {
    }
 
    @Override
-   public <T> T readUnmarshallByteArray(ByteBuf buf, short status, List<String> whitelist, Marshaller marshaller) {
+   public <T> T readUnmarshallByteArray(ByteBuf buf, short status, ClassWhiteList whitelist, Marshaller marshaller) {
       return CodecUtils.readUnmarshallByteArray(buf, status, whitelist, marshaller);
    }
 
@@ -199,12 +199,13 @@ public class Codec10 implements Codec {
                String msgFromServer = ByteBufUtil.readString(buf);
                if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && trace) {
                   localLog.tracef("Server-side timeout performing operation: %s", msgFromServer);
-               } if (msgFromServer.contains("SuspectException")
+               }
+               if (msgFromServer.contains("SuspectException")
                      || msgFromServer.contains("SuspectedException")) {
                   // Handle both Infinispan's and JGroups' suspicions
                   if (trace)
                      localLog.tracef("A remote node was suspected while executing messageId=%d. " +
-                        "Check if retry possible. Message from server: %s", params.messageId, msgFromServer);
+                           "Check if retry possible. Message from server: %s", params.messageId, msgFromServer);
                   // TODO: This will be better handled with its own status id in version 2 of protocol
                   throw new RemoteNodeSuspectException(msgFromServer, params.messageId, status);
                } else {
@@ -274,8 +275,8 @@ public class Codec10 implements Codec {
                                                                short hashFunctionVersion, int hashSpace, int clusterSize) {
       if (trace) {
          localLog.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
-                       "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",
-                 newTopologyId, numKeyOwners, hashFunctionVersion, hashSpace, clusterSize);
+                     "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",
+               newTopologyId, numKeyOwners, hashFunctionVersion, hashSpace, clusterSize);
       }
 
       Map<SocketAddress, Set<Integer>> servers2Hash = new LinkedHashMap<SocketAddress, Set<Integer>>();

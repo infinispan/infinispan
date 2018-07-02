@@ -26,7 +26,7 @@ public class TaskRequestProcessor extends BaseRequestProcessor {
       if (server.getMarshaller() != null) {
          marshaller = server.getMarshaller();
       } else {
-         marshaller = new GenericJBossMarshaller();
+         marshaller = new GenericJBossMarshaller(server.getCacheManager().getClassWhiteList());
       }
       TaskContext taskContext = new TaskContext()
             .marshaller(marshaller)
@@ -43,7 +43,7 @@ public class TaskRequestProcessor extends BaseRequestProcessor {
       } else {
          HotRodHeader h = cdc.header;
          writeResponse(new ExecResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId,
-                     result == null ? new byte[]{} : (byte[]) result));
+               result == null ? new byte[]{} : (byte[]) result));
       }
    }
 }

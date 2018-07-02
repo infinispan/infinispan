@@ -1,5 +1,6 @@
 package org.infinispan.server.core.dataconversion;
 
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 
@@ -8,8 +9,8 @@ import org.infinispan.commons.marshall.JavaSerializationMarshaller;
  */
 public class JavaSerializationTranscoder extends TranscoderMarshallerAdapter {
 
-   public JavaSerializationTranscoder() {
-      super(new JavaSerializationMarshaller());
+   public JavaSerializationTranscoder(ClassWhiteList classWhiteList) {
+      super(new JavaSerializationMarshaller(classWhiteList));
    }
 
 }

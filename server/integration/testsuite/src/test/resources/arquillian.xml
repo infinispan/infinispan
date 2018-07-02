@@ -12,7 +12,8 @@
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/clustered-query-index-flushing.xml</property>
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
-                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip} -Djgroups.join_timeout=2000
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -100,7 +101,8 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">examples/standalone-compatibility-mode.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100
                 </property>
                 <property name="managementPort">10090</property>
@@ -675,6 +677,8 @@
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Djgroups.join_timeout=2000
+                    -Dinfinispan.deserialization.whitelist.classes=java.time.Instant,java.time.Ser
+                    -Dinfinispan.deserialization.whitelist.regexps=.*SpotPrice.*
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11222 8080</property>
@@ -1006,7 +1010,9 @@
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="managementPort">9990</property>
                 <property name="serverConfig">testsuite/clustered-with-sasl-md5-0.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip} -Dsasl.username=test -Dsasl.password=heslo -Dsasl.realm=testRealm
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip} -Dsasl.username=test
+                    -Dsasl.password=heslo -Dsasl.realm=testRealm
                 </property>
                 <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -1065,7 +1071,9 @@
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="managementPort">10090</property>
                 <property name="serverConfig">testsuite/clustered-with-sasl-md5-1.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=another_node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip} -Dsasl.username=test -Dsasl.password=heslo -Dsasl.realm=testRealm
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=another_node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip} -Dsasl.username=test
+                    -Dsasl.password=heslo -Dsasl.realm=testRealm
                     -Djboss.socket.binding.port-offset=100
                 </property>
                 <property name="waitForPorts">11322 8180</property>
@@ -1123,8 +1131,8 @@
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/rest-ssl-with-sni.xml</property>
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
-                      -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                      -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">8443</property>
@@ -1244,7 +1252,8 @@
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="allowConnectingToRunningServer">true</property>
                 <property name="serverConfig">testsuite/clustered-hotrod-rolling-upgrade.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Dremote.destination.port=11422
                 </property>
                 <property name="managementPort">9990</property>
@@ -1369,6 +1378,7 @@
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                    -Dinfinispan.deserialization.whitelist.regexps=org.infinispan.server.test.*
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11222 8080</property>
@@ -1384,6 +1394,7 @@
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                    -Dinfinispan.deserialization.whitelist.regexps=org.infinispan.server.test.*
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11222 8080</property>
@@ -1400,6 +1411,7 @@
                     -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                    -Dinfinispan.deserialization.whitelist.regexps=org.infinispan.server.test.*
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11322 8180</property>
@@ -1415,6 +1427,7 @@
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                    -Dinfinispan.deserialization.whitelist.regexps=org.infinispan.server.test.*
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11222 8080</property>
@@ -1431,6 +1444,7 @@
                     -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                    -Dinfinispan.deserialization.whitelist.regexps=org.infinispan.server.test.*
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11322 8180</property>
@@ -1446,6 +1460,7 @@
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                    -Dinfinispan.deserialization.whitelist.regexps=.*\.Pojo\.*,org.infinispan.*
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11222 8080</property>
@@ -1510,6 +1525,7 @@
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Djboss.socket.binding.port-offset=300 -Djgroups.join_timeout=2000
+                    -Dinfinispan.deserialization.whitelist.classes=org.infinispan.server.test.query.TestEntity
                 </property>
                 <property name="managementPort">10290</property>
                 <property name="waitForPorts">11522 8380</property>
@@ -1521,7 +1537,8 @@
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
-                <property name="serverConfig">testsuite/standalone-query-programmatic-search-mapping-provider.xml</property>
+                <property name="serverConfig">testsuite/standalone-query-programmatic-search-mapping-provider.xml
+                </property>
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Djboss.socket.binding.port-offset=400 -Djgroups.join_timeout=2000
@@ -1540,7 +1557,7 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">${suite.client.local.config}</property>
-                <property name="javaVmArguments">${server.jvm.args} -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=n  -Djboss.node.name=node0
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
@@ -1558,6 +1575,7 @@
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
                     -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                    -Dinfinispan.deserialization.whitelist.regexps=.*\.Pojo\.*,org.infinispan.*
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11222 8080</property>
@@ -1576,6 +1594,7 @@
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                    -Dinfinispan.deserialization.whitelist.regexps=java.*,org.infinispan.*
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211</property>
@@ -1609,6 +1628,7 @@
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                    -Dinfinispan.deserialization.whitelist.regexps=org.infinispan.*
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11222 8080</property>
@@ -1625,6 +1645,7 @@
                     -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                    -Dinfinispan.deserialization.whitelist.regexps=.*\.Pojo\.*,org.infinispan.*
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11322 8180</property>
@@ -1659,6 +1680,7 @@
                     -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                    -Dinfinispan.deserialization.whitelist.regexps=.*\.Pojo\.*,org.infinispan.*
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311</property>
@@ -1702,20 +1724,20 @@
     </group>
 
     <container qualifier="suite-client-domain" default="true">
-            <configuration>
-                <property name="javaHome">${server.jvm}</property>
-                <property name="jbossHome">${server1.dist}</property>
-                <property name="allowConnectingToRunningServer">true</property>
-                <property name="containerModeMap">master:.*=suite</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
-                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
-                </property>
-                <property name="managementPort">10090</property>
-                <property name="waitForPorts">11322 8180</property>
-                <property name="jmxDomain">${server.jmx.domain}</property>
-            </configuration>
+        <configuration>
+            <property name="javaHome">${server.jvm}</property>
+            <property name="jbossHome">${server1.dist}</property>
+            <property name="allowConnectingToRunningServer">true</property>
+            <property name="containerModeMap">master:.*=suite</property>
+            <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                -Djboss.socket.binding.port-offset=100
+                -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+            </property>
+            <property name="managementPort">10090</property>
+            <property name="waitForPorts">11322 8180</property>
+            <property name="jmxDomain">${server.jmx.domain}</property>
+        </configuration>
     </container>
 
 </arquillian>

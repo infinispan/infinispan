@@ -17,6 +17,7 @@ import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.operations.PingOperation;
 import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
@@ -96,7 +97,8 @@ public class RemoteStore<K, V> implements AdvancedLoadWriteStore<K, V>, FlagAffe
       } else if (configuration.hotRodWrapping()) {
          marshaller = new HotRodEntryMarshaller(ctx.getByteBufferFactory());
       } else if (configuration.rawValues()) {
-         marshaller = new GenericJBossMarshaller(Thread.currentThread().getContextClassLoader());
+         ClassWhiteList whiteList = ctx.getCache().getCacheManager().getClassWhiteList();
+         marshaller = new GenericJBossMarshaller(Thread.currentThread().getContextClassLoader(), whiteList);
       } else {
          marshaller = ctx.getMarshaller();
       }
@@ -149,7 +151,7 @@ public class RemoteStore<K, V> implements AdvancedLoadWriteStore<K, V>, FlagAffe
                realValue = new WrappedByteArray((byte[]) realValue);
             }
             return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, realValue,
-                                    new InternalMetadataImpl(metadata, created, lastUsed));
+                  new InternalMetadataImpl(metadata, created, lastUsed));
          } else {
             return null;
          }
@@ -264,7 +266,7 @@ public class RemoteStore<K, V> implements AdvancedLoadWriteStore<K, V>, FlagAffe
    private Object getValue(MarshalledEntry entry) {
       if (configuration.rawValues()) {
          Object value = entry.getValue();
-         return value instanceof  WrappedByteArray ? ((WrappedByteArray) value).getBytes() : value;
+         return value instanceof WrappedByteArray ? ((WrappedByteArray) value).getBytes() : value;
       }
       return entry;
    }
@@ -304,7 +306,7 @@ public class RemoteStore<K, V> implements AdvancedLoadWriteStore<K, V>, FlagAffe
       if (millis > 0 && millis < 1000) {
          if (trace) {
             log.tracef("Adjusting %s time for (k,v): (%s, %s) from %d millis to 1 sec, as milliseconds are not supported by HotRod",
-                       desc ,key, millis);
+                  desc, key, millis);
          }
          return 1;
       }

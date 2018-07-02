@@ -90,7 +90,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot retrieve a transaction manager", id = 19020)
    StatementException noTransactionManager();
 
-   @Message(value ="The TransactionManager does not support nested transactions", id = 19021)
+   @Message(value = "The TransactionManager does not support nested transactions", id = 19021)
    StatementException noNestedTransactions();
 
    @Message(value = "Unexpected error while starting transaction", id = 19022)
@@ -128,4 +128,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The cache '%s' has no backups configured.", id = 19033)
    StatementException noBackupsForCache(String cacheName);
+
+   @Message(value = "Cannot create marshaller, white list not found", id = 19034)
+   IllegalStateException whiteListNotFound();
 }

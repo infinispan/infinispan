@@ -139,7 +139,7 @@ public class MigrationTask implements DistributedCallable<Object, Object, Intege
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
       PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);
       this.stores = loaderManager.getStores(RemoteStore.class);
-      Marshaller marshaller = new MigrationMarshaller();
+      Marshaller marshaller = new MigrationMarshaller(cache.getCacheManager().getClassWhiteList());
       this.cache = cache;
       this.cache.addFilteredListener(listener, new RemovedFilter<>(), null, Util.asSet(CacheEntryRemoved.class));
       DefaultThreadFactory threadFactory = new DefaultThreadFactory(null, 1, THREAD_NAME + "-%t", null, null);

@@ -45,8 +45,10 @@ public class Interpreter {
    private static final long DEFAULT_SESSION_REAPER_WAKEUP_INTERVAL = 60000l; // in millis
    private static final long DEFAULT_SESSION_TIMEOUT = 360000l; // in millis
 
-   @Inject private EmbeddedCacheManager cacheManager;
-   @Inject private TimeService timeService;
+   @Inject
+   private EmbeddedCacheManager cacheManager;
+   @Inject
+   private TimeService timeService;
 
    private ScheduledExecutorService executor;
    private long sessionReaperWakeupInterval = DEFAULT_SESSION_REAPER_WAKEUP_INTERVAL;
@@ -61,7 +63,7 @@ public class Interpreter {
 
    @Start
    public void start() {
-      this.codecRegistry = new CodecRegistry(cacheManager.getCacheManagerConfiguration().classLoader());
+      this.codecRegistry = new CodecRegistry(cacheManager);
       this.executor = Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "Interpreter"));
       sessionReaperTask = executor.scheduleWithFixedDelay(new ScheduledTask(), sessionReaperWakeupInterval, sessionReaperWakeupInterval, TimeUnit.MILLISECONDS);
    }
@@ -103,7 +105,7 @@ public class Interpreter {
 
    void expireSessions() {
       long timeBoundary = timeService.time() - sessionTimeout * 1000000l;
-      for (Iterator<Session> i = sessions.values().iterator(); i.hasNext();) {
+      for (Iterator<Session> i = sessions.values().iterator(); i.hasNext(); ) {
          Session session = i.next();
          if (timeBoundary - session.getTimestamp() > 0) {
             i.remove();

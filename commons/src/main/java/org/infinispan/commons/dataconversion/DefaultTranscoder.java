@@ -28,15 +28,15 @@ public final class DefaultTranscoder implements Transcoder {
    private static final Set<MediaType> supportedTypes = new HashSet<>();
 
    private final GenericJBossMarshaller jbossMarshaller;
-   private final JavaSerializationMarshaller javaSerializationMarshaller;
+   private final JavaSerializationMarshaller javaMarshaller;
 
-   public DefaultTranscoder(GenericJBossMarshaller marshaller, JavaSerializationMarshaller javaSerializationMarshaller) {
-      this.javaSerializationMarshaller = javaSerializationMarshaller;
+   public DefaultTranscoder(GenericJBossMarshaller marshaller, JavaSerializationMarshaller javaMarshaller) {
+      this.javaMarshaller = javaMarshaller;
       this.jbossMarshaller = marshaller;
    }
 
    public DefaultTranscoder() {
-      this.javaSerializationMarshaller = new JavaSerializationMarshaller();
+      this.javaMarshaller = new JavaSerializationMarshaller();
       this.jbossMarshaller = new GenericJBossMarshaller();
    }
 
@@ -83,7 +83,7 @@ public final class DefaultTranscoder implements Transcoder {
          if (contentType.match(TEXT_PLAIN)) {
             return StandardConversions.convertTextToOctetStream(content, contentType);
          }
-         return StandardConversions.convertJavaToOctetStream(content, contentType);
+         return StandardConversions.convertJavaToOctetStream(content, contentType, javaMarshaller);
       } catch (EncodingException | InterruptedException | IOException e) {
          throw log.unsupportedContent(content);
       }
@@ -108,7 +108,7 @@ public final class DefaultTranscoder implements Transcoder {
    private Object convertToTextPlain(Object content, MediaType contentType, MediaType destinationType) {
       if (contentType.match(APPLICATION_UNKNOWN)) {
          try {
-            return StandardConversions.convertJavaToOctetStream(content, APPLICATION_OBJECT);
+            return StandardConversions.convertJavaToOctetStream(content, APPLICATION_OBJECT, javaMarshaller);
          } catch (IOException | InterruptedException e) {
             throw log.unsupportedContent(content);
          }
@@ -132,7 +132,7 @@ public final class DefaultTranscoder implements Transcoder {
    private Object convertToObject(Object content, MediaType contentType, MediaType destinationType) {
       if (contentType.match(APPLICATION_OCTET_STREAM)) {
          byte[] decoded = StandardConversions.decodeOctetStream(content, destinationType);
-         return StandardConversions.convertOctetStreamToJava(decoded, destinationType);
+         return StandardConversions.convertOctetStreamToJava(decoded, destinationType, javaMarshaller);
       }
       if (contentType.match(APPLICATION_OBJECT)) {
          return content;
@@ -160,7 +160,7 @@ public final class DefaultTranscoder implements Transcoder {
          return jbossMarshaller.objectFromByteBuffer(content);
       } catch (IOException | ClassNotFoundException e1) {
          try {
-            return javaSerializationMarshaller.objectFromByteBuffer(content);
+            return javaMarshaller.objectFromByteBuffer(content);
          } catch (IOException | ClassNotFoundException e2) {
             throw log.unsupportedContent(content);
          }
@@ -172,7 +172,7 @@ public final class DefaultTranscoder implements Transcoder {
          return StandardConversions.decodeOctetStream(content, contentType);
       }
       if (contentType.match(APPLICATION_OBJECT)) {
-         return StandardConversions.convertJavaToOctetStream(content, contentType);
+         return StandardConversions.convertJavaToOctetStream(content, contentType, javaMarshaller);
       }
       if (contentType.match(TEXT_PLAIN)) {
          return StandardConversions.convertTextToOctetStream(content, destinationType);

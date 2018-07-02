@@ -3,11 +3,10 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
 import static org.infinispan.client.hotrod.marshall.MarshallerUtil.obj2bytes;
 
-import java.util.List;
-
 import org.infinispan.client.hotrod.impl.MarshallerRegistry;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.IdentityMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
@@ -79,10 +78,6 @@ public final class DataFormat {
       return IdentityMarshaller.INSTANCE;
    }
 
-   public boolean hasCustomFormat() {
-      return keyType != null || valueType != null;
-   }
-
    public byte[] keyToBytes(Object key, int estimateKeySize, int estimateValueSize) {
       Marshaller keyMarshaller = resolveKeyMarshaller();
       return obj2bytes(keyMarshaller, key, true, estimateKeySize, estimateValueSize);
@@ -93,12 +88,12 @@ public final class DataFormat {
       return obj2bytes(valueMarshaller, value, false, estimateKeySize, estimateValueSize);
    }
 
-   public <T> T keyToObj(byte[] bytes, short status, List<String> whitelist) {
+   public <T> T keyToObj(byte[] bytes, short status, ClassWhiteList whitelist) {
       Marshaller keyMarshaller = resolveKeyMarshaller();
       return bytes2obj(keyMarshaller, bytes, status, whitelist);
    }
 
-   public <T> T valueToObj(byte[] bytes, short status, List<String> whitelist) {
+   public <T> T valueToObj(byte[] bytes, short status, ClassWhiteList whitelist) {
       Marshaller valueMarshaller = resolveValueMarshaller();
       return bytes2obj(valueMarshaller, bytes, status, whitelist);
    }

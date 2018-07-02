@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.Lifecycle;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -278,7 +279,8 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
     * @param cacheName name of cache to remove
     * @deprecated obtain a {@link org.infinispan.commons.api.CacheContainerAdmin} instance using {@link #administration()} and invoke the {@link org.infinispan.commons.api.CacheContainerAdmin#removeCache(String)} method
     */
-   @Deprecated // since 9.2
+   @Deprecated
+   // since 9.2
    void removeCache(String cacheName);
 
    /**
@@ -323,7 +325,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
     *
     * @since 9.0
     * @return Health API for this {@link EmbeddedCacheManager}.
-     */
+    */
    Health getHealth();
 
    /**
@@ -335,4 +337,6 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    default EmbeddedCacheManagerAdmin administration() {
       throw new UnsupportedOperationException();
    }
+
+   ClassWhiteList getClassWhiteList();
 }
