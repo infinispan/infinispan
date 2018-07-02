@@ -69,6 +69,7 @@ public class JBMARRemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
+      cacheManagers.forEach(c -> c.getClassWhiteList().addRegexps(".*"));
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {

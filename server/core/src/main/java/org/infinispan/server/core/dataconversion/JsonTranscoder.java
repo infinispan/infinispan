@@ -8,12 +8,14 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.Optional;
 
 import org.codehaus.jackson.annotate.JsonTypeInfo;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.JavaType;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
@@ -30,9 +32,17 @@ public class JsonTranscoder extends OneToManyTranscoder {
 
    public static final String TYPE_PROPERTY = "_type";
 
-   private static class MapperHolder {
-      static final ObjectMapper INSTANCE = new ObjectMapper().setDefaultTyping(
-            new SecureTypeResolverBuilder(ObjectMapper.DefaultTyping.NON_FINAL) {
+   private final ObjectMapper objectMapper;
+
+   public JsonTranscoder() {
+      this(new ClassWhiteList(Collections.emptyList()));
+   }
+
+
+   public JsonTranscoder(ClassWhiteList whiteList) {
+      super(APPLICATION_JSON, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_UNKNOWN);
+      this.objectMapper = new ObjectMapper().setDefaultTyping(
+            new SecureTypeResolverBuilder(ObjectMapper.DefaultTyping.NON_FINAL, whiteList) {
                {
                   init(JsonTypeInfo.Id.CLASS, null);
                   inclusion(JsonTypeInfo.As.PROPERTY);
@@ -44,14 +54,6 @@ public class JsonTranscoder extends OneToManyTranscoder {
                   return !t.isContainerType() && super.useForType(t);
                }
             });
-   }
-
-   public static ObjectMapper getMapper() {
-      return MapperHolder.INSTANCE;
-   }
-
-   public JsonTranscoder() {
-      super(APPLICATION_JSON, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_UNKNOWN);
    }
 
    @Override
@@ -71,9 +73,9 @@ public class JsonTranscoder extends OneToManyTranscoder {
          try {
             if (content instanceof byte[]) {
                String contentAsString = new String((byte[]) content, destinationType.getCharset());
-               return getMapper().writeValueAsBytes(contentAsString);
+               return objectMapper.writeValueAsBytes(contentAsString);
             }
-            return getMapper().writeValueAsBytes(content);
+            return objectMapper.writeValueAsBytes(content);
          } catch (IOException e) {
             throw new CacheException(e);
          }
@@ -81,9 +83,9 @@ public class JsonTranscoder extends OneToManyTranscoder {
       if (destinationType.match(APPLICATION_OBJECT)) {
          try {
             if (content instanceof byte[]) {
-               return getMapper().readValue((byte[]) content, Object.class);
+               return objectMapper.readValue((byte[]) content, Object.class);
             }
-            return getMapper().readValue((String) content, Object.class);
+            return objectMapper.readValue((String) content, Object.class);
          } catch (IOException e) {
             throw new CacheException(e);
          }

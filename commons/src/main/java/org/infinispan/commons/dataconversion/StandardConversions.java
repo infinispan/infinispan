@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.marshall.Marshaller;
 
 /**
  * Utilities to convert between text/plain, octet-stream, java-objects and url-encoded contents.
@@ -119,7 +120,7 @@ public final class StandardConversions {
     * @param destination The type of the converted object.
     * @return an instance of a java object compatible with the supplied destination type.
     */
-   public static Object convertOctetStreamToJava(byte[] source, MediaType destination) {
+   public static Object convertOctetStreamToJava(byte[] source, MediaType destination, Marshaller marshaller) {
       if (source == null) return null;
       if (!destination.match(MediaType.APPLICATION_OBJECT)) {
          throw log.invalidMediaType(APPLICATION_OBJECT_TYPE, destination.toString());
@@ -136,7 +137,7 @@ public final class StandardConversions {
          return new String(source, UTF_8);
       }
       try {
-         return JavaSerializationEncoder.INSTANCE.unmarshall(source);
+         return marshaller.objectFromByteBuffer(source);
       } catch (IOException | ClassNotFoundException e) {
          throw log.conversionNotSupported(source, MediaType.APPLICATION_OCTET_STREAM_TYPE, destination.toString());
       }
@@ -151,7 +152,7 @@ public final class StandardConversions {
     * @throws EncodingException if the sourceMediaType is not a application/x-java-object or if the conversion is
     * not supported.
     */
-   public static byte[] convertJavaToOctetStream(Object source, MediaType sourceMediaType) throws IOException, InterruptedException {
+   public static byte[] convertJavaToOctetStream(Object source, MediaType sourceMediaType, Marshaller marshaller) throws IOException, InterruptedException {
       if (source == null) return null;
       if (!sourceMediaType.match(MediaType.APPLICATION_OBJECT)) {
          throw new EncodingException("destination MediaType not conforming to application/x-java-object!");
@@ -160,7 +161,7 @@ public final class StandardConversions {
       Object decoded = decodeObjectContent(source, sourceMediaType);
       if (decoded instanceof byte[]) return (byte[]) decoded;
       if (decoded instanceof String) return ((String) decoded).getBytes(StandardCharsets.UTF_8);
-      return JavaSerializationEncoder.INSTANCE.marshall(source);
+      return marshaller.objectToByteBuffer(source);
    }
 
    /**

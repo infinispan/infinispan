@@ -60,7 +60,7 @@ public class GetKeyMultimapOperation<V> extends AbstractKeyOperation<Collection<
          result = new HashSet<>(size);
       }
       while (result.size() < size) {
-         V value = codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller());
+         V value = codec.readUnmarshallByteArray(buf, status, cfg.getClassWhiteList(), channelFactory.getMarshaller());
          result.add(value);
          decoder.checkpoint();
       }

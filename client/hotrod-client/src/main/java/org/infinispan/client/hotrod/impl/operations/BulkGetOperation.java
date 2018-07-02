@@ -49,8 +49,8 @@ public class BulkGetOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       while (buf.readUnsignedByte() == 1) { //there's more!
-         K key = codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller());
-         V value = codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller());
+         K key = codec.readUnmarshallByteArray(buf, status, cfg.getClassWhiteList(), channelFactory.getMarshaller());
+         V value = codec.readUnmarshallByteArray(buf, status, cfg.getClassWhiteList(), channelFactory.getMarshaller());
          result.put(key, value);
          decoder.checkpoint();
       }

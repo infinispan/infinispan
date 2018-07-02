@@ -1,7 +1,8 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
-import java.util.List;
 import java.util.Set;
+
+import org.infinispan.commons.configuration.ClassWhiteList;
 
 /**
  * @author gustavonalle
@@ -10,7 +11,7 @@ import java.util.Set;
 class NoOpSegmentKeyTracker implements KeyTracker {
 
    @Override
-   public boolean track(byte[] key, short status, List<String> whitelist) {
+   public boolean track(byte[] key, short status, ClassWhiteList whitelist) {
       return true;
    }
 

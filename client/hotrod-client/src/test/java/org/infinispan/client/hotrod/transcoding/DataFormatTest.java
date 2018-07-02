@@ -166,6 +166,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
    @Test
    public void testKeysInMultipleFormats() throws Exception {
       remoteCache.clear();
+      cacheManager.getClassWhiteList().addRegexps(".*SocketAddress");
       InetSocketAddress value = InetSocketAddress.createUnresolved("infinispan.org", 8080);
 
       // Write using String using default Marshaller
@@ -220,6 +221,8 @@ public class DataFormatTest extends SingleHotRodServerTest {
    @Test
    public void testBatchOperations() {
       remoteCache.clear();
+
+      cacheManager.getClassWhiteList().addClasses(ComplexKey.class);
 
       Map<ComplexKey, String> entries = new HashMap<>();
       IntStream.range(0, 50).forEach(i -> {
@@ -287,7 +290,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
       remoteCache.clear();
 
       RemoteCache<Object, Object> jsonCache = this.remoteCache
-            .withDataFormat(DataFormat.builder().keyType(APPLICATION_JSON).keyMarshaller(new UTF8StringMarshaller()) .build());
+            .withDataFormat(DataFormat.builder().keyType(APPLICATION_JSON).keyMarshaller(new UTF8StringMarshaller()).build());
 
       RawStaticFilteredEventLogListener<Object> l = new RawStaticFilteredEventLogListener<>(jsonCache);
 

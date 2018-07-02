@@ -26,6 +26,7 @@ import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -68,6 +69,8 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
    @BeforeClass
    protected void setup() throws Exception {
       cacheManager = TestCacheManagerFactory.createServerModeCacheManager();
+      ClassWhiteList classWhiteList = cacheManager.getClassWhiteList();
+      classWhiteList.addRegexps(".*");
 
       cacheManager.defineConfiguration(CACHE_NAME, getIndexCacheConfiguration().build());
 

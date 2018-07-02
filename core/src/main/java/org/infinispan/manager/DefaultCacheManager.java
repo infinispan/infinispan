@@ -31,6 +31,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.api.Lifecycle;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Immutables;
@@ -143,6 +144,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    private final Lock lifecycleLock = new ReentrantLock();
    private final DefaultCacheManagerAdmin cacheManagerAdmin;
    private volatile boolean stopping;
+   private final ClassWhiteList classWhiteList = new ClassWhiteList();
 
    /**
     * Constructs and starts a default instance of the CacheManager, using configuration defaults. See
@@ -1012,6 +1014,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Override
    public void close() throws IOException {
       stop();
+   }
+
+   @Override
+   public ClassWhiteList getClassWhiteList() {
+      return classWhiteList;
    }
 
    public EmbeddedCacheManagerAdmin administration() {

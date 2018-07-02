@@ -108,8 +108,8 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
             value = new MetadataValueImpl<>(creation, lifespan, lastUsed, maxIdle, version, value);
          }
 
-         if (segmentKeyTracker.track(key, status, cfg.serialWhitelist())) {
-            Object unmarshallKey = dataFormat.keyToObj(key, status, cfg.serialWhitelist());
+         if (segmentKeyTracker.track(key, status, cfg.getClassWhiteList())) {
+            Object unmarshallKey = dataFormat.keyToObj(key, status, cfg.getClassWhiteList());
             entries.add(new SimpleEntry<>(unmarshallKey, (E) value));
          } else {
             untrackedEntries++;
@@ -124,6 +124,6 @@ public class IterationNextOperation<E> extends HotRodOperation<IterationNextResp
    }
 
    private Object unmarshallValue(byte[] bytes, short status) {
-      return dataFormat.valueToObj(bytes, status, cfg.serialWhitelist());
+      return dataFormat.valueToObj(bytes, status, cfg.getClassWhiteList());
    }
 }

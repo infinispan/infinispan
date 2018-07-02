@@ -171,7 +171,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Invalid Weight '%s'. Supported values are between 0 and 1.0", id = 935)
    EncodingException invalidWeight(Object weight);
 
-   @Message(value = "Class '%s' blocked by deserialization white list. Adjust the client configuration serialization white list regular expression to include this class.", id = 936)
+   @Message(value = "Class '%s' blocked by deserialization white list. Adjust the configuration serialization white list regular expression to include this class.", id = 936)
    CacheException classNotInWhitelist(String className);
 
    @Message(value = "Invalid media type. Expected '%s' but got '%s'", id = 937)

@@ -3,6 +3,9 @@ package org.infinispan.server.core.dataconversion;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+import java.util.Collections;
+
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.test.data.Address;
 import org.infinispan.test.data.Person;
@@ -20,7 +23,7 @@ public class JavaSerializationTranscoderTest extends AbstractTranscoderTest {
       Address address = new Address();
       address.setCity("London");
       dataSrc.setAddress(address);
-      transcoder = new JavaSerializationTranscoder();
+      transcoder = new JavaSerializationTranscoder(new ClassWhiteList(Collections.singletonList(".*")));
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
 

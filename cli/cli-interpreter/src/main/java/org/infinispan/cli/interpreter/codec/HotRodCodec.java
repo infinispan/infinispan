@@ -1,6 +1,7 @@
 package org.infinispan.cli.interpreter.codec;
 
 import org.infinispan.cli.interpreter.logging.Log;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.util.logging.LogFactory;
@@ -15,7 +16,8 @@ import org.kohsuke.MetaInfServices;
 @MetaInfServices(org.infinispan.cli.interpreter.codec.Codec.class)
 public class HotRodCodec extends AbstractCodec {
    public static final Log log = LogFactory.getLog(HotRodCodec.class, Log.class);
-   Marshaller marshaller = new GenericJBossMarshaller(); // FIXME: assumes that clients will marshall using this
+   Marshaller marshaller; // FIXME: assumes that clients will marshall using this
+   private ClassWhiteList classWhiteList;
 
    public HotRodCodec() {
       try {
@@ -25,16 +27,29 @@ public class HotRodCodec extends AbstractCodec {
       }
    }
 
+   private Marshaller getMarshaller() {
+      if (marshaller == null) {
+         if (classWhiteList == null) throw log.whiteListNotFound();
+         return new GenericJBossMarshaller(classWhiteList);
+      }
+      return marshaller;
+   }
+
    @Override
    public String getName() {
       return "hotrod";
    }
 
    @Override
+   public void setWhiteList(ClassWhiteList whiteList) {
+      this.classWhiteList = whiteList;
+   }
+
+   @Override
    public Object encodeKey(Object key) throws CodecException {
       if (key != null) {
          try {
-            return marshaller.objectToByteBuffer(key);
+            return getMarshaller().objectToByteBuffer(key);
          } catch (Exception e) {
             throw log.keyEncodingFailed(e, this.getName());
          }
@@ -47,7 +62,7 @@ public class HotRodCodec extends AbstractCodec {
    public Object encodeValue(Object value) throws CodecException {
       if (value != null) {
          try {
-            return marshaller.objectToByteBuffer(value);
+            return getMarshaller().objectToByteBuffer(value);
          } catch (Exception e) {
             throw log.valueEncodingFailed(e, this.getName());
          }
@@ -60,7 +75,7 @@ public class HotRodCodec extends AbstractCodec {
    public Object decodeKey(Object key) throws CodecException {
       if (key != null) {
          try {
-            return marshaller.objectFromByteBuffer((byte[]) key);
+            return getMarshaller().objectFromByteBuffer((byte[]) key);
          } catch (Exception e) {
             throw log.keyDecodingFailed(e, this.getName());
          }
@@ -73,7 +88,7 @@ public class HotRodCodec extends AbstractCodec {
    public Object decodeValue(Object value) throws CodecException {
       if (value != null) {
          try {
-            return marshaller.objectFromByteBuffer((byte[]) value);
+            return getMarshaller().objectFromByteBuffer((byte[]) value);
          } catch (Exception e) {
             throw log.valueDecodingFailed(e, this.getName());
          }

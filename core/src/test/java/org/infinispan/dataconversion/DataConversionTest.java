@@ -12,6 +12,7 @@ import static org.testng.Assert.assertNotNull;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ import java.util.Map;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.CompatModeEncoder;
 import org.infinispan.commons.dataconversion.GenericJbossMarshallerEncoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
@@ -28,6 +30,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.ContentTypeConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -48,6 +51,7 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -68,6 +72,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
             createCacheManager(cfg)) {
          @Override
          public void call() throws IOException, InterruptedException {
+            cm.getClassWhiteList().addClasses(Person.class);
             Cache<String, Person> cache = cm.getCache();
 
             Marshaller marshaller = cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
@@ -125,12 +130,20 @@ public class DataConversionTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(
             createCacheManager(new ConfigurationBuilder())) {
 
+         GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
+
          private byte[] marshall(Object o) {
-            return (byte[]) GenericJbossMarshallerEncoder.INSTANCE.toStorage(o);
+            try {
+               return marshaller.objectToByteBuffer(o);
+            } catch (IOException | InterruptedException e) {
+               Assert.fail("Cannot marshall content");
+            }
+            return null;
          }
 
          @Override
          public void call() {
+            cm.getClassWhiteList().addClasses(Person.class);
             Cache<byte[], byte[]> cache = cm.getCache();
 
             // Write encoded content to the cache
@@ -156,7 +169,8 @@ public class DataConversionTest extends AbstractInfinispanTest {
    public void testCompatModeEncoder() {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
 
-      JavaSerializationMarshaller marshaller = new JavaSerializationMarshaller();
+      JavaSerializationMarshaller marshaller = new JavaSerializationMarshaller(new ClassWhiteList(
+            Arrays.asList("java.lang.*", ".*Person.*")));
 
       cfg.compatibility().marshaller(marshaller).enable();
 
@@ -169,6 +183,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
 
          @Override
          public void call() throws IOException, InterruptedException {
+            cm.getClassWhiteList().addClasses(Person.class);
             Cache<byte[], byte[]> cache = cm.getCache();
 
             Cache c = cache.getAdvancedCache().withEncoding(CompatModeEncoder.class);
@@ -282,6 +297,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Cache<String, Person> cache = cm.getCache();
+            cm.getClassWhiteList().addClasses(Person.class);
             // Obtain cache with custom valueEncoder
             Cache storeMarshalled = cache.getAdvancedCache().withEncoding(JavaSerializationEncoder.class);
 

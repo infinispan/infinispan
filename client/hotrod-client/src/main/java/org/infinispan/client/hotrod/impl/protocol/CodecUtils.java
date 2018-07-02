@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
+import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.Marshaller;
 
 import io.netty.buffer.ByteBuf;
@@ -34,7 +34,7 @@ public final class CodecUtils {
       return seconds;
    }
 
-   static <T> T readUnmarshallByteArray(ByteBuf buf, short status, List<String> whitelist, Marshaller marshaller) {
+   static <T> T readUnmarshallByteArray(ByteBuf buf, short status, ClassWhiteList whitelist, Marshaller marshaller) {
       byte[] bytes = ByteBufUtil.readArray(buf);
       return MarshallerUtil.bytes2obj(marshaller, bytes, status, whitelist);
    }

@@ -1,9 +1,12 @@
 package org.infinispan.server.core;
 
+import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.server.core.dataconversion.JBossMarshallingTranscoder;
 import org.infinispan.server.core.dataconversion.JavaSerializationTranscoder;
@@ -24,11 +27,16 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
       componentMetadataRepo = gcr.getComponentMetadataRepo();
+      ClassWhiteList classWhiteList = gcr.getComponent(EmbeddedCacheManager.class).getClassWhiteList();
+      GenericJBossMarshaller marshaller = new GenericJBossMarshaller(globalConfiguration.classLoader(), classWhiteList);
+
       EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
-      encoderRegistry.registerTranscoder(new JsonTranscoder());
-      encoderRegistry.registerTranscoder(new JBossMarshallingTranscoder(encoderRegistry));
-      encoderRegistry.registerTranscoder(new XMLTranscoder());
-      encoderRegistry.registerTranscoder(new JavaSerializationTranscoder());
+      JsonTranscoder jsonTranscoder = new JsonTranscoder(classWhiteList);
+
+      encoderRegistry.registerTranscoder(jsonTranscoder);
+      encoderRegistry.registerTranscoder(new JBossMarshallingTranscoder(jsonTranscoder, marshaller));
+      encoderRegistry.registerTranscoder(new XMLTranscoder(classWhiteList));
+      encoderRegistry.registerTranscoder(new JavaSerializationTranscoder(classWhiteList));
 
    }
 }

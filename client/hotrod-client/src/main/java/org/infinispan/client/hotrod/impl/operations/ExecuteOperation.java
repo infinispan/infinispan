@@ -63,6 +63,6 @@ public class ExecuteOperation<T> extends RetryOnFailureOperation<T> {
 
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      complete(codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller()));
+      complete(codec.readUnmarshallByteArray(buf, status, cfg.getClassWhiteList(), channelFactory.getMarshaller()));
    }
 }

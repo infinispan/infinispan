@@ -76,8 +76,8 @@ public class GetAllOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
          decoder.checkpoint();
       }
       while (result.size() < size) {
-         K key = dataFormat.keyToObj(ByteBufUtil.readArray(buf), status, cfg.serialWhitelist());
-         V value = dataFormat.valueToObj(ByteBufUtil.readArray(buf), status, cfg.serialWhitelist());
+         K key = dataFormat.keyToObj(ByteBufUtil.readArray(buf), status, cfg.getClassWhiteList());
+         V value = dataFormat.valueToObj(ByteBufUtil.readArray(buf), status, cfg.getClassWhiteList());
          result.put(key, value);
          decoder.checkpoint();
       }
