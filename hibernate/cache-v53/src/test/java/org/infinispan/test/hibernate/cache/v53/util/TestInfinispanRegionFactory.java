@@ -1,5 +1,6 @@
 package org.infinispan.test.hibernate.cache.v53.util;
 
+import java.util.Collection;
 import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -66,8 +67,8 @@ public class TestInfinispanRegionFactory extends InfinispanRegionFactory {
    }
 
    @Override
-   protected AdvancedCache getCache(String cacheName, String unqualifiedRegionName, DataType type) {
-      AdvancedCache cache = super.getCache(cacheName, unqualifiedRegionName, type);
+   protected AdvancedCache getCache(String cacheName, String unqualifiedRegionName, DataType type, Collection<String> legacyUnqualifiedNames) {
+      AdvancedCache cache = super.getCache(cacheName, unqualifiedRegionName, type, legacyUnqualifiedNames);
       return wrapCache == null ? cache : wrapCache.apply(cache);
    }
 
