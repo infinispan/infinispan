@@ -15,6 +15,7 @@ import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
  */
 class IckleFilterConverterUtils {
 
+   // This marshaller is able to handle primitive/scalar types only
    private static final BaseProtoStreamMarshaller paramMarshaller = new BaseProtoStreamMarshaller() {
 
       private final SerializationContext serializationContext = ProtobufUtil.newSerializationContext(Configuration.builder().build());

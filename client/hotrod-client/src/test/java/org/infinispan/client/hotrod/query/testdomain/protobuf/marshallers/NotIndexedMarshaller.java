@@ -23,7 +23,7 @@ public class NotIndexedMarshaller implements MessageMarshaller<NotIndexed> {
    }
 
    @Override
-   public Class<? extends NotIndexed> getJavaClass() {
+   public Class<NotIndexed> getJavaClass() {
       return NotIndexed.class;
    }
 

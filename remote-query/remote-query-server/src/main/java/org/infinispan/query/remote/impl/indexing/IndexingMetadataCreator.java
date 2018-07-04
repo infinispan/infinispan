@@ -120,7 +120,7 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
                FieldMapping fieldMapping = new FieldMapping(fieldName, isIndexed, fieldLevelBoost, isAnalyzed, isStored, isSortable, fieldLevelAnalyzer, indexNullAs, luceneOptions, fd, false);
                fields.put(fieldName, fieldMapping);
                if (log.isEnabled(Logger.Level.DEBUG)) {
-                  log.debugf("fieldName=%s fieldMapping=%s" , fieldName, fieldMapping);
+                  log.debugf("fieldName=%s fieldMapping=%s", fieldName, fieldMapping);
                }
             }
 
@@ -129,7 +129,7 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
             if (indexedFieldAnnotation != null) {
                if (log.isEnabled(Logger.Level.WARN)) {
                   log.warnf("Detected usage of deprecated annotation '%s' on field %s. Please consider replacing it with "
-                              + IndexingMetadata.FIELD_ANNOTATION + ".", IndexingMetadata.INDEXED_FIELD_ANNOTATION, fd.getFullName());
+                        + IndexingMetadata.FIELD_ANNOTATION + ".", IndexingMetadata.INDEXED_FIELD_ANNOTATION, fd.getFullName());
                }
                if (fieldAnnotation != null) {
                   throw new IllegalStateException("Annotation '" + IndexingMetadata.INDEXED_FIELD_ANNOTATION +
@@ -159,14 +159,14 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
                FieldMapping fieldMapping = new FieldMapping(fd.getName(), isIndexed, 1.0f, false, isStored, false, null, indexNullAs, luceneOptions, fd, true);
                fields.put(fd.getName(), fieldMapping);
                if (log.isEnabled(Logger.Level.DEBUG)) {
-                  log.debugf("fieldName=%s fieldMapping=%s" , fd.getName(), fieldMapping);
+                  log.debugf("fieldName=%s fieldMapping=%s", fd.getName(), fieldMapping);
                }
             }
          }
 
          IndexingMetadata indexingMetadata = new IndexingMetadata(true, indexName, entityAnalyzer, fields);
          if (log.isEnabled(Logger.Level.DEBUG)) {
-            log.debugf("Descriptor name=%s indexingMetadata=%s" , descriptor.getFullName() , indexingMetadata);
+            log.debugf("Descriptor name=%s indexingMetadata=%s", descriptor.getFullName(), indexingMetadata);
          }
          return indexingMetadata;
       } else {

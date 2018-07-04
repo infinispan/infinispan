@@ -4,7 +4,6 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemo
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -31,6 +30,7 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.QueryStringTest;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
+import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -124,7 +124,7 @@ public class RemoteQueryStringTest extends QueryStringTest {
       metadataCache.put("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
       metadataCache.put("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA);
       metadataCache.put("custom_analyzer.proto", CUSTOM_ANALYZER_PROTO_SCHEMA);
-      checkSchemaErrors(metadataCache);
+      RemoteQueryTestUtils.checkSchemaErrors(metadataCache);
 
       //initialize client-side serialization context
       SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
@@ -133,22 +133,6 @@ public class RemoteQueryStringTest extends QueryStringTest {
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("custom_analyzer.proto", CUSTOM_ANALYZER_PROTO_SCHEMA));
       serCtx.registerMarshaller(new NotIndexedMarshaller());
       serCtx.registerMarshaller(new AnalyzerTestEntityMarshaller());
-   }
-
-   /**
-    * Logs the Protobuf schema errors (if any) and fails the test appropriately.
-    */
-   protected void checkSchemaErrors(RemoteCache<String, String> metadataCache) {
-      if (metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX)) {
-         // The existence of this key indicates there are errors in some files
-         String files = metadataCache.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX);
-         for (String fname : files.split("\n")) {
-            String errorKey = fname + ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX;
-            log.errorf("Found errors in Protobuf schema file: %s\n%s\n", fname, metadataCache.get(errorKey));
-         }
-
-         fail("There are errors in the following Protobuf schema files:\n" + files);
-      }
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {
@@ -220,5 +204,14 @@ public class RemoteQueryStringTest extends QueryStringTest {
 
       List<AnalyzerTestEntity> list = q.list();
       assertEquals(2, list.size());
+   }
+
+   @Override
+   public void testEqNonIndexedType() {
+      Query q = createQueryFromString("from sample_bank_account.NotIndexed where notIndexedField = 'testing 123'");
+
+      List<NotIndexed> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals("testing 123", list.get(0).notIndexedField);
    }
 }

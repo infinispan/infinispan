@@ -27,17 +27,17 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
 
    @Override
    public boolean isIndexed(String[] propertyPath) {
-      return getMetadata(propertyPath, IndexingMetadata::isFieldIndexed, true);
+      return getFlag(propertyPath, IndexingMetadata::isFieldIndexed, true);
    }
 
    @Override
    public boolean isAnalyzed(String[] propertyPath) {
-      return getMetadata(propertyPath, IndexingMetadata::isFieldAnalyzed, false);
+      return getFlag(propertyPath, IndexingMetadata::isFieldAnalyzed, false);
    }
 
    @Override
    public boolean isStored(String[] propertyPath) {
-      return getMetadata(propertyPath, IndexingMetadata::isFieldStored, true);
+      return getFlag(propertyPath, IndexingMetadata::isFieldStored, true);
    }
 
    @Override
@@ -62,7 +62,7 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
       return null;
    }
 
-   private boolean getMetadata(String[] propertyPath, BiFunction<IndexingMetadata, String, Boolean> metadataFun, boolean defVal) {
+   private boolean getFlag(String[] propertyPath, BiFunction<IndexingMetadata, String, Boolean> metadataFun, boolean defVal) {
       Descriptor md = messageDescriptor;
       int i = 0;
       for (String p : propertyPath) {
