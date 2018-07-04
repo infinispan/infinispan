@@ -28,7 +28,7 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class MarshallUtil {
 
-   private static final byte NULL_VALUE = -1;
+   public static final byte NULL_VALUE = -1;
 
    private static final Log log = LogFactory.getLog(MarshallUtil.class);
 
@@ -195,6 +195,22 @@ public class MarshallUtil {
     * @see #marshallArray(Object[], ObjectOutput).
     */
    public static <E> E[] unmarshallArray(ObjectInput in, ArrayBuilder<E> builder) throws IOException, ClassNotFoundException {
+      return unmarshallArray(in, builder, i -> (E) i.readObject());
+   }
+
+   /**
+    * Unmarshall arrays.
+    *
+    * @param in      {@link ObjectInput} to read.
+    * @param builder {@link ArrayBuilder} to build the array.
+    * @param reader {@link ElementReader} reads one element from the input.
+    * @param <E>     Array type.
+    * @return The populated array.
+    * @throws IOException            If any of the usual Input/Output related exceptions occur.
+    * @throws ClassNotFoundException If the class of a serialized object cannot be found.
+    * @see #marshallArray(Object[], ObjectOutput).
+    */
+   public static <E> E[] unmarshallArray(ObjectInput in, ArrayBuilder<E> builder, ElementReader<E> reader) throws IOException, ClassNotFoundException {
       final int size = unmarshallSize(in);
       if (size == NULL_VALUE) {
          return null;
@@ -202,7 +218,7 @@ public class MarshallUtil {
       final E[] array = Objects.requireNonNull(builder, "ArrayBuilder must be non-null").build(size);
       for (int i = 0; i < size; ++i) {
          //noinspection unchecked
-         array[i] = (E) in.readObject();
+         array[i] = reader.readFrom(in);
       }
       return array;
    }

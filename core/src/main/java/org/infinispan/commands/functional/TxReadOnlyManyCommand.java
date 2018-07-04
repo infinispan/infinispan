@@ -20,6 +20,7 @@ import org.infinispan.functional.Param;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 
 public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R> {
    public static final byte COMMAND_ID = 65;
@@ -62,8 +63,8 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      super.writeTo(output);
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+      super.writeTo(output, entryFactory);
       // TODO: if the marshaller does not support object counting we could marshall the same functions many times
       // This encoding is optimized for mostly-empty inner lists but is as efficient as regular collection
       // encoding from MarshallUtil if all the inner lists are non-empty
@@ -75,7 +76,7 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
             if (emptyLists > 0) output.writeInt(-emptyLists);
             output.writeInt(list.size());
             for (Mutation<K, V, ?> mut : list) {
-               Mutations.writeTo(output, mut);
+               Mutations.writeTo(mut, entryFactory, output);
             }
             emptyLists = 0;
          }

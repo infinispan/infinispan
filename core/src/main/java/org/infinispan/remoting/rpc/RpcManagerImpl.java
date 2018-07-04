@@ -376,7 +376,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       // Set the topology id of the command, in case we don't have it yet
       setTopologyId(command);
       CacheRpcCommand cacheRpc = toCacheRpcCommand(command);
-
       try {
          t.sendToMany(destinations, cacheRpc, deliverOrder);
       } catch (Exception e) {

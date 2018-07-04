@@ -13,6 +13,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ByteString;
@@ -108,7 +109,7 @@ public class CreateCacheCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       output.writeUTF(cacheNameToCreate);
       output.writeUTF(cacheConfigurationName);
       output.writeInt(expectedMembers);

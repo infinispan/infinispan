@@ -15,6 +15,9 @@ import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.marshall.MarshalledEntryUtil;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
@@ -128,10 +131,9 @@ public class RemoveExpiredCommand extends RemoveCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
-      output.writeObject(key);
-      output.writeObject(value);
+      MarshalledEntryUtil.writeKeyValue(key, value, entryFactory, output);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       if (lifespan != null) {
          output.writeBoolean(true);
@@ -145,8 +147,9 @@ public class RemoveExpiredCommand extends RemoveCommand {
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
-      key = input.readObject();
-      value = input.readObject();
+      MarshalledEntry me = MarshalledEntryUtil.read(input);
+      key = me.getKey();
+      value = me.getValue();
       segment = UnsignedNumeric.readUnsignedInt(input);
       boolean lifespanProvided = input.readBoolean();
       if (lifespanProvided) {

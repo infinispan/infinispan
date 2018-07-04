@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.util.ByteString;
@@ -61,8 +62,8 @@ public class StreamIteratorRequestCommand<K> extends StreamIteratorNextCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      super.writeTo(output);
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+      super.writeTo(output, entryFactory);
       output.writeObject(getOrigin());
       output.writeBoolean(parallelStream);
       output.writeObject(segments);

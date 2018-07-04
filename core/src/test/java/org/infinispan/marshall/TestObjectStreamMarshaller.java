@@ -36,7 +36,7 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller implements St
 
    public TestObjectStreamMarshaller() {
       cacheManager = TestCacheManagerFactory.createCacheManager();
-      marshaller = cacheManager.getCache().getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+      marshaller = cacheManager.getCache().getAdvancedCache().getComponentRegistry().getInternalMarshaller();
    }
 
    @Override

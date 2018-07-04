@@ -1,5 +1,6 @@
 package org.infinispan.commands;
 
+import static org.infinispan.factories.KnownComponentNames.INTERNAL_MARSHALLER;
 import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation;
 import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl;
 
@@ -195,7 +196,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Inject private ComponentRegistry componentRegistry;
    @Inject private OrderedUpdatesManager orderedUpdatesManager;
    @Inject private StateTransferLock stateTransferLock;
-   @Inject private StreamingMarshaller marshaller;
+   @Inject @ComponentName(INTERNAL_MARSHALLER) private StreamingMarshaller marshaller;
    @Inject private BiasManager biasManager;
    @Inject private RpcManager rpcManager;
    @Inject @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS)

@@ -13,10 +13,11 @@ import org.infinispan.commands.functional.AbstractWriteManyCommand;
 import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.marshall.MarshalledEntryUtil;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TriangleFunctionsUtil;
 
@@ -44,7 +45,7 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
    }
 
    public void init(InvocationContextFactory factory, AsyncInterceptorChain chain,
-         ComponentRegistry componentRegistry) {
+                    ComponentRegistry componentRegistry) {
       injectDependencies(factory, chain);
       this.componentRegistry = componentRegistry;
    }
@@ -71,11 +72,11 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       writeBase(output);
       writeFunctionAndParams(output);
       output.writeBoolean(writeOnly);
-      MarshallUtil.marshallMap(entries, output);
+      MarshalledEntryUtil.marshallMap(entries, entryFactory, output);
    }
 
    @Override
@@ -83,7 +84,7 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
       readBase(input);
       readFunctionAndParams(input);
       writeOnly = input.readBoolean();
-      entries = MarshallUtil.unmarshallMap(input, HashMap::new);
+      entries = MarshalledEntryUtil.unmarshallMap(input, HashMap::new);
    }
 
    @Override

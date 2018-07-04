@@ -15,6 +15,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.DependencyGraph;
@@ -76,7 +77,7 @@ public class RemoveCacheCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       // No parameters
    }
 

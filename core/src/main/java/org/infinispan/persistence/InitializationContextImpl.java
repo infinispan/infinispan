@@ -4,6 +4,7 @@ import java.util.concurrent.ExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactory;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
@@ -18,14 +19,14 @@ public class InitializationContextImpl implements InitializationContext {
 
    private final StoreConfiguration configuration;
    private final Cache cache;
-   private final StreamingMarshaller marshaller;
+   private final Marshaller marshaller;
    private final TimeService timeService;
    private final ByteBufferFactory byteBufferFactory;
    private final MarshalledEntryFactory marshalledEntryFactory;
    private final ExecutorService executorService;
 
 
-   public InitializationContextImpl(StoreConfiguration configuration, Cache cache, StreamingMarshaller marshaller,
+   public InitializationContextImpl(StoreConfiguration configuration, Cache cache, Marshaller marshaller,
                                     TimeService timeService, ByteBufferFactory byteBufferFactory, MarshalledEntryFactory mef,
                                     ExecutorService executorService) {
       this.configuration = configuration;
@@ -49,6 +50,13 @@ public class InitializationContextImpl implements InitializationContext {
 
    @Override
    public StreamingMarshaller getMarshaller() {
+      if (marshaller instanceof StreamingMarshaller)
+         return (StreamingMarshaller) marshaller;
+      throw  new UnsupportedOperationException(String.format("Marshaller '%s' is not an instanceof StreamingMarshaller", marshaller.getClass().getName()));
+   }
+
+   @Override
+   public Marshaller getUserMarshaller() {
       return marshaller;
    }
 

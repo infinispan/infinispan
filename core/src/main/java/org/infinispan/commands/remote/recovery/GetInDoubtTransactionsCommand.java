@@ -8,6 +8,7 @@ import java.util.List;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.context.InvocationContext;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -46,7 +47,7 @@ public class GetInDoubtTransactionsCommand extends RecoveryCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       // No parameters
    }
 

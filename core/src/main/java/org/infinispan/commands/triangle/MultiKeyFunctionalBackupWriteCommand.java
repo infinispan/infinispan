@@ -16,6 +16,8 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.marshall.MarshalledEntryUtil;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.util.ByteString;
 
 /**
@@ -69,11 +71,11 @@ public class MultiKeyFunctionalBackupWriteCommand extends FunctionalBackupWriteC
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       writeBase(output);
       writeFunctionAndParams(output);
       output.writeBoolean(writeOnly);
-      MarshallUtil.marshallCollection(keys, output);
+      MarshalledEntryUtil.marshallCollection(keys, entryFactory, output, MarshalledEntryUtil::writeKey);
    }
 
    @Override
@@ -81,7 +83,7 @@ public class MultiKeyFunctionalBackupWriteCommand extends FunctionalBackupWriteC
       readBase(input);
       readFunctionAndParams(input);
       writeOnly = input.readBoolean();
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new, MarshalledEntryUtil::readKey);
    }
 
    @Override

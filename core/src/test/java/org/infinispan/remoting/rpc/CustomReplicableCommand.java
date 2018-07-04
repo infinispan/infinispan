@@ -8,6 +8,7 @@ import java.io.Serializable;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 
 /**
  * @author anistor@redhat.com
@@ -45,7 +46,7 @@ public class CustomReplicableCommand implements VisitableCommand, Serializable {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       output.writeObject(arg);
    }
 

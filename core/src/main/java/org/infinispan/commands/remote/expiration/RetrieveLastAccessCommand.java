@@ -12,6 +12,9 @@ import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.marshall.MarshalledEntryUtil;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -67,24 +70,16 @@ public class RetrieveLastAccessCommand extends BaseRpcCommand implements Topolog
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
-      if (value == null) {
-         output.writeBoolean(false);
-      } else {
-         output.writeBoolean(true);
-         output.writeObject(value);
-      }
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+      MarshalledEntryUtil.writeKeyValue(key, value, entryFactory, output);
       UnsignedNumeric.writeUnsignedInt(output, segment);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
-      boolean hasValue = input.readBoolean();
-      if (hasValue) {
-         value = input.readObject();
-      }
+      MarshalledEntry me = MarshalledEntryUtil.read(input);
+      key = me.getKey();
+      value = me.getValue();
       segment = UnsignedNumeric.readUnsignedInt(input);
    }
 

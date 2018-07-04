@@ -9,7 +9,7 @@ import java.util.Set;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileListCacheKey;
@@ -63,7 +63,7 @@ final class DirectoryLoaderAdaptor {
     * @param entriesCollector loaded entries are collected in this set
     * @param maxEntries to limit amount of entries loaded
     */
-   protected <K, V> void loadAllEntries(final Set<MarshalledEntry<K, V>> entriesCollector, final int maxEntries, StreamingMarshaller marshaller) {
+   protected <K, V> void loadAllEntries(final Set<MarshalledEntry<K, V>> entriesCollector, final int maxEntries, Marshaller marshaller) {
       int existingElements = entriesCollector.size();
       int toLoadElements = maxEntries - existingElements;
       if (toLoadElements <= 0) {

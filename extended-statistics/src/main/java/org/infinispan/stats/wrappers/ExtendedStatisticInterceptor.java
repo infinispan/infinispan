@@ -848,7 +848,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
 
    private void replaceRpcManager(ComponentRegistry componentRegistry) {
       RpcManager oldRpcManager = componentRegistry.getComponent(RpcManager.class);
-      StreamingMarshaller marshaller = componentRegistry.getCacheMarshaller();
+      StreamingMarshaller marshaller = componentRegistry.getInternalMarshaller();
       if (oldRpcManager == null) {
          //local mode
          return;

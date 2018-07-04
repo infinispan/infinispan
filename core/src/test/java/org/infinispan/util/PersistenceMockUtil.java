@@ -10,7 +10,7 @@ import java.util.Set;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -33,11 +33,11 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
  */
 public class PersistenceMockUtil {
 
-   public static InitializationContext createContext(String cacheName, Configuration configuration, StreamingMarshaller marshaller) {
+   public static InitializationContext createContext(String cacheName, Configuration configuration, Marshaller marshaller) {
       return createContext(cacheName, configuration, marshaller, AbstractInfinispanTest.TIME_SERVICE);
    }
 
-   public static InitializationContext createContext(String cacheName, Configuration configuration, StreamingMarshaller marshaller, TimeService timeService) {
+   public static InitializationContext createContext(String cacheName, Configuration configuration, Marshaller marshaller, TimeService timeService) {
       Cache mockCache = mockCache(cacheName, configuration, timeService);
       return new InitializationContextImpl(configuration.persistence().stores().get(0), mockCache, marshaller,
                                            timeService, new ByteBufferFactoryImpl(), new MarshalledEntryFactoryImpl(marshaller),

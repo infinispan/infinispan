@@ -17,6 +17,8 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.marshall.MarshalledEntryUtil;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
@@ -106,16 +108,16 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
-      MarshallUtil.marshallArray(keys, output);
+      MarshalledEntryUtil.marshallArray(keys, entryFactory, output, MarshalledEntryUtil::writeKey);
       output.writeLong(getFlagsBitSet());
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
-      keys = MarshallUtil.unmarshallArray(input, Util::objectArray);
+      keys = MarshallUtil.unmarshallArray(input, Util::objectArray, MarshalledEntryUtil::readKey);
       setFlagsBitSet(input.readLong());
    }
 

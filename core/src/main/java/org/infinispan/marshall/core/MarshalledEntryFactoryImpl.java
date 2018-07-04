@@ -1,9 +1,12 @@
 package org.infinispan.marshall.core;
 
+import static org.infinispan.factories.KnownComponentNames.USER_MARSHALLER;
+
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.metadata.Metadata;
 
 /**
  * @author Mircea Markus
@@ -11,12 +14,12 @@ import org.infinispan.metadata.InternalMetadata;
  */
 public class MarshalledEntryFactoryImpl implements MarshalledEntryFactory {
 
-   @Inject private StreamingMarshaller marshaller;
+   @Inject @ComponentName(USER_MARSHALLER) private Marshaller marshaller;
 
    public MarshalledEntryFactoryImpl() {
    }
 
-   public MarshalledEntryFactoryImpl(StreamingMarshaller marshaller) {
+   public MarshalledEntryFactoryImpl(Marshaller marshaller) {
       this.marshaller = marshaller;
    }
 
@@ -31,7 +34,7 @@ public class MarshalledEntryFactoryImpl implements MarshalledEntryFactory {
    }
 
    @Override
-   public MarshalledEntry newMarshalledEntry(Object key, Object value, InternalMetadata im) {
+   public MarshalledEntry newMarshalledEntry(Object key, Object value, Metadata im) {
       return new MarshalledEntryImpl(key, value, im, marshaller);
    }
 }

@@ -90,7 +90,7 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
    private String cacheName;
    private ConnectionFactory connectionFactory;
    private MarshalledEntryFactory<K, V> marshalledEntryFactory;
-   private StreamingMarshaller marshaller;
+   private StreamingMarshaller marshaller; // TODO convert to Marshaller
    private TableManager tableManager;
    private TimeService timeService;
    private boolean isDistributedCache;

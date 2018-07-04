@@ -7,6 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 import org.infinispan.context.InvocationContext;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.CompletableFutures;
 
@@ -103,11 +104,26 @@ public interface ReplicableCommand {
     *
     * @param output the stream.
     * @throws IOException if an error occurred during the I/O.
+    * @deprecated since 9.4 use {@link #writeTo(ObjectOutput, MarshalledEntryFactory)} instead
     */
-   void writeTo(ObjectOutput output) throws IOException;
+   default void writeTo(ObjectOutput output) throws IOException {
+      // no-op
+   }
 
    /**
-    * Reads this instance from the stream written by {@link #writeTo(ObjectOutput)}.
+    * Writes this instance to the {@link ObjectOutput}.
+    *
+    * @since 9.4
+    * @param output the stream.
+    * @param entryFactory the {@link MarshalledEntryFactory} that should be used to marshall all user objects such as key/entries/metadata
+    * @throws IOException if an error occurred during the I/O.
+    */
+   default void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+      writeTo(output);
+   }
+
+   /**
+    * Reads this instance from the stream written by {@link #writeTo(ObjectOutput, MarshalledEntryFactory)}.
     *
     * @param input the stream to read.
     * @throws IOException            if an error occurred during the I/O.

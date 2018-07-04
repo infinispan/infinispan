@@ -20,6 +20,9 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.marshall.MarshalledEntryUtil;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.ByteString;
 
@@ -55,7 +58,7 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
    }
 
    public void init(InvocationContextFactory factory, AsyncInterceptorChain chain,
-         ComponentRegistry componentRegistry) {
+                    ComponentRegistry componentRegistry) {
       injectDependencies(factory, chain);
       this.componentRegistry = componentRegistry;
    }
@@ -94,20 +97,22 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       writeBase(output);
       writeFunctionAndParams(output);
       MarshallUtil.marshallEnum(operation, output);
-      output.writeObject(key);
       switch (operation) {
          case READ_WRITE_KEY_VALUE:
-            output.writeObject(prevValue);
-            output.writeObject(prevMetadata);
+            MarshalledEntryUtil.write(key, prevValue, prevMetadata, entryFactory, output);
+            MarshalledEntryUtil.writeValue(value, entryFactory, output);
+            break;
          case WRITE_ONLY_KEY_VALUE:
-            output.writeObject(value);
+            MarshalledEntryUtil.writeKeyValue(key, value, entryFactory, output);
+            break;
          case READ_WRITE:
          case WRITE_ONLY:
          default:
+            MarshalledEntryUtil.writeKey(key, entryFactory, output);
       }
    }
 
@@ -116,13 +121,17 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
       readBase(input);
       readFunctionAndParams(input);
       operation = MarshallUtil.unmarshallEnum(input, SingleKeyFunctionalBackupWriteCommand::valueOf);
-      key = input.readObject();
+      MarshalledEntryImpl me = MarshalledEntryUtil.read(input);
+      key = me.getKey();
       switch (operation) {
          case READ_WRITE_KEY_VALUE:
-            prevValue = input.readObject();
-            prevMetadata = (Metadata) input.readObject();
+            prevValue = me.getValue();
+            prevMetadata = me.metadata();
+            value = MarshalledEntryUtil.readValue(input);
+            break;
          case WRITE_ONLY_KEY_VALUE:
-            value = input.readObject();
+            value = me.getValue();
+            break;
          case READ_WRITE:
          case WRITE_ONLY:
          default:
