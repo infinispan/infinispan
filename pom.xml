@@ -208,7 +208,6 @@
       <testNGListeners>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter</testNGListeners>
       <log4j.configurationFile>${infinispan.root}/log4j2.xml</log4j.configurationFile>
       <uberjar.deps.optional>true</uberjar.deps.optional>
-
    </properties>
 
    <dependencyManagement>

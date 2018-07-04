@@ -9,6 +9,8 @@ package org.infinispan.hibernate.cache.v53;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,11 +25,13 @@ import org.hibernate.cache.CacheException;
 import org.hibernate.cache.cfg.spi.DomainDataRegionBuildingContext;
 import org.hibernate.cache.cfg.spi.DomainDataRegionConfig;
 import org.hibernate.cache.internal.DefaultCacheKeysFactory;
+import org.hibernate.cache.spi.AbstractRegionFactory;
 import org.hibernate.cache.spi.CacheKeysFactory;
 import org.hibernate.cache.spi.CacheTransactionSynchronization;
 import org.hibernate.cache.spi.DomainDataRegion;
 import org.hibernate.cache.spi.QueryResultsRegion;
 import org.hibernate.cache.spi.RegionFactory;
+import org.hibernate.cache.spi.SecondLevelCacheLogger;
 import org.hibernate.cache.spi.TimestampsRegion;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.support.RegionNameQualifier;
@@ -134,7 +138,7 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
          dataType = DataType.ENTITY;
       }
 
-      AdvancedCache cache = getCache(qualify(regionConfig.getRegionName()), regionConfig.getRegionName(), dataType);
+      AdvancedCache cache = getCache(qualify(regionConfig.getRegionName()), regionConfig.getRegionName(), dataType, Collections.emptyList());
       DomainDataRegionImpl region = new DomainDataRegionImpl(cache, regionConfig, this, getCacheKeysFactory());
       startRegion(region);
       return region;
@@ -144,7 +148,9 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
    public QueryResultsRegion buildQueryResultsRegion(String regionName, SessionFactoryImplementor sessionFactory) {
       log.debugf("Building query results cache region [%s]", regionName);
 
-      AdvancedCache cache = getCache(qualify(regionName), regionName, DataType.QUERY);
+      List<String> legacyUnqualifiedNames = regionName.equals(RegionFactory.DEFAULT_QUERY_RESULTS_REGION_UNQUALIFIED_NAME) ?
+            AbstractRegionFactory.LEGACY_QUERY_RESULTS_REGION_UNQUALIFIED_NAMES : Collections.emptyList();
+      AdvancedCache cache = getCache(qualify(regionName), regionName, DataType.QUERY, legacyUnqualifiedNames);
       QueryResultsRegionImpl region = new QueryResultsRegionImpl(cache, regionName, this);
       startRegion(region);
       return region;
@@ -154,7 +160,9 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
    public TimestampsRegion buildTimestampsRegion(String regionName, SessionFactoryImplementor sessionFactory) {
       log.debugf("Building timestamps cache region [%s]", regionName);
 
-      final AdvancedCache cache = getCache(qualify(regionName), regionName, DataType.TIMESTAMPS);
+      List<String> legacyUnqualifiedNames = regionName.equals(RegionFactory.DEFAULT_UPDATE_TIMESTAMPS_REGION_UNQUALIFIED_NAME) ?
+            AbstractRegionFactory.LEGACY_UPDATE_TIMESTAMPS_REGION_UNQUALIFIED_NAMES : Collections.emptyList();
+      final AdvancedCache cache = getCache(qualify(regionName), regionName, DataType.TIMESTAMPS, legacyUnqualifiedNames);
       TimestampsRegionImpl region = createTimestampsRegion(cache, regionName);
       startRegion(region);
       return region;
@@ -420,7 +428,7 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
       }
    }
 
-   protected AdvancedCache getCache(String cacheName, String unqualifiedRegionName, DataType type) {
+   protected AdvancedCache getCache(String cacheName, String unqualifiedRegionName, DataType type, Collection<String> legacyUnqualifiedNames) {
       if (!manager.cacheExists(cacheName)) {
          String templateCacheName = baseConfigurations.get(cacheName);
          Configuration configuration;
@@ -456,6 +464,19 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
             }
             if (manager.getCacheConfiguration(unqualifiedRegionName) != null) {
                log.configurationWithUnqualifiedName(unqualifiedRegionName, cacheName);
+            }
+         }
+         // Before the very default configuration for the type try legacy configuration names
+         for (String legacyUnqualified : legacyUnqualifiedNames) {
+            configuration = manager.getCacheConfiguration(qualify(legacyUnqualified));
+            if (configuration != null) {
+               SecondLevelCacheLogger.INSTANCE.usingLegacyCacheName(cacheName, qualify(legacyUnqualified));
+               break;
+            }
+            configuration = manager.getCacheConfiguration(legacyUnqualified);
+            if (configuration != null) {
+               SecondLevelCacheLogger.INSTANCE.usingLegacyCacheName(cacheName, legacyUnqualified);
+               break;
             }
          }
          if (configuration == null) {
