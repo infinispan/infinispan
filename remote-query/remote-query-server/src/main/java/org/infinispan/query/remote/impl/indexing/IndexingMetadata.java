@@ -181,12 +181,34 @@ public final class IndexingMetadata {
    public static final String SORTABLE_FIELD_ANNOTATION = "SortableField";
    public static final String SORTABLE_FIELDS_ANNOTATION = "SortableFields";
 
+   /**
+    * A metadata instance to be used if indexing is disabled for a type.
+    */
    public static final IndexingMetadata NO_INDEXING = new IndexingMetadata(false, null, null, null);
 
+   /**
+    * Indicates if the type is indexed.
+    */
    private final boolean isIndexed;
+
+   /**
+    * The name of the index. Can be {@code null}.
+    */
    private final String indexName;
+
+   /**
+    * The name of the analyzer. Can be {@code null}.
+    */
    private final String analyzer;
+
+   /**
+    * Field mappings. This is null if indexing is disabled.
+    */
    private final Map<String, FieldMapping> fields;
+
+   /**
+    * The collection of sortable field names. Cab be empty but never {@code null}.
+    */
    private final Set<String> sortableFields;
 
    IndexingMetadata(boolean isIndexed, String indexName, String analyzer, Map<String, FieldMapping> fields) {
@@ -246,6 +268,9 @@ public final class IndexingMetadata {
    }
 
    public FieldMapping getFieldMapping(String name) {
+      if (fields == null) {
+         return null;
+      }
       return fields.get(name);
    }
 
