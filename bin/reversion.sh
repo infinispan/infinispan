@@ -34,6 +34,20 @@ function rewriteXML() {
     git add $XML
 }
 
+function copyRewriteXML() {
+    XML=$1
+    OLDMAJOR=$2
+    OLDMINOR=$3
+    NEWMAJOR=$4
+    NEWMINOR=$5
+
+    # Replace both major.minor and major_minor
+    NEWXML=${XML/${OLDMAJOR}.${OLDMINOR}/${NEWMAJOR}.${NEWMINOR}}
+    NEWXML=${NEWXML/${OLDMAJOR}_${OLDMINOR}/${NEWMAJOR}_${NEWMINOR}}
+    cp $XML $NEWXML
+    rewriteXML $NEWXML $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
+}
+
 while test $# -gt 0; do
     case "$1" in
             -h|--help)
@@ -105,8 +119,18 @@ if [ "$OLDSCHEMAVERSION" != "$NEWSCHEMAVERSION" ] && [ "$PROCESS_SCHEMAS" = true
     git add pom.xml
     
     # Create new unified configuration
-    cp core/src/test/resources/configs/unified/$OLDSCHEMAVERSION.xml core/src/test/resources/configs/unified/$NEWSCHEMAVERSION.xml
-    rewriteXML core/src/test/resources/configs/unified/$NEWSCHEMAVERSION.xml $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
+    copyRewriteXML core/src/test/resources/configs/unified/$OLDSCHEMAVERSION.xml $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
+
+    # Create new endpoint configuration
+    copyRewriteXML server/integration/endpoint/src/test/resources/org/infinispan/server/endpoint/endpoint-$OLDSCHEMAVERSION.xml $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
+
+    # Create new rolling upgrades configurations
+    copyRewriteXML server/integration/testsuite/src/test/resources/config/infinispan/rolling-upgrades-clustered-$OLDSCHEMAVERSION.xml $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
+    copyRewriteXML server/integration/testsuite/src/test/resources/config/infinispan/rolling-upgrades-clustered-rest-$OLDSCHEMAVERSION.xml $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
+    copyRewriteXML server/integration/testsuite/src/test/resources/config/parts/rolling-upgrades-server-endpoint-$OLDSCHEMAVERSION.xml $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
+
+    # Create new subsystem configuration (name uses major_minor format instead of major.minor)
+    copyRewriteXML server/integration/infinispan/src/test/resources/org/jboss/as/clustering/infinispan/subsystem/subsystem-infinispan_${OLDSCHEMAMAJOR}_${OLDSCHEMAMINOR}.xml $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
 
     # Update the distribution configurations
     CONFIGS=`find distribution/src/main/release/common/configs/config-samples -name '*.xml'`
@@ -124,6 +148,7 @@ if [ "$OLDSCHEMAVERSION" != "$NEWSCHEMAVERSION" ] && [ "$PROCESS_SCHEMAS" = true
     echo "- org.infinispan.server.jgroups.subsystem.SubsystemParsingTestCase"
     echo "- org.jboss.as.clustering.infinispan.subsystem.Namespace"
     echo "- org.jboss.as.clustering.infinispan.subsystem.SubsystemParsingTestCase"
+    echo "- org.infinispan.server.endpoint.subsystem.Namespace"
     echo "- org.infinispan.server.endpoint.EndpointSubsystemTestCase"
 fi
 
