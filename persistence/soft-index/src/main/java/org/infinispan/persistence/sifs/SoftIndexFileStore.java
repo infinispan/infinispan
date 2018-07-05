@@ -459,72 +459,31 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
 
    private <R> Flowable<R> handleFilePublisher(Flowable<Integer> filePublisher, boolean fetchValue, boolean fetchMetadata,
          EntryFunctor<R> functor) {
-      return filePublisher.flatMap(file ->
-            Flowable.using(() -> {
-                     log.debugf("Loading entries from file %d", file);
-                     return Optional.ofNullable(fileProvider.getFile(file));
-                  },
-                  optHandle -> {
-                     if (!optHandle.isPresent()) {
-                        log.debugf("File %d was deleted during iteration", file);
-                        return Flowable.empty();
-                     }
-
-                     FileProvider.Handle handle = optHandle.get();
-                     AtomicInteger offset = new AtomicInteger();
-                     return Flowable.fromIterable(() -> new AbstractIterator<R>() {
-                        @Override
-                        protected R getNext() {
-                           R next = null;
-                           int innerOffset = offset.get();
-                           try {
-                              while (next == null) {
-                                 EntryHeader header = EntryRecord.readEntryHeader(handle, innerOffset);
-                                 if (header == null) {
-                                    return null; // end of file;
-                                 }
-                                 try {
-                                    byte[] serializedKey = EntryRecord.readKey(handle, header, innerOffset);
-                                    if (serializedKey == null) {
-                                       continue; // we have read the file concurrently with writing there
-                                    }
-                                    byte[] serializedMetadata = null;
-                                    if (fetchMetadata && header.metadataLength() > 0) {
-                                       serializedMetadata = EntryRecord.readMetadata(handle, header, innerOffset);
-                                    }
-                                    byte[] serializedValue = null;
-                                    int offsetOrNegation = innerOffset;
-                                    if (header.valueLength() > 0) {
-                                       if (header.expiryTime() >= 0 && header.expiryTime() <= timeService.wallClockTime()) {
-                                          offsetOrNegation = ~innerOffset;
-                                       } else if (fetchValue) {
-                                          serializedValue = EntryRecord.readValue(handle, header, innerOffset);
-                                       } else {
-                                          serializedValue = EMPTY_BYTES;
-                                       }
-                                    } else {
-                                       offsetOrNegation = ~innerOffset;
-                                    }
-
-                                    next = functor.apply(file, offsetOrNegation, header.totalLength(), serializedKey,
-                                          serializedMetadata, serializedValue, header.seqId(), header.expiryTime());
-                                 } finally {
-                                    innerOffset = offset.addAndGet(header.totalLength());
-                                 }
-                              }
-                              return next;
-                           } catch (Exception e) {
-                              throw new PersistenceException(e);
-                           }
-                        }
-                     });
-                  },
-                  optHandle -> {
-                     if (optHandle.isPresent()) {
-                        optHandle.get().close();
-                     }
+      return filePublisher.flatMap(f -> {
+         // Unbox here once
+         int file = f;
+         return Flowable.using(() -> {
+                  log.debugf("Loading entries from file %d", file);
+                  return Optional.ofNullable(fileProvider.getFile(file));
+               },
+               optHandle -> {
+                  if (!optHandle.isPresent()) {
+                     log.debugf("File %d was deleted during iteration", file);
+                     return Flowable.empty();
                   }
-            ));
+
+                  FileProvider.Handle handle = optHandle.get();
+                  AtomicInteger offset = new AtomicInteger();
+                  return Flowable.fromIterable(() -> new HandleIterator<>(offset, handle, fetchMetadata, fetchValue,
+                        functor, file));
+               },
+               optHandle -> {
+                  if (optHandle.isPresent()) {
+                     optHandle.get().close();
+                  }
+               }
+         );
+      });
    }
 
    @Override
@@ -557,5 +516,69 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                }
                return null;
             });
+   }
+
+   private class HandleIterator<R> extends AbstractIterator<R> {
+      private final AtomicInteger offset;
+      private final FileProvider.Handle handle;
+      private final boolean fetchMetadata;
+      private final boolean fetchValue;
+      private final EntryFunctor<R> functor;
+      private final int file;
+
+      public HandleIterator(AtomicInteger offset, FileProvider.Handle handle, boolean fetchMetadata, boolean fetchValue,
+            EntryFunctor<R> functor, int file) {
+         this.offset = offset;
+         this.handle = handle;
+         this.fetchMetadata = fetchMetadata;
+         this.fetchValue = fetchValue;
+         this.functor = functor;
+         this.file = file;
+      }
+
+      @Override
+      protected R getNext() {
+         R next = null;
+         int innerOffset = offset.get();
+         try {
+            while (next == null) {
+               EntryHeader header = EntryRecord.readEntryHeader(handle, innerOffset);
+               if (header == null) {
+                  return null; // end of file;
+               }
+               try {
+                  byte[] serializedKey = EntryRecord.readKey(handle, header, innerOffset);
+                  if (serializedKey == null) {
+                     continue; // we have read the file concurrently with writing there
+                  }
+                  byte[] serializedMetadata = null;
+                  if (fetchMetadata && header.metadataLength() > 0) {
+                     serializedMetadata = EntryRecord.readMetadata(handle, header, innerOffset);
+                  }
+                  byte[] serializedValue = null;
+                  int offsetOrNegation = innerOffset;
+                  if (header.valueLength() > 0) {
+                     if (header.expiryTime() >= 0 && header.expiryTime() <= timeService.wallClockTime()) {
+                        offsetOrNegation = ~innerOffset;
+                     } else if (fetchValue) {
+                        serializedValue = EntryRecord.readValue(handle, header, innerOffset);
+                     } else {
+                        serializedValue = EMPTY_BYTES;
+                     }
+                  } else {
+                     offsetOrNegation = ~innerOffset;
+                  }
+
+                  next = functor.apply(file, offsetOrNegation, header.totalLength(), serializedKey,
+                        serializedMetadata, serializedValue, header.seqId(), header.expiryTime());
+               } finally {
+                  innerOffset = offset.addAndGet(header.totalLength());
+               }
+            }
+            return next;
+         } catch (Exception e) {
+            throw new PersistenceException(e);
+         }
+      }
    }
 }

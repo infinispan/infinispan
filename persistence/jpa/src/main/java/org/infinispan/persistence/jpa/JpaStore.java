@@ -578,19 +578,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          return new KeyValuePair<>(emStream, results);
       }, kvp -> {
          ScrollableResults results = kvp.getValue();
-         return Flowable.fromIterable(() -> new AbstractIterator<K>() {
-               @Override
-               protected K getNext() {
-                  K key = null;
-                  while (key == null && results.next()) {
-                     K testKey = (K) results.get(0);
-                     if (filter == null || filter.test(testKey)) {
-                        key = testKey;
-                     }
-                  }
-                  return key;
-               }
-            }
+         return Flowable.fromIterable(() -> new ScrollableResultsIterator(results, filter)
          );
       }, kvp -> {
          try {
@@ -816,6 +804,28 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       } catch (Exception e) {
          log.errorExecutingParallelStoreTask(e);
          throw e;
+      }
+   }
+
+   private class ScrollableResultsIterator extends AbstractIterator<K> {
+      private final ScrollableResults results;
+      private final Predicate<? super K> filter;
+
+      public ScrollableResultsIterator(ScrollableResults results, Predicate<? super K> filter) {
+         this.results = results;
+         this.filter = filter;
+      }
+
+      @Override
+      protected K getNext() {
+         K key = null;
+         while (key == null && results.next()) {
+            K testKey = (K) results.get(0);
+            if (filter == null || filter.test(testKey)) {
+               key = testKey;
+            }
+         }
+         return key;
       }
    }
 }
