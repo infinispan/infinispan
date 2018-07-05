@@ -148,7 +148,7 @@ public class RemoteQueryDisableIndexingTest extends AbstractQueryDslTest {
       assertTrue(searchIntegrator.getIndexBindings().containsKey(ProtobufValueWrapper.INDEXING_TYPE));
 
       // we have an index for this cache
-      String indexName = cache.getName() + ProgrammaticSearchMappingProviderImpl.INDEX_NAME_SUFFIX;
+      String indexName = ProgrammaticSearchMappingProviderImpl.getIndexName(cache.getName());
       assertNotNull(searchIntegrator.getIndexManager(indexName));
 
       // index must be empty

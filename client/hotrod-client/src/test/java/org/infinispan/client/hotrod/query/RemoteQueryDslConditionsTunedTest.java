@@ -44,7 +44,7 @@ public class RemoteQueryDslConditionsTunedTest extends RemoteQueryDslConditionsF
       SearchIntegrator searchIntegrator = Search.getSearchManager(getEmbeddedCache()).unwrap(SearchIntegrator.class);
       assertTrue(searchIntegrator.getIndexBindings().containsKey(ProtobufValueWrapper.INDEXING_TYPE));
       for (int shard = 0; shard < NUM_SHARDS; shard++) {
-         assertNotNull(searchIntegrator.getIndexManager(cache.getName() + ProgrammaticSearchMappingProviderImpl.INDEX_NAME_SUFFIX + '.' + shard));
+         assertNotNull(searchIntegrator.getIndexManager(ProgrammaticSearchMappingProviderImpl.getIndexName(cache.getName()) + '.' + shard));
       }
    }
 }
