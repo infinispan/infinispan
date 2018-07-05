@@ -20,7 +20,8 @@ import javax.transaction.Transaction;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.io.ExposedByteArrayOutputStream;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.Util;
@@ -90,7 +91,7 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
    private String cacheName;
    private ConnectionFactory connectionFactory;
    private MarshalledEntryFactory<K, V> marshalledEntryFactory;
-   private StreamingMarshaller marshaller; // TODO convert to Marshaller
+   private Marshaller marshaller;
    private TableManager tableManager;
    private TimeService timeService;
    private boolean isDistributedCache;
@@ -647,8 +648,12 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
 
    @SuppressWarnings("unchecked")
    private <T> T unmarshall(InputStream inputStream) throws PersistenceException {
+      ExposedByteArrayOutputStream bytes = new ExposedByteArrayOutputStream();
+      byte[] buf = new byte[1024];
       try {
-         return (T) marshaller.objectFromInputStream(inputStream);
+         int bytesRead;
+         while ((bytesRead = inputStream.read(buf, 0, buf.length)) != -1) bytes.write(buf, 0, bytesRead);
+         return (T) marshaller.objectFromByteBuffer(bytes.getRawBuffer());
       } catch (IOException e) {
          log.ioErrorUnmarshalling(e);
          throw new PersistenceException("I/O error while unmarshalling from stream", e);
