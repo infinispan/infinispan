@@ -249,25 +249,7 @@ public class RocksDBStore<K,V> implements AdvancedLoadWriteStore<K,V> {
 
     @Override
     public Publisher<K> publishKeys(Predicate<? super K> filter) {
-        return publish(it -> Flowable.fromIterable(() ->
-            new AbstractIterator<K>() {
-                @Override
-                protected K getNext() {
-                    K key = null;
-                    try {
-                        while (key == null && it.isValid()) {
-                            K testKey = (K) unmarshall(it.key());
-                            if (filter == null || filter.test(testKey)) {
-                                key = testKey;
-                            }
-                            it.next();
-                        }
-                    } catch (IOException | ClassNotFoundException e) {
-                        throw new CacheException(e);
-                    }
-                    return key;
-                }
-            }));
+        return publish(it -> Flowable.fromIterable(() -> new RocksKeyIterator(it, filter)));
     }
 
     @Override
@@ -275,40 +257,7 @@ public class RocksDBStore<K,V> implements AdvancedLoadWriteStore<K,V> {
         return publish(it -> Flowable.fromIterable(() -> {
             // Make sure this is taken when the iterator is created
             long now = ctx.getTimeService().wallClockTime();
-            return new AbstractIterator<MarshalledEntry<K, V>>() {
-                @Override
-                protected MarshalledEntry<K, V> getNext() {
-                    MarshalledEntry<K, V> entry = null;
-                    try {
-                        while (entry == null && it.isValid()) {
-                            K key = (K) unmarshall(it.key());
-                            if (filter == null || filter.test(key)) {
-                                if (fetchValue || fetchMetadata) {
-                                    MarshalledEntry<K, V> unmarshalledEntry = (MarshalledEntry<K, V>) unmarshall(
-                                          it.value());
-                                    InternalMetadata metadata = unmarshalledEntry.getMetadata();
-                                    if (metadata == null || !metadata.isExpired(now)) {
-                                        if (fetchMetadata && fetchValue) {
-                                            entry = unmarshalledEntry;
-                                        } else {
-                                            // Sad that this has to make another entry!
-                                            entry = ctx.getMarshalledEntryFactory().newMarshalledEntry(key,
-                                                  fetchValue ? unmarshalledEntry.getValue() : null,
-                                                  fetchMetadata ? unmarshalledEntry.getMetadata() : null);
-                                        }
-                                    }
-                                } else {
-                                    entry = ctx.getMarshalledEntryFactory().newMarshalledEntry(key, (Object) null, null);
-                                }
-                            }
-                            it.next();
-                        }
-                    } catch (IOException | ClassNotFoundException e) {
-                        throw new CacheException(e);
-                    }
-                    return entry;
-                }
-            };
+            return new RocksEntryIterator(it, filter, fetchValue, fetchMetadata, now);
         }));
     }
 
@@ -584,14 +533,79 @@ public class RocksDBStore<K,V> implements AdvancedLoadWriteStore<K,V> {
 
     }
 
-    private static final class Entry {
-        final byte[] key;
-        final byte[] value;
+    private class RocksKeyIterator extends AbstractIterator<K> {
+        private final RocksIterator it;
+        private final Predicate<? super K> filter;
 
-        Entry(byte[] key, byte[] value) {
-            this.key = key;
-            this.value = value;
+        public RocksKeyIterator(RocksIterator it, Predicate<? super K> filter) {
+            this.it = it;
+            this.filter = filter;
+        }
+
+        @Override
+        protected K getNext() {
+            K key = null;
+            try {
+                while (key == null && it.isValid()) {
+                    K testKey = (K) unmarshall(it.key());
+                    if (filter == null || filter.test(testKey)) {
+                        key = testKey;
+                    }
+                    it.next();
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                throw new CacheException(e);
+            }
+            return key;
         }
     }
 
+    private class RocksEntryIterator extends AbstractIterator<MarshalledEntry<K, V>> {
+        private final RocksIterator it;
+        private final Predicate<? super K> filter;
+        private final boolean fetchValue;
+        private final boolean fetchMetadata;
+        private final long now;
+
+        public RocksEntryIterator(RocksIterator it, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata, long now) {
+            this.it = it;
+            this.filter = filter;
+            this.fetchValue = fetchValue;
+            this.fetchMetadata = fetchMetadata;
+            this.now = now;
+        }
+
+        @Override
+        protected MarshalledEntry<K, V> getNext() {
+            MarshalledEntry<K, V> entry = null;
+            try {
+                while (entry == null && it.isValid()) {
+                    K key = (K) unmarshall(it.key());
+                    if (filter == null || filter.test(key)) {
+                        if (fetchValue || fetchMetadata) {
+                            MarshalledEntry<K, V> unmarshalledEntry = (MarshalledEntry<K, V>) unmarshall(
+                                  it.value());
+                            InternalMetadata metadata = unmarshalledEntry.getMetadata();
+                            if (metadata == null || !metadata.isExpired(now)) {
+                                if (fetchMetadata && fetchValue) {
+                                    entry = unmarshalledEntry;
+                                } else {
+                                    // Sad that this has to make another entry!
+                                    entry = ctx.getMarshalledEntryFactory().newMarshalledEntry(key,
+                                          fetchValue ? unmarshalledEntry.getValue() : null,
+                                          fetchMetadata ? unmarshalledEntry.getMetadata() : null);
+                                }
+                            }
+                        } else {
+                            entry = ctx.getMarshalledEntryFactory().newMarshalledEntry(key, (Object) null, null);
+                        }
+                    }
+                    it.next();
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                throw new CacheException(e);
+            }
+            return entry;
+        }
+    }
 }

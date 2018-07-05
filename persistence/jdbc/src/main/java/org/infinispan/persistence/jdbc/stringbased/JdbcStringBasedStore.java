@@ -489,54 +489,12 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
 
    @Override
    public Flowable<K> publishKeys(Predicate<? super K> filter) {
-      return publish(rs -> Flowable.fromIterable(() -> new AbstractIterator<K>() {
-         @Override
-         protected K getNext() {
-            K key = null;
-            try {
-               while (key == null && rs.next()) {
-                  String keyStr = rs.getString(2);
-                  K testKey = (K) ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(keyStr);
-                  if (filter == null || filter.test(testKey)) {
-                     key = testKey;
-                  }
-               }
-            } catch (SQLException e) {
-               throw new CacheException(e);
-            }
-            return key;
-         }
-      }));
+      return publish(rs -> Flowable.fromIterable(() -> new ResultSetKeyIterator(rs, filter)));
    }
 
    @Override
    public Flowable<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
-      return publish(rs -> Flowable.fromIterable(() -> new AbstractIterator<MarshalledEntry<K, V>>() {
-         @Override
-         protected MarshalledEntry<K, V> getNext() {
-            MarshalledEntry<K, V> entry = null;
-            try {
-               while (entry == null && rs.next()) {
-                  String keyStr = rs.getString(2);
-                  K key = (K) ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(keyStr);
-
-                  if (filter == null || filter.test(key)) {
-                     if (fetchValue || fetchMetadata) {
-                        InputStream inputStream = rs.getBinaryStream(1);
-                        KeyValuePair<ByteBuffer, ByteBuffer> kvp = unmarshall(inputStream);
-                        entry = marshalledEntryFactory.newMarshalledEntry(
-                              key, fetchValue ? kvp.getKey() : null, fetchMetadata ? kvp.getValue() : null);
-                     } else {
-                        entry = marshalledEntryFactory.newMarshalledEntry(key, (Object) null, null);
-                     }
-                  }
-               }
-            } catch (SQLException e) {
-               throw new CacheException(e);
-            }
-            return entry;
-         }
-      }));
+      return publish(rs -> Flowable.fromIterable(() -> new ResultSetEntryIterator(rs, filter, fetchValue, fetchMetadata)));
    }
 
    @Override
@@ -697,6 +655,72 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
       } catch (ClassNotFoundException e) {
          log.unexpectedClassNotFoundException(e);
          throw new PersistenceException("*UNEXPECTED* ClassNotFoundException. This should not happen as Bucket class exists", e);
+      }
+   }
+
+   private class ResultSetEntryIterator extends AbstractIterator<MarshalledEntry<K, V>> {
+      private final ResultSet rs;
+      private final Predicate<? super K> filter;
+      private final boolean fetchValue;
+      private final boolean fetchMetadata;
+
+      public ResultSetEntryIterator(ResultSet rs, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
+         this.rs = rs;
+         this.filter = filter;
+         this.fetchValue = fetchValue;
+         this.fetchMetadata = fetchMetadata;
+      }
+
+      @Override
+      protected MarshalledEntry<K, V> getNext() {
+         MarshalledEntry<K, V> entry = null;
+         try {
+            while (entry == null && rs.next()) {
+               String keyStr = rs.getString(2);
+               K key = (K) ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(keyStr);
+
+               if (filter == null || filter.test(key)) {
+                  if (fetchValue || fetchMetadata) {
+                     InputStream inputStream = rs.getBinaryStream(1);
+                     KeyValuePair<ByteBuffer, ByteBuffer> kvp = unmarshall(inputStream);
+                     entry = marshalledEntryFactory.newMarshalledEntry(
+                           key, fetchValue ? kvp.getKey() : null, fetchMetadata ? kvp.getValue() : null);
+                  } else {
+                     entry = marshalledEntryFactory.newMarshalledEntry(key, (Object) null, null);
+                  }
+               }
+            }
+         } catch (SQLException e) {
+            throw new CacheException(e);
+         }
+         return entry;
+      }
+   }
+
+   private class ResultSetKeyIterator extends AbstractIterator<K> {
+      private final ResultSet rs;
+      private final Predicate<? super K> filter;
+
+      public ResultSetKeyIterator(ResultSet rs, Predicate<? super K> filter) {
+         this.rs = rs;
+         this.filter = filter;
+      }
+
+      @Override
+      protected K getNext() {
+         K key = null;
+         try {
+            while (key == null && rs.next()) {
+               String keyStr = rs.getString(2);
+               K testKey = (K) ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(keyStr);
+               if (filter == null || filter.test(testKey)) {
+                  key = testKey;
+               }
+            }
+         } catch (SQLException e) {
+            throw new CacheException(e);
+         }
+         return key;
       }
    }
 }

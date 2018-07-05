@@ -370,24 +370,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             }
             throw t;
          }
-      }, kvp -> Flowable.fromIterable(() -> new AbstractIterator<K>() {
-         @Override
-         protected K getNext() {
-            K key = null;
-            String stringKey;
-            try {
-               while (key == null && (stringKey = kvp.getValue().readLine()) != null) {
-                  K tmpkey = (K) key2StringMapper.getKeyMapping(stringKey);
-                  if (filter == null || filter.test(tmpkey)) {
-                     key = tmpkey;
-                  }
-               }
-            } catch (IOException e) {
-               throw new CacheException(e);
-            }
-            return key;
-         }
-      }), kvp -> {
+      }, kvp -> Flowable.fromIterable(() -> new RestIterator(kvp, filter)), kvp -> {
          try {
             kvp.getValue().close();
          } finally {
@@ -457,5 +440,32 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    private boolean isSuccessful(int status) {
       return status >= 200 && status < 300;
+   }
+
+   private class RestIterator extends AbstractIterator<K> {
+      private final KeyValuePair<FullHttpResponse, BufferedReader> kvp;
+      private final Predicate<? super K> filter;
+
+      public RestIterator(KeyValuePair<FullHttpResponse, BufferedReader> kvp, Predicate<? super K> filter) {
+         this.kvp = kvp;
+         this.filter = filter;
+      }
+
+      @Override
+      protected K getNext() {
+         K key = null;
+         String stringKey;
+         try {
+            while (key == null && (stringKey = kvp.getValue().readLine()) != null) {
+               K tmpkey = (K) key2StringMapper.getKeyMapping(stringKey);
+               if (filter == null || filter.test(tmpkey)) {
+                  key = tmpkey;
+               }
+            }
+         } catch (IOException e) {
+            throw new CacheException(e);
+         }
+         return key;
+      }
    }
 }
