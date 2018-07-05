@@ -58,7 +58,7 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
       SearchManager sm = Search.getSearchManager(cache);
 
       SearchIntegrator searchFactory = sm.unwrap(SearchIntegrator.class);
-      assertNotNull(searchFactory.getIndexManager(cache.getName() + ProgrammaticSearchMappingProviderImpl.INDEX_NAME_SUFFIX));
+      assertNotNull(searchFactory.getIndexManager(ProgrammaticSearchMappingProviderImpl.getIndexName(cache.getName())));
 
       Query luceneQuery = sm.buildQueryBuilderForClass(ProtobufValueWrapper.class)
             .get()
