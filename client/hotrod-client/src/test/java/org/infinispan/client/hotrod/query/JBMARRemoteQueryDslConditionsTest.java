@@ -18,7 +18,7 @@ import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.query.RemoteQueryFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.dsl.QueryFactory;
@@ -74,9 +74,8 @@ public class JBMARRemoteQueryDslConditionsTest extends QueryDslConditionsTest {
 
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
-      builder.compatibility()
-            .enable()
-            .marshaller(new GenericJBossMarshaller());
+      builder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+      builder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       builder.indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");

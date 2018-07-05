@@ -32,6 +32,7 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.GenderMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -41,7 +42,6 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
@@ -55,8 +55,8 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  * @since 9.0
  */
-@Test(groups = "functional", testName = "client.hotrod.event.EmbeddedCompatClientListenerWithDslFilterTest")
-public class EmbeddedCompatClientListenerWithDslFilterTest extends MultiHotRodServersTest {
+@Test(groups = "functional", testName = "client.hotrod.event.ClientListenerWithDslFilterObjectStorageTest")
+public class ClientListenerWithDslFilterObjectStorageTest extends MultiHotRodServersTest {
 
    private final int NUM_NODES = 5;
 
@@ -95,7 +95,8 @@ public class EmbeddedCompatClientListenerWithDslFilterTest extends MultiHotRodSe
 
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      cfgBuilder.compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller());
+      cfgBuilder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+      cfgBuilder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       cfgBuilder.indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");

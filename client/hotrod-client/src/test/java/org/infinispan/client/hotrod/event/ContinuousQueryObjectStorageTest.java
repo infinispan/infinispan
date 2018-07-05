@@ -29,6 +29,7 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.GenderMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -38,7 +39,6 @@ import org.infinispan.query.api.continuous.ContinuousQueryListener;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.filter.IckleContinuousQueryProtobufCacheEventFilterConverterFactory;
@@ -49,13 +49,13 @@ import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
 
 /**
- * Test remote continuous query in compat mode.
+ * Test remote continuous query when storing objects.
  *
  * @author anistor@redhat.com
  * @since 9.0
  */
-@Test(groups = "functional", testName = "client.hotrod.event.EmbeddedCompatContinuousQueryTest")
-public class EmbeddedCompatContinuousQueryTest extends MultiHotRodServersTest {
+@Test(groups = "functional", testName = "client.hotrod.event.ContinuousQueryObjectStorageTest")
+public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
 
    private final int NUM_NODES = 5;
 
@@ -97,7 +97,8 @@ public class EmbeddedCompatContinuousQueryTest extends MultiHotRodServersTest {
 
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      cfgBuilder.compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller());
+      cfgBuilder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+      cfgBuilder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       cfgBuilder.indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
