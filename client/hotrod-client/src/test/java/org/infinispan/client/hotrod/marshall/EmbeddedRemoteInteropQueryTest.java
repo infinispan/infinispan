@@ -27,6 +27,7 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.Marsha
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.NotIndexedMarshaller;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Index;
@@ -47,7 +48,6 @@ import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
-import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -56,14 +56,14 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
- * Tests compatibility between remote query and embedded mode.
+ * Tests interoperability between remote query and embedded mode.
  *
  * @author anistor@redhat.com
  * @since 6.0
  */
-@Test(testName = "client.hotrod.marshall.EmbeddedCompatTest", groups = "functional")
+@Test(testName = "client.hotrod.marshall.EmbeddedRemoteInteropQueryTest", groups = "functional")
 @CleanupAfterMethod
-public class EmbeddedCompatTest extends SingleCacheManagerTest {
+public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
 
    private static final String NOT_INDEXED_PROTO_SCHEMA = "package sample_bank_account;\n" +
          "/* @Indexed(false) */\n" +
@@ -119,7 +119,8 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
 
    protected org.infinispan.configuration.cache.ConfigurationBuilder createConfigBuilder() {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = hotRodCacheConfiguration();
-      builder.compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller());
+      builder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+      builder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       builder.indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");

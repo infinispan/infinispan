@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.stress;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
@@ -29,7 +30,6 @@ import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
-import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -38,13 +38,13 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * Perf test for remote query. This test runs in compat mode so we can also run queries with lucene directly and compare
+ * Perf test for remote query. This test runs storing objects so we can also run queries with lucene directly and compare
  * the performance.
  *
  * @author anistor@redhat.com
  * @since 7.2
  */
-@Test(groups = "stress", testName = "client.hotrod.stress.RemoteQueryDslPerfTest", timeOut = 15*60*1000)
+@Test(groups = "stress", testName = "client.hotrod.stress.RemoteQueryDslPerfTest", timeOut = 15 * 60 * 1000)
 public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
 
    protected HotRodServer hotRodServer;
@@ -60,7 +60,8 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
-      builder.compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller());
+      builder.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
+      builder.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
       builder.indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");

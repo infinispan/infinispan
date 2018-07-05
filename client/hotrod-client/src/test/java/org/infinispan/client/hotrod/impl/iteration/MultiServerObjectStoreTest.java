@@ -8,12 +8,13 @@ import java.util.Set;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "client.hotrod.iteration.MultiServerCompatTest")
-public class MultiServerCompatTest extends MultiHotRodServersTest implements AbstractRemoteIteratorTest {
+@Test(groups = "functional", testName = "client.hotrod.iteration.MultiServerObjectStoreTest")
+public class MultiServerObjectStoreTest extends MultiHotRodServersTest implements AbstractRemoteIteratorTest {
 
    private static final int NUM_SERVERS = 2;
    private static final int CACHE_SIZE = 10;
@@ -26,7 +27,8 @@ public class MultiServerCompatTest extends MultiHotRodServersTest implements Abs
    private org.infinispan.configuration.cache.ConfigurationBuilder getCacheConfiguration() {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.clustering().hash().numSegments(60).numOwners(1);
-      builder.compatibility().enable();
+      builder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+      builder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       return builder;
    }
 

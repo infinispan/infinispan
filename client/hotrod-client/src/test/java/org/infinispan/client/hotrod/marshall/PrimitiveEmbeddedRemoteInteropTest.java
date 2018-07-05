@@ -12,8 +12,8 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -21,13 +21,13 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
- * Tests compatibility mode with primitive types.
+ * Tests interoperability between remote and embedded with primitive types
  *
  * @author anistor@redhat.com
  * @since 7.0
  */
-@Test(testName = "client.hotrod.marshall.PrimitiveEmbeddedCompatTest", groups = "functional")
-public class PrimitiveEmbeddedCompatTest extends SingleCacheManagerTest {
+@Test(testName = "client.hotrod.marshall.PrimitiveEmbeddedRemoteInteropTest", groups = "functional")
+public class PrimitiveEmbeddedRemoteInteropTest extends SingleCacheManagerTest {
 
    private HotRodServer hotRodServer;
    private RemoteCacheManager remoteCacheManager;
@@ -56,7 +56,8 @@ public class PrimitiveEmbeddedCompatTest extends SingleCacheManagerTest {
 
    protected org.infinispan.configuration.cache.ConfigurationBuilder createConfigBuilder() {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = hotRodCacheConfiguration();
-      builder.compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller());
+      builder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+      builder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       return builder;
    }
 

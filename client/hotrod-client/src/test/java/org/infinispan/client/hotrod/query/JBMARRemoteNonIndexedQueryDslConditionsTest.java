@@ -3,7 +3,7 @@ package org.infinispan.client.hotrod.query;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
@@ -18,9 +18,8 @@ public class JBMARRemoteNonIndexedQueryDslConditionsTest extends JBMARRemoteQuer
 
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
-      builder.compatibility()
-            .enable()
-            .marshaller(new GenericJBossMarshaller());
+      builder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+      builder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       return builder;
    }
 

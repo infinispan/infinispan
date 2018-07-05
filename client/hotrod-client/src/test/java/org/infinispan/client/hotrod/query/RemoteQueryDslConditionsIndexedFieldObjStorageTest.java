@@ -12,8 +12,8 @@ import org.testng.annotations.Test;
  *
  * @author anistor@redhat.com
  */
-@Test(groups = "functional", testName = "client.hotrod.query.RemoteQueryDslConditionsIndexedFieldCompatTest")
-public class RemoteQueryDslConditionsIndexedFieldCompatTest extends RemoteQueryDslConditionsTest {
+@Test(groups = "functional", testName = "client.hotrod.query.RemoteQueryDslConditionsIndexedFieldObjStorageTest")
+public class RemoteQueryDslConditionsIndexedFieldObjStorageTest extends RemoteQueryDslConditionsTest {
 
    @Override
    protected String loadSchema() throws IOException {
