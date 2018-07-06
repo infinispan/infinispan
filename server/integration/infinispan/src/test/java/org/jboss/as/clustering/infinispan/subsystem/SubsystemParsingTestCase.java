@@ -21,10 +21,17 @@
 */
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import java.util.Arrays;
+import java.io.FileReader;
+import java.io.Reader;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import org.infinispan.server.commons.controller.Operations;
 import org.infinispan.server.commons.subsystem.ClusteringSubsystemTest;
@@ -52,36 +59,35 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(value = Parameterized.class)
 public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
 
-    private final Namespace schema;
-    private final int operations;
+    private final int expectedOperationCount;
     private final String xsdPath;
     private final String[] templates;
 
-    public SubsystemParsingTestCase(Namespace schema, int operations, String xsdPath, String[] templates) {
-        super(InfinispanExtension.SUBSYSTEM_NAME, new InfinispanExtension(), schema.format("subsystem-infinispan_%d_%d.xml"));
-        this.schema = schema;
-        this.operations = operations;
-        this.xsdPath = xsdPath;
-        this.templates = templates;
+    public SubsystemParsingTestCase(Path xmlPath, Properties properties) {
+        super(InfinispanExtension.SUBSYSTEM_NAME, new InfinispanExtension(), xmlPath.getFileName().toString());
+        this.expectedOperationCount = Integer.parseInt(properties.getProperty("expected.operations.count"));
+        this.xsdPath = properties.getProperty("xsd.path");
+        this.templates = null;
     }
 
     @Parameters
-    public static Collection<Object[]> data() {
-        Object[][] data = new Object[][]{
-              {Namespace.INFINISPAN_SERVER_6_0, 106, null, null},
-              {Namespace.INFINISPAN_SERVER_7_0, 129, null, null},
-              {Namespace.INFINISPAN_SERVER_7_1, 129, null, null},
-              {Namespace.INFINISPAN_SERVER_7_2, 129, null, null},
-              {Namespace.INFINISPAN_SERVER_8_0, 141, null, null},
-              {Namespace.INFINISPAN_SERVER_8_1, 142, null, null},
-              {Namespace.INFINISPAN_SERVER_8_2, 142, null, null},
-              {Namespace.INFINISPAN_SERVER_9_0, 142, null, null},
-              {Namespace.INFINISPAN_SERVER_9_1, 144, null, null},
-              {Namespace.INFINISPAN_SERVER_9_2, 157, null, null},
-              {Namespace.INFINISPAN_SERVER_9_3, 157, null, null},
-              {Namespace.INFINISPAN_SERVER_9_4, 157, "schema/jboss-infinispan-core_9_4.xsd", new String[]{"/subsystem-templates/infinispan-core.xml"}},
-        };
-        return Arrays.asList(data);
+    public static Collection<Object[]> data() throws Exception {
+        URL configDir = Thread.currentThread().getContextClassLoader().getResource("org/jboss/as/clustering/infinispan/subsystem");
+        List<Path> paths = Files.list(Paths.get(configDir.toURI()))
+              .filter(path -> path.getFileName().toString().matches("^subsystem-infinispan_[0-9]+_[0_9]+.xml$"))
+              .collect(Collectors.toList());
+
+        List<Object[]> data = new ArrayList<>();
+        for (int i = 0; i < paths.size(); i++) {
+            Path xmlPath = paths.get(i);
+            String propsPath = xmlPath.toString().replaceAll("\\.xml$", ".properties");
+            Properties properties = new Properties();
+            try (Reader r = new FileReader(propsPath)) {
+                properties.load(r);
+            }
+            data.add(new Object[]{xmlPath, properties});
+        }
+        return data;
     }
 
     @Override
@@ -134,7 +140,7 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
 
         // Check that we have the expected number of operations
         // one for each resource instance
-        Assert.assertEquals(operations.toString(), this.operations, operations.size());
+        Assert.assertEquals(operations.toString(), this.expectedOperationCount, operations.size());
     }
 
     /**

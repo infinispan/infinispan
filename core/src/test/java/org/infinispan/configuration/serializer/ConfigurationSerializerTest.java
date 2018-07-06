@@ -1,5 +1,12 @@
 package org.infinispan.configuration.serializer;
 
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -7,18 +14,13 @@ import org.testng.annotations.Test;
 public class ConfigurationSerializerTest extends AbstractConfigurationSerializerTest {
 
    @DataProvider(name = "configurationFiles")
-   public Object[][] configurationFiles() {
-      return new Object[][] {
-            {"configs/unified/7.0.xml"},
-            {"configs/unified/7.1.xml"},
-            {"configs/unified/7.2.xml"},
-            {"configs/unified/8.0.xml"},
-            {"configs/unified/8.1.xml"},
-            {"configs/unified/8.2.xml"},
-            {"configs/unified/9.0.xml"},
-            {"configs/unified/9.1.xml"},
-            {"configs/unified/9.2.xml"},
-            {"configs/unified/9.3.xml"}
-      };
+   public Object[][] configurationFiles() throws Exception {
+      URL configDir = Thread.currentThread().getContextClassLoader().getResource("configs/unified");
+      List<Path> paths = Files.list(Paths.get(configDir.toURI())).collect(Collectors.toList());
+      Object[][] configurationFiles = new Object[paths.size()][];
+      for (int i = 0; i < paths.size(); i++) {
+         configurationFiles[i] = new Object[]{paths.get(i)};
+      }
+      return configurationFiles;
    }
 }

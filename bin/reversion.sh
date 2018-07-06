@@ -135,14 +135,7 @@ if [ "$OLDSCHEMAVERSION" != "$NEWSCHEMAVERSION" ] && [ "$PROCESS_SCHEMAS" = true
     rewriteXSDs . $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
     rewriteXSDs _ $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
 
-    echo ""
-    echo "WARNING: you will need to manually modify the server namespaces and parsing testcases to look for the new schema"
-    echo "- org.infinispan.server.jgroups.subsystem.JGroupsSchema"
-    echo "- org.infinispan.server.jgroups.subsystem.SubsystemParsingTestCase"
-    echo "- org.jboss.as.clustering.infinispan.subsystem.Namespace"
-    echo "- org.jboss.as.clustering.infinispan.subsystem.SubsystemParsingTestCase"
-    echo "- org.infinispan.server.endpoint.subsystem.Namespace"
-    echo "- org.infinispan.server.endpoint.EndpointSubsystemTestCase"
+    echo "DONE!"
 fi
 
 

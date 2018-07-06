@@ -57,7 +57,7 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
         ModelNode operation = Util.createAddOperation(address);
         operations.put(address, operation);
 
-        if (!this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+        if (!this.schema.since(8, 0)) {
             @SuppressWarnings("deprecation")
             String defaultStack = require(reader, Attribute.DEFAULT_STACK);
             JGroupsSubsystemResourceDefinition.DEFAULT_STACK.parseAndSetParameter(defaultStack, operation, reader);
@@ -67,19 +67,19 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
             Element element = Element.forName(reader.getLocalName());
             switch (element) {
                 case CHANNELS: {
-                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+                    if (this.schema.since(8, 0)) {
                         this.parseChannels(reader, address, operations);
                         break;
                     }
                 }
                 case STACKS: {
-                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+                    if (this.schema.since(8, 0)) {
                         this.parseStacks(reader, address, operations);
                         break;
                     }
                 }
                 case STACK: {
-                    if (!this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+                    if (!this.schema.since(8, 0)) {
                         this.parseStack(reader, address, operations);
                         break;
                     }
@@ -255,13 +255,13 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
                     break;
                 }
                 case RELAY: {
-                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0)) {
+                    if (this.schema.since(7, 0)) {
                         this.parseRelay(reader, address, operations);
                         break;
                     }
                 }
                 case SASL: {
-                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0))
+                    if (this.schema.since(7, 0))
                     if (!hasSasl) {
                         this.parseSasl(reader, address, operations);
                         hasSasl = true;
@@ -302,7 +302,7 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
                     break;
                 }
                 case OOB_EXECUTOR: {
-                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_9_0)) {
+                    if (this.schema.since(9, 0)) {
                         throw ParseUtils.unexpectedAttribute(reader, i);
                     } else {
                         ControllerLogger.DEPRECATED_LOGGER.warnf("OOB thread pool settings are ignored.");
@@ -310,7 +310,7 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
                     break;
                 }
                 case TIMER_EXECUTOR: {
-                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_9_0)) {
+                    if (this.schema.since(9, 0)) {
                         throw ParseUtils.unexpectedAttribute(reader, i);
                     } else {
                         ControllerLogger.DEPRECATED_LOGGER.warnf("Timer thread pool settings are ignored.");
@@ -322,19 +322,19 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
                     break;
                 }
                 case SITE: {
-                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0)) {
+                    if (this.schema.since(7, 0)) {
                         TransportResourceDefinition.SITE.parseAndSetParameter(value, operation, reader);
                         break;
                     }
                 }
                 case RACK: {
-                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0)) {
+                    if (this.schema.since(7, 0)) {
                         TransportResourceDefinition.RACK.parseAndSetParameter(value, operation, reader);
                         break;
                     }
                 }
                 case MACHINE: {
-                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0)) {
+                    if (this.schema.since(7, 0)) {
                         TransportResourceDefinition.MACHINE.parseAndSetParameter(value, operation, reader);
                         break;
                     }
@@ -379,7 +379,7 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
                 break;
             }
             case MODULE: {
-                if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+                if (this.schema.since(8, 0)) {
                     ProtocolResourceDefinition.MODULE.parseAndSetParameter(value, operation, reader);
                     break;
                 }
@@ -401,7 +401,7 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
                 parseThreadPool(ThreadPoolResourceDefinition.DEFAULT, reader, address, operations);
                 break;
             case INTERNAL_THREAD_POOL:
-                if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_9_0)) {
+                if (this.schema.since(9, 0)) {
                     throw ParseUtils.unexpectedElement(reader);
                 } else {
                     ControllerLogger.DEPRECATED_LOGGER.warnf("Internal thread pool settings are ignored.");
@@ -409,7 +409,7 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
                 }
                 break;
             case OOB_THREAD_POOL:
-                if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_9_0)) {
+                if (this.schema.since(9, 0)) {
                     throw ParseUtils.unexpectedElement(reader);
                 } else {
                     ControllerLogger.DEPRECATED_LOGGER.warnf("OOB thread pool settings are ignored.");
@@ -417,7 +417,7 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
                 }
                 break;
             case TIMER_THREAD_POOL:
-                if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_9_0)) {
+                if (this.schema.since(9, 0)) {
                     throw ParseUtils.unexpectedElement(reader);
                 } else {
                     ControllerLogger.DEPRECATED_LOGGER.warnf("Timer thread pool settings are ignored.");
@@ -523,19 +523,19 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
                     break;
                 }
                 case STACK: {
-                    if (!this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+                    if (!this.schema.since(8, 0)) {
                         RemoteSiteResourceDefinition.STACK.parseAndSetParameter(value, operation, reader);
                         break;
                     }
                 }
                 case CLUSTER: {
-                    if (!this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+                    if (!this.schema.since(8, 0)) {
                         cluster = value;
                         break;
                     }
                 }
                 case CHANNEL: {
-                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+                    if (this.schema.since(8, 0)) {
                         RemoteSiteResourceDefinition.CHANNEL.parseAndSetParameter(value, operation, reader);
 
                         // We need to populate the deprecated STACK attribute so that we have enough context for transforming the add operation
@@ -560,7 +560,7 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
             }
         }
 
-        if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+        if (this.schema.since(8, 0)) {
             if (!operation.hasDefined(RemoteSiteResourceDefinition.CHANNEL.getName())) {
                 throw ParseUtils.missingRequired(reader, EnumSet.of(Attribute.CHANNEL));
             }

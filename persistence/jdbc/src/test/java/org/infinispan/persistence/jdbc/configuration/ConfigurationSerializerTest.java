@@ -2,6 +2,8 @@ package org.infinispan.persistence.jdbc.configuration;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.nio.file.Paths;
+
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.serializer.AbstractConfigurationSerializerTest;
 import org.testng.annotations.DataProvider;
@@ -13,7 +15,7 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
    @DataProvider(name = "configurationFiles")
    public Object[][] configurationFiles() {
       return new Object[][]{
-            {"configs/string-based.xml"}
+            {Paths.get("configs/string-based.xml")}
       };
    }
 

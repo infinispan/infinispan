@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,9 +28,9 @@ import org.testng.annotations.Test;
 @Test(groups = "functional")
 public abstract class AbstractConfigurationSerializerTest extends AbstractInfinispanTest {
    @Test(dataProvider="configurationFiles")
-   public void configurationSerializationTest(String config) throws Exception {
+   public void configurationSerializationTest(Path config) throws Exception {
       ParserRegistry registry = new ParserRegistry();
-      InputStream is = FileLookupFactory.newInstance().lookupFileStrict(config, Thread.currentThread().getContextClassLoader());
+      InputStream is = FileLookupFactory.newInstance().lookupFileStrict(config.toString(), Thread.currentThread().getContextClassLoader());
       ConfigurationBuilderHolder holderBefore = registry.parse(is);
       Map<String, Configuration> configurations = new HashMap<>();
       for(Map.Entry<String, ConfigurationBuilder> configuration : holderBefore.getNamedConfigurationBuilders().entrySet()) {

@@ -55,7 +55,7 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
    @Override
    public void writeContent(final XMLExtendedStreamWriter writer, final SubsystemMarshallingContext context)
          throws XMLStreamException {
-      context.startSubsystemElement(Namespace.CURRENT.getUri(), false);
+      context.startSubsystemElement(EndpointSchema.CURRENT.getNamespaceUri(), false);
       final ModelNode node = context.getModelNode();
       writeConnectors(writer, node);
       writer.writeEndElement();

@@ -52,7 +52,7 @@ public class InfinispanExtension implements Extension {
     @Override
     public void initialize(ExtensionContext context) {
         // IMPORTANT: Management API version != xsd version! Not all Management API changes result in XSD changes
-        SubsystemRegistration subsystem = context.registerSubsystem(SUBSYSTEM_NAME, Namespace.CURRENT.getVersion());
+        SubsystemRegistration subsystem = context.registerSubsystem(SUBSYSTEM_NAME, InfinispanSchema.CURRENT.getVersion());
         // Create the path resolver handler
         final ResolvePathHandler resolvePathHandler;
         final PathManager pathManager;
@@ -77,8 +77,8 @@ public class InfinispanExtension implements Extension {
      */
     @Override
     public void initializeParsers(ExtensionParsingContext context) {
-        for (Namespace namespace: Namespace.values()) {
-            context.setSubsystemXmlMapping(SUBSYSTEM_NAME, namespace.getUri(), () -> new InfinispanSubsystemXMLReader(namespace));
+        for (InfinispanSchema namespace: InfinispanSchema.SCHEMAS) {
+            context.setSubsystemXmlMapping(SUBSYSTEM_NAME, namespace.getNamespaceUri(), () -> new InfinispanSubsystemXMLReader(namespace));
         }
     }
 }

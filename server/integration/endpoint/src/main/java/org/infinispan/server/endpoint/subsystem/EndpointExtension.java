@@ -55,8 +55,8 @@ public class EndpointExtension implements Extension {
 
    @Override
    public void initializeParsers(ExtensionParsingContext context) {
-      for (Namespace namespace : Namespace.values()) {
-         context.setSubsystemXmlMapping(Constants.SUBSYSTEM_NAME, namespace.getUri(), new EndpointSubsystemReader(namespace));
+      for (EndpointSchema namespace : EndpointSchema.SCHEMAS) {
+         context.setSubsystemXmlMapping(Constants.SUBSYSTEM_NAME, namespace.getNamespaceUri(), new EndpointSubsystemReader(namespace));
       }
    }
 }
