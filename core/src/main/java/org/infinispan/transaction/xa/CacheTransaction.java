@@ -45,7 +45,10 @@ public interface CacheTransaction {
     * @param modificationClass the modification type to look for
     * @return true if found, false otherwise
     */
-   boolean hasModification(Class<?> modificationClass);
+   @Deprecated
+   default boolean hasModification(Class<?> modificationClass) {
+      return false;
+   }
 
    CacheEntry lookupEntry(Object key);
 
@@ -53,7 +56,8 @@ public interface CacheTransaction {
 
    void putLookedUpEntry(Object key, CacheEntry e);
 
-   void putLookedUpEntries(Map<Object, CacheEntry> entries);
+   @Deprecated
+   default void putLookedUpEntries(Map<Object, CacheEntry> entries) { }
 
    void removeLookedUpEntry(Object key);
 
@@ -64,6 +68,8 @@ public interface CacheTransaction {
    void clearLockedKeys();
 
    Set<Object> getLockedKeys();
+
+   void forEachLock(Consumer<Object> consumer);
 
    int getTopologyId();
 

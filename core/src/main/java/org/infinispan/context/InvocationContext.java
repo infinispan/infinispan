@@ -1,6 +1,7 @@
 package org.infinispan.context;
 
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -53,6 +54,10 @@ public interface InvocationContext extends EntryLookup, Cloneable {
     * Returns the set of keys that are locked for writing.
     */
    Set<Object> getLockedKeys();
+
+   default void forEachLock(Consumer<Object> consumer) {
+      getLockedKeys().forEach(consumer);
+   }
 
    void clearLockedKeys();
 

@@ -5,17 +5,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.transaction.Transaction;
 
-import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.RepeatableReadEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.remoting.transport.Address;
@@ -79,6 +74,13 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       return remoteLockedNodes;
    }
 
+   @Override
+   void checkIfRolledBack() {
+      if (isMarkedForRollback()) {
+         throw new CacheException("This transaction is marked for rollback and cannot acquire locks!");
+      }
+   }
+
    public void clearRemoteLocksAcquired() {
       if (remoteLockedNodes != null) remoteLockedNodes.clear();
    }
@@ -87,36 +89,8 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       return transaction;
    }
 
-   @Override
-   public Map<Object, CacheEntry> getLookedUpEntries() {
-      return lookedUpEntries == null ? Collections.emptyMap() : lookedUpEntries;
-   }
-
    public boolean isImplicitTransaction() {
       return implicitTransaction;
-   }
-
-   @Override
-   public void putLookedUpEntry(Object key, CacheEntry e) {
-      if (isMarkedForRollback()) {
-         throw new CacheException("This transaction is marked for rollback and cannot acquire locks!");
-      }
-      if (lookedUpEntries == null)
-         lookedUpEntries = CollectionFactory.makeMap(4);
-
-      lookedUpEntries.put(key, e);
-   }
-
-   @Override
-   public void putLookedUpEntries(Map<Object, CacheEntry> entries) {
-      if (isMarkedForRollback()) {
-         throw new CacheException("This transaction is marked for rollback and cannot acquire locks!");
-      }
-      if (lookedUpEntries == null) {
-         lookedUpEntries = CollectionFactory.makeMap(entries);
-      } else {
-         lookedUpEntries.putAll(entries);
-      }
    }
 
    public boolean isReadOnly() {
@@ -151,24 +125,6 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
             ", topologyId=" + topologyId +
             ", stateTransferFlag=" + getStateTransferFlag() +
             "} " + super.toString();
-   }
-
-   @Override
-   public void addReadKey(Object key) {
-      CacheEntry entry = lookupEntry(key);
-      if (entry instanceof RepeatableReadEntry) {
-         ((RepeatableReadEntry) entry).setRead();
-      }
-   }
-
-   @Override
-   public boolean keyRead(Object key) {
-      CacheEntry entry = lookupEntry(key);
-      if (entry instanceof RepeatableReadEntry) {
-         return ((RepeatableReadEntry) entry).isRead();
-      } else {
-         return false;
-      }
    }
 
    public void setStateTransferFlag(Flag stateTransferFlag) {
@@ -206,9 +162,6 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       List<Address> members = cacheTopology.getMembers();
       if (trace) log.tracef("getCommitNodes recipients=%s, currentTopologyId=%s, members=%s, txTopologyId=%s",
                             recipients, currentTopologyId, members, getTopologyId());
-      if (hasModification(ClearCommand.class)) {
-         return members;
-      }
       if (recipients == null) {
          return null;
       }

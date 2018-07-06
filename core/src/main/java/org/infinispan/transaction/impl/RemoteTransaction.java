@@ -2,17 +2,11 @@ package org.infinispan.transaction.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.InvalidTransactionException;
@@ -50,16 +44,13 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
 
    public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId, long txCreationTime) {
       super(tx, topologyId, txCreationTime);
-      this.modifications = modifications == null || modifications.length == 0
-            ? Collections.emptyList()
-            : Arrays.asList(modifications);
-      lookedUpEntries = CollectionFactory.makeMap(CollectionFactory.computeCapacity(this.modifications.size()));
+      if (modifications != null && modifications.length != 0) {
+         setModifications(Arrays.asList(modifications));
+      }
    }
 
    public RemoteTransaction(GlobalTransaction tx, int topologyId, long txCreationTime) {
       super(tx, topologyId, txCreationTime);
-      this.modifications = new LinkedList<>();
-      lookedUpEntries = CollectionFactory.makeMap(4);
    }
 
    @Override
@@ -67,24 +58,6 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
       if (getStateTransferFlag() == null && stateTransferFlag == Flag.PUT_FOR_X_SITE_STATE_TRANSFER) {
          internalSetStateTransferFlag(stateTransferFlag);
       }
-   }
-
-   @Override
-   public void putLookedUpEntry(Object key, CacheEntry e) {
-      checkIfRolledBack();
-      if (trace) {
-         log.tracef("Adding key %s to tx %s", toStr(key), getGlobalTransaction());
-      }
-      lookedUpEntries.put(key, e);
-   }
-
-   @Override
-   public void putLookedUpEntries(Map<Object, CacheEntry> entries) {
-      checkIfRolledBack();
-      if (trace) {
-         log.tracef("Adding keys %s to tx %s", entries.keySet(), getGlobalTransaction());
-      }
-      lookedUpEntries.putAll(entries);
    }
 
    @Override
@@ -103,10 +76,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    @Override
    public Object clone() {
       try {
-         RemoteTransaction dolly = (RemoteTransaction) super.clone();
-         dolly.modifications = new ArrayList<>(modifications);
-         dolly.lookedUpEntries = CollectionFactory.makeMap(lookedUpEntries);
-         return dolly;
+         return super.clone();
       } catch (CloneNotSupportedException e) {
          throw new IllegalStateException("Impossible!!", e);
       }
@@ -115,8 +85,6 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    @Override
    public String toString() {
       return "RemoteTransaction{" +
-            "modifications=" + modifications +
-            ", lookedUpEntries=" + lookedUpEntries +
             ", lockedKeys=" + toStr(getLockedKeys()) +
             ", backupKeyLocks=" + toStr(getBackupLockedKeys()) +
             ", lookedUpEntriesTopology=" + lookedUpEntriesTopology +
@@ -134,7 +102,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
       return lookedUpEntriesTopology;
    }
 
-   private void checkIfRolledBack() {
+   void checkIfRolledBack() {
       if (isMarkedForRollback()) {
          throw new InvalidTransactionException("This remote transaction " + getGlobalTransaction() + " is already rolled back");
       }

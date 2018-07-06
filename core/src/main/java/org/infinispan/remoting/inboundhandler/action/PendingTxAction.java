@@ -75,7 +75,7 @@ public class PendingTxAction extends BaseLockingAction implements PendingLockLis
          //we could skip the check if "is-retried". if it is the first time, there is no backup locks acquired in any case.
          //clear the backup locks
          context.getCacheTransaction().cleanupBackupLocks();
-         keysToLock.removeAll(context.getLockedKeys());
+         context.forEachLock(keysToLock::remove);
       }
       if (command instanceof LockControlCommand) {
          //the lock command is only issued if the transaction doesn't have the lock for the keys.

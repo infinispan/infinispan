@@ -281,7 +281,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
          localTx.setModifications(tx.getModifications());
          localTx.setXid(xid);
          localTx.addAllAffectedKeys(tx.getAffectedKeys());
-         for (Object lk : tx.getLockedKeys()) localTx.registerLockedKey(lk);
+         tx.forEachLock(localTx::registerLockedKey);
          return completeTransaction(localTx, commit, xid);
       }
    }

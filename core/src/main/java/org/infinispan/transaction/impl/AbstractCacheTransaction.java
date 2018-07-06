@@ -6,18 +6,17 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.ImmutableListCopy;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.container.entries.CacheEntry;
@@ -48,30 +47,11 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    protected final GlobalTransaction tx;
    private static final Log log = LogFactory.getLog(AbstractCacheTransaction.class);
    private static final boolean trace = log.isTraceEnabled();
-   private static final int INITIAL_LOCK_CAPACITY = 4;
 
    volatile boolean hasLocalOnlyModifications;
    protected volatile List<WriteCommand> modifications;
 
-   protected Map<Object, CacheEntry> lookedUpEntries;
-
-   /** Holds all the locked keys that were acquired by the transaction allover the cluster. */
-   protected Set<Object> affectedKeys = null;
-
-   /** Holds all the keys that were actually locked on the local node. */
-   private final AtomicReference<Set<Object>> lockedKeys = new AtomicReference<>();
-
-   /**
-    * Holds all the locks for which the local node is a secondary data owner.
-    * <p>
-    * A {@link CompletableFuture} is created for each key and it is completed when the backup lock is release for that
-    * key. A transaction, before acquiring the locks, must wait for all the backup locks (i.e. the {@link
-    * CompletableFuture}) is released, for all transaction created in the previous topology.
-    */
-   @GuardedBy("this")
-   private Map<Object, CompletableFuture<Void>> backupKeyLocks;
-   //should we merge the locked and backup locked keys in a single map?
-
+   protected final Map<Object, ContextEntry> entries = new ConcurrentHashMap<>();
    protected final int topologyId;
 
    private EntryVersionsMap updatedEntryVersions;
@@ -105,7 +85,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public GlobalTransaction getGlobalTransaction() {
+   public final GlobalTransaction getGlobalTransaction() {
       return tx;
    }
 
@@ -143,18 +123,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       this.modifications = Collections.synchronizedList(mods);
    }
 
-   public final boolean hasModification(Class<?> modificationClass) {
-      if (modifications != null) {
-         for (WriteCommand mod : getModifications()) {
-            if (modificationClass.isAssignableFrom(mod.getClass())) {
-               return true;
-            }
-         }
-      }
-      return false;
-   }
-
-
    @Override
    public void freezeModifications() {
       if (modifications != null) {
@@ -165,33 +133,49 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public Map<Object, CacheEntry> getLookedUpEntries() {
-      return lookedUpEntries;
+   public final void putLookedUpEntry(Object key, CacheEntry e) {
+      checkIfRolledBack();
+      entries.computeIfAbsent(key, ContextEntry::new).cacheEntry = e;
    }
 
    @Override
-   public CacheEntry lookupEntry(Object key) {
-      if (lookedUpEntries == null) return null;
-      return lookedUpEntries.get(key);
+   public final Map<Object, CacheEntry> getLookedUpEntries() {
+      throw new UnsupportedOperationException();
    }
 
    @Override
-   public void removeLookedUpEntry(Object key) {
-      if (lookedUpEntries != null) lookedUpEntries.remove(key);
+   public final CacheEntry lookupEntry(Object key) {
+      if (key == null) {
+         return null; //org.infinispan.container.entries.NullCacheEntry has null key
+      }
+      ContextEntry entry = entries.get(key);
+      return entry == null ? null : entry.cacheEntry;
    }
 
    @Override
-   public void clearLookedUpEntries() {
-      lookedUpEntries = null;
+   public final void clearLookedUpEntries() {
+      for (ContextEntry entry : entries.values()) {
+         entry.cacheEntry = null;
+      }
    }
 
    @Override
-   public boolean ownsLock(Object key) {
-      return getLockedKeys().contains(key);
+   public final boolean ownsLock(Object key) {
+      ContextEntry entry = entries.get(key);
+      return entry != null && entry.isLocked();
+   }
+
+   @Override
+   public final void removeLookedUpEntry(Object key) {
+      ContextEntry entry = entries.get(key);
+      if (entry != null) {
+         entry.cacheEntry = null;
+      }
    }
 
    @Override
    public void notifyOnTransactionFinished() {
+      //TODO!
       if (trace) log.tracef("Transaction %s has completed, notifying listening threads.", tx);
       if (!txCompleted.isDone()) {
          txCompleted.complete(null);
@@ -205,52 +189,48 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public int getTopologyId() {
+   public final int getTopologyId() {
       return topologyId;
    }
 
    @Override
-   public synchronized void addBackupLockForKey(Object key) {
-      if (backupKeyLocks == null) {
-         backupKeyLocks = new HashMap<>();
-      }
-      backupKeyLocks.put(key, new CompletableFuture<>());
+   public final void addBackupLockForKey(Object key) {
+      entries.computeIfAbsent(key, ContextEntry::new).addBackupLock();
    }
 
-   public void registerLockedKey(Object key) {
-      // we need a synchronized collection to be able to get a valid snapshot from another thread during state transfer
-      final Set<Object> keys = lockedKeys.updateAndGet((value) -> value == null ? Collections.synchronizedSet(CollectionFactory.makeSet(INITIAL_LOCK_CAPACITY)) : value);
+   public final void registerLockedKey(Object key) {
       if (trace) log.tracef("Registering locked key: %s", toStr(key));
-      keys.add(key);
+      entries.computeIfAbsent(key, ContextEntry::new).addLock();
    }
 
    @Override
-   public Set<Object> getLockedKeys() {
-      final Set<Object> keys = lockedKeys.get();
-      return keys == null ? Collections.emptySet() : keys;
+   public final Set<Object> getLockedKeys() {
+      return entries.values().stream().filter(ContextEntry::isLocked).map(ContextEntry::getKey).collect(Collectors.toSet());
    }
 
    @Override
-   public synchronized Set<Object> getBackupLockedKeys() {
-      return backupKeyLocks == null ? Collections.emptySet() : new HashSet<>(backupKeyLocks.keySet());
+   public final Set<Object> getBackupLockedKeys() {
+      return entries.values().stream().filter(ContextEntry::isBackupLocked).map(ContextEntry::getKey).collect(Collectors.toSet());
    }
 
    @Override
    public void clearLockedKeys() {
-      if (trace) log.tracef("Clearing locked keys: %s", toStr(lockedKeys.get()));
-      lockedKeys.set(null);
+      if (trace) {
+         log.tracef("Clearing locked keys:");
+      }
+      entries.values().forEach(ContextEntry::releaseLock);
    }
 
    @Override
    public boolean containsLockOrBackupLock(Object key) {
-      return getLockedKeys().contains(key) || getBackupLockedKeys().contains(key);
+      ContextEntry entry = entries.get(key);
+      return entry != null && entry.isLockedOrBackupLocked();
    }
 
    @Override
    public Object findAnyLockedOrBackupLocked(Collection<Object> keys) {
-      Set<Object> lockedKeysCopy = getLockedKeys();
       for (Object key : keys) {
-         if (lockedKeysCopy.contains(key) || containsBackupLock(key)) {
+         if (containsLockOrBackupLock(key)) {
             return key;
          }
       }
@@ -263,21 +243,20 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    public Set<Object> getAffectedKeys() {
-      return affectedKeys == null ? Collections.emptySet() : affectedKeys;
+      return entries.values().stream()
+            .filter(contextEntry -> contextEntry.clusterWideLocked)
+            .map(contextEntry -> contextEntry.key)
+            .collect(Collectors.toSet());
    }
 
    public void addAffectedKey(Object key) {
-      initAffectedKeys();
-      affectedKeys.add(key);
+      entries.computeIfAbsent(key, ContextEntry::new).clusterWideLocked = true;
    }
 
    public void addAllAffectedKeys(Collection<?> keys) {
-      initAffectedKeys();
-      affectedKeys.addAll(keys);
-   }
-
-   private void initAffectedKeys() {
-      if (affectedKeys == null) affectedKeys = CollectionFactory.makeSet(INITIAL_LOCK_CAPACITY);
+      for (Object key : keys) {
+         entries.computeIfAbsent(key, ContextEntry::new).clusterWideLocked = true;
+      }
    }
 
    @Override
@@ -307,7 +286,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public EntryVersionsMap getVersionsRead() {
+   public final EntryVersionsMap getVersionsRead() {
       return versionsSeenMap == null ? new EntryVersionsMap() : versionsSeenMap;
    }
 
@@ -333,22 +312,28 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public CompletableFuture<Void> getReleaseFutureForKey(Object key) {
-      if (getLockedKeys().contains(key)) {
+      ContextEntry entry = entries.get(key);
+      if (entry == null || entry.isNotLockedOrBackupLock()) {
+         return null;
+      } else if (entry.isLocked()) {
          return txCompleted;
       } else {
-         return findBackupLock(key);
+         return entry.getBackupLockCF();
       }
    }
 
    @Override
    public Map<Object, CompletableFuture<Void>> getReleaseFutureForKeys(Collection<Object> keys) {
-      Set<Object> locked = getLockedKeys();
       Map<Object, CompletableFuture<Void>> result = null;
       for (Object key : keys) {
-         if (locked.contains(key)) {
+         ContextEntry entry = entries.get(key);
+         if (entry == null) {
+            continue;
+         }
+         if (entry.isLocked()) {
             return Collections.singletonMap(key, txCompleted);
          } else {
-            CompletableFuture<Void> cf = findBackupLock(key);
+            CompletableFuture<Void> cf = entry.getBackupLockCF();
             if (cf != null) {
                if (result == null) {
                   result = new HashMap<>();
@@ -361,52 +346,177 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public synchronized void cleanupBackupLocks() {
-      if (backupKeyLocks != null) {
-         for (CompletableFuture<Void> cf : backupKeyLocks.values()) {
-            cf.complete(null);
-         }
-         backupKeyLocks.clear();
-      }
+   public void cleanupBackupLocks() {
+      entries.values().forEach(ContextEntry::releaseBackupLock);
    }
 
    @Override
    public synchronized void removeBackupLocks(Collection<?> keys) {
-      if (backupKeyLocks != null) {
-         for (Object key : keys) {
-            CompletableFuture<Void> cf = backupKeyLocks.remove(key);
-            if (cf != null) {
-               cf.complete(null);
-            }
-         }
-      }
+      keys.forEach(this::removeBackupLock);
    }
 
    public synchronized void removeBackupLock(Object key) {
-      if (backupKeyLocks != null) {
-         CompletableFuture<Void> cf = backupKeyLocks.remove(key);
-         if (cf != null) {
-            cf.complete(null);
-         }
+      ContextEntry entry = entries.get(key);
+      if (entry != null && entry.isBackupLocked()) {
+         entry.releaseBackupLock();
       }
    }
 
    @Override
    public synchronized void forEachBackupLock(Consumer<Object> consumer) {
-      if (backupKeyLocks != null) {
-         backupKeyLocks.keySet().forEach(consumer);
-      }
+      entries.values().stream().filter(ContextEntry::isBackupLocked).map(ContextEntry::getKey).forEach(consumer);
    }
 
    final void internalSetStateTransferFlag(Flag stateTransferFlag) {
       this.stateTransferFlag = stateTransferFlag;
    }
 
-   private synchronized boolean containsBackupLock(Object key) {
-      return backupKeyLocks != null && backupKeyLocks.containsKey(key);
+   @Override
+   public final EntryVersion getLookedUpRemoteVersion(Object key) {
+      return null;
    }
 
-   private synchronized CompletableFuture<Void> findBackupLock(Object key) {
-      return backupKeyLocks == null ? null : backupKeyLocks.get(key);
+   @Override
+   public final void replaceVersionRead(Object key, EntryVersion version) {
    }
+
+   @Override
+   public final boolean hasModification(Class<?> modificationClass) {
+      return false;
+   }
+
+   @Override
+   public final void putLookedUpEntries(Map<Object, CacheEntry> entries) {
+   }
+
+   @Override
+   public final void putLookedUpRemoteVersion(Object key, EntryVersion version) {
+   }
+
+
+   @Override
+   public final void addReadKey(Object key) {
+   }
+
+   @Override
+   public final boolean keyRead(Object key) {
+      return false;
+   }
+
+   public void forEachValue(BiConsumer<Object, CacheEntry> action) {
+      for (ContextEntry entry : entries.values()) {
+         if (entry.cacheEntry == null || entry.cacheEntry.isRemoved() || entry.cacheEntry.isNull()) {
+            continue;
+         }
+         action.accept(entry.key, entry.cacheEntry);
+      }
+   }
+
+   public int lookedUpEntriesCount() {
+      int size = 0;
+      for (ContextEntry entry : entries.values()) {
+         if (entry.cacheEntry != null) {
+            size++;
+         }
+      }
+      return size;
+   }
+
+   public void forEachEntry(BiConsumer<Object, CacheEntry> action) {
+      for (ContextEntry entry : entries.values()) {
+         if (entry.cacheEntry == null) {
+            continue;
+         }
+         action.accept(entry.key, entry.cacheEntry);
+      }
+   }
+
+   public boolean hasLookupEntries() {
+      return entries.values().stream().anyMatch(contextEntry -> contextEntry.cacheEntry != null);
+   }
+
+   @Override
+   public void forEachLock(Consumer<Object> consumer) {
+      entries.values().stream().filter(ContextEntry::isLocked).map(ContextEntry::getKey).forEach(consumer);
+   }
+
+   abstract void checkIfRolledBack();
+
+   private enum LockMode {
+      PRIMARY,
+      BACKUP
+   }
+
+   private static class ContextEntry implements Map.Entry<Object, CacheEntry> {
+      private final Object key;
+      private CacheEntry cacheEntry; //entry read/written
+      private boolean clusterWideLocked; //true if the key is locked somewhere in the cluster
+      @GuardedBy("this")
+      private LockMode lockMode; //lock mode. null for not locked
+      @GuardedBy("this")
+      private CompletableFuture<Void> backupLockFuture;
+
+      private ContextEntry(Object key) {
+         this.key = key;
+      }
+
+      @Override
+      public Object getKey() {
+         return key;
+      }
+
+      @Override
+      public CacheEntry getValue() {
+         return cacheEntry;
+      }
+
+      @Override
+      public CacheEntry setValue(CacheEntry value) {
+         throw new UnsupportedOperationException();
+      }
+
+      synchronized CompletableFuture<Void> getBackupLockCF() {
+         return backupLockFuture;
+      }
+
+      synchronized boolean isLockedOrBackupLocked() {
+         return lockMode != null;
+      }
+
+      synchronized boolean isNotLockedOrBackupLock() {
+         return lockMode == null;
+      }
+
+      synchronized void addLock() {
+         lockMode = LockMode.PRIMARY;
+      }
+
+      synchronized boolean isLocked() {
+         return lockMode == LockMode.PRIMARY;
+      }
+
+      synchronized boolean isBackupLocked() {
+         return lockMode == LockMode.BACKUP;
+      }
+
+      synchronized void releaseLock() {
+         if (lockMode == LockMode.PRIMARY) {
+            lockMode = null;
+         }
+      }
+
+      synchronized void releaseBackupLock() {
+         if (lockMode == LockMode.BACKUP) {
+            lockMode = null;
+            backupLockFuture.complete(null);
+            backupLockFuture = null;
+         }
+      }
+
+      synchronized void addBackupLock() {
+         lockMode = LockMode.BACKUP;
+         backupLockFuture = new CompletableFuture<>();
+      }
+   }
+
 }

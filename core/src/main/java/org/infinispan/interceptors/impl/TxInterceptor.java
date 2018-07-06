@@ -151,9 +151,6 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
             }
          });
       } else {
-         if (ctx.getCacheTransaction().hasModification(ClearCommand.class)) {
-            throw new IllegalStateException("No ClearCommand is allowed in Transaction.");
-         }
          return invokeNext(ctx, command);
       }
    }

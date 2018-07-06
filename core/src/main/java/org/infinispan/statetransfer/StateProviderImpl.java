@@ -222,14 +222,11 @@ public class StateProviderImpl implements StateProvider {
 
          // transfer only locked keys that belong to requested segments
          Set<Object> filteredLockedKeys = new HashSet<>();
-         Set<Object> lockedKeys = tx.getLockedKeys();
-         synchronized (lockedKeys) {
-            for (Object key : lockedKeys) {
-               if (segments.contains(keyPartitioner.getSegment(key))) {
-                  filteredLockedKeys.add(key);
-               }
+         tx.forEachLock(key -> {
+            if (segments.contains(keyPartitioner.getSegment(key))) {
+               filteredLockedKeys.add(key);
             }
-         }
+         });
          //avoids the warning about synchronizing in a local variable.
          //and allows us to change the CacheTransaction internals without having to worry about it
          tx.forEachBackupLock(key -> {
