@@ -186,3 +186,34 @@ The next step is to add a new `router-connector` endpoint and configure how othe
 
 With the following configuration, Hot Rod clients will access `hotrod-1` connector when using SNI Host Name "hotrod-1".
 REST clients will need to use the following URL to access "rest-1" connector - `https://<server_ip>:<server_port>/rest/rest-1`.
+
+== Single Port
+
+Single Port features allows to expose multiple protocols over the same TCP port.
+This approach is very convenient in Cloud Environments such as OpenShift or Kubernetes where the application
+(a Pod) is hidden behind the frontend proxy (a Route or an Ingress).
+
+For protocol switching, Infinispan Server uses HTTP/1.1 Upgrade header or TLS/ALPN.
+
+NOTE: The initial implementation supports only HTTP/1.1, HTTP/2 and Hot Rod protocols.
+
+==== Single Port router
+
+Internally, Single Port reuses router component, therefore the configuration looks very similar to
+the Multi-tenancy.
+
+[source,xml]
+----
+
+<router-connector single-port-socket-binding="rest">
+    <single-port security-realm="SSLRealm1">
+        <hotrod name="hotrod" />
+        <rest name="rest" />
+    </single-port>
+</router-connector>
+
+----
+
+With the configuration above, the Single Port Router will operate on `rest` socket
+binding. The Single Port will use `SSLRealm1` for TLS/ALPN and will be able to switch
+between Rest Server named `rest` and Hot Rod Server named `hotrod`.
