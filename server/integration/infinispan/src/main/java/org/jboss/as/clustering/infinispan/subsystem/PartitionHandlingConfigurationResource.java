@@ -25,6 +25,7 @@ package org.jboss.as.clustering.infinispan.subsystem;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.conflict.MergePolicy;
 import org.jboss.as.controller.AttributeDefinition;
+import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
@@ -50,7 +51,7 @@ public class PartitionHandlingConfigurationResource extends CacheConfigurationCh
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(true))
-                    .setDeprecated(Namespace.INFINISPAN_SERVER_9_1.getVersion())
+                    .setDeprecated(ModelVersion.create(9, 1))
                     .build();
 
     static final SimpleAttributeDefinition WHEN_SPLIT =

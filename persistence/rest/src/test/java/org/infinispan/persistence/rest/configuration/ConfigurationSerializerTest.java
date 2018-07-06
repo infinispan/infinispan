@@ -1,5 +1,7 @@
 package org.infinispan.persistence.rest.configuration;
 
+import java.nio.file.Paths;
+
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.serializer.AbstractConfigurationSerializerTest;
 import org.testng.AssertJUnit;
@@ -12,7 +14,7 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
    @DataProvider(name = "configurationFiles")
    public Object[][] configurationFiles() {
       return new Object[][] {
-            {"rest-cl-config.xml"}
+            {Paths.get("rest-cl-config.xml")}
       };
    }
 

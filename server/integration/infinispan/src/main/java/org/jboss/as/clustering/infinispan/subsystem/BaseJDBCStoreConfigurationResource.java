@@ -27,6 +27,7 @@ import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
+import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.ObjectTypeAttributeDefinition;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -77,7 +78,7 @@ public class BaseJDBCStoreConfigurationResource extends BaseStoreConfigurationRe
                     .setXmlName(Attribute.BATCH_SIZE.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDeprecated(Namespace.INFINISPAN_SERVER_9_1.getVersion())
+                    .setDeprecated(ModelVersion.create(9, 1))
                     .setDefaultValue(new ModelNode().set(AbstractStoreConfiguration.MAX_BATCH_SIZE.getDefaultValue()))
                     .build();
     static final SimpleAttributeDefinition FETCH_SIZE =

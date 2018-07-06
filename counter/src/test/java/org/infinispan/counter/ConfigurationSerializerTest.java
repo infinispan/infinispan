@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,7 +41,7 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
 
    @DataProvider
    public static Object[][] configurationFiles() {
-      return new Object[][]{{"config/counters.xml"}};
+      return new Object[][]{{Paths.get("config/counters.xml")}};
    }
 
    public void testParser() throws IOException {

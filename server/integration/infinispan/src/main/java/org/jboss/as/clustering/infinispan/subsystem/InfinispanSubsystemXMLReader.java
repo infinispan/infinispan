@@ -72,9 +72,9 @@ import org.jboss.staxmapper.XMLExtendedStreamReader;
  */
 public final class InfinispanSubsystemXMLReader implements XMLElementReader<List<ModelNode>> {
    private static final Logger log = Logger.getLogger(InfinispanSubsystemXMLReader.class);
-   private final Namespace namespace;
+   private final InfinispanSchema namespace;
 
-   public InfinispanSubsystemXMLReader(Namespace namespace) {
+   public InfinispanSubsystemXMLReader(InfinispanSchema namespace) {
        this.namespace = namespace;
    }
 
@@ -144,7 +144,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case LISTENER_EXECUTOR: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         throw ParseUtils.unexpectedAttribute(reader, i);
                     } else {
                         ROOT_LOGGER.deprecatedExecutor(ModelKeys.LISTENER_EXECUTOR, ModelKeys.LISTENER_THREAD_POOL);
@@ -152,7 +152,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case ASYNC_EXECUTOR: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         throw ParseUtils.unexpectedAttribute(reader, i);
                     } else {
                         ROOT_LOGGER.deprecatedExecutor(ModelKeys.ASYNC_EXECUTOR, ModelKeys.ASYNC_OPERATIONS_THREAD_POOL);
@@ -160,7 +160,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case EVICTION_EXECUTOR: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         throw ParseUtils.unexpectedAttribute(reader, i);
                     } else {
                         ROOT_LOGGER.deprecatedExecutor(ModelKeys.EVICTION_EXECUTOR, ModelKeys.EXPIRATION_THREAD_POOL);
@@ -168,7 +168,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case EXPIRATION_EXECUTOR: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         throw ParseUtils.unexpectedAttribute(reader, i);
                     } else {
                         ROOT_LOGGER.deprecatedExecutor(ModelKeys.EXPIRATION_EXECUTOR, ModelKeys.EXPIRATION_THREAD_POOL);
@@ -176,7 +176,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                    break;
                 }
                 case REPLICATION_QUEUE_EXECUTOR: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         throw ParseUtils.unexpectedAttribute(reader, i);
                     } else {
                         ROOT_LOGGER.deprecatedExecutor(ModelKeys.REPLICATION_QUEUE_EXECUTOR, ModelKeys.REPLICATION_QUEUE_THREAD_POOL);
@@ -184,7 +184,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case STATE_TRANSFER_EXECUTOR: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         throw ParseUtils.unexpectedAttribute(reader, i);
                     } else {
                         ROOT_LOGGER.deprecatedExecutor(ModelKeys.STATE_TRANSFER_EXECUTOR, ModelKeys.STATE_TRANSFER_THREAD_POOL);
@@ -231,7 +231,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case SECURITY: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_7_0)) {
+                    if (namespace.since(7, 0)) {
                         parseGlobalSecurity(reader, containerAddress, operations);
                     } else {
                         throw ParseUtils.unexpectedElement(reader);
@@ -239,7 +239,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case GLOBAL_STATE: {
-                   if (namespace.since(Namespace.INFINISPAN_SERVER_8_1)) {
+                   if (namespace.since(8, 1)) {
                       parseGlobalState(reader, containerAddress, operations);
                    } else {
                       throw ParseUtils.unexpectedElement(reader);
@@ -247,7 +247,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                    break;
                 }
                 case MODULES: {
-                   if (namespace.since(Namespace.INFINISPAN_SERVER_9_2)) {
+                   if (namespace.since(9, 2)) {
                       parseModules(reader, containerAddress, operations);
                    } else {
                       throw ParseUtils.unexpectedElement(reader);
@@ -259,7 +259,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case LOCAL_CACHE_CONFIGURATION: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         parseLocalCache(reader, containerAddress, operations, true);
                     } else {
                         throw ParseUtils.unexpectedElement(reader);
@@ -271,7 +271,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case INVALIDATION_CACHE_CONFIGURATION: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         parseInvalidationCache(reader, containerAddress, operations, true);
                     } else {
                         throw ParseUtils.unexpectedElement(reader);
@@ -283,7 +283,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case REPLICATED_CACHE_CONFIGURATION: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         parseReplicatedCache(reader, containerAddress, operations, true);
                     } else {
                         throw ParseUtils.unexpectedElement(reader);
@@ -295,7 +295,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case DISTRIBUTED_CACHE_CONFIGURATION: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         parseDistributedCache(reader, containerAddress, operations, true);
                     } else {
                         throw ParseUtils.unexpectedElement(reader);
@@ -303,55 +303,55 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case ASYNC_OPERATIONS_THREAD_POOL: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         this.parseThreadPool(ThreadPoolResource.ASYNC_OPERATIONS, reader, containerAddress, operations);
                         break;
                     }
                 }
                 case EXPIRATION_THREAD_POOL: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         this.parseScheduledThreadPool(ScheduledThreadPoolResource.EXPIRATION, reader, containerAddress, operations);
                         break;
                     }
                 }
                 case LISTENER_THREAD_POOL: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         this.parseThreadPool(ThreadPoolResource.LISTENER, reader, containerAddress, operations);
                         break;
                     }
                 }
                 case PERSISTENCE_THREAD_POOL: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         this.parseScheduledThreadPool(ScheduledThreadPoolResource.PERSISTENCE, reader, containerAddress, operations);
                         break;
                     }
                 }
                 case REMOTE_COMMAND_THREAD_POOL: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         this.parseThreadPool(ThreadPoolResource.REMOTE_COMMAND, reader, containerAddress, operations);
                         break;
                     }
                 }
                 case REPLICATION_QUEUE_THREAD_POOL: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         this.parseScheduledThreadPool(ScheduledThreadPoolResource.REPLICATION_QUEUE, reader, containerAddress, operations);
                         break;
                     }
                 }
                 case STATE_TRANSFER_THREAD_POOL: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         this.parseThreadPool(ThreadPoolResource.STATE_TRANSFER, reader, containerAddress, operations);
                         break;
                     }
                 }
                 case TRANSPORT_THREAD_POOL: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         this.parseThreadPool(ThreadPoolResource.TRANSPORT, reader, containerAddress, operations);
                         break;
                     }
                 }
                 case COUNTERS: {
-                   if (namespace.since(Namespace.INFINISPAN_SERVER_9_2)) {
+                   if (namespace.since(9, 2)) {
                        PathAddress countersAddress = containerAddress.append(CacheContainerCountersResource.PATH);
                        operations.put(countersAddress, Util.getEmptyOperation(ADD, countersAddress.toModelNode()));
                        this.parseCounters(reader, countersAddress, operations);
@@ -685,7 +685,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case EXECUTOR: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         throw ParseUtils.unexpectedAttribute(reader, i);
                     } else {
                         ROOT_LOGGER.deprecatedExecutor(ModelKeys.EXECUTOR, ModelKeys.TRANSPORT_THREAD_POOL);
@@ -697,7 +697,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case REMOTE_COMMAND_EXECUTOR: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (namespace.since(8, 0)) {
                         throw ParseUtils.unexpectedAttribute(reader, i);
                     } else {
                         ROOT_LOGGER.deprecatedExecutor(ModelKeys.REMOTE_COMMAND_EXECUTOR, ModelKeys.REMOTE_COMMAND_THREAD_POOL);
@@ -709,25 +709,25 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case TOTAL_ORDER_EXECUTOR: {
-                    if (!namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (!namespace.since(8, 0)) {
                         log.warn("The xml element total-order-executor has been removed and has no effect, please update your configuration file.");
                         break;
                     }
                 }
                 case STACK: {
-                    if (!namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (!namespace.since(8, 0)) {
                         stack = value;
                         break;
                     }
                 }
                 case CLUSTER: {
-                    if (!namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                    if (!namespace.since(8, 0)) {
                         cluster = value;
                         break;
                     }
                 }
                 case INITIAL_CLUSTER_SIZE: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_2)) {
+                    if (namespace.since(8, 2)) {
                         TransportResource.INITIAL_CLUSTER_SIZE.parseAndSetParameter(value, transport, reader);
                         break;
                     } else {
@@ -735,7 +735,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     }
                 }
                 case INITIAL_CLUSTER_TIMEOUT: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_2)) {
+                    if (namespace.since(8, 2)) {
                         TransportResource.INITIAL_CLUSTER_TIMEOUT.parseAndSetParameter(value, transport, reader);
                         break;
                     } else {
@@ -748,7 +748,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             }
         }
 
-        if (!namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+        if (!namespace.since(8, 0)) {
             // We need to create a corresponding channel add operation
             String channel = (cluster != null) ? cluster : ("cluster-" + containerAddress.getLastElement().getValue());
             TransportResource.CHANNEL.parseAndSetParameter(channel, transport, reader);
@@ -932,7 +932,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
     private void parseClusteredCacheAttribute(XMLExtendedStreamReader reader, int index, Attribute attribute, String value, ModelNode cache) throws XMLStreamException {
         switch (attribute) {
              case ASYNC_MARSHALLING: {
-                 if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                 if (namespace.since(8, 0)) {
                      throw ParseUtils.unexpectedAttribute(reader, index);
                  } else {
                      log.warn("The async-marshalling attribute has been deprecated and has no effect, please update your configuration file.");
@@ -944,7 +944,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 break;
             }
             case QUEUE_SIZE: {
-                if (namespace.since(Namespace.INFINISPAN_SERVER_9_0)) {
+                if (namespace.since(9, 0)) {
                     throw ParseUtils.unexpectedAttribute(reader, index);
                 } else {
                     log.warn("The queue-size attribute has been deprecated and has no effect, please update your configuration file.");
@@ -952,7 +952,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 }
             }
             case QUEUE_FLUSH_INTERVAL: {
-                if (namespace.since(Namespace.INFINISPAN_SERVER_9_0)) {
+                if (namespace.since(9, 0)) {
                     throw ParseUtils.unexpectedAttribute(reader, index);
                 } else {
                     log.warn("The queue-flush-interval attribute has been deprecated and has no effect, please update your configuration file.");
@@ -1031,7 +1031,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
         if (!cacheConfiguration.hasDefined(ModelKeys.NAME)) {
             throw ParseUtils.missingRequired(reader, EnumSet.of(Attribute.NAME));
         }
-        if (!namespace.since(Namespace.INFINISPAN_SERVER_9_0)) {
+        if (!namespace.since(9, 0)) {
             if (!cacheConfiguration.hasDefined(ModelKeys.MODE) && !cacheConfiguration.hasDefined(ModelKeys.CONFIGURATION)) {
                 throw ParseUtils.missingRequired(reader, EnumSet.of(Attribute.MODE));
             }
@@ -1078,7 +1078,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             Element element = Element.forName(reader.getLocalName());
             switch (element) {
                 case PARTITION_HANDLING: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_7_0)) {
+                    if (namespace.since(7, 0)) {
                         this.parsePartitionHandling(reader, cacheConfiguration, additionalConfigurationOperations);
                     } else {
                         throw ParseUtils.unexpectedElement(reader);
@@ -1182,7 +1182,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 break;
             }
             case BACKUP_FOR: {
-                if (namespace.since(Namespace.INFINISPAN_SERVER_7_0)) {
+                if (namespace.since(7, 0)) {
                     this.parseBackupFor(reader, cache);
                 } else {
                     throw ParseUtils.unexpectedElement(reader);
@@ -1206,7 +1206,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 break;
             }
             case DATA_TYPE: {
-                if (namespace.since(Namespace.INFINISPAN_SERVER_9_2)) {
+                if (namespace.since(9, 2)) {
                     this.parseDataType(reader, cache, operations);
                 } else {
                     throw ParseUtils.unexpectedElement(reader);
@@ -1246,7 +1246,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 break;
             }
             case LEVELDB_STORE: {
-                if (namespace.since(Namespace.INFINISPAN_SERVER_9_0)) {
+                if (namespace.since(9, 0)) {
                     throw ParseUtils.unexpectedElement(reader);
                 } else {
                     this.parseLevelDBStore(reader, cache, operations);
@@ -1258,7 +1258,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 break;
             }
             case ROCKSDB_STORE: {
-                if (namespace.since(Namespace.INFINISPAN_SERVER_9_0)) {
+                if (namespace.since(9, 0)) {
                     this.parseRocksDBStore(reader, cache, operations);
                 } else {
                     throw ParseUtils.unexpectedElement(reader);
@@ -1270,7 +1270,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 break;
             }
             case SECURITY: {
-                if (namespace.since(Namespace.INFINISPAN_SERVER_7_0)) {
+                if (namespace.since(7, 0)) {
                     this.parseCacheSecurity(reader, cache, operations);
                     break;
                 }
@@ -1499,7 +1499,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
 
     private void parseEviction(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
 
-        if (namespace.since(Namespace.INFINISPAN_SERVER_9_0)) {
+        if (namespace.since(9, 0)) {
             throw ParseUtils.unexpectedElement(reader);
         }
 
@@ -1516,7 +1516,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case MAX_ENTRIES: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_1)) {
+                    if (namespace.since(8, 1)) {
                         throw ParseUtils.unexpectedAttribute(reader, i);
                     }
                 }
@@ -1778,7 +1778,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case ENCRYPTION: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_9_1)) {
+                    if (namespace.since(9, 1)) {
                         parseRemoteStoreEncryption(reader, store, additionalConfigurationOperations);
                     } else {
                         throw ParseUtils.unexpectedElement(reader);
@@ -1786,7 +1786,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case AUTHENTICATION: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_9_1)) {
+                    if (namespace.since(9, 1)) {
                         parseRemoteStoreAuthentication(reader, store, additionalConfigurationOperations);
                     } else {
                         throw ParseUtils.unexpectedElement(reader);
@@ -2309,13 +2309,13 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case CREATE_ON_START: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_7_2)) {
+                    if (namespace.since(7, 2)) {
                         BaseJDBCStoreConfigurationResource.CREATE_ON_START.parseAndSetParameter(value, table, reader);
                         break;
                     }
                 }
                 case DROP_ON_EXIT: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_7_2)) {
+                    if (namespace.since(7, 2)) {
                         BaseJDBCStoreConfigurationResource.DROP_ON_EXIT.parseAndSetParameter(value, table, reader);
                         break;
                     }
@@ -2479,7 +2479,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
             switch (attribute) {
                 case FLUSH_LOCK_TIMEOUT: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_9_0)) {
+                    if (namespace.since(9, 0)) {
                         throw ParseUtils.unexpectedAttribute(reader, i);
                     } else {
                         ROOT_LOGGER.flushLockTimeoutDeprecated();
@@ -2491,7 +2491,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case SHUTDOWN_TIMEOUT: {
-                    if (namespace.since(Namespace.INFINISPAN_SERVER_9_0)) {
+                    if (namespace.since(9, 0)) {
                         throw ParseUtils.unexpectedAttribute(reader, i);
                     } else {
                         ROOT_LOGGER.shutdownTimeoutDeprecated();
@@ -2705,7 +2705,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case STATE_TRANSFER:
-                   if (namespace.since(Namespace.INFINISPAN_SERVER_7_0)) {
+                   if (namespace.since(7, 0)) {
                        this.parseXSiteStateTransfer(reader, operation, additionalOperations);
                        break;
                    }
@@ -2854,7 +2854,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case ENABLED: {
-               if (namespace.since(Namespace.INFINISPAN_SERVER_9_1))
+               if (namespace.since(9, 1))
                   throw ParseUtils.unexpectedAttribute(reader, i);
 
                PartitionHandling type = Boolean.valueOf(value) ? PartitionHandling.DENY_READ_WRITES : PartitionHandling.ALLOW_READ_WRITES;
@@ -2921,7 +2921,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
            switch (attribute) {
                case MIN_THREADS:
                case QUEUE_LENGTH: {
-                   if (ScheduledThreadPoolResource.PERSISTENCE != pool || namespace.since(Namespace.INFINISPAN_SERVER_9_3)) {
+                   if (ScheduledThreadPoolResource.PERSISTENCE != pool || namespace.since(9, 3)) {
                        throw ParseUtils.unexpectedAttribute(reader, i);
                    }
                    ROOT_LOGGER.deprecatedExecutorAttribute(attribute.getLocalName());

@@ -1,5 +1,7 @@
 package org.infinispan.persistence.sifs;
 
+import java.nio.file.Paths;
+
 import org.infinispan.configuration.serializer.AbstractConfigurationSerializerTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -10,7 +12,7 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
    @DataProvider(name = "configurationFiles")
    public Object[][] configurationFiles() {
       return new Object[][] {
-            {"sifs-config.xml"}
+            {Paths.get("sifs-config.xml")}
       };
    }
 }

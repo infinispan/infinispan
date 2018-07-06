@@ -45,9 +45,9 @@ import org.jboss.staxmapper.XMLExtendedStreamReader;
  *
  */
 class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<List<ModelNode>> {
-   private final Namespace namespace;
+   private final EndpointSchema namespace;
 
-   EndpointSubsystemReader(Namespace namespace) {
+   EndpointSubsystemReader(EndpointSchema namespace) {
       this.namespace = namespace;
    }
 
@@ -169,7 +169,7 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
          String value, Attribute attribute) throws XMLStreamException {
       switch (attribute) {
       case IGNORED_CACHES: {
-         if (namespace.since(Namespace.INFINISPAN_ENDPOINT_8_0)) {
+         if (namespace.since(8, 0)) {
             reader.getListAttributeValue(i).forEach(a -> connector.get(ModelKeys.IGNORED_CACHES).add(a));
          } else {
             throw ParseUtils.unexpectedAttribute(reader, i);
@@ -275,7 +275,7 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
             break;
          }
          case AUTH_METHOD: {
-            if (namespace.since(Namespace.INFINISPAN_ENDPOINT_9_0)) {
+            if (namespace.since(9, 0)) {
                throw ParseUtils.unexpectedAttribute(reader, i);
             } else {
                ROOT_LOGGER.restAuthMethodIgnored();
@@ -308,14 +308,14 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
             break;
          }
          case SECURITY_DOMAIN: {
-            if (namespace.since(Namespace.INFINISPAN_ENDPOINT_9_0)) {
+            if (namespace.since(9, 0)) {
                throw ParseUtils.unexpectedAttribute(reader, i);
             } else {
                ROOT_LOGGER.restSecurityDomainIgnored();
             }
          }
          case SECURITY_MODE: {
-            if (namespace.since(Namespace.INFINISPAN_ENDPOINT_9_0)) {
+            if (namespace.since(9, 0)) {
                throw ParseUtils.unexpectedAttribute(reader, i);
             } else {
                ROOT_LOGGER.restSecurityModeIgnored();
@@ -323,7 +323,7 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
             break;
          }
          case SECURITY_REALM: {
-            if (namespace.since(Namespace.INFINISPAN_ENDPOINT_9_0)) {
+            if (namespace.since(9, 0)) {
                throw ParseUtils.unexpectedAttribute(reader, i);
             } else {
                ROOT_LOGGER.restSecurityRealmIgnored();
@@ -331,7 +331,7 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
             break;
          }
          case VIRTUAL_HOST: {
-            if (namespace.since(Namespace.INFINISPAN_ENDPOINT_9_0)) {
+            if (namespace.since(9, 0)) {
                throw ParseUtils.unexpectedAttribute(reader, i);
             } else {
                ROOT_LOGGER.virtualHostNotInUse();
@@ -339,7 +339,7 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
             break;
          }
          case IGNORED_CACHES: {
-            if (namespace.since(Namespace.INFINISPAN_ENDPOINT_8_0)) {
+            if (namespace.since(8, 0)) {
                reader.getListAttributeValue(i).forEach(a -> connector.get(ModelKeys.IGNORED_CACHES).add(a));
             } else {
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -466,7 +466,7 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
                break;
             }
             case SINGLE_PORT: {
-               if (namespace.since(Namespace.INFINISPAN_ENDPOINT_9_2)) {
+               if (namespace.since(9, 2)) {
                   parseSinglePort(reader, connector, operations);
                } else {
                   throw ParseUtils.unexpectedElement(reader);
@@ -783,7 +783,7 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
          final Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case CORS_RULE: {
-               if (namespace.since(Namespace.INFINISPAN_ENDPOINT_9_2)) {
+               if (namespace.since(9, 2)) {
                   parseCorsRule(reader, connector, operations);
                   break;
                }
@@ -889,7 +889,7 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
          final Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case SNI: {
-               if (namespace.since(Namespace.INFINISPAN_ENDPOINT_9_0)) {
+               if (namespace.since(9, 0)) {
                   parseSni(reader, security, operations);
                   break;
                }

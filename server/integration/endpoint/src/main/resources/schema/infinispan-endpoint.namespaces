@@ -1,0 +1,7 @@
+infinispan:server:endpoint:7.2
+infinispan:server:endpoint:8.0
+infinispan:server:endpoint:9.0
+infinispan:server:endpoint:9.1
+infinispan:server:endpoint:9.2
+infinispan:server:endpoint:9.3
+infinispan:server:endpoint:9.4

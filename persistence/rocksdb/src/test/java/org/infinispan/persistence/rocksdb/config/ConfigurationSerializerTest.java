@@ -1,5 +1,7 @@
 package org.infinispan.persistence.rocksdb.config;
 
+import java.nio.file.Paths;
+
 import org.infinispan.configuration.serializer.AbstractConfigurationSerializerTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -10,7 +12,7 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
    @DataProvider(name = "configurationFiles")
    public Object[][] configurationFiles() {
       return new Object[][] {
-            {"config/rocksdb-config.xml"},
+            {Paths.get("config/rocksdb-config.xml")},
       };
    }
 }

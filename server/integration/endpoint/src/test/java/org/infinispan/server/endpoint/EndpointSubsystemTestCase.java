@@ -27,10 +27,18 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUBSYSTEM;
 
+import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
+import java.io.Reader;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
+import java.util.stream.Collectors;
 
 import org.infinispan.server.commons.subsystem.ClusteringSubsystemTest;
 import org.infinispan.server.endpoint.subsystem.EndpointExtension;
@@ -53,27 +61,34 @@ import org.junit.runners.Parameterized.Parameters;
 public class EndpointSubsystemTestCase extends ClusteringSubsystemTest {
 
    private final String xsdPath;
-   private final int operations;
+   private final int expectedOperationCount;
    private final String[] templates;
 
-   public EndpointSubsystemTestCase(String xmlFile, int operations, String xsdPath, String[] templates) {
-      super(Constants.SUBSYSTEM_NAME, new EndpointExtension(), xmlFile);
-      this.operations = operations;
-      this.xsdPath = xsdPath;
-      this.templates = templates;
+   public EndpointSubsystemTestCase(Path xmlPath, Properties properties) {
+      super(Constants.SUBSYSTEM_NAME, new EndpointExtension(), xmlPath.getFileName().toString());
+      this.expectedOperationCount = Integer.parseInt(properties.getProperty("expected.operations.count"));
+      this.xsdPath = properties.getProperty("xsd.path");
+      this.templates = null;
    }
 
    @Parameters
-   public static Collection<Object[]> data() {
-      Object[][] data = new Object[][] {
-            { "endpoint-7.2.xml", 15, null, null },
-            { "endpoint-8.0.xml", 15, null, null },
-            { "endpoint-9.0.xml", 37, null, null },
-            { "endpoint-9.2.xml", 40, null, null },
-            { "endpoint-9.3.xml", 43, null, null },
-            { "endpoint-9.4.xml", 43, "schema/jboss-infinispan-endpoint_9_4.xsd", new String[] { "/subsystem-templates/infinispan-endpoint.xml"} },
-      };
-      return Arrays.asList(data);
+   public static Collection<Object[]> data() throws Exception {
+      URL configDir = Thread.currentThread().getContextClassLoader().getResource("org/infinispan/server/endpoint");
+      List<Path> paths = Files.list(Paths.get(configDir.toURI()))
+            .filter(path -> path.getFileName().toString().matches("^endpoint-[0-9]+\\.[0_9]+.xml$"))
+            .collect(Collectors.toList());
+
+      List<Object[]> data = new ArrayList<>();
+      for (int i = 0; i < paths.size(); i++) {
+         Path xmlPath = paths.get(i);
+         String propsPath = xmlPath.toString().replaceAll("\\.xml$", ".properties");
+         Properties properties = new Properties();
+         try (Reader r = new FileReader(propsPath)) {
+            properties.load(r);
+         }
+         data.add(new Object[]{xmlPath, properties});
+      }
+      return data;
    }
 
    @Override
@@ -107,7 +122,7 @@ public class EndpointSubsystemTestCase extends ClusteringSubsystemTest {
 
       // Check that we have the expected number of operations
       // one for each resource instance
-      Assert.assertEquals(this.operations, operations.size());
+      Assert.assertEquals(this.expectedOperationCount, operations.size());
 
       // Check that each operation has the correct content
       ModelNode addSubsystem = operations.get(0);

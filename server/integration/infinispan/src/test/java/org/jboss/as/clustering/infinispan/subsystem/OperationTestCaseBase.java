@@ -32,7 +32,7 @@ import org.junit.Assert;
 
 public class OperationTestCaseBase extends AbstractSubsystemTest {
 
-    static final ModelVersion VERSION = Namespace.CURRENT.getVersion();
+    static final ModelVersion VERSION = InfinispanSchema.CURRENT.getVersion();
     static final String SUBSYSTEM_XML_FILE = String.format("subsystem-infinispan_%d_%d.xml", VERSION.getMajor(), VERSION.getMinor());
 
     public OperationTestCaseBase() {

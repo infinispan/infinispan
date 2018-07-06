@@ -71,7 +71,7 @@ public class JGroupsExtension implements Extension {
      */
     @Override
     public void initializeParsers(ExtensionParsingContext context) {
-        for (JGroupsSchema schema: JGroupsSchema.values()) {
+        for (JGroupsSchema schema : JGroupsSchema.SCHEMAS) {
             context.setSubsystemXmlMapping(SUBSYSTEM_NAME, schema.getNamespaceUri(), new JGroupsSubsystemXMLReader(schema));
         }
     }

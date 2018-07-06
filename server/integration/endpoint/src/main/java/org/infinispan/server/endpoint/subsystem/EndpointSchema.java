@@ -19,7 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.jgroups.subsystem;
+package org.infinispan.server.endpoint.subsystem;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -30,18 +30,18 @@ import java.util.List;
 /**
  * Holds the supported subsystem xml schemas.
  */
-class JGroupsSchema {
+class EndpointSchema {
     private static final String URN_PATTERN = "urn:%s:%d.%d";
 
-    static final List<JGroupsSchema> SCHEMAS;
-    static final JGroupsSchema CURRENT;
+    static final List<EndpointSchema> SCHEMAS;
+    static final EndpointSchema CURRENT;
     static {
         SCHEMAS = new ArrayList<>();
-        try (BufferedReader r = new BufferedReader(new InputStreamReader(JGroupsSchema.class.getResourceAsStream("/schema/infinispan-jgroups.namespaces"), StandardCharsets.UTF_8))) {
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(EndpointSchema.class.getResourceAsStream("/schema/infinispan-endpoint.namespaces"), StandardCharsets.UTF_8))) {
             r.lines().forEach(line -> {
                 int colon = line.lastIndexOf(':');
                 String parts[] = line.substring(colon + 1).split("\\.");
-                SCHEMAS.add(new JGroupsSchema(line.substring(0, colon), Integer.parseInt(parts[0]), Integer.parseInt(parts[1])));
+                SCHEMAS.add(new EndpointSchema(line.substring(0, colon), Integer.parseInt(parts[0]), Integer.parseInt(parts[1])));
             });
             CURRENT = SCHEMAS.get(SCHEMAS.size() - 1);
         } catch (Exception e) {
@@ -53,7 +53,7 @@ class JGroupsSchema {
     private final int major;
     private final int minor;
 
-    private JGroupsSchema(String domain, int major, int minor) {
+    private EndpointSchema(String domain, int major, int minor) {
         this.domain = domain;
         this.major = major;
         this.minor = minor;
@@ -66,8 +66,8 @@ class JGroupsSchema {
     /**
      * @return true, if this version of the schema is greater than or equal to the version of any of the specified schemas, false otherwise.
      */
-    public boolean since(JGroupsSchema... schemas) {
-        for(JGroupsSchema schema : schemas) {
+    public boolean since(EndpointSchema... schemas) {
+        for(EndpointSchema schema : schemas) {
             if ((this.domain.equals(schema.domain) && ((this.major > schema.major) || ((this.major == schema.major) && (this.minor >= schema.minor)))))
                 return true;
         }

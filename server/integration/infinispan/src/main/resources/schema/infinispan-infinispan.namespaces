@@ -1,0 +1,12 @@
+infinispan:server:core:6.0
+infinispan:server:core:7.0
+infinispan:server:core:7.1
+infinispan:server:core:7.2
+infinispan:server:core:8.0
+infinispan:server:core:8.1
+infinispan:server:core:8.2
+infinispan:server:core:9.0
+infinispan:server:core:9.1
+infinispan:server:core:9.2
+infinispan:server:core:9.3
+infinispan:server:core:9.4
