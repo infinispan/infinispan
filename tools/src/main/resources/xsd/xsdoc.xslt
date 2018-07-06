@@ -1,4 +1,102 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE xsl:stylesheet [
+        <!ELEMENT xsl:stylesheet (xsl:output|xsl:key|xsl:template)*>
+        <!ATTLIST xsl:stylesheet
+                xmlns:xsl CDATA #REQUIRED
+                xmlns CDATA #REQUIRED
+                xmlns:html CDATA #REQUIRED
+                xmlns:xs CDATA #REQUIRED
+                version CDATA #REQUIRED
+                exclude-result-prefixes CDATA #REQUIRED>
+        <!ELEMENT xsl:output (#PCDATA)>
+        <!ATTLIST xsl:output
+                method CDATA #REQUIRED
+                encoding CDATA #REQUIRED
+                standalone CDATA #REQUIRED
+                version CDATA #REQUIRED
+                doctype-public CDATA #REQUIRED
+                doctype-system CDATA #REQUIRED
+                indent CDATA #REQUIRED>
+        <!ELEMENT xsl:key (#PCDATA)>
+        <!ATTLIST xsl:key
+                match CDATA #REQUIRED
+                name CDATA #REQUIRED
+                use CDATA #REQUIRED>
+        <!ELEMENT xsl:template (html|div|xsl:apply-templates|xsl:if|xsl:param|xsl:variable|xsl:choose|tr|xsl:for-each|a)*>
+        <!ATTLIST xsl:template
+                match CDATA #IMPLIED
+                mode CDATA #IMPLIED
+                name CDATA #IMPLIED>
+        <!ELEMENT html (head|body)*>
+        <!ELEMENT head (title|meta|style|script)*>
+        <!ELEMENT title (xsl:value-of)*>
+        <!ELEMENT xsl:value-of (#PCDATA)>
+        <!ATTLIST xsl:value-of
+                select CDATA #REQUIRED>
+        <!ELEMENT meta (#PCDATA)>
+        <!ATTLIST meta
+                charset CDATA #REQUIRED>
+        <!ELEMENT style (#PCDATA)>
+        <!ELEMENT script (#PCDATA)>
+        <!ATTLIST script
+                src CDATA #IMPLIED
+                type CDATA #REQUIRED>
+        <!ELEMENT body (h1|xsl:apply-templates|div)*>
+        <!ELEMENT h1 (xsl:value-of)*>
+        <!ELEMENT xsl:apply-templates (xsl:with-param)*>
+        <!ATTLIST xsl:apply-templates
+                mode CDATA #IMPLIED
+                select CDATA #REQUIRED>
+        <!ELEMENT div (a|h3|div|p|xsl:choose|xsl:apply-templates)*>
+        <!ATTLIST div
+                class CDATA #IMPLIED
+                id CDATA #IMPLIED>
+        <!ELEMENT a (xsl:attribute|h3|xsl:value-of)*>
+        <!ATTLIST a
+                href CDATA #IMPLIED>
+        <!ELEMENT h3 (xsl:value-of|xsl:apply-templates)*>
+        <!ATTLIST h3
+                class CDATA #IMPLIED>
+        <!ELEMENT p (xsl:apply-templates)*>
+        <!ELEMENT xsl:choose (xsl:when|xsl:otherwise)*>
+        <!ELEMENT xsl:when (xsl:variable|xsl:value-of|xsl:apply-templates|xsl:call-template|xsl:choose|xsl:text)*>
+        <!ATTLIST xsl:when
+                test CDATA #REQUIRED>
+        <!ELEMENT xsl:variable (xsl:choose)*>
+        <!ATTLIST xsl:variable
+                name CDATA #REQUIRED
+                select CDATA #IMPLIED>
+        <!ELEMENT xsl:otherwise (xsl:value-of|xsl:apply-templates|xsl:for-each|span|xsl:variable|xsl:call-template)*>
+        <!ELEMENT xsl:if (table|xsl:apply-templates|xsl:value-of)*>
+        <!ATTLIST xsl:if
+                test CDATA #REQUIRED>
+        <!ELEMENT table (tr|xsl:apply-templates)*>
+        <!ATTLIST table
+                class CDATA #IMPLIED>
+        <!ELEMENT tr (th|td)*>
+        <!ELEMENT th (#PCDATA)>
+        <!ELEMENT xsl:with-param (#PCDATA)>
+        <!ATTLIST xsl:with-param
+                name CDATA #REQUIRED
+                select CDATA #REQUIRED>
+        <!ELEMENT xsl:param (#PCDATA)>
+        <!ATTLIST xsl:param
+                name CDATA #REQUIRED>
+        <!ELEMENT xsl:for-each (xsl:apply-templates|xsl:call-template)*>
+        <!ATTLIST xsl:for-each
+                select CDATA #REQUIRED>
+        <!ELEMENT xsl:attribute (xsl:value-of|xsl:apply-templates)*>
+        <!ATTLIST xsl:attribute
+                name CDATA #REQUIRED>
+        <!ELEMENT td (xsl:value-of|xsl:choose|xsl:if|xsl:apply-templates|xsl:attribute)*>
+        <!ELEMENT xsl:call-template (xsl:with-param)*>
+        <!ATTLIST xsl:call-template
+                name CDATA #REQUIRED>
+        <!ELEMENT span (#PCDATA)>
+        <!ATTLIST span
+                class CDATA #REQUIRED>
+        <!ELEMENT xsl:text (#PCDATA)>
+        ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="1.0" exclude-result-prefixes="xs html">
    <xsl:output method="html" encoding="ISO-8859-1" standalone="yes" version="1.0" doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN" doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd" indent="yes" />
 
@@ -50,7 +148,10 @@
                ga('create', 'UA-8601422-4', 'auto');
                ga('send', 'pageview');
             </script>
-            <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js">
+            <script
+                    src="https://code.jquery.com/jquery-2.2.4.min.js"
+                    integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+                    crossorigin="anonymous">
             </script>
             <script type="text/javascript">
                $(document).ready(function() {
