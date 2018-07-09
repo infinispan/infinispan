@@ -2,8 +2,11 @@ package org.infinispan.stats.impl;
 
 import static org.infinispan.stats.impl.StatKeys.ACTIVATIONS;
 import static org.infinispan.stats.impl.StatKeys.AVERAGE_READ_TIME;
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_READ_TIME_NANOS;
 import static org.infinispan.stats.impl.StatKeys.AVERAGE_REMOVE_TIME;
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_REMOVE_TIME_NANOS;
 import static org.infinispan.stats.impl.StatKeys.AVERAGE_WRITE_TIME;
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_WRITE_TIME_NANOS;
 import static org.infinispan.stats.impl.StatKeys.CACHE_LOADER_LOADS;
 import static org.infinispan.stats.impl.StatKeys.CACHE_LOADER_MISSES;
 import static org.infinispan.stats.impl.StatKeys.CACHE_WRITER_STORES;
@@ -104,8 +107,11 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
          putLongAttributes(responseList, att);
 
       putLongAttributesAverage(responseList, AVERAGE_WRITE_TIME);
+      putLongAttributesAverage(responseList, AVERAGE_WRITE_TIME_NANOS);
       putLongAttributesAverage(responseList, AVERAGE_READ_TIME);
+      putLongAttributesAverage(responseList, AVERAGE_READ_TIME_NANOS);
       putLongAttributesAverage(responseList, AVERAGE_REMOVE_TIME);
+      putLongAttributesAverage(responseList, AVERAGE_REMOVE_TIME_NANOS);
       putLongAttributesAverage(responseList, OFF_HEAP_MEMORY_USED);
 
       putIntAttributes(responseList, NUMBER_OF_LOCKS_HELD);
@@ -126,7 +132,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    @Override
    @ManagedAttribute(description = "Cluster wide total average number of milliseconds for a read operation on the cache",
-         displayName = "Cluster wide total average read time",
+         displayName = "Cluster wide total average read time (ms)",
          units = Units.MILLISECONDS,
          displayType = DisplayType.SUMMARY)
    public long getAverageReadTime() {
@@ -134,8 +140,17 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    }
 
    @Override
+   @ManagedAttribute(description = "Cluster wide total average number of nanoseconds for a read operation on the cache",
+         displayName = "Cluster wide total average read time (ns)",
+         units = Units.NANOSECONDS,
+         displayType = DisplayType.SUMMARY)
+   public long getAverageReadTimeNanos() {
+      return getStatAsLong(AVERAGE_READ_TIME_NANOS);
+   }
+
+   @Override
    @ManagedAttribute(description = "Cluster wide total average number of milliseconds for a remove operation in the cache",
-         displayName = "Cluster wide total average remove time",
+         displayName = "Cluster wide total average remove time (ms)",
          units = Units.MILLISECONDS,
          displayType = DisplayType.SUMMARY)
    public long getAverageRemoveTime() {
@@ -143,17 +158,35 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    }
 
    @Override
-   public int getRequiredMinimumNumberOfNodes() {
-      return getStatAsInt(REQUIRED_MIN_NODES);
+   @ManagedAttribute(description = "Cluster wide total average number of nanoseconds for a remove operation in the cache",
+         displayName = "Cluster wide total average remove time (ns)",
+         units = Units.NANOSECONDS,
+         displayType = DisplayType.SUMMARY)
+   public long getAverageRemoveTimeNanos() {
+      return getStatAsLong(AVERAGE_REMOVE_TIME_NANOS);
    }
 
    @Override
    @ManagedAttribute(description = "Cluster wide average number of milliseconds for a write operation in the cache",
-         displayName = "Cluster wide average write time",
+         displayName = "Cluster wide average write time (ms)",
          units = Units.MILLISECONDS,
          displayType = DisplayType.SUMMARY)
    public long getAverageWriteTime() {
       return getStatAsLong(AVERAGE_WRITE_TIME);
+   }
+
+   @Override
+   @ManagedAttribute(description = "Cluster wide average number of nanoseconds for a write operation in the cache",
+         displayName = "Cluster wide average write time (ns)",
+         units = Units.NANOSECONDS,
+         displayType = DisplayType.SUMMARY)
+   public long getAverageWriteTimeNanos() {
+      return getStatAsLong(AVERAGE_WRITE_TIME_NANOS);
+   }
+
+   @Override
+   public int getRequiredMinimumNumberOfNodes() {
+      return getStatAsInt(REQUIRED_MIN_NODES);
    }
 
    @ManagedAttribute(description = "Cluster wide total number of cache eviction operations",
@@ -415,8 +448,11 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
          Map<String, Number> map = new HashMap<>();
          Stats stats = remoteCache.getStats();
          map.put(AVERAGE_READ_TIME, stats.getAverageReadTime());
+         map.put(AVERAGE_READ_TIME_NANOS, stats.getAverageReadTimeNanos());
          map.put(AVERAGE_WRITE_TIME, stats.getAverageWriteTime());
+         map.put(AVERAGE_WRITE_TIME_NANOS, stats.getAverageWriteTimeNanos());
          map.put(AVERAGE_REMOVE_TIME, stats.getAverageRemoveTime());
+         map.put(AVERAGE_REMOVE_TIME_NANOS, stats.getAverageRemoveTimeNanos());
          map.put(EVICTIONS, stats.getEvictions());
          map.put(HITS, stats.getHits());
          map.put(MISSES, stats.getMisses());

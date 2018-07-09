@@ -54,6 +54,9 @@ public class MetricKeys {
     public static final String AVERAGE_READ_TIME = "average-read-time";
     public static final String AVERAGE_WRITE_TIME = "average-write-time";
     public static final String AVERAGE_REMOVE_TIME = "average-remove-time";
+    public static final String AVERAGE_READ_TIME_NANOS = "average-read-time-nanos";
+    public static final String AVERAGE_WRITE_TIME_NANOS = "average-write-time-nanos";
+    public static final String AVERAGE_REMOVE_TIME_NANOS = "average-remove-time-nanos";
     public static final String TIME_SINCE_START = "time-since-start";
     public static final String EVICTIONS = "evictions";
     public static final String HIT_RATIO = "hit-ratio";

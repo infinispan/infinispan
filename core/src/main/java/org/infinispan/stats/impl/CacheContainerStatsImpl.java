@@ -103,6 +103,44 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       return totalAverageReadTime;
    }
 
+   @ManagedAttribute(description = "Cache container total average number of nanoseconds for all read operation in this cache container",
+         displayName = "Cache container total average read time (ns)",
+         units = Units.NANOSECONDS,
+         displayType = DisplayType.SUMMARY)
+   @Override
+   public long getAverageReadTimeNanos() {
+      long result = -1;
+      if (getStatisticsEnabled()) {
+         result = calculateAverageReadTimeNanos();
+      }
+      return result;
+   }
+
+   protected long calculateAverageReadTimeNanos() {
+      long totalAverageReadTime = 0;
+      int includedCacheCounter = 0;
+      for (Stats stats : getEnabledStats()) {
+         long averageReadTime = stats.getAverageReadTimeNanos();
+         if (averageReadTime > 0) {
+            includedCacheCounter++;
+            totalAverageReadTime += averageReadTime;
+         }
+      }
+      if (includedCacheCounter > 0) {
+         totalAverageReadTime = totalAverageReadTime / includedCacheCounter;
+      }
+      return totalAverageReadTime;
+   }
+
+   @Override
+   public int getRequiredMinimumNumberOfNodes() {
+      int result = -1;
+      for (Stats stats : getStats()) {
+         result = Math.max(result, stats.getRequiredMinimumNumberOfNodes());
+      }
+      return result;
+   }
+
    @ManagedAttribute(description = "Cache container total average number of milliseconds for all remove operation in this cache container",
          displayName = "Cache container total average remove time",
          units = Units.MILLISECONDS,
@@ -116,20 +154,40 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       return result;
    }
 
-   @Override
-   public int getRequiredMinimumNumberOfNodes() {
-      int result = -1;
-      for (Stats stats : getStats()) {
-         result = Math.max(result, stats.getRequiredMinimumNumberOfNodes());
-      }
-      return result;
-   }
-
    protected long calculateAverageRemoveTime() {
       long totalAverageRemoveTime = 0;
       int includedCacheCounter = 0;
       for (Stats stats : getEnabledStats()) {
          long averageRemoveTime = stats.getAverageRemoveTime();
+         if (averageRemoveTime > 0) {
+            includedCacheCounter++;
+            totalAverageRemoveTime += averageRemoveTime;
+         }
+      }
+      if (includedCacheCounter > 0) {
+         totalAverageRemoveTime = totalAverageRemoveTime / includedCacheCounter;
+      }
+      return totalAverageRemoveTime;
+   }
+
+   @ManagedAttribute(description = "Cache container total average number of nanoseconds for all remove operation in this cache container",
+         displayName = "Cache container total average remove time (ns)",
+         units = Units.NANOSECONDS,
+         displayType = DisplayType.SUMMARY)
+   @Override
+   public long getAverageRemoveTimeNanos() {
+      long result = -1;
+      if (getStatisticsEnabled()) {
+         result = calculateAverageRemoveTimeNanos();
+      }
+      return result;
+   }
+
+   protected long calculateAverageRemoveTimeNanos() {
+      long totalAverageRemoveTime = 0;
+      int includedCacheCounter = 0;
+      for (Stats stats : getEnabledStats()) {
+         long averageRemoveTime = stats.getAverageRemoveTimeNanos();
          if (averageRemoveTime > 0) {
             includedCacheCounter++;
             totalAverageRemoveTime += averageRemoveTime;
@@ -159,6 +217,35 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       int includedCacheCounter = 0;
       for (Stats stats : getEnabledStats()) {
          long averageWriteTime = stats.getAverageWriteTime();
+         if (averageWriteTime > 0) {
+            includedCacheCounter++;
+            totalAverageWriteTime += averageWriteTime;
+         }
+      }
+      if (includedCacheCounter > 0) {
+         totalAverageWriteTime = totalAverageWriteTime / includedCacheCounter;
+      }
+      return totalAverageWriteTime;
+   }
+
+   @ManagedAttribute(description = "Cache container average number of nanoseconds for all write operation in this cache container",
+         displayName = "Cache container average write time (ns)",
+         units = Units.MILLISECONDS,
+         displayType = DisplayType.SUMMARY)
+   @Override
+   public long getAverageWriteTimeNanos() {
+      long result = -1;
+      if (getStatisticsEnabled()) {
+         result = calculateAverageWriteTimeNanos();
+      }
+      return result;
+   }
+
+   protected long calculateAverageWriteTimeNanos() {
+      long totalAverageWriteTime = 0;
+      int includedCacheCounter = 0;
+      for (Stats stats : getEnabledStats()) {
+         long averageWriteTime = stats.getAverageWriteTimeNanos();
          if (averageWriteTime > 0) {
             includedCacheCounter++;
             totalAverageWriteTime += averageWriteTime;

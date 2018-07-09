@@ -491,7 +491,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedAttribute(
-         description = "number of cache attribute put operations",
+         description = "Number of cache attribute put operations",
          displayName = "Number of cache puts" ,
          measurementType = MeasurementType.TRENDSUP,
          displayType = DisplayType.SUMMARY
@@ -528,7 +528,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedAttribute(
-         description = "read/writes ratio for the cache",
+         description = "Read/writes ratio for the cache",
          displayName = "Read/write ratio",
          units = Units.PERCENTAGE,
          displayType = DisplayType.SUMMARY
@@ -557,6 +557,20 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedAttribute(
+         description = "Average number of nanoseconds for a read operation on the cache",
+         displayName = "Average read time",
+         units = Units.NANOSECONDS,
+         displayType = DisplayType.SUMMARY
+   )
+   @SuppressWarnings("unused")
+   public long getAverageReadTimeNanos() {
+      long total = counters.get(StripeB.hitsFieldUpdater) + counters.get(StripeB.missesFieldUpdater);
+      if (total == 0)
+         return 0;
+      return (counters.get(StripeB.hitTimesFieldUpdater) + counters.get(StripeB.missTimesFieldUpdater)) / total;
+   }
+
+   @ManagedAttribute(
          description = "Average number of milliseconds for a write operation in the cache",
          displayName = "Average write time",
          units = Units.MILLISECONDS,
@@ -571,6 +585,20 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedAttribute(
+         description = "Average number of nanoseconds for a write operation in the cache",
+         displayName = "Average write time",
+         units = Units.NANOSECONDS,
+         displayType = DisplayType.SUMMARY
+   )
+   @SuppressWarnings("unused")
+   public long getAverageWriteTimeNanos() {
+      long sum = counters.get(StripeB.storesFieldUpdater);
+      if (sum == 0)
+         return 0;
+      return counters.get(StripeB.storeTimesFieldUpdater) / sum;
+   }
+
+   @ManagedAttribute(
          description = "Average number of milliseconds for a remove operation in the cache",
          displayName = "Average remove time",
          units = Units.MILLISECONDS,
@@ -582,6 +610,20 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       if (removes == 0)
          return 0;
       return TimeUnit.NANOSECONDS.toMillis(counters.get(StripeB.removeTimesFieldUpdater) / removes);
+   }
+
+   @ManagedAttribute(
+         description = "Average number of nanoseconds for a remove operation in the cache",
+         displayName = "Average remove time",
+         units = Units.NANOSECONDS,
+         displayType = DisplayType.SUMMARY
+   )
+   @SuppressWarnings("unused")
+   public long getAverageRemoveTimeNanos() {
+      long removes = getRemoveHits();
+      if (removes == 0)
+         return 0;
+      return counters.get(StripeB.removeTimesFieldUpdater) / removes;
    }
 
    @ManagedAttribute(

@@ -160,6 +160,16 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
          displayType = DisplayType.SUMMARY
    )
    public long getAverageReadTime() {
+      return TimeUnit.NANOSECONDS.toMillis(getAverageReadTimeNanos());
+   }
+
+   @ManagedAttribute(
+         description = "Average number of nanoseconds for a read operation on the cache",
+         displayName = "Average read time (ns)",
+         units = Units.NANOSECONDS,
+         displayType = DisplayType.SUMMARY
+   )
+   public long getAverageReadTimeNanos() {
       long total = hits.sum() + misses.sum();
       if (total == 0)
          return 0;
@@ -174,6 +184,17 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
    )
    @SuppressWarnings("unused")
    public long getAverageWriteTime() {
+      return TimeUnit.NANOSECONDS.toMillis(getAverageWriteTimeNanos());
+   }
+
+   @ManagedAttribute(
+         description = "Average number of nanoseconds for a write operation in the cache",
+         displayName = "Average write time (ns)",
+         units = Units.NANOSECONDS,
+         displayType = DisplayType.SUMMARY
+   )
+   @SuppressWarnings("unused")
+   public long getAverageWriteTimeNanos() {
       long sum = stores.sum();
       if (sum == 0)
          return 0;
@@ -188,6 +209,17 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
    )
    @SuppressWarnings("unused")
    public long getAverageRemoveTime() {
+      return TimeUnit.NANOSECONDS.toMillis(getAverageWriteTimeNanos());
+   }
+
+   @ManagedAttribute(
+         description = "Average number of nanoseconds for a remove operation in the cache",
+         displayName = "Average remove time (ns)",
+         units = Units.NANOSECONDS,
+         displayType = DisplayType.SUMMARY
+   )
+   @SuppressWarnings("unused")
+   public long getAverageRemoveTimeNanos() {
       long removes = getRemoveHits();
       if (removes == 0)
          return 0;
