@@ -86,6 +86,11 @@ public interface Stats {
    long getAverageReadTime();
 
    /**
+    * @return Average number of nanoseconds for a cache get on the cache
+    */
+   long getAverageReadTimeNanos();
+
+   /**
     * @return Average number of milliseconds for a cache put on the cache
     */
    long getAverageWriteTime();
@@ -93,7 +98,17 @@ public interface Stats {
    /**
     * @return Average number of milliseconds for a cache put on the cache
     */
+   long getAverageWriteTimeNanos();
+
+   /**
+    * @return Average number of milliseconds for a cache remove on the cache
+    */
    long getAverageRemoveTime();
+
+   /**
+    * @return Average number of nanoseconds for a cache remove on the cache
+    */
+   long getAverageRemoveTimeNanos();
 
    /**
     * @return Required minimum number of nodes to guarantee data consistency

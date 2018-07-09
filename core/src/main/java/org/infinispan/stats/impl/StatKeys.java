@@ -12,6 +12,9 @@ class StatKeys {
    static final String AVERAGE_WRITE_TIME = "averageWriteTime";
    static final String AVERAGE_READ_TIME = "averageReadTime";
    static final String AVERAGE_REMOVE_TIME = "averageRemoveTime";
+   static final String AVERAGE_WRITE_TIME_NANOS = "averageWriteTimeNanos";
+   static final String AVERAGE_READ_TIME_NANOS = "averageReadTimeNanos";
+   static final String AVERAGE_REMOVE_TIME_NANOS = "averageRemoveTimeNanos";
    static final String EVICTIONS = "evictions";
    static final String HITS = "hits";
    static final String MISSES = "misses";

@@ -1,8 +1,11 @@
 package org.infinispan.stats.impl;
 
 import static org.infinispan.stats.impl.StatKeys.AVERAGE_READ_TIME;
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_READ_TIME_NANOS;
 import static org.infinispan.stats.impl.StatKeys.AVERAGE_REMOVE_TIME;
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_REMOVE_TIME_NANOS;
 import static org.infinispan.stats.impl.StatKeys.AVERAGE_WRITE_TIME;
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_WRITE_TIME_NANOS;
 import static org.infinispan.stats.impl.StatKeys.EVICTIONS;
 import static org.infinispan.stats.impl.StatKeys.HITS;
 import static org.infinispan.stats.impl.StatKeys.MISSES;
@@ -37,7 +40,7 @@ public class StatsImpl implements Stats {
 
    private static String[] Attributes = new String[]{TIME_SINCE_RESET, TIME_SINCE_START, NUMBER_OF_ENTRIES, NUMBER_OF_ENTRIES_IN_MEMORY,
          OFF_HEAP_MEMORY_USED, RETRIEVALS, STORES, HITS, MISSES, REMOVE_HITS, REMOVE_MISSES, EVICTIONS, AVERAGE_READ_TIME,
-         AVERAGE_REMOVE_TIME, AVERAGE_WRITE_TIME, REQUIRED_MIN_NODES};
+         AVERAGE_REMOVE_TIME, AVERAGE_WRITE_TIME, AVERAGE_READ_TIME_NANOS, AVERAGE_REMOVE_TIME_NANOS, AVERAGE_WRITE_TIME_NANOS, REQUIRED_MIN_NODES};
 
    private final Map<String, Long> statsMap = new HashMap<>();
    final CacheMgmtInterceptor mgmtInterceptor;
@@ -63,6 +66,9 @@ public class StatsImpl implements Stats {
          statsMap.put(AVERAGE_READ_TIME, mgmtInterceptor.getAverageReadTime());
          statsMap.put(AVERAGE_REMOVE_TIME, mgmtInterceptor.getAverageRemoveTime());
          statsMap.put(AVERAGE_WRITE_TIME, mgmtInterceptor.getAverageWriteTime());
+         statsMap.put(AVERAGE_READ_TIME_NANOS, mgmtInterceptor.getAverageReadTimeNanos());
+         statsMap.put(AVERAGE_REMOVE_TIME_NANOS, mgmtInterceptor.getAverageRemoveTimeNanos());
+         statsMap.put(AVERAGE_WRITE_TIME_NANOS, mgmtInterceptor.getAverageWriteTimeNanos());
          statsMap.put(REQUIRED_MIN_NODES, (long) mgmtInterceptor.getRequiredMinimumNumberOfNodes());
       } else {
          for (String key : Attributes)
@@ -89,6 +95,9 @@ public class StatsImpl implements Stats {
          statsMap.put(AVERAGE_READ_TIME, other.getAverageReadTime());
          statsMap.put(AVERAGE_REMOVE_TIME, other.getAverageRemoveTime());
          statsMap.put(AVERAGE_WRITE_TIME, other.getAverageWriteTime());
+         statsMap.put(AVERAGE_READ_TIME_NANOS, other.getAverageReadTimeNanos());
+         statsMap.put(AVERAGE_REMOVE_TIME_NANOS, other.getAverageRemoveTimeNanos());
+         statsMap.put(AVERAGE_WRITE_TIME_NANOS, other.getAverageWriteTimeNanos());
          statsMap.put(REQUIRED_MIN_NODES, (long) other.getRequiredMinimumNumberOfNodes());
       } else {
          for (String key : Attributes)
@@ -174,6 +183,21 @@ public class StatsImpl implements Stats {
    @Override
    public long getAverageRemoveTime() {
       return statsMap.get(AVERAGE_REMOVE_TIME);
+   }
+
+   @Override
+   public long getAverageReadTimeNanos() {
+      return statsMap.get(AVERAGE_READ_TIME_NANOS);
+   }
+
+   @Override
+   public long getAverageWriteTimeNanos() {
+      return statsMap.get(AVERAGE_WRITE_TIME_NANOS);
+   }
+
+   @Override
+   public long getAverageRemoveTimeNanos() {
+      return statsMap.get(AVERAGE_REMOVE_TIME_NANOS);
    }
 
    @Override
