@@ -15,7 +15,7 @@
 
    <properties>
       <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
-      <version.hibernate.core>5.3.1.Final</version.hibernate.core>
+      <version.hibernate.core>5.3.2.Final</version.hibernate.core>
    </properties>
 
    <dependencies>
