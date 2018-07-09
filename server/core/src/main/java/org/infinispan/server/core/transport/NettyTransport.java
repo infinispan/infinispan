@@ -169,13 +169,13 @@ public class NettyTransport implements Transport {
    }
 
    @Override
-   public String getTotalBytesWritten() {
-      return Long.toString(connectionStats.getTotalBytesWritten());
+   public long getTotalBytesWritten() {
+      return connectionStats.getTotalBytesWritten();
    }
 
    @Override
-   public String getTotalBytesRead() {
-      return Long.toString(connectionStats.getTotalBytesRead());
+   public long getTotalBytesRead() {
+      return connectionStats.getTotalBytesRead();
    }
 
    @Override
@@ -184,42 +184,42 @@ public class NettyTransport implements Transport {
    }
 
    @Override
-   public Integer getPort() {
+   public int getPort() {
       return nettyPort.orElse(address.getPort());
    }
 
    @Override
-   public String getNumberWorkerThreads() {
-      return Integer.toString(configuration.workerThreads());
+   public int getNumberWorkerThreads() {
+      return configuration.workerThreads();
    }
 
    @Override
-   public String getIdleTimeout() {
-      return Integer.toString(configuration.idleTimeout());
+   public int getIdleTimeout() {
+      return configuration.idleTimeout();
    }
 
    @Override
-   public String getTcpNoDelay() {
-      return Boolean.toString(configuration.tcpNoDelay());
+   public boolean getTcpNoDelay() {
+      return configuration.tcpNoDelay();
    }
 
    @Override
-   public String getSendBufferSize() {
-      return Integer.toString(configuration.sendBufSize());
+   public int getSendBufferSize() {
+      return configuration.sendBufSize();
    }
 
    @Override
-   public String getReceiveBufferSize() {
-      return Integer.toString(configuration.recvBufSize());
+   public int getReceiveBufferSize() {
+      return configuration.recvBufSize();
    }
 
    @Override
-   public Integer getNumberOfLocalConnections() {
+   public int getNumberOfLocalConnections() {
       return connectionStats.getNumberOfLocalConnections();
    }
 
    @Override
-   public Integer getNumberOfGlobalConnections() {
+   public int getNumberOfGlobalConnections() {
       return connectionStats.getNumberOfGlobalConnections();
    }
 

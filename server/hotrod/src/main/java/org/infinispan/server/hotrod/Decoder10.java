@@ -203,8 +203,8 @@ public class Decoder10 implements VersionedDecoder {
       stats.put("misses", String.valueOf(cacheStats.getMisses()));
       stats.put("removeHits", String.valueOf(cacheStats.getRemoveHits()));
       stats.put("removeMisses", String.valueOf(cacheStats.getRemoveMisses()));
-      stats.put("totalBytesRead", t.getTotalBytesRead());
-      stats.put("totalBytesWritten", t.getTotalBytesWritten());
+      stats.put("totalBytesRead", String.valueOf(t.getTotalBytesRead()));
+      stats.put("totalBytesWritten", String.valueOf(t.getTotalBytesWritten()));
       return new StatsResponse(h.version, h.messageId, h.cacheName, h.clientIntel, stats, h.topologyId);
    }
 
