@@ -46,7 +46,7 @@ public class HotRodAuthenticationTest extends HotRodSingleNodeTest {
       TestAuthMechListResponse a = client().authMechList();
       assertEquals(1, a.mechs.size());
       assertTrue(a.mechs.contains("CRAM-MD5"));
-      assertEquals(1, server().getDecoder().getTransport().getNumberOfLocalConnections().intValue());
+      assertEquals(1, server().getDecoder().getTransport().getNumberOfLocalConnections());
    }
 
    public void testAuth(Method m) throws SaslException {
@@ -55,7 +55,7 @@ public class HotRodAuthenticationTest extends HotRodSingleNodeTest {
                                             new TestCallbackHandler("user", "realm", "password".toCharArray()));
       TestAuthResponse res = client().auth(sc);
       assertTrue(res.complete);
-      assertEquals(1, server().getDecoder().getTransport().getNumberOfLocalConnections().intValue());
+      assertEquals(1, server().getDecoder().getTransport().getNumberOfLocalConnections());
    }
 
    public void testUnauthorizedOpCloseConnection(Method m) {
@@ -66,7 +66,7 @@ public class HotRodAuthenticationTest extends HotRodSingleNodeTest {
       try {
          client().assertPutFail(m);
       } finally {
-         assertEquals(0, server().getDecoder().getTransport().getNumberOfLocalConnections().intValue());
+         assertEquals(0, server().getDecoder().getTransport().getNumberOfLocalConnections());
       }
    }
 }
