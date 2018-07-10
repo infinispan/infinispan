@@ -11,10 +11,15 @@ import org.infinispan.commons.marshall.SerializeWith;
  * @since 9.4
  */
 @SerializeWith(value = Currency.Externalizer.class)
+@SuppressWarnings("unused")
 public class Currency implements Serializable {
 
-   private final String country;
-   private final String symbol;
+   private String country;
+
+   private String symbol;
+
+   public Currency() {
+   }
 
    public Currency(String country, String symbol) {
       this.country = country;
@@ -27,6 +32,14 @@ public class Currency implements Serializable {
 
    public String getSymbol() {
       return symbol;
+   }
+
+   public void setCountry(String country) {
+      this.country = country;
+   }
+
+   public void setSymbol(String symbol) {
+      this.symbol = symbol;
    }
 
    public static final class Externalizer implements org.infinispan.commons.marshall.Externalizer<Currency> {
