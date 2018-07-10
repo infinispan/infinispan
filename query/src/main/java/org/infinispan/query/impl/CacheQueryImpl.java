@@ -44,6 +44,7 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
 
    protected final AdvancedCache<?, ?> cache;
    protected final KeyTransformationHandler keyTransformationHandler;
+   protected final PartitionHandlingSupport partitionHandlingSupport;
    protected QueryDefinition queryDefinition;
    private ProjectionConverter projectionConverter;
 
@@ -63,15 +64,14 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
       this.queryDefinition = queryDefinition;
       this.cache = cache;
       this.keyTransformationHandler = keyTransformationHandler;
+      this.partitionHandlingSupport = new PartitionHandlingSupport(cache);
    }
 
    /**
     * Create a CacheQueryImpl based on a HSQuery.
     */
    public CacheQueryImpl(HSQuery hSearchQuery, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler) {
-      this.queryDefinition = new QueryDefinition(hSearchQuery);
-      this.cache = cache;
-      this.keyTransformationHandler = keyTransformationHandler;
+      this(new QueryDefinition(hSearchQuery), cache, keyTransformationHandler);
    }
 
    /**
@@ -90,6 +90,7 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
     */
    @Override
    public int getResultSize() {
+      partitionHandlingSupport.checkCacheAvailable();
       return queryDefinition.getHsQuery().queryResultSize();
    }
 
@@ -146,6 +147,7 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
 
    @Override
    public ResultIterator<E> iterator(FetchOptions fetchOptions) throws SearchException {
+      partitionHandlingSupport.checkCacheAvailable();
       HSQuery hSearchQuery = queryDefinition.getHsQuery();
       if (fetchOptions.getFetchMode() == FetchOptions.FetchMode.EAGER) {
          hSearchQuery.getTimeoutManager().start();
@@ -165,6 +167,7 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
 
    @Override
    public List<E> list() throws SearchException {
+      partitionHandlingSupport.checkCacheAvailable();
       HSQuery hSearchQuery = queryDefinition.getHsQuery();
       hSearchQuery.getTimeoutManager().start();
       final List<EntityInfo> entityInfos = hSearchQuery.queryEntityInfos();
