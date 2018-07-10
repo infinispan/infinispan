@@ -176,7 +176,7 @@ public class RocksDBStore<K,V> implements AdvancedLoadWriteStore<K,V> {
                 throw new PersistenceException("RocksDB is stopped");
             }
             Optional<RocksIterator> optionalIterator = wrapIterator(this.db);
-            if (optionalIterator.isPresent() && configuration.clearThreshold() <= 0) {
+            if (optionalIterator.isPresent() && configuration.clearThreshold() > 0) {
                 try (RocksIterator it = optionalIterator.get()) {
                     for(it.seekToFirst(); it.isValid(); it.next()) {
                         db.delete(it.key());
