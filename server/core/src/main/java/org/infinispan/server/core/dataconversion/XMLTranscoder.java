@@ -48,13 +48,18 @@ public class XMLTranscoder extends OneToManyTranscoder {
    }
 
    public XMLTranscoder() {
-      this(new ClassWhiteList(Collections.emptyList()));
+      this(XMLTranscoder.class.getClassLoader(), new ClassWhiteList(Collections.emptyList()));
    }
 
-   public XMLTranscoder(ClassWhiteList whiteList) {
+   public XMLTranscoder(ClassWhiteList classWhiteList) {
+      this(XMLTranscoder.class.getClassLoader(), classWhiteList);
+   }
+
+   public XMLTranscoder(ClassLoader classLoader, ClassWhiteList whiteList) {
       super(APPLICATION_XML, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_UNKNOWN);
       XStreamHolder.XStream.addPermission(NoTypePermission.NONE);
       XStreamHolder.XStream.addPermission(type -> whiteList.isSafeClass(type.getName()));
+      XStreamHolder.XStream.setClassLoader(classLoader);
    }
 
    @Override
