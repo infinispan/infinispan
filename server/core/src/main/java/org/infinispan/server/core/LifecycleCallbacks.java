@@ -28,14 +28,15 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
       componentMetadataRepo = gcr.getComponentMetadataRepo();
       ClassWhiteList classWhiteList = gcr.getComponent(EmbeddedCacheManager.class).getClassWhiteList();
-      GenericJBossMarshaller marshaller = new GenericJBossMarshaller(globalConfiguration.classLoader(), classWhiteList);
+      ClassLoader classLoader = globalConfiguration.classLoader();
+      GenericJBossMarshaller marshaller = new GenericJBossMarshaller(classLoader, classWhiteList);
 
       EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
-      JsonTranscoder jsonTranscoder = new JsonTranscoder(classWhiteList);
+      JsonTranscoder jsonTranscoder = new JsonTranscoder(classLoader, classWhiteList);
 
       encoderRegistry.registerTranscoder(jsonTranscoder);
       encoderRegistry.registerTranscoder(new JBossMarshallingTranscoder(jsonTranscoder, marshaller));
-      encoderRegistry.registerTranscoder(new XMLTranscoder(classWhiteList));
+      encoderRegistry.registerTranscoder(new XMLTranscoder(classLoader, classWhiteList));
       encoderRegistry.registerTranscoder(new JavaSerializationTranscoder(classWhiteList));
 
    }

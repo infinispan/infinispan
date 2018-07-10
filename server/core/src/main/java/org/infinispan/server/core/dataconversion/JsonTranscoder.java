@@ -23,6 +23,7 @@ import org.infinispan.util.logging.LogFactory;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 
 /**
  * @since 9.2
@@ -36,11 +37,15 @@ public class JsonTranscoder extends OneToManyTranscoder {
    private final ObjectMapper objectMapper;
 
    public JsonTranscoder() {
-      this(new ClassWhiteList(Collections.emptyList()));
+      this(JsonTranscoder.class.getClassLoader(), new ClassWhiteList(Collections.emptyList()));
    }
 
 
    public JsonTranscoder(ClassWhiteList whiteList) {
+      this(JsonTranscoder.class.getClassLoader(), whiteList);
+   }
+
+   public JsonTranscoder(ClassLoader classLoader, ClassWhiteList whiteList) {
       super(APPLICATION_JSON, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_UNKNOWN);
       this.objectMapper = new ObjectMapper().setDefaultTyping(
             new SecureTypeResolverBuilder(ObjectMapper.DefaultTyping.NON_FINAL, whiteList) {
@@ -55,6 +60,8 @@ public class JsonTranscoder extends OneToManyTranscoder {
                   return !t.isContainerType() && super.useForType(t);
                }
             });
+      TypeFactory typeFactory = TypeFactory.defaultInstance().withClassLoader(classLoader);
+      this.objectMapper.setTypeFactory(typeFactory);
    }
 
    @Override
