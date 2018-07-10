@@ -242,6 +242,7 @@
         <transform in="clustered.xml" out="testsuite/clustered-mergepolicies.xml" modifyInfinispan="${infinispan.parts}/mergepolicies.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-customtask.xml" modifyInfinispan="${infinispan.parts}/customtask.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-deployed-pojos.xml" modifyInfinispan="${infinispan.parts}/deployed-pojos.xml" filtering="true"/>
+        <transform in="standalone.xml" out="testsuite/standalone-pojo-storage.xml" modifyInfinispan="${infinispan.parts}/pojo-storage.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-custom-compat-marshaller.xml" modifyInfinispan="${infinispan.parts}/custom-compat-marshaller.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-query-programmatic-search-mapping-provider.xml" modifyInfinispan="${infinispan.parts}/query-programmatic-search-mapping-provider.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-off-heap.xml" modifyInfinispan="${infinispan.parts}/off-heap.xml"/>
