@@ -1,0 +1,13 @@
+<subsystem xmlns="urn:infinispan:server:core:${infinispan.core.schema.version}">
+    <cache-container name="local" default-cache="default">
+        <modules>
+            <module name="deployment.entities.jar"/>
+        </modules>
+        <local-cache name="default">
+            <encoding>
+                <key media-type="application/x-java-object"/>
+                <value media-type="application/x-java-object"/>
+            </encoding>
+        </local-cache>
+    </cache-container>
+</subsystem>
