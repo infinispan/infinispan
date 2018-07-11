@@ -11,7 +11,7 @@ import org.infinispan.query.remote.client.ContinuousQueryResult;
 import org.infinispan.query.remote.impl.ExternalizerIds;
 
 /**
- * A 'remote' ContinuousQueryResult needs jboss-marshalling serializability between nodes when running in compat mode.
+ * A 'remote' ContinuousQueryResult needs jboss-marshalling serializability between nodes when running with object storage.
  * It will only be marshalled using protobuf before passing it to the remote client.
  *
  * @author anistor@redhat.com
