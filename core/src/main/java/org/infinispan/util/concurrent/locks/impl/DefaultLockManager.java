@@ -168,7 +168,15 @@ public class DefaultLockManager implements LockManager {
 
    @Override
    public void unlockAll(InvocationContext context) {
-      unlockAll(context.getLockedKeys(), context.getLockOwner());
+      final Object lockOwner = context.getLockOwner();
+      context.forEachLock(key -> {
+         if (key == lockOwner) {
+            if (trace)
+               log.tracef("Ignoring key %s as it matches lock owner", key);
+            return;
+         }
+         unlock(key, lockOwner);
+      });
       context.clearLockedKeys();
    }
 

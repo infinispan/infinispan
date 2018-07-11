@@ -138,9 +138,7 @@ public class ExtendedStatisticLockManager implements LockManager {
       final long timestamp = timeService.time();
       final Object lockOwner = ctx.getLockOwner();
 
-      for (Object key : ctx.getLockedKeys()) {
-         onUnlock(key, lockOwner, timestamp);
-      }
+      ctx.forEachLock(key -> onUnlock(key, lockOwner, timestamp));
       actual.unlockAll(ctx);
    }
 

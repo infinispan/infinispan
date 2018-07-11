@@ -80,8 +80,6 @@ public class RecoveryAwareRemoteTransaction extends RemoteTransaction implements
       return getClass().getSimpleName() +
             "{prepared=" + prepared +
             ", isOrphan=" + isOrphan +
-            ", modifications=" + modifications +
-            ", lookedUpEntries=" + lookedUpEntries +
             ", tx=" + tx +
             "} ";
    }

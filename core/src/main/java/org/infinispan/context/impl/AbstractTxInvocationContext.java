@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
@@ -53,6 +55,16 @@ public abstract class AbstractTxInvocationContext<T extends AbstractCacheTransac
    }
 
    @Override
+   public boolean hasLockedKey(Object key) {
+      return cacheTransaction.ownsLock(key);
+   }
+
+   @Override
+   public void forEachLock(Consumer<Object> consumer) {
+      cacheTransaction.forEachLock(consumer);
+   }
+
+   @Override
    public final void addLockedKey(Object key) {
       cacheTransaction.registerLockedKey(key);
    }
@@ -80,7 +92,22 @@ public abstract class AbstractTxInvocationContext<T extends AbstractCacheTransac
 
    @Override
    public final Map<Object, CacheEntry> getLookedUpEntries() {
-      return cacheTransaction.getLookedUpEntries();
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void forEachValue(BiConsumer<Object, CacheEntry> action) {
+      cacheTransaction.forEachValue(action);
+   }
+
+   @Override
+   public void forEachEntry(BiConsumer<Object, CacheEntry> action) {
+      cacheTransaction.forEachEntry(action);
+   }
+
+   @Override
+   public int lookedUpEntriesCount() {
+      return cacheTransaction.lookedUpEntriesCount();
    }
 
    @Override

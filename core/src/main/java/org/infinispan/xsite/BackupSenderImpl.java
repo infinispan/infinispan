@@ -128,7 +128,7 @@ public class BackupSenderImpl implements BackupSender {
 
    @Override
    public BackupResponse backupPrepare(PrepareCommand command, AbstractCacheTransaction cacheTransaction) throws Exception {
-      List<WriteCommand> modifications = filterModifications(command.getModifications(), cacheTransaction.getLookedUpEntries());
+      List<WriteCommand> modifications = filterModifications(command.getModifications(), cacheTransaction);
       if (modifications.isEmpty()) {
          return EMPTY_RESPONSE;
       }
@@ -221,7 +221,7 @@ public class BackupSenderImpl implements BackupSender {
 
    private BackupResponse sendTo1PCBackups(CommitCommand command) throws Exception {
       final LocalTransaction localTx = txTable.getLocalTransaction(command.getGlobalTransaction());
-      List<WriteCommand> modifications = filterModifications(localTx.getModifications(), localTx.getLookedUpEntries());
+      List<WriteCommand> modifications = filterModifications(localTx.getModifications(), localTx);
       if (modifications.isEmpty()) {
          return EMPTY_RESPONSE;
       }
@@ -287,14 +287,14 @@ public class BackupSenderImpl implements BackupSender {
       return offline != null && offline.isOffline();
    }
 
-   private List<WriteCommand> filterModifications(WriteCommand[] modifications, Map<Object, CacheEntry> lookedUpEntries) {
+   private List<WriteCommand> filterModifications(WriteCommand[] modifications, AbstractCacheTransaction cacheTransaction) {
       if (modifications == null || modifications.length == 0) {
          return Collections.emptyList();
       }
-      return filterModifications(Arrays.asList(modifications), lookedUpEntries);
+      return filterModifications(Arrays.asList(modifications), cacheTransaction);
    }
 
-   private List<WriteCommand> filterModifications(List<WriteCommand> modifications, Map<Object, CacheEntry> lookedUpEntries) {
+   private List<WriteCommand> filterModifications(List<WriteCommand> modifications, AbstractCacheTransaction cacheTransaction) {
       if (modifications == null || modifications.isEmpty()) {
          return Collections.emptyList();
       }
@@ -314,7 +314,7 @@ public class BackupSenderImpl implements BackupSender {
             if (filteredKeys.contains(key)) {
                continue;
             }
-            CacheEntry entry = lookedUpEntries.get(key);
+            CacheEntry entry = cacheTransaction.lookupEntry(key);
             if (entry == null) {
                // Functional commands should always fetch the remote value to originator if xsite is enabled.
                throw new IllegalStateException();
