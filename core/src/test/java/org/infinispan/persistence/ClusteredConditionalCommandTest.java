@@ -29,6 +29,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.test.fwk.InCacheMode;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 /**
@@ -105,6 +106,10 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
 
    private void doTest(List<Cache<String, String>> cacheList, ConditionalOperation operation, Ownership ownership,
                        Flag flag, boolean shared) {
+      // These are not valid test combinations - so just ignore them
+      if (shared && passivation) {
+         throw new SkipException("Shared passivation is not supported");
+      }
       waitForNoRebalance(cacheList);
       final CacheHelper<String, String> cacheHelper = create(cacheList);
       final boolean skipLoad = flag == Flag.SKIP_CACHE_LOAD || flag == Flag.SKIP_CACHE_STORE;
@@ -184,9 +189,11 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
 
       int index = 0;
       for (EmbeddedCacheManager cacheManager : cacheManagers) {
-         cacheManager.defineConfiguration(SHARED_STORE_CACHE_NAME,
-                                          createConfiguration(getClass().getSimpleName(), true, transactional,
-                                                              passivation, index).build());
+         if (!passivation) {
+            cacheManager.defineConfiguration(SHARED_STORE_CACHE_NAME,
+                  createConfiguration(getClass().getSimpleName(), true, transactional,
+                        false, index).build());
+         }
          cacheManager.defineConfiguration(PRIVATE_STORE_CACHE_NAME,
                                           createConfiguration(getClass().getSimpleName(), false, transactional,
                                                               passivation, index).build());

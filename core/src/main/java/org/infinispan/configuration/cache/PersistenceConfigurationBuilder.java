@@ -138,10 +138,14 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
       for (StoreConfigurationBuilder<?, ?> b : stores) {
          b.validate();
          StoreConfiguration storeConfiguration = b.create();
-         if (storeConfiguration.shared() && storeConfiguration.singletonStore().enabled()) {
-            throw log.singletonStoreCannotBeShared(storeConfiguration.getClass().getSimpleName());
-         }
-         if (!storeConfiguration.shared() && storeConfiguration.transactional() && !isLocalCache) {
+         if (storeConfiguration.shared()) {
+            if (storeConfiguration.singletonStore().enabled()) {
+               throw log.singletonStoreCannotBeShared(storeConfiguration.getClass().getSimpleName());
+            }
+            if (b.persistence().passivation()) {
+               throw log.passivationStoreCannotBeShared(storeConfiguration.getClass().getSimpleName());
+            }
+         } else if (storeConfiguration.transactional() && !isLocalCache) {
             throw log.clusteredTransactionalStoreMustBeShared(storeConfiguration.getClass().getSimpleName());
          }
          if (storeConfiguration.async().enabled() && storeConfiguration.transactional()) {

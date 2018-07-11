@@ -1814,4 +1814,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Store or loader %s must implement SegmentedLoadWriteStore or its config must extend AbstractSegmentedStoreConfiguration if configured as segmented", id = 531)
    CacheConfigurationException storeNotSegmented(Class<?> implementedClass);
+
+   @Message(value = "Invalid cache loader configuration for '%s'.  If a cache loader is configured with passivation, the cache loader cannot be shared in a cluster!", id = 532)
+   CacheConfigurationException passivationStoreCannotBeShared(String name);
 }

@@ -141,8 +141,14 @@ entry has been loaded a notification is emitted to the cache listeners that the 
 enable passivation just set passivation to true (false by default). When passivation is used, only the first cache loader
 configured is used and all others are ignored.
 
-NOTE: Entries which have been activated, i.e. brought back from the store to memory, will still continue to exist in
-the cache store if this has been configured as `shared`. This happens because backup owners might still need to access it.
+==== Limitations
+
+Due to the unique nature of passivation, it is not supported with some other store configurations.
+
+# Transactional store - Passivation writes/removes entries from the store outside
+the scope of the actual Infinispan commit boundaries.
+# Shared store - Shared store requires entries always being in the store for other
+owners. Thus passivation makes no sense as we can't remove the entry from the store.
 
 ==== Cache Loader Behavior with Passivation Disabled vs Enabled
 When passivation is disabled, whenever an element is modified, added or removed, then that modification is persisted in
