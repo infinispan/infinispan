@@ -6,7 +6,9 @@ pipeline {
     }
 
     parameters {
-        string(defaultValue: '0.0.0.Qualifier', description: 'Release version', name: 'version')
+        string(name: 'version', defaultValue: '0.0.0.Qualifier', description: 'Release version')
+        string(name: 'nextVersion', defaultValue: '', description: 'Next release (blank to stay on current SNAPSHOT)')
+        string(name: 'branch', defaultValue: 'master', description: 'Branch to release from')
     }
 
     options {
@@ -65,7 +67,7 @@ pipeline {
         stage('Tag') {
             steps {
                 // Commit and tag once everything is good
-                sh "$MAVEN_HOME/bin/mvn -B -v scm:checkin -Dmessage=\"Releasing version ${version}\""
+                sh "$MAVEN_HOME/bin/mvn -B -V scm:checkin -Dmessage=\"Releasing version ${version}\" -DpushChanges=false"
                 sh "$MAVEN_HOME/bin/mvn -B -V scm:tag"
             }
         }

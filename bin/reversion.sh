@@ -41,13 +41,35 @@ function copyXMLs() {
     NEWMAJOR=$4
     NEWMINOR=$5
 
-    for XML in $(find . -name "*${OLDSCHEMAMAJOR}${SEPARATOR}${OLDSCHEMAMINOR}.xml" -print); do
+    for XML in $(find . -name "*${OLDMAJOR}${SEPARATOR}${OLDMINOR}.xml" -print); do
        if ! git check-ignore -q $XML; then
           NEWXML=${XML/${OLDMAJOR}${SEPARATOR}${OLDMINOR}/${NEWMAJOR}${SEPARATOR}${NEWMINOR}}
           echo Adding $NEWXML
           cp $XML $NEWXML
-          rewriteXML $NEWXML $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
+          rewriteXML $NEWXML $OLDMAJOR $OLDMINOR $NEWMAJOR $NEWMINOR
        fi
+    done
+    
+    for PROPERTIES in $(find . -name "*${OLDMAJOR}${SEPARATOR}${OLDMINOR}.properties" -print); do
+       if ! git check-ignore -q $PROPERTIES; then
+          NEWPROPERTIES=${PROPERTIES/${OLDMAJOR}${SEPARATOR}${OLDMINOR}/${NEWMAJOR}${SEPARATOR}${NEWMINOR}}
+          echo Adding $NEWPROPERTIES
+          cp $PROPERTIES $NEWPROPERTIES
+          git add $NEWPROPERTIES
+       fi
+    done
+}
+
+function addNamespace() {
+    OLDMAJOR=$1
+    OLDMINOR=$2
+    NEWMAJOR=$3
+    NEWMINOR=$4
+
+    for NAMESPACES in $(find . -name "*.namespaces" -print); do
+        OLDNAMESPACE=`grep ${OLDMAJOR}.${OLDMINOR} $NAMESPACES`
+        echo "Modifying $NAMESPACES"
+        echo "${OLDNAMESPACE/$OLDMAJOR.$OLDMINOR/$NEWMAJOR.$NEWMINOR}" >> $NAMESPACES
     done
 }
 
@@ -114,7 +136,7 @@ NEWSCHEMAVERSION=`echo $NEWVERSION|cut -d. -f1,2`
 if [ "$OLDSCHEMAVERSION" != "$NEWSCHEMAVERSION" ] && [ "$PROCESS_SCHEMAS" = true ] ;  then
     echo "Current schema: $OLDSCHEMAVERSION"
     echo "New schema:     $NEWSCHEMAVERSION"
-    
+
     # Set master schema version
     sed -i "s/<infinispan.base.version>$OLDSCHEMAVERSION<\/infinispan.base.version>/<infinispan.base.version>$NEWSCHEMAVERSION<\/infinispan.base.version>/g" pom.xml
     # Set the codename to WIP
@@ -124,6 +146,7 @@ if [ "$OLDSCHEMAVERSION" != "$NEWSCHEMAVERSION" ] && [ "$PROCESS_SCHEMAS" = true
     # Create new test configurations
     copyXMLs . $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
     copyXMLs _ $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
+    addNamespace $OLDSCHEMAMAJOR $OLDSCHEMAMINOR $NEWSCHEMAMAJOR $NEWSCHEMAMINOR
 
     # Update the distribution configurations
     CONFIGS=$(find distribution/src/main/release/common/configs/config-samples -name '*.xml')
