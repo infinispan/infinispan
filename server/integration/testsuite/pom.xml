@@ -262,10 +262,12 @@
     </dependencies>
 
     <properties>
+        <test.libs.dir>${project.build.directory}/test-libs</test.libs.dir>
+
         <h2.server.ip>127.0.0.1</h2.server.ip>
         <h2.server.address>tcp://${h2.server.ip}:9092</h2.server.address>
         <database>h2</database>
-        <driver.dir>${project.build.directory}/test-libs</driver.dir>
+        <driver.dir>${test.libs.dir}</driver.dir>
         <driver.jar>h2.jar</driver.jar>
         <driver.class>org.h2.jdbcx.JdbcDataSource</driver.class>
 
@@ -433,7 +435,7 @@
                         <phase>process-test-resources</phase>
                         <configuration>
                             <skip>${skipTests}</skip>
-                            <outputDirectory>${project.build.directory}/test-libs</outputDirectory>
+                            <outputDirectory>${test.libs.dir}</outputDirectory>
                             <stripVersion>true</stripVersion>
                             <artifactItems>
                                 <artifactItem>
@@ -448,6 +450,12 @@
                                     <type>jar</type>
                                     <overWrite>true</overWrite>
                                 </artifactItem>
+                               <artifactItem>
+                                  <groupId>io.fabric8</groupId>
+                                  <artifactId>agent-bond-agent</artifactId>
+                                  <type>jar</type>
+                                  <overWrite>true</overWrite>
+                               </artifactItem>
                             </artifactItems>
                         </configuration>
                         <goals>
