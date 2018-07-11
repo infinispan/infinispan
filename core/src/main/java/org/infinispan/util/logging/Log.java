@@ -1807,4 +1807,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Class '%s' blocked by deserialization white list. Include the class name in the server white list to authorize.", id = 529)
    CacheException errorDeserializing(String className);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unsupported async cache mode '%s' for transactional caches, forcing %s", id = 530)
+   void unsupportedAsyncCacheMode(CacheMode unsupportedCacheMode, CacheMode forcedCacheMode);
 }

@@ -65,6 +65,10 @@ class InfinispanSchema {
         return (this.major > major || (this.major == major && this.minor >= minor));
     }
 
+    public boolean equals(int major, int minor) {
+        return this.major == major && this.minor == minor;
+    }
+
     /**
      * @return true, if this version of the schema is greater than or equal to the version of any of the specified schemas, false otherwise.
      */

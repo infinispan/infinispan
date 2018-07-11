@@ -351,7 +351,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     }
                 }
                 case COUNTERS: {
-                   if (namespace.since(9, 2)) {
+                   if (namespace.since(9, 2) || namespace.equals(8, 5)) {
                        PathAddress countersAddress = containerAddress.append(CacheContainerCountersResource.PATH);
                        operations.put(countersAddress, Util.getEmptyOperation(ADD, countersAddress.toModelNode()));
                        this.parseCounters(reader, countersAddress, operations);
@@ -1031,7 +1031,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
         if (!cacheConfiguration.hasDefined(ModelKeys.NAME)) {
             throw ParseUtils.missingRequired(reader, EnumSet.of(Attribute.NAME));
         }
-        if (!namespace.since(9, 0)) {
+        if (!namespace.since(8, 4)) {
             if (!cacheConfiguration.hasDefined(ModelKeys.MODE) && !cacheConfiguration.hasDefined(ModelKeys.CONFIGURATION)) {
                 throw ParseUtils.missingRequired(reader, EnumSet.of(Attribute.MODE));
             }
@@ -1206,7 +1206,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 break;
             }
             case DATA_TYPE: {
-                if (namespace.since(9, 2)) {
+                if (namespace.since(9, 2) || namespace.equals(8, 5)) {
                     this.parseDataType(reader, cache, operations);
                 } else {
                     throw ParseUtils.unexpectedElement(reader);
@@ -1778,7 +1778,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case ENCRYPTION: {
-                    if (namespace.since(9, 1)) {
+                    if (namespace.since(9, 1) || namespace.equals(8, 5)) {
                         parseRemoteStoreEncryption(reader, store, additionalConfigurationOperations);
                     } else {
                         throw ParseUtils.unexpectedElement(reader);
@@ -1786,7 +1786,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case AUTHENTICATION: {
-                    if (namespace.since(9, 1)) {
+                    if (namespace.since(9, 1) || namespace.equals(8, 5)) {
                         parseRemoteStoreAuthentication(reader, store, additionalConfigurationOperations);
                     } else {
                         throw ParseUtils.unexpectedElement(reader);

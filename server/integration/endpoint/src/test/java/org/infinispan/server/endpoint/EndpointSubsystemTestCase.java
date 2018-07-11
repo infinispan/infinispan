@@ -75,7 +75,7 @@ public class EndpointSubsystemTestCase extends ClusteringSubsystemTest {
    public static Collection<Object[]> data() throws Exception {
       URL configDir = Thread.currentThread().getContextClassLoader().getResource("org/infinispan/server/endpoint");
       List<Path> paths = Files.list(Paths.get(configDir.toURI()))
-            .filter(path -> path.getFileName().toString().matches("^endpoint-[0-9]+\\.[0_9]+.xml$"))
+            .filter(path -> path.getFileName().toString().matches("^endpoint-[0-9]+\\.[0-9]+.xml$"))
             .collect(Collectors.toList());
 
       List<Object[]> data = new ArrayList<>();

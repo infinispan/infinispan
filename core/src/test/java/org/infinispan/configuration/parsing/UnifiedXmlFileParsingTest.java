@@ -169,6 +169,61 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          }
       },
 
+      INFINISPAN_85(8, 5) {
+         @Override
+         public boolean isIncludedBy(int major, int minor) {
+            return (major == this.major && minor >= this.minor);
+         }
+
+         @Override
+         public void check(EmbeddedCacheManager cm) {
+            GlobalStateConfiguration gs = cm.getCacheManagerConfiguration().globalState();
+            assertEquals(ConfigurationStorage.OVERLAY, gs.configurationStorage());
+            assertEquals("sharedPath", gs.sharedPersistentLocation());
+
+            EncodingConfiguration encoding = cm.getCacheConfiguration("local").encoding();
+            assertEquals(MediaType.APPLICATION_OBJECT, encoding.keyDataType().mediaType());
+            assertEquals(MediaType.APPLICATION_OBJECT, encoding.valueDataType().mediaType());
+
+            PartitionHandlingConfiguration ph = cm.getCacheConfiguration("dist").clustering().partitionHandling();
+            assertTrue(ph.enabled());
+            assertEquals(PartitionHandling.ALLOW_READS, ph.whenSplit());
+            assertEquals(MergePolicy.PREFERRED_NON_NULL, ph.mergePolicy());
+
+            ph = cm.getCacheConfiguration("repl").clustering().partitionHandling();
+            assertFalse(ph.enabled());
+            assertEquals(PartitionHandling.ALLOW_READ_WRITES, ph.whenSplit());
+            assertEquals(MergePolicy.NONE, ph.mergePolicy());
+
+            MemoryConfiguration mc = cm.getCacheConfiguration("off-heap-memory").memory();
+            assertEquals(StorageType.OFF_HEAP, mc.storageType());
+            assertEquals(10000000, mc.size());
+            assertEquals(4, mc.addressCount());
+            assertEquals(EvictionType.MEMORY, mc.evictionType());
+
+            mc = cm.getCacheConfiguration("binary-memory").memory();
+            assertEquals(StorageType.BINARY, mc.storageType());
+            assertEquals(1, mc.size());
+
+            mc = cm.getCacheConfiguration("object-memory").memory();
+            assertEquals(StorageType.OBJECT, mc.storageType());
+         }
+      },
+
+      INFINISPAN_84(8, 4) {
+         @Override
+         public void check(EmbeddedCacheManager cm) {
+            // Nothing new
+         }
+      },
+
+      INFINISPAN_83(8, 3) {
+         @Override
+         public void check(EmbeddedCacheManager cm) {
+            // Nothing new
+         }
+      },
+
       INFINISPAN_82(8, 2) {
          @Override
          public void check(EmbeddedCacheManager cm) {
@@ -584,8 +639,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       },
       ;
 
-      private final int major;
-      private final int minor;
+      protected final int major;
+      protected final int minor;
 
       ParserVersionCheck(int major, int minor) {
          this.major = major;
