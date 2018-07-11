@@ -48,10 +48,9 @@ public class SizeTest extends MultiHotRodServersTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.memory().size(1);
       builder.persistence()
-            .passivation(true)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .storeName(getClass().getName())
-            .shared(true).purgeOnStartup(true);
+            .purgeOnStartup(true);
       defineInAll(cacheName, builder);
       assertEquals(0, clients.get(0).getCache(cacheName).size());
       populateCache(cacheName);

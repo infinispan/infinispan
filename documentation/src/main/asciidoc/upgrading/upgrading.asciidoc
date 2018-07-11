@@ -19,6 +19,15 @@ Infinispan 9.4 introduces a new naming scheme for the connection pool properties
 names. For a complete reference of the available configuration options for the properties file please refer to
 link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html#package.description[remote client configuration] javadoc.
 
+=== Store Changes
+
+==== Shared and Passivation
+
+A store cannot be configured as both shared and having passivation enabled.
+Doing so can cause data inconsistencies as there is no way to synchronize
+data between all the various nodes. As such this configuration will now
+cause a startup exception. Please update your configuration as appropriate.
+
 == Upgrading from 9.2 to 9.3
 
 === AdvancedCacheLoader changes

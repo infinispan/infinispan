@@ -166,7 +166,9 @@ public class LocalConditionalCommandTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       EmbeddedCacheManager embeddedCacheManager = TestCacheManagerFactory.createCacheManager();
       embeddedCacheManager.defineConfiguration(PRIVATE_STORE_CACHE_NAME, createConfiguration(getClass().getSimpleName(), false, transactional, passivation).build());
-      embeddedCacheManager.defineConfiguration(SHARED_STORE_CACHE_NAME, createConfiguration(getClass().getSimpleName(), true, transactional, passivation).build());
+      if (!passivation) {
+         embeddedCacheManager.defineConfiguration(SHARED_STORE_CACHE_NAME, createConfiguration(getClass().getSimpleName(), true, transactional, false).build());
+      }
       return embeddedCacheManager;
    }
 
