@@ -18,6 +18,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.util.logging.TraceException;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeListener;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
@@ -264,7 +265,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
          throw new CacheException("Thread interrupted while invoking RPC", e);
       } catch (ExecutionException e) {
          Throwable cause = e.getCause();
-         cause.addSuppressed(e);
+         cause.addSuppressed(new TraceException());
          if (cause instanceof CacheException) {
             throw ((CacheException) cause);
          } else {

@@ -30,7 +30,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -39,6 +38,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.util.logging.TraceException;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.FileLookup;
@@ -69,13 +69,13 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.AbstractRequest;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.BackupResponse;
+import org.infinispan.remoting.transport.ResponseCollector;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.FilterMapResponseCollector;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.impl.MultiTargetRequest;
 import org.infinispan.remoting.transport.impl.Request;
 import org.infinispan.remoting.transport.impl.RequestRepository;
-import org.infinispan.remoting.transport.ResponseCollector;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleTargetRequest;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
@@ -293,7 +293,7 @@ public class JGroupsTransport implements Transport {
             return CompletableFutures.await(request.toCompletableFuture());
          } catch (ExecutionException e) {
             Throwable cause = e.getCause();
-            cause.addSuppressed(e);
+            cause.addSuppressed(new TraceException());
             throw Util.rewrapAsCacheException(cause);
          }
       } else {

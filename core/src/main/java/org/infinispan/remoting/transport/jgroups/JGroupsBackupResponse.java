@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import org.infinispan.util.logging.TraceException;
 import org.infinispan.remoting.CacheUnreachableException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
@@ -78,7 +79,7 @@ public class JGroupsBackupResponse implements BackupResponse {
             addCommunicationError(siteName);
          } catch (ExecutionException ue) {
             Throwable cause = ue.getCause();
-            cause.addSuppressed(ue);
+            cause.addSuppressed(new TraceException());
             log.tracef(cause, "Communication error with site %s", siteName);
             errors.put(siteName, filterException(cause));
             addCommunicationError(siteName);
