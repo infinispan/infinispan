@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.util.logging.TraceException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.Util;
@@ -71,7 +72,7 @@ public interface Transport extends Lifecycle {
          return CompletableFutures.await(future);
       } catch (ExecutionException e) {
          Throwable cause = e.getCause();
-         cause.addSuppressed(e);
+         cause.addSuppressed(new TraceException());
          throw Util.rewrapAsCacheException(cause);
       }
    }
@@ -170,7 +171,7 @@ public interface Transport extends Lifecycle {
          return result;
       } catch (ExecutionException e) {
          Throwable cause = e.getCause();
-         cause.addSuppressed(e);
+         cause.addSuppressed(new TraceException());
          throw Util.rewrapAsCacheException(cause);
       }
    }

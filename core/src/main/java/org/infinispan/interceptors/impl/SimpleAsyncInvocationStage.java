@@ -9,6 +9,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.InvocationCallback;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.logging.TraceException;
 
 /**
  * Invocation stage representing a computation that may or may not be done yet.
@@ -37,7 +38,7 @@ public class SimpleAsyncInvocationStage extends InvocationStage {
          return CompletableFutures.await(future);
       } catch (ExecutionException e) {
          Throwable cause = e.getCause();
-         cause.addSuppressed(e);
+         cause.addSuppressed(new TraceException());
          throw cause;
       }
    }
