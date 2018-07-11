@@ -74,7 +74,7 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
     public static Collection<Object[]> data() throws Exception {
         URL configDir = Thread.currentThread().getContextClassLoader().getResource("org/jboss/as/clustering/infinispan/subsystem");
         List<Path> paths = Files.list(Paths.get(configDir.toURI()))
-              .filter(path -> path.getFileName().toString().matches("^subsystem-infinispan_[0-9]+_[0_9]+.xml$"))
+              .filter(path -> path.getFileName().toString().matches("^subsystem-infinispan_[0-9]+_[0-9]+.xml$"))
               .collect(Collectors.toList());
 
         List<Object[]> data = new ArrayList<>();

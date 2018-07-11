@@ -1874,6 +1874,13 @@ public class Parser implements ConfigurationParser {
    }
 
    protected void parseTransaction(XMLExtendedStreamReader reader, ConfigurationBuilder builder, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      if (!reader.getSchema().since(9, 0)) {
+         CacheMode cacheMode = builder.clustering().cacheMode();
+         if (!cacheMode.isSynchronous()) {
+            log.unsupportedAsyncCacheMode(cacheMode, cacheMode.toSync());
+            builder.clustering().cacheMode(cacheMode.toSync());
+         }
+      }
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = replaceProperties(reader.getAttributeValue(i));
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));

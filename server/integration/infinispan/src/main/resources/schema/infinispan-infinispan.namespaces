@@ -5,6 +5,9 @@ infinispan:server:core:7.2
 infinispan:server:core:8.0
 infinispan:server:core:8.1
 infinispan:server:core:8.2
+infinispan:server:core:8.3
+infinispan:server:core:8.4
+infinispan:server:core:8.5
 infinispan:server:core:9.0
 infinispan:server:core:9.1
 infinispan:server:core:9.2
