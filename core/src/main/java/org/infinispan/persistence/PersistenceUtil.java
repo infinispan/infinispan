@@ -131,75 +131,70 @@ public class PersistenceUtil {
 
    public static <K, V> InternalCacheEntry<K,V> loadAndStoreInDataContainer(DataContainer<K, V> dataContainer, int segment,
          final PersistenceManager persistenceManager, K key, final InvocationContext ctx, final TimeService timeService,
-                                                         final AtomicReference<Boolean> isLoaded) {
-      final ByRef<Boolean> expired = new ByRef<>(null);
-      DataContainer.ComputeAction<K, V> computeAction = (k, oldEntry, factory) -> {
-         //under the lock, check if the entry exists in the DataContainer
-         if (oldEntry != null) {
-            if (isLoaded != null) {
-               isLoaded.set(null); //not loaded
-            }
-            if (oldEntry.canExpire() && oldEntry.isExpired(timeService.wallClockTime())) {
-               expired.set(Boolean.TRUE);
-               return oldEntry;
-            }
-            return oldEntry; //no changes in container
-         }
-
-         // Load using key from command
-         MarshalledEntry<K, V> loaded = loadAndCheckExpiration(persistenceManager, key, ctx, timeService);
-         if (loaded == null) {
-            if (isLoaded != null) {
-               isLoaded.set(Boolean.FALSE); //not loaded
-            }
-            return null; //no changed in container
-         }
-
-         InternalCacheEntry<K, V> newEntry = convert(loaded, factory);
-
-         if (isLoaded != null) {
-            isLoaded.set(Boolean.TRUE); //loaded!
-         }
-         return newEntry;
-      };
-
-      InternalCacheEntry<K,V> entry;
-      if (segment != SEGMENT_NOT_PROVIDED && dataContainer instanceof InternalDataContainer) {
-         entry = ((InternalDataContainer) dataContainer).compute(segment, key, computeAction);
-      } else {
-         entry = dataContainer.compute(key, computeAction);
-      }
-
-      if (expired.get() == Boolean.TRUE) {
-         return null;
-      } else {
-         return entry;
-      }
+         final AtomicReference<Boolean> isLoaded) {
+      return loadAndComputeInDataContainer(dataContainer, segment, persistenceManager, key, ctx, timeService, null, isLoaded);
    }
 
    public static <K, V> InternalCacheEntry<K,V> loadAndComputeInDataContainer(DataContainer<K, V> dataContainer,
          int segment, final PersistenceManager persistenceManager, K key, final InvocationContext ctx,
          final TimeService timeService, DataContainer.ComputeAction<K, V> action) {
+      return loadAndComputeInDataContainer(dataContainer, segment, persistenceManager, key, ctx, timeService, action, null);
+   }
+
+   private static <K, V> InternalCacheEntry<K, V> loadAndComputeInDataContainer(DataContainer<K, V> dataContainer,
+         int segment, final PersistenceManager persistenceManager, K key, final InvocationContext ctx,
+         final TimeService timeService, DataContainer.ComputeAction<K, V> action, final AtomicReference<Boolean> isLoaded) {
       final ByRef<Boolean> expired = new ByRef<>(null);
 
       DataContainer.ComputeAction<K, V> computeAction = (k, oldEntry, factory) -> {
+         InternalCacheEntry<K, V> entryToUse;
          //under the lock, check if the entry exists in the DataContainer
          if (oldEntry != null) {
             if (oldEntry.canExpire() && oldEntry.isExpired(timeService.wallClockTime())) {
-               expired.set(Boolean.TRUE);
-               return oldEntry;
+               // If it was expired we can check CacheLoaders - since they can have different
+               // metadata than a store
+               MarshalledEntry<K, V> loaded = loadAndCheckExpiration(persistenceManager, key, ctx, false);
+               if (loaded != null) {
+                  if (isLoaded != null) {
+                     isLoaded.set(Boolean.TRUE); //loaded!
+                  }
+                  entryToUse = convert(loaded, factory);
+
+               } else {
+                  if (isLoaded != null) {
+                     isLoaded.set(Boolean.FALSE); //not loaded
+                  }
+                  expired.set(Boolean.TRUE);
+                  // Return the original entry - so it doesn't remove expired entry early
+                  return oldEntry;
+               }
+            } else {
+               if (isLoaded != null) {
+                  isLoaded.set(null); //no attempt to load
+               }
+               entryToUse = oldEntry;
             }
-            return action.compute(k, oldEntry, factory);
+         } else {
+            // There was no entry in memory so check all the stores to see if it is there
+            MarshalledEntry<K, V> loaded = loadAndCheckExpiration(persistenceManager, key, ctx, true);
+            if (loaded != null) {
+               if (isLoaded != null) {
+                  isLoaded.set(Boolean.TRUE); //loaded!
+               }
+               entryToUse = convert(loaded, factory);
+            } else {if (isLoaded != null) {
+               isLoaded.set(Boolean.FALSE); //not loaded
+            }
+
+               entryToUse = null;
+            }
          }
 
-         // Load using key from command
-         MarshalledEntry<K, V> loaded = loadAndCheckExpiration(persistenceManager, key, ctx, timeService);
-         if (loaded == null) {
-            return action.compute(k, null, factory);
+         if (action != null) {
+            return action.compute(k, entryToUse, factory);
+         } else {
+            return entryToUse;
          }
-
-         InternalCacheEntry<K, V> newEntry = convert(loaded, factory);
-         return action.compute(k, newEntry, factory);
       };
       InternalCacheEntry<K,V> entry;
       if (segment != SEGMENT_NOT_PROVIDED && dataContainer instanceof InternalDataContainer) {
@@ -216,7 +211,13 @@ public class PersistenceUtil {
 
    public static <K, V> MarshalledEntry<K, V> loadAndCheckExpiration(PersistenceManager persistenceManager, Object key,
                                                         InvocationContext context, TimeService timeService) {
-      final MarshalledEntry<K, V> loaded = persistenceManager.loadFromAllStores(key, context.isOriginLocal());
+      return loadAndCheckExpiration(persistenceManager, key, context, true);
+   }
+
+   private static <K, V> MarshalledEntry<K, V> loadAndCheckExpiration(PersistenceManager persistenceManager, Object key,
+         InvocationContext context, boolean includeStores) {
+      final MarshalledEntry<K, V> loaded = persistenceManager.loadFromAllStores(key, context.isOriginLocal(),
+            includeStores);
       if (trace) {
          log.tracef("Loaded %s for key %s from persistence.", loaded, key);
       }

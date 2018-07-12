@@ -80,7 +80,7 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
-   public MarshalledEntry loadFromAllStores(Object key, boolean localContext) {
+   public MarshalledEntry loadFromAllStores(Object key, boolean localContext, boolean includeStores) {
       return null;
    }
 
