@@ -21,6 +21,8 @@
 */
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.FileReader;
 import java.io.Reader;
 import java.net.URL;
@@ -33,6 +35,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
+import org.infinispan.Version;
 import org.infinispan.server.commons.controller.Operations;
 import org.infinispan.server.commons.subsystem.ClusteringSubsystemTest;
 import org.infinispan.server.jgroups.subsystem.JGroupsSubsystemResourceDefinition;
@@ -77,9 +80,14 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
               .filter(path -> path.getFileName().toString().matches("^subsystem-infinispan_[0-9]+_[0-9]+.xml$"))
               .collect(Collectors.toList());
 
+        boolean hasCurrentSchema = false;
+        String currentSchema = "subsystem-infinispan_" + Version.getSchemaVersion().replaceAll("\\.", "_") + ".xml";
         List<Object[]> data = new ArrayList<>();
         for (int i = 0; i < paths.size(); i++) {
             Path xmlPath = paths.get(i);
+            if (xmlPath.getFileName().toString().equals(currentSchema)) {
+                hasCurrentSchema = true;
+            }
             String propsPath = xmlPath.toString().replaceAll("\\.xml$", ".properties");
             Properties properties = new Properties();
             try (Reader r = new FileReader(propsPath)) {
@@ -87,6 +95,8 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
             }
             data.add(new Object[]{xmlPath, properties});
         }
+        // Ensure that we contain the current schema version at the very least
+        assertTrue("Could not find a '" + currentSchema + ".xml' configuration file", hasCurrentSchema);
         return data;
     }
 
@@ -154,7 +164,7 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
         // Read the whole model and make sure it looks as expected
         ModelNode model = services.readWholeModel();
 
-        Assert.assertTrue(model.get(InfinispanSubsystemRootResource.PATH.getKey()).hasDefined(InfinispanSubsystemRootResource.PATH.getValue()));
+        assertTrue(model.get(InfinispanSubsystemRootResource.PATH.getKey()).hasDefined(InfinispanSubsystemRootResource.PATH.getValue()));
     }
 
     private KernelServicesBuilder createKernelServicesBuilder() {

@@ -1,12 +1,12 @@
 package org.infinispan.configuration.parsing;
 
-import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,10 +20,12 @@ import org.infinispan.Version;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
+import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.QueryableDataContainer;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.BackupConfiguration;
@@ -31,6 +33,7 @@ import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.EncodingConfiguration;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
@@ -53,14 +56,11 @@ import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.jmx.CustomMBeanServerPropertiesTest;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.AdvancedExternalizerTest;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
@@ -76,9 +76,16 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       URL configDir = Thread.currentThread().getContextClassLoader().getResource("configs/unified");
       List<Path> paths = Files.list(Paths.get(configDir.toURI())).collect(Collectors.toList());
       Object[][] configurationFiles = new Object[paths.size()][];
+      boolean hasCurrentSchema = false;
       for (int i = 0; i < paths.size(); i++) {
+         if (paths.get(i).getFileName().toString().equals(Version.getSchemaVersion() + ".xml")) {
+            hasCurrentSchema = true;
+         }
          configurationFiles[i] = new Object[]{paths.get(i)};
       }
+      // Ensure that we contain the current schema version at the very least
+      assertTrue("Could not find a '" + Version.getSchemaVersion() + ".xml' configuration file", hasCurrentSchema);
+
       return configurationFiles;
    }
 
@@ -88,24 +95,22 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       int major = Integer.parseInt(parts[0]);
       int minor = Integer.parseInt(parts[1]);
 
-      withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.fromXml(config.toString(), true, false, false)) {
-         @Override
-         public void call() {
-            for(ParserVersionCheck check : ParserVersionCheck.values()) {
-               if (check.isIncludedBy(major, minor)) {
-                  check.check(cm);
-               }
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false);
+      try (InputStream is = FileLookupFactory.newInstance().lookupFileStrict(config.toString(), Thread.currentThread().getContextClassLoader())) {
+         ConfigurationBuilderHolder holder = parserRegistry.parse(is);
+         for(ParserVersionCheck check : ParserVersionCheck.values()) {
+            if (check.isIncludedBy(major, minor)) {
+               check.check(holder);
             }
          }
-      });
+      }
    }
 
    public enum ParserVersionCheck {
       INFINISPAN_93(9, 3) {
          @Override
-         public void check(EmbeddedCacheManager cm) {
-            Configuration local = cm.getCacheConfiguration("local");
+         public void check(ConfigurationBuilderHolder holder) {
+            Configuration local = getConfiguration(holder, "local");
             PersistenceConfiguration persistenceConfiguration = local.persistence();
             assertEquals(5, persistenceConfiguration.connectionAttempts());
             assertEquals(100, persistenceConfiguration.connectionInterval());
@@ -118,29 +123,29 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
       INFINISPAN_92(9, 2) {
          @Override
-         public void check(EmbeddedCacheManager cm) {
-            GlobalStateConfiguration gs = cm.getCacheManagerConfiguration().globalState();
+         public void check(ConfigurationBuilderHolder holder) {
+            GlobalStateConfiguration gs = getGlobalConfiguration(holder).globalState();
             assertEquals(ConfigurationStorage.OVERLAY, gs.configurationStorage());
             assertEquals("sharedPath", gs.sharedPersistentLocation());
 
-            EncodingConfiguration encoding = cm.getCacheConfiguration("local").encoding();
+            EncodingConfiguration encoding = getConfiguration(holder, "local").encoding();
             assertEquals(MediaType.APPLICATION_OBJECT, encoding.keyDataType().mediaType());
             assertEquals(MediaType.APPLICATION_OBJECT, encoding.valueDataType().mediaType());
 
-            MemoryConfiguration memory = cm.getCacheConfiguration("dist-template").memory();
+            MemoryConfiguration memory = getConfiguration(holder, "dist-template").memory();
             assertEquals(EvictionStrategy.REMOVE, memory.evictionStrategy());
          }
       },
 
       INFINISPAN_91(9, 1) {
          @Override
-         public void check(EmbeddedCacheManager cm) {
-            PartitionHandlingConfiguration ph = cm.getCacheConfiguration("dist").clustering().partitionHandling();
+         public void check(ConfigurationBuilderHolder holder) {
+            PartitionHandlingConfiguration ph = getConfiguration(holder, "dist").clustering().partitionHandling();
             assertTrue(ph.enabled());
             assertEquals(PartitionHandling.ALLOW_READS, ph.whenSplit());
             assertEquals(MergePolicy.PREFERRED_NON_NULL, ph.mergePolicy());
 
-            ph = cm.getCacheConfiguration("repl").clustering().partitionHandling();
+            ph = getConfiguration(holder, "repl").clustering().partitionHandling();
             assertFalse(ph.enabled());
             assertEquals(PartitionHandling.ALLOW_READ_WRITES, ph.whenSplit());
             assertEquals(MergePolicy.NONE, ph.mergePolicy());
@@ -149,22 +154,22 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
       INFINISPAN_90(9, 0) {
          @Override
-         public void check(EmbeddedCacheManager cm) {
-            GlobalConfiguration globalConfiguration = cm.getCacheManagerConfiguration();
+         public void check(ConfigurationBuilderHolder holder) {
+            GlobalConfiguration globalConfiguration = getGlobalConfiguration(holder);
             assertEquals(4, globalConfiguration.transport().initialClusterSize());
             assertEquals(30000, globalConfiguration.transport().initialClusterTimeout());
 
-            MemoryConfiguration mc = cm.getCacheConfiguration("off-heap-memory").memory();
+            MemoryConfiguration mc = getConfiguration(holder, "off-heap-memory").memory();
             assertEquals(StorageType.OFF_HEAP, mc.storageType());
             assertEquals(10000000, mc.size());
             assertEquals(4, mc.addressCount());
             assertEquals(EvictionType.MEMORY, mc.evictionType());
 
-            mc = cm.getCacheConfiguration("binary-memory").memory();
+            mc = getConfiguration(holder, "binary-memory").memory();
             assertEquals(StorageType.BINARY, mc.storageType());
             assertEquals(1, mc.size());
 
-            mc = cm.getCacheConfiguration("object-memory").memory();
+            mc = getConfiguration(holder, "object-memory").memory();
             assertEquals(StorageType.OBJECT, mc.storageType());
          }
       },
@@ -176,58 +181,58 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          }
 
          @Override
-         public void check(EmbeddedCacheManager cm) {
-            GlobalStateConfiguration gs = cm.getCacheManagerConfiguration().globalState();
+         public void check(ConfigurationBuilderHolder holder) {
+            GlobalStateConfiguration gs = getGlobalConfiguration(holder).globalState();
             assertEquals(ConfigurationStorage.OVERLAY, gs.configurationStorage());
             assertEquals("sharedPath", gs.sharedPersistentLocation());
 
-            EncodingConfiguration encoding = cm.getCacheConfiguration("local").encoding();
+            EncodingConfiguration encoding = getConfiguration(holder, "local").encoding();
             assertEquals(MediaType.APPLICATION_OBJECT, encoding.keyDataType().mediaType());
             assertEquals(MediaType.APPLICATION_OBJECT, encoding.valueDataType().mediaType());
 
-            PartitionHandlingConfiguration ph = cm.getCacheConfiguration("dist").clustering().partitionHandling();
+            PartitionHandlingConfiguration ph = getConfiguration(holder, "dist").clustering().partitionHandling();
             assertTrue(ph.enabled());
             assertEquals(PartitionHandling.ALLOW_READS, ph.whenSplit());
             assertEquals(MergePolicy.PREFERRED_NON_NULL, ph.mergePolicy());
 
-            ph = cm.getCacheConfiguration("repl").clustering().partitionHandling();
+            ph = getConfiguration(holder, "repl").clustering().partitionHandling();
             assertFalse(ph.enabled());
             assertEquals(PartitionHandling.ALLOW_READ_WRITES, ph.whenSplit());
             assertEquals(MergePolicy.NONE, ph.mergePolicy());
 
-            MemoryConfiguration mc = cm.getCacheConfiguration("off-heap-memory").memory();
+            MemoryConfiguration mc = getConfiguration(holder, "off-heap-memory").memory();
             assertEquals(StorageType.OFF_HEAP, mc.storageType());
             assertEquals(10000000, mc.size());
             assertEquals(4, mc.addressCount());
             assertEquals(EvictionType.MEMORY, mc.evictionType());
 
-            mc = cm.getCacheConfiguration("binary-memory").memory();
+            mc = getConfiguration(holder, "binary-memory").memory();
             assertEquals(StorageType.BINARY, mc.storageType());
             assertEquals(1, mc.size());
 
-            mc = cm.getCacheConfiguration("object-memory").memory();
+            mc = getConfiguration(holder, "object-memory").memory();
             assertEquals(StorageType.OBJECT, mc.storageType());
          }
       },
 
       INFINISPAN_84(8, 4) {
          @Override
-         public void check(EmbeddedCacheManager cm) {
+         public void check(ConfigurationBuilderHolder holder) {
             // Nothing new
          }
       },
 
       INFINISPAN_83(8, 3) {
          @Override
-         public void check(EmbeddedCacheManager cm) {
+         public void check(ConfigurationBuilderHolder holder) {
             // Nothing new
          }
       },
 
       INFINISPAN_82(8, 2) {
          @Override
-         public void check(EmbeddedCacheManager cm) {
-            GlobalConfiguration globalConfiguration = cm.getCacheManagerConfiguration();
+         public void check(ConfigurationBuilderHolder holder) {
+            GlobalConfiguration globalConfiguration = getGlobalConfiguration(holder);
             assertEquals(4, globalConfiguration.transport().initialClusterSize());
             assertEquals(30000, globalConfiguration.transport().initialClusterTimeout());
          }
@@ -235,8 +240,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
       INFINISPAN_81(8, 1) {
          @Override
-         public void check(EmbeddedCacheManager cm) {
-            GlobalConfiguration globalConfiguration = cm.getCacheManagerConfiguration();
+         public void check(ConfigurationBuilderHolder holder) {
+            GlobalConfiguration globalConfiguration = getGlobalConfiguration(holder);
             assertTrue(globalConfiguration.globalState().enabled());
             assertEquals("persistentPath", globalConfiguration.globalState().persistentLocation());
             assertEquals("tmpPath", globalConfiguration.globalState().temporaryLocation());
@@ -245,55 +250,54 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
       INFINISPAN_80(8, 0) {
          @Override
-         public void check(EmbeddedCacheManager cm) {
-            Configuration c = cm.getDefaultCacheConfiguration();
+         public void check(ConfigurationBuilderHolder holder) {
+            Configuration c = holder.getDefaultConfigurationBuilder().build();
             assertFalse(c.memory().evictionType() == EvictionType.MEMORY);
-            c = cm.getCacheConfiguration("invalid");
+            c = getConfiguration(holder, "invalid");
             assertTrue(c.memory().evictionType() == EvictionType.COUNT);
 
             DefaultThreadFactory threadFactory;
             BlockingThreadPoolExecutorFactory threadPool;
 
-            threadFactory = cm.getCacheManagerConfiguration().asyncThreadPool().threadFactory();
+            threadFactory = getGlobalConfiguration(holder).asyncThreadPool().threadFactory();
             assertEquals("infinispan", threadFactory.threadGroup().getName());
             assertEquals("%G %i", threadFactory.threadNamePattern());
             assertEquals(5, threadFactory.initialPriority());
-            threadPool = cm.getCacheManagerConfiguration().asyncThreadPool().threadPoolFactory();
-            assertEquals(TestCacheManagerFactory.ASYNC_EXEC_MAX_THREADS, threadPool.coreThreads()); // overriden by TestCacheManagerFactory
-            assertEquals(TestCacheManagerFactory.ASYNC_EXEC_MAX_THREADS, threadPool.maxThreads()); // overriden by TestCacheManagerFactory
-            assertEquals(TestCacheManagerFactory.ASYNC_EXEC_QUEUE_SIZE, threadPool.queueLength()); // overriden by TestCacheManagerFactory
-            assertEquals(TestCacheManagerFactory.KEEP_ALIVE, threadPool.keepAlive());  // overriden by TestCacheManagerFactory
+            threadPool = getGlobalConfiguration(holder).asyncThreadPool().threadPoolFactory();
+            assertEquals(5, threadPool.coreThreads());
+            assertEquals(5, threadPool.maxThreads());
+            assertEquals(0, threadPool.queueLength());
+            assertEquals(0, threadPool.keepAlive());
 
-            threadFactory = cm.getCacheManagerConfiguration().stateTransferThreadPool().threadFactory();
+            threadFactory = getGlobalConfiguration(holder).stateTransferThreadPool().threadFactory();
             assertEquals("infinispan", threadFactory.threadGroup().getName());
             assertEquals("%G %i", threadFactory.threadNamePattern());
             assertEquals(5, threadFactory.initialPriority());
-            threadPool = cm.getCacheManagerConfiguration().stateTransferThreadPool().threadPoolFactory();
-            assertEquals(TestCacheManagerFactory.STATE_TRANSFER_EXEC_MAX_THREADS, threadPool.coreThreads()); // overriden by TestCacheManagerFactory
-            assertEquals(TestCacheManagerFactory.STATE_TRANSFER_EXEC_MAX_THREADS, threadPool.maxThreads()); // overriden by TestCacheManagerFactory
-            assertEquals(TestCacheManagerFactory.STATE_TRANSFER_EXEC_QUEUE_SIZE, threadPool.queueLength()); //
-            // overriden by TestCacheManagerFactory
-            assertEquals(TestCacheManagerFactory.KEEP_ALIVE, threadPool.keepAlive());  // overriden by TestCacheManagerFactory
+            threadPool = getGlobalConfiguration(holder).stateTransferThreadPool().threadPoolFactory();
+            assertEquals(1, threadPool.coreThreads());
+            assertEquals(60, threadPool.maxThreads());
+            assertEquals(0, threadPool.queueLength());
+            assertEquals(0, threadPool.keepAlive());
 
-            assertTemplateConfiguration(cm, "local-template");
-            assertTemplateConfiguration(cm, "invalidation-template");
-            assertTemplateConfiguration(cm, "repl-template");
-            assertTemplateConfiguration(cm, "dist-template");
+            assertTemplateConfiguration(holder, "local-template");
+            assertTemplateConfiguration(holder, "invalidation-template");
+            assertTemplateConfiguration(holder, "repl-template");
+            assertTemplateConfiguration(holder, "dist-template");
 
-            assertCacheConfiguration(cm, "local-instance");
-            assertCacheConfiguration(cm, "invalidation-instance");
-            assertCacheConfiguration(cm, "repl-instance");
-            assertCacheConfiguration(cm, "dist-instance");
+            assertCacheConfiguration(holder, "local-instance");
+            assertCacheConfiguration(holder, "invalidation-instance");
+            assertCacheConfiguration(holder, "repl-instance");
+            assertCacheConfiguration(holder, "dist-instance");
 
-            Configuration localTemplate = cm.getCacheConfiguration("local-template");
-            Configuration localConfiguration = cm.getCacheConfiguration("local-instance");
+            Configuration localTemplate = getConfiguration(holder, "local-template");
+            Configuration localConfiguration = getConfiguration(holder, "local-instance");
             assertEquals(10000, localTemplate.expiration().wakeUpInterval());
             assertEquals(11000, localConfiguration.expiration().wakeUpInterval());
             assertEquals(10, localTemplate.expiration().lifespan());
             assertEquals(10, localConfiguration.expiration().lifespan());
 
-            Configuration replTemplate = cm.getCacheConfiguration("repl-template");
-            Configuration replConfiguration = cm.getCacheConfiguration("repl-instance");
+            Configuration replTemplate = getConfiguration(holder, "repl-template");
+            Configuration replConfiguration = getConfiguration(holder, "repl-instance");
             assertEquals(31000, replTemplate.locking().lockAcquisitionTimeout());
             assertEquals(32000, replConfiguration.locking().lockAcquisitionTimeout());
             assertEquals(3000, replTemplate.locking().concurrencyLevel());
@@ -302,8 +306,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       },
 
       INFINISPAN_70(7, 0) {
-         public void check(EmbeddedCacheManager cm) {
-            GlobalConfiguration g = cm.getCacheManagerConfiguration();
+         public void check(ConfigurationBuilderHolder holder) {
+            GlobalConfiguration g = getGlobalConfiguration(holder);
             assertEquals("maximal", g.globalJmxStatistics().cacheManagerName());
             assertTrue(g.globalJmxStatistics().enabled());
             assertEquals("my-domain", g.globalJmxStatistics().domain());
@@ -323,50 +327,46 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             DefaultThreadFactory threadFactory;
             BlockingThreadPoolExecutorFactory threadPool;
 
-            threadFactory = cm.getCacheManagerConfiguration().listenerThreadPool().threadFactory();
+            threadFactory = getGlobalConfiguration(holder).listenerThreadPool().threadFactory();
             assertEquals("infinispan", threadFactory.threadGroup().getName());
             assertEquals("%G %i", threadFactory.threadNamePattern());
             assertEquals(5, threadFactory.initialPriority());
-            threadPool = cm.getCacheManagerConfiguration().listenerThreadPool().threadPoolFactory();
+            threadPool = getGlobalConfiguration(holder).listenerThreadPool().threadPoolFactory();
             assertEquals(1, threadPool.coreThreads());
             assertEquals(1, threadPool.maxThreads());
             assertEquals(0, threadPool.queueLength());
             assertEquals(0, threadPool.keepAlive());
 
-            assertTrue(cm.getCacheManagerConfiguration().expirationThreadPool().threadPoolFactory() instanceof ScheduledThreadPoolExecutorFactory);
-            threadFactory = cm.getCacheManagerConfiguration().expirationThreadPool().threadFactory();
+            assertTrue(getGlobalConfiguration(holder).expirationThreadPool().threadPoolFactory() instanceof ScheduledThreadPoolExecutorFactory);
+            threadFactory = getGlobalConfiguration(holder).expirationThreadPool().threadFactory();
             assertEquals("infinispan", threadFactory.threadGroup().getName());
             assertEquals("%G %i", threadFactory.threadNamePattern());
             assertEquals(5, threadFactory.initialPriority());
 
-            ThreadPoolExecutorFactory threadPoolExecutorFactory = cm.getCacheManagerConfiguration().replicationQueueThreadPool().threadPoolFactory();
+            ThreadPoolExecutorFactory threadPoolExecutorFactory = getGlobalConfiguration(holder).replicationQueueThreadPool().threadPoolFactory();
             if (threadPoolExecutorFactory != null) { // Removed on 9.0
                assertTrue(threadPoolExecutorFactory instanceof ScheduledThreadPoolExecutorFactory);
-               threadFactory = cm.getCacheManagerConfiguration().replicationQueueThreadPool().threadFactory();
+               threadFactory = getGlobalConfiguration(holder).replicationQueueThreadPool().threadFactory();
                assertEquals("infinispan", threadFactory.threadGroup().getName());
                assertEquals("%G %i", threadFactory.threadNamePattern());
                assertEquals(5, threadFactory.initialPriority());
             }
 
-            threadFactory = cm.getCacheManagerConfiguration().transport().remoteCommandThreadPool().threadFactory();
+            threadFactory = getGlobalConfiguration(holder).transport().remoteCommandThreadPool().threadFactory();
             assertEquals("infinispan", threadFactory.threadGroup().getName());
             assertEquals("%G %i", threadFactory.threadNamePattern());
             assertEquals(5, threadFactory.initialPriority());
-            threadPool = cm.getCacheManagerConfiguration().transport().remoteCommandThreadPool().threadPoolFactory();
-            assertEquals(TestCacheManagerFactory.REMOTE_EXEC_MAX_THREADS, threadPool.coreThreads()); // overriden by TestCacheManagerFactory
-            assertEquals(TestCacheManagerFactory.REMOTE_EXEC_MAX_THREADS, threadPool.maxThreads()); // overriden by TestCacheManagerFactory
-            assertEquals(TestCacheManagerFactory.REMOTE_EXEC_QUEUE_SIZE, threadPool.queueLength()); // overriden by TestCacheManagerFactory
-            assertEquals(TestCacheManagerFactory.KEEP_ALIVE, threadPool.keepAlive());  // overriden by TestCacheManagerFactory
+            assertTrue(getGlobalConfiguration(holder).transport().remoteCommandThreadPool().threadPoolFactory() instanceof CachedThreadPoolExecutorFactory);
 
-            threadFactory = cm.getCacheManagerConfiguration().transport().transportThreadPool().threadFactory();
+            threadFactory = getGlobalConfiguration(holder).transport().transportThreadPool().threadFactory();
             assertEquals("infinispan", threadFactory.threadGroup().getName());
             assertEquals("%G %i", threadFactory.threadNamePattern());
             assertEquals(5, threadFactory.initialPriority());
-            threadPool = cm.getCacheManagerConfiguration().transport().transportThreadPool().threadPoolFactory();
-            assertEquals(TestCacheManagerFactory.TRANSPORT_EXEC_MAX_THREADS, threadPool.coreThreads()); // overriden by TestCacheManagerFactory
-            assertEquals(TestCacheManagerFactory.TRANSPORT_EXEC_MAX_THREADS, threadPool.maxThreads()); // overriden by TestCacheManagerFactory
-            assertEquals(TestCacheManagerFactory.TRANSPORT_EXEC_QUEUE_SIZE, threadPool.queueLength()); // overriden by TestCacheManagerFactory
-            assertEquals(TestCacheManagerFactory.KEEP_ALIVE, threadPool.keepAlive());  // overriden by TestCacheManagerFactory
+            threadPool = getGlobalConfiguration(holder).transport().transportThreadPool().threadPoolFactory();
+            assertEquals(5, threadPool.coreThreads());
+            assertEquals(10, threadPool.maxThreads());
+            assertEquals(100, threadPool.queueLength());
+            assertEquals(10000, threadPool.keepAlive());
 
             assertTrue(g.serialization().marshaller() instanceof TestObjectStreamMarshaller);
             assertEquals(Version.getVersionShort("1.0"), g.serialization().version());
@@ -378,7 +378,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(ShutdownHookBehavior.DONT_REGISTER, g.shutdown().hookBehavior());
 
             // Default cache is "local" named cache
-            Configuration c = cm.getDefaultCacheConfiguration();
+            Configuration c = holder.getDefaultConfigurationBuilder().build();
             assertFalse(c.invocationBatching().enabled());
             assertTrue(c.jmxStatistics().enabled());
             assertEquals(CacheMode.LOCAL, c.clustering().cacheMode());
@@ -408,7 +408,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(1, fileStore.async().threadPoolSize());
             assertEquals(Index.NONE, c.indexing().index());
 
-            c = cm.getCacheConfiguration("invalid");
+            c = getConfiguration(holder, "invalid");
             assertEquals(CacheMode.INVALIDATION_SYNC, c.clustering().cacheMode());
             assertTrue(c.invocationBatching().enabled());
             assertTrue(c.jmxStatistics().enabled());
@@ -427,7 +427,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(11, c.expiration().maxIdle());
             assertEquals(Index.NONE, c.indexing().index());
 
-            c = cm.getCacheConfiguration("repl");
+            c = getConfiguration(holder, "repl");
             assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
             assertTrue(c.invocationBatching().enabled());
             assertTrue(c.jmxStatistics().enabled());
@@ -452,7 +452,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertFalse(clusterLoader.preload());
             assertEquals(Index.NONE, c.indexing().index());
 
-            c = cm.getCacheConfiguration("dist");
+            c = getConfiguration(holder, "dist");
             assertEquals(CacheMode.DIST_SYNC, c.clustering().cacheMode());
             assertFalse(c.invocationBatching().enabled());
             assertEquals(1200000, c.clustering().l1().lifespan());
@@ -502,7 +502,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals("users", c.sites().backupFor().remoteCache());
             assertEquals("LON", c.sites().backupFor().remoteSite());
 
-            c = cm.getCacheConfiguration("capedwarf-data");
+            c = getConfiguration(holder, "capedwarf-data");
             assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.transaction().useSynchronization()); // Non XA
@@ -513,7 +513,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(fileStore.preload());
             assertFalse(fileStore.purgeOnStartup());
 
-            c = cm.getCacheConfiguration("capedwarf-metadata");
+            c = getConfiguration(holder, "capedwarf-metadata");
             assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.transaction().useSynchronization()); // Non XA
@@ -524,7 +524,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertFalse(dummyStore.preload());
             assertFalse(dummyStore.purgeOnStartup());
 
-            c = cm.getCacheConfiguration("capedwarf-memcache");
+            c = getConfiguration(holder, "capedwarf-memcache");
             assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.transaction().useSynchronization()); // Non XA
@@ -533,7 +533,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(-1, c.memory().size());
             assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
 
-            c = cm.getCacheConfiguration("capedwarf-default");
+            c = getConfiguration(holder, "capedwarf-default");
             assertEquals(CacheMode.DIST_SYNC, c.clustering().cacheMode());
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.transaction().useSynchronization()); // Non XA
@@ -545,7 +545,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertFalse(fileStore.purgeOnStartup());
             assertEquals(Index.NONE, c.indexing().index());
 
-            c = cm.getCacheConfiguration("capedwarf-dist");
+            c = getConfiguration(holder, "capedwarf-dist");
             assertEquals(CacheMode.DIST_SYNC, c.clustering().cacheMode());
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.transaction().useSynchronization()); // Non XA
@@ -557,7 +557,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(fileStore.preload());
             assertFalse(fileStore.purgeOnStartup());
 
-            c = cm.getCacheConfiguration("capedwarf-tasks");
+            c = getConfiguration(holder, "capedwarf-tasks");
             assertEquals(CacheMode.DIST_SYNC, c.clustering().cacheMode());
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.transaction().useSynchronization()); // Non XA
@@ -568,7 +568,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertFalse(fileStore.purgeOnStartup());
             assertEquals(Index.NONE, c.indexing().index());
 
-            c = cm.getCacheConfiguration("HibernateSearch-LuceneIndexesMetadata");
+            c = getConfiguration(holder, "HibernateSearch-LuceneIndexesMetadata");
             assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.invocationBatching().enabled());
@@ -579,7 +579,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(fileStore.preload());
             assertFalse(fileStore.purgeOnStartup());
 
-            c = cm.getCacheConfiguration("HibernateSearch-LuceneIndexesData");
+            c = getConfiguration(holder, "HibernateSearch-LuceneIndexesData");
             assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.invocationBatching().enabled());
@@ -590,7 +590,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(fileStore.preload());
             assertFalse(fileStore.purgeOnStartup());
 
-            c = cm.getCacheConfiguration("HibernateSearch-LuceneIndexesLocking");
+            c = getConfiguration(holder, "HibernateSearch-LuceneIndexesLocking");
             assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.invocationBatching().enabled());
@@ -598,7 +598,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertFalse(c.transaction().recovery().enabled()); // Non XA
             assertEquals(-1, c.memory().size());
 
-            c = cm.getCacheConfiguration("custom-interceptors");
+            c = getConfiguration(holder, "custom-interceptors");
             List<InterceptorConfiguration> interceptors = c.customInterceptors().interceptors();
             InterceptorConfiguration interceptor = interceptors.get(0);
             assertTrue(interceptor.interceptor() instanceof CustomInterceptor1);
@@ -614,24 +614,24 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(InterceptorConfiguration.Position.LAST, interceptor.position());
             assertTrue(c.unsafe().unreliableReturnValues());
 
-            c = cm.getCacheConfiguration("write-skew");
+            c = getConfiguration(holder, "write-skew");
             assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().isolationLevel());
             assertTrue(c.versioning().enabled());
             assertEquals(VersioningScheme.SIMPLE, c.versioning().scheme());
             assertFalse(c.deadlockDetection().enabled());
 
-            c = cm.getCacheConfiguration("compatibility");
+            c = getConfiguration(holder, "compatibility");
             assertTrue(c.compatibility().enabled());
             assertTrue(c.compatibility().marshaller() instanceof GenericJBossMarshaller);
             assertFalse(c.deadlockDetection().enabled());
             assertEquals(-1, c.deadlockDetection().spinDuration());
 
-            c = cm.getCacheConfiguration("custom-container");
+            c = getConfiguration(holder, "custom-container");
             assertTrue(c.dataContainer().dataContainer() instanceof QueryableDataContainer);
             assertTrue(c.dataContainer().<byte[]>keyEquivalence() instanceof AnyEquivalence);
             assertTrue(c.dataContainer().<byte[]>valueEquivalence() instanceof AnyEquivalence);
 
-            c = cm.getCacheConfiguration("store-as-binary");
+            c = getConfiguration(holder, "store-as-binary");
             if (c != null)
                assertTrue(c.memory().storageType() == StorageType.BINARY);
          }
@@ -647,21 +647,21 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          this.minor = minor;
       }
 
-      public abstract void check(EmbeddedCacheManager cm);
+      public abstract void check(ConfigurationBuilderHolder cm);
 
       public boolean isIncludedBy(int major, int minor) {
          return major > this.major || (major == this.major && minor >= this.minor);
       }
    }
 
-   private static void assertTemplateConfiguration(EmbeddedCacheManager cm, String name) {
-      Configuration configuration = cm.getCacheConfiguration(name);
+   private static void assertTemplateConfiguration(ConfigurationBuilderHolder holder, String name) {
+      Configuration configuration = getConfiguration(holder, name);
       assertNotNull("Configuration " + name + " expected", configuration);
       assertTrue("Configuration " + name + " should be a template", configuration.isTemplate());
    }
 
-   private static void assertCacheConfiguration(EmbeddedCacheManager cm, String name) {
-      Configuration configuration = cm.getCacheConfiguration(name);
+   private static void assertCacheConfiguration(ConfigurationBuilderHolder holder, String name) {
+      Configuration configuration = getConfiguration(holder, name);
       assertNotNull("Configuration " + name + " expected", configuration);
       assertFalse("Configuration " + name + " should not be a template", configuration.isTemplate());
    }
@@ -686,6 +686,15 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
    public static final class CustomInterceptor4 extends CommandInterceptor {
       String foo; // configured via XML
+   }
+
+   static Configuration getConfiguration(ConfigurationBuilderHolder holder, String name) {
+      ConfigurationBuilder builder = holder.getNamedConfigurationBuilders().get(name);
+      return builder != null ? builder.build() : null;
+   }
+
+   static GlobalConfiguration getGlobalConfiguration(ConfigurationBuilderHolder holder) {
+      return holder.getGlobalConfigurationBuilder().build();
    }
 
 }
