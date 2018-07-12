@@ -10,6 +10,7 @@ import org.testng.xml.XmlTest;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 public class NamedTestMethod implements ITestNGMethod {
    private final ITestNGMethod method;
@@ -263,6 +264,16 @@ public class NamedTestMethod implements ITestNGMethod {
    }
 
    @Override
+   public void setMoreInvocationChecker(Callable<Boolean> callable) {
+      method.setMoreInvocationChecker(callable);
+   }
+
+   @Override
+   public boolean hasMoreInvocation() {
+      return method.hasMoreInvocation();
+   }
+
+   @Override
    public ITestNGMethod clone() {
       return method.clone();
    }
@@ -348,8 +359,8 @@ public class NamedTestMethod implements ITestNGMethod {
    }
 
    @Override
-   public int compareTo(Object o) {
-      return method.compareTo(o);
+   public String getQualifiedName() {
+      return method.getQualifiedName();
    }
 
    @Override
