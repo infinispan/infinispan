@@ -64,6 +64,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-commons</artifactId>
             <type>test-jar</type>

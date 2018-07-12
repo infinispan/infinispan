@@ -21,6 +21,8 @@
 */
 package org.infinispan.server.jgroups.subsystem;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.FileReader;
 import java.io.Reader;
 import java.net.URL;
@@ -38,6 +40,7 @@ import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.infinispan.Version;
 import org.infinispan.server.commons.controller.Operations;
 import org.infinispan.server.commons.subsystem.ClusteringSubsystemTest;
 import org.jboss.as.controller.PathAddress;
@@ -82,10 +85,14 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
         List<Path> paths = Files.list(Paths.get(configDir.toURI()))
               .filter(path -> path.toString().endsWith(".xml"))
               .collect(Collectors.toList());
-
+        boolean hasCurrentSchema = false;
+        String currentSchema = "subsystem-infinispan_server_jgroups-" + Version.getSchemaVersion().replaceAll("\\.", "_") + ".xml";
         List<Object[]> data = new ArrayList<>();
         for (int i = 0; i < paths.size(); i++) {
             Path xmlPath = paths.get(i);
+            if (xmlPath.getFileName().toString().equals(currentSchema)) {
+                hasCurrentSchema = true;
+            }
             String propsPath = xmlPath.toString().replaceAll("\\.xml$", ".properties");
             Properties properties = new Properties();
             try (Reader r = new FileReader(propsPath)) {
@@ -93,6 +100,8 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
             }
             data.add(new Object[]{xmlPath, properties});
         }
+        // Ensure that we contain the current schema version at the very least
+        assertTrue("Could not find a '" + currentSchema + "' configuration file", hasCurrentSchema);
         return data;
     }
 

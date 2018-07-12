@@ -26,6 +26,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.DES
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUBSYSTEM;
+import static org.junit.Assert.assertTrue;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -40,6 +41,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
+import org.infinispan.Version;
 import org.infinispan.server.commons.subsystem.ClusteringSubsystemTest;
 import org.infinispan.server.endpoint.subsystem.EndpointExtension;
 import org.jboss.as.controller.PathAddress;
@@ -78,9 +80,14 @@ public class EndpointSubsystemTestCase extends ClusteringSubsystemTest {
             .filter(path -> path.getFileName().toString().matches("^endpoint-[0-9]+\\.[0-9]+.xml$"))
             .collect(Collectors.toList());
 
+      boolean hasCurrentSchema = false;
+      String currentSchema = "endpoint-" + Version.getSchemaVersion() + ".xml";
       List<Object[]> data = new ArrayList<>();
       for (int i = 0; i < paths.size(); i++) {
          Path xmlPath = paths.get(i);
+         if (xmlPath.getFileName().toString().equals(currentSchema)) {
+            hasCurrentSchema = true;
+         }
          String propsPath = xmlPath.toString().replaceAll("\\.xml$", ".properties");
          Properties properties = new Properties();
          try (Reader r = new FileReader(propsPath)) {
@@ -88,6 +95,8 @@ public class EndpointSubsystemTestCase extends ClusteringSubsystemTest {
          }
          data.add(new Object[]{xmlPath, properties});
       }
+      // Ensure that we contain the current schema version at the very least
+      assertTrue("Could not find a '" + currentSchema + "' configuration file", hasCurrentSchema);
       return data;
    }
 
