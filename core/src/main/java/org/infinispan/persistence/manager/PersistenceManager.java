@@ -98,7 +98,15 @@ public interface PersistenceManager extends Lifecycle {
     */
    <K> Publisher<K> publishKeys(Predicate<? super K> filter, AccessMode mode);
 
-   MarshalledEntry loadFromAllStores(Object key, boolean localInvocation);
+   /**
+    * Loads an entry from the persistence store for the given key. The returned value may be null. This value
+    * is guaranteed to not be expired when it was returned.
+    * @param key key to read the entry from
+    * @param localInvocation whether this invocation is a local invocation. Some loaders may be ignored if it is not local
+    * @param includeStores if a loader that is also a store can be loaded from
+    * @return entry that maps to the key
+    */
+   MarshalledEntry loadFromAllStores(Object key, boolean localInvocation, boolean includeStores);
 
    /**
     * Returns the store one configured with fetch persistent state, or null if none exist.

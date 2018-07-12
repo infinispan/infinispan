@@ -540,13 +540,15 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public MarshalledEntry loadFromAllStores(Object key, boolean localInvocation) {
+   public MarshalledEntry loadFromAllStores(Object key, boolean localInvocation, boolean includeStores) {
       storesMutex.readLock().lock();
       try {
          checkStoreAvailability();
          for (CacheLoader l : loaders) {
-            if (!localInvocation && isLocalOnlyLoader(l))
+            if (!localInvocation && isLocalOnlyLoader(l)
+                  || !includeStores && l instanceof CacheWriter) {
                continue;
+            }
 
             MarshalledEntry load = l.load(key);
             if (load != null)
