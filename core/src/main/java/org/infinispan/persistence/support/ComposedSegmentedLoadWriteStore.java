@@ -11,6 +11,7 @@ import java.util.function.ToIntFunction;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
 import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -18,9 +19,9 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
+import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
@@ -117,76 +118,34 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
 
    @Override
    public Flowable<K> publishKeys(IntSet segments, Predicate<? super K> filter) {
-      Flowable<Publisher<K>> flowable = new FlowableFromIntSetFunction<>(segments, i -> {
+      return PersistenceUtil.parallelizePublisher(segments, scheduler, i -> {
          AdvancedLoadWriteStore<K, V> alws = stores.get(i);
          if (alws != null) {
             return alws.publishKeys(filter);
          }
          return Flowable.empty();
       });
-      // Can't chain with this, doesn't like the typing
-      // Filter out empty so we don't use a thread for it
-      flowable = flowable.filter(f -> f != Flowable.empty());
-      return flowable.parallel()
-            .runOn(scheduler)
-            .flatMap(f -> f)
-            .sequential();
    }
 
    @Override
-   public Publisher<K> publishKeys(Predicate<? super K> filter) {
-      Flowable<Publisher<K>> flowable = Flowable.range(0, stores.length())
-            .map(i -> {
-               AdvancedLoadWriteStore<K, V> alws = stores.get(i);
-               if (alws == null) {
-                  return Flowable.empty();
-               } else {
-                  return alws.publishKeys(filter);
-               }
-            });
-      // Can't chain with this, doesn't like the typing
-      // Filter out empty so we don't use a thread for it
-      flowable = flowable.filter(f -> f != Flowable.empty());
-      return flowable.parallel()
-            .runOn(scheduler)
-            .flatMap(f -> f)
-            .sequential();
+   public Flowable<K> publishKeys(Predicate<? super K> filter) {
+      return publishKeys(IntSets.immutableRangeSet(stores.length()), filter);
    }
 
    @Override
    public Publisher<MarshalledEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
-      Flowable<Publisher<MarshalledEntry<K, V>>> flowable = new FlowableFromIntSetFunction<>(segments, i -> {
+      return PersistenceUtil.parallelizePublisher(segments, scheduler, i -> {
          AdvancedLoadWriteStore<K, V> alws = stores.get(i);
          if (alws != null) {
             return alws.publishEntries(filter, fetchValue, fetchMetadata);
          }
          return Flowable.empty();
       });
-      // Cast is required otherwise it complains I can't use != operator with 2 unlike types.... bug anyone?
-      // Filter out empty so we don't use a thread for it
-      flowable = flowable.filter(f -> (Object) f != Flowable.empty());
-      return flowable.parallel()
-            .runOn(scheduler)
-            .flatMap(f -> f)
-            .sequential();
    }
 
    @Override
    public Publisher<MarshalledEntry<K, V>> publishEntries(Predicate<? super K> filter, boolean fetchValue, boolean fetchMetadata) {
-      Flowable<Publisher<MarshalledEntry<K, V>>> flowable = Flowable.range(0, stores.length())
-            .map(i -> {
-               AdvancedLoadWriteStore<K, V> alws = stores.get(i);
-               if (alws == null) {
-                  return Flowable.empty();
-               } else {
-                  return alws.publishEntries(filter, fetchValue, fetchMetadata);
-               }
-            });
-      flowable = flowable.filter(f -> (Object) f != Flowable.empty());
-      return flowable.parallel()
-            .runOn(scheduler)
-            .flatMap(f -> f)
-            .sequential();
+      return publishEntries(IntSets.immutableRangeSet(stores.length()), filter, fetchValue, fetchMetadata);
    }
 
    @Override

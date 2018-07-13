@@ -19,7 +19,10 @@ import org.testng.annotations.Test;
 public class RocksDBReaderTest extends AbstractReaderTest {
 
    private static final String SOURCE_DIR = "target/test-classes/leveldbstore/";
-   private static final String TARGET_DIR = SOURCE_DIR + "/rocksdbstore/";
+
+   private String getTargetDirectory() {
+      return SOURCE_DIR + "/rocksdbstore-" + segmentCount + "/";
+   }
 
    @Factory
    public Object[] factory() {
@@ -31,8 +34,9 @@ public class RocksDBReaderTest extends AbstractReaderTest {
 
    public ConfigurationBuilder getTargetCacheConfig() {
       ConfigurationBuilder builder = super.getTargetCacheConfig();
+      String targetDir = getTargetDirectory();
       builder.persistence()
-            .addStore(RocksDBStoreConfigurationBuilder.class).location(TARGET_DIR).expiredLocation(TARGET_DIR + "-expired-")
+            .addStore(RocksDBStoreConfigurationBuilder.class).location(targetDir).expiredLocation(targetDir + "expired")
             .preload(true).ignoreModifications(true).segmented(segmentCount > 0);
       return builder;
    }
@@ -41,6 +45,6 @@ public class RocksDBReaderTest extends AbstractReaderTest {
    protected void configureStoreProperties(Properties properties, Element type) {
       super.configureStoreProperties(properties, type);
       properties.put(propKey(type, TYPE), StoreType.ROCKSDB.toString());
-      properties.put(propKey(type, LOCATION), type == SOURCE ? SOURCE_DIR : TARGET_DIR);
+      properties.put(propKey(type, LOCATION), type == SOURCE ? SOURCE_DIR : getTargetDirectory());
    }
 }

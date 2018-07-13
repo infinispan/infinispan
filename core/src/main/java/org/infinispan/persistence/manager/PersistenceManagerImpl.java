@@ -70,6 +70,7 @@ import org.infinispan.persistence.async.AsyncCacheLoader;
 import org.infinispan.persistence.async.AsyncCacheWriter;
 import org.infinispan.persistence.async.State;
 import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
+import org.infinispan.persistence.internal.PersistenceUtil;
 import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
@@ -93,6 +94,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
+import io.reactivex.internal.functions.Functions;
 import net.jcip.annotations.GuardedBy;
 
 public class PersistenceManagerImpl implements PersistenceManager {
@@ -125,7 +127,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @GuardedBy("storesMutex")
    private final Map<Object, StoreStatus> storeStatuses = new HashMap<>();
    private AdvancedPurgeListener<Object, Object> advancedListener;
-   private final Callable<Semaphore> publisherSemaphoreCallable = () -> publisherSemaphore;
+   private final Callable<Semaphore> publisherSemaphoreCallable = Functions.justCallable(publisherSemaphore);
 
    /**
     * making it volatile as it might change after @Start, so it needs the visibility.
@@ -560,8 +562,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             return segmentedStore.publishEntries(segments, filter, fetchValue, fetchMetadata);
          }, Semaphore::release);
       }
-      Predicate<Object> segmentFilter = k -> segments.contains(keyPartitioner.getSegment(k));
-      return publishEntries(filter == null ? segmentFilter : filter.and(segmentFilter), fetchValue, fetchMetadata, mode);
+      return publishEntries(PersistenceUtil.combinePredicate(segments, keyPartitioner, filter), fetchValue, fetchMetadata, mode);
    }
 
    @Override
@@ -592,8 +593,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          }, Semaphore::release);
       }
 
-      Predicate<Object> segmentFilter = k -> segments.contains(keyPartitioner.getSegment(k));
-      return publishKeys(filter == null ? segmentFilter : filter.and(segmentFilter), mode);
+      return publishKeys(PersistenceUtil.combinePredicate(segments, keyPartitioner, filter), mode);
    }
 
    @Override

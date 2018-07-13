@@ -1,13 +1,17 @@
 package org.infinispan.persistence.internal;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.IntFunction;
+import java.util.function.Predicate;
 
 import org.infinispan.commons.util.ByRef;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
@@ -16,6 +20,12 @@ import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.rxjava.FlowableFromIntSetFunction;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
+import io.reactivex.Scheduler;
+import io.reactivex.internal.functions.Functions;
 
 /**
  * Persistence Utility that is useful for internal classes. Normally methods that require non public classes, such as
@@ -149,5 +159,24 @@ public class PersistenceUtil {
          //noinspection unchecked
          return factory.create(loaded.getKey(), loaded.getValue(), (Metadata) null);
       }
+   }
+
+   public static <K> Predicate<? super K> combinePredicate(IntSet segments, KeyPartitioner keyPartitioner, Predicate<? super K> filter) {
+      if (segments != null) {
+         Predicate<Object> segmentFilter = k -> segments.contains(keyPartitioner.getSegment(k));
+         return filter == null ? segmentFilter : filter.and(segmentFilter);
+      }
+      return filter;
+   }
+
+   public static <R> Flowable<R> parallelizePublisher(IntSet segments, Scheduler scheduler,
+         IntFunction<Publisher<R>> publisherFunction) {
+      Flowable<Publisher<R>> flowable = new FlowableFromIntSetFunction<>(segments, publisherFunction);
+      // We internally support removing rxjava empty flowables - don't waste thread on them
+      flowable = flowable.filter(f -> f != Flowable.empty());
+      return flowable.parallel()
+            .runOn(scheduler)
+            .flatMap(Functions.identity())
+            .sequential();
    }
 }
