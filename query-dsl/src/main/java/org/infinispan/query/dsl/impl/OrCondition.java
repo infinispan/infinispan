@@ -6,9 +6,9 @@ import org.infinispan.query.dsl.QueryFactory;
  * @author anistor@redhat.com
  * @since 6.0
  */
-class OrCondition extends BooleanCondition {
+final class OrCondition extends BooleanCondition {
 
-   public OrCondition(QueryFactory queryFactory, BaseCondition leftCondition, BaseCondition rightCondition) {
+   OrCondition(QueryFactory queryFactory, BaseCondition leftCondition, BaseCondition rightCondition) {
       super(queryFactory, leftCondition, rightCondition);
    }
 

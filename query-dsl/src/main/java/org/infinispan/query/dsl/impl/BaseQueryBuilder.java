@@ -226,6 +226,7 @@ public abstract class BaseQueryBuilder implements QueryBuilder, Visitable {
 
       NotCondition notCondition = new NotCondition(queryFactory, baseCondition);
       notCondition.setQueryBuilder(this);
+      baseCondition.setParent(notCondition);
       setFilterCondition(notCondition);
       return filterCondition;
    }

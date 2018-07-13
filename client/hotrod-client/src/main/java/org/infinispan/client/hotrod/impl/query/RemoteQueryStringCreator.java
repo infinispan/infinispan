@@ -11,11 +11,11 @@ import org.infinispan.query.dsl.impl.QueryStringCreator;
  * @author anistor@redhat.com
  * @since 6.0
  */
-class RemoteQueryStringCreator extends QueryStringCreator {
+final class RemoteQueryStringCreator extends QueryStringCreator {
 
    private final SerializationContext serializationContext;
 
-   public RemoteQueryStringCreator(SerializationContext serializationContext) {
+   RemoteQueryStringCreator(SerializationContext serializationContext) {
       this.serializationContext = serializationContext;
    }
 
