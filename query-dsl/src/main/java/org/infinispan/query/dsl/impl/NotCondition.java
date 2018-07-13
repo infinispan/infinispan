@@ -6,9 +6,9 @@ import org.infinispan.query.dsl.QueryFactory;
  * @author anistor@redhat.com
  * @since 6.0
  */
-class NotCondition extends BooleanCondition {
+final class NotCondition extends BooleanCondition {
 
-   public NotCondition(QueryFactory queryFactory, BaseCondition condition) {
+   NotCondition(QueryFactory queryFactory, BaseCondition condition) {
       super(queryFactory, condition, null);
    }
 
@@ -19,6 +19,6 @@ class NotCondition extends BooleanCondition {
 
    @Override
    public String toString() {
-      return "NOT (" + getFirstCondition();
+      return "NOT (" + getFirstCondition() + ")";
    }
 }

@@ -6,9 +6,9 @@ import org.infinispan.query.dsl.QueryFactory;
  * @author anistor@redhat.com
  * @since 6.0
  */
-class AndCondition extends BooleanCondition {
+final class AndCondition extends BooleanCondition {
 
-   public AndCondition(QueryFactory queryFactory, BaseCondition leftCondition, BaseCondition rightCondition) {
+   AndCondition(QueryFactory queryFactory, BaseCondition leftCondition, BaseCondition rightCondition) {
       super(queryFactory, leftCondition, rightCondition);
    }
 

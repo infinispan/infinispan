@@ -21,6 +21,9 @@ abstract class BooleanCondition extends BaseCondition {
 
    protected BooleanCondition(QueryFactory queryFactory, BaseCondition leftCondition, BaseCondition rightCondition) {
       super(queryFactory);
+      if (leftCondition == rightCondition) {
+         throw log.leftAndRightCannotBeTheSame();
+      }
       this.leftCondition = leftCondition;
       this.rightCondition = rightCondition;
    }

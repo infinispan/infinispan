@@ -16,6 +16,9 @@ abstract class OperatorAndArgument<ArgumentType> implements Visitable {
    protected final ArgumentType argument;
 
    protected OperatorAndArgument(AttributeCondition attributeCondition, ArgumentType argument) {
+      if (attributeCondition == null) {
+         throw log.argumentCannotBeNull("attributeCondition");
+      }
       this.attributeCondition = attributeCondition;
       this.argument = argument;
    }
