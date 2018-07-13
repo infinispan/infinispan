@@ -13,7 +13,7 @@ import org.jboss.logging.Logger;
  * @author anistor@redhat.com
  * @since 6.0
  */
-class IncompleteCondition extends BaseCondition implements FilterConditionBeginContext {
+final class IncompleteCondition extends BaseCondition implements FilterConditionBeginContext {
 
    private static final Log log = Logger.getMessageLogger(Log.class, IncompleteCondition.class.getName());
 

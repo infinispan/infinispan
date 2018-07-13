@@ -5,8 +5,8 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
 /**
- * Log abstraction for the query DSL. For this module, message ids
- * ranging from 14801 to 15000 inclusively have been reserved.
+ * Log abstraction for the query DSL. For this module, message ids ranging from 14801 to 15000 inclusively have been
+ * reserved.
  *
  * @author anistor@redhat.com
  * @since 8.2
@@ -62,7 +62,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Grouping can be specified only once", id = 14816)
    IllegalStateException groupingCanBeSpecifiedOnlyOnce();
 
-   @Message(value = "Expecting a Collection or an array of Object", id = 14817)
+   @Message(value = "Expecting a java.lang.Collection or an array of java.lang.Object", id = 14817)
    IllegalArgumentException expectingCollectionOrArray();
 
    @Message(value = "Incomplete sentence. Missing attribute path or operator.", id = 14818)
@@ -88,4 +88,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Query parameter '%s' was not set", id = 14825)
    IllegalStateException queryParameterNotSet(String paramName);
+
+   @Message(value = "Left and right condition cannot be the same", id = 14826)
+   IllegalArgumentException leftAndRightCannotBeTheSame();
 }

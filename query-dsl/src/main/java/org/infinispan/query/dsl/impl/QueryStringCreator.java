@@ -26,6 +26,8 @@ public class QueryStringCreator implements Visitor<String> {
 
    public static final String DEFAULT_ALIAS = "_gen0";
 
+   private static final String DATE_FORMAT = "yyyyMMddHHmmssSSS";
+
    private static final TimeZone GMT_TZ = TimeZone.getTimeZone("GMT");
 
    protected Map<String, Object> namedParameters;
@@ -112,17 +114,32 @@ public class QueryStringCreator implements Visitor<String> {
 
    @Override
    public String visit(AndCondition booleanCondition) {
-      return '(' + booleanCondition.getFirstCondition().accept(this) + ") AND (" + booleanCondition.getSecondCondition().accept(this) + ')';
+      return generateBooleanCondition(booleanCondition, "AND");
    }
 
    @Override
    public String visit(OrCondition booleanCondition) {
-      return '(' + booleanCondition.getFirstCondition().accept(this) + ") OR (" + booleanCondition.getSecondCondition().accept(this) + ')';
+      return generateBooleanCondition(booleanCondition, "OR");
+   }
+
+   private String generateBooleanCondition(BooleanCondition booleanCondition, String booleanOperator) {
+      StringBuilder sb = new StringBuilder();
+      boolean wrap = parentIsNotOfClass(booleanCondition, booleanCondition.getClass());
+      if (wrap) {
+         sb.append('(');
+      }
+      sb.append(booleanCondition.getFirstCondition().accept(this));
+      sb.append(' ').append(booleanOperator).append(' ');
+      sb.append(booleanCondition.getSecondCondition().accept(this));
+      if (wrap) {
+         sb.append(')');
+      }
+      return sb.toString();
    }
 
    @Override
    public String visit(NotCondition notCondition) {
-      return "NOT (" + notCondition.getFirstCondition().accept(this) + ')';
+      return "NOT " + notCondition.getFirstCondition().accept(this);
    }
 
    @Override
@@ -155,7 +172,11 @@ public class QueryStringCreator implements Visitor<String> {
       StringBuilder sb = new StringBuilder();
       ValueRange range = operator.getArgument();
       if (!range.isIncludeLower() || !range.isIncludeUpper()) {
-         // if any of the bounds are not included then we cannot use BETWEEN and need to resort to comparison
+         // if any of the bounds are not included then we cannot use BETWEEN and need to resort to simple comparisons
+         boolean wrap = parentIsNotOfClass(operator.getAttributeCondition(), operator.getAttributeCondition().isNegated() ? OrCondition.class : AndCondition.class);
+         if (wrap) {
+            sb.append('(');
+         }
          appendAttributePath(sb, operator.getAttributeCondition());
          sb.append(operator.getAttributeCondition().isNegated() ?
                (range.isIncludeLower() ? " < " : " <= ") : (range.isIncludeLower() ? " >= " : " > "));
@@ -166,6 +187,9 @@ public class QueryStringCreator implements Visitor<String> {
          sb.append(operator.getAttributeCondition().isNegated() ?
                (range.isIncludeUpper() ? " > " : " >= ") : (range.isIncludeUpper() ? " <= " : " < "));
          appendArgument(sb, range.getTo());
+         if (wrap) {
+            sb.append(')');
+         }
       } else {
          // if the bounds are included then we can use BETWEEN
          if (operator.getAttributeCondition().isNegated()) {
@@ -231,17 +255,28 @@ public class QueryStringCreator implements Visitor<String> {
       return sb;
    }
 
+   /**
+    * We check if the parent if of the expected class, hoping that if it is then we can avoid wrapping this condition in
+    * parentheses and still maintain the same logic.
+    *
+    * @return {@code true} if wrapping is needed, {@code false} otherwise
+    */
+   private boolean parentIsNotOfClass(BaseCondition condition, Class<? extends BooleanCondition> expectedParentClass) {
+      BaseCondition parent = condition.getParent();
+      return parent != null && parent.getClass() != expectedParentClass;
+   }
+
    @Override
    public String visit(ContainsAllOperator operator) {
-      return generateMultipleCondition(operator, "AND");
+      return generateMultipleBooleanCondition(operator, "AND", AndCondition.class);
    }
 
    @Override
    public String visit(ContainsAnyOperator operator) {
-      return generateMultipleCondition(operator, "OR");
+      return generateMultipleBooleanCondition(operator, "OR", OrCondition.class);
    }
 
-   private String generateMultipleCondition(OperatorAndArgument operator, String booleanOperator) {
+   private String generateMultipleBooleanCondition(OperatorAndArgument operator, String booleanOperator, Class<? extends BooleanCondition> expectedParentClass) {
       Object argument = operator.getArgument();
       Collection values;
       if (argument instanceof Collection) {
@@ -252,6 +287,10 @@ public class QueryStringCreator implements Visitor<String> {
          throw log.expectingCollectionOrArray();
       }
       StringBuilder sb = new StringBuilder();
+      boolean wrap = parentIsNotOfClass(operator.getAttributeCondition(), expectedParentClass);
+      if (wrap) {
+         sb.append('(');
+      }
       boolean isFirst = true;
       for (Object value : values) {
          if (isFirst) {
@@ -260,6 +299,9 @@ public class QueryStringCreator implements Visitor<String> {
             sb.append(' ').append(booleanOperator).append(' ');
          }
          appendSingleCondition(sb, operator.getAttributeCondition(), value, "=", "!=");
+      }
+      if (wrap) {
+         sb.append(')');
       }
       return sb.toString();
    }
@@ -368,11 +410,6 @@ public class QueryStringCreator implements Visitor<String> {
          return;
       }
 
-      if (argument instanceof Instant) {
-         sb.append('\'').append(argument).append('\'');
-         return;
-      }
-
       sb.append(argument);
    }
 
@@ -386,7 +423,7 @@ public class QueryStringCreator implements Visitor<String> {
 
    private DateFormat getDateFormatter() {
       if (dateFormat == null) {
-         dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+         dateFormat = new SimpleDateFormat(DATE_FORMAT);
          dateFormat.setTimeZone(GMT_TZ);
       }
       return dateFormat;

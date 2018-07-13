@@ -13,7 +13,7 @@ import org.jboss.logging.Logger;
  * @author anistor@redhat.com
  * @since 6.0
  */
-class AttributeCondition extends BaseCondition implements FilterConditionEndContext, RangeConditionContextQueryBuilder {
+final class AttributeCondition extends BaseCondition implements FilterConditionEndContext, RangeConditionContextQueryBuilder {
 
    private static final Log log = Logger.getMessageLogger(Log.class, AttributeCondition.class.getName());
 

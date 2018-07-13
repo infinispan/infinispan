@@ -1,5 +1,5 @@
 /**
- * DSL implementation and translation to internal intermediary representation based on a JPQL syntax subset.
+ * Query builder DSL implementation for Ickle (a JP-QL subset).
  *
  * @author anistor@redhat.com
  * @since 6.0
