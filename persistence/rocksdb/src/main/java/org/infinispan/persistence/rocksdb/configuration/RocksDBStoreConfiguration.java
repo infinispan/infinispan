@@ -5,7 +5,6 @@ import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
@@ -20,7 +19,7 @@ import org.infinispan.persistence.rocksdb.RocksDBStore;
 @ConfigurationFor(RocksDBStore.class)
 @BuiltBy(RocksDBStoreConfigurationBuilder.class)
 @SerializedWith(RocksDBStoreConfigurationSerializer.class)
-public class RocksDBStoreConfiguration extends AbstractSegmentedStoreConfiguration<RocksDBStoreConfiguration> {
+public class RocksDBStoreConfiguration extends AbstractStoreConfiguration {
    final static AttributeDefinition<String> LOCATION = AttributeDefinition.builder("location", "Infinispan-RocksDBStore/data").immutable().xmlName("path").build();
    final static AttributeDefinition<String> EXPIRED_LOCATION = AttributeDefinition.builder("expiredLocation", "Infinispan-RocksDBStore/expired").immutable().autoPersist(false).xmlName("path").build();
    final static AttributeDefinition<CompressionType> COMPRESSION_TYPE = AttributeDefinition.builder("compressionType", CompressionType.NONE).immutable().autoPersist(false).build();
@@ -51,17 +50,6 @@ public class RocksDBStoreConfiguration extends AbstractSegmentedStoreConfigurati
       cacheSize = attributes.attribute(CACHE_SIZE);
       expiryQueueSize = attributes.attribute(EXPIRY_QUEUE_SIZE);
       clearThreshold = attributes.attribute(CLEAR_THRESHOLD);
-   }
-
-   @Override
-   public RocksDBStoreConfiguration newConfigurationFrom(int segment) {
-      AttributeSet set = RocksDBStoreConfiguration.attributeDefinitionSet();
-      set.read(attributes);
-      String location = set.attribute(LOCATION).get();
-      set.attribute(LOCATION).set(fileLocationTransform(location, segment));
-      String expiredLocation = set.attribute(EXPIRED_LOCATION).get();
-      set.attribute(EXPIRED_LOCATION).set(fileLocationTransform(expiredLocation, segment));
-      return new RocksDBStoreConfiguration(set.protect(), async(), singletonStore());
    }
 
    public String location() {

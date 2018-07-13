@@ -3,9 +3,12 @@ package org.infinispan.persistence;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -20,8 +23,10 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
 
 import io.reactivex.Flowable;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * @author Mircea Markus
@@ -164,5 +169,23 @@ public class PersistenceUtil {
 
    public static <K, V> InternalCacheEntry<K, V> convert(MarshalledEntry<K, V> loaded, InternalEntryFactory factory) {
       return org.infinispan.persistence.internal.PersistenceUtil.convert(loaded, factory);
+   }
+
+   /**
+    * Will create a publisher that parallelizes each publisher returned from the <b>publisherFunction</b> by executing
+    * them on the executor as needed.
+    * <p>
+    * Note that returned publisher will be publishing entries from the invocation of the executor. Thus any subscription
+    * will not block the thread it was invoked on, unless explicitly configured to do so.
+    * @param segments segments to parallelize across
+    * @param executor the executor execute parallelized operations on
+    * @param publisherFunction function that creates a different publisher for each segment
+    * @param <R> the returned value
+    * @return a publisher that
+    */
+   public static <R> Publisher<R> parallelizePublisher(IntSet segments, Executor executor,
+         IntFunction<Publisher<R>> publisherFunction) {
+      return org.infinispan.persistence.internal.PersistenceUtil.parallelizePublisher(segments, Schedulers.from(executor),
+            publisherFunction);
    }
 }

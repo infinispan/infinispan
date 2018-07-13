@@ -8,8 +8,10 @@ import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.Test;
 
-public abstract class RocksDBStoreFunctionalTest extends BaseStoreFunctionalTest {
+@Test(groups = "unit", testName = "persistence.rocksdb.RocksDBStoreFunctionalTest")
+public class RocksDBStoreFunctionalTest extends BaseStoreFunctionalTest {
    protected String tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
 
    @AfterClass(alwaysRun = true)
@@ -20,5 +22,12 @@ public abstract class RocksDBStoreFunctionalTest extends BaseStoreFunctionalTest
    RocksDBStoreConfigurationBuilder createStoreBuilder(PersistenceConfigurationBuilder loaders) {
       new File(tmpDirectory).mkdirs();
       return loaders.addStore(RocksDBStoreConfigurationBuilder.class).location(tmpDirectory + "/data").expiredLocation(tmpDirectory + "/expiry").clearThreshold(2);
+   }
+
+   @Override
+   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence, boolean preload) {
+      createStoreBuilder(persistence)
+            .preload(preload);
+      return persistence;
    }
 }

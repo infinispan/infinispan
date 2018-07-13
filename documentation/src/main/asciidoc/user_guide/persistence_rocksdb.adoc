@@ -6,14 +6,14 @@ link:http://rocksdb.org/[RocksDB] is a fast key-value filesystem-based storage f
 Google's LevelDB, but provides superior performance and reliability, especially in highly concurrent scenarios.
 
 ==== Segmentation support
-This store supports being segmented, as it will create a separate instance per
-segment. This will create multiple directories under the configured directory
-where each one is a number representing the given segment the data maps to.
+This store supports being segmented, as it will create a separate column family per
+segment. This should improve lookup performance and iteration substantially. However
+writes are a little slower in this mode.
 
-It should be noted that rocks db currently uses a handful of files per database.
-Thus if the number of configured segments is high, this can cause a large
-amount of file pointers to be opened. Please be cognizant of this fact when
-using a segmented rocksdb store.
+Another thing to note is that you should not configure more than a few hundred segments.
+RocksDB is not designed to have as many column families as you want. This will also
+adversely affect startup time of the store and could take many seconds to minutes
+if you have too many segments.
 
 ===== Sample Usage
 The RocksDB cache store requires 2 filesystem directories to be configured - each directory contains a RocksDB database:
