@@ -1,5 +1,10 @@
 package org.infinispan.commands.write;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.container.DataContainer;
@@ -15,11 +20,6 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Must be {@link VisitableCommand} as we want to catch it in persistence handling etc.
@@ -143,14 +143,12 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
       // TODO: topology ids are mostly the same - sort the arrays according to topologyIds and use compaction encoding
       output.writeInt(keys.length);
       for (int i = 0; i < keys.length; ++i) {
-         if (keys[i] == null) {
-            output.writeObject(null);
+         MarshalledEntryUtil.writeKey(keys[i], entryFactory, output);
+         if (keys[i] == null)
             break;
-         } else {
-            MarshalledEntryUtil.writeKey(keys[i], entryFactory, output);
-            output.writeInt(topologyIds[i]);
-            output.writeLong(versions[i]);
-         }
+
+         output.writeInt(topologyIds[i]);
+         output.writeLong(versions[i]);
       }
       output.writeBoolean(removed);
    }

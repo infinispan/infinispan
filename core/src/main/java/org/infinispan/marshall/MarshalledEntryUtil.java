@@ -23,6 +23,12 @@ import org.infinispan.metadata.Metadata;
  */
 public class MarshalledEntryUtil {
 
+   // Just write as a MarshalledEntry
+   public static <K> void writeGroupName(K group, MarshalledEntryFactory factory, ObjectOutput out) throws IOException {
+      writeKey(group, factory, out);
+   }
+
+
    public static <K> void writeKey(K key, MarshalledEntryFactory factory, ObjectOutput out) throws IOException {
       write(key, null, null, factory, out);
    }
@@ -40,20 +46,20 @@ public class MarshalledEntryUtil {
    }
 
    public static <K, V> void write(K key, V value, Metadata metadata, MarshalledEntryFactory factory, ObjectOutput out) throws IOException {
-      try {
-         out.writeObject(factory.newMarshalledEntry(key, value, metadata));
-      } catch (NullPointerException e) {
-         throw e;
-      }
+      out.writeObject(factory.newMarshalledEntry(key, value, metadata));
    }
 
-   public static <K, V> K readKey(ObjectInput in) throws ClassNotFoundException, IOException {
-      MarshalledEntry<K, V> entry = read(in);
+   public static <K> K readGroupName(ObjectInput in) throws ClassNotFoundException, IOException {
+      return readKey(in);
+   }
+
+   public static <K> K readKey(ObjectInput in) throws ClassNotFoundException, IOException {
+      MarshalledEntry<K, ?> entry = read(in);
       return entry.getKey();
    }
 
-   public static <K, V> V readValue(ObjectInput in) throws ClassNotFoundException, IOException {
-      MarshalledEntry<K, V> entry = read(in);
+   public static <V> V readValue(ObjectInput in) throws ClassNotFoundException, IOException {
+      MarshalledEntry<?, V> entry = read(in);
       return entry.getValue();
    }
 
@@ -161,30 +167,6 @@ public class MarshalledEntryUtil {
       for (int i = 0; i < size; ++i) {
          writer.writeTo(array[i], factory, out);
       }
-   }
-
-   /**
-    * Unmarshall arrays.
-    *
-    * @param in      {@link ObjectInput} to read.
-    * @param builder {@link MarshallUtil.ArrayBuilder} to build the array.
-    * @param <E>     Array type.
-    * @return The populated array.
-    * @throws IOException            If any of the usual Input/Output related exceptions occur.
-    * @throws ClassNotFoundException If the class of a serialized object cannot be found.
-    * @see #marshallArray(Object[], ObjectOutput).
-    */
-   public static <E> E[] unmarshallArray(ObjectInput in, MarshallUtil.ArrayBuilder<E> builder) throws IOException, ClassNotFoundException {
-      final int size = unmarshallSize(in);
-      if (size == NULL_VALUE) {
-         return null;
-      }
-      final E[] array = Objects.requireNonNull(builder, "ArrayBuilder must be non-null").build(size);
-      for (int i = 0; i < size; ++i) {
-         //noinspection unchecked
-         array[i] = (E) in.readObject();
-      }
-      return array;
    }
 
    @FunctionalInterface

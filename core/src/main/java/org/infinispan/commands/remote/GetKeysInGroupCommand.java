@@ -15,6 +15,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.group.impl.GroupManager;
+import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 
 /**
@@ -67,13 +68,13 @@ public class GetKeysInGroupCommand extends AbstractTopologyAffectedCommand imple
 
    @Override
    public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      output.writeObject(groupName);
+      MarshalledEntryUtil.writeGroupName(groupName, entryFactory, output);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      groupName = input.readObject();
+      groupName = MarshalledEntryUtil.readGroupName(input);
       setFlagsBitSet(input.readLong());
    }
 
