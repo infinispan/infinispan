@@ -152,7 +152,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       super.writeTo(output, entryFactory);
       output.writeBoolean(unlock);
-      MarshalledEntryUtil.marshallCollection(keys, entryFactory, output, MarshalledEntryUtil::writeKey);
+      MarshalledEntryUtil.marshallCollection(keys, (key, factory, out) -> MarshalledEntryUtil.writeKey(key));
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(flags));
    }
 

@@ -63,7 +63,7 @@ public class UpdateLastAccessCommand extends BaseRpcCommand implements TopologyA
 
    @Override
    public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      MarshalledEntryUtil.writeKey(key, entryFactory, output);
+      MarshalledEntryUtil.writeKey(key);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       UnsignedNumeric.writeUnsignedLong(output, acessTime);
    }

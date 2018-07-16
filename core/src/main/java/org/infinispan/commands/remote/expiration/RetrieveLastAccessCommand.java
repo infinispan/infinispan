@@ -71,7 +71,7 @@ public class RetrieveLastAccessCommand extends BaseRpcCommand implements Topolog
 
    @Override
    public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      MarshalledEntryUtil.writeKeyValue(key, value, entryFactory, output);
+      MarshalledEntryUtil.writeKeyValue(key, value);
       UnsignedNumeric.writeUnsignedInt(output, segment);
    }
 

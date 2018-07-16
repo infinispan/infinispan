@@ -85,7 +85,7 @@ public class RevokeBiasCommand extends BaseRpcCommand {
          output.writeLong(id);
       }
       output.writeInt(topologyId);
-      MarshalledEntryUtil.marshallCollection(keys, entryFactory, output, MarshalledEntryUtil::writeKey);
+      MarshalledEntryUtil.marshallCollection(keys, (key, factory, out) -> MarshalledEntryUtil.writeKey(key));
    }
 
    @Override

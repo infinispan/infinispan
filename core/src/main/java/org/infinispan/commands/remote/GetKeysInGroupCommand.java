@@ -68,7 +68,7 @@ public class GetKeysInGroupCommand extends AbstractTopologyAffectedCommand imple
 
    @Override
    public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      MarshalledEntryUtil.writeGroupName(groupName, entryFactory, output);
+      MarshalledEntryUtil.writeGroupName(groupName);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 

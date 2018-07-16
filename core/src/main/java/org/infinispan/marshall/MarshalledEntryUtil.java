@@ -24,28 +24,28 @@ import org.infinispan.metadata.Metadata;
 public class MarshalledEntryUtil {
 
    // Just write as a MarshalledEntry
-   public static <K> void writeGroupName(K group, MarshalledEntryFactory factory, ObjectOutput out) throws IOException {
-      writeKey(group, factory, out);
+   public static <K> void writeGroupName(K group) throws IOException {
+      writeKey(group);
    }
 
 
-   public static <K> void writeKey(K key, MarshalledEntryFactory factory, ObjectOutput out) throws IOException {
-      write(key, null, null, factory, out);
+   public static <K> void writeKey(K key) throws IOException {
+      write(key, null, null);
    }
 
-   public static <V> void writeValue(V value, MarshalledEntryFactory factory, ObjectOutput out) throws IOException {
-      write(null, value, null, factory, out);
+   public static <V> void writeValue(V value) throws IOException {
+      write(null, value, null);
    }
 
-   public static <K, V> void writeKeyValue(K key, V value, MarshalledEntryFactory factory, ObjectOutput out) throws IOException {
-      write(key, value, null, factory, out);
+   public static <K, V> void writeKeyValue(K key, V value) throws IOException {
+      write(key, value, null);
    }
 
-   public static void writeMetadata(Metadata metadata, MarshalledEntryFactory factory, ObjectOutput out) throws IOException {
-      write(null, null, metadata, factory, out);
+   public static void writeMetadata(Metadata metadata) throws IOException {
+      write(null, null, metadata);
    }
 
-   public static <K, V> void write(K key, V value, Metadata metadata, MarshalledEntryFactory factory, ObjectOutput out) throws IOException {
+   public static <K, V> void write(K key, V value, Metadata metadata) throws IOException {
       out.writeObject(factory.newMarshalledEntry(key, value, metadata));
    }
 
@@ -77,16 +77,13 @@ public class MarshalledEntryUtil {
     * <p>
     * {@code null} maps are supported.
     *
-    * @param map     {@link Map} to marshall.
-    * @param out     {@link ObjectOutput} to write. It must be non-null.
-    * @param factory {@link MarshalledEntryFactory} used to create the {@link org.infinispan.marshall.core.MarshalledEntry}
-    *                wrapper.
     * @param <K>     Key type of the map.
     * @param <V>     Value type of the map.
     * @param <T>     Type of the {@link Map}.
+    * @param map     {@link Map} to marshall.
     * @throws IOException If any of the usual Input/Output related exceptions occur.
     */
-   public static <K, V, T extends Map<K, V>> void marshallMap(T map, MarshalledEntryFactory factory, ObjectOutput out) throws IOException {
+   public static <K, V, T extends Map<K, V>> void marshallMap(T map) throws IOException {
       final int mapSize = map == null ? NULL_VALUE : map.size();
       marshallSize(out, mapSize);
       if (mapSize <= 0) return;
@@ -107,7 +104,7 @@ public class MarshalledEntryUtil {
     * @return The populated {@link Map} created by the {@link MarshallUtil.MapBuilder} or {@code null}.
     * @throws IOException            If any of the usual Input/Output related exceptions occur.
     * @throws ClassNotFoundException If the class of a serialized object cannot be found.
-    * @see #marshallMap(Map, MarshalledEntryFactory marshalledEntryFactory, ObjectOutput)
+    * @see #marshallMap(Map)
     */
    public static <K, V, T extends Map<K, V>> T unmarshallMap(ObjectInput in, MarshallUtil.MapBuilder<K, V, T> builder) throws IOException, ClassNotFoundException {
       final int size = unmarshallSize(in);
@@ -128,14 +125,12 @@ public class MarshalledEntryUtil {
     * <p>
     * This method supports {@code null} {@code collection}.
     *
-    * @param collection {@link Collection} to marshal.
-    * @param factory    {@link MarshalledEntryFactory} to write.
-    * @param out        {@link ObjectOutput} to write.
-    * @param writer     {@link MarshalledElementWriter} that writes single element to the output.
     * @param <E>        Collection's element type.
+    * @param collection {@link Collection} to marshal.
+    * @param writer     {@link MarshalledElementWriter} that writes single element to the output.
     * @throws IOException If any of the usual Input/Output related exceptions occur.
     */
-   public static <E> void marshallCollection(Collection<E> collection, MarshalledEntryFactory factory, ObjectOutput out, MarshalledElementWriter<E> writer) throws IOException {
+   public static <E> void marshallCollection(Collection<E> collection, MarshalledElementWriter<E> writer) throws IOException {
       final int size = collection == null ? NULL_VALUE : collection.size();
       marshallSize(out, size);
       if (size <= 0) {
@@ -151,14 +146,12 @@ public class MarshalledEntryUtil {
     * <p>
     * This method supports {@code null} {@code array}.
     *
-    * @param array   Array to marshall.
-    * @param factory {@link MarshalledEntryFactory} to write.
-    * @param out     {@link ObjectOutput} to write.
-    * @param writer  {@link MarshalledElementWriter} that writes single element to the output.
     * @param <E>     Array type.
+    * @param array   Array to marshall.
+    * @param writer  {@link MarshalledElementWriter} that writes single element to the output.
     * @throws IOException If any of the usual Input/Output related exceptions occur.
     */
-   public static <E> void marshallArray(E[] array, MarshalledEntryFactory factory, ObjectOutput out, MarshalledElementWriter<E> writer) throws IOException {
+   public static <E> void marshallArray(E[] array, MarshalledElementWriter<E> writer) throws IOException {
       final int size = array == null ? NULL_VALUE : array.length;
       marshallSize(out, size);
       if (size <= 0) {

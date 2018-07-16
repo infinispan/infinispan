@@ -143,7 +143,7 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
       // TODO: topology ids are mostly the same - sort the arrays according to topologyIds and use compaction encoding
       output.writeInt(keys.length);
       for (int i = 0; i < keys.length; ++i) {
-         MarshalledEntryUtil.writeKey(keys[i], entryFactory, output);
+         MarshalledEntryUtil.writeKey(keys[i]);
          if (keys[i] == null)
             break;
 

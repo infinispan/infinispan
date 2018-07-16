@@ -66,8 +66,8 @@ public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKey
 
    @Override
    public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      MarshalledEntryUtil.write(key, prevValue, prevMetadata, entryFactory, output);
-      MarshalledEntryUtil.writeValue(argument, entryFactory, output);
+      MarshalledEntryUtil.write(key, prevValue, prevMetadata);
+      MarshalledEntryUtil.writeValue(argument);
       output.writeObject(f);
       MarshallUtil.marshallEnum(valueMatcher, output);
       UnsignedNumeric.writeUnsignedInt(output, segment);

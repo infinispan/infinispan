@@ -63,7 +63,7 @@ public final class GetCacheEntryCommand extends AbstractDataCommand {
 
    @Override
    public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      MarshalledEntryUtil.writeKey(key, entryFactory, output);
+      MarshalledEntryUtil.writeKey(key);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }

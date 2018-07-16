@@ -75,7 +75,7 @@ public class MultiKeyFunctionalBackupWriteCommand extends FunctionalBackupWriteC
       writeBase(output);
       writeFunctionAndParams(output);
       output.writeBoolean(writeOnly);
-      MarshalledEntryUtil.marshallCollection(keys, entryFactory, output, MarshalledEntryUtil::writeKey);
+      MarshalledEntryUtil.marshallCollection(keys, (key, factory, out) -> MarshalledEntryUtil.writeKey(key));
    }
 
    @Override

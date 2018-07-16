@@ -62,7 +62,7 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
 
    @Override
    public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      MarshalledEntryUtil.writeKey(key, entryFactory, output);
+      MarshalledEntryUtil.writeKey(key);
       output.writeObject(f);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       Params.writeObject(output, params);

@@ -110,7 +110,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    @Override
    public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      MarshalledEntryUtil.write(key, value, metadata, entryFactory, output);
+      MarshalledEntryUtil.write(key, value, metadata);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       MarshallUtil.marshallEnum(valueMatcher, output);
       CommandInvocationId.writeTo(output, commandInvocationId);
