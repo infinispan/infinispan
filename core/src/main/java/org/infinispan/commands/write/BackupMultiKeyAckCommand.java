@@ -5,6 +5,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CommandAckCollector;
 
@@ -61,7 +62,7 @@ public class BackupMultiKeyAckCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       output.writeLong(id);
       output.writeInt(segment);
       output.writeInt(topologyId);

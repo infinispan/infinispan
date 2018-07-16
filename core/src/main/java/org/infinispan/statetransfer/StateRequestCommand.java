@@ -13,6 +13,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.distexec.DistributedCallable;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.scattered.ScatteredStateProvider;
@@ -161,7 +162,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
 
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       MarshallUtil.marshallEnum(type, output);
       switch (type) {
          case START_CONSISTENCY_CHECK:

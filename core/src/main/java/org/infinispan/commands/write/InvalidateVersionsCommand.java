@@ -6,6 +6,8 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.marshall.MarshalledEntryUtil;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.persistence.manager.OrderedUpdatesManager;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.statetransfer.StateTransferLock;
@@ -136,7 +138,7 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       output.writeInt(topologyId);
       // TODO: topology ids are mostly the same - sort the arrays according to topologyIds and use compaction encoding
       output.writeInt(keys.length);
@@ -145,7 +147,7 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
             output.writeObject(null);
             break;
          } else {
-            output.writeObject(keys[i]);
+            MarshalledEntryUtil.writeKey(keys[i], entryFactory, output);
             output.writeInt(topologyIds[i]);
             output.writeLong(versions[i]);
          }
@@ -160,7 +162,7 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
       topologyIds = new int[keys.length];
       versions = new long[keys.length];
       for (int i = 0; i < keys.length; ++i) {
-         Object key = input.readObject();
+         Object key = MarshalledEntryUtil.readKey(input);
          if (key == null) {
             break;
          }

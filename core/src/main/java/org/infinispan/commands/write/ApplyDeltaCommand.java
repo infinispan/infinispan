@@ -9,6 +9,7 @@ import org.infinispan.atomic.Delta;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 
 
 /**
@@ -59,7 +60,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       throw new UnsupportedOperationException();
    }
 

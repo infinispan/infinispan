@@ -14,7 +14,9 @@ import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 
 /**
  * Helper class for marshalling, also hiding implementations of {@link Mutation} from the interface.
@@ -24,7 +26,7 @@ final class Mutations {
    }
 
    // No need to occupy externalizer ids when we have a limited set of options
-   static <K, V, T, R> void writeTo(ObjectOutput output, Mutation<K, V, R> mutation) throws IOException {
+   static <K, V, T, R> void writeTo(Mutation<K, V, R> mutation, MarshalledEntryFactory factory, ObjectOutput output) throws IOException {
       BaseMutation bm = (BaseMutation) mutation;
       DataConversion.writeTo(output, bm.keyDataConversion);
       DataConversion.writeTo(output, bm.valueDataConversion);
@@ -36,7 +38,7 @@ final class Mutations {
             break;
          case ReadWriteWithValue.TYPE:
             ReadWriteWithValue<K, V, T, R> rwwv = (ReadWriteWithValue<K, V, T, R>) mutation;
-            output.writeObject(rwwv.argument);
+            MarshalledEntryUtil.writeValue(rwwv.argument, factory, output);
             output.writeObject(rwwv.f);
             break;
          case Write.TYPE:
@@ -44,7 +46,7 @@ final class Mutations {
             break;
          case WriteWithValue.TYPE:
             WriteWithValue<K, V, T> wwv = (WriteWithValue<K, V, T>) mutation;
-            output.writeObject(wwv.argument);
+            MarshalledEntryUtil.writeValue(wwv.argument, factory, output);
             output.writeObject(wwv.f);
             break;
       }
@@ -57,11 +59,11 @@ final class Mutations {
          case ReadWrite.TYPE:
             return new ReadWrite<>(keyDataConversion, valueDataConversion, (Function<EntryView.ReadWriteEntryView<K, V>, ?>) input.readObject());
          case ReadWriteWithValue.TYPE:
-            return new ReadWriteWithValue<>(keyDataConversion, valueDataConversion, input.readObject(), (BiFunction<V, EntryView.ReadWriteEntryView<K, V>, ?>) input.readObject());
+            return new ReadWriteWithValue<>(keyDataConversion, valueDataConversion, MarshalledEntryUtil.readValue(input), (BiFunction<V, EntryView.ReadWriteEntryView<K, V>, ?>) input.readObject());
          case Write.TYPE:
             return new Write<>(keyDataConversion, valueDataConversion, (Consumer<EntryView.WriteEntryView<K, V>>) input.readObject());
          case WriteWithValue.TYPE:
-            return new WriteWithValue<>(keyDataConversion, valueDataConversion, input.readObject(), (BiConsumer<T, EntryView.WriteEntryView<K, V>>) input.readObject());
+            return new WriteWithValue<>(keyDataConversion, valueDataConversion, MarshalledEntryUtil.readValue(input), (BiConsumer<T, EntryView.WriteEntryView<K, V>>) input.readObject());
          default:
             throw new IllegalStateException("Unknown type of mutation, broken input?");
       }

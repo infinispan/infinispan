@@ -5,7 +5,7 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionType;
@@ -69,8 +69,8 @@ public class RemoteStoreRawValuesTest extends BaseStoreTest {
    }
 
    @Override
-   protected StreamingMarshaller getMarshaller() {
-      return localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+   protected Marshaller getMarshaller() {
+      return localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().getUserMarshaller();
    }
 
    @Override

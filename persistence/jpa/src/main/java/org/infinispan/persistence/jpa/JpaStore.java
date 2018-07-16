@@ -35,7 +35,7 @@ import org.hibernate.dialect.Dialect;
 import org.hibernate.dialect.MySQLDialect;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.infinispan.commons.configuration.ConfiguredBy;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.executors.ExecutorAllCompletionService;
@@ -72,7 +72,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private JpaStoreConfiguration configuration;
    private EntityManagerFactory emf;
    private EntityManagerFactoryRegistry emfRegistry;
-   private StreamingMarshaller marshaller;
+   private Marshaller marshaller;
    private MarshalledEntryFactory marshallerEntryFactory;
    private TimeService timeService;
    private ExecutorService executorService;
@@ -84,7 +84,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       this.configuration = ctx.getConfiguration();
       this.emfRegistry = ctx.getCache().getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry().getComponent(EntityManagerFactoryRegistry.class);
       this.marshallerEntryFactory = ctx.getMarshalledEntryFactory();
-      this.marshaller = ctx.getMarshaller();
+      this.marshaller = ctx.getUserMarshaller();
       this.timeService = ctx.getTimeService();
       this.executorService = ctx.getExecutor();
    }

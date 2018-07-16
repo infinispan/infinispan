@@ -54,7 +54,7 @@ public class OffHeapSingleNodeTest extends OffHeapMultiNodeTest {
    public void testLockOnExecuteTask() throws InterruptedException, TimeoutException, BrokenBarrierException,
          ExecutionException, IOException {
       Cache<byte[], byte[]> cache = cache(0);
-      Marshaller marshaller = cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+      Marshaller marshaller = cache.getAdvancedCache().getComponentRegistry().getUserMarshaller();
       byte[] key = randomBytes(KEY_SIZE);
       WrappedBytes keyWB = new WrappedByteArray(marshaller.objectToByteBuffer(key));
       byte[] value = randomBytes(VALUE_SIZE);
@@ -110,7 +110,7 @@ public class OffHeapSingleNodeTest extends OffHeapMultiNodeTest {
 
       timeService.advance(20);
 
-      Marshaller marshaller = cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+      Marshaller marshaller = cache.getAdvancedCache().getComponentRegistry().getUserMarshaller();
 
       WrappedBytes keyWB = new WrappedByteArray(marshaller.objectToByteBuffer(key));
 

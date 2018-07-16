@@ -21,6 +21,8 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.marshall.MarshalledEntryUtil;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
@@ -147,10 +149,10 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      super.writeTo(output);
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+      super.writeTo(output, entryFactory);
       output.writeBoolean(unlock);
-      MarshallUtil.marshallCollection(keys, output);
+      MarshalledEntryUtil.marshallCollection(keys, entryFactory, output, MarshalledEntryUtil::writeKey);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(flags));
    }
 
@@ -159,7 +161,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       super.readFrom(input);
       unlock = input.readBoolean();
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new, MarshalledEntryUtil::readKey);
       flags = input.readLong();
    }
 

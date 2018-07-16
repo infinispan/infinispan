@@ -12,17 +12,17 @@ import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.MarshallableTypeHints;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.jboss.ExtendedRiverUnmarshaller;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.jboss.marshalling.ByteInput;
 import org.jboss.marshalling.ByteOutput;
+import org.jboss.marshalling.ClassResolver;
 
-final class ExternalJBossMarshaller implements StreamingMarshaller {
+final class ExternalJbossMarshaller implements StreamingMarshaller {
 
    final MarshallableTypeHints marshallableTypeHints = new MarshallableTypeHints();
    final JBossMarshaller marshaller;
 
-   ExternalJBossMarshaller(GlobalMarshaller marshaller, GlobalConfiguration globalCfg) {
-      this.marshaller = new JBossMarshaller(marshaller, globalCfg);
+   ExternalJbossMarshaller(GlobalMarshaller marshaller, ClassResolver classResolver) {
+      this.marshaller = new JBossMarshaller(marshaller, classResolver);
    }
 
    @Override

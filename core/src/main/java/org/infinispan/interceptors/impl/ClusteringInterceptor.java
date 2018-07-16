@@ -10,6 +10,7 @@ import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -33,6 +34,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
    @Inject protected InternalDataContainer dataContainer;
    @Inject protected StateTransferManager stateTransferManager;
    @Inject protected DistributionManager distributionManager;
+   @Inject protected MarshalledEntryFactory marshalledEntryFactory;
 
    protected static Response getSingleResponse(Map<Address, Response> responseMap) {
       Iterator<Response> it = responseMap.values().iterator();

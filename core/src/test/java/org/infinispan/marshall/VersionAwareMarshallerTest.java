@@ -81,6 +81,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.marshall.core.JBossMarshallingTest.CustomReadObjectMethod;
 import org.infinispan.marshall.core.JBossMarshallingTest.ObjectThatContainsACustomReadObjectMethod;
+import org.infinispan.marshall.core.MarshallingException;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -90,6 +91,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -382,19 +384,11 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       assert rEntry.contentType.equals(entry.contentType);
    }
 
-   public void testNestedNonSerializable() throws Exception {
+   public void testNestedNonSerializable() {
       PutKeyValueCommand cmd = new PutKeyValueCommand(
             "k", new Object(), false, null, new EmbeddedMetadata.Builder().build(), 0,
             EnumUtil.EMPTY_BIT_SET, CommandInvocationId.generateId(null));
-      try {
-         marshaller.objectToByteBuffer(cmd);
-      } catch (NotSerializableException e) {
-         log.info("Log exception for output format verification", e);
-         TraceInformation inf = (TraceInformation) e.getCause();
-         if (inf != null) {
-            assert inf.toString().contains("in object java.lang.Object@");
-         }
-      }
+      Exceptions.expectException(MarshallingException.class, NotSerializableException.class, () -> marshaller.objectToByteBuffer(cmd));
    }
 
    public void testNonSerializable() throws Exception {

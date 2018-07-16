@@ -18,6 +18,9 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.marshall.MarshalledEntryUtil;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.ByteString;
@@ -109,21 +112,24 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       writeBase(output);
       MarshallUtil.marshallEnum(operation, output);
-      output.writeObject(key);
       switch (operation) {
          case COMPUTE_IF_PRESENT:
          case COMPUTE_IF_ABSENT:
          case COMPUTE:
-         case REPLACE:
-         case WRITE:
-            output.writeObject(metadata);
-         case REMOVE_EXPIRED:
+            MarshalledEntryUtil.writeKey(key, entryFactory, output);
+            // We must use the internal marshaller for functions
             output.writeObject(valueOrFunction);
             break;
+         case REMOVE_EXPIRED:
+         case REPLACE:
+         case WRITE:
+            MarshalledEntryUtil.write(key, valueOrFunction, metadata, entryFactory, output);
+            break;
          case REMOVE:
+            MarshalledEntryUtil.writeKey(key, entryFactory, output);
             break;
          default:
       }
@@ -133,16 +139,19 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       readBase(input);
       operation = MarshallUtil.unmarshallEnum(input, SingleKeyBackupWriteCommand::valueOf);
-      key = input.readObject();
+      MarshalledEntryImpl me = MarshalledEntryUtil.read(input);
+      key = me.getKey();
       switch (operation) {
          case COMPUTE_IF_PRESENT:
          case COMPUTE_IF_ABSENT:
          case COMPUTE:
+            valueOrFunction = input.readObject();
+            break;
+         case REMOVE_EXPIRED:
          case REPLACE:
          case WRITE:
-            metadata = (Metadata) input.readObject();
-         case REMOVE_EXPIRED:
-            valueOrFunction = input.readObject();
+            metadata = me.metadata();
+            valueOrFunction = me.getValue();
             break;
          case REMOVE:
             break;

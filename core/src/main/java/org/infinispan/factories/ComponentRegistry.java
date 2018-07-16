@@ -1,6 +1,8 @@
 package org.infinispan.factories;
 
+import static org.infinispan.factories.KnownComponentNames.INTERNAL_MARSHALLER;
 import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIALIZERS;
+import static org.infinispan.factories.KnownComponentNames.USER_MARSHALLER;
 
 import java.lang.ref.WeakReference;
 import java.util.Collections;
@@ -12,6 +14,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.conflict.impl.InternalConflictManager;
@@ -290,10 +293,14 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    /**
-    * Caching shortcut for #getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+    * Caching shortcut for #getComponent(Marshaller.class, USER_MARSHALLER);
     */
-   public StreamingMarshaller getCacheMarshaller() {
-      return globalComponents.getComponent(StreamingMarshaller.class);
+   public Marshaller getUserMarshaller() {
+      return globalComponents.getComponent(Marshaller.class, USER_MARSHALLER);
+   }
+
+   public StreamingMarshaller getInternalMarshaller() {
+      return globalComponents.getComponent(StreamingMarshaller.class, INTERNAL_MARSHALLER);
    }
 
    /**

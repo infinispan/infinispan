@@ -43,6 +43,7 @@ public final class ApplyDelta<K> implements BiFunction<Object, EntryView.ReadWri
             deltaAware = ((CopyableDeltaAware) value).copy();
          } else if (value instanceof DeltaAware) {
             try {
+               // TODO should this be user or internal marshaller?
                byte[] bytes = marshaller.objectToByteBuffer(value);
                deltaAware = (DeltaAware) marshaller.objectFromByteBuffer(bytes);
             } catch (InterruptedException e) {

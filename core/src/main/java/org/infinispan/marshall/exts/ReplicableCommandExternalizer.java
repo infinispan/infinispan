@@ -42,6 +42,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.impl.ReplicableCommandManagerFunction;
 import org.infinispan.manager.impl.ReplicableCommandRunnable;
 import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
@@ -55,10 +56,13 @@ import org.infinispan.util.ByteString;
 public class ReplicableCommandExternalizer extends AbstractExternalizer<ReplicableCommand> {
    private final RemoteCommandsFactory cmdFactory;
    private final GlobalComponentRegistry globalComponentRegistry;
+   private final MarshalledEntryFactory entryFactory;
 
-   public ReplicableCommandExternalizer(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry globalComponentRegistry) {
+   public ReplicableCommandExternalizer(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry globalComponentRegistry,
+                                        MarshalledEntryFactory entryFactory) {
       this.cmdFactory = cmdFactory;
       this.globalComponentRegistry = globalComponentRegistry;
+      this.entryFactory = entryFactory;
    }
 
    @Override
@@ -68,7 +72,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
    }
 
    protected void writeCommandParameters(ObjectOutput output, ReplicableCommand command) throws IOException {
-      command.writeTo(output);
+      command.writeTo(output, entryFactory);
       if (command instanceof TopologyAffectedCommand) {
          output.writeInt(((TopologyAffectedCommand) command).getTopologyId());
       }

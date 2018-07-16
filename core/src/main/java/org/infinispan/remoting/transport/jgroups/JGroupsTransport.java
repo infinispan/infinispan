@@ -1,5 +1,6 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import static org.infinispan.factories.KnownComponentNames.INTERNAL_MARSHALLER;
 import static org.infinispan.remoting.transport.jgroups.JGroupsAddressCache.fromJGroupsAddress;
 import static org.infinispan.util.logging.LogFactory.CLUSTER;
 
@@ -141,7 +142,7 @@ public class JGroupsTransport implements Transport {
    private static final byte SINGLE_MESSAGE = 2;
 
    @Inject protected GlobalConfiguration configuration;
-   @Inject protected StreamingMarshaller marshaller;
+   @Inject @ComponentName(INTERNAL_MARSHALLER) protected StreamingMarshaller marshaller;
    @Inject protected CacheManagerNotifier notifier;
    @Inject protected TimeService timeService;
    @Inject protected InboundInvocationHandler invocationHandler;

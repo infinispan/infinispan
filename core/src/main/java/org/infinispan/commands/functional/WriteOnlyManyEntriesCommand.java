@@ -11,7 +11,6 @@ import java.util.function.BiConsumer;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
@@ -19,6 +18,8 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.marshall.MarshalledEntryUtil;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 
 public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteManyCommand<K, V> {
 
@@ -74,9 +75,9 @@ public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteMan
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
-      MarshallUtil.marshallMap(arguments, output);
+      MarshalledEntryUtil.marshallMap(arguments, entryFactory, output);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);
@@ -90,7 +91,7 @@ public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteMan
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
       // We use LinkedHashMap in order to guarantee the same order of iteration
-      arguments = MarshallUtil.unmarshallMap(input, LinkedHashMap::new);
+      arguments = MarshalledEntryUtil.unmarshallMap(input, LinkedHashMap::new);
       f = (BiConsumer<T, WriteEntryView<K, V>>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);

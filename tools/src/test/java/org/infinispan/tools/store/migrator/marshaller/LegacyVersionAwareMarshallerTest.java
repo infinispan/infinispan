@@ -69,7 +69,7 @@ public class ByteOutputGenerator {
 
       EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig, config);
       ComponentRegistry registry = manager.getCache().getAdvancedCache().getComponentRegistry();
-      StreamingMarshaller marshaller = registry.getCacheMarshaller();
+      StreamingMarshaller marshaller = registry.getUserMarshaller();
 
       // Write to stores
       generateOutput(new CacheStoreOutput(manager.getCache("RocksDBReaderTest")));

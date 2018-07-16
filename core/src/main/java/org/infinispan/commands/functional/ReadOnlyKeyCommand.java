@@ -21,6 +21,8 @@ import org.infinispan.functional.Param.StatisticsMode;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
+import org.infinispan.marshall.MarshalledEntryUtil;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 
 public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
 
@@ -59,8 +61,8 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+      MarshalledEntryUtil.writeKey(key, entryFactory, output);
       output.writeObject(f);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       Params.writeObject(output, params);
@@ -70,7 +72,7 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
+      key = MarshalledEntryUtil.readKey(input);
       f = (Function<ReadEntryView<K, V>, R>) input.readObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
       params = Params.readObject(input);

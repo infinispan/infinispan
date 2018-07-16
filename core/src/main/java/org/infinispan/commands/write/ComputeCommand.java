@@ -16,6 +16,8 @@ import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -167,23 +169,23 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+      output.writeObject(entryFactory.newMarshalledEntry(key, null, metadata));
       output.writeBoolean(computeIfPresent);
       output.writeObject(remappingBiFunction);
       UnsignedNumeric.writeUnsignedInt(output, segment);
-      output.writeObject(metadata);
       CommandInvocationId.writeTo(output, commandInvocationId);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
+      MarshalledEntryImpl me = (MarshalledEntryImpl) input.readObject();
+      key = me.getKey();
+      metadata = me.metadata();
       computeIfPresent = input.readBoolean();
       remappingBiFunction = (BiFunction) input.readObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
-      metadata = (Metadata) input.readObject();
       commandInvocationId = CommandInvocationId.readFrom(input);
       setFlagsBitSet(input.readLong());
    }

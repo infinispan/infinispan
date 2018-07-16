@@ -7,7 +7,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.sifs.EntryHeader;
@@ -20,7 +20,7 @@ import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
 
 public class SoftIndexFileStoreIterator implements StoreIterator {
 
-   private final StreamingMarshaller marshaller;
+   private final Marshaller marshaller;
    private final String location;
 
    public SoftIndexFileStoreIterator(StoreProperties props) {

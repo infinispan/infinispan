@@ -6,6 +6,7 @@ import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -44,7 +45,7 @@ public class StreamSegmentResponseCommand<R> extends StreamResponseCommand<R> {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       output.writeObject(getOrigin());
       output.writeObject(id);
       output.writeBoolean(complete);

@@ -16,6 +16,9 @@ import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.MarshalledEntryUtil;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -134,21 +137,21 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+      MarshalledEntryUtil.write(key, null, metadata, entryFactory, output);
       output.writeObject(mappingFunction);
       UnsignedNumeric.writeUnsignedInt(output, segment);
-      output.writeObject(metadata);
       CommandInvocationId.writeTo(output, commandInvocationId);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
+      MarshalledEntryImpl me = MarshalledEntryUtil.read(input);
+      key = me.getKey();
+      metadata = me.metadata();
       mappingFunction = (Function) input.readObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
-      metadata = (Metadata) input.readObject();
       commandInvocationId = CommandInvocationId.readFrom(input);
       setFlagsBitSet(input.readLong());
    }

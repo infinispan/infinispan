@@ -4,6 +4,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 
 /**
  * A hear-beat command used to ping members in {@link ClusterTopologyManagerImpl#confirmMembersAvailable()}.
@@ -33,7 +34,7 @@ public class HeartBeatCommand implements ReplicableCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output){
+   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory){
       //nothing to write
    }
 

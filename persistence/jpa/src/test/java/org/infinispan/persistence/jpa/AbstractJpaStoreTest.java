@@ -3,18 +3,15 @@ package org.infinispan.persistence.jpa;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertNotNull;
 
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.AfterMethod;
@@ -38,7 +35,7 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
 
    //protected TransactionFactory gtf = new TransactionFactory();
 
-   protected StreamingMarshaller marshaller;
+   protected Marshaller marshaller;
 
    protected AbstractJpaStoreTest() {
      // gtf.init(false, false, true, false);
@@ -72,7 +69,7 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
    public void setUp() throws Exception {
       try {
          cm = createCacheManager();
-         marshaller = cm.getCache().getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+         marshaller = cm.getCache().getAdvancedCache().getComponentRegistry().getUserMarshaller();
          cs = createCacheStore();
          cs.clear();
       } catch (Exception e) {
@@ -91,17 +88,12 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
    /**
     * @return a mock marshaller for use with the cache store impls
     */
-   protected StreamingMarshaller getMarshaller() {
+   protected Marshaller getMarshaller() {
       return marshaller;
    }
 
    protected MarshalledEntryImpl createEntry(Object key, Object value) {
       return new MarshalledEntryImpl(key, value, null, getMarshaller());
-   }
-
-   protected MarshalledEntryImpl createEntry(Object key, Object value, long lifespan) {
-      InternalCacheEntry ice = TestInternalCacheEntryFactory.create(key, value, lifespan);
-      return new MarshalledEntryImpl(key, value, new InternalMetadataImpl(ice), getMarshaller());
    }
 
    protected MarshalledEntryImpl createEntry(TestObject obj) {

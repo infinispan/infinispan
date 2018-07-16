@@ -81,6 +81,7 @@ public class TransactionInfo {
          output.writeObject(object.globalTransaction);
          output.writeInt(object.topologyId);
          MarshallUtil.marshallArray(object.modifications, output);
+         // TODO use MarshalledEntryFactory?
          MarshallUtil.marshallCollection(object.lockedKeys, output);
       }
 
