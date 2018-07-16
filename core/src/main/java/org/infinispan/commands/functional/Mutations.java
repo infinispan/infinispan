@@ -2,7 +2,6 @@ package org.infinispan.commands.functional;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -16,7 +15,7 @@ import org.infinispan.functional.EntryView;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
+import org.infinispan.marshall.core.UserAwareObjectOutput;
 
 /**
  * Helper class for marshalling, also hiding implementations of {@link Mutation} from the interface.
@@ -26,7 +25,7 @@ final class Mutations {
    }
 
    // No need to occupy externalizer ids when we have a limited set of options
-   static <K, V, T, R> void writeTo(Mutation<K, V, R> mutation, MarshalledEntryFactory factory, ObjectOutput output) throws IOException {
+   static <K, V, T, R> void writeTo(UserAwareObjectOutput output, Mutation<K, V, R> mutation) throws IOException {
       BaseMutation bm = (BaseMutation) mutation;
       DataConversion.writeTo(output, bm.keyDataConversion);
       DataConversion.writeTo(output, bm.valueDataConversion);
@@ -38,7 +37,7 @@ final class Mutations {
             break;
          case ReadWriteWithValue.TYPE:
             ReadWriteWithValue<K, V, T, R> rwwv = (ReadWriteWithValue<K, V, T, R>) mutation;
-            MarshalledEntryUtil.writeValue(rwwv.argument);
+            output.writeValue(rwwv.argument);
             output.writeObject(rwwv.f);
             break;
          case Write.TYPE:
@@ -46,7 +45,7 @@ final class Mutations {
             break;
          case WriteWithValue.TYPE:
             WriteWithValue<K, V, T> wwv = (WriteWithValue<K, V, T>) mutation;
-            MarshalledEntryUtil.writeValue(wwv.argument);
+            output.writeValue(wwv.argument);
             output.writeObject(wwv.f);
             break;
       }

@@ -2,12 +2,12 @@ package org.infinispan.xsite.statetransfer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
+import org.infinispan.marshall.core.UserAwareObjectOutput;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.BackupReceiver;
@@ -97,7 +97,7 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       MarshallUtil.marshallEnum(control, output);
       switch (control) {
          case START_SEND:

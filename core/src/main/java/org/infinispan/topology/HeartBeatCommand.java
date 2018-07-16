@@ -1,10 +1,10 @@
 package org.infinispan.topology;
 
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
+import org.infinispan.marshall.core.UserAwareObjectOutput;
 
 /**
  * A hear-beat command used to ping members in {@link ClusterTopologyManagerImpl#confirmMembersAvailable()}.
@@ -34,7 +34,7 @@ public class HeartBeatCommand implements ReplicableCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory){
+   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory){
       //nothing to write
    }
 

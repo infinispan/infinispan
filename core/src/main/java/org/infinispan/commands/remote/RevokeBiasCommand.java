@@ -2,7 +2,6 @@ package org.infinispan.commands.remote;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -11,6 +10,7 @@ import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
+import org.infinispan.marshall.core.UserAwareObjectOutput;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -79,13 +79,13 @@ public class RevokeBiasCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       output.writeObject(ackTarget);
       if (ackTarget != null) {
          output.writeLong(id);
       }
       output.writeInt(topologyId);
-      MarshalledEntryUtil.marshallCollection(keys, (key, factory, out) -> MarshalledEntryUtil.writeKey(key));
+      output.marshallCollection(keys, UserAwareObjectOutput::writeKey);
    }
 
    @Override

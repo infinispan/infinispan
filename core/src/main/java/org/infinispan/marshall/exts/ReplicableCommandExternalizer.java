@@ -72,7 +72,8 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
    }
 
    protected void writeCommandParameters(ObjectOutput output, ReplicableCommand command) throws IOException {
-      command.writeTo(output, entryFactory);
+      // TODO hook in UserAwareObjectOutput Impl
+      command.writeTo(output);
       if (command instanceof TopologyAffectedCommand) {
          output.writeInt(((TopologyAffectedCommand) command).getTopologyId());
       }

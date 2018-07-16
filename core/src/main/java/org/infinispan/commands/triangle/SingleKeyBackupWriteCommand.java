@@ -2,7 +2,6 @@ package org.infinispan.commands.triangle;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -21,6 +20,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.marshall.core.UserAwareObjectOutput;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.ByteString;
@@ -112,24 +112,24 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       writeBase(output);
       MarshallUtil.marshallEnum(operation, output);
       switch (operation) {
          case COMPUTE_IF_PRESENT:
          case COMPUTE_IF_ABSENT:
          case COMPUTE:
-            MarshalledEntryUtil.writeKey(key);
+            output.writeKey(key);
             // We must use the internal marshaller for functions
             output.writeObject(valueOrFunction);
             break;
          case REMOVE_EXPIRED:
          case REPLACE:
          case WRITE:
-            MarshalledEntryUtil.write(key, valueOrFunction, metadata);
+            output.writeEntry(key, valueOrFunction, metadata);
             break;
          case REMOVE:
-            MarshalledEntryUtil.writeKey(key);
+            output.writeKey(key);
             break;
          default:
       }

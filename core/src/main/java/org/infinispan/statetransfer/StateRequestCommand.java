@@ -2,7 +2,6 @@ package org.infinispan.statetransfer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -14,6 +13,7 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
+import org.infinispan.marshall.core.UserAwareObjectOutput;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.scattered.ScatteredStateProvider;
@@ -162,7 +162,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
 
 
    @Override
-   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       MarshallUtil.marshallEnum(type, output);
       switch (type) {
          case START_CONSISTENCY_CHECK:

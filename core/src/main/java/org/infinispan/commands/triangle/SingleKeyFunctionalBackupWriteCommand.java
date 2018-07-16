@@ -4,7 +4,6 @@ import static org.infinispan.commands.write.ValueMatcher.MATCH_ALWAYS;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -23,6 +22,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.marshall.core.UserAwareObjectOutput;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.ByteString;
 
@@ -97,22 +97,22 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
    }
 
    @Override
-   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       writeBase(output);
       writeFunctionAndParams(output);
       MarshallUtil.marshallEnum(operation, output);
       switch (operation) {
          case READ_WRITE_KEY_VALUE:
-            MarshalledEntryUtil.write(key, prevValue, prevMetadata);
-            MarshalledEntryUtil.writeValue(value);
+            output.writeEntry(key, prevValue, prevMetadata);
+            output.writeValue(value);
             break;
          case WRITE_ONLY_KEY_VALUE:
-            MarshalledEntryUtil.writeKeyValue(key, value);
+            output.writeKeyValue(key, value);
             break;
          case READ_WRITE:
          case WRITE_ONLY:
          default:
-            MarshalledEntryUtil.writeKey(key);
+            output.writeKey(key);
       }
    }
 

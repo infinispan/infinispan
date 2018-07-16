@@ -2,12 +2,12 @@ package org.infinispan.commands.remote.recovery;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
 import javax.transaction.xa.Xid;
 
 import org.infinispan.marshall.core.MarshalledEntryFactory;
+import org.infinispan.marshall.core.UserAwareObjectOutput;
 import org.infinispan.util.ByteString;
 
 /**
@@ -55,7 +55,7 @@ public class CompleteTransactionCommand extends RecoveryCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       output.writeObject(xid);
       output.writeBoolean(commit);
    }

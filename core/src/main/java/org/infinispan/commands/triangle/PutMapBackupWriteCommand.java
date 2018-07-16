@@ -2,7 +2,6 @@ package org.infinispan.commands.triangle;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,6 +12,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
+import org.infinispan.marshall.core.UserAwareObjectOutput;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.ByteString;
@@ -55,10 +55,10 @@ public class PutMapBackupWriteCommand extends BackupWriteCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       writeBase(output);
-      MarshalledEntryUtil.marshallMap(map);
-      MarshalledEntryUtil.writeMetadata(metadata);
+      output.marshallMap(map);
+      output.writeMetadata(metadata);
    }
 
    @Override

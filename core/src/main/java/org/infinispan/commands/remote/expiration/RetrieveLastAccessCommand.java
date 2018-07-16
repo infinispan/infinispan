@@ -2,7 +2,6 @@ package org.infinispan.commands.remote.expiration;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -15,6 +14,7 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
+import org.infinispan.marshall.core.UserAwareObjectOutput;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -70,8 +70,8 @@ public class RetrieveLastAccessCommand extends BaseRpcCommand implements Topolog
    }
 
    @Override
-   public void writeTo(ObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      MarshalledEntryUtil.writeKeyValue(key, value);
+   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+      output.writeKeyValue(key, value);
       UnsignedNumeric.writeUnsignedInt(output, segment);
    }
 

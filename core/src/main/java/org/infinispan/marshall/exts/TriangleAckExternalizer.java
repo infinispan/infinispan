@@ -42,7 +42,8 @@ public class TriangleAckExternalizer implements AdvancedExternalizer<CacheRpcCom
    public void writeObject(ObjectOutput output, CacheRpcCommand object) throws IOException {
       output.writeByte(object.getCommandId());
       ByteString.writeObject(output, object.getCacheName());
-      object.writeTo(output, entryFactory);
+      // TODO add UserAwareObjectOutput instance
+      object.writeTo(output);
    }
 
    public CacheRpcCommand readObject(ObjectInput input) throws IOException, ClassNotFoundException {
