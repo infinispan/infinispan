@@ -26,8 +26,9 @@ public class ModelKeys {
    public static final String HOTROD_CONNECTOR = "hotrod-connector";
    public static final String MEMCACHED_CONNECTOR = "memcached-connector";
    public static final String REST_CONNECTOR = "rest-connector";
-   public static final String WEBSOCKET_CONNECTOR = "websocket-connector";
    public static final String ROUTER_CONNECTOR = "router-connector";
+   @Deprecated
+   public static final String WEBSOCKET_CONNECTOR = "websocket-connector";
 
    public static final String NAME = "name"; // string
    public static final String CACHE_NAME = "cache-name"; // string

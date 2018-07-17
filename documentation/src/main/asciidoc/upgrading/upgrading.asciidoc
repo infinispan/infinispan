@@ -7,6 +7,11 @@ The Infinispan community
 
 This guide walks you through the process of upgrading Infinispan.
 
+== Upgrading from 9.3 to 9.4
+
+=== WebSocket endpoint removal
+The WebSocket endpoint has been unmaintained for several years. It has been removed.
+
 == Upgrading from 9.2 to 9.3
 
 === AdvancedCacheLoader changes

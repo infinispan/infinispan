@@ -49,7 +49,6 @@
             </cors-rule>
         </cors-rules>
     </rest-connector>
-    <websocket-connector socket-binding="websocket" cache-container="default" idle-timeout="100" tcp-nodelay="true" worker-threads="5" receive-buffer-size="10000" send-buffer-size="10000" />
     <router-connector name="router" hotrod-socket-binding="router-hotrood" rest-socket-binding="router-restStatsChannelHandler" single-port-socket-binding="router-single-port" tcp-nodelay="true" keep-alive="true" receive-buffer-size="10000" send-buffer-size="10000">
         <single-port security-realm="other">
             <rest name="rest-1"/>

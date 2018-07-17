@@ -1,1 +1,0 @@
-See http://community.jboss.org/wiki/InfinispanWebSocketServer
