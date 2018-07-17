@@ -1,12 +1,12 @@
 package org.infinispan.stream.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
@@ -76,7 +76,7 @@ public class StreamIteratorRequestCommand<K> extends StreamIteratorNextCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       super.readFrom(input);
       setOrigin((Address) input.readObject());
       parallelStream = input.readBoolean();

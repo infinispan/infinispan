@@ -1,9 +1,9 @@
 package org.infinispan.remoting.rpc;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
@@ -48,7 +48,7 @@ public class SleepingCacheRpcCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       sleepTime = input.readLong();
    }
 

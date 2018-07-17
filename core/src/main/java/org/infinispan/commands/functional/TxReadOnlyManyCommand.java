@@ -3,13 +3,13 @@ package org.infinispan.commands.functional;
 import static org.infinispan.functional.impl.EntryViews.snapshot;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
@@ -85,7 +85,7 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       super.readFrom(input);
       int numMutations = keys.size();
       mutations = new ArrayList<>(numMutations);

@@ -1,9 +1,9 @@
 package org.infinispan.commands.tx;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
@@ -115,7 +115,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       globalTx = (GlobalTransaction) input.readObject();
    }
 

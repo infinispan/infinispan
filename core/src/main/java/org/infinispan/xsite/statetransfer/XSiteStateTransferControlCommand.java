@@ -1,11 +1,11 @@
 package org.infinispan.xsite.statetransfer;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.ByteString;
@@ -125,7 +125,7 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       control = Objects.requireNonNull(MarshallUtil.unmarshallEnum(input, StateTransferControl::valueOf));
       switch (control) {
          case START_SEND:

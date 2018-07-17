@@ -6,9 +6,10 @@ import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.CompletableFutures;
 
@@ -130,8 +131,23 @@ public interface ReplicableCommand {
     * @param input the stream to read.
     * @throws IOException            if an error occurred during the I/O.
     * @throws ClassNotFoundException if it tries to load an undefined class.
+    * @deprecated since 9.4 use {@link #writeTo(UserObjectOutput, MarshalledEntryFactory)} instead
     */
-   void readFrom(ObjectInput input) throws IOException, ClassNotFoundException;
+   @Deprecated
+   default void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      // no-op
+   }
+
+   /**
+    * Reads this instance from the stream written by {@link #writeTo(UserObjectOutput, MarshalledEntryFactory)}.
+    *
+    * @param input the stream to read.
+    * @throws IOException            if an error occurred during the I/O.
+    * @throws ClassNotFoundException if it tries to load an undefined class.
+    */
+   default void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
+      readFrom((ObjectInput) input);
+   }
 
    /**
     * Sets the sender's {@link Address}.

@@ -1,11 +1,11 @@
 package org.infinispan.commands.remote.recovery;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.concurrent.CompletableFuture;
 
 import javax.transaction.xa.Xid;
 
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.ByteString;
@@ -61,7 +61,7 @@ public class CompleteTransactionCommand extends RecoveryCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       xid = (Xid) input.readObject();
       commit = input.readBoolean();
    }

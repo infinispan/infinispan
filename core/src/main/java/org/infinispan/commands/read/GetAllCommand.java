@@ -3,7 +3,6 @@ package org.infinispan.commands.read;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -12,6 +11,7 @@ import java.util.Map;
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
@@ -119,7 +119,7 @@ public class GetAllCommand extends AbstractTopologyAffectedCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       keys = MarshallUtil.unmarshallCollection(input, ArrayList::new, MarshalledEntryUtil::readKey);
       setFlagsBitSet(input.readLong());
       returnEntries = input.readBoolean();

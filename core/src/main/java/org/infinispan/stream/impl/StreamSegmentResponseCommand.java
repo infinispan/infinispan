@@ -1,9 +1,9 @@
 package org.infinispan.stream.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
@@ -54,7 +54,7 @@ public class StreamSegmentResponseCommand<R> extends StreamResponseCommand<R> {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       setOrigin((Address) input.readObject());
       id = input.readObject();
       complete = input.readBoolean();

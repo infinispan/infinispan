@@ -132,12 +132,11 @@ final class InternalExternalizers {
 
    static ClassToExternalizerMap load(Marshaller userMarshaller, GlobalComponentRegistry gcr,
                                       RemoteCommandsFactory cmdFactory) {
-      final MarshalledEntryFactory entryFactory = new MarshalledEntryFactoryImpl(userMarshaller);
       // TODO Add initial value and load factor
       ClassToExternalizerMap exts = new ClassToExternalizerMap(512, 0.6f);
 
       // Add the stateful externalizer first
-      ReplicableCommandExternalizer ext = new ReplicableCommandExternalizer(cmdFactory, gcr, entryFactory);
+      ReplicableCommandExternalizer ext = new ReplicableCommandExternalizer(cmdFactory, gcr);
       addInternalExternalizer(ext, exts);
 
       // Add the rest of stateless externalizers
@@ -255,7 +254,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new VersionedResults.Externalizer(), exts);
       addInternalExternalizer(new WrappedByteArray.Externalizer(), exts);
       addInternalExternalizer(new XSiteState.XSiteStateExternalizer(), exts);
-      addInternalExternalizer(new TriangleAckExternalizer(entryFactory), exts);
+      addInternalExternalizer(new TriangleAckExternalizer(), exts);
       addInternalExternalizer(new IteratorResponses.IteratorResponsesExternalizer(), exts);
       addInternalExternalizer(new EndIterator.EndIteratorExternalizer(), exts);
       addInternalExternalizer(XidImpl.EXTERNALIZER, exts);

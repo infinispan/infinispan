@@ -1,7 +1,6 @@
 package org.infinispan.commands.triangle;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Consumer;
@@ -12,6 +11,7 @@ import org.infinispan.commands.functional.ReadWriteManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -79,7 +79,7 @@ public class MultiKeyFunctionalBackupWriteCommand extends FunctionalBackupWriteC
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       readBase(input);
       readFunctionAndParams(input);
       writeOnly = input.readBoolean();

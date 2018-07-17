@@ -1,10 +1,10 @@
 package org.infinispan.commands.write;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.remoting.transport.ResponseCollectors;
@@ -73,7 +73,7 @@ public class ExceptionAckCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       id = input.readLong();
       throwable = (Throwable) input.readObject();
       topologyId = input.readInt();

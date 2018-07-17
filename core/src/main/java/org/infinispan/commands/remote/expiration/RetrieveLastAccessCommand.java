@@ -1,7 +1,6 @@
 package org.infinispan.commands.remote.expiration;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -9,6 +8,7 @@ import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.marshall.MarshalledEntryUtil;
@@ -76,7 +76,7 @@ public class RetrieveLastAccessCommand extends BaseRpcCommand implements Topolog
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       MarshalledEntry me = MarshalledEntryUtil.read(input);
       key = me.getKey();
       value = me.getValue();

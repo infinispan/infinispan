@@ -1,11 +1,11 @@
 package org.infinispan.manager.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
@@ -43,7 +43,7 @@ public class ReplicableCommandManagerFunction implements ReplicableCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       function = (Function<? super EmbeddedCacheManager, ?>) input.readObject();
    }
 

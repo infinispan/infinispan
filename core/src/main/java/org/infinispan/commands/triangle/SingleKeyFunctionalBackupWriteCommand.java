@@ -3,7 +3,6 @@ package org.infinispan.commands.triangle;
 import static org.infinispan.commands.write.ValueMatcher.MATCH_ALWAYS;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -16,6 +15,7 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -117,7 +117,7 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       readBase(input);
       readFunctionAndParams(input);
       operation = MarshallUtil.unmarshallEnum(input, SingleKeyFunctionalBackupWriteCommand::valueOf);

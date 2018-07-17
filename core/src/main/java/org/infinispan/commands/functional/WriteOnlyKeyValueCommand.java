@@ -1,7 +1,6 @@
 package org.infinispan.commands.functional;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.function.BiConsumer;
 
 import org.infinispan.commands.CommandInvocationId;
@@ -10,6 +9,7 @@ import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -69,7 +69,7 @@ public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCom
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       MarshalledEntry me = MarshalledEntryUtil.read(input);
       key = me.getKey();
       argument = me.getValue();

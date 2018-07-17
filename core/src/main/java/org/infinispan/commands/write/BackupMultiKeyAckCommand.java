@@ -1,9 +1,9 @@
 package org.infinispan.commands.write;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.ByteString;
@@ -69,7 +69,7 @@ public class BackupMultiKeyAckCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       id = input.readLong();
       segment = input.readInt();
       topologyId = input.readInt();

@@ -1,7 +1,6 @@
 package org.infinispan.statetransfer;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -9,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
@@ -134,7 +134,7 @@ public class StateResponseCommand extends BaseRpcCommand implements TopologyAffe
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       setOrigin((Address) input.readObject());
       pushTransfer = input.readBoolean();
       stateChunks = MarshallUtil.unmarshallCollection(input, ArrayList::new);

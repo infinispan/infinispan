@@ -1,10 +1,10 @@
 package org.infinispan.commands.remote;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
@@ -44,7 +44,7 @@ public class SingleRpcCommand extends BaseRpcInvokingCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       command = (ReplicableCommand) input.readObject();
    }
 

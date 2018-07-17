@@ -1,7 +1,6 @@
 package org.infinispan.commands.triangle;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -13,6 +12,7 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
@@ -136,7 +136,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       readBase(input);
       operation = MarshallUtil.unmarshallEnum(input, SingleKeyBackupWriteCommand::valueOf);
       MarshalledEntryImpl me = MarshalledEntryUtil.read(input);

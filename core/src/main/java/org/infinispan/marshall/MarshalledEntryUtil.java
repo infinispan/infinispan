@@ -21,10 +21,6 @@ import org.infinispan.metadata.Metadata;
  */
 public class MarshalledEntryUtil {
 
-   public static <K> K readGroupName(ObjectInput in) throws ClassNotFoundException, IOException {
-      return readKey(in);
-   }
-
    public static <K> K readKey(ObjectInput in) throws ClassNotFoundException, IOException {
       MarshalledEntry<K, ?> entry = read(in);
       return entry.getKey();

@@ -1,7 +1,6 @@
 package org.infinispan.commands.remote;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -9,6 +8,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
@@ -124,7 +124,7 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       key = MarshalledEntryUtil.readKey(input);
       segment = UnsignedNumeric.readUnsignedInt(input);
       setFlagsBitSet(input.readLong());

@@ -3,7 +3,6 @@ package org.infinispan.commands.write;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,6 +15,7 @@ import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -162,7 +162,7 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       map = MarshalledEntryUtil.unmarshallMap(input, LinkedHashMap::new);
       metadata = MarshalledEntryUtil.readMetadata(input);
       isForwarded = input.readBoolean();

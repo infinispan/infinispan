@@ -1,7 +1,6 @@
 package org.infinispan.topology;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -9,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
@@ -338,7 +338,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       cacheName = MarshallUtil.unmarshallString(input);
       type = MarshallUtil.unmarshallEnum(input, ordinal -> Type.CACHED_VALUES[ordinal]);
       switch (type) {

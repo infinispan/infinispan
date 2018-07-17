@@ -1,8 +1,7 @@
 package org.infinispan.topology;
 
-import java.io.ObjectInput;
-
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
 
@@ -39,7 +38,7 @@ public class HeartBeatCommand implements ReplicableCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) {
+   public void readFrom(UserObjectInput input) {
       //nothing to read
    }
 }

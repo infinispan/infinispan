@@ -1,7 +1,6 @@
 package org.infinispan.commands.remote;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +10,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -137,7 +137,7 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       keys = MarshallUtil.unmarshallCollection(input, ArrayList::new, MarshalledEntryUtil::readKey);
       setFlagsBitSet(input.readLong());
       gtx = (GlobalTransaction) input.readObject();

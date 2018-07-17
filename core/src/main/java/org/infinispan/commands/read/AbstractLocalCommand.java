@@ -1,10 +1,10 @@
 package org.infinispan.commands.read;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.LocalCommand;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
 
@@ -25,7 +25,7 @@ public abstract class AbstractLocalCommand extends AbstractFlagAffectedCommand i
       //no-op
    }
 
-   public final void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public final void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       //no-op
    }
 

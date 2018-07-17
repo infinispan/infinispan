@@ -1,13 +1,13 @@
 package org.infinispan.commands.write;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
@@ -111,7 +111,7 @@ public class InvalidateL1Command extends InvalidateCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       super.readFrom(input);
       writeOrigin = (Address) input.readObject();
    }

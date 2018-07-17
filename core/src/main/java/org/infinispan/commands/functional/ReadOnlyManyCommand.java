@@ -3,7 +3,6 @@ package org.infinispan.commands.functional;
 import static org.infinispan.functional.impl.EntryViews.snapshot;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Function;
@@ -12,6 +11,7 @@ import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
@@ -104,7 +104,7 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       this.keys = MarshallUtil.unmarshallCollection(input, ArrayList::new, MarshalledEntryUtil::readKey);
       this.f = (Function<ReadEntryView<K, V>, R>) input.readObject();
       this.params = Params.readObject(input);

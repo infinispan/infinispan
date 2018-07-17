@@ -1,12 +1,12 @@
 package org.infinispan.stream.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
@@ -72,7 +72,7 @@ public class StreamIteratorNextCommand extends BaseRpcCommand implements Topolog
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       id = input.readObject();
       batchSize = UnsignedNumeric.readUnsignedLong(input);
    }

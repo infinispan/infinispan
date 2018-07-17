@@ -3,12 +3,12 @@ package org.infinispan.commands.write;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
@@ -145,7 +145,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
       MarshalledEntry me = MarshalledEntryUtil.read(input);
       key = me.getKey();

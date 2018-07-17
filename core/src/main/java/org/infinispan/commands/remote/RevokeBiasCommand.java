@@ -1,13 +1,13 @@
 package org.infinispan.commands.remote;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.ArrayList;
 import java.util.Collection;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
@@ -89,7 +89,7 @@ public class RevokeBiasCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       ackTarget = (Address) input.readObject();
       if (ackTarget != null) {
          id = input.readLong();

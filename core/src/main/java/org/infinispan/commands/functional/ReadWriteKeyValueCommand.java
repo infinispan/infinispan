@@ -4,7 +4,6 @@ import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.functional.impl.EntryViews.snapshot;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.function.BiFunction;
 
 import org.infinispan.commands.CommandInvocationId;
@@ -13,6 +12,7 @@ import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -79,7 +79,7 @@ public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKey
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       MarshalledEntryImpl me = MarshalledEntryUtil.read(input);
       key = me.getKey();
       prevValue = me.getValue();

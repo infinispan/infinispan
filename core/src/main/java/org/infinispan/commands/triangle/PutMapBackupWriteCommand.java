@@ -1,13 +1,13 @@
 package org.infinispan.commands.triangle;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.marshall.MarshalledEntryUtil;
@@ -62,7 +62,7 @@ public class PutMapBackupWriteCommand extends BackupWriteCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       readBase(input);
       map = MarshalledEntryUtil.unmarshallMap(input, HashMap::new);
       metadata = MarshalledEntryUtil.readMetadata(input);

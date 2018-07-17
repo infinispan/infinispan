@@ -1,9 +1,9 @@
 package org.infinispan.commands.remote.recovery;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.ByteString;
@@ -42,7 +42,7 @@ public class GetInDoubtTxInfoCommand extends RecoveryCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       // No parameters
    }
 

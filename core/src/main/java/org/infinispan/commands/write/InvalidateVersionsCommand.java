@@ -1,11 +1,11 @@
 package org.infinispan.commands.write;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
@@ -154,7 +154,7 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       topologyId = input.readInt();
       keys = new Object[input.readInt()];
       topologyIds = new int[keys.length];

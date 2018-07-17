@@ -1,7 +1,6 @@
 package org.infinispan.commands.remote;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,13 +9,13 @@ import java.util.Map;
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.group.impl.GroupManager;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
  * {@link org.infinispan.commands.VisitableCommand} that fetches the keys belonging to a group.
@@ -73,8 +72,8 @@ public class GetKeysInGroupCommand extends AbstractTopologyAffectedCommand imple
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      groupName = MarshalledEntryUtil.readGroupName(input);
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
+      groupName = input.readUserObject();
       setFlagsBitSet(input.readLong());
    }
 

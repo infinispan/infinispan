@@ -1,9 +1,9 @@
 package org.infinispan.commands.tx;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
@@ -53,7 +53,7 @@ public class VersionedCommitCommand extends CommitCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       super.readFrom(input);
       updatedVersions = MarshallUtil.unmarshallMap(input, EntryVersionsMap::new);
    }

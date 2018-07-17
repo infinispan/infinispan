@@ -13,7 +13,6 @@ import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.util.ByteString;
 
 /**
@@ -23,12 +22,6 @@ import org.infinispan.util.ByteString;
  * @since 9.0
  */
 public class TriangleAckExternalizer implements AdvancedExternalizer<CacheRpcCommand> {
-
-   private final MarshalledEntryFactory entryFactory;
-
-   public TriangleAckExternalizer(MarshalledEntryFactory entryFactory) {
-      this.entryFactory = entryFactory;
-   }
 
    public Set<Class<? extends CacheRpcCommand>> getTypeClasses() {
       //noinspection unchecked

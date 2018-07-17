@@ -1,13 +1,13 @@
 package org.infinispan.commands;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -116,7 +116,7 @@ public class CreateCacheCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       cacheNameToCreate = input.readUTF();
       cacheConfigurationName = input.readUTF();
       expectedMembers = input.readInt();
