@@ -9,7 +9,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserObjectOutput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
  * Replicable Command that runs the given Function passing the {@link EmbeddedCacheManager} as an argument

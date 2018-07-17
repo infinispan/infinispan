@@ -9,7 +9,7 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserObjectOutput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.util.ByteString;

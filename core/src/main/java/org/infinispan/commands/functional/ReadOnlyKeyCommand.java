@@ -22,7 +22,7 @@ import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserObjectOutput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 
 public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
 

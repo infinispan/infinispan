@@ -13,7 +13,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserObjectOutput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
  * Used to fetch a full CacheEntry rather than just the value.

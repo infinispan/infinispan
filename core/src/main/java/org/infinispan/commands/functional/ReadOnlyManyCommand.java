@@ -23,7 +23,7 @@ import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserObjectOutput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 
 public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedCommand implements LocalCommand {
    public static final int COMMAND_ID = 63;

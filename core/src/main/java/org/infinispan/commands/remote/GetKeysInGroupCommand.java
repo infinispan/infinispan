@@ -16,7 +16,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserObjectOutput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
  * {@link org.infinispan.commands.VisitableCommand} that fetches the keys belonging to a group.

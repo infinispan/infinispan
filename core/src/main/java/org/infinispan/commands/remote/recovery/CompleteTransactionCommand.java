@@ -7,7 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserObjectOutput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.ByteString;
 
 /**

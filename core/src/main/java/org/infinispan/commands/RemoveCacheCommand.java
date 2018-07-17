@@ -15,7 +15,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserObjectOutput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.DependencyGraph;

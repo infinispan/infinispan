@@ -13,7 +13,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserObjectOutput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ByteString;

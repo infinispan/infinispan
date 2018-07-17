@@ -15,7 +15,7 @@ import org.infinispan.functional.EntryView;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.marshall.core.UserObjectOutput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
  * Helper class for marshalling, also hiding implementations of {@link Mutation} from the interface.

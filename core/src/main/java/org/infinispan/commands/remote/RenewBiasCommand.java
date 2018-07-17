@@ -6,7 +6,7 @@ import java.io.ObjectInput;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserObjectOutput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.util.ByteString;
 

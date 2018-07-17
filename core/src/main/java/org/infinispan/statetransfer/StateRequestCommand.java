@@ -13,7 +13,7 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserObjectOutput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.scattered.ScatteredStateProvider;

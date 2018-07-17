@@ -1,4 +1,4 @@
-package org.infinispan.marshall.core;
+package org.infinispan.commons.marshall;
 
 import java.io.IOException;
 import java.io.ObjectOutput;

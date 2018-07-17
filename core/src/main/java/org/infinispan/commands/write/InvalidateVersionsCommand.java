@@ -12,7 +12,7 @@ import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserObjectOutput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.persistence.manager.OrderedUpdatesManager;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.statetransfer.StateTransferLock;
