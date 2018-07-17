@@ -300,11 +300,28 @@ import org.infinispan.commons.util.Util;
  *       <td>{@link TransactionConfigurationBuilder#transactionMode(TransactionMode)}</td>
  *    </tr>
  *    <tr>
- *  *       <td><b>infinispan.client.hotrod.transaction.timeout</b></td>
- *  *       <td>Long</td>
- *  *       <td>{@link TransactionConfigurationBuilder#DEFAULT_TIMEOUT 60000}</td>
- *  *       <td>{@link TransactionConfigurationBuilder#timeout(long, TimeUnit)}</td>
- *  *    </tr>
+ *       <td><b>infinispan.client.hotrod.transaction.timeout</b></td>
+ *       <td>Long</td>
+ *       <td>{@link TransactionConfigurationBuilder#DEFAULT_TIMEOUT 60000}</td>
+ *       <td>{@link TransactionConfigurationBuilder#timeout(long, TimeUnit)}</td>
+ *    </tr>
+ *       <td><b>infinispan.client.hotrod.near_cache.mode</b></td>
+ *       <td>String ({@link NearCacheMode} enum name)</td>
+ *       <td>{@link NearCacheMode#DISABLED DISABLED}</td>
+ *       <td>{@link NearCacheConfigurationBuilder#mode(NearCacheMode)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.near_cache.max_entries</b></td>
+ *       <td>Integer</td>
+ *       <td>-1 (no limit)</td>
+ *       <td>{@link NearCacheConfigurationBuilder#maxEntries(int)}</td>
+ *    </tr>
+ *    <tr>
+ *       <td><b>infinispan.client.hotrod.near_cache.name_pattern</b></td>
+ *        <td>String (regex pattern, see {@link Pattern})</td>
+ *        <td>null (matches all cache names)</td>
+ *        <td>{@link NearCacheConfigurationBuilder#cacheNamePattern(String)}</td>
+ *    </tr>
  * </table>
  *
  * @author Tristan Tarrant
@@ -638,6 +655,16 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
       this.batchSize(typed.getIntProperty(ConfigurationProperties.BATCH_SIZE, batchSize, true));
       transaction.withTransactionProperties(properties);
+
+      if (typed.containsKey(ConfigurationProperties.NEAR_CACHE_MAX_ENTRIES)) {
+         this.nearCache().maxEntries(typed.getIntProperty(ConfigurationProperties.NEAR_CACHE_MAX_ENTRIES, -1));
+      }
+      if (typed.containsKey(ConfigurationProperties.NEAR_CACHE_MODE)) {
+         this.nearCache().mode(NearCacheMode.valueOf(typed.getProperty(ConfigurationProperties.NEAR_CACHE_MODE)));
+      }
+      if (typed.containsKey(ConfigurationProperties.NEAR_CACHE_NAME_PATTERN)) {
+         this.nearCache().cacheNamePattern(typed.getProperty(ConfigurationProperties.NEAR_CACHE_NAME_PATTERN));
+      }
       return this;
    }
 
