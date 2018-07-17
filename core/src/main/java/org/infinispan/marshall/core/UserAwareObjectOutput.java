@@ -5,18 +5,11 @@ import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Map;
 
-import org.infinispan.marshall.MarshalledEntryUtil;
-import org.infinispan.metadata.Metadata;
-
 /**
- * The interface that should be used to write all user objects to the output stream provided by the implementation.
+ * The interface that should be used to write all custom user objects to the output stream.
  *
- * @author remerson
- * @since 4.0
  */
 public interface UserAwareObjectOutput extends ObjectOutput {
-
-   void writeGroupName(Object object) throws IOException;
 
    void writeKey(Object keyObject) throws IOException;
 
@@ -24,9 +17,9 @@ public interface UserAwareObjectOutput extends ObjectOutput {
 
    void writeKeyValue(Object key, Object valueObject) throws IOException;
 
-   void writeMetadata(Metadata metadataObject) throws IOException;
+   void writeEntry(Object key, Object value, Object metadata) throws IOException;
 
-   void writeEntry(Object key, Object value, Metadata metadata) throws IOException;
+   void writeUserObject(Object object) throws IOException;
 
    /**
     * Marshall the {@code map} to the delegate {@code ObjectOutput} using the user marshaller to serialize objects.
@@ -39,7 +32,7 @@ public interface UserAwareObjectOutput extends ObjectOutput {
     * @param map     {@link Map} to marshall.
     * @throws IOException If any of the usual Input/Output related exceptions occur.
     */
-   <K, V, T extends Map<K, V>> void marshallMap(T map) throws IOException;
+   <K, V, T extends Map<K, V>> void writeUserMap(T map) throws IOException;
 
    /**
     * Marshall a {@link Collection}.
@@ -48,10 +41,10 @@ public interface UserAwareObjectOutput extends ObjectOutput {
     *
     * @param <E>        Collection's element type.
     * @param collection {@link Collection} to marshal.
-    * @param writer     {@link MarshalledEntryUtil.MarshalledElementWriter} that writes single element to the output.
+    * @param writer     {@link UserAwareObjectOutput} that writes single element to the output.
     * @throws IOException If any of the usual Input/Output related exceptions occur.
     */
-   <E> void marshallCollection(Collection<E> collection, UserObjectWriter<E> writer) throws IOException;
+   <E> void writeUserCollection(Collection<E> collection, UserObjectWriter<E> writer) throws IOException;
 
    /**
     * Marshall arrays.
@@ -60,10 +53,10 @@ public interface UserAwareObjectOutput extends ObjectOutput {
     *
     * @param <E>     Array type.
     * @param array   Array to marshall.
-    * @param writer  {@link MarshalledEntryUtil.MarshalledElementWriter} that writes single element to the output.
+    * @param writer  {@link UserAwareObjectOutput} that writes single element to the output.
     * @throws IOException If any of the usual Input/Output related exceptions occur.
     */
-   <E> void marshallArray(E[] array, UserObjectWriter<E> writer) throws IOException;
+   <E> void writeUserArray(E[] array, UserObjectWriter<E> writer) throws IOException;
 
    @FunctionalInterface
    interface UserObjectWriter<E> {

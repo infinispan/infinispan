@@ -75,7 +75,7 @@ public class MultiKeyFunctionalBackupWriteCommand extends FunctionalBackupWriteC
       writeBase(output);
       writeFunctionAndParams(output);
       output.writeBoolean(writeOnly);
-      output.marshallCollection(keys, UserAwareObjectOutput::writeKey);
+      output.writeUserCollection(keys, UserAwareObjectOutput::writeKey);
    }
 
    @Override

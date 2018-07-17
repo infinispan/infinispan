@@ -76,7 +76,7 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
       writeBase(output);
       writeFunctionAndParams(output);
       output.writeBoolean(writeOnly);
-      output.marshallMap(entries);
+      output.writeUserMap(entries);
    }
 
    @Override

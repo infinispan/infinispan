@@ -96,7 +96,7 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
 
    @Override
    public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      output.marshallCollection(keys, UserAwareObjectOutput::writeKey);
+      output.writeUserCollection(keys, UserAwareObjectOutput::writeKey);
       output.writeObject(f);
       Params.writeObject(output, params);
       DataConversion.writeTo(output, keyDataConversion);

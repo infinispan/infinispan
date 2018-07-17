@@ -57,8 +57,8 @@ public class PutMapBackupWriteCommand extends BackupWriteCommand {
    @Override
    public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       writeBase(output);
-      output.marshallMap(map);
-      output.writeMetadata(metadata);
+      output.writeUserMap(map);
+      output.writeUserObject(metadata);
    }
 
    @Override

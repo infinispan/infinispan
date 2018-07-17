@@ -154,8 +154,8 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
 
    @Override
    public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      output.marshallMap(map);
-      output.writeMetadata(metadata);
+      output.writeUserMap(map);
+      output.writeUserObject(metadata);
       output.writeBoolean(isForwarded);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);

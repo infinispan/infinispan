@@ -88,7 +88,7 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
    @Override
    public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
-      output.marshallMap(arguments);
+      output.writeUserMap(arguments);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);

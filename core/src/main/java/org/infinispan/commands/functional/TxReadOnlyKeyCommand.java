@@ -53,7 +53,7 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    @Override
    public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       super.writeTo(output, entryFactory);
-      output.marshallCollection(mutations, Mutations::writeTo);
+      output.writeUserCollection(mutations, Mutations::writeTo);
    }
 
    @Override
