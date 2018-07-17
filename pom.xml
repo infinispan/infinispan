@@ -108,7 +108,6 @@
       <module>server/core</module>
       <module>server/memcached</module>
       <module>server/hotrod</module>
-      <module>server/websocket</module>
       <module>server/rest</module>
       <module>server/router</module>
       <module>client/hotrod-client</module>
@@ -2826,7 +2825,6 @@
                               <source>${dir.ispn}/remote-query/remote-query-client/src/main/java</source>
                               <source>${dir.ispn}/remote-query/remote-query-server/src/main/java</source>
                               <source>${dir.ispn}/scripting/src/main/java</source>
-                              <source>${dir.ispn}/server/websocket/src/main/java</source>
                               <source>${dir.ispn}/spring/spring/src/main/java</source>
                               <source>${dir.ispn}/spring/spring4/spring4-common/src/main/java</source>
                               <source>${dir.ispn}/spring/spring4/spring4-embedded/src/main/java</source>

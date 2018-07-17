@@ -219,4 +219,8 @@ public interface EndpointLogger extends BasicLogger {
 
    @Message(id = 10041, value = "Authentication error: %s")
    SecurityException authenticationError(Throwable reason);
+
+   @LogMessage(level = WARN)
+   @Message(id = 10042, value = "The WebSocket connector has been removed. Ignoring it.")
+   void webSocketConnectorRemoved();
 }

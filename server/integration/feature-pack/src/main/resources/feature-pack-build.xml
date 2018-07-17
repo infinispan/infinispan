@@ -122,10 +122,6 @@
            template="configuration/domain/template.xml"
            subsystems="configuration/examples/subsystems-memcached-domain.xml"
            output-file="docs/examples/configs/domain-memcached.xml" />
-        <standalone
-           template="configuration/standalone/template.xml"
-           subsystems="configuration/examples/subsystems-websocket-local.xml"
-           output-file="docs/examples/configs/standalone-websocket.xml"/>
     </config>
     <mkdirs>
         <dir name="domain/data/content"/>

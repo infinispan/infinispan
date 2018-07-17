@@ -76,7 +76,12 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
             break;
          }
          case WEBSOCKET_CONNECTOR: {
-            parseWebSocketConnector(reader, subsystemAddress, operations);
+            if (namespace.since(9, 4)) {
+               throw ParseUtils.unexpectedElement(reader);
+            } else {
+               ROOT_LOGGER.webSocketConnectorRemoved();
+               ParseUtils.requireNoContent(reader);
+            }
             break;
          }
          case ROUTER_CONNECTOR: {
@@ -407,34 +412,6 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
       ParseUtils.requireNoContent(reader);
 
       operations.add(authentication);
-   }
-
-   private void parseWebSocketConnector(XMLExtendedStreamReader reader, PathAddress subsystemAddress,
-         List<ModelNode> operations) throws XMLStreamException {
-
-      ModelNode connector = Util.getEmptyOperation(ADD, null);
-      String name = ModelKeys.WEBSOCKET_CONNECTOR;
-      final Set<Attribute> required = EnumSet.of(Attribute.SOCKET_BINDING);
-
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-         required.remove(attribute);
-         name = parseConnectorAttributes(reader, connector, name, i, value, attribute);
-      }
-
-      if (!required.isEmpty()) {
-         throw ParseUtils.missingRequired(reader, required);
-      }
-
-      PathAddress connectorAddress = subsystemAddress.append(PathElement.pathElement(ModelKeys.WEBSOCKET_CONNECTOR,
-            name));
-      connector.get(OP_ADDR).set(connectorAddress.toModelNode());
-
-      ParseUtils.requireNoContent(reader);
-
-      operations.add(connector);
    }
 
    private void parseRouterConnector(XMLExtendedStreamReader reader, PathAddress subsystemAddress,

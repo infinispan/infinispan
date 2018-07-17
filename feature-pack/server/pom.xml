@@ -161,17 +161,6 @@
 
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-server-websocket</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-tasks</artifactId>
             <exclusions>
                 <exclusion>

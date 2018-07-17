@@ -55,12 +55,6 @@ Here's a brief summary of the available server endpoints.
  - As opposed to Memcached servers, {brandname} based Memcached servers can actually be clustered and hence they can replicate or distribute data using consistent hash algorithms around the cluster. So, this module is particularly of interest to those users that want to provide failover capabilities to the data stored in Memcached servers.
  - In terms of load balancing and failover, there're a few clients that can load balance or failover given a static list of server addresses (perl's Cache::Memcached for example) but any server addition or removal would require manual intervention.
 
-* *Websocket Server Module* - This module enables {brandname} to be accessed over a link:http://en.wikipedia.org/wiki/WebSockets[Websocket] interface via a Javascript API.
- - This module is very specifically designed for Javascript clients and so that is the only client implementation available.
- - This module is particularly suited for developers wanting to enable access to {brandname} instances from their Javascript codebase.
- - Since websockets work on the same HTTP port, any HTTP load balancer would do to load balance and failover.
- - This module is [red]**UNMAINTAINED**!
-
 === Which protocol should I use?
 
 Choosing the right protocol depends on a number of factors.
@@ -85,6 +79,5 @@ Choosing the right protocol depends on a number of factors.
 include::server_protocols_hotrod.adoc[]
 include::server_protocols_rest.adoc[]
 include::server_protocols_memcached.adoc[]
-include::server_protocols_websocket.adoc[]
 
 include::execute_grid_remote.adoc[]

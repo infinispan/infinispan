@@ -8,7 +8,6 @@
             <xs:element name="hotrod-connector" type="tns:hotrod-connector" />
             <xs:element name="memcached-connector" type="tns:memcached-connector" />
             <xs:element name="rest-connector" type="tns:rest-connector" />
-            <xs:element name="websocket-connector" type="tns:websocket-connector" />
             <xs:element name="router-connector" type="tns:router-connector" />
         </xs:choice>
     </xs:complexType>
@@ -204,12 +203,6 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-    </xs:complexType>
-
-    <xs:complexType name="websocket-connector">
-        <xs:complexContent>
-            <xs:extension base="tns:protocol-connector" />
-        </xs:complexContent>
     </xs:complexType>
 
     <xs:complexType name="topology-state-transfer">
@@ -507,13 +500,13 @@
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
-    
+
     <xs:complexType name="cors-rules">
         <xs:annotation>
             <xs:documentation>
             <![CDATA[
-                Configures CORS (Cross Origin Resource Sharing) for the REST Server. 
-                
+                Configures CORS (Cross Origin Resource Sharing) for the REST Server.
+
                 Contains one or more rules that specify the permissions for cross-domain requests based on the origin.
             ]]>
             </xs:documentation>
@@ -609,7 +602,7 @@
         </xs:annotation>
         <xs:list itemType="xs:string"/>
     </xs:simpleType>
-    
+
     <xs:complexType name="cors-rule">
         <xs:annotation>
             <xs:documentation>A Cors rule for one or more origins</xs:documentation>
@@ -629,13 +622,13 @@
                 <xs:annotation>
                     <xs:documentation>A comma separated list used to set the CORS 'Access-Control-Allow-Headers' in the preflight response to specify which headers can be used by the configured origin(s)</xs:documentation>
                 </xs:annotation>
-            </xs:element>        
+            </xs:element>
             <xs:element name="expose-headers" type="xs:string" minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>A comma separated list used to set the CORS 'Access-Control-Expose-Headers' in the preflight response to specify which headers can be exposed to the configured origin(s)</xs:documentation>
                 </xs:annotation>
-            </xs:element>        
-        </xs:all>  
+            </xs:element>
+        </xs:all>
          <xs:attribute name="name" type="xs:string">
             <xs:annotation>
                 <xs:documentation>The rule name</xs:documentation>

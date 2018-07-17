@@ -160,17 +160,10 @@
          <memcached-connector socket-binding="memcached" cache-container="clustered" cache="default"/>
       </replacement>
    </supplement>
-   <supplement name="websocket-local">
-      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
-      <replacement placeholder="CONNECTORS">
-         <websocket-connector socket-binding="websocket" cache-container="local" />
-      </replacement>
-   </supplement>
    <socket-binding name="hotrod" port="11222" />
    <socket-binding name="hotrod-internal" port="11223" />
    <socket-binding name="hotrod-multi-tenancy" port="11224" />
    <socket-binding name="memcached" port="11211" />
-   <socket-binding name="websocket" port="8181" />
    <socket-binding name="rest" port="8080" />
    <socket-binding name="rest-ssl" port="8443" />
    <socket-binding name="rest-multi-tenancy" port="8081" />
