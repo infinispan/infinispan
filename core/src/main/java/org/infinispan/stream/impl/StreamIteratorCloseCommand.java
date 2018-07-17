@@ -6,7 +6,6 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
@@ -55,7 +54,7 @@ public class StreamIteratorCloseCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       output.writeObject(id);
    }
 

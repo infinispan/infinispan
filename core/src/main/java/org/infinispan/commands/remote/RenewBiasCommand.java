@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.util.ByteString;
 
@@ -50,7 +49,7 @@ public class RenewBiasCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       output.writeUserArray(keys);
    }
 

@@ -2,7 +2,6 @@ package org.infinispan.topology;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.marshall.UserObjectInput;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
@@ -33,7 +32,7 @@ public class HeartBeatCommand implements ReplicableCommand {
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory){
+   public void writeTo(UserObjectOutput output){
       //nothing to write
    }
 

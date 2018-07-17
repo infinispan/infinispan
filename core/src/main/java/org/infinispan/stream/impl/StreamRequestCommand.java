@@ -12,7 +12,6 @@ import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
@@ -117,7 +116,7 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyA
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       output.writeObject(getOrigin());
       output.writeObject(id);
       output.writeBoolean(parallelStream);

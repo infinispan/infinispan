@@ -35,7 +35,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -200,8 +199,8 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      super.writeTo(output, entryFactory); //global tx
+   public void writeTo(UserObjectOutput output) throws IOException {
+      super.writeTo(output); //global tx
       output.writeBoolean(onePhaseCommit);
       output.writeBoolean(retriedCommand);
       MarshallUtil.marshallArray(modifications, output);

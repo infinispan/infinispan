@@ -10,13 +10,10 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -116,10 +113,12 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      output.writeObject(entryFactory.newMarshalledEntry(key, oldValue, metadata));
-      output.writeObject(entryFactory.newMarshalledEntry(null, newValue, null));
+   public void writeTo(UserObjectOutput output) throws IOException {
+      output.writeUserObject(key);
+      output.writeUserObject(oldValue);
+      output.writeUserObject(newValue);
       UnsignedNumeric.writeUnsignedInt(output, segment);
+      output.writeUserObject(metadata);
       MarshallUtil.marshallEnum(valueMatcher, output);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
@@ -127,12 +126,11 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      MarshalledEntryImpl oldEntry = (MarshalledEntryImpl) input.readObject();
-      key = oldEntry.getKey();
-      oldValue = oldEntry.getValue();
-      metadata = oldEntry.metadata();
-      newValue = ((MarshalledEntry) input.readObject()).getValue();
+      key = input.readUserObject();
+      oldValue = input.readUserObject();
+      newValue = input.readUserObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
+      metadata = (Metadata) input.readUserObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);

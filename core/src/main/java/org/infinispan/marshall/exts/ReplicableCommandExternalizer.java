@@ -37,6 +37,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.impl.ReplicableCommandManagerFunction;
@@ -62,13 +63,12 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
    }
 
    @Override
-   public void writeObject(ObjectOutput output, ReplicableCommand command) throws IOException {
+   public void writeObject(UserObjectOutput output, ReplicableCommand command) throws IOException {
       writeCommandHeader(output, command);
       writeCommandParameters(output, command);
    }
 
-   protected void writeCommandParameters(ObjectOutput output, ReplicableCommand command) throws IOException {
-      // TODO hook in UserAwareObjectOutput Impl
+   protected void writeCommandParameters(UserObjectOutput output, ReplicableCommand command) throws IOException {
       command.writeTo(output);
       if (command instanceof TopologyAffectedCommand) {
          output.writeInt(((TopologyAffectedCommand) command).getTopologyId());

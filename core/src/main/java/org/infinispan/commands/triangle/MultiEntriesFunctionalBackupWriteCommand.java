@@ -16,7 +16,6 @@ import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TriangleFunctionsUtil;
 
@@ -71,7 +70,7 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       writeBase(output);
       writeFunctionAndParams(output);
       output.writeBoolean(writeOnly);

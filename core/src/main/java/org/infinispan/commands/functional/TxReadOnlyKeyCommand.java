@@ -17,7 +17,6 @@ import org.infinispan.functional.Param.StatisticsMode;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 
 public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    public static final byte COMMAND_ID = 64;
@@ -50,8 +49,8 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      super.writeTo(output, entryFactory);
+   public void writeTo(UserObjectOutput output) throws IOException {
+      super.writeTo(output);
       output.writeUserCollection(mutations);
    }
 

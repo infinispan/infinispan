@@ -11,7 +11,6 @@ import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 
@@ -61,7 +60,7 @@ public class UpdateLastAccessCommand extends BaseRpcCommand implements TopologyA
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       output.writeKey(key);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       UnsignedNumeric.writeUnsignedLong(output, acessTime);

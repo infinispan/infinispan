@@ -13,7 +13,6 @@ import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.metadata.Metadata;
@@ -108,7 +107,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       output.writeEntry(key, value, metadata);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       MarshallUtil.marshallEnum(valueMatcher, output);

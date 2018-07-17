@@ -13,7 +13,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
@@ -105,8 +104,8 @@ public class InvalidateL1Command extends InvalidateCommand {
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      super.writeTo(output, entryFactory); //command invocation id + keys
+   public void writeTo(UserObjectOutput output) throws IOException {
+      super.writeTo(output); //command invocation id + keys
       output.writeObject(writeOrigin);
    }
 

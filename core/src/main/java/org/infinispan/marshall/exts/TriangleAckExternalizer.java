@@ -4,7 +4,6 @@ import static org.infinispan.commons.marshall.Ids.TRIANGLE_ACK_EXTERNALIZER;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -12,6 +11,7 @@ import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.util.ByteString;
 
@@ -32,10 +32,9 @@ public class TriangleAckExternalizer implements AdvancedExternalizer<CacheRpcCom
       return TRIANGLE_ACK_EXTERNALIZER;
    }
 
-   public void writeObject(ObjectOutput output, CacheRpcCommand object) throws IOException {
+   public void writeObject(UserObjectOutput output, CacheRpcCommand object) throws IOException {
       output.writeByte(object.getCommandId());
       ByteString.writeObject(output, object.getCacheName());
-      // TODO add UserAwareObjectOutput instance
       object.writeTo(output);
    }
 

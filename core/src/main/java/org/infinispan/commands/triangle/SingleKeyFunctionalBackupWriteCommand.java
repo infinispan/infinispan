@@ -20,7 +20,6 @@ import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.ByteString;
 
@@ -95,7 +94,7 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       writeBase(output);
       writeFunctionAndParams(output);
       MarshallUtil.marshallEnum(operation, output);

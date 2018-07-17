@@ -8,7 +8,6 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
@@ -48,7 +47,7 @@ public class ReplicableCommandManagerFunction implements ReplicableCommand {
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       output.writeObject(function);
    }
 

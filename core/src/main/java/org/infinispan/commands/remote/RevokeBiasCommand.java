@@ -8,7 +8,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -77,7 +76,7 @@ public class RevokeBiasCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       output.writeObject(ackTarget);
       if (ackTarget != null) {
          output.writeLong(id);

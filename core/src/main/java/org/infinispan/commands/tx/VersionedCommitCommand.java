@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.container.versioning.EntryVersionsMap;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
@@ -47,8 +46,8 @@ public class VersionedCommitCommand extends CommitCommand {
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      super.writeTo(output, entryFactory); //write global tx
+   public void writeTo(UserObjectOutput output) throws IOException {
+      super.writeTo(output); //write global tx
       MarshallUtil.marshallMap(updatedVersions, output);
    }
 

@@ -5,7 +5,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.marshall.UserObjectInput;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.ByteString;
 
@@ -49,7 +48,7 @@ public class SingleXSiteRpcCommand extends XSiteReplicateCommand {
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       output.writeObject(command);
    }
 

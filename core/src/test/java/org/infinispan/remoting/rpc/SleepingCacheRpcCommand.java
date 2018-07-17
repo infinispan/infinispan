@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.ByteString;
 
@@ -43,7 +42,7 @@ public class SleepingCacheRpcCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       output.writeLong(sleepTime);
    }
 

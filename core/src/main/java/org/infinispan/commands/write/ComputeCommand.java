@@ -11,13 +11,11 @@ import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -169,8 +167,9 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      output.writeObject(entryFactory.newMarshalledEntry(key, null, metadata));
+   public void writeTo(UserObjectOutput output) throws IOException {
+      output.writeUserObject(key);
+      output.writeUserObject(metadata);
       output.writeBoolean(computeIfPresent);
       output.writeObject(remappingBiFunction);
       UnsignedNumeric.writeUnsignedInt(output, segment);
@@ -180,7 +179,6 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      MarshalledEntryImpl me = (MarshalledEntryImpl) input.readObject();
       key = input.readUserObject();
       metadata = (Metadata) input.readUserObject();
       computeIfPresent = input.readBoolean();

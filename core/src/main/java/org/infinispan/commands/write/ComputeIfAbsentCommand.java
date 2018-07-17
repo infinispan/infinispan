@@ -16,7 +16,6 @@ import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -135,7 +134,7 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
    }
 
    @Override
-   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       output.writeEntry(key, null, metadata);
       output.writeObject(mappingFunction);
       UnsignedNumeric.writeUnsignedInt(output, segment);
