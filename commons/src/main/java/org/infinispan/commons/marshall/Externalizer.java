@@ -76,7 +76,21 @@ import java.io.Serializable;
  * @author Galder Zamarreño
  * @since 5.0
  */
+// TODO update javadoc
 public interface Externalizer<T> extends Serializable {
+
+   /**
+    * Write the object reference to the stream.
+    *
+    * @param output the {@link UserObjectOutput} to write to
+    * @param object the object reference to write
+    * @throws IOException if an I/O error occurs
+    * @deprecated use {@link #writeObject(UserObjectOutput, Object)} instead
+    */
+   @Deprecated
+   default void writeObject(ObjectOutput output, T object) throws IOException {
+      // no-op
+   }
 
    /**
     * Write the object reference to the stream.
@@ -85,7 +99,9 @@ public interface Externalizer<T> extends Serializable {
     * @param object the object reference to write
     * @throws IOException if an I/O error occurs
     */
-   void writeObject(ObjectOutput output, T object) throws IOException;
+   default void writeObject(UserObjectOutput output, T object) throws IOException {
+      writeObject((ObjectOutput) output, object);
+   }
 
    /**
     * Read an instance from the stream.  The instance will have been written by the
@@ -97,7 +113,25 @@ public interface Externalizer<T> extends Serializable {
     * @return the object instance
     * @throws IOException if an I/O error occurs
     * @throws ClassNotFoundException if a class could not be found
+    * @deprecated use {@link #readObject(UserObjectInput)} instead
     */
-   T readObject(ObjectInput input) throws IOException, ClassNotFoundException;
+   @Deprecated
+   default T readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      return null;
+   }
 
+   /**
+    * Read an instance from the stream.  The instance will have been written by the
+    * {@link #writeObject(ObjectOutput, Object)} method.  Implementations are free
+    * to create instances of the object read from the stream in any way that they
+    * feel like. This could be via constructor, factory or reflection.
+    *
+    * @param input the {@link UserObjectInput} to read from
+    * @return the object instance
+    * @throws IOException if an I/O error occurs
+    * @throws ClassNotFoundException if a class could not be found
+    */
+   default T readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
+      return readObject((ObjectInput) input);
+   }
 }
