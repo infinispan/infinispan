@@ -9,16 +9,14 @@ import java.util.Collection;
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
@@ -117,7 +115,7 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
-      keys = MarshallUtil.unmarshallArray(input, Util::objectArray, MarshalledEntryUtil::readKey);
+      keys = input.readUserArray(Util::objectArray);
       setFlagsBitSet(input.readLong());
    }
 

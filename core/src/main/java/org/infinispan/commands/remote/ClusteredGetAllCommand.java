@@ -9,8 +9,8 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetAllCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -20,9 +20,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -138,7 +136,7 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new, MarshalledEntryUtil::readKey);
+      keys = input.readUserCollection(ArrayList::new);
       setFlagsBitSet(input.readLong());
       gtx = (GlobalTransaction) input.readObject();
    }

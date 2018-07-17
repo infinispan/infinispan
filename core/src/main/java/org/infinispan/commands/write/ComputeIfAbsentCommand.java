@@ -11,14 +11,12 @@ import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -147,9 +145,8 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      MarshalledEntryImpl me = MarshalledEntryUtil.read(input);
-      key = me.getKey();
-      metadata = me.metadata();
+      key = input.readUserObject();
+      metadata = (Metadata) input.readUserObject();
       mappingFunction = (Function) input.readObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
       commandInvocationId = CommandInvocationId.readFrom(input);

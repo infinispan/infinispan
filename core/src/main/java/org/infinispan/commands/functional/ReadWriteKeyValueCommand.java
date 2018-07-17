@@ -13,6 +13,7 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -24,10 +25,7 @@ import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.EntryViews.AccessLoggingReadWriteView;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -80,11 +78,10 @@ public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKey
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      MarshalledEntryImpl me = MarshalledEntryUtil.read(input);
-      key = me.getKey();
-      prevValue = me.getValue();
-      prevMetadata = me.metadata();
-      argument = MarshalledEntryUtil.readValue(input);
+      key = input.readUserObject();
+      prevValue = input.readUserObject();
+      prevMetadata = (Metadata) input.readUserObject();
+      argument = input.readUserObject();
 
       f = (BiFunction<T, ReadWriteEntryView<K, V>, R>) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);

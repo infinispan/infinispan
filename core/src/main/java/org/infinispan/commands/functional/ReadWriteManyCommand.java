@@ -11,8 +11,8 @@ import java.util.function.Function;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
@@ -23,9 +23,7 @@ import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.EntryViews.AccessLoggingReadWriteView;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 
 // TODO: the command does not carry previous values to backup, so it can cause
 // the values on primary and backup owners to diverge in case of topology change
@@ -95,7 +93,7 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new, MarshalledEntryUtil::readKey);
+      keys = input.readUserCollection(ArrayList::new);
       f = (Function<ReadWriteEntryView<K, V>, R>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);

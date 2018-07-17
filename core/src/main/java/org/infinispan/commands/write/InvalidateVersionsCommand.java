@@ -6,13 +6,12 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.persistence.manager.OrderedUpdatesManager;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.statetransfer.StateTransferLock;
@@ -160,7 +159,7 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
       topologyIds = new int[keys.length];
       versions = new long[keys.length];
       for (int i = 0; i < keys.length; ++i) {
-         Object key = MarshalledEntryUtil.readKey(input);
+         Object key = input.readUserObject();
          if (key == null) {
             break;
          }

@@ -16,13 +16,11 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.ByteString;
 
@@ -121,16 +119,15 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
       readBase(input);
       readFunctionAndParams(input);
       operation = MarshallUtil.unmarshallEnum(input, SingleKeyFunctionalBackupWriteCommand::valueOf);
-      MarshalledEntryImpl me = MarshalledEntryUtil.read(input);
-      key = me.getKey();
+      key = input.readUserObject();
       switch (operation) {
          case READ_WRITE_KEY_VALUE:
-            prevValue = me.getValue();
-            prevMetadata = me.metadata();
-            value = MarshalledEntryUtil.readValue(input);
+            prevValue = input.readUserObject();
+            prevMetadata = (Metadata) input.readUserObject();
+            value = input.readUserObject();
             break;
          case WRITE_ONLY_KEY_VALUE:
-            value = me.getValue();
+            value = input.readUserObject();
             break;
          case READ_WRITE:
          case WRITE_ONLY:

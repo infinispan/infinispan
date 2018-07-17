@@ -6,8 +6,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
@@ -18,7 +18,6 @@ import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 
 public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    public static final byte COMMAND_ID = 64;
@@ -59,7 +58,7 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       super.readFrom(input);
-      mutations = MarshallUtil.unmarshallCollection(input, ArrayList::new, Mutations::readFrom);
+      mutations = input.readUserCollection(ArrayList::new, Mutations::readFrom);
    }
 
    @Override

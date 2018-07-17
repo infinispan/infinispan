@@ -186,7 +186,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    @Override
    public Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException {
-      BytesObjectInput in = BytesObjectInput.from(buf, this);
+      BytesObjectInput in = BytesObjectInput.from(buf, this, userMarshaller);
       return objectFromObjectInput(in);
    }
 
@@ -219,7 +219,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
       // Ignore length since boundary checks are not so useful here where the
       // unmarshalling code knows what to expect specifically. E.g. if reading
       // a byte[] subset within it, it's always appended with length.
-      BytesObjectInput in = BytesObjectInput.from(bytes, offset, this);
+      BytesObjectInput in = BytesObjectInput.from(bytes, offset, this, userMarshaller);
       return objectFromObjectInput(in);
    }
 

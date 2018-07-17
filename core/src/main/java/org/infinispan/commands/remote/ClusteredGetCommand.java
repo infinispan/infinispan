@@ -9,6 +9,7 @@ import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
@@ -18,9 +19,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
@@ -125,7 +124,7 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      key = MarshalledEntryUtil.readKey(input);
+      key = input.readUserObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
       setFlagsBitSet(input.readLong());
    }

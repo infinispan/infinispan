@@ -36,6 +36,10 @@ import javax.cache.processor.EntryProcessorResult;
 import javax.cache.processor.MutableEntry;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.marshall.Externalizer;
+import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.FunctionalMap.ReadOnlyMap;
@@ -44,8 +48,6 @@ import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.functional.Listeners.ReadWriteListeners;
 import org.infinispan.functional.Listeners.WriteListeners;
 import org.infinispan.functional.Traversable;
-import org.infinispan.commons.marshall.Externalizer;
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
@@ -328,15 +330,15 @@ public final class FunctionalJCache<K, V> implements Cache<K, V>, FunctionalList
 
       public static final class Externalizer0 implements Externalizer<EntryProcessorResultWithKey<?, ?>> {
          @Override
-         public void writeObject(ObjectOutput oo, EntryProcessorResultWithKey<?, ?> o) throws IOException {
-            oo.writeObject(o.key);
-            oo.writeObject(o.t);
+         public void writeObject(UserObjectOutput oo, EntryProcessorResultWithKey<?, ?> o) throws IOException {
+            oo.writeUserObject(o.key);
+            oo.writeUserObject(o.t);
          }
 
          @Override
-         public EntryProcessorResultWithKey<?, ?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            Object key = input.readObject();
-            Object t = input.readObject();
+         public EntryProcessorResultWithKey<?, ?> readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
+            Object key = input.readUserObject();
+            Object t = input.readUserObject();
             return new EntryProcessorResultWithKey<>(key, t);
          }
       }

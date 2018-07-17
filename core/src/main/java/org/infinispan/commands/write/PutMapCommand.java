@@ -16,12 +16,11 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -163,8 +162,8 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      map = MarshalledEntryUtil.unmarshallMap(input, LinkedHashMap::new);
-      metadata = MarshalledEntryUtil.readMetadata(input);
+      map = input.readUserMap(LinkedHashMap::new);
+      metadata = (Metadata) input.readUserObject();
       isForwarded = input.readBoolean();
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);

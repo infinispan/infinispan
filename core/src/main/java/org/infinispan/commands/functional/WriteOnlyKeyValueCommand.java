@@ -10,6 +10,7 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -20,10 +21,7 @@ import org.infinispan.functional.Param.StatisticsMode;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
-import org.infinispan.marshall.MarshalledEntryUtil;
-import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 
 public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCommand<K, V> {
 
@@ -70,9 +68,8 @@ public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCom
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      MarshalledEntry me = MarshalledEntryUtil.read(input);
-      key = me.getKey();
-      argument = me.getValue();
+      key = input.readUserObject();
+      argument = input.readUserObject();
       f = (BiConsumer<T, WriteEntryView<K, V>>) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       segment = UnsignedNumeric.readUnsignedInt(input);

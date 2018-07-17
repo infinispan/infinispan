@@ -13,6 +13,7 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -24,9 +25,7 @@ import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.EntryViews.AccessLoggingReadWriteView;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 
 // TODO: the command does not carry previous values to backup, so it can cause
 // the values on primary and backup owners to diverge in case of topology change
@@ -70,7 +69,7 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      key = MarshalledEntryUtil.readKey(input);
+      key = input.readUserObject();
       f = (Function<ReadWriteEntryView<K, V>, R>) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       segment = UnsignedNumeric.readUnsignedInt(input);

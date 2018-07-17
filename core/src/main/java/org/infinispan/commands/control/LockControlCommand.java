@@ -12,17 +12,15 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
@@ -161,7 +159,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       super.readFrom(input);
       unlock = input.readBoolean();
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new, MarshalledEntryUtil::readKey);
+      keys = input.readUserCollection(ArrayList::new);
       flags = input.readLong();
    }
 

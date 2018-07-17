@@ -120,9 +120,9 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       MarshalledEntryImpl me = (MarshalledEntryImpl) input.readObject();
-      key = me.getKey();
+      key = input.readUserObject();
       value = me.getValue();
-      metadata = me.metadata();
+      metadata = (Metadata) input.readUserObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       commandInvocationId = CommandInvocationId.readFrom(input);

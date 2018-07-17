@@ -7,12 +7,11 @@ import java.io.IOException;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -73,7 +72,7 @@ public class GetKeyValueCommand extends AbstractDataCommand {
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      key = MarshalledEntryUtil.readKey(input);
+      key = input.readUserObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
       setFlagsBitSet(input.readLong());
    }

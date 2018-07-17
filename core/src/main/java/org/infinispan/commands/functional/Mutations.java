@@ -1,21 +1,20 @@
 package org.infinispan.commands.functional;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
  * Helper class for marshalling, also hiding implementations of {@link Mutation} from the interface.
@@ -51,18 +50,18 @@ final class Mutations {
       }
    }
 
-   static <K, V, T> Mutation<K, V, ?> readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   static <K, V, T> Mutation<K, V, ?> readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       DataConversion keyDataConversion = DataConversion.readFrom(input);
       DataConversion valueDataConversion = DataConversion.readFrom(input);
       switch (input.readByte()) {
          case ReadWrite.TYPE:
             return new ReadWrite<>(keyDataConversion, valueDataConversion, (Function<EntryView.ReadWriteEntryView<K, V>, ?>) input.readObject());
          case ReadWriteWithValue.TYPE:
-            return new ReadWriteWithValue<>(keyDataConversion, valueDataConversion, MarshalledEntryUtil.readValue(input), (BiFunction<V, EntryView.ReadWriteEntryView<K, V>, ?>) input.readObject());
+            return new ReadWriteWithValue<>(keyDataConversion, valueDataConversion, input.readUserObject(), (BiFunction<V, EntryView.ReadWriteEntryView<K, V>, ?>) input.readObject());
          case Write.TYPE:
             return new Write<>(keyDataConversion, valueDataConversion, (Consumer<EntryView.WriteEntryView<K, V>>) input.readObject());
          case WriteWithValue.TYPE:
-            return new WriteWithValue<>(keyDataConversion, valueDataConversion, MarshalledEntryUtil.readValue(input), (BiConsumer<T, EntryView.WriteEntryView<K, V>>) input.readObject());
+            return new WriteWithValue<>(keyDataConversion, valueDataConversion, input.readUserObject(), (BiConsumer<T, EntryView.WriteEntryView<K, V>>) input.readObject());
          default:
             throw new IllegalStateException("Unknown type of mutation, broken input?");
       }

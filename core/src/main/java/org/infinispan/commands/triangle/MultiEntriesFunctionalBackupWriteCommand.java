@@ -12,12 +12,11 @@ import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TriangleFunctionsUtil;
 
@@ -84,7 +83,7 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
       readBase(input);
       readFunctionAndParams(input);
       writeOnly = input.readBoolean();
-      entries = MarshalledEntryUtil.unmarshallMap(input, HashMap::new);
+      entries = input.readUserMap(HashMap::new);
    }
 
    @Override

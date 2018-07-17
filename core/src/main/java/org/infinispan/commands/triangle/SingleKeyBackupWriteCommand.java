@@ -13,14 +13,12 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.ByteString;
@@ -139,8 +137,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       readBase(input);
       operation = MarshallUtil.unmarshallEnum(input, SingleKeyBackupWriteCommand::valueOf);
-      MarshalledEntryImpl me = MarshalledEntryUtil.read(input);
-      key = me.getKey();
+      key = input.readUserObject();
       switch (operation) {
          case COMPUTE_IF_PRESENT:
          case COMPUTE_IF_ABSENT:
@@ -150,8 +147,8 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
          case REMOVE_EXPIRED:
          case REPLACE:
          case WRITE:
-            metadata = me.metadata();
-            valueOrFunction = me.getValue();
+            metadata = (Metadata) input.readUserObject();
+            valueOrFunction = input.readUserObject();
             break;
          case REMOVE:
             break;

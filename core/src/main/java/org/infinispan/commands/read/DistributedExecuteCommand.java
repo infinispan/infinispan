@@ -16,12 +16,11 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.ByteString;
 
 /**
@@ -136,7 +135,7 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      keys = MarshallUtil.unmarshallCollection(input, HashSet::new, MarshalledEntryUtil::readKey);
+      keys = input.readUserCollection(HashSet::new);
       callable = (Callable<V>) input.readObject();
       uuid = MarshallUtil.unmarshallUUID(input, false);
    }

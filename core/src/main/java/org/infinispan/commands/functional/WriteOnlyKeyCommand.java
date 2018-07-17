@@ -10,6 +10,7 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -20,9 +21,7 @@ import org.infinispan.functional.Param;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 
 public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, V> {
 
@@ -66,7 +65,7 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      key = MarshalledEntryUtil.readKey(input);
+      key = input.readUserObject();
       f = (Consumer<WriteEntryView<K, V>>) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       segment = UnsignedNumeric.readUnsignedInt(input);

@@ -9,15 +9,13 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.marshall.MarshalledEntryUtil;
-import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
@@ -147,9 +145,8 @@ public class RemoveExpiredCommand extends RemoveCommand {
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
-      MarshalledEntry me = MarshalledEntryUtil.read(input);
-      key = me.getKey();
-      value = me.getValue();
+      key = input.readUserObject();
+      value = input.readUserObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
       boolean lifespanProvided = input.readBoolean();
       if (lifespanProvided) {

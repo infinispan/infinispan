@@ -2,11 +2,9 @@ package org.infinispan.commands.remote;
 
 import java.io.IOException;
 
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
-import org.infinispan.marshall.MarshalledEntryUtil;
-import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.commons.marshall.UserObjectOutput;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.util.ByteString;
 
@@ -58,6 +56,6 @@ public class RenewBiasCommand extends BaseRpcCommand {
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      keys = MarshallUtil.unmarshallArray(input, Object[]::new, MarshalledEntryUtil::readKey);
+      keys = input.readUserArray(Object[]::new);
    }
 }

@@ -1,38 +1,51 @@
 package org.infinispan.marshall.core;
 
+import static org.infinispan.commons.marshall.MarshallUtil.NULL_VALUE;
+import static org.infinispan.commons.marshall.MarshallUtil.unmarshallSize;
+import static org.infinispan.commons.util.CollectionFactory.computeCapacity;
+
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.ObjectInput;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+
+import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.UserObjectInput;
 
 /**
- * Array backed {@link ObjectInput} implementation.
+ * Array backed {@link UserObjectInput} implementation.
  *
  * {@link #skip(long)} and {@link #skipBytes(int)} have been enhanced so that
  * if a negative number is passed in, they skip backwards effectively
  * providing rewind capabilities.
  */
-final class BytesObjectInput implements ObjectInput {
+final class BytesObjectInput implements UserObjectInput {
 
    final byte bytes[];
 
    final GlobalMarshaller marshaller;
+   final Marshaller userMarshaller;
 
    int pos;
    int offset; // needed for external JBoss Marshalling, to be able to rewind correctly when the bytes are prepended :(
 
-   private BytesObjectInput(byte[] bytes, int offset, GlobalMarshaller marshaller) {
+   private BytesObjectInput(byte[] bytes, int offset, GlobalMarshaller marshaller, Marshaller userMarshaller) {
       this.bytes = bytes;
       this.pos = offset;
       this.offset = offset;
       this.marshaller = marshaller;
+      this.userMarshaller = userMarshaller;
    }
 
-   static BytesObjectInput from(byte[] bytes, GlobalMarshaller marshaller) {
-      return from(bytes, 0, marshaller);
+   static BytesObjectInput from(byte[] bytes, GlobalMarshaller marshaller, Marshaller userMarshaller) {
+      return from(bytes, 0, marshaller, userMarshaller);
    }
 
-   static BytesObjectInput from(byte[] bytes, int offset, GlobalMarshaller marshaller) {
-      return new BytesObjectInput(bytes, offset, marshaller);
+   static BytesObjectInput from(byte[] bytes, int offset, GlobalMarshaller marshaller, Marshaller userMarshaller) {
+      return new BytesObjectInput(bytes, offset, marshaller, userMarshaller);
    }
 
    @Override
@@ -266,4 +279,38 @@ final class BytesObjectInput implements ObjectInput {
       }
    }
 
+   @Override
+   public Object readUserObject() throws ClassNotFoundException, IOException {
+      ByteBuffer buf = (ByteBuffer) readObject();
+      return userMarshaller.objectFromByteBuffer(buf.getBuf());
+   }
+
+   @Override
+   public <K, V, T extends Map<K, V>> T readUserMap(MapBuilder<K, V, T> builder) throws IOException, ClassNotFoundException {
+      final int size = unmarshallSize(this);
+      if (size == NULL_VALUE) {
+         return null;
+      }
+      final T map = Objects.requireNonNull(builder, "MapBuilder must be non-null").build(computeCapacity(size));
+      for (int i = 0; i < size; i++) {
+         //noinspection unchecked
+         map.put((K) readUserObject(), (V) readUserObject());
+      }
+      return map;
+   }
+
+   @Override
+   public <E, T extends Collection<E>> T readUserCollection(CollectionBuilder<E, T> builder) throws IOException, ClassNotFoundException {
+      return null;
+   }
+
+   @Override
+   public <E, T extends Collection<E>> T readUserCollection(CollectionBuilder<E, T> builder, ElementReader<E> reader) throws IOException, ClassNotFoundException {
+      return null;  // TODO: Customise this generated block
+   }
+
+   @Override
+   public <E> E[] readUserArray(MarshallUtil.ArrayBuilder<E> builder) throws IOException, ClassNotFoundException {
+      return null;  // TODO: Customise this generated block
+   }
 }

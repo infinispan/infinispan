@@ -181,8 +181,8 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       MarshalledEntryImpl me = (MarshalledEntryImpl) input.readObject();
-      key = me.getKey();
-      metadata = me.metadata();
+      key = input.readUserObject();
+      metadata = (Metadata) input.readUserObject();
       computeIfPresent = input.readBoolean();
       remappingBiFunction = (BiFunction) input.readObject();
       segment = UnsignedNumeric.readUnsignedInt(input);

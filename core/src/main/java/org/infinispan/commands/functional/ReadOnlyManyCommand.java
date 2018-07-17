@@ -10,8 +10,8 @@ import java.util.function.Function;
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
@@ -21,9 +21,7 @@ import org.infinispan.functional.Param;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 
 public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedCommand implements LocalCommand {
    public static final int COMMAND_ID = 63;
@@ -105,7 +103,7 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      this.keys = MarshallUtil.unmarshallCollection(input, ArrayList::new, MarshalledEntryUtil::readKey);
+      this.keys = input.readUserCollection(ArrayList::new);
       this.f = (Function<ReadEntryView<K, V>, R>) input.readObject();
       this.params = Params.readObject(input);
       this.setFlagsBitSet(params.toFlagsBitSet());

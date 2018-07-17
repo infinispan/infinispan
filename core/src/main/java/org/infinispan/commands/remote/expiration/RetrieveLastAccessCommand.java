@@ -9,18 +9,17 @@ import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
-import org.infinispan.marshall.MarshalledEntryUtil;
-import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * Command that when invoked will retrieve the last access time from an entry without updating it
+ *
  * @author wburns
  * @since 9.3
  */
@@ -77,9 +76,8 @@ public class RetrieveLastAccessCommand extends BaseRpcCommand implements Topolog
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      MarshalledEntry me = MarshalledEntryUtil.read(input);
-      key = me.getKey();
-      value = me.getValue();
+      key = input.readUserObject();
+      value = input.readUserObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
    }
 

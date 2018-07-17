@@ -18,17 +18,18 @@ public interface UserObjectInput extends ObjectInput {
     * <p>
     * If the marshalled map is {@link null}, then the {@link MapBuilder} is not invoked.
     *
-    * @param in      {@link ObjectInput} to read.
     * @param builder {@link MapBuilder} to create the concrete {@link Map} implementation.
     * @return The populated {@link Map} created by the {@link MapBuilder} or {@code null}.
     * @throws IOException            If any of the usual Input/Output related exceptions occur.
     * @throws ClassNotFoundException If the class of a serialized object cannot be found.
     */
-   <K, V, T extends Map<K, V>> T unmarshallMap(ObjectInput in, MapBuilder<K, V, T> builder) throws IOException, ClassNotFoundException;
+   <K, V, T extends Map<K, V>> T readUserMap(MapBuilder<K, V, T> builder) throws IOException, ClassNotFoundException;
 
-   <E, T extends Collection<E>> T unmarshallCollection(ObjectInput in, CollectionBuilder<E, T> builder, ElementReader<E> reader) throws IOException, ClassNotFoundException;
+   <E, T extends Collection<E>> T readUserCollection(CollectionBuilder<E, T> builder) throws IOException, ClassNotFoundException;
 
-   <E> E[] unmarshallArray(ObjectInput in, MarshallUtil.ArrayBuilder<E> builder, ElementReader<E> reader) throws IOException, ClassNotFoundException;
+   <E, T extends Collection<E>> T readUserCollection(CollectionBuilder<E, T> builder, ElementReader<E> reader) throws IOException, ClassNotFoundException;
+
+   <E> E[] readUserArray(MarshallUtil.ArrayBuilder<E> builder) throws IOException, ClassNotFoundException;
 
    @FunctionalInterface
    interface ElementReader<E> {

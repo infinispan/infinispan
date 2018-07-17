@@ -11,13 +11,11 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
@@ -185,10 +183,9 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      MarshalledEntryImpl me = MarshalledEntryUtil.read(input);
-      key = me.getKey();
-      value = me.getValue();
-      metadata = me.metadata();
+      key = input.readUserObject();
+      value = input.readUserObject();
+      metadata = (Metadata) input.readUserObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
       setFlagsBitSet(input.readLong());
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);

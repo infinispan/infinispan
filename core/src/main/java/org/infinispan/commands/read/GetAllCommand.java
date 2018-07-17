@@ -10,15 +10,13 @@ import java.util.Map;
 
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -120,7 +118,7 @@ public class GetAllCommand extends AbstractTopologyAffectedCommand {
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new, MarshalledEntryUtil::readKey);
+      keys = input.readUserCollection(ArrayList::new);
       setFlagsBitSet(input.readLong());
       returnEntries = input.readBoolean();
    }

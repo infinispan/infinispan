@@ -10,6 +10,7 @@ import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -20,9 +21,7 @@ import org.infinispan.functional.Param.StatisticsMode;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
-import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.commons.marshall.UserObjectOutput;
 
 public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
 
@@ -72,7 +71,7 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      key = MarshalledEntryUtil.readKey(input);
+      key = input.readUserObject();
       f = (Function<ReadEntryView<K, V>, R>) input.readObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
       params = Params.readObject(input);
