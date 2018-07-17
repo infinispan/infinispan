@@ -365,8 +365,15 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    private <K, V> RemoteCacheImpl<K, V> createRemoteCache(String cacheName) {
       switch (configuration.nearCache().mode()) {
          case INVALIDATED:
-            return new InvalidatedNearRemoteCache<>(this, cacheName,
-                  createNearCacheService(configuration.nearCache()));
+            Pattern pattern = configuration.nearCache().cacheNamePattern();
+            if (pattern == null || pattern.matcher(cacheName).matches()) {
+               if (log.isTraceEnabled()) {
+                  log.tracef("Enabling near-caching for cache '%s'", cacheName);
+               }
+               return new InvalidatedNearRemoteCache<>(this, cacheName,
+                     createNearCacheService(configuration.nearCache()));
+            }
+            // else fallthrough
          case DISABLED:
          default:
             return new RemoteCacheImpl<>(this, cacheName);

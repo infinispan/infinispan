@@ -1195,6 +1195,23 @@ ConfigurationBuilder bounded = new ConfigurationBuilder();
 bounded.nearCache().mode(NearCacheMode.INVALIDATED).maxEntries(100);
 ----
 
+Since the configuration is shared by all caches obtained from a single
+`RemoteCacheManager`, you may not want to enable near-caching for all of them.
+You can use the `cacheNamePattern` configuration attribute to define a regular
+expression which matches the names of the caches for which you want near-caching.
+Caches whose name don't match the regular expression, will not have near-caching
+enabled.
+
+[source,java]
+----
+// Bounded invalidated near cache with pattern matching
+ConfigurationBuilder bounded = new ConfigurationBuilder();
+bounded.nearCache()
+  .mode(NearCacheMode.INVALIDATED)
+  .maxEntries(100)
+  .cacheNamePattern("near.*"); // enable near-cache only for caches whose name starts with 'near'
+----
+
 NOTE: Near caches work the same way for local caches as they do for clustered
 caches, but in a clustered cache scenario, if the server node sending the near
 cache notifications to the Hot Rod client goes down, the Hot Rod client

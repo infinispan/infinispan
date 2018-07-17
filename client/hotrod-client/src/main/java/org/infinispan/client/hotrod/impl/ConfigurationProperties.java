@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
@@ -71,6 +72,9 @@ public class ConfigurationProperties {
    public static final String TRANSACTION_MANAGER_LOOKUP = "infinispan.client.hotrod.transaction.transaction_manager_lookup";
    public static final String TRANSACTION_MODE = "infinispan.client.hotrod.transaction.transaction_mode";
    public static final String TRANSACTION_TIMEOUT = "infinispan.client.hotrod.transaction.timeout";
+   public static final String NEAR_CACHE_MAX_ENTRIES = "infinispan.client.hotrod.near_cache.max_entries";
+   public static final String NEAR_CACHE_MODE = "infinispan.client.hotrod.near_cache.mode";
+   public static final String NEAR_CACHE_NAME_PATTERN = "infinispan.client.hotrod.near_cache.name_pattern";
 
    // defaults
 
@@ -204,6 +208,18 @@ public class ConfigurationProperties {
 
    public TransactionMode getTransactionMode() {
       return props.getEnumProperty(TRANSACTION_MODE, TransactionMode.class, TransactionMode.NONE, true);
+   }
+
+   public NearCacheMode getNearCacheMode() {
+      return props.getEnumProperty(NEAR_CACHE_MODE, NearCacheMode.class, NearCacheMode.DISABLED, true);
+   }
+
+   public int getNearCacheMaxEntries() {
+      return props.getIntProperty(NEAR_CACHE_MAX_ENTRIES, -1);
+   }
+
+   public Pattern getNearCacheNamePattern() {
+      return (Pattern) props.get(NEAR_CACHE_NAME_PATTERN);
    }
 
    /**

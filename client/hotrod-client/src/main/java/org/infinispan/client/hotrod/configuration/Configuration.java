@@ -353,6 +353,12 @@ public class Configuration {
       properties.setProperty(ConfigurationProperties.BATCH_SIZE, Integer.toString(batchSize));
 
       transaction.toProperties(properties);
+
+      properties.setProperty(ConfigurationProperties.NEAR_CACHE_MODE, nearCache.mode().name());
+      properties.setProperty(ConfigurationProperties.NEAR_CACHE_MAX_ENTRIES, Integer.toString(nearCache.maxEntries()));
+      if (nearCache.cacheNamePattern() != null)
+         properties.setProperty(ConfigurationProperties.NEAR_CACHE_NAME_PATTERN, nearCache.cacheNamePattern().pattern());
+
       return properties;
    }
 }

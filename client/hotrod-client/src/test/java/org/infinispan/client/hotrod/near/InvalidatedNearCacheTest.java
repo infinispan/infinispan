@@ -2,6 +2,8 @@ package org.infinispan.client.hotrod.near;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withRemoteCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.ExecutionException;
 
@@ -9,6 +11,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
+import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.CacheConfigurationException;
@@ -174,6 +177,17 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
       builder.nearCache().mode(getNearCacheMode());
       new RemoteCacheManager(builder.build());
+   }
+
+   public void testNearCacheNamePattern() {
+      cacheManager.defineConfiguration("nearcache", new org.infinispan.configuration.cache.ConfigurationBuilder().build());
+      ConfigurationBuilder builder = clientConfiguration();
+      builder.nearCache().cacheNamePattern("near.*");
+      RemoteCacheManager manager = new RemoteCacheManager(builder.build());
+      RemoteCache nearcache = manager.getCache("nearcache");
+      assertTrue(nearcache instanceof InvalidatedNearRemoteCache);
+      RemoteCache cache = manager.getCache();
+      assertFalse(cache instanceof InvalidatedNearRemoteCache);
    }
 
 }
