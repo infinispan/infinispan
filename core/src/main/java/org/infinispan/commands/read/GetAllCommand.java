@@ -18,7 +18,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserAwareObjectOutput;
+import org.infinispan.marshall.core.UserObjectOutput;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -112,8 +112,8 @@ public class GetAllCommand extends AbstractTopologyAffectedCommand {
    }
 
    @Override
-   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      output.writeUserCollection(keys, UserAwareObjectOutput::writeKey);
+   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+      output.writeUserCollection(keys, UserObjectOutput::writeKey);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeBoolean(returnEntries);
    }

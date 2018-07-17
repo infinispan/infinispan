@@ -19,7 +19,7 @@ import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserAwareObjectOutput;
+import org.infinispan.marshall.core.UserObjectOutput;
 
 public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K, V> {
 
@@ -71,9 +71,9 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    }
 
    @Override
-   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
-      output.writeUserCollection(keys, UserAwareObjectOutput::writeKey);
+      output.writeUserCollection(keys, UserObjectOutput::writeKey);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);

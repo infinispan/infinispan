@@ -12,7 +12,7 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserAwareObjectOutput;
+import org.infinispan.marshall.core.UserObjectOutput;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -271,7 +271,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    }
 
    @Override
-   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       MarshallUtil.marshallString(cacheName, output);
       MarshallUtil.marshallEnum(type, output);
       switch (type) {

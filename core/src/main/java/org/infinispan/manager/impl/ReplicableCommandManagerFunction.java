@@ -9,7 +9,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserAwareObjectOutput;
+import org.infinispan.marshall.core.UserObjectOutput;
 
 /**
  * Replicable Command that runs the given Function passing the {@link EmbeddedCacheManager} as an argument
@@ -48,7 +48,7 @@ public class ReplicableCommandManagerFunction implements ReplicableCommand {
    }
 
    @Override
-   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       output.writeObject(function);
    }
 

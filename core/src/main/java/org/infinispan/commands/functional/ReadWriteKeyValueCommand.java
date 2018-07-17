@@ -27,7 +27,7 @@ import org.infinispan.functional.impl.StatsEnvelope;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.marshall.core.UserAwareObjectOutput;
+import org.infinispan.marshall.core.UserObjectOutput;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -65,7 +65,7 @@ public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKey
    }
 
    @Override
-   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       output.writeEntry(key, prevValue, prevMetadata);
       output.writeValue(argument);
       output.writeObject(f);

@@ -11,7 +11,7 @@ import javax.transaction.xa.Xid;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserAwareObjectOutput;
+import org.infinispan.marshall.core.UserObjectOutput;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -128,7 +128,7 @@ public class TxCompletionNotificationCommand  extends RecoveryCommand implements
    }
 
    @Override
-   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       if (xid == null) {
          output.writeBoolean(true);
          output.writeLong(internalId);

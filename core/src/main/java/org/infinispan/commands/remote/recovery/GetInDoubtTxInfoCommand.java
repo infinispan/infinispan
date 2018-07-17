@@ -5,7 +5,7 @@ import java.io.ObjectInput;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserAwareObjectOutput;
+import org.infinispan.marshall.core.UserObjectOutput;
 import org.infinispan.util.ByteString;
 
 /**
@@ -37,7 +37,7 @@ public class GetInDoubtTxInfoCommand extends RecoveryCommand {
    }
 
    @Override
-   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       // No parameters
    }
 

@@ -15,7 +15,7 @@ import org.infinispan.functional.EntryView;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.marshall.core.UserAwareObjectOutput;
+import org.infinispan.marshall.core.UserObjectOutput;
 
 /**
  * Helper class for marshalling, also hiding implementations of {@link Mutation} from the interface.
@@ -25,7 +25,7 @@ final class Mutations {
    }
 
    // No need to occupy externalizer ids when we have a limited set of options
-   static <K, V, T, R> void writeTo(UserAwareObjectOutput output, Mutation<K, V, R> mutation) throws IOException {
+   static <K, V, T, R> void writeTo(UserObjectOutput output, Mutation<K, V, R> mutation) throws IOException {
       BaseMutation bm = (BaseMutation) mutation;
       DataConversion.writeTo(output, bm.keyDataConversion);
       DataConversion.writeTo(output, bm.valueDataConversion);

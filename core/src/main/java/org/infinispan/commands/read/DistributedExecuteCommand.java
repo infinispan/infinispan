@@ -21,7 +21,7 @@ import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserAwareObjectOutput;
+import org.infinispan.marshall.core.UserObjectOutput;
 import org.infinispan.util.ByteString;
 
 /**
@@ -128,8 +128,8 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
    }
 
    @Override
-   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      output.writeUserCollection(keys, UserAwareObjectOutput::writeKey);
+   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+      output.writeUserCollection(keys, UserObjectOutput::writeKey);
       output.writeObject(callable);
       MarshallUtil.marshallUUID(uuid, output, false);
    }

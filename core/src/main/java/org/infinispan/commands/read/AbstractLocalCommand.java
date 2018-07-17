@@ -6,7 +6,7 @@ import java.io.ObjectInput;
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserAwareObjectOutput;
+import org.infinispan.marshall.core.UserObjectOutput;
 
 /**
  * Abstract class
@@ -21,7 +21,7 @@ public abstract class AbstractLocalCommand extends AbstractFlagAffectedCommand i
       return 0;  // no-op
    }
 
-   public final void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public final void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       //no-op
    }
 

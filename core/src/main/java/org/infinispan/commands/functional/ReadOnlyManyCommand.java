@@ -23,7 +23,7 @@ import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserAwareObjectOutput;
+import org.infinispan.marshall.core.UserObjectOutput;
 
 public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedCommand implements LocalCommand {
    public static final int COMMAND_ID = 63;
@@ -95,8 +95,8 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
    }
 
    @Override
-   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      output.writeUserCollection(keys, UserAwareObjectOutput::writeKey);
+   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+      output.writeUserCollection(keys, UserObjectOutput::writeKey);
       output.writeObject(f);
       Params.writeObject(output, params);
       DataConversion.writeTo(output, keyDataConversion);

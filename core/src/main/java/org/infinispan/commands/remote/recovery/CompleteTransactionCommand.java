@@ -7,7 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserAwareObjectOutput;
+import org.infinispan.marshall.core.UserObjectOutput;
 import org.infinispan.util.ByteString;
 
 /**
@@ -55,7 +55,7 @@ public class CompleteTransactionCommand extends RecoveryCommand {
    }
 
    @Override
-   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       output.writeObject(xid);
       output.writeBoolean(commit);
    }

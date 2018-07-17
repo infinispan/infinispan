@@ -17,7 +17,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.marshall.MarshalledEntryUtil;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.marshall.core.UserAwareObjectOutput;
+import org.infinispan.marshall.core.UserObjectOutput;
 import org.infinispan.util.ByteString;
 
 /**
@@ -71,11 +71,11 @@ public class MultiKeyFunctionalBackupWriteCommand extends FunctionalBackupWriteC
    }
 
    @Override
-   public void writeTo(UserAwareObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
+   public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       writeBase(output);
       writeFunctionAndParams(output);
       output.writeBoolean(writeOnly);
-      output.writeUserCollection(keys, UserAwareObjectOutput::writeKey);
+      output.writeUserCollection(keys, UserObjectOutput::writeKey);
    }
 
    @Override
