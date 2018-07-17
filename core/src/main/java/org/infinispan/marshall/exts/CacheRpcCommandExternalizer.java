@@ -1,7 +1,6 @@
 package org.infinispan.marshall.exts;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 
 import org.infinispan.commands.CancelCommand;
@@ -38,6 +37,7 @@ import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -122,7 +122,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
    }
 
    @Override
-   public CacheRpcCommand readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public CacheRpcCommand readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
       //header
       byte type = input.readByte();
       byte methodId = (byte) input.readShort();
