@@ -179,7 +179,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
    }
 
    private BytesObjectOutput writeObjectOutput(Object obj, int estimatedSize) throws IOException {
-      BytesObjectOutput out = new BytesObjectOutput(estimatedSize, this);
+      BytesObjectOutput out = new BytesObjectOutput(estimatedSize, this, userMarshaller);
       writeNullableObject(obj, out);
       return out;
    }
@@ -196,7 +196,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    @Override
    public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant, int estimatedSize) throws IOException {
-      BytesObjectOutput out = new BytesObjectOutput(estimatedSize, this);
+      BytesObjectOutput out = new BytesObjectOutput(estimatedSize, this, userMarshaller);
       return new StreamBytesObjectOutput(os, out);
    }
 

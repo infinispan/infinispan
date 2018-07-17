@@ -85,7 +85,7 @@ public class RevokeBiasCommand extends BaseRpcCommand {
          output.writeLong(id);
       }
       output.writeInt(topologyId);
-      output.writeUserCollection(keys, UserObjectOutput::writeKey);
+      output.writeUserCollection(keys);
    }
 
    @Override

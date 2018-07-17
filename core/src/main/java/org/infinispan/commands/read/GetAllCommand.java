@@ -113,7 +113,7 @@ public class GetAllCommand extends AbstractTopologyAffectedCommand {
 
    @Override
    public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      output.writeUserCollection(keys, UserObjectOutput::writeKey);
+      output.writeUserCollection(keys);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeBoolean(returnEntries);
    }

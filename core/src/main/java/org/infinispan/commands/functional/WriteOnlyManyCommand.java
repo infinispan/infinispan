@@ -73,7 +73,7 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    @Override
    public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
-      output.writeUserCollection(keys, UserObjectOutput::writeKey);
+      output.writeUserCollection(keys);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);

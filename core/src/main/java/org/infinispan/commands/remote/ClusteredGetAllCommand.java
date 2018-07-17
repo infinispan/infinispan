@@ -131,7 +131,7 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
 
    @Override
    public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      output.writeUserCollection(keys, UserObjectOutput::writeKey);
+      output.writeUserCollection(keys);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeObject(gtx);
    }

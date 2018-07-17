@@ -11,11 +11,11 @@ import java.util.Map;
  */
 public interface UserObjectOutput extends ObjectOutput {
 
-   void writeKey(Object keyObject) throws IOException;
+   void writeKey(Object key) throws IOException;
 
-   void writeValue(Object valueObject) throws IOException;
+   void writeValue(Object value) throws IOException;
 
-   void writeKeyValue(Object key, Object valueObject) throws IOException;
+   void writeKeyValue(Object key, Object value) throws IOException;
 
    void writeEntry(Object key, Object value, Object metadata) throws IOException;
 
@@ -41,10 +41,9 @@ public interface UserObjectOutput extends ObjectOutput {
     *
     * @param <E>        Collection's element type.
     * @param collection {@link Collection} to marshal.
-    * @param writer     {@link UserObjectOutput} that writes single element to the output.
     * @throws IOException If any of the usual Input/Output related exceptions occur.
     */
-   <E> void writeUserCollection(Collection<E> collection, UserObjectWriter<E> writer) throws IOException;
+   <E> void writeUserCollection(Collection<E> collection) throws IOException;
 
    /**
     * Marshall arrays.
@@ -53,13 +52,7 @@ public interface UserObjectOutput extends ObjectOutput {
     *
     * @param <E>     Array type.
     * @param array   Array to marshall.
-    * @param writer  {@link UserObjectOutput} that writes single element to the output.
     * @throws IOException If any of the usual Input/Output related exceptions occur.
     */
-   <E> void writeUserArray(E[] array, UserObjectWriter<E> writer) throws IOException;
-
-   @FunctionalInterface
-   interface UserObjectWriter<E> {
-      void writeTo(UserObjectOutput out, E element) throws IOException;
-   }
+   <E> void writeUserArray(E[] array) throws IOException;
 }

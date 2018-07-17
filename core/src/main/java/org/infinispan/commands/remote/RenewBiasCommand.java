@@ -53,7 +53,7 @@ public class RenewBiasCommand extends BaseRpcCommand {
 
    @Override
    public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      output.writeUserArray(keys, UserObjectOutput::writeKey);
+      output.writeUserArray(keys);
    }
 
    @Override

@@ -110,7 +110,7 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    @Override
    public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
-      output.writeUserArray(keys, UserObjectOutput::writeKey);
+      output.writeUserArray(keys);
       output.writeLong(getFlagsBitSet());
    }
 

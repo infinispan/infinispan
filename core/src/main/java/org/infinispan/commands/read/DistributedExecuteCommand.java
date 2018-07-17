@@ -129,7 +129,7 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
 
    @Override
    public void writeTo(UserObjectOutput output, MarshalledEntryFactory entryFactory) throws IOException {
-      output.writeUserCollection(keys, UserObjectOutput::writeKey);
+      output.writeUserCollection(keys);
       output.writeObject(callable);
       MarshallUtil.marshallUUID(uuid, output, false);
    }
