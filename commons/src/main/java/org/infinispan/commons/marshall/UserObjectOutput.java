@@ -15,14 +15,6 @@ import java.util.Map;
  */
 public interface UserObjectOutput extends ObjectOutput {
 
-   void writeKey(Object key) throws IOException;
-
-   void writeValue(Object value) throws IOException;
-
-   void writeKeyValue(Object key, Object value) throws IOException;
-
-   void writeEntry(Object key, Object value, Object metadata) throws IOException;
-
    /**
     * Writes the provided object to the stream using using the configured user marshaller to generate the resulting bytes.
     *
@@ -30,6 +22,14 @@ public interface UserObjectOutput extends ObjectOutput {
     * @throws IOException If any of the usual Input/Output related exceptions occur.
     */
    void writeUserObject(Object object) throws IOException;
+
+   /**
+    * Convenience method that writes all of the provided user objects to the stream via {@link #writeUserObject(Object)}
+    *
+    * @param objects the user objects to write to the stream
+    * @throws IOException If any of the usual Input/Output related exceptions occur.
+    */
+   void writeUserObjects(Object... objects) throws IOException;
 
    /**
     * Write the {@code map} to the stream using {@link #writeUserObject(Object)} to write entries.

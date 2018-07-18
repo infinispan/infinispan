@@ -19,26 +19,9 @@ import org.infinispan.commons.marshall.UserObjectOutput;
 abstract class AbstractUserObjectOutput implements UserObjectOutput {
 
    @Override
-   public void writeKey(Object key) throws IOException {
-      writeUserObject(key);
-   }
-
-   @Override
-   public void writeValue(Object value) throws IOException {
-      writeUserObject(value);
-   }
-
-   @Override
-   public void writeKeyValue(Object key, Object value) throws IOException {
-      writeUserObject(key);
-      writeUserObject(value);
-   }
-
-   @Override
-   public void writeEntry(Object key, Object value, Object metadata) throws IOException {
-      writeUserObject(key);
-      writeUserObject(value);
-      writeUserObject(metadata);
+   public void writeUserObjects(Object... objects) throws IOException {
+      for (Object object : objects)
+         writeUserObject(object);
    }
 
    @Override

@@ -69,7 +69,7 @@ public class RetrieveLastAccessCommand extends BaseRpcCommand implements Topolog
 
    @Override
    public void writeTo(UserObjectOutput output) throws IOException {
-      output.writeKeyValue(key, value);
+      output.writeUserObjects(key, value);
       UnsignedNumeric.writeUnsignedInt(output, segment);
    }
 

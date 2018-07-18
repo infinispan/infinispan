@@ -55,7 +55,7 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
 
    @Override
    public void writeTo(UserObjectOutput output) throws IOException {
-      output.writeKey(key);
+      output.writeUserObject(key);
       output.writeObject(f);
       MarshallUtil.marshallEnum(valueMatcher, output);
       UnsignedNumeric.writeUnsignedInt(output, segment);

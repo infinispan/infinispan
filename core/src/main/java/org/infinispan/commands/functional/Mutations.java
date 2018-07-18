@@ -36,7 +36,7 @@ final class Mutations {
             break;
          case ReadWriteWithValue.TYPE:
             ReadWriteWithValue<K, V, T, R> rwwv = (ReadWriteWithValue<K, V, T, R>) mutation;
-            output.writeValue(rwwv.argument);
+            output.writeUserObject(rwwv.argument);
             output.writeObject(rwwv.f);
             break;
          case Write.TYPE:
@@ -44,7 +44,7 @@ final class Mutations {
             break;
          case WriteWithValue.TYPE:
             WriteWithValue<K, V, T> wwv = (WriteWithValue<K, V, T>) mutation;
-            output.writeValue(wwv.argument);
+            output.writeUserObject(wwv.argument);
             output.writeObject(wwv.f);
             break;
       }

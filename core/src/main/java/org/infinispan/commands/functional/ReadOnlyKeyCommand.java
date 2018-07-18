@@ -60,7 +60,7 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
 
    @Override
    public void writeTo(UserObjectOutput output) throws IOException {
-      output.writeKey(key);
+      output.writeUserObject(key);
       output.writeObject(f);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       Params.writeObject(output, params);

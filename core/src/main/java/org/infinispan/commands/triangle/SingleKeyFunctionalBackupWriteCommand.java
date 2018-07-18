@@ -100,16 +100,15 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
       MarshallUtil.marshallEnum(operation, output);
       switch (operation) {
          case READ_WRITE_KEY_VALUE:
-            output.writeEntry(key, prevValue, prevMetadata);
-            output.writeValue(value);
+            output.writeUserObjects(key, prevValue, prevMetadata, value);
             break;
          case WRITE_ONLY_KEY_VALUE:
-            output.writeKeyValue(key, value);
+            output.writeUserObjects(key, value);
             break;
          case READ_WRITE:
          case WRITE_ONLY:
          default:
-            output.writeKey(key);
+            output.writeUserObject(key);
       }
    }
 

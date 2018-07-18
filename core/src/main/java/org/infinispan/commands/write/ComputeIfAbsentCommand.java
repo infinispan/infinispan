@@ -135,7 +135,7 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
 
    @Override
    public void writeTo(UserObjectOutput output) throws IOException {
-      output.writeEntry(key, null, metadata);
+      output.writeUserObjects(key, metadata);
       output.writeObject(mappingFunction);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       CommandInvocationId.writeTo(output, commandInvocationId);

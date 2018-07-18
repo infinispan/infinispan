@@ -54,7 +54,7 @@ public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCom
 
    @Override
    public void writeTo(UserObjectOutput output) throws IOException {
-      output.writeKeyValue(key, argument);
+      output.writeUserObjects(key, argument);
       output.writeObject(f);
       MarshallUtil.marshallEnum(valueMatcher, output);
       UnsignedNumeric.writeUnsignedInt(output, segment);

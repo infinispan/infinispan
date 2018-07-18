@@ -116,17 +116,17 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
          case COMPUTE_IF_PRESENT:
          case COMPUTE_IF_ABSENT:
          case COMPUTE:
-            output.writeKey(key);
+            output.writeUserObject(key);
             // We must use the internal marshaller for functions
             output.writeObject(valueOrFunction);
             break;
          case REMOVE_EXPIRED:
          case REPLACE:
          case WRITE:
-            output.writeEntry(key, valueOrFunction, metadata);
+            output.writeUserObjects(key, valueOrFunction, metadata);
             break;
          case REMOVE:
-            output.writeKey(key);
+            output.writeUserObject(key);
             break;
          default:
       }

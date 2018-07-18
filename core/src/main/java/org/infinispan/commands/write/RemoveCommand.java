@@ -173,7 +173,7 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
 
    @Override
    public void writeTo(UserObjectOutput output) throws IOException {
-      output.writeEntry(key, value, metadata);
+      output.writeUserObjects(key, value, metadata);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       MarshallUtil.marshallEnum(valueMatcher, output);

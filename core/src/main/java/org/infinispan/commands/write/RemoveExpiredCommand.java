@@ -130,7 +130,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
    @Override
    public void writeTo(UserObjectOutput output) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
-      output.writeKeyValue(key, value);
+      output.writeUserObjects(key, value);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       if (lifespan != null) {
          output.writeBoolean(true);
