@@ -15,11 +15,12 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.transport.DelayedViewJGroupsTransport;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.jgroups.View;
 import org.testng.annotations.Test;
 
 /**
@@ -161,4 +162,25 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
       addClusterEnabledCacheManager(configuration);
    }
 
+   private static final class DelayedViewJGroupsTransport extends JGroupsTransport {
+
+      private final CountDownLatch waitLatch;
+
+      DelayedViewJGroupsTransport(CountDownLatch waitLatch) {
+         this.waitLatch = waitLatch;
+      }
+
+      @Override
+      public void receiveClusterView(View newView) {
+         // check if this is an event of node going down, and if so wait for a signal to apply new view
+         if (waitLatch != null && getMembers().size() > newView.getMembers().size()) {
+            try {
+               waitLatch.await(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+            }
+         }
+         super.receiveClusterView(newView);
+      }
+   }
 }
