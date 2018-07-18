@@ -3,7 +3,7 @@
             <hotrod-connector name="multi-tenant-hotrod-2" cache-container="multi-tenancy-2" />
             <rest-connector name="multi-tenant-rest-1" cache-container="multi-tenancy-1" />
             <rest-connector name="multi-tenant-rest-2" cache-container="multi-tenancy-2" />
-            <router-connector hotrod-socket-binding="hotrod" rest-socket-binding="rest" keep-alive="true" tcp-nodelay="false" receive-buffer-size="1024" send-buffer-size="1024">
+            <router-connector hotrod-socket-binding="hotrod" rest-socket-binding="rest" tcp-keepalive="true" tcp-nodelay="false" receive-buffer-size="1024" send-buffer-size="1024">
                 <multi-tenancy>
                     <hotrod name="multi-tenant-hotrod-1" >
                         <sni host-name="sni1" security-realm="SSLRealm2"/>

@@ -48,6 +48,11 @@
                 <xs:documentation>Affects TCP NODELAY on the TCP stack. Defaults to enabled</xs:documentation>
             </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="tcp-keepalive" type="xs:boolean" use="optional">
+            <xs:annotation>
+                <xs:documentation>Affects TCP KEEPALIVE on the TCP stack. Defaults to disabled</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
         <xs:attribute name="send-buffer-size" type="xs:int" use="optional">
             <xs:annotation>
                 <xs:documentation>Sets the size of the send buffer.</xs:documentation>
@@ -127,7 +132,7 @@
                 <xs:documentation>Affects TCP NODELAY on the TCP stack. Defaults to enabled</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="keep-alive" type="xs:boolean" use="optional">
+        <xs:attribute name="tcp-keepalive" type="xs:boolean" use="optional">
             <xs:annotation>
                 <xs:documentation>Affects TCP KEEP-ALIVE on the TCP stack. Defaults to disabled</xs:documentation>
             </xs:annotation>

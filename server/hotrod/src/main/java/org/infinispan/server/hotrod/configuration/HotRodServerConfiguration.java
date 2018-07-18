@@ -19,10 +19,14 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
    private final boolean topologyStateTransfer;
    private final AuthenticationConfiguration authentication;
 
-   HotRodServerConfiguration(String defaultCacheName, String proxyHost, int proxyPort, long topologyLockTimeout, long topologyReplTimeout, boolean topologyAwaitInitialTransfer, boolean topologyStateTransfer,
-         String name, String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads, AuthenticationConfiguration authentication, Set<String> ignoredCaches,
-         boolean startTransport, AdminOperationsHandler adminOperationsHandler) {
-      super(defaultCacheName, name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, workerThreads,
+   HotRodServerConfiguration(String defaultCacheName, String proxyHost, int proxyPort,
+                             long topologyLockTimeout, long topologyReplTimeout, boolean topologyAwaitInitialTransfer, boolean topologyStateTransfer,
+                             String name, String host, int port,
+                             int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, boolean tcpKeepAlive,
+                             int workerThreads, AuthenticationConfiguration authentication, Set<String> ignoredCaches,
+                             boolean startTransport, AdminOperationsHandler adminOperationsHandler) {
+      super(defaultCacheName, name, host, port,
+            idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, tcpKeepAlive, workerThreads,
             ignoredCaches, startTransport, adminOperationsHandler);
       this.proxyHost = proxyHost;
       this.proxyPort = proxyPort;

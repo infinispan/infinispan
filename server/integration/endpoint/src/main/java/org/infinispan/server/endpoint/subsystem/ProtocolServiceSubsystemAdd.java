@@ -23,11 +23,11 @@ import java.util.stream.Collectors;
 
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.jboss.as.controller.AbstractAddStepHandler;
+import org.jboss.as.controller.OperationContext;
+import org.jboss.as.controller.OperationFailedException;
 import org.jboss.dmr.ModelNode;
 
 public abstract class ProtocolServiceSubsystemAdd extends AbstractAddStepHandler {
-   private static final int DEFAULT_WORKER_THREADS = 160;
-
    protected String getServiceName(ModelNode config) {
       return config.hasDefined(ModelKeys.NAME) ? config.get(ModelKeys.NAME).asString() : null;
    }
@@ -40,25 +40,16 @@ public abstract class ProtocolServiceSubsystemAdd extends AbstractAddStepHandler
       return config.hasDefined(ModelKeys.CACHE_CONTAINER) ? config.get(ModelKeys.CACHE_CONTAINER).asString() : null;
    }
 
-   protected void configureProtocolServer(ProtocolServerConfigurationBuilder<?, ?> builder, ModelNode config) {
+   protected void configureProtocolServer(OperationContext context, ProtocolServerConfigurationBuilder<?, ?> builder, ModelNode config) throws OperationFailedException {
       if (config.hasDefined(ModelKeys.NAME)) {
          builder.name(config.get(ModelKeys.NAME).asString());
       }
-
-      builder.workerThreads(config.hasDefined(ModelKeys.WORKER_THREADS) ? config.get(ModelKeys.WORKER_THREADS).asInt() : DEFAULT_WORKER_THREADS);
-
-      if (config.hasDefined(ModelKeys.IDLE_TIMEOUT)) {
-         builder.idleTimeout(config.get(ModelKeys.IDLE_TIMEOUT).asInt());
-      }
-      if (config.hasDefined(ModelKeys.TCP_NODELAY)) {
-         builder.tcpNoDelay(config.get(ModelKeys.TCP_NODELAY).asBoolean());
-      }
-      if (config.hasDefined(ModelKeys.SEND_BUFFER_SIZE)) {
-         builder.sendBufSize(config.get(ModelKeys.SEND_BUFFER_SIZE).asInt());
-      }
-      if (config.hasDefined(ModelKeys.RECEIVE_BUFFER_SIZE)) {
-         builder.recvBufSize(config.get(ModelKeys.RECEIVE_BUFFER_SIZE).asInt());
-      }
+      builder.workerThreads(ProtocolServerConnectorResource.WORKER_THREADS.resolveModelAttribute(context, config).asInt());
+      builder.idleTimeout(ProtocolServerConnectorResource.IDLE_TIMEOUT.resolveModelAttribute(context, config).asInt());
+      builder.tcpNoDelay(ProtocolServerConnectorResource.TCP_NODELAY.resolveModelAttribute(context, config).asBoolean());
+      builder.tcpKeepAlive(ProtocolServerConnectorResource.TCP_KEEPALIVE.resolveModelAttribute(context, config).asBoolean());
+      builder.recvBufSize(ProtocolServerConnectorResource.RECEIVE_BUFFER_SIZE.resolveModelAttribute(context, config).asInt());
+      builder.sendBufSize(ProtocolServerConnectorResource.SEND_BUFFER_SIZE.resolveModelAttribute(context, config).asInt());
       if (config.hasDefined(ModelKeys.IGNORED_CACHES)) {
          Set<String> ignoredCaches = config.get(ModelKeys.IGNORED_CACHES).asList()
                  .stream().map(ModelNode::asString).collect(Collectors.toSet());

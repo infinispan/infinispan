@@ -104,7 +104,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    @Override
    public HotRodServerConfiguration create() {
       return new HotRodServerConfiguration(defaultCacheName, proxyHost == null ? host : proxyHost, proxyPort < 0 ? port : proxyPort, topologyLockTimeout, topologyReplTimeout, topologyAwaitInitialTransfer, topologyStateTransfer, name, host, port, idleTimeout,
-            recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, workerThreads, authentication.create(), ignoredCaches, startTransport, adminOperationsHandler);
+            recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, tcpKeepAlive, workerThreads, authentication.create(), ignoredCaches, startTransport, adminOperationsHandler);
    }
 
    @Override

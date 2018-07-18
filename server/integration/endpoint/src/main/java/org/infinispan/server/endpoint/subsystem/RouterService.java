@@ -245,8 +245,8 @@ class RouterService implements Service<Router> {
         this.configurationBuilder.hotrod().tcpNoDelay(tcpNoDelay);
     }
 
-    public void keepAlive(boolean keepAlive) {
-        this.configurationBuilder.hotrod().keepAlive(keepAlive);
+    public void tcpKeepAlive(boolean tcpKeepAlive) {
+        this.configurationBuilder.hotrod().tcpKeepAlive(tcpKeepAlive);
     }
 
     public void sendBufferSize(int sendBufferSize) {

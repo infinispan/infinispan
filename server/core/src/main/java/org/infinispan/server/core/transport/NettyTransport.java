@@ -118,6 +118,7 @@ public class NettyTransport implements Transport {
          bootstrap.childOption(ChannelOption.SO_SNDBUF, configuration.sendBufSize()); // Sets server side send buffer
       if (configuration.recvBufSize() > 0)
          bootstrap.childOption(ChannelOption.SO_RCVBUF, configuration.recvBufSize()); // Sets server side receive buffer
+      bootstrap.childOption(ChannelOption.SO_KEEPALIVE, configuration.tcpKeepAlive()); // Sets the keep-alive tcp flag
 
       Channel ch;
       try {

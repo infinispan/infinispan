@@ -22,7 +22,7 @@ public class RestServerConfiguration extends ProtocolServerConfiguration {
                            Set<String> ignoredCaches, SslConfiguration ssl, boolean startTransport, String contextPath,
                            AdminOperationsHandler adminOperationsHandler, int maxContentLength,
                            List<CorsConfig> corsRules, int compressionLevel) {
-      super(defaultCacheName, name, host, port, -1, -1, -1, ssl, false,
+      super(defaultCacheName, name, host, port, -1, -1, -1, ssl, false, false,
             -1, ignoredCaches, startTransport, adminOperationsHandler);
       this.extendedHeaders = extendedHeaders;
       this.contextPath = contextPath;

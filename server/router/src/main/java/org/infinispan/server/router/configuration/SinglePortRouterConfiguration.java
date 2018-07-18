@@ -21,7 +21,7 @@ public class SinglePortRouterConfiguration extends ProtocolServerConfiguration {
      * @param receiveBufferSize Receive buffer size.
      */
     public SinglePortRouterConfiguration(String name, InetAddress ip, int port, int sendBufferSize, int receiveBufferSize, SslConfiguration sslConfiguration) {
-        super(name, ip.getHostName(), port, 100, receiveBufferSize, sendBufferSize, sslConfiguration, false, 16);
+        super(name, ip.getHostName(), port, 100, receiveBufferSize, sendBufferSize, sslConfiguration, false, false, 16);
     }
 
 }

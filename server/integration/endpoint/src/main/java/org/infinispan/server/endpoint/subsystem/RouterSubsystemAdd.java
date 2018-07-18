@@ -117,7 +117,7 @@ class RouterSubsystemAdd extends AbstractAddStepHandler {
             ModelNode hotRod = hr.get(0);
             String hotRodName = MultiTenantHotRodResource.NAME.resolveModelAttribute(context, hotRod).asString();
             routerService.tcpNoDelay(RouterConnectorResource.TCP_NODELAY.resolveModelAttribute(context, hotRod).asBoolean());
-            routerService.keepAlive(RouterConnectorResource.KEEP_ALIVE.resolveModelAttribute(context, hotRod).asBoolean());
+            routerService.tcpKeepAlive(RouterConnectorResource.TCP_KEEPALIVE.resolveModelAttribute(context, hotRod).asBoolean());
             routerService.sendBufferSize(RouterConnectorResource.SEND_BUFFER_SIZE.resolveModelAttribute(context, hotRod).asInt());
             routerService.receiveBufferSize(RouterConnectorResource.RECEIVE_BUFFER_SIZE.resolveModelAttribute(context, hotRod).asInt());
             if(hotRod.get(ModelKeys.SNI).isDefined()) {

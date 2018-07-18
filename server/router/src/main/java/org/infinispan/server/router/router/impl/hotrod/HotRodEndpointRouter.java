@@ -44,7 +44,7 @@ public class HotRodEndpointRouter implements EndpointRouter {
          bootstrap.group(masterGroup, workerGroup)
                .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                .childOption(ChannelOption.TCP_NODELAY, configuration.tcpNoDelay())
-               .childOption(ChannelOption.SO_KEEPALIVE, configuration.keepAlive())
+               .childOption(ChannelOption.SO_KEEPALIVE, configuration.tcpKeepAlive())
                .childHandler(new SniHandlerInitializer(routingTable))
                .channel(NioServerSocketChannel.class);
          if (configuration.sendBufferSize() > 0)

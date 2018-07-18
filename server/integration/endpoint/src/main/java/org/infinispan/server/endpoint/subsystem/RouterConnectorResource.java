@@ -55,13 +55,13 @@ public class RouterConnectorResource extends SimpleResourceDefinition {
                .setRestartAllServices()
                .build();
 
-   static final SimpleAttributeDefinition KEEP_ALIVE =
-           new SimpleAttributeDefinitionBuilder(ModelKeys.KEEP_ALIVE, ModelType.BOOLEAN, true)
-                   .setAllowExpression(true)
-                   .setXmlName(ModelKeys.KEEP_ALIVE)
-                   .setRestartAllServices()
-                   .setDefaultValue(new ModelNode().set(false))
-                   .build();
+   static final SimpleAttributeDefinition TCP_KEEPALIVE =
+         new SimpleAttributeDefinitionBuilder(ModelKeys.TCP_KEEPALIVE, ModelType.BOOLEAN, true)
+               .setAllowExpression(true)
+               .setXmlName(ModelKeys.TCP_KEEPALIVE)
+               .setRestartAllServices()
+               .setDefaultValue(new ModelNode().set(true))
+               .build();
 
    static final SimpleAttributeDefinition TCP_NODELAY =
            new SimpleAttributeDefinitionBuilder(ModelKeys.TCP_NODELAY, ModelType.BOOLEAN, true)
@@ -94,7 +94,10 @@ public class RouterConnectorResource extends SimpleResourceDefinition {
                    .setRestartAllServices()
                    .build();
 
-   static final SimpleAttributeDefinition[] ROUTER_CONNECTOR_ATTRIBUTES = { KEEP_ALIVE, TCP_NODELAY, SEND_BUFFER_SIZE, RECEIVE_BUFFER_SIZE, HOTROD_SOCKET_BINDING, REST_SOCKET_BINDING, SINGLE_PORT_SOCKET_BINDING, NAME };
+   static final SimpleAttributeDefinition[] ROUTER_CONNECTOR_ATTRIBUTES = {
+         TCP_KEEPALIVE, TCP_NODELAY, SEND_BUFFER_SIZE, RECEIVE_BUFFER_SIZE,
+         HOTROD_SOCKET_BINDING, REST_SOCKET_BINDING, SINGLE_PORT_SOCKET_BINDING, NAME
+   };
 
    public RouterConnectorResource() {
       super(ROUTER_CONNECTOR_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.ROUTER_CONNECTOR), RouterSubsystemAdd.INSTANCE, ReloadRequiredRemoveStepHandler.INSTANCE);

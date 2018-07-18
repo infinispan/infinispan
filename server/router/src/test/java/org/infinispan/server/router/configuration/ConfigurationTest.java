@@ -25,7 +25,7 @@ public class ConfigurationTest {
         //when
         multiTenantConfigurationBuilder
                 .hotrod()
-                .keepAlive(true)
+                .tcpKeepAlive(true)
                 .receiveBufferSize(1)
                 .sendBufferSize(1)
                 .tcpNoDelay(false)
@@ -44,7 +44,7 @@ public class ConfigurationTest {
         //then
         assertThat(hotRodRouterConfiguration.getPort()).isEqualTo(1010);
         assertThat(hotRodRouterConfiguration.getIp()).isEqualTo(InetAddress.getLoopbackAddress());
-        assertThat(hotRodRouterConfiguration.keepAlive()).isTrue();
+        assertThat(hotRodRouterConfiguration.tcpKeepAlive()).isTrue();
         assertThat(hotRodRouterConfiguration.tcpNoDelay()).isFalse();
         assertThat(hotRodRouterConfiguration.sendBufferSize()).isEqualTo(1);
         assertThat(hotRodRouterConfiguration.receiveBufferSize()).isEqualTo(1);

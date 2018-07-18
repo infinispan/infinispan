@@ -6,7 +6,7 @@
         <topology-state-transfer external-host="localhost" external-port="1234" lazy-retrieval="false" await-initial-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
         <encryption security-realm="other" />
     </hotrod-connector>
-    <hotrod-connector name="hotrod3" socket-binding="hotrod" cache-container="default" idle-timeout="100" tcp-nodelay="true" worker-threads="5" receive-buffer-size="10000" send-buffer-size="10000">
+    <hotrod-connector name="hotrod3" socket-binding="hotrod" cache-container="default" idle-timeout="100" tcp-nodelay="true" tcp-keepalive="false" worker-threads="5" receive-buffer-size="10000" send-buffer-size="10000">
         <topology-state-transfer external-host="localhost" external-port="1234" lazy-retrieval="false" await-initial-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
         <authentication security-realm="other">
             <sasl server-context-name="host" server-name="localhost" mechanisms="GSSAPI DIGEST-MD5 PLAIN" qop="auth" strength="high medium low">
@@ -49,7 +49,7 @@
             </cors-rule>
         </cors-rules>
     </rest-connector>
-    <router-connector name="router" hotrod-socket-binding="router-hotrood" rest-socket-binding="router-restStatsChannelHandler" single-port-socket-binding="router-single-port" tcp-nodelay="true" keep-alive="true" receive-buffer-size="10000" send-buffer-size="10000">
+    <router-connector name="router" hotrod-socket-binding="router-hotrood" rest-socket-binding="router-restStatsChannelHandler" single-port-socket-binding="router-single-port" tcp-nodelay="true" tcp-keepalive="true" receive-buffer-size="10000" send-buffer-size="10000">
         <single-port security-realm="other">
             <rest name="rest-1"/>
             <hotrod name="hotrod-2"/>

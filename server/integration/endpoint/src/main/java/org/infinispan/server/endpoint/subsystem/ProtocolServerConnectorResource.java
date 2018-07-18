@@ -49,13 +49,15 @@ public class ProtocolServerConnectorResource extends CommonConnectorResource {
          new SimpleAttributeDefinitionBuilder(ModelKeys.WORKER_THREADS, ModelType.INT, true)
                  .setAllowExpression(true)
                  .setXmlName(ModelKeys.WORKER_THREADS)
+                 .setDefaultValue(new ModelNode().set(160))
                  .setRestartAllServices()
                  .build();
 
    static final SimpleAttributeDefinition IDLE_TIMEOUT =
-         new SimpleAttributeDefinitionBuilder(ModelKeys.IDLE_TIMEOUT, ModelType.LONG, true)
+         new SimpleAttributeDefinitionBuilder(ModelKeys.IDLE_TIMEOUT, ModelType.INT, true)
                  .setAllowExpression(true)
                  .setXmlName(ModelKeys.IDLE_TIMEOUT)
+                 .setDefaultValue(new ModelNode().set(-1))
                  .setRestartAllServices()
                  .build();
 
@@ -66,6 +68,14 @@ public class ProtocolServerConnectorResource extends CommonConnectorResource {
                  .setRestartAllServices()
                  .setDefaultValue(new ModelNode().set(true))
                  .build();
+
+   static final SimpleAttributeDefinition TCP_KEEPALIVE =
+         new SimpleAttributeDefinitionBuilder(ModelKeys.TCP_KEEPALIVE, ModelType.BOOLEAN, true)
+               .setAllowExpression(true)
+               .setXmlName(ModelKeys.TCP_KEEPALIVE)
+               .setRestartAllServices()
+               .setDefaultValue(new ModelNode().set(false))
+               .build();
 
    static final SimpleAttributeDefinition RECEIVE_BUFFER_SIZE =
          new SimpleAttributeDefinitionBuilder(ModelKeys.RECEIVE_BUFFER_SIZE, ModelType.LONG, true)
@@ -83,7 +93,9 @@ public class ProtocolServerConnectorResource extends CommonConnectorResource {
                  .setDefaultValue(new ModelNode().set(0))
                  .build();
 
-   static final SimpleAttributeDefinition[] PROTOCOL_SERVICE_ATTRIBUTES = { SOCKET_BINDING, IDLE_TIMEOUT, TCP_NODELAY, RECEIVE_BUFFER_SIZE, SEND_BUFFER_SIZE, WORKER_THREADS };
+   static final SimpleAttributeDefinition[] PROTOCOL_SERVICE_ATTRIBUTES = {
+         SOCKET_BINDING, IDLE_TIMEOUT, TCP_NODELAY, TCP_KEEPALIVE, RECEIVE_BUFFER_SIZE, SEND_BUFFER_SIZE, WORKER_THREADS
+   };
 
 
 
