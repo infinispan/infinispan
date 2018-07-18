@@ -5,9 +5,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -16,6 +15,8 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.junit.Test;
 
 /**
@@ -297,7 +298,7 @@ public class MediaTypeTest {
       return map;
    }
 
-   private static class ObjectInOut implements ObjectInput, ObjectOutput {
+   private static class ObjectInOut implements UserObjectInput, UserObjectOutput {
 
       private final Queue<Object> buffer = new LinkedList<>();
 
@@ -489,6 +490,76 @@ public class MediaTypeTest {
       @Override
       public String readUTF() {
          return (String) buffer.poll();
+      }
+
+      @Override
+      public Object readUserObject() throws ClassNotFoundException, IOException {
+         return buffer.poll();
+      }
+
+      @Override
+      public <K, V, T extends Map<K, V>> T readUserMap(MapBuilder<K, V, T> builder) throws IOException, ClassNotFoundException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public <E, T extends Collection<E>> T readUserCollection(CollectionBuilder<E, T> builder) throws IOException, ClassNotFoundException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public <E, T extends Collection<E>> T readUserCollection(CollectionBuilder<E, T> builder, ElementReader<E> reader) throws IOException, ClassNotFoundException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public <E> E[] readUserArray(ArrayBuilder<E> builder) throws IOException, ClassNotFoundException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public <E> E[] readUserArray(ArrayBuilder<E> builder, ElementReader<E> reader) throws IOException, ClassNotFoundException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void writeUserObject(Object object) throws IOException {
+         buffer.add(object);
+      }
+
+      @Override
+      public void writeUserObjects(Object... objects) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public <K, V, T extends Map<K, V>> void writeUserMap(T map) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public <K, V, T extends Map<K, V>> void writeUserMap(T map, ElementWriter<K> keyWriter, ElementWriter<V> valueWriter) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public <E> void writeUserCollection(Collection<E> collection) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public <E> void writeUserCollection(Collection<E> collection, ElementWriter<E> writer) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public <E> void writeUserArray(E[] array) throws IOException {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public <E> void writeUserArray(E[] array, ElementWriter<E> writer) throws IOException {
+         throw new UnsupportedOperationException();
       }
    }
 }
