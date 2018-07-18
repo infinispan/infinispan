@@ -34,42 +34,6 @@ public class ScatteredDelayedAvailabilityUpdateTest extends DelayedAvailabilityU
       };
    }
 
-   @Test(groups = "unstable", description = "ISPN-8524")
-   @Override
-   public void testDelayedAvailabilityUpdate0() throws Exception {
-      super.testDelayedAvailabilityUpdate0();
-   }
-
-   @Test(groups = "unstable", description = "ISPN-8524")
-   @Override
-   public void testDelayedAvailabilityUpdate1() throws Exception {
-      super.testDelayedAvailabilityUpdate1();
-   }
-
-   @Test(groups = "unstable", description = "ISPN-8524")
-   @Override
-   public void testDelayedAvailabilityUpdate2() throws Exception {
-      super.testDelayedAvailabilityUpdate2();
-   }
-
-   @Test(groups = "unstable", description = "ISPN-8524")
-   @Override
-   public void testDelayedAvailabilityUpdate3() throws Exception {
-      super.testDelayedAvailabilityUpdate3();
-   }
-
-   @Test(groups = "unstable", description = "ISPN-8524")
-   @Override
-   public void testDelayedAvailabilityUpdate4() throws Exception {
-      super.testDelayedAvailabilityUpdate4();
-   }
-
-   @Test(groups = "unstable", description = "ISPN-8524")
-   @Override
-   public void testDelayedAvailabilityUpdate5() throws Exception {
-      super.testDelayedAvailabilityUpdate5();
-   }
-
    @Override
    protected void testDelayedAvailabilityUpdate(PartitionDescriptor p0, PartitionDescriptor p1) throws Exception {
       Object k0Existing = new MagicKey("k0Existing", cache(p0.node(0)));
@@ -100,6 +64,7 @@ public class ScatteredDelayedAvailabilityUpdateTest extends DelayedAvailabilityU
       cache(p0.node(1)).addListener(new BlockAvailabilityChangeListener(false, ss,
             "main:after_availability_update_p0n1", "main:resume_topology_update_p0n1"));
 
+      DistributionManager dmP0N0 = advancedCache(p0.node(0)).getDistributionManager();
       DistributionManager dmP0N1 = advancedCache(p0.node(1)).getDistributionManager();
       int topologyBeforeSplit = dmP0N1.getCacheTopology().getTopologyId();
       splitCluster(p0.getNodes(), p1.getNodes());
@@ -107,14 +72,21 @@ public class ScatteredDelayedAvailabilityUpdateTest extends DelayedAvailabilityU
       ss.enter("main:check_before_topology_update_p0n1");
       // Now we should get topology 8 which just drops the primary owners but keeps the cache available, and soon
       // afterwards topology 9 which actually carries the degraded mode info. If topology 9 arrives before 8
-      // the availability update will be blocked, but in topology 9 is blocked on p0n0 and therefore the reads
-      // below would block.
-      int currentTopology = dmP0N1.getCacheTopology().getTopologyId();
-      if (currentTopology == topologyBeforeSplit + 1) {
+      // we won't get any StateTransferLock notifications for topology 8 - the topology updates executor is single-threaded
+      // and update 8 will be queued and later discarded.
+      // If p0n1 is at topology 9 any reads will be blocked
+      // If p0n1 is at topology 8 and p0n0 is blocking update to 9 (without seeing 8), the reads will trigger OTE
+      // and will get blocked as well.
+      // Therefore we can do the check if and only if both nodes are at topology 8.
+      int currentTopologyP0N0 = dmP0N0.getCacheTopology().getTopologyId();
+      int currentTopologyP0N1 = dmP0N1.getCacheTopology().getTopologyId();
+      log.debugf("Topology before split: %d, now on P0N0: %d, P0N1: %d", topologyBeforeSplit, currentTopologyP0N0, currentTopologyP0N1);
+      if (currentTopologyP0N0 == topologyBeforeSplit + 1 && currentTopologyP0N1 == topologyBeforeSplit + 1) {
+         // See ScatteredPartitionHandlingManagerImpl why this is not available
          assertKeyNotAvailableForRead(cache(p0.node(1)), k0Existing);
          assertKeyNotAvailableForRead(cache(p0.node(1)), k0Missing);
       }
-      CompletableFuture<Void> topologyUpdateFuture = TestingUtil.extractComponent(cache(p0.node(1)), StateTransferLock.class).topologyFuture(currentTopology + 1);
+      CompletableFuture<Void> topologyUpdateFuture = TestingUtil.extractComponent(cache(p0.node(1)), StateTransferLock.class).topologyFuture(currentTopologyP0N1 + 1);
       ss.exit("main:check_before_topology_update_p0n1");
 
       topologyUpdateFuture.get(10, TimeUnit.SECONDS);
