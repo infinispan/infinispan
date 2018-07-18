@@ -22,6 +22,7 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    protected int sendBufSize = 0;
    protected final SslConfigurationBuilder<T, S> ssl;
    protected boolean tcpNoDelay = true;
+   protected boolean tcpKeepAlive = false;
    protected int workerThreads = 2 * ProcessorInfo.availableProcessors();
    protected Set<String> ignoredCaches = Collections.EMPTY_SET;
    protected boolean startTransport = true;
@@ -75,6 +76,12 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    @Override
    public S tcpNoDelay(boolean tcpNoDelay) {
       this.tcpNoDelay = tcpNoDelay;
+      return this.self();
+   }
+
+   @Override
+   public S tcpKeepAlive(boolean tcpKeepAlive) {
+      this.tcpKeepAlive = tcpKeepAlive;
       return this.self();
    }
 
@@ -141,6 +148,7 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
       this.recvBufSize = template.recvBufSize();
       this.sendBufSize = template.sendBufSize();
       this.tcpNoDelay = template.tcpNoDelay();
+      this.tcpKeepAlive = template.tcpKeepAlive();
       this.workerThreads = template.workerThreads();
       this.ssl.read(template.ssl());
       this.ignoredCaches = template.ignoredCaches();

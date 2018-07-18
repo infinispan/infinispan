@@ -55,7 +55,7 @@ class MemcachedSubsystemAdd extends ProtocolServiceSubsystemAdd {
       ModelNode config = Resource.Tools.readModel(context.readResource(PathAddress.EMPTY_ADDRESS));
       // Create the builder
       MemcachedServerConfigurationBuilder configurationBuilder = new MemcachedServerConfigurationBuilder();
-      this.configureProtocolServer(configurationBuilder, config);
+      this.configureProtocolServer(context, configurationBuilder, config);
 
       final String cacheName = MemcachedConnectorResource.CACHE.resolveModelAttribute(context, config).asString();
 

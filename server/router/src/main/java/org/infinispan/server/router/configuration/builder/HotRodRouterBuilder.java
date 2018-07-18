@@ -11,7 +11,7 @@ public class HotRodRouterBuilder extends AbstractRouterBuilder {
 
     private int sendBufferSize = 0;
     private int receiveBufferSize = 0;
-    private boolean keepAlive = false;
+    private boolean tcpKeepAlive = false;
     private boolean tcpNoDelay = true;
 
     /**
@@ -33,7 +33,7 @@ public class HotRodRouterBuilder extends AbstractRouterBuilder {
             } catch (Exception e) {
                 throw logger.configurationValidationError(e);
             }
-            return new HotRodRouterConfiguration(ip, port, sendBufferSize, receiveBufferSize, keepAlive, tcpNoDelay);
+            return new HotRodRouterConfiguration(ip, port, sendBufferSize, receiveBufferSize, tcpKeepAlive, tcpNoDelay);
         }
         return null;
     }
@@ -49,8 +49,8 @@ public class HotRodRouterBuilder extends AbstractRouterBuilder {
     /**
      * Sets TCP Keep Alive
      */
-    public HotRodRouterBuilder keepAlive(boolean keepAlive) {
-        this.keepAlive = keepAlive;
+    public HotRodRouterBuilder tcpKeepAlive(boolean tcpKeepAlive) {
+        this.tcpKeepAlive = tcpKeepAlive;
         return this;
     }
 

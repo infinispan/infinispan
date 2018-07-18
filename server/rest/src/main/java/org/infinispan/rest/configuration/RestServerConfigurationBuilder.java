@@ -140,6 +140,11 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
    }
 
    @Override
+   public RestServerConfigurationBuilder tcpKeepAlive(boolean tcpKeepAlive) {
+      throw logger.unsupportedConfigurationOption();
+   }
+
+   @Override
    public RestServerConfigurationBuilder recvBufSize(int recvBufSize) {
       throw logger.unsupportedConfigurationOption();
    }

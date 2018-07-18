@@ -210,6 +210,10 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
          ProtocolServerConnectorResource.TCP_NODELAY.parseAndSetParameter(value, connector, reader);
          break;
       }
+      case TCP_KEEPALIVE: {
+         ProtocolServerConnectorResource.TCP_KEEPALIVE.parseAndSetParameter(value, connector, reader);
+         break;
+      }
       case WORKER_THREADS: {
          ProtocolServerConnectorResource.WORKER_THREADS.parseAndSetParameter(value, connector, reader);
          break;
@@ -237,8 +241,20 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
             RouterConnectorResource.TCP_NODELAY.parseAndSetParameter(value, connector, reader);
             break;
          }
+         case TCP_KEEPALIVE: {
+            if (namespace.since(9, 4)) {
+               RouterConnectorResource.TCP_KEEPALIVE.parseAndSetParameter(value, connector, reader);
+            } else {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+            break;
+         }
          case KEEP_ALIVE: {
-            RouterConnectorResource.KEEP_ALIVE.parseAndSetParameter(value, connector, reader);
+            if (namespace.since(9, 4)) {
+               throw ParseUtils.unexpectedElement(reader);
+            } else {
+               RouterConnectorResource.TCP_KEEPALIVE.parseAndSetParameter(value, connector, reader);
+            }
             break;
          }
          case SEND_BUFFER_SIZE: {

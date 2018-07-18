@@ -56,6 +56,12 @@ public abstract class AbstractProtocolServerConfigurationChildBuilder<T extends 
    }
 
    @Override
+   public S tcpKeepAlive(boolean tcpKeepAlive) {
+      builder.tcpKeepAlive(tcpKeepAlive);
+      return self();
+   }
+
+   @Override
    public S recvBufSize(int recvBufSize) {
       builder.recvBufSize(recvBufSize);
       return self();
