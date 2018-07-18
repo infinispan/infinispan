@@ -16,7 +16,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.marshall.core.ExternalPojo;
-import org.infinispan.marshall.core.MarshallingException;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
@@ -37,7 +36,7 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
    public void testInvokeAndExceptionWhileUnmarshalling() throws Exception {
       Cache cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
-      Exceptions.expectException(RemoteException.class, MarshallingException.class, EOFException.class,
+      Exceptions.expectException(RemoteException.class, EOFException.class,
                                  () -> cache1.put(key, new BrokenDeserializationPojo()));
    }
 
