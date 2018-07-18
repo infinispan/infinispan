@@ -4,12 +4,12 @@ import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -133,7 +133,7 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
 
    public static class Externalizer extends AbstractExternalizer<TransientCacheEntry> {
       @Override
-      public void writeObject(ObjectOutput output, TransientCacheEntry tce) throws IOException {
+      public void writeObject(UserObjectOutput output, TransientCacheEntry tce) throws IOException {
          output.writeObject(tce.key);
          output.writeObject(tce.value);
          UnsignedNumeric.writeUnsignedLong(output, tce.lastUsed);

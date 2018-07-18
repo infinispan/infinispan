@@ -3,6 +3,7 @@ package org.infinispan.distribution.ch.impl;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
@@ -10,7 +11,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -232,7 +232,7 @@ public class ScatteredConsistentHashFactory extends AbstractConsistentHashFactor
    public static class Externalizer extends AbstractExternalizer<ScatteredConsistentHashFactory> {
 
       @Override
-      public void writeObject(ObjectOutput output, ScatteredConsistentHashFactory chf) throws IOException {
+      public void writeObject(UserObjectOutput output, ScatteredConsistentHashFactory chf) throws IOException {
       }
 
       @Override

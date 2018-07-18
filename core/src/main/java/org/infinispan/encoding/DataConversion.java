@@ -21,6 +21,7 @@ import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
@@ -348,7 +349,7 @@ public final class DataConversion {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, DataConversion dataConversion) throws IOException {
+      public void writeObject(UserObjectOutput output, DataConversion dataConversion) throws IOException {
          writeTo(output, dataConversion);
       }
 

@@ -2,11 +2,11 @@ package org.infinispan.partitionhandling;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 
@@ -46,7 +46,7 @@ public enum AvailabilityMode {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, AvailabilityMode AvailabilityMode) throws IOException {
+      public void writeObject(UserObjectOutput output, AvailabilityMode AvailabilityMode) throws IOException {
          MarshallUtil.marshallEnum(AvailabilityMode, output);
       }
 

@@ -2,12 +2,12 @@ package org.infinispan.notifications.cachelistener.filter;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.KeyFilter;
@@ -44,7 +44,7 @@ public class KeyFilterAsCacheEventFilter<K> implements CacheEventFilter<K, Objec
       }
 
       @Override
-      public void writeObject(ObjectOutput output, KeyFilterAsCacheEventFilter object) throws IOException {
+      public void writeObject(UserObjectOutput output, KeyFilterAsCacheEventFilter object) throws IOException {
          output.writeObject(object.filter);
       }
 

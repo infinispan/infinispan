@@ -6,7 +6,6 @@ import static java.util.Collections.emptyMap;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Comparator;
@@ -21,6 +20,7 @@ import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectOutput;
 
 
 /**
@@ -282,7 +282,7 @@ public final class MediaType {
 
    public static final class MediaTypeExternalizer implements Externalizer<MediaType> {
       @Override
-      public void writeObject(ObjectOutput output, MediaType mediaType) throws IOException {
+      public void writeObject(UserObjectOutput output, MediaType mediaType) throws IOException {
          String type = mediaType.type + "/" + mediaType.subType;
          Short id = MediaTypeIds.getId(type);
          if (id == null) {

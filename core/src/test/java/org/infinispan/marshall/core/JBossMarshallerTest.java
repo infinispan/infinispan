@@ -7,13 +7,13 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -160,7 +160,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
          }
 
          @Override
-         public void writeObject(ObjectOutput output, DuplicateIdClass object) throws IOException {
+         public void writeObject(UserObjectOutput output, DuplicateIdClass object) throws IOException {
          }
 
          @Override
@@ -183,7 +183,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
          }
 
          @Override
-         public void writeObject(ObjectOutput output, TooHighIdClass object) throws IOException {
+         public void writeObject(UserObjectOutput output, TooHighIdClass object) throws IOException {
          }
 
          @Override
@@ -204,7 +204,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       private final AdvancedExternalizer idViaBothObjExt = new IdViaBothObj.Externalizer();
 
       @Override
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
+      public void writeObject(UserObjectOutput output, Object object) throws IOException {
          AdvancedExternalizer ext;
          if (object instanceof IdViaConfigObj) {
             output.write(0);

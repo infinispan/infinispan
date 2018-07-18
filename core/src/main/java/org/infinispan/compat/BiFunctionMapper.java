@@ -2,13 +2,13 @@ package org.infinispan.compat;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 import java.util.function.BiFunction;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -55,7 +55,7 @@ public class BiFunctionMapper implements BiFunction {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, BiFunctionMapper object) throws IOException {
+      public void writeObject(UserObjectOutput output, BiFunctionMapper object) throws IOException {
          output.writeObject(object.biFunction);
          DataConversion.writeTo(output, object.keyDataConversion);
          DataConversion.writeTo(output, object.valueDataConversion);

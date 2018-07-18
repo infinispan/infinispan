@@ -16,7 +16,6 @@ import static org.infinispan.marshall.core.MarshallableFunctions.setValueReturnP
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -218,7 +217,7 @@ public final class FunctionalJCache<K, V> implements Cache<K, V>, FunctionalList
       }
 
       public static final class Externalizer0 implements Externalizer<InvokeFunction<?, ?, ?>> {
-         public void writeObject(ObjectOutput oo, InvokeFunction<?, ?, ?> o) throws IOException {
+         public void writeObject(UserObjectOutput oo, InvokeFunction<?, ?, ?> o) throws IOException {
             oo.writeObject(o.entryProcessor);
             oo.writeInt(o.arguments.length);
             for (Object argument : o.arguments)
@@ -297,7 +296,7 @@ public final class FunctionalJCache<K, V> implements Cache<K, V>, FunctionalList
       }
 
       public static final class Externalizer0 implements Externalizer<InvokeAllFunction<?, ?, ?>> {
-         public void writeObject(ObjectOutput oo, InvokeAllFunction<?, ?, ?> o) throws IOException {
+         public void writeObject(UserObjectOutput oo, InvokeAllFunction<?, ?, ?> o) throws IOException {
             oo.writeObject(o.entryProcessor);
             oo.writeInt(o.arguments.length);
             for (Object argument : o.arguments)

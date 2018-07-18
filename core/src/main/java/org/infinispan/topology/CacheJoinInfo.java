@@ -2,7 +2,6 @@ package org.infinispan.topology;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -10,6 +9,7 @@ import java.util.Set;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.marshall.core.Ids;
@@ -171,7 +171,7 @@ public class CacheJoinInfo {
 
    public static class Externalizer extends AbstractExternalizer<CacheJoinInfo> {
       @Override
-      public void writeObject(ObjectOutput output, CacheJoinInfo cacheJoinInfo) throws IOException {
+      public void writeObject(UserObjectOutput output, CacheJoinInfo cacheJoinInfo) throws IOException {
          output.writeObject(cacheJoinInfo.consistentHashFactory);
          output.writeObject(cacheJoinInfo.hashFunction);
          output.writeInt(cacheJoinInfo.numSegments);

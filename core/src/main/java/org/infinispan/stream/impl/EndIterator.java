@@ -2,12 +2,12 @@ package org.infinispan.stream.impl;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
  * Singleton object with no state that is used to signal that an iterator has reached the end. This is useful for
@@ -37,7 +37,7 @@ public class EndIterator {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, EndIterator object) throws IOException {
+      public void writeObject(UserObjectOutput output, EndIterator object) throws IOException {
 
       }
 

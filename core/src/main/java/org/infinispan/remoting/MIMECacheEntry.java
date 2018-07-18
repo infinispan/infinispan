@@ -1,12 +1,12 @@
 package org.infinispan.remoting;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Set;
@@ -64,7 +64,7 @@ public class MIMECacheEntry implements Serializable {
       }
 
       @Override
-      public void writeObject(ObjectOutput out, MIMECacheEntry obj) throws IOException {
+      public void writeObject(UserObjectOutput out, MIMECacheEntry obj) throws IOException {
          out.writeUTF(obj.contentType);
          out.writeInt(obj.data.length);
          out.write(obj.data);

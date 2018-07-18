@@ -2,11 +2,11 @@ package org.infinispan.util;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSetsExternalization;
 
@@ -28,7 +28,7 @@ public class IntSetExternalizer extends AbstractExternalizer<IntSet> {
    }
 
    @Override
-   public void writeObject(ObjectOutput output, IntSet intSet) throws IOException {
+   public void writeObject(UserObjectOutput output, IntSet intSet) throws IOException {
       IntSetsExternalization.writeTo(output, intSet);
    }
 

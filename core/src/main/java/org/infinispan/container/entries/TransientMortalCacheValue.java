@@ -4,11 +4,11 @@ import static java.lang.Math.min;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 
@@ -111,7 +111,7 @@ public class TransientMortalCacheValue extends MortalCacheValue {
 
    public static class Externalizer extends AbstractExternalizer<TransientMortalCacheValue> {
       @Override
-      public void writeObject(ObjectOutput output, TransientMortalCacheValue value) throws IOException {
+      public void writeObject(UserObjectOutput output, TransientMortalCacheValue value) throws IOException {
          output.writeObject(value.value);
          UnsignedNumeric.writeUnsignedLong(output, value.created);
          output.writeLong(value.lifespan); // could be negative so should not use unsigned longs

@@ -2,7 +2,6 @@ package org.infinispan.stream.impl;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Comparator;
 import java.util.DoubleSummaryStatistics;
 import java.util.IntSummaryStatistics;
@@ -43,6 +42,7 @@ import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -330,7 +330,7 @@ final class TerminalFunctions {
 
       public static final class AllMatchFunctionExternalizer implements Externalizer<AllMatchFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AllMatchFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AllMatchFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
@@ -356,7 +356,7 @@ final class TerminalFunctions {
 
       public static final class AllMatchDoubleFunctionExternalizer implements Externalizer<AllMatchDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AllMatchDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AllMatchDoubleFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
@@ -382,7 +382,7 @@ final class TerminalFunctions {
 
       public static final class AllMatchIntFunctionExternalizer implements Externalizer<AllMatchIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AllMatchIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AllMatchIntFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
@@ -408,7 +408,7 @@ final class TerminalFunctions {
 
       public static final class AllMatchLongFunctionExternalizer implements Externalizer<AllMatchLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AllMatchLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AllMatchLongFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
@@ -434,7 +434,7 @@ final class TerminalFunctions {
 
       public static final class AnyMatchFunctionExternalizer implements Externalizer<AnyMatchFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AnyMatchFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AnyMatchFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
@@ -460,7 +460,7 @@ final class TerminalFunctions {
 
       public static final class AnyMatchDoubleFunctionExternalizer implements Externalizer<AnyMatchDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AnyMatchDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AnyMatchDoubleFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
@@ -486,7 +486,7 @@ final class TerminalFunctions {
 
       public static final class AnyMatchIntFunctionExternalizer implements Externalizer<AnyMatchIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AnyMatchIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AnyMatchIntFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
@@ -512,7 +512,7 @@ final class TerminalFunctions {
 
       public static final class AnyMatchLongFunctionExternalizer implements Externalizer<AnyMatchLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AnyMatchLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AnyMatchLongFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
@@ -541,7 +541,7 @@ final class TerminalFunctions {
 
       public static final class AverageDoubleFunctionExternalizer implements Externalizer<AverageDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AverageDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AverageDoubleFunction object) throws IOException {
          }
 
          @Override
@@ -569,7 +569,7 @@ final class TerminalFunctions {
 
       public static final class AverageIntFunctionExternalizer implements Externalizer<AverageIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AverageIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AverageIntFunction object) throws IOException {
          }
 
          @Override
@@ -597,7 +597,7 @@ final class TerminalFunctions {
 
       public static final class AverageLongFunctionExternalizer implements Externalizer<AverageLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AverageLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AverageLongFunction object) throws IOException {
          }
 
          @Override
@@ -626,7 +626,7 @@ final class TerminalFunctions {
 
       public static final class CountFunctionExternalizer implements Externalizer<CountFunction> {
          @Override
-         public void writeObject(ObjectOutput output, CountFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CountFunction object) throws IOException {
          }
 
          @Override
@@ -653,7 +653,7 @@ final class TerminalFunctions {
 
       public static final class CountDoubleFunctionExternalizer implements Externalizer<CountDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, CountDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CountDoubleFunction object) throws IOException {
          }
 
          @Override
@@ -680,7 +680,7 @@ final class TerminalFunctions {
 
       public static final class CountIntFunctionExternalizer implements Externalizer<CountIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, CountIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CountIntFunction object) throws IOException {
          }
 
          @Override
@@ -707,7 +707,7 @@ final class TerminalFunctions {
 
       public static final class CountLongFunctionExternalizer implements Externalizer<CountLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, CountLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CountLongFunction object) throws IOException {
          }
 
          @Override
@@ -734,7 +734,7 @@ final class TerminalFunctions {
 
       public static final class FindAnyFunctionExternalizer implements Externalizer<FindAnyFunction> {
          @Override
-         public void writeObject(ObjectOutput output, FindAnyFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, FindAnyFunction object) throws IOException {
          }
 
          @Override
@@ -766,7 +766,7 @@ final class TerminalFunctions {
 
       public static final class FindAnyDoubleFunctionExternalizer implements Externalizer<FindAnyDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, FindAnyDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, FindAnyDoubleFunction object) throws IOException {
          }
 
          @Override
@@ -798,7 +798,7 @@ final class TerminalFunctions {
 
       public static final class FindAnyIntFunctionExternalizer implements Externalizer<FindAnyIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, FindAnyIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, FindAnyIntFunction object) throws IOException {
          }
 
          @Override
@@ -830,7 +830,7 @@ final class TerminalFunctions {
 
       public static final class FindAnyLongFunctionExternalizer implements Externalizer<FindAnyLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, FindAnyLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, FindAnyLongFunction object) throws IOException {
          }
 
          @Override
@@ -855,7 +855,7 @@ final class TerminalFunctions {
 
       public static final class NoneMatchFunctionExternalizer implements Externalizer<NoneMatchFunction> {
          @Override
-         public void writeObject(ObjectOutput output, NoneMatchFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, NoneMatchFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
@@ -881,7 +881,7 @@ final class TerminalFunctions {
 
       public static final class NoneMatchDoubleFunctionExternalizer implements Externalizer<NoneMatchDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, NoneMatchDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, NoneMatchDoubleFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
@@ -907,7 +907,7 @@ final class TerminalFunctions {
 
       public static final class NoneMatchIntFunctionExternalizer implements Externalizer<NoneMatchIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, NoneMatchIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, NoneMatchIntFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
@@ -933,7 +933,7 @@ final class TerminalFunctions {
 
       public static final class NoneMatchLongFunctionExternalizer implements Externalizer<NoneMatchLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, NoneMatchLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, NoneMatchLongFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
@@ -964,7 +964,7 @@ final class TerminalFunctions {
       public static final class CollectFunctionExternalizer implements Externalizer<CollectFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, CollectFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CollectFunction object) throws IOException {
             output.writeObject(object.supplier);
             output.writeObject(object.accumulator);
             output.writeObject(object.combiner);
@@ -998,7 +998,7 @@ final class TerminalFunctions {
       public static final class CollectDoubleFunctionExternalizer implements Externalizer<CollectDoubleFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, CollectDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CollectDoubleFunction object) throws IOException {
             output.writeObject(object.supplier);
             output.writeObject(object.accumulator);
             output.writeObject(object.combiner);
@@ -1032,7 +1032,7 @@ final class TerminalFunctions {
       public static final class CollectIntFunctionExternalizer implements Externalizer<CollectIntFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, CollectIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CollectIntFunction object) throws IOException {
             output.writeObject(object.supplier);
             output.writeObject(object.accumulator);
             output.writeObject(object.combiner);
@@ -1066,7 +1066,7 @@ final class TerminalFunctions {
       public static final class CollectLongFunctionExternalizer implements Externalizer<CollectLongFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, CollectLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CollectLongFunction object) throws IOException {
             output.writeObject(object.supplier);
             output.writeObject(object.accumulator);
             output.writeObject(object.combiner);
@@ -1095,7 +1095,7 @@ final class TerminalFunctions {
 
       public static final class CollectorFunctionExternalizer implements Externalizer<CollectorFunction> {
          @Override
-         public void writeObject(ObjectOutput output, CollectorFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CollectorFunction object) throws IOException {
             output.writeObject(object.collector);
          }
 
@@ -1122,7 +1122,7 @@ final class TerminalFunctions {
 
       public static final class ForEachFunctionExternalizer implements Externalizer<ForEachFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ForEachFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ForEachFunction object) throws IOException {
             output.writeObject(object.consumer);
          }
 
@@ -1149,7 +1149,7 @@ final class TerminalFunctions {
 
       public static final class ForEachBiConsumerFunctionExternalizer implements Externalizer<ForEachBiConsumerFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ForEachBiConsumerFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ForEachBiConsumerFunction object) throws IOException {
             output.writeObject(object.consumer);
          }
 
@@ -1176,7 +1176,7 @@ final class TerminalFunctions {
 
       public static final class ForEachDoubleFunctionExternalizer implements Externalizer<ForEachDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ForEachDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ForEachDoubleFunction object) throws IOException {
             output.writeObject(object.consumer);
          }
 
@@ -1203,7 +1203,7 @@ final class TerminalFunctions {
 
       public static final class ForEachObjDoubleFunctionExternalizer implements Externalizer<ForEachObjDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ForEachObjDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ForEachObjDoubleFunction object) throws IOException {
             output.writeObject(object.consumer);
          }
 
@@ -1230,7 +1230,7 @@ final class TerminalFunctions {
 
       public static final class ForEachIntFunctionExternalizer implements Externalizer<ForEachIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ForEachIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ForEachIntFunction object) throws IOException {
             output.writeObject(object.consumer);
          }
 
@@ -1257,7 +1257,7 @@ final class TerminalFunctions {
 
       public static final class ForEachObjIntFunctionExternalizer implements Externalizer<ForEachObjIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ForEachObjIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ForEachObjIntFunction object) throws IOException {
             output.writeObject(object.consumer);
          }
 
@@ -1284,7 +1284,7 @@ final class TerminalFunctions {
 
       public static final class ForEachLongFunctionExternalizer implements Externalizer<ForEachLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ForEachLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ForEachLongFunction object) throws IOException {
             output.writeObject(object.consumer);
          }
 
@@ -1311,7 +1311,7 @@ final class TerminalFunctions {
 
       public static final class ForEachObjLongFunctionExternalizer implements Externalizer<ForEachObjLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ForEachObjLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ForEachObjLongFunction object) throws IOException {
             output.writeObject(object.consumer);
          }
 
@@ -1337,7 +1337,7 @@ final class TerminalFunctions {
 
       public static final class MaxFunctionExternalizer implements Externalizer<MaxFunction> {
          @Override
-         public void writeObject(ObjectOutput output, MaxFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, MaxFunction object) throws IOException {
             output.writeObject(object.comparator);
          }
 
@@ -1370,7 +1370,7 @@ final class TerminalFunctions {
 
       public static final class MaxDoubleFunctionExternalizer implements Externalizer<MaxDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, MaxDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, MaxDoubleFunction object) throws IOException {
          }
 
          @Override
@@ -1402,7 +1402,7 @@ final class TerminalFunctions {
 
       public static final class MaxIntFunctionExternalizer implements Externalizer<MaxIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, MaxIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, MaxIntFunction object) throws IOException {
          }
 
          @Override
@@ -1434,7 +1434,7 @@ final class TerminalFunctions {
 
       public static final class MaxLongFunctionExternalizer implements Externalizer<MaxLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, MaxLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, MaxLongFunction object) throws IOException {
          }
 
          @Override
@@ -1459,7 +1459,7 @@ final class TerminalFunctions {
 
       public static final class MinFunctionExternalizer implements Externalizer<MinFunction> {
          @Override
-         public void writeObject(ObjectOutput output, MinFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, MinFunction object) throws IOException {
             output.writeObject(object.comparator);
          }
 
@@ -1492,7 +1492,7 @@ final class TerminalFunctions {
 
       public static final class MinDoubleFunctionExternalizer implements Externalizer<MinDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, MinDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, MinDoubleFunction object) throws IOException {
          }
 
          @Override
@@ -1524,7 +1524,7 @@ final class TerminalFunctions {
 
       public static final class MinIntFunctionExternalizer implements Externalizer<MinIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, MinIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, MinIntFunction object) throws IOException {
          }
 
          @Override
@@ -1556,7 +1556,7 @@ final class TerminalFunctions {
 
       public static final class MinLongFunctionExternalizer implements Externalizer<MinLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, MinLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, MinLongFunction object) throws IOException {
          }
 
          @Override
@@ -1582,7 +1582,7 @@ final class TerminalFunctions {
       public static final class ReduceFunctionExternalizer implements Externalizer<ReduceFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, ReduceFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ReduceFunction object) throws IOException {
             output.writeObject(object.accumulator);
          }
 
@@ -1614,7 +1614,7 @@ final class TerminalFunctions {
       public static final class ReduceDoubleFunctionExternalizer implements Externalizer<ReduceDoubleFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, ReduceDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ReduceDoubleFunction object) throws IOException {
             output.writeObject(object.accumulator);
          }
 
@@ -1646,7 +1646,7 @@ final class TerminalFunctions {
       public static final class ReduceIntFunctionExternalizer implements Externalizer<ReduceIntFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, ReduceIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ReduceIntFunction object) throws IOException {
             output.writeObject(object.accumulator);
          }
 
@@ -1678,7 +1678,7 @@ final class TerminalFunctions {
       public static final class ReduceLongFunctionExternalizer implements Externalizer<ReduceLongFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, ReduceLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ReduceLongFunction object) throws IOException {
             output.writeObject(object.accumulator);
          }
 
@@ -1707,7 +1707,7 @@ final class TerminalFunctions {
       public static final class IdentityReductFunctionExternalizer implements Externalizer<IdentityReduceFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, IdentityReduceFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, IdentityReduceFunction object) throws IOException {
             output.writeObject(object.identity);
             output.writeObject(object.accumulator);
          }
@@ -1737,7 +1737,7 @@ final class TerminalFunctions {
       public static final class IdentityReductFunctionExternalizer implements Externalizer<IdentityReduceDoubleFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, IdentityReduceDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, IdentityReduceDoubleFunction object) throws IOException {
             output.writeDouble(object.identity);
             output.writeObject(object.accumulator);
          }
@@ -1767,7 +1767,7 @@ final class TerminalFunctions {
       public static final class IdentityReductFunctionExternalizer implements Externalizer<IdentityReduceIntFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, IdentityReduceIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, IdentityReduceIntFunction object) throws IOException {
             output.writeInt(object.identity);
             output.writeObject(object.accumulator);
          }
@@ -1797,7 +1797,7 @@ final class TerminalFunctions {
       public static final class IdentityReductFunctionExternalizer implements Externalizer<IdentityReduceLongFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, IdentityReduceLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, IdentityReduceLongFunction object) throws IOException {
             output.writeLong(object.identity);
             output.writeObject(object.accumulator);
          }
@@ -1830,7 +1830,7 @@ final class TerminalFunctions {
       public static final class IdentityReductFunctionExternalizer implements Externalizer<IdentityReduceCombinerFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, IdentityReduceCombinerFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, IdentityReduceCombinerFunction object) throws IOException {
             output.writeObject(object.identity);
             output.writeObject(object.accumulator);
             output.writeObject(object.combiner);
@@ -1861,7 +1861,7 @@ final class TerminalFunctions {
 
       public static final class SumDoubleFunctionExternalizer implements Externalizer<SumDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, SumDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, SumDoubleFunction object) throws IOException {
          }
 
          @Override
@@ -1888,7 +1888,7 @@ final class TerminalFunctions {
 
       public static final class SumIntFunctionExternalizer implements Externalizer<SumIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, SumIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, SumIntFunction object) throws IOException {
          }
 
          @Override
@@ -1915,7 +1915,7 @@ final class TerminalFunctions {
 
       public static final class SumLongFunctionExternalizer implements Externalizer<SumLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, SumLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, SumLongFunction object) throws IOException {
          }
 
          @Override
@@ -1943,7 +1943,7 @@ final class TerminalFunctions {
       public static final class SummaryStatisticsDoubleFunctionExternalizer
               implements Externalizer<SummaryStatisticsDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, SummaryStatisticsDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, SummaryStatisticsDoubleFunction object) throws IOException {
          }
 
          @Override
@@ -1971,7 +1971,7 @@ final class TerminalFunctions {
       public static final class SummaryStatisticsIntFunctionExternalizer
               implements Externalizer<SummaryStatisticsIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, SummaryStatisticsIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, SummaryStatisticsIntFunction object) throws IOException {
          }
 
          @Override
@@ -1999,7 +1999,7 @@ final class TerminalFunctions {
       public static final class SummaryStatisticsLongFunctionExternalizer
               implements Externalizer<SummaryStatisticsLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, SummaryStatisticsLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, SummaryStatisticsLongFunction object) throws IOException {
          }
 
          @Override
@@ -2026,7 +2026,7 @@ final class TerminalFunctions {
 
       public static final class ToArrayFunctionExternalizer implements Externalizer<ToArrayFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ToArrayFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ToArrayFunction object) throws IOException {
          }
 
          @Override
@@ -2053,7 +2053,7 @@ final class TerminalFunctions {
 
       public static final class ToArrayDoubleFunctionExternalizer implements Externalizer<ToArrayDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ToArrayDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ToArrayDoubleFunction object) throws IOException {
          }
 
          @Override
@@ -2080,7 +2080,7 @@ final class TerminalFunctions {
 
       public static final class ToArrayIntFunctionExternalizer implements Externalizer<ToArrayIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ToArrayIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ToArrayIntFunction object) throws IOException {
          }
 
          @Override
@@ -2107,7 +2107,7 @@ final class TerminalFunctions {
 
       public static final class ToArrayLongFunctionExternalizer implements Externalizer<ToArrayLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ToArrayLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ToArrayLongFunction object) throws IOException {
          }
 
          @Override
@@ -2132,7 +2132,7 @@ final class TerminalFunctions {
 
       public static final class ToArrayGeneratorFunctionExternalizer implements Externalizer<ToArrayGeneratorFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ToArrayGeneratorFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ToArrayGeneratorFunction object) throws IOException {
             output.writeObject(object.generator);
          }
 

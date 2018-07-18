@@ -2,12 +2,12 @@ package org.infinispan.transaction.xa;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -113,7 +113,7 @@ public class GlobalTransaction implements Cloneable {
 
    protected abstract static class AbstractGlobalTxExternalizer<T extends GlobalTransaction> extends AbstractExternalizer<T> {
       @Override
-      public void writeObject(ObjectOutput output, T gtx) throws IOException {
+      public void writeObject(UserObjectOutput output, T gtx) throws IOException {
          output.writeLong(gtx.id);
          output.writeObject(gtx.addr);
       }

@@ -1,11 +1,11 @@
 package org.infinispan.filter;
 
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 
@@ -42,7 +42,7 @@ public class AcceptAllKeyValueFilter implements KeyValueFilter<Object, Object> {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, AcceptAllKeyValueFilter object) {
+      public void writeObject(UserObjectOutput output, AcceptAllKeyValueFilter object) {
       }
 
       @Override

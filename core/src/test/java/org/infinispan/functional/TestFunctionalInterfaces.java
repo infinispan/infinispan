@@ -2,10 +2,10 @@ package org.infinispan.functional;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.marshall.Externalizer;
@@ -31,7 +31,7 @@ public class TestFunctionalInterfaces {
       public static final class Externalizer0
             implements Externalizer<SetConstantOnReadWrite<?>> {
          @Override
-         public void writeObject(ObjectOutput output, SetConstantOnReadWrite<?> object)
+         public void writeObject(UserObjectOutput output, SetConstantOnReadWrite<?> object)
                throws IOException {
             output.writeUTF(object.constant);
          }
@@ -61,7 +61,7 @@ public class TestFunctionalInterfaces {
 
       public static final class Externalizer0 implements Externalizer<SetConstantOnWriteOnly> {
          @Override
-         public void writeObject(ObjectOutput output, SetConstantOnWriteOnly object)
+         public void writeObject(UserObjectOutput output, SetConstantOnWriteOnly object)
                throws IOException {
             output.writeUTF(object.constant);
          }

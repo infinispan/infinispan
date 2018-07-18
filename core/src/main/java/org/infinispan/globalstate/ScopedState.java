@@ -2,12 +2,12 @@ package org.infinispan.globalstate;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
  * Key for scoped entries in the ClusterConfigurationManager state cache
@@ -73,7 +73,7 @@ public class ScopedState {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, ScopedState object) throws IOException {
+      public void writeObject(UserObjectOutput output, ScopedState object) throws IOException {
          output.writeUTF(object.scope);
          output.writeUTF(object.name);
       }

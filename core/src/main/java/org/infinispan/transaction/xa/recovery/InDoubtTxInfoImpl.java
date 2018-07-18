@@ -2,13 +2,13 @@ package org.infinispan.transaction.xa.recovery;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
@@ -89,7 +89,7 @@ public class InDoubtTxInfoImpl implements RecoveryManager.InDoubtTxInfo {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, InDoubtTxInfoImpl inDoubtTxInfoImpl) throws IOException {
+      public void writeObject(UserObjectOutput output, InDoubtTxInfoImpl inDoubtTxInfoImpl) throws IOException {
          output.writeObject(inDoubtTxInfoImpl.getXid());
          output.writeLong(inDoubtTxInfoImpl.getInternalId());
          output.writeObject(inDoubtTxInfoImpl.status);

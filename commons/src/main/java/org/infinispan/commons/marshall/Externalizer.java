@@ -105,7 +105,7 @@ public interface Externalizer<T> extends Serializable {
 
    /**
     * Read an instance from the stream.  The instance will have been written by the
-    * {@link #writeObject(ObjectOutput, Object)} method.  Implementations are free
+    * {@link #writeObject(UserObjectOutput, Object)} method.  Implementations are free
     * to create instances of the object read from the stream in any way that they
     * feel like. This could be via constructor, factory or reflection.
     *
@@ -122,7 +122,7 @@ public interface Externalizer<T> extends Serializable {
 
    /**
     * Read an instance from the stream.  The instance will have been written by the
-    * {@link #writeObject(ObjectOutput, Object)} method.  Implementations are free
+    * {@link #writeObject(UserObjectOutput, Object)} method.  Implementations are free
     * to create instances of the object read from the stream in any way that they
     * feel like. This could be via constructor, factory or reflection.
     *

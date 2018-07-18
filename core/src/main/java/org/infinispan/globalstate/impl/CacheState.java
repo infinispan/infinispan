@@ -2,7 +2,6 @@ package org.infinispan.globalstate.impl;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
@@ -12,6 +11,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
  * Cache State information stored in a cluster-wide cache
@@ -47,7 +47,7 @@ public class CacheState {
    public static class Externalizer implements AdvancedExternalizer<CacheState> {
 
       @Override
-      public void writeObject(ObjectOutput output, CacheState state) throws IOException {
+      public void writeObject(UserObjectOutput output, CacheState state) throws IOException {
          MarshallUtil.marshallString(state.template, output);
          MarshallUtil.marshallString(state.configuration, output);
          output.writeObject(state.flags);

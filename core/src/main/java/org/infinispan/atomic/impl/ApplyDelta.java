@@ -2,7 +2,6 @@ package org.infinispan.atomic.impl;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 import java.util.function.BiFunction;
 
@@ -10,6 +9,7 @@ import org.infinispan.atomic.CopyableDeltaAware;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.functional.EntryView;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
@@ -81,7 +81,7 @@ public final class ApplyDelta<K> implements BiFunction<Object, EntryView.ReadWri
       }
 
       @Override
-      public void writeObject(ObjectOutput output, ApplyDelta object) throws IOException {
+      public void writeObject(UserObjectOutput output, ApplyDelta object) throws IOException {
       }
 
       @Override

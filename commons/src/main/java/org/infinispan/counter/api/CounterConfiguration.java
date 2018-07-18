@@ -8,13 +8,13 @@ import static org.infinispan.counter.util.EncodeUtil.encodeTypeAndStorage;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
  * A counter configuration used to define counters cluster wide via {@link CounterManager#defineCounter(String,
@@ -226,7 +226,7 @@ public class CounterConfiguration {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, CounterConfiguration object) throws IOException {
+      public void writeObject(UserObjectOutput output, CounterConfiguration object) throws IOException {
          output.writeByte(encodeTypeAndStorage(object));
          output.writeLong(object.initialValue);
          switch (object.type) {

@@ -1,13 +1,13 @@
 package org.infinispan.cache.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
@@ -50,13 +50,13 @@ public class EncoderKeyMapper<K> implements InjectiveFunction<K, K> {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, EncoderKeyMapper object) throws IOException {
+      public void writeObject(UserObjectOutput output, EncoderKeyMapper object) throws IOException {
          DataConversion.writeTo(output, object.dataConversion);
       }
 
       @Override
       @SuppressWarnings("unchecked")
-      public EncoderKeyMapper readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public EncoderKeyMapper readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new EncoderKeyMapper(DataConversion.readFrom(input));
       }
    }

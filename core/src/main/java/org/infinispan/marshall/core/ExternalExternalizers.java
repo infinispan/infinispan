@@ -1,13 +1,13 @@
 package org.infinispan.marshall.core;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -74,12 +74,12 @@ final class ExternalExternalizers {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
+      public void writeObject(UserObjectOutput output, Object object) throws IOException {
          ext.writeObject(output, object);
       }
 
       @Override
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public Object readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return ext.readObject(input);
       }
 

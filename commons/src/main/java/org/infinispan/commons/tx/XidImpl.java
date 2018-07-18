@@ -12,6 +12,7 @@ import javax.transaction.xa.Xid;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 
 /**
@@ -192,7 +193,7 @@ public class XidImpl implements Xid {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, XidImpl object) throws IOException {
+      public void writeObject(UserObjectOutput output, XidImpl object) throws IOException {
          writeTo(output, object);
       }
 

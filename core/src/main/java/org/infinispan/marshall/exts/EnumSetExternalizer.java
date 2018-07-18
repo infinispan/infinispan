@@ -2,7 +2,6 @@ package org.infinispan.marshall.exts;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.AbstractSet;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -10,6 +9,7 @@ import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.jboss.marshalling.util.IdentityIntMap;
@@ -48,7 +48,7 @@ public class EnumSetExternalizer extends AbstractExternalizer<Set> {
    }
 
    @Override
-   public void writeObject(ObjectOutput output, Set set) throws IOException {
+   public void writeObject(UserObjectOutput output, Set set) throws IOException {
       int number = numbers.get(set.getClass(), UNKNOWN_ENUM_SET);
       if (number == UNKNOWN_ENUM_SET) {
          // Fallback on standard object write

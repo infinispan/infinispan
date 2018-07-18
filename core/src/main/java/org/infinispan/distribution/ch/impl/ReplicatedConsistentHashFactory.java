@@ -1,7 +1,6 @@
 package org.infinispan.distribution.ch.impl;
 
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.List;
@@ -11,6 +10,7 @@ import java.util.Set;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
@@ -151,7 +151,7 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
    public static class Externalizer extends AbstractExternalizer<ReplicatedConsistentHashFactory> {
 
       @Override
-      public void writeObject(ObjectOutput output, ReplicatedConsistentHashFactory chf) {
+      public void writeObject(UserObjectOutput output, ReplicatedConsistentHashFactory chf) {
       }
 
       @Override

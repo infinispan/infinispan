@@ -2,11 +2,11 @@ package org.infinispan.metadata;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.marshall.core.Ids;
@@ -327,7 +327,7 @@ public class EmbeddedMetadata implements Metadata {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, EmbeddedMetadata object) throws IOException {
+      public void writeObject(UserObjectOutput output, EmbeddedMetadata object) throws IOException {
          int number = numbers.get(object.getClass(), -1);
          output.write(number);
          switch (number) {

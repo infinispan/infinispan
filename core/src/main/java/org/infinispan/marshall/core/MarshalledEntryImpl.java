@@ -2,12 +2,12 @@ package org.infinispan.marshall.core;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
@@ -204,7 +204,7 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, MarshalledEntryImpl me) throws IOException {
+      public void writeObject(UserObjectOutput output, MarshalledEntryImpl me) throws IOException {
          output.writeObject(me.getKeyBytes());
          output.writeObject(me.getValueBytes());
          output.writeObject(me.getMetadataBytes());

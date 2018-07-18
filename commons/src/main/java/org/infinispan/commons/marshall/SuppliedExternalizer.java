@@ -2,7 +2,6 @@ package org.infinispan.commons.marshall;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -30,7 +29,7 @@ public class SuppliedExternalizer<T> implements AdvancedExternalizer<T> {
    }
 
    @Override
-   public void writeObject(ObjectOutput output, T object) throws IOException {
+   public void writeObject(UserObjectOutput output, T object) throws IOException {
    }
 
    @Override

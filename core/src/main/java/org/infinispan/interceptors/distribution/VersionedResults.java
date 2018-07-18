@@ -2,11 +2,11 @@ package org.infinispan.interceptors.distribution;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 
@@ -43,7 +43,7 @@ public class VersionedResults {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, VersionedResults object) throws IOException {
+      public void writeObject(UserObjectOutput output, VersionedResults object) throws IOException {
          output.writeInt(object.values.length);
          // TODO: we could optimize this if all objects are of the same type
          for (Object value : object.values) output.writeObject(value);

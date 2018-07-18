@@ -2,11 +2,11 @@ package org.infinispan.filter;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.marshall.core.Ids;
@@ -44,7 +44,7 @@ public class KeyValueFilterAsKeyFilter<K> implements KeyFilter<K> {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, KeyValueFilterAsKeyFilter object) throws IOException {
+      public void writeObject(UserObjectOutput output, KeyValueFilterAsKeyFilter object) throws IOException {
          output.writeObject(object.filter);
       }
 

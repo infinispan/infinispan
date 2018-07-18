@@ -2,7 +2,6 @@ package org.infinispan.context;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
@@ -11,6 +10,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.Ids;
@@ -333,7 +333,7 @@ public enum Flag {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, Flag flag) throws IOException {
+      public void writeObject(UserObjectOutput output, Flag flag) throws IOException {
          MarshallUtil.marshallEnum(flag, output);
       }
 

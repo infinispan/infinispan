@@ -2,11 +2,11 @@ package org.infinispan.container.entries.metadata;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.ImmortalCacheValue;
@@ -81,7 +81,7 @@ public class MetadataTransientCacheValue extends ImmortalCacheValue implements M
 
    public static class Externalizer extends AbstractExternalizer<MetadataTransientCacheValue> {
       @Override
-      public void writeObject(ObjectOutput output, MetadataTransientCacheValue tcv) throws IOException {
+      public void writeObject(UserObjectOutput output, MetadataTransientCacheValue tcv) throws IOException {
          output.writeObject(tcv.value);
          output.writeObject(tcv.metadata);
          UnsignedNumeric.writeUnsignedLong(output, tcv.lastUsed);

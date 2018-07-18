@@ -2,11 +2,11 @@ package org.infinispan.interceptors.distribution;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 
@@ -36,7 +36,7 @@ public class VersionedResult {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, VersionedResult object) throws IOException {
+      public void writeObject(UserObjectOutput output, VersionedResult object) throws IOException {
          output.writeObject(object.result);
          output.writeObject(object.version);
       }

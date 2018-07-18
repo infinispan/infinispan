@@ -1,12 +1,12 @@
 package org.infinispan.util;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.marshall.core.Ids;
 
 /**
@@ -39,14 +39,13 @@ public class KeyValuePair<K,V> {
       private static final long serialVersionUID = -5291318076267612501L;
 
       @Override
-      public void writeObject(ObjectOutput output, KeyValuePair kvPair) throws IOException {
-         output.writeObject(kvPair.getKey());
-         output.writeObject(kvPair.getValue());
+      public void writeObject(UserObjectOutput output, KeyValuePair kvPair) throws IOException {
+         output.writeUserObjects(kvPair.getKey(), kvPair.getValue());
       }
 
       @Override
-      public KeyValuePair readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new KeyValuePair(input.readObject(), input.readObject());
+      public KeyValuePair readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
+         return new KeyValuePair(input.readUserObject(), input.readUserObject());
       }
 
       @Override

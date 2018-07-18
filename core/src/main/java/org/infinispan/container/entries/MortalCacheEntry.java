@@ -4,11 +4,11 @@ import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -130,7 +130,7 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
 
    public static class Externalizer extends AbstractExternalizer<MortalCacheEntry> {
       @Override
-      public void writeObject(ObjectOutput output, MortalCacheEntry mce) throws IOException {
+      public void writeObject(UserObjectOutput output, MortalCacheEntry mce) throws IOException {
          output.writeObject(mce.key);
          output.writeObject(mce.value);
          UnsignedNumeric.writeUnsignedLong(output, mce.created);

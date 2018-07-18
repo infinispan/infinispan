@@ -7,7 +7,6 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +22,7 @@ import javax.cache.processor.MutableEntry;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.functional.decorators.FunctionalJCache;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -595,7 +595,7 @@ public class FunctionalJCacheTest extends AbstractFunctionalTest {
       }
 
       public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
+         public void writeObject(UserObjectOutput oo, Object o) {}
          public Object readObject(ObjectInput input) { return INSTANCE; }
       }
    }
@@ -616,7 +616,7 @@ public class FunctionalJCacheTest extends AbstractFunctionalTest {
       }
 
       public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
+         public void writeObject(UserObjectOutput oo, Object o) {}
          public Object readObject(ObjectInput input) { return INSTANCE; }
       }
    }
@@ -637,7 +637,7 @@ public class FunctionalJCacheTest extends AbstractFunctionalTest {
       }
 
       public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
+         public void writeObject(UserObjectOutput oo, Object o) {}
          public Object readObject(ObjectInput input) { return INSTANCE; }
       }
    }
@@ -713,7 +713,7 @@ public class FunctionalJCacheTest extends AbstractFunctionalTest {
       }
 
       public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
+         public void writeObject(UserObjectOutput oo, Object o) {}
          public Object readObject(ObjectInput input) { return INSTANCE; }
       }
    }

@@ -28,7 +28,6 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,6 +46,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
@@ -124,7 +124,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
 
       private static final SetStringConstant INSTANCE = new SetStringConstant();
       public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
+         public void writeObject(UserObjectOutput oo, Object o) {}
          public Object readObject(ObjectInput input) { return INSTANCE; }
       }
    }
@@ -185,7 +185,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       private static final SetValueAndConstantLifespan INSTANCE =
          new SetValueAndConstantLifespan<>();
       public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
+         public void writeObject(UserObjectOutput oo, Object o) {}
          public Object readObject(ObjectInput input) { return INSTANCE; }
       }
    }
@@ -274,7 +274,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       private static final SetStringConstantReturnPrevious INSTANCE =
          new SetStringConstantReturnPrevious<>();
       public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
+         public void writeObject(UserObjectOutput oo, Object o) {}
          public Object readObject(ObjectInput input) { return INSTANCE; }
       }
    }
@@ -362,7 +362,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       private static final SetStringAndVersionConstant INSTANCE =
          new SetStringAndVersionConstant<>();
       public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
+         public void writeObject(UserObjectOutput oo, Object o) {}
          public Object readObject(ObjectInput input) { return INSTANCE; }
       }
    }
@@ -388,7 +388,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
 
       public static final class Externalizer0 implements Externalizer<VersionBasedConditionalReplace<?>> {
          @Override
-         public void writeObject(ObjectOutput output, VersionBasedConditionalReplace<?> object) throws IOException {
+         public void writeObject(UserObjectOutput output, VersionBasedConditionalReplace<?> object) throws IOException {
             output.writeLong(object.version);
          }
 

@@ -2,13 +2,13 @@ package org.infinispan.notifications.cachelistener.cluster;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.util.logging.Log;
@@ -63,7 +63,7 @@ public class ClusterListenerRemoveCallable<K, V> implements DistributedCallable<
       }
 
       @Override
-      public void writeObject(ObjectOutput output, ClusterListenerRemoveCallable object) throws IOException {
+      public void writeObject(UserObjectOutput output, ClusterListenerRemoveCallable object) throws IOException {
          output.writeObject(object.identifier);
       }
 

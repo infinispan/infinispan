@@ -5,12 +5,12 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
@@ -112,7 +112,7 @@ public class RehashWithL1Test extends MultipleCacheManagersTest {
 
       public static final class Ext implements Externalizer<MyBaseControlledConsistentHashFactory> {
          @Override
-         public void writeObject(ObjectOutput output, MyBaseControlledConsistentHashFactory object) {
+         public void writeObject(UserObjectOutput output, MyBaseControlledConsistentHashFactory object) {
             // No-op
          }
 

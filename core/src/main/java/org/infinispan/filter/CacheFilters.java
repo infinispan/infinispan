@@ -2,7 +2,6 @@ package org.infinispan.filter;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -11,6 +10,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.CacheStream;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -184,7 +184,7 @@ public final class CacheFilters {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
+      public void writeObject(UserObjectOutput output, Object object) throws IOException {
          int number = objects.get(object.getClass(), -1);
          output.writeByte(number);
          switch (number) {

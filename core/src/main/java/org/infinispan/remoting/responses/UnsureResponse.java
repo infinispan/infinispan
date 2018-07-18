@@ -2,10 +2,10 @@ package org.infinispan.remoting.responses;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 
@@ -30,7 +30,7 @@ public class UnsureResponse extends ValidResponse {
 
    public static class Externalizer extends AbstractExternalizer<UnsureResponse> {
       @Override
-      public void writeObject(ObjectOutput output, UnsureResponse subject) throws IOException {
+      public void writeObject(UserObjectOutput output, UnsureResponse subject) throws IOException {
       }
 
       @Override

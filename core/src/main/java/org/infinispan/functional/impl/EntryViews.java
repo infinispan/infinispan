@@ -4,13 +4,13 @@ import static org.infinispan.metadata.Metadatas.updateMetadata;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
@@ -648,7 +648,7 @@ public final class EntryViews {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, ReadOnlySnapshotView object) throws IOException {
+      public void writeObject(UserObjectOutput output, ReadOnlySnapshotView object) throws IOException {
          output.writeObject(object.key);
          output.writeObject(object.value);
          output.writeObject(object.metadata);
@@ -676,7 +676,7 @@ public final class EntryViews {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, NoValueReadOnlyView object) throws IOException {
+      public void writeObject(UserObjectOutput output, NoValueReadOnlyView object) throws IOException {
          output.writeObject(object.key);
       }
 
@@ -701,7 +701,7 @@ public final class EntryViews {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, ReadWriteSnapshotView obj) throws IOException {
+      public void writeObject(UserObjectOutput output, ReadWriteSnapshotView obj) throws IOException {
          output.writeObject(obj.key);
          output.writeObject(obj.value);
          output.writeObject(obj.metadata);

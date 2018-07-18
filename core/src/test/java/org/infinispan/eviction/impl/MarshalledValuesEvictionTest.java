@@ -4,10 +4,10 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.eviction.EvictionType;
@@ -100,7 +100,7 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
          }
 
          @Override
-         public void writeObject(ObjectOutput out, EvictionPojo pojo) throws IOException {
+         public void writeObject(UserObjectOutput out, EvictionPojo pojo) throws IOException {
             out.writeInt(pojo.i);
             writes.incrementAndGet();
          }

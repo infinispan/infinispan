@@ -2,7 +2,6 @@ package org.infinispan.commons.marshall;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
@@ -104,7 +103,7 @@ public class WrappedByteArray implements WrappedBytes {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, WrappedByteArray object) throws IOException {
+      public void writeObject(UserObjectOutput output, WrappedByteArray object) throws IOException {
          MarshallUtil.marshallByteArray(object.bytes, output);
          if (object.initializedHashCode) {
             output.writeBoolean(true);

@@ -2,7 +2,6 @@ package org.infinispan.stream.impl;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -32,6 +31,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -788,7 +788,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       }
 
       @Override
-      public void writeObject(ObjectOutput output, IntermediateOperation object) throws IOException {
+      public void writeObject(UserObjectOutput output, IntermediateOperation object) throws IOException {
          int number = numbers.get(object.getClass(), -1);
          output.write(number);
          switch (number) {

@@ -2,7 +2,6 @@ package org.infinispan.notifications.cachelistener.cluster;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -12,6 +11,7 @@ import java.util.UUID;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.util.logging.Log;
@@ -67,7 +67,7 @@ public class MultiClusterEventCallable<K, V> implements DistributedCallable<K, V
       }
 
       @Override
-      public void writeObject(ObjectOutput output, MultiClusterEventCallable object) throws IOException {
+      public void writeObject(UserObjectOutput output, MultiClusterEventCallable object) throws IOException {
          output.writeObject(object.multiEvents);
       }
 

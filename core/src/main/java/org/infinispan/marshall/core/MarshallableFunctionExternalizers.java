@@ -6,6 +6,7 @@ import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.LambdaExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.marshall.ValueMatcherMode;
 import org.infinispan.commons.util.Util;
 import org.infinispan.functional.MetaParam;
@@ -105,7 +106,7 @@ public class MarshallableFunctionExternalizers {
          return org.infinispan.commons.marshall.Ids.LAMBDA_CONSTANT;
       }
 
-      public void writeObject(ObjectOutput oo, Object o) throws IOException {
+      public void writeObject(UserObjectOutput oo, Object o) throws IOException {
          int id = numbers.get(o.getClass(), -1);
          oo.writeShort(id);
       }
@@ -181,7 +182,7 @@ public class MarshallableFunctionExternalizers {
       }
 
       @Override
-      public void writeObject(ObjectOutput oo, MarshallableFunctions.LambdaWithMetas o) throws IOException {
+      public void writeObject(UserObjectOutput oo, MarshallableFunctions.LambdaWithMetas o) throws IOException {
          int id = numbers.get(o.getClass(), -1);
          oo.writeShort(id);
          writeMetas(oo, o);
@@ -221,7 +222,7 @@ public class MarshallableFunctionExternalizers {
 
    public static final class SetValueIfEqualsReturnBooleanExternalizer
             implements LambdaExternalizer<MarshallableFunctions.SetValueIfEqualsReturnBoolean> {
-      public void writeObject(ObjectOutput oo, MarshallableFunctions.SetValueIfEqualsReturnBoolean o) throws IOException {
+      public void writeObject(UserObjectOutput oo, MarshallableFunctions.SetValueIfEqualsReturnBoolean o) throws IOException {
          oo.writeObject(o.oldValue);
          writeMetas(oo, o);
       }

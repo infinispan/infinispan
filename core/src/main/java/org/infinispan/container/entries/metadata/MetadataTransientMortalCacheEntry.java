@@ -4,11 +4,11 @@ import static java.lang.Math.min;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.AbstractInternalCacheEntry;
 import org.infinispan.container.entries.ExpiryHelper;
@@ -136,7 +136,7 @@ public class MetadataTransientMortalCacheEntry extends AbstractInternalCacheEntr
 
    public static class Externalizer extends AbstractExternalizer<MetadataTransientMortalCacheEntry> {
       @Override
-      public void writeObject(ObjectOutput output, MetadataTransientMortalCacheEntry ice) throws IOException {
+      public void writeObject(UserObjectOutput output, MetadataTransientMortalCacheEntry ice) throws IOException {
          output.writeObject(ice.key);
          output.writeObject(ice.value);
          output.writeObject(ice.metadata);

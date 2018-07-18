@@ -13,6 +13,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.atomic.FineGrainedAtomicMap;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.impl.MergeOnStore;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.functional.EntryView;
@@ -481,7 +482,7 @@ public final class AtomicKeySetImpl<K> implements MergeOnStore {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, AtomicKeySetImpl object) throws IOException {
+      public void writeObject(UserObjectOutput output, AtomicKeySetImpl object) throws IOException {
          ByteString.writeObject(output, object.cacheName);
          output.writeObject(object.group);
       }
@@ -524,7 +525,7 @@ public final class AtomicKeySetImpl<K> implements MergeOnStore {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, Externalizable object) throws IOException {
+      public void writeObject(UserObjectOutput output, Externalizable object) throws IOException {
          output.writeByte(object.type().ordinal());
          object.writeTo(output);
       }

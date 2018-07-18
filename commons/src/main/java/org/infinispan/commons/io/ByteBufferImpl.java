@@ -4,12 +4,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
  * A byte buffer that exposes the internal byte array with minimal copying
@@ -115,7 +115,7 @@ public class ByteBufferImpl implements ByteBuffer {
       private static final long serialVersionUID = -5291318076267612501L;
 
       @Override
-      public void writeObject(ObjectOutput output, ByteBufferImpl b) throws IOException {
+      public void writeObject(UserObjectOutput output, ByteBufferImpl b) throws IOException {
          UnsignedNumeric.writeUnsignedInt(output, b.length);
          output.write(b.buf, b.offset, b.length);
       }

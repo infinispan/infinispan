@@ -2,11 +2,11 @@ package org.infinispan.container.versioning;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.marshall.core.Ids;
 
 import net.jcip.annotations.Immutable;
@@ -85,7 +85,7 @@ public class SimpleClusteredVersion implements IncrementableEntryVersion {
    public static class Externalizer extends AbstractExternalizer<SimpleClusteredVersion> {
 
       @Override
-      public void writeObject(ObjectOutput output, SimpleClusteredVersion ch) throws IOException {
+      public void writeObject(UserObjectOutput output, SimpleClusteredVersion ch) throws IOException {
          output.writeInt(ch.topologyId);
          output.writeLong(ch.version);
       }

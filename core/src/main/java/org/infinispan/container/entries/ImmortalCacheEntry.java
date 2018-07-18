@@ -4,10 +4,10 @@ import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -121,7 +121,7 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
 
    public static class Externalizer extends AbstractExternalizer<ImmortalCacheEntry> {
       @Override
-      public void writeObject(ObjectOutput output, ImmortalCacheEntry ice) throws IOException {
+      public void writeObject(UserObjectOutput output, ImmortalCacheEntry ice) throws IOException {
          output.writeObject(ice.key);
          output.writeObject(ice.value);
       }
