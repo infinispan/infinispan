@@ -112,22 +112,21 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
    public void writeTo(UserObjectOutput output) throws IOException {
       writeBase(output);
       MarshallUtil.marshallEnum(operation, output);
+      output.writeUserObject(key);
       switch (operation) {
          case COMPUTE_IF_PRESENT:
          case COMPUTE_IF_ABSENT:
          case COMPUTE:
-            output.writeUserObject(key);
             // We must use the internal marshaller for functions
             output.writeObject(valueOrFunction);
+            output.writeUserObject(metadata);
             break;
          case REMOVE_EXPIRED:
          case REPLACE:
          case WRITE:
-            output.writeUserObjects(key, valueOrFunction, metadata);
+            output.writeUserObjects(valueOrFunction, metadata);
             break;
          case REMOVE:
-            output.writeUserObject(key);
-            break;
          default:
       }
    }
@@ -142,15 +141,15 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
          case COMPUTE_IF_ABSENT:
          case COMPUTE:
             valueOrFunction = input.readObject();
+            metadata = (Metadata) input.readObject();
             break;
          case REMOVE_EXPIRED:
          case REPLACE:
          case WRITE:
-            metadata = (Metadata) input.readUserObject();
             valueOrFunction = input.readUserObject();
+            metadata = (Metadata) input.readUserObject();
             break;
          case REMOVE:
-            break;
          default:
       }
    }
