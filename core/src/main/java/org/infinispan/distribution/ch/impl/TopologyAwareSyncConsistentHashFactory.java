@@ -1,6 +1,5 @@
 package org.infinispan.distribution.ch.impl;
 
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +7,7 @@ import java.util.Set;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.distribution.topologyaware.TopologyInfo;
 import org.infinispan.distribution.topologyaware.TopologyLevel;
@@ -134,7 +134,7 @@ public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFa
 
       @Override
       @SuppressWarnings("unchecked")
-      public TopologyAwareSyncConsistentHashFactory readObject(ObjectInput unmarshaller) {
+      public TopologyAwareSyncConsistentHashFactory readObject(UserObjectInput unmarshaller) {
          return new TopologyAwareSyncConsistentHashFactory();
       }
 

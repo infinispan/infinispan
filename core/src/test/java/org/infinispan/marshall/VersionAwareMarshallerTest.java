@@ -56,6 +56,7 @@ import org.infinispan.commons.marshall.PojoWithJBossExternalize;
 import org.infinispan.commons.marshall.PojoWithSerializeWith;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.FastCopyHashMap;
@@ -686,7 +687,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          }
 
          @Override
-         public PojoAnnotated readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public PojoAnnotated readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new PojoAnnotated(input.readInt(), input.readBoolean());
          }
       }
@@ -724,7 +725,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          }
 
          @Override
-         public PojoWithExternalizer readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public PojoWithExternalizer readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new PojoWithExternalizer(input.readInt(), input.readBoolean());
          }
       }
@@ -755,7 +756,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          }
 
          @Override
-         public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public Object readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new PojoWithMultiExternalizer(input.readInt(), input.readBoolean());
          }
       }
@@ -871,7 +872,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          }
 
          @Override
-         public PojoWithExternalAndInternal readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public PojoWithExternalAndInternal readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             Human human = (Human) input.readObject();
             String value = (String) input.readObject();
             return new PojoWithExternalAndInternal(human, value);

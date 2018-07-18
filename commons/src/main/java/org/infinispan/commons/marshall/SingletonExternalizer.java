@@ -1,7 +1,6 @@
 package org.infinispan.commons.marshall;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 
 import org.infinispan.commons.util.Util;
@@ -31,7 +30,7 @@ public class SingletonExternalizer<T> implements AdvancedExternalizer<T> {
    }
 
    @Override
-   public T readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public T readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
       return instance;
    }
 }

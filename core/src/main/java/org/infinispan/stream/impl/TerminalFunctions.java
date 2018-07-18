@@ -1,7 +1,6 @@
 package org.infinispan.stream.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Comparator;
 import java.util.DoubleSummaryStatistics;
 import java.util.IntSummaryStatistics;
@@ -42,6 +41,7 @@ import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -335,7 +335,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public AllMatchFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AllMatchFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new AllMatchFunction((Predicate) input.readObject());
          }
       }
@@ -361,7 +361,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public AllMatchDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AllMatchDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new AllMatchDoubleFunction((DoublePredicate) input.readObject());
          }
       }
@@ -387,7 +387,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public AllMatchIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AllMatchIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new AllMatchIntFunction((IntPredicate) input.readObject());
          }
       }
@@ -413,7 +413,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public AllMatchLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AllMatchLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new AllMatchLongFunction((LongPredicate) input.readObject());
          }
       }
@@ -439,7 +439,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public AnyMatchFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AnyMatchFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new AnyMatchFunction((Predicate) input.readObject());
          }
       }
@@ -465,7 +465,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public AnyMatchDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AnyMatchDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new AnyMatchDoubleFunction((DoublePredicate) input.readObject());
          }
       }
@@ -491,7 +491,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public AnyMatchIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AnyMatchIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new AnyMatchIntFunction((IntPredicate) input.readObject());
          }
       }
@@ -517,7 +517,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public AnyMatchLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AnyMatchLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new AnyMatchLongFunction((LongPredicate) input.readObject());
          }
       }
@@ -545,7 +545,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public AverageDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AverageDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -573,7 +573,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public AverageIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AverageIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -601,7 +601,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public AverageLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AverageLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -630,7 +630,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public CountFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CountFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -657,7 +657,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public CountDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CountDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -684,7 +684,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public CountIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CountIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -711,7 +711,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public CountLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CountLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -738,7 +738,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public FindAnyFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public FindAnyFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -770,7 +770,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public FindAnyDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public FindAnyDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -802,7 +802,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public FindAnyIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public FindAnyIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -834,7 +834,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public FindAnyLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public FindAnyLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -860,7 +860,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public NoneMatchFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public NoneMatchFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new NoneMatchFunction((Predicate) input.readObject());
          }
       }
@@ -886,7 +886,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public NoneMatchDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public NoneMatchDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new NoneMatchDoubleFunction((DoublePredicate) input.readObject());
          }
       }
@@ -912,7 +912,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public NoneMatchIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public NoneMatchIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new NoneMatchIntFunction((IntPredicate) input.readObject());
          }
       }
@@ -938,7 +938,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public NoneMatchLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public NoneMatchLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new NoneMatchLongFunction((LongPredicate) input.readObject());
          }
       }
@@ -971,7 +971,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public CollectFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CollectFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new CollectFunction((Supplier) input.readObject(), (BiConsumer) input.readObject(),
                     (BiConsumer) input.readObject());
          }
@@ -1005,7 +1005,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public CollectDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CollectDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new CollectDoubleFunction((Supplier) input.readObject(), (ObjDoubleConsumer) input.readObject(),
                     (BiConsumer) input.readObject());
          }
@@ -1039,7 +1039,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public CollectIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CollectIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new CollectIntFunction((Supplier) input.readObject(), (ObjIntConsumer) input.readObject(),
                     (BiConsumer) input.readObject());
          }
@@ -1073,7 +1073,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public CollectLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CollectLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new CollectLongFunction((Supplier) input.readObject(), (ObjLongConsumer) input.readObject(),
                     (BiConsumer) input.readObject());
          }
@@ -1100,7 +1100,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public CollectorFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CollectorFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new CollectorFunction((Collector) input.readObject());
          }
       }
@@ -1127,7 +1127,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public ForEachFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ForEachFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachFunction((Consumer) input.readObject());
          }
       }
@@ -1154,7 +1154,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public ForEachBiConsumerFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ForEachBiConsumerFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachBiConsumerFunction((BiConsumer) input.readObject());
          }
       }
@@ -1181,7 +1181,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public ForEachDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ForEachDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachDoubleFunction((DoubleConsumer) input.readObject());
          }
       }
@@ -1208,7 +1208,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public ForEachObjDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ForEachObjDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachObjDoubleFunction((ObjDoubleConsumer) input.readObject());
          }
       }
@@ -1235,7 +1235,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public ForEachIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ForEachIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachIntFunction((IntConsumer) input.readObject());
          }
       }
@@ -1262,7 +1262,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public ForEachObjIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ForEachObjIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachObjIntFunction((ObjIntConsumer) input.readObject());
          }
       }
@@ -1289,7 +1289,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public ForEachLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ForEachLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachLongFunction((LongConsumer) input.readObject());
          }
       }
@@ -1316,7 +1316,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public ForEachObjLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ForEachObjLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachObjLongFunction((ObjLongConsumer) input.readObject());
          }
       }
@@ -1342,7 +1342,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public MaxFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public MaxFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new MaxFunction((Comparator) input.readObject());
          }
       }
@@ -1374,7 +1374,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public MaxDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public MaxDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return MaxDoubleFunction.getInstance();
          }
       }
@@ -1406,7 +1406,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public MaxIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public MaxIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return MaxIntFunction.getInstance();
          }
       }
@@ -1438,7 +1438,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public MaxLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public MaxLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return MaxLongFunction.getInstance();
          }
       }
@@ -1464,7 +1464,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public MinFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public MinFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new MinFunction((Comparator) input.readObject());
          }
       }
@@ -1496,7 +1496,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public MinDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public MinDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return MinDoubleFunction.getInstance();
          }
       }
@@ -1528,7 +1528,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public MinIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public MinIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return MinIntFunction.getInstance();
          }
       }
@@ -1560,7 +1560,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public MinLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public MinLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return MinLongFunction.getInstance();
          }
       }
@@ -1587,7 +1587,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public ReduceFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ReduceFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ReduceFunction((BinaryOperator) input.readObject());
          }
       }
@@ -1619,7 +1619,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public ReduceDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ReduceDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ReduceDoubleFunction((DoubleBinaryOperator) input.readObject());
          }
       }
@@ -1651,7 +1651,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public ReduceIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ReduceIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ReduceIntFunction((IntBinaryOperator) input.readObject());
          }
       }
@@ -1683,7 +1683,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public ReduceLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ReduceLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ReduceLongFunction((LongBinaryOperator) input.readObject());
          }
       }
@@ -1713,7 +1713,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public IdentityReduceFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public IdentityReduceFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new IdentityReduceFunction(input.readObject(), (BinaryOperator) input.readObject());
          }
       }
@@ -1743,7 +1743,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public IdentityReduceDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public IdentityReduceDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new IdentityReduceDoubleFunction(input.readDouble(), (DoubleBinaryOperator) input.readObject());
          }
       }
@@ -1773,7 +1773,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public IdentityReduceIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public IdentityReduceIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new IdentityReduceIntFunction(input.readInt(), (IntBinaryOperator) input.readObject());
          }
       }
@@ -1803,7 +1803,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public IdentityReduceLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public IdentityReduceLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new IdentityReduceLongFunction(input.readLong(), (LongBinaryOperator) input.readObject());
          }
       }
@@ -1837,7 +1837,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public IdentityReduceCombinerFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public IdentityReduceCombinerFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new IdentityReduceCombinerFunction(input.readObject(), (BiFunction) input.readObject(),
                     (BinaryOperator) input.readObject());
          }
@@ -1865,7 +1865,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public SumDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public SumDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return SumDoubleFunction.getInstance();
          }
       }
@@ -1892,7 +1892,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public SumIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public SumIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return SumIntFunction.getInstance();
          }
       }
@@ -1919,7 +1919,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public SumLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public SumLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return SumLongFunction.getInstance();
          }
       }
@@ -1947,7 +1947,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public SummaryStatisticsDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public SummaryStatisticsDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return SummaryStatisticsDoubleFunction.getInstance();
          }
       }
@@ -1975,7 +1975,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public SummaryStatisticsIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public SummaryStatisticsIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return SummaryStatisticsIntFunction.getInstance();
          }
       }
@@ -2003,7 +2003,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public SummaryStatisticsLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public SummaryStatisticsLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return SummaryStatisticsLongFunction.getInstance();
          }
       }
@@ -2030,7 +2030,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public ToArrayFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ToArrayFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return ToArrayFunction.getInstance();
          }
       }
@@ -2057,7 +2057,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public ToArrayDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ToArrayDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return ToArrayDoubleFunction.getInstance();
          }
       }
@@ -2084,7 +2084,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public ToArrayIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ToArrayIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return ToArrayIntFunction.getInstance();
          }
       }
@@ -2111,7 +2111,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public ToArrayLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ToArrayLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return ToArrayLongFunction.getInstance();
          }
       }
@@ -2137,7 +2137,7 @@ final class TerminalFunctions {
          }
 
          @Override
-         public ToArrayGeneratorFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ToArrayGeneratorFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ToArrayGeneratorFunction((IntFunction) input.readObject());
          }
       }

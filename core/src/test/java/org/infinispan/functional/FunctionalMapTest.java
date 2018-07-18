@@ -27,7 +27,6 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -46,6 +45,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.functional.EntryView.ReadEntryView;
@@ -125,7 +125,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       private static final SetStringConstant INSTANCE = new SetStringConstant();
       public static final class Externalizer0 implements Externalizer<Object> {
          public void writeObject(UserObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+         public Object readObject(UserObjectInput input) { return INSTANCE; }
       }
    }
 
@@ -186,7 +186,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
          new SetValueAndConstantLifespan<>();
       public static final class Externalizer0 implements Externalizer<Object> {
          public void writeObject(UserObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+         public Object readObject(UserObjectInput input) { return INSTANCE; }
       }
    }
 
@@ -275,7 +275,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
          new SetStringConstantReturnPrevious<>();
       public static final class Externalizer0 implements Externalizer<Object> {
          public void writeObject(UserObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+         public Object readObject(UserObjectInput input) { return INSTANCE; }
       }
    }
 
@@ -363,7 +363,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
          new SetStringAndVersionConstant<>();
       public static final class Externalizer0 implements Externalizer<Object> {
          public void writeObject(UserObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+         public Object readObject(UserObjectInput input) { return INSTANCE; }
       }
    }
 
@@ -393,7 +393,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
          }
 
          @Override
-         public VersionBasedConditionalReplace<?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public VersionBasedConditionalReplace<?> readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             long version = input.readLong();
             return new VersionBasedConditionalReplace<>(version);
          }

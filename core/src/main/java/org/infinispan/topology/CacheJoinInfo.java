@@ -1,7 +1,6 @@
 package org.infinispan.topology;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -9,6 +8,7 @@ import java.util.Set;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -185,7 +185,7 @@ public class CacheJoinInfo {
       }
 
       @Override
-      public CacheJoinInfo readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public CacheJoinInfo readObject(UserObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          ConsistentHashFactory consistentHashFactory = (ConsistentHashFactory) unmarshaller.readObject();
          Hash hashFunction = (Hash) unmarshaller.readObject();
          int numSegments = unmarshaller.readInt();

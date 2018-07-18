@@ -1,7 +1,6 @@
 package org.infinispan.stream.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.Iterator;
@@ -11,6 +10,7 @@ import java.util.Spliterators;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -157,7 +157,7 @@ public abstract class IteratorResponses implements IteratorResponse {
       }
 
       @Override
-      public IteratorResponses readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public IteratorResponses readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          int batchSize = input.readInt();
          Object object = input.readObject();
          Spliterator<Object> spliterator;

@@ -21,6 +21,7 @@ import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.Util;
@@ -354,7 +355,7 @@ public final class DataConversion {
       }
 
       @Override
-      public DataConversion readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public DataConversion readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return readFrom(input);
       }
 

@@ -18,6 +18,7 @@ import java.util.function.Function;
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.FunctionalMap;
@@ -432,7 +433,7 @@ public class AtomicMapProxyImpl<K, V, MK> implements AtomicMap<K, V> {
       }
 
       @Override
-      public ExternalizableFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ExternalizableFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          int id = input.read();
          switch (FUNCTIONS[id]) {
             case TOUCH:

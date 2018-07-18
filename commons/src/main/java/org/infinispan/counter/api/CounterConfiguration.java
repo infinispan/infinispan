@@ -7,13 +7,13 @@ import static org.infinispan.counter.util.EncodeUtil.decodeType;
 import static org.infinispan.counter.util.EncodeUtil.encodeTypeAndStorage;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
@@ -242,7 +242,7 @@ public class CounterConfiguration {
       }
 
       @Override
-      public CounterConfiguration readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public CounterConfiguration readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          byte flags = input.readByte();
          CounterType type = decodeType(flags);
          Builder builder = builder(type);

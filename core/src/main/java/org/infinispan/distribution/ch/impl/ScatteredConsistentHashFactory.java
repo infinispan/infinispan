@@ -3,6 +3,7 @@ package org.infinispan.distribution.ch.impl;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
@@ -10,7 +11,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -237,7 +237,7 @@ public class ScatteredConsistentHashFactory extends AbstractConsistentHashFactor
 
       @Override
       @SuppressWarnings("unchecked")
-      public ScatteredConsistentHashFactory readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public ScatteredConsistentHashFactory readObject(UserObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          return new ScatteredConsistentHashFactory();
       }
 

@@ -5,7 +5,6 @@ import static java.util.Arrays.stream;
 import static java.util.Collections.emptyMap;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Comparator;
@@ -20,6 +19,7 @@ import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 
 
@@ -299,7 +299,7 @@ public final class MediaType {
 
       @Override
       @SuppressWarnings("unchecked")
-      public MediaType readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MediaType readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          boolean isInternal = input.readBoolean();
          if (isInternal) {
             short id = input.readShort();

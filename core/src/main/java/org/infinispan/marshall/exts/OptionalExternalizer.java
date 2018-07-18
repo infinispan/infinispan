@@ -1,11 +1,11 @@
 package org.infinispan.marshall.exts;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Optional;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
@@ -20,7 +20,7 @@ public class OptionalExternalizer extends AbstractExternalizer<Optional> {
    }
 
    @Override
-   public Optional readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public Optional readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
       boolean isPresent = input.readByte() == 1;
       return isPresent ? Optional.of(input.readObject()) : Optional.empty();
    }

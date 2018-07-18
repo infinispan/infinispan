@@ -2,7 +2,6 @@ package org.infinispan.commons.util;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInput;
 import java.io.Reader;
 import java.io.Serializable;
 import java.lang.reflect.Array;
@@ -22,6 +21,7 @@ import java.util.function.Consumer;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 
 
@@ -528,7 +528,7 @@ public class Immutables {
       }
 
       @Override
-      public Set readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public Set readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          Set<Object> set = MarshallUtil.unmarshallCollection(input, HashSet::new);
          return Immutables.immutableSetWrap(set);
       }
@@ -637,7 +637,7 @@ public class Immutables {
       }
 
       @Override
-      public Map readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public Map readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return Immutables.immutableMapWrap(MarshallUtil.unmarshallMap(input, HashMap::new));
       }
 

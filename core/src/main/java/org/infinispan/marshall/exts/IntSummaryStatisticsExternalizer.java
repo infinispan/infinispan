@@ -1,13 +1,13 @@
 package org.infinispan.marshall.exts;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.lang.reflect.Field;
 import java.util.IntSummaryStatistics;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.NotSerializableException;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
@@ -63,7 +63,7 @@ public class IntSummaryStatisticsExternalizer extends AbstractExternalizer<IntSu
    }
 
    @Override
-   public IntSummaryStatistics readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public IntSummaryStatistics readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
       verifySerialization();
       IntSummaryStatistics summaryStatistics = new IntSummaryStatistics();
       try {

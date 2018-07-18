@@ -2,6 +2,7 @@ package org.infinispan.marshall.exts;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.FastCopyHashMap;
 import org.infinispan.commons.util.Util;
@@ -10,7 +11,6 @@ import org.infinispan.marshall.core.Ids;
 import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -95,7 +95,7 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
    }
 
    @Override
-   public Collection readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public Collection readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
       int magicNumber = input.readUnsignedByte();
       switch (magicNumber) {
          case ARRAY_LIST:

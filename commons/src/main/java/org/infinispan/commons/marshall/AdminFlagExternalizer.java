@@ -1,7 +1,6 @@
 package org.infinispan.commons.marshall;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.Set;
 
@@ -14,7 +13,7 @@ public class AdminFlagExternalizer extends AbstractExternalizer<CacheContainerAd
    }
 
    @Override
-   public CacheContainerAdmin.AdminFlag readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public CacheContainerAdmin.AdminFlag readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
       return MarshallUtil.unmarshallEnum(input, CacheContainerAdmin.AdminFlag::valueOf);
    }
 

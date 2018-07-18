@@ -1,13 +1,13 @@
 package org.infinispan.transaction.xa.recovery;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -96,7 +96,7 @@ public class InDoubtTxInfoImpl implements RecoveryManager.InDoubtTxInfo {
       }
 
       @Override
-      public InDoubtTxInfoImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public InDoubtTxInfoImpl readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new InDoubtTxInfoImpl((Xid) input.readObject(), input.readLong(), (IntSet) input.readObject());
       }
 

@@ -1,7 +1,6 @@
 package org.infinispan.context;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
@@ -10,6 +9,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -338,7 +338,7 @@ public enum Flag {
       }
 
       @Override
-      public Flag readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public Flag readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return MarshallUtil.unmarshallEnum(input, Flag::valueOf);
       }
 

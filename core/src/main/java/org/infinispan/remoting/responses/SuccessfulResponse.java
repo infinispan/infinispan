@@ -1,10 +1,10 @@
 package org.infinispan.remoting.responses;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
@@ -66,7 +66,7 @@ public class SuccessfulResponse extends ValidResponse {
       }
 
       @Override
-      public SuccessfulResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public SuccessfulResponse readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return create(input.readObject());
       }
 

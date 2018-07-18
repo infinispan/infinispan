@@ -1,12 +1,12 @@
 package org.infinispan.globalstate;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
@@ -79,7 +79,7 @@ public class ScopedState {
       }
 
       @Override
-      public ScopedState readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ScopedState readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          String scope = input.readUTF();
          String name = input.readUTF();
 

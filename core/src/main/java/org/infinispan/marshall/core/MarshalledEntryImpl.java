@@ -1,12 +1,12 @@
 package org.infinispan.marshall.core;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.metadata.InternalMetadata;
@@ -211,7 +211,7 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
       }
 
       @Override
-      public MarshalledEntryImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MarshalledEntryImpl readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          ByteBuffer keyBytes = (ByteBuffer) input.readObject();
          ByteBuffer valueBytes = (ByteBuffer) input.readObject();
          ByteBuffer metadataBytes = (ByteBuffer) input.readObject();

@@ -1,11 +1,11 @@
 package org.infinispan.atomic;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.marshall.core.Ids;
 
@@ -64,7 +64,7 @@ public final class DeltaCompositeKey {
 
       @Override
       @SuppressWarnings("unchecked")
-      public DeltaCompositeKey readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public DeltaCompositeKey readObject(UserObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          Object deltaAwareValueKey = unmarshaller.readObject();
          Object entryKey = unmarshaller.readObject();
          return new DeltaCompositeKey(deltaAwareValueKey, entryKey);

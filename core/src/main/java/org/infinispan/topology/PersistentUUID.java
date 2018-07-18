@@ -1,12 +1,12 @@
 package org.infinispan.topology;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
@@ -96,7 +96,7 @@ public class PersistentUUID implements Address {
       }
 
       @Override
-      public PersistentUUID readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public PersistentUUID readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new PersistentUUID(input.readLong(), input.readLong());
       }
 

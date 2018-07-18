@@ -1,11 +1,11 @@
 package org.infinispan.metadata;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
@@ -347,7 +347,7 @@ public class EmbeddedMetadata implements Metadata {
       }
 
       @Override
-      public EmbeddedMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public EmbeddedMetadata readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          int number = input.readUnsignedByte();
          switch (number) {
             case IMMORTAL:

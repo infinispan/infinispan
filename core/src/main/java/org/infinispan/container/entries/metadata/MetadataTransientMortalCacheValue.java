@@ -3,11 +3,11 @@ package org.infinispan.container.entries.metadata;
 import static java.lang.Math.min;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.ExpiryHelper;
@@ -77,7 +77,7 @@ public class MetadataTransientMortalCacheValue extends MetadataMortalCacheValue 
       }
 
       @Override
-      public MetadataTransientMortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MetadataTransientMortalCacheValue readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
          Metadata metadata = (Metadata) input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);

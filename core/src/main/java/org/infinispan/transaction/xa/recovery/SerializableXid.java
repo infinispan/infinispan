@@ -1,13 +1,13 @@
 package org.infinispan.transaction.xa.recovery;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Arrays;
 import java.util.Set;
 
 import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
@@ -111,7 +111,7 @@ public class SerializableXid implements Xid {
       }
 
       @Override
-      public SerializableXid readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public SerializableXid readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          byte[] bq = (byte[]) input.readObject();
          byte[] gtId = (byte[]) input.readObject();
          int type = input.readInt();

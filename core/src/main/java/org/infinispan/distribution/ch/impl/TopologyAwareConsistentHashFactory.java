@@ -1,12 +1,12 @@
 package org.infinispan.distribution.ch.impl;
 
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.distribution.topologyaware.TopologyInfo;
 import org.infinispan.distribution.topologyaware.TopologyLevel;
@@ -247,7 +247,7 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
 
       @Override
       @SuppressWarnings("unchecked")
-      public TopologyAwareConsistentHashFactory readObject(ObjectInput unmarshaller) {
+      public TopologyAwareConsistentHashFactory readObject(UserObjectInput unmarshaller) {
          return new TopologyAwareConsistentHashFactory();
       }
 

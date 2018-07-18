@@ -1,12 +1,12 @@
 package org.infinispan.remoting.responses;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.transport.Address;
@@ -41,7 +41,7 @@ public class BiasRevocationResponse extends SuccessfulResponse {
       }
 
       @Override
-      public BiasRevocationResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public BiasRevocationResponse readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          Object value = input.readObject();
          Address[] waitFor = MarshallUtil.unmarshallArray(input, Address[]::new);
          return new BiasRevocationResponse(value, waitFor);

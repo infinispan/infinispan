@@ -1,7 +1,6 @@
 package org.infinispan.atomic.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 import java.util.function.BiFunction;
 
@@ -9,6 +8,7 @@ import org.infinispan.atomic.CopyableDeltaAware;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.functional.EntryView;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -85,7 +85,7 @@ public final class ApplyDelta<K> implements BiFunction<Object, EntryView.ReadWri
       }
 
       @Override
-      public ApplyDelta readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ApplyDelta readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new ApplyDelta(gcr.getComponent(Marshaller.class));
       }
    }

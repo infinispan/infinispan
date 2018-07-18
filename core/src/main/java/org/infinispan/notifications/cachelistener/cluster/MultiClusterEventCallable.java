@@ -1,7 +1,6 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -11,6 +10,7 @@ import java.util.UUID;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.marshall.core.Ids;
@@ -72,7 +72,7 @@ public class MultiClusterEventCallable<K, V> implements DistributedCallable<K, V
       }
 
       @Override
-      public MultiClusterEventCallable readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MultiClusterEventCallable readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new MultiClusterEventCallable((Map<UUID, Collection<? extends ClusterEvent>>)input.readObject());
       }
 

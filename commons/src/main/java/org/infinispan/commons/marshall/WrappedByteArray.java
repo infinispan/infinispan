@@ -1,7 +1,6 @@
 package org.infinispan.commons.marshall;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
@@ -114,7 +113,7 @@ public class WrappedByteArray implements WrappedBytes {
       }
 
       @Override
-      public WrappedByteArray readObject(ObjectInput input) throws IOException {
+      public WrappedByteArray readObject(UserObjectInput input) throws IOException {
          byte[] bytes = MarshallUtil.unmarshallByteArray(input);
          boolean hasHashCode = input.readBoolean();
          if (hasHashCode) {

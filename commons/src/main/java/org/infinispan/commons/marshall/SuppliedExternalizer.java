@@ -1,7 +1,6 @@
 package org.infinispan.commons.marshall;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -33,7 +32,7 @@ public class SuppliedExternalizer<T> implements AdvancedExternalizer<T> {
    }
 
    @Override
-   public T readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public T readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
       return supplier.get();
    }
 }

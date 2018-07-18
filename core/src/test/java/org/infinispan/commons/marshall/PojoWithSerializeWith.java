@@ -1,7 +1,6 @@
 package org.infinispan.commons.marshall;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.io.Serializable;
 
 
@@ -49,7 +48,7 @@ public class PojoWithSerializeWith {
       }
 
       @Override
-      public PojoWithSerializeWith readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public PojoWithSerializeWith readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new PojoWithSerializeWith(PojoWithAttributes.readObject(input));
       }
    }

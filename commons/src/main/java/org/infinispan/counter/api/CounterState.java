@@ -1,13 +1,13 @@
 package org.infinispan.counter.api;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
@@ -55,7 +55,7 @@ public enum CounterState {
       }
 
       @Override
-      public CounterState readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public CounterState readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return MarshallUtil.unmarshallEnum(input, CounterState::valueOf);
       }
    }

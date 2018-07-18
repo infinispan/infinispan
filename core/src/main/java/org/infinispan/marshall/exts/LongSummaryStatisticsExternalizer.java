@@ -1,13 +1,13 @@
 package org.infinispan.marshall.exts;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.lang.reflect.Field;
 import java.util.LongSummaryStatistics;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.NotSerializableException;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
@@ -63,7 +63,7 @@ public class LongSummaryStatisticsExternalizer extends AbstractExternalizer<Long
    }
 
    @Override
-   public LongSummaryStatistics readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public LongSummaryStatistics readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
       verifySerialization();
       LongSummaryStatistics summaryStatistics = new LongSummaryStatistics();
       try {

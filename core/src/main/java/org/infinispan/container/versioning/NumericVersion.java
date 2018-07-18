@@ -1,11 +1,11 @@
 package org.infinispan.container.versioning;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.marshall.core.Ids;
 
@@ -80,7 +80,7 @@ public class NumericVersion implements IncrementableEntryVersion {
       }
 
       @Override
-      public NumericVersion readObject(ObjectInput input) throws IOException {
+      public NumericVersion readObject(UserObjectInput input) throws IOException {
          return new NumericVersion(input.readLong());
       }
 

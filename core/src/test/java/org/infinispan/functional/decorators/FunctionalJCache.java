@@ -15,7 +15,6 @@ import static org.infinispan.marshall.core.MarshallableFunctions.setValueIfPrese
 import static org.infinispan.marshall.core.MarshallableFunctions.setValueReturnPrevOrNull;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -223,7 +222,7 @@ public final class FunctionalJCache<K, V> implements Cache<K, V>, FunctionalList
             for (Object argument : o.arguments)
                oo.writeObject(argument);
          }
-         public InvokeFunction<?, ?, ?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public InvokeFunction<?, ?, ?> readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             EntryProcessor<?, ?, ?> entryProcessor = (EntryProcessor<?, ?, ?>) input.readObject();
             int length = input.readInt();
             Object[] arguments = new Object[length];
@@ -302,7 +301,7 @@ public final class FunctionalJCache<K, V> implements Cache<K, V>, FunctionalList
             for (Object argument : o.arguments)
                oo.writeObject(argument);
          }
-         public InvokeAllFunction<?, ?, ?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public InvokeAllFunction<?, ?, ?> readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             EntryProcessor<?, ?, ?> entryProcessor = (EntryProcessor<?, ?, ?>) input.readObject();
             int length = input.readInt();
             Object[] arguments = new Object[length];

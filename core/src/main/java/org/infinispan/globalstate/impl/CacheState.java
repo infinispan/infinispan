@@ -1,7 +1,6 @@
 package org.infinispan.globalstate.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
@@ -11,6 +10,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
@@ -54,7 +54,7 @@ public class CacheState {
       }
 
       @Override
-      public CacheState readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public CacheState readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          String template = MarshallUtil.unmarshallString(input);
          String configuration = MarshallUtil.unmarshallString(input);
          EnumSet<CacheContainerAdmin.AdminFlag> flags = (EnumSet<CacheContainerAdmin.AdminFlag>) input.readObject();

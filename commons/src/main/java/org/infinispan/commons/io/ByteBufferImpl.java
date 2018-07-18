@@ -3,12 +3,12 @@ package org.infinispan.commons.io;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
@@ -121,7 +121,7 @@ public class ByteBufferImpl implements ByteBuffer {
       }
 
       @Override
-      public ByteBufferImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ByteBufferImpl readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          int length = UnsignedNumeric.readUnsignedInt(input);
          byte[] data = new byte[length];
          input.readFully(data, 0, length);

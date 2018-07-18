@@ -1,6 +1,5 @@
 package org.infinispan.distribution.ch.impl;
 
-import java.io.ObjectInput;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.List;
@@ -10,6 +9,7 @@ import java.util.Set;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
@@ -156,7 +156,7 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
 
       @Override
       @SuppressWarnings("unchecked")
-      public ReplicatedConsistentHashFactory readObject(ObjectInput unmarshaller) {
+      public ReplicatedConsistentHashFactory readObject(UserObjectInput unmarshaller) {
          return new ReplicatedConsistentHashFactory();
       }
 

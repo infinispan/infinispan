@@ -1,9 +1,9 @@
 package org.infinispan.marshall.exts;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.functional.MetaParam.MetaEntryVersion;
@@ -26,7 +26,7 @@ public final class MetaParamExternalizers {
       }
 
       @Override
-      public MetaLifespan readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MetaLifespan readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new MetaLifespan(input.readLong());
       }
 
@@ -48,7 +48,7 @@ public final class MetaParamExternalizers {
       }
 
       @Override
-      public MetaMaxIdle readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MetaMaxIdle readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new MetaMaxIdle(input.readLong());
       }
 
@@ -70,7 +70,7 @@ public final class MetaParamExternalizers {
       }
 
       @Override
-      public MetaEntryVersion readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MetaEntryVersion readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          EntryVersion entryVersion = (EntryVersion) input.readObject();
          return new MetaEntryVersion(entryVersion);
       }

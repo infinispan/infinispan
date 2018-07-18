@@ -3,12 +3,12 @@ package org.infinispan.container.entries;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
@@ -141,7 +141,7 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       }
 
       @Override
-      public TransientCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public TransientCacheEntry readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          Object k = input.readObject();
          Object v = input.readObject();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);

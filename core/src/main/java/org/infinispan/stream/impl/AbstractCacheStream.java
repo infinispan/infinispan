@@ -1,7 +1,6 @@
 package org.infinispan.stream.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -31,6 +30,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
@@ -803,7 +803,7 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       }
 
       @Override
-      public IntermediateOperation readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public IntermediateOperation readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          int number = input.readUnsignedByte();
          switch (number) {
             case MAP:

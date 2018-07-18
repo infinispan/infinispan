@@ -1,12 +1,12 @@
 package org.infinispan.transaction.xa.recovery;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.Set;
 
 import javax.transaction.xa.Xid;
 
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
@@ -80,7 +80,7 @@ public class RecoveryAwareDldGlobalTransaction extends DldGlobalTransaction impl
 
       @Override
       @SuppressWarnings("unchecked")
-      public RecoveryAwareDldGlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public RecoveryAwareDldGlobalTransaction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          RecoveryAwareDldGlobalTransaction globalTransaction = super.readObject(input);
          globalTransaction.setCoinToss(input.readLong());
          Object locksAtOriginObj = input.readObject();

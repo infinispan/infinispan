@@ -1,11 +1,11 @@
 package org.infinispan.filter;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -50,7 +50,7 @@ public class KeyFilterAsKeyValueFilter<K, V> implements KeyValueFilter<K, V> {
       }
 
       @Override
-      public KeyFilterAsKeyValueFilter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public KeyFilterAsKeyValueFilter readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new KeyFilterAsKeyValueFilter((KeyFilter)input.readObject());
       }
 

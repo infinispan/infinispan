@@ -3,10 +3,10 @@ package org.infinispan.container.entries;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
@@ -127,7 +127,7 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
       }
 
       @Override
-      public ImmortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ImmortalCacheEntry readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          Object k = input.readObject();
          Object v = input.readObject();
          return new ImmortalCacheEntry(k, v);

@@ -13,6 +13,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.atomic.FineGrainedAtomicMap;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.impl.MergeOnStore;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
@@ -488,7 +489,7 @@ public final class AtomicKeySetImpl<K> implements MergeOnStore {
       }
 
       @Override
-      public AtomicKeySetImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public AtomicKeySetImpl readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          ByteString cacheName1 = ByteString.readObject(input);
          Object group = input.readObject();
          ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName1);
@@ -531,7 +532,7 @@ public final class AtomicKeySetImpl<K> implements MergeOnStore {
       }
 
       @Override
-      public Externalizable readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public Externalizable readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          Type type = TYPES[input.readByte()];
          switch (type) {
             case KEY:

@@ -3,13 +3,13 @@ package org.infinispan.functional.impl;
 import static org.infinispan.metadata.Metadatas.updateMetadata;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.Util;
@@ -655,7 +655,7 @@ public final class EntryViews {
       }
 
       @Override
-      public ReadOnlySnapshotView readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ReadOnlySnapshotView readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          Object key = input.readObject();
          Object value = input.readObject();
          Metadata metadata = (Metadata) input.readObject();
@@ -681,7 +681,7 @@ public final class EntryViews {
       }
 
       @Override
-      public NoValueReadOnlyView readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public NoValueReadOnlyView readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new NoValueReadOnlyView(input.readObject(), null);
       }
    }
@@ -709,7 +709,7 @@ public final class EntryViews {
 
       @Override
       @SuppressWarnings("unchecked")
-      public ReadWriteSnapshotView readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ReadWriteSnapshotView readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          Object key = input.readObject();
          Object value = input.readObject();
          Metadata metadata = (Metadata) input.readObject();

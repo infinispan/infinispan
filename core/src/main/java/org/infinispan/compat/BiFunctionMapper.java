@@ -1,13 +1,13 @@
 package org.infinispan.compat;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.Set;
 import java.util.function.BiFunction;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
@@ -62,7 +62,7 @@ public class BiFunctionMapper implements BiFunction {
       }
 
       @Override
-      public BiFunctionMapper readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public BiFunctionMapper readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new BiFunctionMapper((BiFunction) input.readObject(),
                DataConversion.readFrom(input), DataConversion.readFrom(input));
       }

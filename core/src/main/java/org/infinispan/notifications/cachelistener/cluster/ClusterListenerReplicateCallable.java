@@ -1,7 +1,6 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.HashSet;
@@ -11,6 +10,7 @@ import java.util.UUID;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.DistributedExecutorService;
@@ -170,7 +170,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
       }
 
       @Override
-      public ClusterListenerReplicateCallable readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ClusterListenerReplicateCallable readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          UUID id = (UUID) input.readObject();
          Address address = (Address) input.readObject();
          CacheEventFilter filter = (CacheEventFilter) input.readObject();

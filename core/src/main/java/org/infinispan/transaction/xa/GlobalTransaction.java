@@ -1,12 +1,12 @@
 package org.infinispan.transaction.xa;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
@@ -125,7 +125,7 @@ public class GlobalTransaction implements Cloneable {
       protected abstract T createGlobalTransaction();
 
       @Override
-      public T readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public T readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          T gtx = createGlobalTransaction();
          gtx.id = input.readLong();
          gtx.addr = (Address) input.readObject();

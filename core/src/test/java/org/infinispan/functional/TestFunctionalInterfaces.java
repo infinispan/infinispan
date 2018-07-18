@@ -1,10 +1,10 @@
 package org.infinispan.functional;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
@@ -37,7 +37,7 @@ public class TestFunctionalInterfaces {
          }
 
          @Override
-         public SetConstantOnReadWrite<?> readObject(ObjectInput input)
+         public SetConstantOnReadWrite<?> readObject(UserObjectInput input)
                throws IOException, ClassNotFoundException {
             String constant = input.readUTF();
             return new SetConstantOnReadWrite<>(constant);
@@ -67,7 +67,7 @@ public class TestFunctionalInterfaces {
          }
 
          @Override
-         public SetConstantOnWriteOnly readObject(ObjectInput input)
+         public SetConstantOnWriteOnly readObject(UserObjectInput input)
                throws IOException, ClassNotFoundException {
             String constant = input.readUTF();
             return new SetConstantOnWriteOnly(constant);

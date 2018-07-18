@@ -3,10 +3,10 @@ package org.infinispan.metadata.impl;
 import static java.lang.Math.min;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -148,7 +148,7 @@ public class InternalMetadataImpl implements InternalMetadata {
       }
 
       @Override
-      public InternalMetadataImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public InternalMetadataImpl readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          long created = input.readLong();
          long lastUsed = input.readLong();
          Metadata actual = (Metadata) input.readObject();

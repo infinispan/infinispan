@@ -4,11 +4,11 @@ import static java.lang.Math.min;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
@@ -168,7 +168,7 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
       }
 
       @Override
-      public TransientMortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public TransientMortalCacheEntry readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          Object k = input.readObject();
          Object v = input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);

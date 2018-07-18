@@ -1,11 +1,11 @@
 package org.infinispan.container.entries.metadata;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.ExpiryHelper;
@@ -88,7 +88,7 @@ public class MetadataTransientCacheValue extends ImmortalCacheValue implements M
       }
 
       @Override
-      public MetadataTransientCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MetadataTransientCacheValue readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
          Metadata metadata = (Metadata) input.readObject();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);

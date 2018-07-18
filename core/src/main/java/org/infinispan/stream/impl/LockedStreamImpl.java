@@ -1,7 +1,6 @@
 package org.infinispan.stream.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -20,6 +19,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
@@ -277,7 +277,7 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
          }
 
          @Override
-         public CacheEntryFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CacheEntryFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new CacheEntryFunction((BiFunction) input.readObject(), (Predicate) input.readObject());
          }
       }
@@ -312,7 +312,7 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
          }
 
          @Override
-         public CacheEntryConsumer readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CacheEntryConsumer readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new CacheEntryConsumer((BiConsumer) input.readObject(), (Predicate) input.readObject());
          }
       }

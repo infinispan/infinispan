@@ -1,11 +1,11 @@
 package org.infinispan.partitionhandling;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
@@ -51,7 +51,7 @@ public enum AvailabilityMode {
       }
 
       @Override
-      public AvailabilityMode readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public AvailabilityMode readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return MarshallUtil.unmarshallEnum(input, AvailabilityMode::valueOf);
       }
    }

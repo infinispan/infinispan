@@ -1,7 +1,6 @@
 package org.infinispan.statetransfer;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -10,6 +9,7 @@ import java.util.Set;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -87,7 +87,7 @@ public class TransactionInfo {
 
       @Override
       @SuppressWarnings("unchecked")
-      public TransactionInfo readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public TransactionInfo readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          GlobalTransaction globalTransaction = (GlobalTransaction) input.readObject();
          int topologyId = input.readInt();
          WriteCommand[] modifications = MarshallUtil.unmarshallArray(input, WriteCommand[]::new);

@@ -1,11 +1,11 @@
 package org.infinispan.container.versioning;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.marshall.core.Ids;
 
@@ -92,7 +92,7 @@ public class SimpleClusteredVersion implements IncrementableEntryVersion {
 
       @Override
       @SuppressWarnings("unchecked")
-      public SimpleClusteredVersion readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public SimpleClusteredVersion readObject(UserObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          int topologyId = unmarshaller.readInt();
          long version = unmarshaller.readLong();
          return new SimpleClusteredVersion(topologyId, version);

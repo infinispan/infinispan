@@ -1,11 +1,11 @@
 package org.infinispan.interceptors.distribution;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
@@ -42,7 +42,7 @@ public class VersionedResult {
       }
 
       @Override
-      public VersionedResult readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public VersionedResult readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new VersionedResult(input.readObject(), (EntryVersion) input.readObject());
       }
    }

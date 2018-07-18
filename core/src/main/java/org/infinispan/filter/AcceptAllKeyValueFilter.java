@@ -1,10 +1,10 @@
 package org.infinispan.filter;
 
-import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
@@ -46,7 +46,7 @@ public class AcceptAllKeyValueFilter implements KeyValueFilter<Object, Object> {
       }
 
       @Override
-      public AcceptAllKeyValueFilter readObject(ObjectInput input) {
+      public AcceptAllKeyValueFilter readObject(UserObjectInput input) {
          return AcceptAllKeyValueFilter.getInstance();
       }
 

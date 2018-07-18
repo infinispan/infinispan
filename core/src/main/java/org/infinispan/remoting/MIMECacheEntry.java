@@ -1,12 +1,12 @@
 package org.infinispan.remoting;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Set;
@@ -71,7 +71,7 @@ public class MIMECacheEntry implements Serializable {
       }
 
       @Override
-      public MIMECacheEntry readObject(ObjectInput in) throws IOException, ClassNotFoundException {
+      public MIMECacheEntry readObject(UserObjectInput in) throws IOException, ClassNotFoundException {
          String contentType = in.readUTF();
          int len = in.readInt();
          byte[] data = new byte[len];

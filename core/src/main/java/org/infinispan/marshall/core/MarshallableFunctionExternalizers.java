@@ -6,6 +6,7 @@ import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.LambdaExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.marshall.ValueMatcherMode;
 import org.infinispan.commons.util.Util;
@@ -111,7 +112,7 @@ public class MarshallableFunctionExternalizers {
          oo.writeShort(id);
       }
 
-      public Object readObject(ObjectInput input) throws IOException {
+      public Object readObject(UserObjectInput input) throws IOException {
          short id = input.readShort();
          switch (id) {
             case SET_VALUE_RETURN_PREV_OR_NULL: return MarshallableFunctions.setValueReturnPrevOrNull();
@@ -189,7 +190,7 @@ public class MarshallableFunctionExternalizers {
       }
 
       @Override
-      public MarshallableFunctions.LambdaWithMetas readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MarshallableFunctions.LambdaWithMetas readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          short id = input.readShort();
          MetaParam.Writable[] metas = readMetas(input);
          switch (id) {
@@ -227,7 +228,7 @@ public class MarshallableFunctionExternalizers {
          writeMetas(oo, o);
       }
 
-      public MarshallableFunctions.SetValueIfEqualsReturnBoolean readObject(ObjectInput input)
+      public MarshallableFunctions.SetValueIfEqualsReturnBoolean readObject(UserObjectInput input)
          throws IOException, ClassNotFoundException {
          Object oldValue = input.readObject();
          MetaParam.Writable[] metas = readMetas(input);

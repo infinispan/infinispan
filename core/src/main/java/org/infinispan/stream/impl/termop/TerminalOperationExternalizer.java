@@ -1,7 +1,6 @@
 package org.infinispan.stream.impl.termop;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -15,6 +14,7 @@ import java.util.function.ObjLongConsumer;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
@@ -182,7 +182,7 @@ public class TerminalOperationExternalizer implements AdvancedExternalizer<BaseT
    }
 
    @Override
-   public BaseTerminalOperation readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public BaseTerminalOperation readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
       int number = input.readUnsignedByte();
       switch (number) {
          case SINGLE:

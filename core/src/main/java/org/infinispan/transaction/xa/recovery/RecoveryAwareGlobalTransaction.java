@@ -1,11 +1,11 @@
 package org.infinispan.transaction.xa.recovery;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.util.Set;
 
 import javax.transaction.xa.Xid;
 
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
@@ -76,7 +76,7 @@ public class RecoveryAwareGlobalTransaction extends GlobalTransaction implements
       }
 
       @Override
-      public RecoveryAwareGlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public RecoveryAwareGlobalTransaction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          RecoveryAwareGlobalTransaction xidGtx = super.readObject(input);
          Xid xid = (Xid) input.readObject();
          xidGtx.setXid(xid);
