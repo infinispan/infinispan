@@ -1,6 +1,6 @@
 package org.infinispan.partitionhandling.impl;
 
-import static org.infinispan.partitionhandling.impl.AvailabilityStrategy.ownersConsistentHash;
+import static org.infinispan.partitionhandling.impl.AvailabilityStrategy.readConsistentHash;
 import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 import java.util.ArrayList;
@@ -262,7 +262,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
             // The node hasn't properly joined yet, so it can't be part of a partition
             continue;
          }
-         ConsistentHash readCH = ownersConsistentHash(topology, response.getCacheJoinInfo().getConsistentHashFactory());
+         ConsistentHash readCH = readConsistentHash(topology, response.getCacheJoinInfo().getConsistentHashFactory());
          Partition p = new Partition(sender, topology, response.getStableTopology(), readCH);
          partitions.add(p);
       }

@@ -14,7 +14,7 @@ import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
  * Listens for view changes.  Note that you do NOT have to register this listener; it does so automatically when
  * constructed.
  */
-@Listener(observation = Listener.Observation.POST)
+@Listener
 public class ViewChangeListener {
    CacheContainer cm;
    final CountDownLatch latch = new CountDownLatch(1);

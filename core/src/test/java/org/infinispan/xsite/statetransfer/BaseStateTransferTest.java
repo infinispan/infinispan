@@ -39,6 +39,7 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ControlledTransport;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.ExceptionRunnable;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.xsite.BackupReceiver;
@@ -99,7 +100,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       //check if NYC is empty
       assertInSite(NYC, cache -> assertTrue(cache.isEmpty()));
 
-      ControlledTransport controllerTransport = ControlledTransport.replace(cache(LON, 0));
+      ControlledTransport controllerTransport = replaceTransport(cache(LON, 0));
       controllerTransport.blockBefore(XSiteStatePushCommand.class);
 
       startStateTransfer();
@@ -481,6 +482,13 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
          }
       }
       return false;
+   }
+
+   private ControlledTransport replaceTransport(Cache<?, ?> cache) {
+      Transport current = extractGlobalComponent(cache.getCacheManager(), Transport.class);
+      ControlledTransport controlled = new ControlledTransport(current);
+      replaceComponent(cache.getCacheManager(), Transport.class, controlled, true);
+      return controlled;
    }
 
    private enum Operation {
