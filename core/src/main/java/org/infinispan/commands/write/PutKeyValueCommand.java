@@ -10,11 +10,10 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -108,8 +107,10 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    @Override
    public void writeTo(UserObjectOutput output) throws IOException {
-      output.writeEntry(key, value, metadata);
+      output.writeUserObject(key);
+      output.writeUserObject(value);
       UnsignedNumeric.writeUnsignedInt(output, segment);
+      output.writeUserObject(metadata);
       MarshallUtil.marshallEnum(valueMatcher, output);
       CommandInvocationId.writeTo(output, commandInvocationId);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
@@ -118,11 +119,10 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    @Override
    public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
-      MarshalledEntryImpl me = (MarshalledEntryImpl) input.readObject();
       key = input.readUserObject();
-      value = me.getValue();
-      metadata = (Metadata) input.readUserObject();
+      value = input.readUserObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
+      metadata = (Metadata) input.readUserObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       commandInvocationId = CommandInvocationId.readFrom(input);
       setFlagsBitSet(input.readLong());

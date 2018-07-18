@@ -106,4 +106,19 @@ public interface Marshaller {
     */
    MediaType mediaType();
 
+   /**
+    * Perform any initialization required before the marshaller is used.
+    */
+   default void start() {
+      // no-op
+   }
+
+   /**
+    * Stop the marshaller. Implementations of this method should clear up
+    * any cached data, or close any resources while marshalling/unmarshalling
+    * that have not been already closed.
+    */
+   default void stop() {
+      // no-op
+   }
 }

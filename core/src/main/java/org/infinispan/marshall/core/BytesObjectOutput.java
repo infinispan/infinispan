@@ -1,43 +1,29 @@
 package org.infinispan.marshall.core;
 
-import static org.infinispan.commons.marshall.MarshallUtil.NULL_VALUE;
-import static org.infinispan.commons.marshall.MarshallUtil.marshallSize;
-
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
  * Array backed, expandable {@link UserObjectOutput} implementation.
  */
-class BytesObjectOutput implements UserObjectOutput {
+class BytesObjectOutput extends AbstractUserObjectOutput {
 
    final GlobalMarshaller marshaller;
-   final Marshaller userMarshaller;
 
    byte bytes[];
    int pos;
 
-   // Testing only
    BytesObjectOutput(int size, GlobalMarshaller marshaller) {
-      this(size, marshaller, null);
-   }
-
-   BytesObjectOutput(int size, GlobalMarshaller marshaller, Marshaller userMarshaller) {
       this.bytes = new byte[size];
       this.marshaller = marshaller;
-      this.userMarshaller = marshaller;
    }
 
    @Override
-   public void writeObject(Object o) throws IOException {
-      marshaller.writeNullableObject(o, this);
+   public void writeObject(Object obj) throws IOException {
+      marshaller.writeNullableObject(obj, this);
    }
 
    @Override
@@ -292,83 +278,7 @@ class BytesObjectOutput implements UserObjectOutput {
    }
 
    @Override
-   public void writeKey(Object key) throws IOException {
-      writeUserObject(key);
-   }
-
-   @Override
-   public void writeValue(Object value) throws IOException {
-      writeUserObject(value);
-   }
-
-   @Override
-   public void writeKeyValue(Object key, Object value) throws IOException {
-      writeUserObject(key);
-      writeUserObject(value);
-   }
-
-   @Override
-   public void writeEntry(Object key, Object value, Object metadata) throws IOException {
-      writeUserObject(key);
-      writeUserObject(value);
-      writeUserObject(metadata);
-   }
-
-   @Override
    public void writeUserObject(Object object) throws IOException {
-      try {
-         writeObject(userMarshaller.objectToBuffer(object));
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-      }
-   }
-
-   @Override
-   public <K, V, T extends Map<K, V>> void writeUserMap(T map) throws IOException {
-      writeMap(map, this::writeUserObject, this::writeUserObject);
-   }
-
-   /**
-    * Marshall the provided {@code map}.
-    * <p>
-    * {@code null} maps are supported.
-    *
-    * @param map {@link Map} to marshall.
-    * @param <K> Key type of the map.
-    * @param <V> Value type of the map.
-    * @param <T> Type of the {@link Map}.
-    * @throws IOException If any of the usual Input/Output related exceptions occur.
-    */
-   public <K, V, T extends Map<K, V>> void writeMap(T map, ElementWriter<K> keyWriter, ElementWriter<V> valueWriter) throws IOException {
-      final int mapSize = map == null ? NULL_VALUE : map.size();
-      marshallSize(this, mapSize);
-      if (mapSize <= 0) return;
-
-      for (Map.Entry<K, V> me : map.entrySet()) {
-         keyWriter.writeTo(me.getKey());
-         valueWriter.writeTo(me.getValue());
-      }
-   }
-
-   @Override
-   public <E> void writeUserCollection(Collection<E> collection) throws IOException {
-      MarshallUtil.marshallCollection(collection, this, (o, e) -> writeUserObject(e));
-   }
-
-   @Override
-   public <E> void writeUserArray(E[] array) throws IOException {
-      final int size = array == null ? NULL_VALUE : array.length;
-      marshallSize(this, size);
-      if (size <= 0) {
-         return;
-      }
-      for (int i = 0; i < size; ++i) {
-         writeUserObject(array[i]);
-      }
-   }
-
-   @FunctionalInterface
-   public interface ElementWriter<E> {
-      void writeTo(E element) throws IOException;
+      marshaller.writeUnknown(object, this);
    }
 }

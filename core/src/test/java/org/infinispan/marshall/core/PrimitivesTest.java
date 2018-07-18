@@ -80,7 +80,7 @@ public class PrimitivesTest extends AbstractInfinispanTest {
    private void assertReadAndWrite(Object write, int id) throws IOException, ClassNotFoundException {
       BytesObjectOutput out = new BytesObjectOutput(10240, globalMarshaller);
       writePrimitive(write, out, id);
-      Object read = readPrimitive(BytesObjectInput.from(out.bytes, 0, globalMarshaller, null));
+      Object read = readPrimitive(BytesObjectInput.from(out.bytes, 0, globalMarshaller));
       assertTrue(deepEquals(write, read));
    }
 }

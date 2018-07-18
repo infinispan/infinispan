@@ -23,6 +23,7 @@ import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.marshall.jboss.DefaultContextClassResolver;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -57,7 +58,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
    static final int ID_INTERNAL                    = 0x02;
    static final int ID_EXTERNAL                    = 0x03;
    static final int ID_ANNOTATED                   = 0x04;
-   static final int ID_UNKNOWN                     = 0x05;
+   static final int ID_UNKNOWN                     = 0x05; // TODO change this to ID_USER?
    /**
     * The array will be encoded as follows:
     *
@@ -124,7 +125,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
          ClassResolver classResolver = globalCfg.serialization().classResolver();
          if (classResolver == null)
             classResolver = new DefaultContextClassResolver(globalCfg.classLoader());
-         StreamingMarshaller marshaller = new ExternalJbossMarshaller(this, classResolver);
+         Marshaller marshaller = new JBossMarshaller(this, classResolver);
          marshaller.start();
          this.userMarshaller = marshaller;
          internalExts = InternalExternalizers.load(this, gcr, cmdFactory);
@@ -155,8 +156,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
       externalExts = null;
       reverseExternalExts = null;
       classIdentifiers = null;
-      if (userMarshaller instanceof StreamingMarshaller)
-         ((StreamingMarshaller) userMarshaller).stop();
+      userMarshaller.stop();
    }
 
 
@@ -179,14 +179,14 @@ public class GlobalMarshaller implements StreamingMarshaller {
    }
 
    private BytesObjectOutput writeObjectOutput(Object obj, int estimatedSize) throws IOException {
-      BytesObjectOutput out = new BytesObjectOutput(estimatedSize, this, userMarshaller);
+      BytesObjectOutput out = new BytesObjectOutput(estimatedSize, this);
       writeNullableObject(obj, out);
       return out;
    }
 
    @Override
    public Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException {
-      BytesObjectInput in = BytesObjectInput.from(buf, this, userMarshaller);
+      BytesObjectInput in = BytesObjectInput.from(buf, this);
       return objectFromObjectInput(in);
    }
 
@@ -196,7 +196,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    @Override
    public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant, int estimatedSize) throws IOException {
-      BytesObjectOutput out = new BytesObjectOutput(estimatedSize, this, userMarshaller);
+      BytesObjectOutput out = new BytesObjectOutput(estimatedSize, this);
       return new StreamBytesObjectOutput(os, out);
    }
 
@@ -219,7 +219,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
       // Ignore length since boundary checks are not so useful here where the
       // unmarshalling code knows what to expect specifically. E.g. if reading
       // a byte[] subset within it, it's always appended with length.
-      BytesObjectInput in = BytesObjectInput.from(bytes, offset, this, userMarshaller);
+      BytesObjectInput in = BytesObjectInput.from(bytes, offset, this);
       return objectFromObjectInput(in);
    }
 
@@ -606,23 +606,18 @@ public class GlobalMarshaller implements StreamingMarshaller {
       }
    }
 
-   private void writeUnknown(Object obj, BytesObjectOutput out) throws IOException {
-      assert ExternallyMarshallable.isAllowed(obj) : "Check support for: " + obj.getClass();
+   void writeUnknown(Object obj, BytesObjectOutput out) throws IOException {
       out.writeByte(ID_UNKNOWN);
       writeRawUnknown(obj, out);
    }
 
    private void writeRawUnknown(Object obj, BytesObjectOutput out) throws IOException {
-      if (userMarshaller instanceof StreamingMarshaller)
-         ((StreamingMarshaller) userMarshaller).objectToObjectStream(obj, out);
-      else {
-         try {
-            byte[] bytes = userMarshaller.objectToByteBuffer(obj);
-            out.writeInt(bytes.length);
-            out.write(bytes);
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-         }
+      try {
+         byte[] bytes = userMarshaller.objectToByteBuffer(obj);
+         out.writeInt(bytes.length);
+         out.write(bytes);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
       }
    }
 
@@ -635,7 +630,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
    private void writeInternal(Object obj, AdvancedExternalizer ext, ObjectOutput out) throws IOException {
       out.writeByte(ID_INTERNAL);
       out.writeByte(ext.getId());
-      ext.writeObject(out, obj);
+      ext.writeObject(castOutput(out), obj);
    }
 
    private void writeInternalClean(Object obj, AdvancedExternalizer ext, ObjectOutput out) {
@@ -649,7 +644,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
    private void writeExternal(Object obj, AdvancedExternalizer ext, ObjectOutput out) throws IOException {
       out.writeByte(ID_EXTERNAL);
       out.writeInt(ext.getId());
-      ext.writeObject(out, obj);
+      ext.writeObject(castOutput(out), obj);
    }
 
    private void writeExternalClean(Object obj, AdvancedExternalizer ext, ObjectOutput out) {
@@ -868,18 +863,24 @@ public class GlobalMarshaller implements StreamingMarshaller {
    }
 
    private Object readUnknown(BytesObjectInput in) throws IOException, ClassNotFoundException {
-      if (userMarshaller instanceof StreamingMarshaller) {
-         try {
-            return ((StreamingMarshaller) userMarshaller).objectFromObjectStream(in);
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return null;
-         }
-      } else {
-         int length = in.readInt();
-         byte[] bytes = new byte[length];
-         in.readFully(bytes);
-         return userMarshaller.objectFromByteBuffer(bytes);
-      }
+      int length = in.readInt();
+      byte[] bytes = new byte[length];
+      in.readFully(bytes);
+      return userMarshaller.objectFromByteBuffer(bytes);
+   }
+
+   Object readUserObject(BytesObjectInput in) throws IOException, ClassNotFoundException {
+      in.readUnsignedByte(); // We must make sure we read the type first
+      return readUnknown(in);
+   }
+
+   private UserObjectOutput castOutput(ObjectOutput out) {
+      return out instanceof UserObjectOutput ? (UserObjectOutput) out :
+            new AbstractDelegatingUserObjectOutput(out) {
+               @Override
+               public void writeUserObject(Object object) throws IOException {
+                  writeObject(object);
+               }
+            };
    }
 }
