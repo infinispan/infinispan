@@ -32,6 +32,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.Search;
+import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
@@ -3051,5 +3052,18 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       List<User> list = q.list();
       assertEquals(3, list.size());
+   }
+
+   public void testManyClauses() {
+      QueryFactory qf = getQueryFactory();
+
+      QueryBuilder qb = qf.from(getModelFactory().getUserImplClass());
+      FilterConditionContext fcc = qb.having("name").eq("test");
+      for (int i = 0; i < 2000; i++) {
+         fcc = fcc.and().having("name").eq("test" + i);
+      }
+
+      List<User> list = qb.build().list();
+      assertEquals(0, list.size());
    }
 }
