@@ -54,6 +54,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
@@ -503,33 +504,37 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             if (command.hasAnyFlag(SKIP_REMOTE_FLAGS) || command.loadType() == VisitableCommand.LoadType.DONT_LOAD) {
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                return invokeNext(ctx, command);
-            } else if (forceRemoteReadForFunctionalCommands && !command.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
-               return asyncInvokeNext(ctx, command, remoteGet(ctx, command, key, true));
-            } else {
-               LocalizedCacheTopology cacheTopology = checkTopologyId(command);
-               int segment = command.getSegment();
-               Collection<Address> owners = cacheTopology.getDistributionForSegment(segment).readOwners();
-
-               List<Mutation> mutationsOnKey = getMutationsOnKey((TxInvocationContext) ctx, key);
-               mutationsOnKey.add(command.toMutation(key));
-               TxReadOnlyKeyCommand remoteRead = new TxReadOnlyKeyCommand(key, mutationsOnKey, segment,
-                     command.getParams(), command.getKeyDataConversion(), command.getValueDataConversion(),
-                     componentRegistry);
-               remoteRead.setTopologyId(command.getTopologyId());
-
-               CompletionStage<Response> remoteStage =
-                     rpcManager.invokeCommand(owners, remoteRead, new RemoteGetResponseCollector(),
-                                              rpcManager.getSyncRpcOptions());
-               return asyncValue(remoteStage.thenApply(r -> {
-                  if (r instanceof SuccessfulResponse) {
-                     SuccessfulResponse response = (SuccessfulResponse) r;
-                     Object responseValue = response.getResponseValue();
-                     return unwrapFunctionalResultOnOrigin(ctx, command.getKey(),
-                                                           responseValue);
-                  }
-                  throw handleMissingSuccessfulResponse(r);
-               }));
             }
+
+            LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+            int segment = command.getSegment();
+            DistributionInfo distributionInfo = cacheTopology.getSegmentDistribution(segment);
+
+            // If this node is a write owner we're obliged to apply the value locally even if we can't read it - otherwise
+            // we could have stale value after state transfer.
+            if (distributionInfo.isWriteOwner() || forceRemoteReadForFunctionalCommands && !command.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
+               return asyncInvokeNext(ctx, command, remoteGet(ctx, command, key, true));
+            }
+
+            List<Mutation> mutationsOnKey = getMutationsOnKey((TxInvocationContext) ctx, command, key);
+            mutationsOnKey.add(command.toMutation(key));
+            TxReadOnlyKeyCommand remoteRead = new TxReadOnlyKeyCommand(key, mutationsOnKey, segment,
+                  command.getParams(), command.getKeyDataConversion(), command.getValueDataConversion(),
+                  componentRegistry);
+            remoteRead.setTopologyId(command.getTopologyId());
+
+            CompletionStage<Response> remoteStage =
+                  rpcManager.invokeCommandStaggered(distributionInfo.readOwners(), remoteRead, new RemoteGetResponseCollector(),
+                                           rpcManager.getSyncRpcOptions());
+            return asyncValue(remoteStage.thenApply(r -> {
+               if (r instanceof SuccessfulResponse) {
+                  SuccessfulResponse response = (SuccessfulResponse) r;
+                  Object responseValue = response.getResponseValue();
+                  return unwrapFunctionalResultOnOrigin(ctx, command.getKey(),
+                                                        responseValue);
+               }
+               throw handleMissingSuccessfulResponse(r);
+            }));
          }
          // It's possible that this is not an owner, but the entry was loaded from L1 - let the command run
          return invokeNext(ctx, command);
@@ -575,7 +580,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (!ctx.isInTxScope()) {
          return command;
       }
-      return new TxReadOnlyKeyCommand(command, getMutationsOnKey((TxInvocationContext) ctx, command.getKey()),
+      return new TxReadOnlyKeyCommand(command, getMutationsOnKey((TxInvocationContext) ctx, null, command.getKey()),
             command.getSegment(), command.getParams(), command.getKeyDataConversion(), command.getValueDataConversion(),
             componentRegistry);
    }
@@ -589,7 +594,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (!ctx.isOriginLocal() || !ctx.isInTxScope()) {
          return cf;
       }
-      List<Mutation> mutationsOnKey = getMutationsOnKey((TxInvocationContext) ctx, key);
+      List<Mutation> mutationsOnKey = getMutationsOnKey((TxInvocationContext) ctx, command instanceof WriteCommand ? (WriteCommand) command : null, key);
       if (mutationsOnKey.isEmpty()) {
          return cf;
       }
@@ -607,11 +612,11 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    @Override
-   protected void handleRemotelyRetrievedKeys(InvocationContext ctx, List<?> remoteKeys) {
+   protected void handleRemotelyRetrievedKeys(InvocationContext ctx, WriteCommand appliedCommand, List<?> remoteKeys) {
       if (!ctx.isInTxScope()) {
          return;
       }
-      List<List<Mutation>> mutations = getMutations(ctx, remoteKeys);
+      List<List<Mutation>> mutations = getMutations(ctx, appliedCommand, remoteKeys);
       if (mutations == null || mutations.isEmpty()) {
          return;
       }
@@ -631,10 +636,15 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       assert !mutationsIterator.hasNext();
    }
 
-   private static List<Mutation> getMutationsOnKey(TxInvocationContext ctx, Object key) {
+   private static List<Mutation> getMutationsOnKey(TxInvocationContext ctx, WriteCommand untilCommand, Object key) {
       List<Mutation> mutations = new ArrayList<>();
       // We don't use getAllModifications() because this goes remote and local mods should not affect it
       for (WriteCommand write : ctx.getCacheTransaction().getModifications()) {
+         if (write == untilCommand) {
+            // We've reached this command in the modifications list; this happens when we're replaying a prepared
+            // transaction - see EntryWrappingInterceptor.wrapEntriesForPrepareAndApply
+            break;
+         }
          if (write.getAffectedKeys().contains(key)) {
             if (write instanceof FunctionalCommand) {
                mutations.add(((FunctionalCommand) write).toMutation(key));
@@ -649,7 +659,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return mutations;
    }
 
-   private static List<List<Mutation>> getMutations(InvocationContext ctx, List<?> keys) {
+   private static List<List<Mutation>> getMutations(InvocationContext ctx, WriteCommand untilCommand, List<?> keys) {
       if (!ctx.isInTxScope()) {
          return null;
       }
@@ -659,6 +669,11 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       for (int i = keys.size(); i > 0; --i) mutations.add(Collections.emptyList());
 
       for (WriteCommand write : txCtx.getCacheTransaction().getModifications()) {
+         if (write == untilCommand) {
+            // We've reached this command in the modifications list; this happens when we're replaying a prepared
+            // transaction - see EntryWrappingInterceptor.wrapEntriesForPrepareAndApply
+            break;
+         }
          for (int i = 0; i < keys.size(); ++i) {
             Object key = keys.get(i);
             if (write.getAffectedKeys().contains(key)) {
@@ -684,7 +699,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    private class TxReadOnlyManyHelper extends ReadOnlyManyHelper {
       @Override
       public ReadOnlyManyCommand copyForRemote(ReadOnlyManyCommand command, List<Object> keys, InvocationContext ctx) {
-         List<List<Mutation>> mutations = getMutations(ctx, keys);
+         List<List<Mutation>> mutations = getMutations(ctx, null, keys);
          if (mutations == null) {
             return new ReadOnlyManyCommand<>(command).withKeys(keys);
          } else {
@@ -701,7 +716,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
       @Override
       public ReadOnlyManyCommand<?, ?, ?> copyForRemote(C command, List<Object> keys, InvocationContext ctx) {
-         List<List<Mutation>> mutations = getMutations(ctx, keys);
+         List<List<Mutation>> mutations = getMutations(ctx, command, keys);
          // write command is always executed in transactional scope
          assert mutations != null;
 
@@ -734,6 +749,29 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       @Override
       public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable {
          return wrapFunctionalManyResultOnNonOrigin(rCtx, ((WriteCommand) rCommand).getAffectedKeys(), ((List) rv).toArray());
+      }
+
+      @Override
+      public CompletableFuture<Void> fetchRequiredKeys(LocalizedCacheTopology cacheTopology, Map<Address, List<Object>> requestedKeys, List<Object> availableKeys, InvocationContext ctx, C command) {
+         List<Object> fetchedKeys = null;
+         for (Map.Entry<Address, List<Object>> addressKeys : requestedKeys.entrySet()) {
+            for (Iterator<Object> iterator = addressKeys.getValue().iterator(); iterator.hasNext(); ) {
+               Object key = iterator.next();
+               if (cacheTopology.getDistribution(key).isWriteOwner()) {
+                  iterator.remove();
+                  availableKeys.add(key);
+                  if (fetchedKeys == null) {
+                     fetchedKeys = new ArrayList<>();
+                  }
+                  fetchedKeys.add(key);
+               }
+            }
+         }
+         if (fetchedKeys != null) {
+            return remoteGetAll(ctx, command, fetchedKeys, RemoteGetAllForWriteHandler.INSTANCE);
+         } else {
+            return null;
+         }
       }
    }
 

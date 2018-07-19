@@ -164,6 +164,8 @@ public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKey
             .append(", prevValue=").append(toStr(prevValue))
             .append(", prevMetadata=").append(toStr(prevMetadata))
             .append(", flags=").append(printFlags())
+            .append(", commandInvocationId=").append(commandInvocationId)
+            .append(", topologyId=").append(getTopologyId())
             .append(", valueMatcher=").append(valueMatcher)
             .append(", successful=").append(successful)
             .append(", keyDataConversion=").append(keyDataConversion)
