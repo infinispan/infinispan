@@ -307,4 +307,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Exception caught while preparing transaction %s", id = 4086)
    void exceptionDuringPrepare(Xid xid, @Cause Exception e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Use of maxIdle expiration with a near cache is unsupported.", id = 4087)
+   void nearCacheMaxIdleUnsupported();
 }

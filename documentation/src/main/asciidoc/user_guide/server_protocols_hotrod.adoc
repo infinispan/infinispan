@@ -1163,6 +1163,10 @@ updated or removed server-side, the cached near cache entries are invalidated.
 If a key is requested after it's been invalidated, it'll have to be re-fetched
 from the server.
 
+WARNING: You should not use `maxIdle` expiration with near caches, as near-cache
+reads will not propagate the last access change to the server and to the other
+clients.
+
 When near cache is enabled, its size must be configured by defining
 the maximum number of entries to keep in the near cache. When the maximum is
 reached, near cached entries are evicted using a least-recently-used (LRU)
@@ -1306,7 +1310,7 @@ Using the DataFormat API, it's possible to decorate remote caches so that all op
 
 ===== Using different marshallers for Key and Values
 
-Marshallers for Keys and Values can be overridden at run time. For example, to bypass all serialization in the Hot Rod client and read the byte[] as they are stored in the server: 
+Marshallers for Keys and Values can be overridden at run time. For example, to bypass all serialization in the Hot Rod client and read the byte[] as they are stored in the server:
 
 [source,java]
 ----
@@ -1338,14 +1342,14 @@ RemoteCache<String, String> jsonStrCache = remoteCache.withDataFormat(jsonString
 DataFormat jsonNode = DataFormat.builder().valueType(MediaType.APPLICATION_JSON).valueMarshaller(new CustomJacksonMarshaller().build();
 
 RemoteCache<String, JsonNode> jsonNodeCache = remoteCache.withDataFormat(jsonNode);
----- 
+----
 
 IMPORTANT: The data conversions happen in the server, and if it doesn't support converting from the storage format to the request format and vice versa, an error will be returned.
 For more details on server data format configuration and supported conversions, see <<encoding:media_type,here.>>
 
-WARNING: Using different marshallers and formats for the key, with `.keyMarshaller()` and `.keyType()` may interfere with the client intelligence routing mechanism, causing it 
+WARNING: Using different marshallers and formats for the key, with `.keyMarshaller()` and `.keyType()` may interfere with the client intelligence routing mechanism, causing it
 contact the server that is not the owner of the key during Hot Rod operations. This will not result in errors but can result in extra hops inside the cluster to execute the operation.
-If performance is critical, make sure to use the keys in the format stored by the server.    
+If performance is critical, make sure to use the keys in the format stored by the server.
 
 ==== Statistics
 Various server usage statistics can be obtained through the link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache] .stats() method. This returns a link:{javadocroot}/org/infinispan/client/hotrod/ServerStatistics.html[ServerStatistics] object - please refer to javadoc for details on the available statistics.

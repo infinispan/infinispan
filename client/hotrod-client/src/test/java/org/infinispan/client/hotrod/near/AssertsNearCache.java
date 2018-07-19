@@ -15,9 +15,11 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.VersionedValue;
@@ -57,9 +59,26 @@ class AssertsNearCache<K, V> {
       return this;
    }
 
+   AssertsNearCache<K, V> getAsync(K key, V expected) throws ExecutionException, InterruptedException {
+      assertEquals(expected, remote.getAsync(key).get());
+      return this;
+   }
+
    AssertsNearCache<K, V> getVersioned(K key, V expected) {
       VersionedValue<V> versioned = remote.getVersioned(key);
       assertEquals(expected, versioned == null ? null : versioned.getValue());
+      return this;
+   }
+
+   AssertsNearCache<K, V> getWithMetadata(K key, V expected) {
+      MetadataValue<V> entry = remote.getWithMetadata(key);
+      assertEquals(expected, entry == null ? null : entry.getValue());
+      return this;
+   }
+
+   AssertsNearCache<K, V> getWithMetadataAsync(K key, V expected) throws ExecutionException, InterruptedException {
+      MetadataValue<V> entry = remote.getWithMetadataAsync(key).get();
+      assertEquals(expected, entry == null ? null : entry.getValue());
       return this;
    }
 
@@ -68,8 +87,18 @@ class AssertsNearCache<K, V> {
       return this;
    }
 
+   AssertsNearCache<K, V> putAsync(K key, V value) throws ExecutionException, InterruptedException {
+      remote.putAsync(key, value).get();
+      return this;
+   }
+
    AssertsNearCache<K, V> remove(K key) {
       remote.remove(key);
+      return this;
+   }
+
+   AssertsNearCache<K, V> removeAsync(K key) throws ExecutionException, InterruptedException {
+      remote.removeAsync(key).get();
       return this;
    }
 

@@ -258,6 +258,11 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    MetadataValue<V> getWithMetadata(K key);
 
    /**
+    * Asynchronously returns the {@link MetadataValue} associated to the supplied key param, or null if it doesn't exist.
+    */
+   CompletableFuture<MetadataValue<V>> getWithMetadataAsync(K key);
+
+   /**
     * @inheritDoc
     * <p>
     * Due to this set being backed by the remote cache, each invocation on this set may require remote invocations

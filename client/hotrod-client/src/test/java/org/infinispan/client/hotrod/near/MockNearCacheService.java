@@ -2,7 +2,7 @@ package org.infinispan.client.hotrod.near;
 
 import java.util.concurrent.BlockingQueue;
 
-import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 
@@ -23,8 +23,8 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
    static abstract class MockEvent {}
    static abstract class MockKeyValueEvent<K, V> extends MockEvent {
       final K key;
-      final VersionedValue<V> value;
-      MockKeyValueEvent(K key, VersionedValue<V> value) {
+      final MetadataValue<V> value;
+      MockKeyValueEvent(K key, MetadataValue<V> value) {
          this.key = key;
          this.value = value;
       }
@@ -44,13 +44,13 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
       }
 
       @Override
-      public void put(K key, VersionedValue<V> value) {
+      public void put(K key, MetadataValue<V> value) {
          delegate.put(key, value);
          events.add(new MockPutEvent<K, V>(key, value));
       }
 
       @Override
-      public void putIfAbsent(K key, VersionedValue<V> value) {
+      public void putIfAbsent(K key, MetadataValue<V> value) {
          delegate.putIfAbsent(key, value);
          events.add(new MockPutIfAbsentEvent<K, V>(key, value));
       }
@@ -62,8 +62,8 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
       }
 
       @Override
-      public VersionedValue<V> get(K key) {
-         VersionedValue<V> value = delegate.get(key);
+      public MetadataValue<V> get(K key) {
+         MetadataValue<V> value = delegate.get(key);
          events.add(new MockGetEvent<>(key, value));
          return value;
       }
@@ -77,17 +77,17 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
    }
 
    static class MockPutEvent<K, V> extends MockKeyValueEvent<K, V> {
-      MockPutEvent(K key, VersionedValue<V> value) {
+      MockPutEvent(K key, MetadataValue<V> value) {
          super(key, value);
       }
    }
    static class MockPutIfAbsentEvent<K, V> extends MockKeyValueEvent<K, V> {
-      MockPutIfAbsentEvent(K key, VersionedValue<V> value) {
+      MockPutIfAbsentEvent(K key, MetadataValue<V> value) {
          super(key, value);
       }
    }
    static class MockGetEvent<K, V> extends MockKeyValueEvent<K, V> {
-      MockGetEvent(K key, VersionedValue<V> value) {
+      MockGetEvent(K key, MetadataValue<V> value) {
          super(key, value);
       }
    }

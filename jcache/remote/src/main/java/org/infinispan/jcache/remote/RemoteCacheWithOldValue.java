@@ -19,7 +19,7 @@ class RemoteCacheWithOldValue<K, V> extends RemoteCacheWrapper<K, V> {
       @SuppressWarnings("unchecked")
       K k = (K) key;
 
-      VersionedValue<V> versioned = delegate.getVersioned(k);
+      VersionedValue<V> versioned = delegate.getWithMetadata(k);
       if (versioned == null) {
          return false;
       }
@@ -31,7 +31,7 @@ class RemoteCacheWithOldValue<K, V> extends RemoteCacheWrapper<K, V> {
 
    @Override
    public boolean replace(K key, V oldValue, V newValue) {
-      VersionedValue<V> versioned = delegate.getVersioned(key);
+      VersionedValue<V> versioned = delegate.getWithMetadata(key);
       if (versioned == null) {
          return false;
       }

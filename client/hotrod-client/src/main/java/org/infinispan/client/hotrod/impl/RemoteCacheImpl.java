@@ -200,15 +200,20 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    @Override
-   public MetadataValue<V> getWithMetadata(K key) {
-      return getWithMetadata(key, dataFormat);
+   public CompletableFuture<MetadataValue<V>> getWithMetadataAsync(K key) {
+      return getWithMetadataAsync(key, dataFormat);
    }
 
-   private MetadataValue<V> getWithMetadata(K key, DataFormat dataFormat) {
+   @Override
+   public MetadataValue<V> getWithMetadata(K key) {
+      return await(getWithMetadataAsync(key));
+   }
+
+   private CompletableFuture<MetadataValue<V>> getWithMetadataAsync(K key, DataFormat dataFormat) {
       assertRemoteCacheManagerIsStarted();
       GetWithMetadataOperation<V> op = operationsFactory.newGetWithMetadataOperation(
             compatKeyIfNeeded(key), keyToBytes(key), dataFormat);
-      return await(op.execute());
+      return op.execute();
    }
 
    @Override
@@ -579,7 +584,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    private boolean removeEntry(K key, V value) {
-      VersionedValue<V> versionedValue = getWithMetadata(key, dataFormat);
+      VersionedValue<V> versionedValue = getWithMetadata(key);
       return versionedValue != null && value.equals(versionedValue.getValue()) &&
             RemoteCacheImpl.this.removeWithVersion(key, versionedValue.getVersion());
    }
