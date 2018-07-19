@@ -14,6 +14,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.distribution.ch.impl.SingleSegmentKeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -39,7 +40,8 @@ public class PersistenceMockUtil {
 
    public static InitializationContext createContext(String cacheName, Configuration configuration, StreamingMarshaller marshaller, TimeService timeService) {
       Cache mockCache = mockCache(cacheName, configuration, timeService);
-      return new InitializationContextImpl(configuration.persistence().stores().get(0), mockCache, marshaller,
+      return new InitializationContextImpl(configuration.persistence().stores().get(0), mockCache,
+                                           SingleSegmentKeyPartitioner.getInstance(), marshaller,
                                            timeService, new ByteBufferFactoryImpl(), new MarshalledEntryFactoryImpl(marshaller),
                                            new WithinThreadExecutor());
    }

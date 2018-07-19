@@ -18,6 +18,7 @@ import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.query.dsl.Query;
 
 /**
@@ -63,6 +64,11 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    @Override
    public CloseableIteratorSet<Entry<K, V>> entrySet() {
       return delegate.entrySet();
+   }
+
+   @Override
+   public CloseableIteratorSet<Entry<K, V>> entrySet(IntSet segments) {
+      return delegate.entrySet(segments);
    }
 
    @Override
@@ -138,6 +144,11 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    @Override
    public CloseableIteratorSet<K> keySet() {
       return delegate.keySet();
+   }
+
+   @Override
+   public CloseableIteratorSet<K> keySet(IntSet segments) {
+      return delegate.keySet(segments);
    }
 
    @Override
@@ -408,6 +419,11 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    @Override
    public CloseableIteratorCollection<V> values() {
       return delegate.values();
+   }
+
+   @Override
+   public CloseableIteratorCollection<V> values(IntSet segments) {
+      return delegate.values(segments);
    }
 
    @Override

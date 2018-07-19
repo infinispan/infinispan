@@ -8,6 +8,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IteratorMapper;
 
 import io.netty.buffer.ByteBuf;
@@ -24,14 +25,16 @@ public class Codec23 extends Codec22 {
    }
 
    @Override
-   public <K> CloseableIterator<K> keyIterator(RemoteCache<K, ?> remoteCache, OperationsFactory operationsFactory, int batchSize) {
+   public <K> CloseableIterator<K> keyIterator(RemoteCache<K, ?> remoteCache, OperationsFactory operationsFactory,
+         IntSet segments, int batchSize) {
       // Retrieve key and entry but map to key
-      return new IteratorMapper<>(remoteCache.retrieveEntries(null, batchSize), e -> (K) e.getKey());
+      return new IteratorMapper<>(remoteCache.retrieveEntries(null, segments, batchSize), e -> (K) e.getKey());
    }
 
    @Override
-   public <K, V> CloseableIterator<Map.Entry<K, V>> entryIterator(RemoteCache<K, V> remoteCache, int batchSize) {
-      return castEntryIterator(remoteCache.retrieveEntries(null, batchSize));
+   public <K, V> CloseableIterator<Map.Entry<K, V>> entryIterator(RemoteCache<K, V> remoteCache, IntSet segments,
+         int batchSize) {
+      return castEntryIterator(remoteCache.retrieveEntries(null, segments, batchSize));
    }
 
    protected <K, V> CloseableIterator<Map.Entry<K, V>> castEntryIterator(CloseableIterator iterator) {

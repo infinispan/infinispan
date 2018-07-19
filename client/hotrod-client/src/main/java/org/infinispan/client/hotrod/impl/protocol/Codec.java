@@ -18,6 +18,7 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.IntSet;
 
 import io.netty.buffer.ByteBuf;
 
@@ -114,23 +115,28 @@ public interface Codec {
    /**
     * Creates a key iterator with the given batch size if applicable. This iterator does not support removal.
     * @param remoteCache
+    * @param operationsFactory
+    * @param segments
     * @param batchSize
     * @param <K>
     * @return
     */
-   default <K> CloseableIterator<K> keyIterator(RemoteCache<K, ?> remoteCache, OperationsFactory operationsFactory, int batchSize) {
+   default <K> CloseableIterator<K> keyIterator(RemoteCache<K, ?> remoteCache, OperationsFactory operationsFactory,
+         IntSet segments, int batchSize) {
       throw new UnsupportedOperationException("This version doesn't support iterating upon keys!");
    }
 
    /**
     * Creates an entry iterator with the given batch size if applicable. This iterator does not support removal.
     * @param remoteCache
+    * @param segments
     * @param batchSize
     * @param <K>
     * @param <V>
     * @return
     */
-   default <K, V> CloseableIterator<Map.Entry<K, V>> entryIterator(RemoteCache<K, V> remoteCache, int batchSize) {
+   default <K, V> CloseableIterator<Map.Entry<K, V>> entryIterator(RemoteCache<K, V> remoteCache,
+         IntSet segments, int batchSize) {
       throw new UnsupportedOperationException("This version doesn't support iterating upon entries!");
    }
 }

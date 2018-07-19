@@ -6,6 +6,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.util.TimeService;
@@ -45,6 +46,11 @@ public class DummyInitializationContext implements InitializationContext {
    @Override
    public Cache getCache() {
       return cache;
+   }
+
+   @Override
+   public KeyPartitioner getKeyPartitioner() {
+      return cache.getAdvancedCache().getComponentRegistry().getComponent(KeyPartitioner.class);
    }
 
    @Override
