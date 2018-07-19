@@ -2,8 +2,11 @@ package org.infinispan.persistence.remote;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
@@ -21,8 +24,6 @@ import org.testng.annotations.Test;
 public class RemoteStoreFunctionalTest extends BaseStoreFunctionalTest {
    private EmbeddedCacheManager localCacheManager;
    private HotRodServer hrServer;
-
-
 
    @Override
    protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence, boolean preload) {
@@ -46,19 +47,18 @@ public class RemoteStoreFunctionalTest extends BaseStoreFunctionalTest {
    }
 
    @Override
-   public void testPreloadAndExpiry() {
-      // No-op, since remote cache store does not support preload
-   }
-
-   @Override
-   public void testPreloadStoredAsBinary() {
-      // No-op, remote cache store does not support store as binary
-      // since Hot Rod already stores them as binary
-   }
-
-   @Override
    public void testTwoCachesSameCacheStore() {
       //not applicable
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class)
+   public void testSegmentedWithUnsupportedVersion() {
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.persistence()
+            .addStore(RemoteStoreConfigurationBuilder.class)
+            .segmented(true)
+            .protocolVersion(ProtocolVersion.PROTOCOL_VERSION_21);
+      cb.build();
    }
 
 }

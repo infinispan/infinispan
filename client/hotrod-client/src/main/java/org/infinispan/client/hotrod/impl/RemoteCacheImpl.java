@@ -60,6 +60,7 @@ import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.query.dsl.Query;
@@ -512,24 +513,45 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public CloseableIteratorSet<K> keySet() {
-      return new KeySet();
+      return keySet(null);
+   }
+
+   @Override
+   public CloseableIteratorSet<K> keySet(IntSet segments) {
+      return new KeySet(segments);
    }
 
    @Override
    public CloseableIteratorSet<Entry<K, V>> entrySet() {
-      return new EntrySet();
+      return entrySet(null);
+   }
+
+   @Override
+   public CloseableIteratorSet<Entry<K, V>> entrySet(IntSet segments) {
+      return new EntrySet(segments);
    }
 
    @Override
    public CloseableIteratorCollection<V> values() {
-      return new ValuesCollection();
+      return values(null);
+   }
+
+   @Override
+   public CloseableIteratorCollection<V> values(IntSet segments) {
+      return new ValuesCollection(segments);
    }
 
    private class KeySet extends AbstractCollection<K> implements CloseableIteratorSet<K> {
+      private final IntSet segments;
+
+      private KeySet(IntSet segments) {
+         this.segments = segments;
+      }
 
       @Override
       public CloseableIterator<K> iterator() {
-         CloseableIterator<K> keyIterator = operationsFactory.getCodec().keyIterator(RemoteCacheImpl.this, operationsFactory, batchSize);
+         CloseableIterator<K> keyIterator = operationsFactory.getCodec().keyIterator(RemoteCacheImpl.this, operationsFactory,
+               segments, batchSize);
          return new RemovableCloseableIterator<>(keyIterator, this::remove);
       }
 
@@ -590,11 +612,16 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    private class EntrySet extends AbstractCollection<Map.Entry<K, V>> implements CloseableIteratorSet<Entry<K, V>> {
+      private final IntSet segments;
+
+      public EntrySet(IntSet segments) {
+         this.segments = segments;
+      }
 
       @Override
       public CloseableIterator<Entry<K, V>> iterator() {
-         return new RemovableCloseableIterator<>(operationsFactory.getCodec().entryIterator(RemoteCacheImpl.this, batchSize),
-               this::remove);
+         return new RemovableCloseableIterator<>(operationsFactory.getCodec().entryIterator(RemoteCacheImpl.this,
+               segments, batchSize), this::remove);
       }
 
       @Override
@@ -648,11 +675,16 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    private class ValuesCollection extends AbstractCollection<V> implements CloseableIteratorCollection<V> {
+      private final IntSet segments;
+
+      private ValuesCollection(IntSet segments) {
+         this.segments = segments;
+      }
 
       @Override
       public CloseableIterator<V> iterator() {
          CloseableIterator<Map.Entry<K, V>> entryIterator = operationsFactory.getCodec().entryIterator(
-               RemoteCacheImpl.this, batchSize);
+               RemoteCacheImpl.this, segments, batchSize);
          return new IteratorMapper<>(new RemovableCloseableIterator<>(entryIterator, e -> RemoteCacheImpl.this.remove(e.getKey(), e.getValue())),
                // Convert to V for user
                Entry::getValue);

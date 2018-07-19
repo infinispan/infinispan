@@ -1,5 +1,6 @@
 package org.infinispan.persistence.remote.configuration;
 
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SEGMENTED;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.BALANCING_STRATEGY;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.CONNECTION_TIMEOUT;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.FORCE_RETURN_VALUES;
@@ -218,6 +219,12 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
 
       if (attributes.attribute(HOTROD_WRAPPING).get() && attributes.attribute(MARSHALLER).get() != null) {
          throw log.cannotEnableHotRodWrapping();
+      }
+
+      ProtocolVersion version = attributes.attribute(PROTOCOL_VERSION).get();
+      ProtocolVersion minimumVersion = ProtocolVersion.PROTOCOL_VERSION_23;
+      if (attributes.attribute(SEGMENTED).get() && version.compareTo(minimumVersion) < 0) {
+         throw log.segmentationNotSupportedInThisVersion(minimumVersion);
       }
    }
 }

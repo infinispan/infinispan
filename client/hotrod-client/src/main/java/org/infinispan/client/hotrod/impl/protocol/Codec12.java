@@ -12,6 +12,7 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.IntSet;
 
 import io.netty.buffer.ByteBuf;
 
@@ -56,7 +57,11 @@ public class Codec12 extends Codec11 {
    }
 
    @Override
-   public <K> CloseableIterator<K> keyIterator(RemoteCache<K, ?> remoteCache, OperationsFactory operationsFactory, int batchSize) {
+   public <K> CloseableIterator<K> keyIterator(RemoteCache<K, ?> remoteCache, OperationsFactory operationsFactory,
+         IntSet segments, int batchSize) {
+      if (segments != null) {
+         throw new UnsupportedOperationException("This version doesn't support iterating upon keys by segment!");
+      }
       BulkGetKeysOperation<K> op = operationsFactory.newBulkGetKeysOperation(0);
       Set<K> keys = await(op.execute());
       return Closeables.iterator(keys.iterator());

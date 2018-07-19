@@ -20,6 +20,7 @@ import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -61,6 +62,20 @@ public class PersistenceUtil {
 
       // This can't be null
       Long result = Flowable.fromPublisher(acl.publishKeys(filter)).count().blockingGet();
+      if (result > Integer.MAX_VALUE) {
+         return Integer.MAX_VALUE;
+      }
+      return result.intValue();
+   }
+
+   /**
+    * Counts how many entries are present in the segmented store. Only the segments provided will have entries counted.
+    * @param salws segmented store containing entries
+    * @param segments segments to count entries from
+    * @return count of entries that are in the provided segments
+    */
+   public static int count(SegmentedAdvancedLoadWriteStore<?, ?> salws, IntSet segments) {
+      Long result = Flowable.fromPublisher(salws.publishKeys(segments, null)).count().blockingGet();
       if (result > Integer.MAX_VALUE) {
          return Integer.MAX_VALUE;
       }

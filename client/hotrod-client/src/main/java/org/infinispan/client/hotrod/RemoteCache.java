@@ -10,6 +10,7 @@ import org.infinispan.commons.api.TransactionalCache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.query.dsl.Query;
 
 /**
@@ -281,6 +282,18 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    CloseableIteratorSet<K> keySet();
 
    /**
+    * This method is identical to {@link #keySet()} except that it will only return keys that map to the given segments.
+    * Note that these segments will be determined by the remote server. Thus you should be aware of how many segments
+    * it has configured and hashing algorithm it is using. If the segments and hashing algorithm are not the same
+    * this method may return unexpected keys.
+    * @param segments the segments of keys to return - null means all available
+    * @return set containing keys that map to the given segments
+    * @see #keySet()
+    * @since 9.4
+    */
+   CloseableIteratorSet<K> keySet(IntSet segments);
+
+   /**
     * @inheritDoc
     * <p>
     * Due to this collection being backed by the remote cache, each invocation on this collection may require remote
@@ -297,6 +310,18 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     */
    @Override
    CloseableIteratorCollection<V> values();
+
+   /**
+    * This method is identical to {@link #values()} except that it will only return values that map to the given segments.
+    * Note that these segments will be determined by the remote server. Thus you should be aware of how many segments
+    * it has configured and hashing algorithm it is using. If the segments and hashing algorithm are not the same
+    * this method may return unexpected values.
+    * @param segments the segments of values to return - null means all available
+    * @return collection containing values that map to the given segments
+    * @see #values()
+    * @since 9.4
+    */
+   CloseableIteratorCollection<V> values(IntSet segments);
 
    /**
     * @inheritDoc
@@ -319,6 +344,18 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     */
    @Override
    CloseableIteratorSet<Entry<K, V>> entrySet();
+
+   /**
+    * This method is identical to {@link #entrySet()} except that it will only return entries that map to the given segments.
+    * Note that these segments will be determined by the remote server. Thus you should be aware of how many segments
+    * it has configured and hashing algorithm it is using. If the segments and hashing algorithm are not the same
+    * this method may return unexpected entries.
+    * @param segments the segments of entries to return - null means all available
+    * @return set containing entries that map to the given segments
+    * @see #entrySet()
+    * @since 9.4
+    */
+   CloseableIteratorSet<Entry<K, V>> entrySet(IntSet segments);
 
    /**
     * Synthetic operation. The client iterates over the set of keys and calls put for each one of them. This results in

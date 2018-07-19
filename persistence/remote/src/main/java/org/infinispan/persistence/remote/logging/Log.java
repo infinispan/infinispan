@@ -3,6 +3,7 @@ package org.infinispan.persistence.remote.logging;
 import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.jboss.logging.BasicLogger;
@@ -40,4 +41,6 @@ public interface Log extends BasicLogger {
    @Message(value = "The RemoteCacheStore for cache %s should be configured with hotRodWrapping enabled", id = 10007)
    CacheException remoteStoreNoHotRodWrapping(String cacheName);
 
+   @Message(value = "RemoteStore only supports segmentation when using at least protocol version %s or higher", id = 10008)
+   CacheConfigurationException segmentationNotSupportedInThisVersion(ProtocolVersion version);
 }

@@ -38,6 +38,7 @@ import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.counter.api.CounterState;
 
 import io.netty.buffer.ByteBuf;
@@ -228,7 +229,11 @@ public class Codec20 implements Codec, HotRodConstants {
    }
 
    @Override
-   public <K> CloseableIterator<K> keyIterator(RemoteCache<K, ?> remoteCache, OperationsFactory operationsFactory, int batchSize) {
+   public <K> CloseableIterator<K> keyIterator(RemoteCache<K, ?> remoteCache, OperationsFactory operationsFactory,
+         IntSet segments, int batchSize) {
+      if (segments != null) {
+         throw new UnsupportedOperationException("This version doesn't support iterating upon keys by segment!");
+      }
       BulkGetKeysOperation<K> op = operationsFactory.newBulkGetKeysOperation(0);
       Set<K> keys = await(op.execute());
       return Closeables.iterator(keys.iterator());

@@ -881,8 +881,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
          writer = postProcessWriter(processedConfiguration, writer);
          loader = postProcessReader(processedConfiguration, writer, loader);
 
-         InitializationContextImpl ctx = new InitializationContextImpl(processedConfiguration, cache, m, timeService, byteBufferFactory,
-                                                                       marshalledEntryFactory, persistenceExecutor);
+         InitializationContextImpl ctx = new InitializationContextImpl(processedConfiguration, cache, keyPartitioner, m,
+               timeService, byteBufferFactory, marshalledEntryFactory, persistenceExecutor);
          initializeLoader(processedConfiguration, loader, ctx);
          initializeWriter(processedConfiguration, writer, ctx);
          initializeBareInstance(bareInstance, ctx);
