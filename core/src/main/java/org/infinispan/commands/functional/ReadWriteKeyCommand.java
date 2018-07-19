@@ -134,6 +134,7 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       sb.append(", f=").append(f.getClass().getName());
       sb.append(", flags=").append(printFlags());
       sb.append(", commandInvocationId=").append(commandInvocationId);
+      sb.append(", topologyId=").append(getTopologyId());
       sb.append(", params=").append(params);
       sb.append(", valueMatcher=").append(valueMatcher);
       sb.append(", successful=").append(successful);

@@ -9,6 +9,7 @@ import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.functional.FunctionalCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
@@ -833,6 +834,17 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    protected final Object wrapEntriesForPrepareAndApply(TxInvocationContext ctx, PrepareCommand command, InvocationSuccessFunction handler) throws Throwable {
       if (!ctx.isOriginLocal() || command.isReplayEntryWrapping()) {
          return applyModificationsAndThen(ctx, command, command.getModifications(), 0, handler);
+      } else if (ctx.isOriginLocal()) {
+         // If there's a functional command invoked in previous topology, it's possible that this node was not an owner
+         // but now it has become one. In that case the modification was not applied into the context and we would not
+         // commit the change. To be on the safe side we'll replay the whole transaction.
+         for (WriteCommand mod : command.getModifications()) {
+            if (mod.getTopologyId() < command.getTopologyId() && mod instanceof FunctionalCommand) {
+               log.trace("Clearing looked up entries and replaying whole transaction");
+               ctx.getCacheTransaction().clearLookedUpEntries();
+               return applyModificationsAndThen(ctx, command, command.getModifications(), 0, handler);
+            }
+         }
       }
       return handler.apply(ctx, command, null);
    }

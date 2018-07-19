@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -50,15 +51,47 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
    }
 
+   public void testDoubleIncrementBeforeTopology() throws Exception {
+      testBeforeTopology((rw, key) -> {
+         Integer oldValue = rw.eval(key, FunctionalTxTest::increment).join();
+         rw.eval(key, FunctionalTxTest::increment).join();
+         return oldValue;
+      }, 2);
+   }
+
+   public void testDoubleIncrementAfterTopology() throws Exception {
+      testAfterTopology((rw, key) -> {
+         Integer oldValue = rw.eval(key, FunctionalTxTest::increment).join();
+         rw.eval(key, FunctionalTxTest::increment).join();
+         return oldValue;
+      }, 2);
+   }
+
    public void testReadWriteKeyBeforeTopology() throws Exception {
-      testBeforeTopology((rw, key) -> rw.eval(key, FunctionalTxTest::increment).join());
+      testBeforeTopology((rw, key) -> rw.eval(key, FunctionalTxTest::increment).join(), 1);
    }
 
    public void testReadWriteKeyAfterTopology() throws Exception {
-      testBeforeTopology((rw, key) -> rw.eval(key, FunctionalTxTest::increment).join());
+      testAfterTopology((rw, key) -> rw.eval(key, FunctionalTxTest::increment).join(), 1);
    }
 
-   private void testBeforeTopology(BiFunction<FunctionalMap.ReadWriteMap<String, Integer>, String, Integer> op) throws Exception {
+   public void testReadWriteManyKeysBeforeTopology() throws Exception {
+      testBeforeTopology((rw, key) -> rw.evalMany(Collections.singleton(key), FunctionalTxTest::increment).findAny().get(), 1);
+   }
+
+   public void testReadWriteManyKeysAfterTopology() throws Exception {
+      testAfterTopology((rw, key) -> rw.evalMany(Collections.singleton(key), FunctionalTxTest::increment).findAny().get(), 1);
+   }
+
+   public void testReadWriteManyEntriesBeforeTopology() throws Exception {
+      testBeforeTopology((rw, key) -> rw.evalMany(Collections.singletonMap(key, 1), FunctionalTxTest::add).findAny().get(), 1);
+   }
+
+   public void testReadWriteManyEntriesAfterTopology() throws Exception {
+      testAfterTopology((rw, key) -> rw.evalMany(Collections.singletonMap(key, 1), FunctionalTxTest::add).findAny().get(), 1);
+   }
+
+   private void testBeforeTopology(BiFunction<FunctionalMap.ReadWriteMap<String, Integer>, String, Integer> op, int expectedIncrement) throws Exception {
       cache(0).put("key", 1);
 
       // Blocking on receiver side. We cannot block the StateResponseCommand on the server side since
@@ -93,10 +126,10 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       future.get(10, TimeUnit.SECONDS);
 
       InternalCacheEntry<Object, Object> ice = cache(2).getAdvancedCache().getDataContainer().get("key");
-      assertEquals("Current ICE: " + ice, 2, ice.getValue());
+      assertEquals("Current ICE: " + ice, 1 + expectedIncrement, ice.getValue());
    }
 
-   private void testAfterTopology(BiFunction<FunctionalMap.ReadWriteMap<String, Integer>, String, Integer> op) throws Exception {
+   private void testAfterTopology(BiFunction<FunctionalMap.ReadWriteMap<String, Integer>, String, Integer> op, int expectedIncrement) throws Exception {
       cache(0).put("key", 1);
 
       // Blocking on receiver side. We cannot block the StateResponseCommand on the server side since
@@ -130,12 +163,18 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       future.get(10, TimeUnit.SECONDS);
 
       InternalCacheEntry<Object, Object> ice = cache(2).getAdvancedCache().getDataContainer().get("key");
-      assertEquals("Current ICE: " + ice, 2, ice.getValue());
+      assertEquals("Current ICE: " + ice, 1 + expectedIncrement, ice.getValue());
    }
 
    private static Integer increment(EntryView.ReadWriteEntryView<String, Integer> view) {
       int value = view.find().orElse(0);
       view.set(value + 1);
+      return value;
+   }
+
+   private static Integer add(Integer param, EntryView.ReadWriteEntryView<String, Integer> view) {
+      int value = view.find().orElse(0);
+      view.set(value + param);
       return value;
    }
 

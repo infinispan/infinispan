@@ -34,6 +34,7 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ValueMatcher;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ArrayCollector;
 import org.infinispan.container.entries.CacheEntry;
@@ -394,7 +395,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return allFuture;
    }
 
-   protected void handleRemotelyRetrievedKeys(InvocationContext ctx, List<?> remoteKeys) {
+   protected void handleRemotelyRetrievedKeys(InvocationContext ctx, WriteCommand appliedCommand, List<?> remoteKeys) {
    }
 
    private class ClusteredGetAllHandler<C extends FlagAffectedCommand & TopologyAffectedCommand> implements BiConsumer<Map<Address, Response>, Throwable> {
@@ -450,7 +451,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                CacheEntry entry = value == null ? NullCacheEntry.getInstance() : value.toInternalCacheEntry(key);
                wrapRemoteEntry(ctx, key, entry, false);
             }
-            handleRemotelyRetrievedKeys(ctx, keys);
+            handleRemotelyRetrievedKeys(ctx, command instanceof WriteCommand ? (WriteCommand) command : null, keys);
             if (--allFuture.counter == 0) {
                allFuture.complete(null);
             }
@@ -571,6 +572,18 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       List<Object> availableKeys = new ArrayList<>(estimateForOneNode);
       Map<Address, List<Object>> requestedKeys = getKeysByOwner(ctx, keys, cacheTopology, availableKeys, null);
 
+      CompletableFuture<Void> requiredKeysFuture = helper.fetchRequiredKeys(cacheTopology, requestedKeys, availableKeys, ctx, command);
+      if (requiredKeysFuture == null || requiredKeysFuture.isDone()) {
+         return asyncValue(fetchAndApplyValues(ctx, command, helper, keys, availableKeys, requestedKeys));
+      } else {
+         // We need to run the requiredKeysFuture and fetchAndApplyValues futures serially for two reasons
+         // a) adding the values to context after fetching the values remotely is not synchronized
+         // b) fetchAndApplyValues invokes the command on availableKeys and stores the result
+         return asyncValue(requiredKeysFuture.thenCompose(nil -> fetchAndApplyValues(ctx, command, helper, keys, availableKeys, requestedKeys)));
+      }
+   }
+
+   private <C extends TopologyAffectedCommand & FlagAffectedCommand> MergingCompletableFuture<Object> fetchAndApplyValues(InvocationContext ctx, C command, ReadManyCommandHelper<C> helper, Collection<?> keys, List<Object> availableKeys, Map<Address, List<Object>> requestedKeys) {
       // TODO: while this works in a non-blocking way, the returned stream is not lazy as the functional
       // contract suggests. Traversable is also not honored as it is executed only locally on originator.
       // On FutureMode.ASYNC, there should be one command per target node going from the top level
@@ -583,6 +596,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       int pos = availableKeys.size();
       for (Map.Entry<Address, List<Object>> addressKeys : requestedKeys.entrySet()) {
          List<Object> keysForAddress = addressKeys.getValue();
+
          ReadOnlyManyCommand remoteCommand = helper.copyForRemote(command, keysForAddress, ctx);
          remoteCommand.setTopologyId(command.getTopologyId());
          Address target = addressKeys.getKey();
@@ -592,7 +606,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                          new ReadManyHandler(target, allFuture, ctx, command, keysForAddress, null, pos, helper));
          pos += keysForAddress.size();
       }
-      return asyncValue(allFuture);
+      return allFuture;
    }
 
    private Object handleLocalOnlyReadManyCommand(InvocationContext ctx, VisitableCommand command, Collection<?> keys) {
@@ -916,6 +930,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       ReadOnlyManyCommand copyForRemote(C command, List<Object> keys, InvocationContext ctx);
       void applyLocalResult(MergingCompletableFuture allFuture, Object rv);
       Object transformResult(Object[] results);
+      CompletableFuture<Void> fetchRequiredKeys(LocalizedCacheTopology cacheTopology, Map<Address, List<Object>> requestedKeys, List<Object> availableKeys, InvocationContext ctx, C command);
    }
 
    protected class ReadOnlyManyHelper implements ReadManyCommandHelper<ReadOnlyManyCommand> {
@@ -947,6 +962,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       @Override
       public Object transformResult(Object[] results) {
          return Arrays.stream(results).filter(o -> o != LOST_PLACEHOLDER);
+      }
+
+      @Override
+      public CompletableFuture<Void> fetchRequiredKeys(LocalizedCacheTopology cacheTopology, Map<Address, List<Object>> requestedKeys, List<Object> availableKeys, InvocationContext ctx, ReadOnlyManyCommand command) {
+         return null;
       }
    }
 
