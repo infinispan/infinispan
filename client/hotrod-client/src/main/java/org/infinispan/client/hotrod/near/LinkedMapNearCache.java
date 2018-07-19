@@ -6,7 +6,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
 
 /**
@@ -19,16 +19,16 @@ import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
 @Deprecated
 final class LinkedMapNearCache<K, V> implements NearCache<K, V> {
 
-   private final LinkedHashMap<K, VersionedValue<V>> cache;
+   private final LinkedHashMap<K, MetadataValue<V>> cache;
 
    private final ReadWriteLock rwlock = new ReentrantReadWriteLock();
 
-   protected LinkedMapNearCache(LinkedHashMap<K, VersionedValue<V>> cache) {
+   protected LinkedMapNearCache(LinkedHashMap<K, MetadataValue<V>> cache) {
       this.cache = cache;
    }
 
    @Override
-   public void put(K key, VersionedValue<V> value) {
+   public void put(K key, MetadataValue<V> value) {
       Lock lock = rwlock.writeLock();
       try {
          lock.lock();
@@ -39,11 +39,11 @@ final class LinkedMapNearCache<K, V> implements NearCache<K, V> {
    }
 
    @Override
-   public void putIfAbsent(K key, VersionedValue<V> value) {
+   public void putIfAbsent(K key, MetadataValue<V> value) {
       Lock lock = rwlock.writeLock();
       try {
          lock.lock();
-         VersionedValue<V> current = cache.get(key);
+         MetadataValue<V> current = cache.get(key);
          if (current == null)
             cache.put(key, value);
       } finally {
@@ -63,7 +63,7 @@ final class LinkedMapNearCache<K, V> implements NearCache<K, V> {
    }
 
    @Override
-   public VersionedValue<V> get(K key) {
+   public MetadataValue<V> get(K key) {
       Lock lock = rwlock.readLock();
       try {
          lock.lock();
@@ -85,8 +85,8 @@ final class LinkedMapNearCache<K, V> implements NearCache<K, V> {
    }
 
    public static <K, V> NearCache<K, V> create(final NearCacheConfiguration config) {
-      return new LinkedMapNearCache<K, V>(
-            new LinkedHashMap<K, VersionedValue<V>>(1 << 4, 0.75f, true) {
+      return new LinkedMapNearCache(
+            new LinkedHashMap<K, MetadataValue<V>>(1 << 4, 0.75f, true) {
          @Override
          protected boolean removeEldestEntry(Map.Entry eldest) {
             return size() > config.maxEntries();

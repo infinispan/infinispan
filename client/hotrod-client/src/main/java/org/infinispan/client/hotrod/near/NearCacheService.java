@@ -2,8 +2,8 @@ package org.infinispan.client.hotrod.near;
 
 import java.nio.ByteBuffer;
 
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
@@ -16,7 +16,7 @@ import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheFailoverEvent;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
-import org.infinispan.client.hotrod.impl.VersionedValueImpl;
+import org.infinispan.client.hotrod.impl.MetadataValueImpl;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.io.UnsignedNumeric;
@@ -55,8 +55,8 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
 
    private Object createListener(RemoteCache<K, V> remote) {
       return config.mode().invalidated()
-            ? new InvalidatedNearCacheListener<K, V>(this)
-            : new EagerNearCacheListener<K, V>(this, remote.getRemoteCacheManager().getMarshaller());
+            ? new InvalidatedNearCacheListener(this)
+            : new EagerNearCacheListener(this, remote.getRemoteCacheManager().getMarshaller());
    }
 
    public void stop(RemoteCache<K, V> remote) {
@@ -71,17 +71,17 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
 
    protected NearCache<K, V> createNearCache(NearCacheConfiguration config) {
       return config.maxEntries() > 0
-            ? BoundedConcurrentMapNearCache.<K, V>create(config)
-            : ConcurrentMapNearCache.<K, V>create();
+            ? BoundedConcurrentMapNearCache.create(config)
+            : ConcurrentMapNearCache.create();
    }
 
    public static <K, V> NearCacheService<K, V> create(
          NearCacheConfiguration config, ClientListenerNotifier listenerNotifier) {
-      return new NearCacheService<K, V>(config, listenerNotifier);
+      return new NearCacheService(config, listenerNotifier);
    }
 
    @Override
-   public void put(K key, VersionedValue<V> value) {
+   public void put(K key, MetadataValue<V> value) {
        cache.put(key, value);
 
       if (trace)
@@ -90,7 +90,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    }
 
    @Override
-   public void putIfAbsent(K key, VersionedValue<V> value) {
+   public void putIfAbsent(K key, MetadataValue<V> value) {
       cache.putIfAbsent(key, value);
 
       if (trace)
@@ -107,10 +107,10 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    }
 
    @Override
-   public VersionedValue<V> get(K key) {
+   public MetadataValue<V> get(K key) {
       boolean listenerConnected = isConnected();
       if (listenerConnected) {
-         VersionedValue<V> value = cache.get(key);
+         MetadataValue<V> value = cache.get(key);
          if (trace)
             log.tracef("Get key=%s returns value=%s (listenerId=%s)", key, value, Util.printArray(listenerId));
 
@@ -205,7 +205,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
          V value = unmarshallObject(valueBytes, "value");
          long version = in.getLong();
          if (key != null && value != null) {
-            VersionedValueImpl<V> entry = new VersionedValueImpl<>(version, value);
+            MetadataValueImpl<V> entry = new MetadataValueImpl<>(0, 0, 0, 0, version, value);
             cache.put(key, entry);
          }
       }

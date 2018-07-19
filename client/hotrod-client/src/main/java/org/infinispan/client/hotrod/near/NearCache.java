@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.near;
 
-import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.MetadataValue;
 
 /**
  * Near cache contract.
@@ -8,9 +8,9 @@ import org.infinispan.client.hotrod.VersionedValue;
  * @since 7.1
  */
 interface NearCache<K, V> {
-   void put(K key, VersionedValue<V> value);
-   void putIfAbsent(K key, VersionedValue<V> value);
+   void put(K key, MetadataValue<V> value);
+   void putIfAbsent(K key, MetadataValue<V> value);
    void remove(K key);
-   VersionedValue<V> get(K key);
+   MetadataValue<V> get(K key);
    void clear();
 }

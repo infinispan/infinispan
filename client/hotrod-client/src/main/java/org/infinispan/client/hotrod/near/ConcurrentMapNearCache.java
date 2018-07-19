@@ -2,7 +2,7 @@ package org.infinispan.client.hotrod.near;
 
 import java.util.concurrent.ConcurrentMap;
 
-import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.commons.util.CollectionFactory;
 
 /**
@@ -13,15 +13,15 @@ import org.infinispan.commons.util.CollectionFactory;
  */
 final class ConcurrentMapNearCache<K, V> implements NearCache<K, V> {
 
-   private final ConcurrentMap<K, VersionedValue<V>> cache = CollectionFactory.makeConcurrentMap();
+   private final ConcurrentMap<K, MetadataValue<V>> cache = CollectionFactory.makeConcurrentMap();
 
    @Override
-   public void put(K key, VersionedValue<V> value) {
+   public void put(K key, MetadataValue<V> value) {
       cache.put(key, value);
    }
 
    @Override
-   public void putIfAbsent(K key, VersionedValue<V> value) {
+   public void putIfAbsent(K key, MetadataValue<V> value) {
       cache.putIfAbsent(key, value);
    }
 
@@ -31,7 +31,7 @@ final class ConcurrentMapNearCache<K, V> implements NearCache<K, V> {
    }
 
    @Override
-   public VersionedValue<V> get(Object key) {
+   public MetadataValue<V> get(Object key) {
       return cache.get(key);
    }
 

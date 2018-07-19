@@ -81,6 +81,11 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<MetadataValue<V>> getWithMetadataAsync(K key) {
+      return delegate.getWithMetadataAsync(key);
+   }
+
+   @Override
    public Map<K, V> getBulk() {
       return delegate.getBulk();
    }
