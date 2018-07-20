@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.PrimitiveIterator;
+import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -58,6 +60,8 @@ import io.reactivex.schedulers.Schedulers;
 @ConfiguredBy(RocksDBStoreConfiguration.class)
 public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     private static final Log log = LogFactory.getLog(RocksDBStore.class, Log.class);
+    static final String databasePropertyNameWithSuffix = "database.";
+    static final String columnFamilyPropertyNameWithSuffix = "data.";
 
     private RocksDBStoreConfiguration configuration;
     private BlockingQueue<ExpiryEntry> expiryEntryQueue;
@@ -69,6 +73,8 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     private Semaphore semaphore;
     private WriteOptions dataWriteOptions;
     private RocksDBHandler handler;
+    private Properties databaseProperties;
+    private Properties columnFamilyProperties;
     private volatile boolean stopped = true;
 
     @Override
@@ -92,6 +98,23 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
                   keyPartitioner);
         } else {
             handler = new NonSegmentedRocksDBHandler(keyPartitioner);
+        }
+
+        // Has to be done before we open the database, so we can pass the properties
+        Properties allProperties = configuration.properties();
+        for (Map.Entry<Object, Object> entry : allProperties.entrySet()) {
+            String key = entry.getKey().toString();
+            if (key.startsWith(databasePropertyNameWithSuffix)) {
+                if (databaseProperties == null) {
+                    databaseProperties = new Properties();
+                }
+                databaseProperties.setProperty(key.substring(databasePropertyNameWithSuffix.length()), entry.getValue().toString());
+            } else if (key.startsWith(columnFamilyPropertyNameWithSuffix)) {
+                if (columnFamilyProperties == null) {
+                    columnFamilyProperties = new Properties();
+                }
+                columnFamilyProperties.setProperty(key.substring(columnFamilyPropertyNameWithSuffix.length()), entry.getValue().toString());
+            }
         }
 
         try {
@@ -122,14 +145,21 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     }
 
     private DBOptions dataDbOptions() {
-        DBOptions options = new DBOptions()
+        DBOptions dbOptions;
+        if (databaseProperties != null) {
+            dbOptions = DBOptions.getDBOptionsFromProps(databaseProperties);
+            if (dbOptions == null) {
+                throw log.rocksDBUnknownPropertiesSupplied(databaseProperties.toString());
+            }
+        } else {
+            dbOptions = new DBOptions();
+        }
+        return dbOptions
               .setCreateIfMissing(true)
               // We have to create missing column families on open.
               // Otherwise when we start we won't know what column families this database had if any - thus
               // we must specify all of them and later remove them.
               .setCreateMissingColumnFamilies(true);
-
-        return options;
     }
 
     private Options expiredDbOptions() {
@@ -535,8 +565,17 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         abstract int calculateSegment(Object key);
 
         ColumnFamilyDescriptor newDescriptor(byte[] name) {
+            ColumnFamilyOptions columnFamilyOptions;
+            if (columnFamilyProperties != null) {
+                columnFamilyOptions = ColumnFamilyOptions.getColumnFamilyOptionsFromProps(columnFamilyProperties);
+                if (columnFamilyOptions == null) {
+                    throw log.rocksDBUnknownPropertiesSupplied(columnFamilyProperties.toString());
+                }
+            } else {
+                columnFamilyOptions = new ColumnFamilyOptions();
+            }
             return new ColumnFamilyDescriptor(name,
-                  new ColumnFamilyOptions().setCompressionType(CompressionType.getCompressionType(configuration.compressionType().toString())));
+                  columnFamilyOptions.setCompressionType(CompressionType.getCompressionType(configuration.compressionType().toString())));
         }
 
         boolean contains(int segment, Object key) {
