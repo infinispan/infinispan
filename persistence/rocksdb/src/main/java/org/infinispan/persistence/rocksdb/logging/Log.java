@@ -3,6 +3,7 @@ package org.infinispan.persistence.rocksdb.logging;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.INFO;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -22,4 +23,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Ignoring XML attribute %s, please remove from configuration file", id = 293)
    void ignoreXmlAttribute(Object attribute);
+
+   @Message(value = "RocksDB properties %s, contains an unknown property", id = 294)
+   CacheConfigurationException rocksDBUnknownPropertiesSupplied(String properties);
 }
