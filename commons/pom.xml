@@ -66,6 +66,11 @@
          <artifactId>junit</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>
@@ -112,19 +117,7 @@
                   <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                   <build.directory>${project.build.directory}</build.directory>
                </systemPropertyVariables>
-               <properties combine.self="override">
-                  <usedefaultlisteners>false</usedefaultlisteners>
-                  <listener>${junitListener}</listener>
-               </properties>
-               <disableXmlReport>false</disableXmlReport>
             </configuration>
-            <dependencies>
-               <dependency>
-                  <groupId>org.apache.maven.surefire</groupId>
-                  <artifactId>surefire-junit47</artifactId>
-                  <version>${version.maven.surefire}</version>
-               </dependency>
-            </dependencies>
          </plugin>
 
          <plugin>

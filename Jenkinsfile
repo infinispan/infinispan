@@ -54,7 +54,7 @@ pipeline {
                 // TODO Add StabilityTestDataPublisher after https://issues.jenkins-ci.org/browse/JENKINS-42610 is fixed
                 // Capture target/surefire-reports/*.xml, target/failsafe-reports/*.xml,
                 // target/failsafe-reports-embedded/*.xml, target/failsafe-reports-remote/*.xml
-                junit testResults: '**/target/*-reports*/*.xml',
+                junit testResults: '**/target/*-reports*/**/TEST-*.xml',
                         testDataPublishers: [[$class: 'ClaimTestDataPublisher']],
                         healthScaleFactor: 100, allowEmptyResults: true
 
