@@ -3,6 +3,7 @@ package org.infinispan.context.impl;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.container.entries.CacheEntry;
@@ -113,5 +114,14 @@ public final class ImmutableContext implements InvocationContext {
    @Override
    public boolean isEntryRemovedInContext(Object key) {
       return false;
+   }
+
+   @Override
+   public CompletionStage<Void> enter() {
+      return null;
+   }
+
+   @Override
+   public void exit() {
    }
 }

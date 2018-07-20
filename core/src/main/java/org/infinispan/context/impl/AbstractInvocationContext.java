@@ -1,5 +1,7 @@
 package org.infinispan.context.impl;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -55,6 +57,16 @@ public abstract class AbstractInvocationContext implements InvocationContext {
     */
    @Deprecated
    protected void onEntryValueReplaced(final Object key, final InternalCacheEntry cacheEntry) {
+   }
+
+   @Override
+   public CompletionStage<Void> enter() {
+      return null;  // TODO: Customise this generated block
+   }
+
+   @Override
+   public void exit() {
+      // TODO: Customise this generated block
    }
 
    @Override

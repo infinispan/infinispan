@@ -233,6 +233,7 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
       try {
          Object result = firstInterceptor.visitCommand(ctx, command);
          if (result instanceof InvocationStage) {
+            ctx.exit();
             return ((InvocationStage) result).toCompletableFuture();
          } else {
             return CompletableFuture.completedFuture(result);
@@ -247,6 +248,7 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
       try {
          Object result = firstInterceptor.visitCommand(ctx, command);
          if (result instanceof InvocationStage) {
+            ctx.exit();
             return ((InvocationStage) result).get();
          } else {
             return result;

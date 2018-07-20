@@ -3,6 +3,8 @@ package org.infinispan.context;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.BiConsumer;
 
 import org.infinispan.container.entries.CacheEntry;
@@ -15,7 +17,8 @@ import org.infinispan.remoting.transport.Address;
  */
 @Deprecated
 public final class SingleKeyNonTxInvocationContext implements InvocationContext {
-
+   private static AtomicReferenceFieldUpdater currentThreadUpdater =
+         AtomicReferenceFieldUpdater.newUpdater(SingleKeyNonTxInvocationContext.class, Thread.class, "currentThread");
    /**
     * It is possible for the key to only be wrapped but not locked, e.g. when a get takes place.
     */
@@ -30,6 +33,9 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
    private final Address origin;
 
    private Object lockOwner;
+
+   // Let the creating thread automatically acquire it.
+   private volatile Thread currentThread = Thread.currentThread();
 
    public SingleKeyNonTxInvocationContext(final Address origin) {
       this.origin = origin;
@@ -170,6 +176,23 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
    public boolean isEntryRemovedInContext(final Object key) {
       CacheEntry ce = lookupEntry(key);
       return ce != null && ce.isRemoved() && ce.isChanged();
+   }
+
+   @Override
+   public CompletionStage<Void> enter() {
+      if (currentThreadUpdater.compareAndSet(this, null, Thread.currentThread())) {
+         return null;
+      } else {
+         // we might miss the thread when doing the log...
+         throw new IllegalStateException("Concurrent access by " + currentThread + ", we are " + Thread.currentThread());
+      }
+   }
+
+   @Override
+   public void exit() {
+      if (!currentThreadUpdater.compareAndSet(this, Thread.currentThread(), null)) {
+         throw new IllegalStateException("Unexpected locking thread: " + currentThread + ", we are " + Thread.currentThread());
+      }
    }
 
    public void resetState() {

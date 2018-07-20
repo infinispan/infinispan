@@ -1,6 +1,7 @@
 package org.infinispan.context;
 
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -95,4 +96,25 @@ public interface InvocationContext extends EntryLookup, Cloneable {
    }
 
    boolean isEntryRemovedInContext(Object key);
+
+   /**
+    * Rationale: Commands can fork processing to multiple threads, e.g. by issuing an async RPC
+    * and adding a handler to that. In some cases involving exceptions the handlers might be invoked
+    * in parallel. In order to not synchronize all collections in the context and prevent inconsistencies
+    * we introduce a big lock on the context.
+    *
+    * Acquires a non-reentrant lock on the context. This must be called before processing command
+    * with this context.
+    * @return Null if the code is free to continue or a stage if the code should be blocked.
+    *         Any handler registered on this stage will be executed with acquired lock.
+    * @throws IllegalStateException If the implementation is not expecting any concurrent access
+    *         but we observe that. Example implementation could be a CAS returning non-zero.
+    */
+   CompletionStage<Void> enter();
+
+   /**
+    * Releases a lock on the context. This must be called before releasing the control to other
+    * threads, e.g. after a RPC has been invoked and there's no more processing to be done by this thread.
+    */
+   void exit();
 }
