@@ -47,6 +47,7 @@ public final class Deployments {
                   new File("target/test-libs/reactive-streams.jar"),
                   new File("target/test-libs/jboss-marshalling.jar"),
                   new File("target/test-libs/jboss-marshalling-river.jar"),
+                  new File("target/test-libs/protostream.jar"),
                   new File("target/test-libs/wildfly-controller-client.jar"))
             .addPackage(Deployments.class.getPackage())
             .addPackage(AbstractAuthentication.class.getPackage());

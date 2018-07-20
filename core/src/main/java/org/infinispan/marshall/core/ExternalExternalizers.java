@@ -20,6 +20,13 @@ final class ExternalExternalizers {
    }
 
    static ClassToExternalizerMap load(GlobalConfiguration globalCfg) {
+      return load(globalCfg, 0, Integer.MAX_VALUE);
+   }
+
+   /**
+    * Load the {@link AdvancedExternalizer} instances with Ids inclusive of the specified bounds.
+    */
+   static ClassToExternalizerMap load(GlobalConfiguration globalCfg, int lowerBound, int upperBound) {
       ClassToExternalizerMap exts = new ClassToExternalizerMap(4, 0.375f);
 
       Map<Integer, AdvancedExternalizer<?>> cfgExts = globalCfg.serialization().advancedExternalizers();
@@ -37,7 +44,11 @@ final class ExternalExternalizers {
          else if (config.getKey() != null)
             id = config.getKey();
 
-         checkForeignIdLimit(id, ext);
+         if (id < 0)
+            throw log.foreignExternalizerUsingNegativeId(ext, id);
+
+         if (id < lowerBound || id > upperBound)
+            continue;
 
          Set<Class> subTypes = ext.getTypeClasses();
          ForeignAdvancedExternalizer foreignExt = new ForeignAdvancedExternalizer(id, ext);

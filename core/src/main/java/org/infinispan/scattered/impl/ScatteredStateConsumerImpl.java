@@ -391,8 +391,8 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       for (KeyAndVersion pair : list) {
          keys[i] = pair.key;
          SimpleClusteredVersion version = (SimpleClusteredVersion) pair.version;
-         topologyIds[i] = version.topologyId;
-         versions[i] = version.version;
+         topologyIds[i] = version.getTopologyId();
+         versions[i] = version.getVersion();
          ++i;
       }
       // Theoretically we can just send these invalidations asynchronously, but we'd prefer to have old copies

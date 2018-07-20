@@ -6,11 +6,11 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
@@ -42,7 +42,7 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
    protected TableManager tableManager;
    protected static final Person MIRCEA = new Person("Mircea", "Markus", 28);
    protected static final Person MANIK = new Person("Manik", "Surtani", 18);
-   protected StreamingMarshaller marshaller;
+   protected PersistenceMarshaller marshaller;
 
    protected JdbcStringBasedStoreConfigurationBuilder createJdbcConfig(ConfigurationBuilder builder) {
       JdbcStringBasedStoreConfigurationBuilder storeBuilder = builder

@@ -80,6 +80,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.marshall.core.JBossMarshallingTest.CustomReadObjectMethod;
 import org.infinispan.marshall.core.JBossMarshallingTest.ObjectThatContainsACustomReadObjectMethod;
+import org.infinispan.marshall.core.MarshallingException;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -430,9 +431,10 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       byte[] bytes = marshaller.objectToByteBuffer(pojo);
       try {
          marshaller.objectFromByteBuffer(bytes);
-      } catch (IOException e) {
+      } catch (MarshallingException e) {
          log.info("Log exception for output format verification", e);
-         TraceInformation inf = (TraceInformation) e.getCause();
+         IOException ioEx = (IOException) e.getCause();
+         TraceInformation inf = (TraceInformation) ioEx.getCause();
          if (inf != null)
             assert inf.toString().contains("in object of type org.infinispan.marshall.VersionAwareMarshallerTest$PojoWhichFailsOnUnmarshalling");
       }

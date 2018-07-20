@@ -15,6 +15,16 @@
 
    <dependencies>
       <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-processor</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>com.github.ben-manes.caffeine</groupId>
          <artifactId>caffeine</artifactId>
       </dependency>

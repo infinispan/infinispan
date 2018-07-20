@@ -1,17 +1,11 @@
 package org.infinispan.counter.impl.strong;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import java.util.Objects;
+
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.impl.entries.CounterKey;
-import org.infinispan.counter.impl.externalizers.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.ByteString;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Set;
 
 /**
  * The key to store in the {@link org.infinispan.Cache} used by {@link StrongCounter}.
@@ -22,9 +16,10 @@ import java.util.Set;
  */
 public class StrongCounterKey implements CounterKey {
 
-   public static final AdvancedExternalizer<StrongCounterKey> EXTERNALIZER = new Externalizer();
+   @ProtoField(number = 1)
+   ByteString counterName;
 
-   private final ByteString counterName;
+   StrongCounterKey() {}
 
    StrongCounterKey(String counterName) {
       this(ByteString.fromString(counterName));
@@ -64,31 +59,5 @@ public class StrongCounterKey implements CounterKey {
    @Override
    public ByteString getCounterName() {
       return counterName;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<StrongCounterKey> {
-
-      private Externalizer() {
-      }
-
-      @Override
-      public Set<Class<? extends StrongCounterKey>> getTypeClasses() {
-         return Collections.singleton(StrongCounterKey.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.STRONG_COUNTER_KEY;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, StrongCounterKey object) throws IOException {
-         ByteString.writeObject(output, object.counterName);
-      }
-
-      @Override
-      public StrongCounterKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new StrongCounterKey(ByteString.readObject(input));
-      }
    }
 }

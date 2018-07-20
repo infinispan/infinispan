@@ -1,5 +1,7 @@
 package org.infinispan.scripting.impl;
 
+import org.infinispan.protostream.annotations.ProtoEnumValue;
+
 /**
  * ScriptExecutionMode.
  *
@@ -7,7 +9,11 @@ package org.infinispan.scripting.impl;
  * @since 7.2
  */
 public enum ExecutionMode {
+
+   @ProtoEnumValue(number = 1)
    LOCAL(LocalRunner.INSTANCE, false),
+
+   @ProtoEnumValue(number = 2)
    DISTRIBUTED(DistributedRunner.INSTANCE, true);
 
    private final ScriptRunner runner;

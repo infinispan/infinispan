@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
@@ -583,10 +582,6 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
       private DummyInMemoryStore cacheStore(Ownership ownership) {
          Cache<K, V> cache = cache(ownership);
          return cache != null ? getFirstWriter(cache) : null;
-      }
-
-      private StreamingMarshaller marshaller(Ownership ownership) {
-         return cacheEnumMap.get(ownership).getAdvancedCache().getComponentRegistry().getCacheMarshaller();
       }
 
       protected long loads(Ownership ownership) {

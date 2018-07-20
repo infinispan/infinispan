@@ -16,10 +16,14 @@
     <description>Infinispan Server - Infinispan Server Event Logger</description>
 
     <dependencies>
-       <dependency>
-          <groupId>org.infinispan</groupId>
-          <artifactId>infinispan-component-processor</artifactId>
-       </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-component-processor</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan.protostream</groupId>
+            <artifactId>protostream-processor</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-core</artifactId>

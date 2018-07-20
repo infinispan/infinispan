@@ -19,12 +19,12 @@ import org.infinispan.util.logging.events.EventLogger;
  * @since 8.2
  */
 public class DecoratedEventLogger implements EventLogger {
-   private static final Optional<String> LOCAL_SCOPE = Optional.of("local");
+   private static final String LOCAL_SCOPE = "local";
    private EventLogger delegate;
-   protected Optional<String> detail = Optional.empty();
-   protected Optional<String> context = Optional.empty();
-   protected Optional<String> scope = Optional.empty();
-   protected Optional<String> who = Optional.empty();
+   protected String detail;
+   protected String context;
+   protected String scope;
+   protected String who;
 
    protected DecoratedEventLogger(EventLogger delegate) {
       this.delegate = delegate;
@@ -33,42 +33,47 @@ public class DecoratedEventLogger implements EventLogger {
    @Override
    public void log(EventLogLevel level, EventLogCategory category, String message) {
       StringBuilder sb = new StringBuilder();
-      context.ifPresent(c -> sb.append(MESSAGES.eventLogContext(c)));
-      scope.ifPresent(s -> sb.append(MESSAGES.eventLogScope(s)));
-      who.ifPresent(w -> sb.append(MESSAGES.eventLogWho(w)));
+      addLogsToBuilder(sb);
       // We don't include detail in this implementation
       sb.append(' ');
       sb.append(message);
       delegate.log(level, category, sb.toString());
    }
 
+   protected void addLogsToBuilder(StringBuilder sb) {
+      if (context != null) sb.append(MESSAGES.eventLogContext(context));
+      if (scope != null) sb.append(MESSAGES.eventLogContext(scope));
+      if (who != null) sb.append(MESSAGES.eventLogContext(who));
+   }
+
+
    @Override
    public EventLogger who(String who) {
-      this.who = Optional.of(who);
+      this.who = who;
       return this;
    }
 
    @Override
    public EventLogger scope(String scope) {
-      this.scope = Optional.of(scope);
+      this.scope = scope;
       return this;
    }
 
    @Override
    public EventLogger scope(Address scope) {
-      this.scope = scope != null ? Optional.of(scope.toString()) : LOCAL_SCOPE;
+      this.scope = scope != null ? scope.toString() : LOCAL_SCOPE;
       return this;
    }
 
    @Override
    public EventLogger context(String context) {
-      this.context = Optional.of(context);
+      this.context = context;
       return this;
    }
 
    @Override
    public EventLogger detail(String detail) {
-      this.detail = Optional.ofNullable(detail);
+      this.detail = detail;
       return this;
    }
 

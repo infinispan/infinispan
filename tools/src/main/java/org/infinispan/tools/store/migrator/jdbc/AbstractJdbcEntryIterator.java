@@ -6,11 +6,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
 
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.impl.table.TableManager;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 
 /**
@@ -20,7 +20,7 @@ import org.infinispan.persistence.spi.PersistenceException;
 abstract class AbstractJdbcEntryIterator implements Iterator<MarshallableEntry>, AutoCloseable {
    final ConnectionFactory connectionFactory;
    final TableManager tableManager;
-   final StreamingMarshaller marshaller;
+   final Marshaller marshaller;
    private Connection conn;
    private PreparedStatement ps;
    ResultSet rs;
@@ -28,7 +28,7 @@ abstract class AbstractJdbcEntryIterator implements Iterator<MarshallableEntry>,
    int rowIndex = 0;
 
    AbstractJdbcEntryIterator(ConnectionFactory connectionFactory, TableManager tableManager,
-                             StreamingMarshaller marshaller) {
+                             Marshaller marshaller) {
       this.connectionFactory = connectionFactory;
       this.tableManager = tableManager;
       this.marshaller = marshaller;

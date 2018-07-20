@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
 
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.impl.table.TableManager;
@@ -23,7 +25,7 @@ abstract class AbstractStringJdbcIterator extends AbstractJdbcEntryIterator {
    final TwoWayKey2StringMapper key2StringMapper;
    final MarshallableEntryFactory entryFactory;
 
-   AbstractStringJdbcIterator(ConnectionFactory connectionFactory, TableManager tableManager, StreamingMarshaller marshaller,
+   AbstractStringJdbcIterator(ConnectionFactory connectionFactory, TableManager tableManager, Marshaller marshaller,
                               TwoWayKey2StringMapper key2StringMapper) {
       super(connectionFactory, tableManager, marshaller);
       this.key2StringMapper = key2StringMapper;
@@ -56,7 +58,13 @@ abstract class AbstractStringJdbcIterator extends AbstractJdbcEntryIterator {
    @SuppressWarnings("unchecked")
    <T> T unmarshall(InputStream inputStream) throws PersistenceException {
       try {
-         return (T) marshaller.objectFromInputStream(inputStream);
+         Object retVal = null;
+         if (marshaller instanceof StreamingMarshaller) {
+            retVal = ((StreamingMarshaller) marshaller).objectFromInputStream(inputStream);
+         } else if (marshaller instanceof StreamAwareMarshaller) {
+            retVal = ((StreamAwareMarshaller) marshaller).readObject(inputStream);
+         }
+         return (T) retVal;
       } catch (IOException e) {
          throw new PersistenceException("I/O error while unmarshalling from stream", e);
       } catch (ClassNotFoundException e) {

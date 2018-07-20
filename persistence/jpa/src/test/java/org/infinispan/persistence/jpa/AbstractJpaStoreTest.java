@@ -2,10 +2,10 @@ package org.infinispan.persistence.jpa;
 
 import static org.testng.AssertJUnit.assertNotNull;
 
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternallyMarshallable;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationBuilder;
@@ -35,7 +35,7 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
 
    //protected TransactionFactory gtf = new TransactionFactory();
 
-   protected StreamingMarshaller marshaller;
+   protected PersistenceMarshaller marshaller;
 
    protected MarshallableEntryFactory entryFactory;
 
@@ -70,7 +70,7 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
    public void setUp() throws Exception {
       try {
          cm = createCacheManager();
-         marshaller = cm.getCache().getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+         marshaller = cm.getCache().getAdvancedCache().getComponentRegistry().getPersistenceMarshaller();
          entryFactory = new MarshalledEntryFactoryImpl(marshaller);
          cs = createCacheStore();
          cs.clear();

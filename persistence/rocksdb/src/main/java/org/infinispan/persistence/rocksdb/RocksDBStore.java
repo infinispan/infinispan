@@ -23,6 +23,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
@@ -80,6 +81,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     private RocksDBHandler handler;
     private Properties databaseProperties;
     private Properties columnFamilyProperties;
+    private Marshaller marshaller;
     private MarshallableEntryFactory<K, V> entryFactory;
     private volatile boolean stopped = true;
 
@@ -89,6 +91,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         this.ctx = ctx;
         this.scheduler = Schedulers.from(ctx.getExecutor());
         this.timeService = ctx.getTimeService();
+        this.marshaller = ctx.getPersistenceMarshaller();
         this.semaphore = new Semaphore(Integer.MAX_VALUE, true);
         this.entryFactory = ctx.getMarshallableEntryFactory();
     }
@@ -412,14 +415,14 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     }
 
     private byte[] marshall(Object entry) throws IOException, InterruptedException {
-        return ctx.getMarshaller().objectToByteBuffer(entry);
+        return marshaller.objectToByteBuffer(entry);
     }
 
     private Object unmarshall(byte[] bytes) throws IOException, ClassNotFoundException {
         if (bytes == null)
             return null;
 
-        return ctx.getMarshaller().objectFromByteBuffer(bytes);
+        return marshaller.objectFromByteBuffer(bytes);
     }
 
     private MarshallableEntry<K, V> valueToMarshallableEntry(Object key, byte[] valueBytes, boolean fetchMeta) throws IOException, ClassNotFoundException {

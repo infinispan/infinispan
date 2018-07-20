@@ -822,14 +822,12 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
       }
    }
 
-   protected Metadata buildMetadata() {
-      MemcachedMetadataBuilder metadata = new MemcachedMetadataBuilder();
-      metadata.version(generateVersion(cache));
-      metadata.flags(params.flags);
-      if (params.lifespan > 0)
-         metadata.lifespan(toMillis(params.lifespan));
-
-      return metadata.build();
+   private Metadata buildMetadata() {
+      return new MemcachedMetadata.Builder()
+            .flags(params.flags)
+            .version(generateVersion(cache))
+            .lifespan(params.lifespan > 0 ? toMillis(params.lifespan) : -1)
+            .build();
    }
 
    private StringBuilder logAndCreateErrorMessage(StringBuilder sb, MemcachedException m) {

@@ -10,7 +10,6 @@ import java.util.Set;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -22,6 +21,7 @@ import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.TestModuleRepository;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.spi.InitializationContext;
@@ -37,11 +37,11 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
  */
 public class PersistenceMockUtil {
 
-   public static InitializationContext createContext(String nodeName, Configuration configuration, StreamingMarshaller marshaller) {
+   public static InitializationContext createContext(String nodeName, Configuration configuration, PersistenceMarshaller marshaller) {
       return createContext(nodeName, configuration, marshaller, AbstractInfinispanTest.TIME_SERVICE);
    }
 
-   public static InitializationContext createContext(String nodeName, Configuration configuration, StreamingMarshaller marshaller, TimeService timeService) {
+   public static InitializationContext createContext(String nodeName, Configuration configuration, PersistenceMarshaller marshaller, TimeService timeService) {
       Cache mockCache = mockCache(nodeName, configuration, timeService);
       MarshalledEntryFactoryImpl mef = new MarshalledEntryFactoryImpl(marshaller);
       return new InitializationContextImpl(configuration.persistence().stores().get(0), mockCache,
@@ -76,5 +76,4 @@ public class PersistenceMockUtil {
       when(cache.getCacheConfiguration()).thenReturn(configuration);
       return cache;
    }
-
 }

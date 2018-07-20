@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferFactory;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
@@ -117,7 +117,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    private LogAppender logAppender;
    private Index index;
    private Compactor compactor;
-   private StreamingMarshaller marshaller;
+   private Marshaller marshaller;
    private ByteBufferFactory byteBufferFactory;
    private MarshallableEntryFactory marshallableEntryFactory;
    private TimeService timeService;
@@ -126,7 +126,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    @Override
    public void init(InitializationContext ctx) {
       configuration = ctx.getConfiguration();
-      marshaller = ctx.getMarshaller();
+      marshaller = ctx.getPersistenceMarshaller();
       marshallableEntryFactory = ctx.getMarshallableEntryFactory();
       byteBufferFactory = ctx.getByteBufferFactory();
       timeService = ctx.getTimeService();

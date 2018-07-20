@@ -29,8 +29,8 @@ public class RemoteMetadata implements Metadata {
    public RemoteMetadata(Address address, EntryVersion version) {
       this.address = address;
       SimpleClusteredVersion scv = (SimpleClusteredVersion) version;
-      this.topologyId = scv.topologyId;
-      this.version = scv.version;
+      this.topologyId = scv.getTopologyId();
+      this.version = scv.getVersion();
    }
 
    private RemoteMetadata(Address address, int topologyId, long version) {

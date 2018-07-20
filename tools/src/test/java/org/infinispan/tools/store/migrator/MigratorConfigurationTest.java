@@ -29,11 +29,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.marshall.core.GlobalMarshaller;
+import org.infinispan.marshall.core.JBossUserMarshaller;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
@@ -69,7 +70,7 @@ public class MigratorConfigurationTest {
       properties.put(propKey(SOURCE, MARSHALLER, CLASS), GenericJBossMarshaller.class.getName());
 
       StoreProperties props = new StoreProperties(SOURCE, properties);
-      StreamingMarshaller marshaller = SerializationConfigUtil.getMarshaller(props);
+      Marshaller marshaller = SerializationConfigUtil.getMarshaller(props);
       assert marshaller != null;
       assert marshaller instanceof GenericJBossMarshaller;
    }
@@ -81,7 +82,7 @@ public class MigratorConfigurationTest {
       properties.put(propKey(SOURCE, MARSHALLER, EXTERNALIZERS), externalizers);
 
       StoreProperties props = new StoreProperties(SOURCE, properties);
-      StreamingMarshaller marshaller = SerializationConfigUtil.getMarshaller(props);
+      Marshaller marshaller = SerializationConfigUtil.getMarshaller(props);
       assert marshaller != null;
       assert marshaller instanceof Infinispan8Marshaller;
 
@@ -93,15 +94,15 @@ public class MigratorConfigurationTest {
    }
 
    public void testCurrentMarshallerLoadedAndExternalizersLoaded() throws Exception {
-      String externalizers = "1:" + PersonExternalizer.class.getName();
+      String externalizers = String.format("%d:%s", JBossUserMarshaller.USER_EXT_ID_MIN, PersonExternalizer.class.getName());
       Properties properties = createBaseProperties();
       properties.put(propKey(SOURCE, MARSHALLER, TYPE), MarshallerType.CURRENT.toString());
       properties.put(propKey(SOURCE, MARSHALLER, EXTERNALIZERS), externalizers);
 
       StoreProperties props = new StoreProperties(SOURCE, properties);
-      StreamingMarshaller marshaller = SerializationConfigUtil.getMarshaller(props);
+      Marshaller marshaller = SerializationConfigUtil.getMarshaller(props);
       assert marshaller != null;
-      assert marshaller instanceof GlobalMarshaller;
+      assert marshaller instanceof PersistenceMarshaller;
       byte[] bytes = marshaller.objectToByteBuffer(new Person(Person.class.getName()));
       Person person = (Person) marshaller.objectFromByteBuffer(bytes);
       assert person != null;

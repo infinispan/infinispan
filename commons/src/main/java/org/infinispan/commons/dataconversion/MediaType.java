@@ -20,6 +20,7 @@ import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.protostream.annotations.ProtoField;
 
 
 /**
@@ -90,11 +91,13 @@ public final class MediaType {
    private static final double DEFAULT_WEIGHT = 1.0;
    private static final Charset DEFAULT_CHARSET = UTF_8;
 
-   private final Map<String, String> params = new HashMap<>(2);
-   private final String type;
-   private final String subType;
-   private final String typeSubtype;
-   private final transient double weight;
+   private Map<String, String> params = new HashMap<>(2);
+   private String type;
+   private String subType;
+   private String typeSubtype;
+   private transient double weight;
+
+   MediaType() {}
 
    public MediaType(String type, String subtype) {
       this(type, subtype, emptyMap());
@@ -111,6 +114,19 @@ public final class MediaType {
       } else {
          this.weight = DEFAULT_WEIGHT;
       }
+   }
+
+   @ProtoField(number = 1)
+   String getTree() {
+      return toString();
+   }
+
+   void setTree(String tree) {
+      MediaType type = MediaType.fromString(tree);
+      this.type = type.type;
+      this.subType = type.subType;
+      this.typeSubtype = type.typeSubtype;
+      this.weight = type.weight;
    }
 
    public static MediaType fromString(String mediaType) {

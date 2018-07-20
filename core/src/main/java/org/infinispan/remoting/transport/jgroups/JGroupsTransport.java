@@ -148,7 +148,8 @@ public class JGroupsTransport implements Transport {
    private static final byte SINGLE_MESSAGE = 2;
 
    @Inject protected GlobalConfiguration configuration;
-   @Inject protected StreamingMarshaller marshaller;
+   @Inject @ComponentName(KnownComponentNames.INTERNAL_MARSHALLER)
+   protected StreamingMarshaller marshaller;
    @Inject protected CacheManagerNotifier notifier;
    @Inject protected TimeService timeService;
    @Inject protected InboundInvocationHandler invocationHandler;

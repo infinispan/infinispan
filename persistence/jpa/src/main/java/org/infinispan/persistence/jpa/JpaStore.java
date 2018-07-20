@@ -36,11 +36,11 @@ import org.hibernate.dialect.Dialect;
 import org.hibernate.dialect.MySQLDialect;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.infinispan.commons.configuration.ConfiguredBy;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.executors.ExecutorAllCompletionService;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration;
 import org.infinispan.persistence.jpa.impl.EntityManagerFactoryRegistry;
@@ -76,7 +76,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private JpaStoreConfiguration configuration;
    private EntityManagerFactory emf;
    private EntityManagerFactoryRegistry emfRegistry;
-   private StreamingMarshaller marshaller;
+   private PersistenceMarshaller marshaller;
    private MarshallableEntryFactory<K,V> marshallerEntryFactory;
    private TimeService timeService;
    private Scheduler scheduler;
@@ -88,7 +88,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       this.configuration = ctx.getConfiguration();
       this.emfRegistry = ctx.getCache().getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry().getComponent(EntityManagerFactoryRegistry.class);
       this.marshallerEntryFactory = ctx.getMarshallableEntryFactory();
-      this.marshaller = ctx.getMarshaller();
+      this.marshaller = ctx.getPersistenceMarshaller();
       this.timeService = ctx.getTimeService();
       this.scheduler = Schedulers.from(ctx.getExecutor());
    }

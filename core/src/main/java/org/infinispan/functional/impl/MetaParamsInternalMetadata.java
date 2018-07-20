@@ -1,25 +1,21 @@
 package org.infinispan.functional.impl;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.util.Experimental;
+import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.functional.MetaParam;
 import org.infinispan.functional.MetaParam.MetaCreated;
 import org.infinispan.functional.MetaParam.MetaEntryVersion;
 import org.infinispan.functional.MetaParam.MetaLastUsed;
 import org.infinispan.functional.MetaParam.MetaLifespan;
 import org.infinispan.functional.MetaParam.MetaMaxIdle;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Experimental;
-import org.infinispan.commons.util.Util;
-import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * Metadata parameters backed internal metadata representation.
@@ -33,6 +29,10 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
 
    public static Metadata from(MetaParams params) {
       return new MetaParamsInternalMetadata(params);
+   }
+
+   MetaParamsInternalMetadata() {
+      this.params = new MetaParams(MetaParams.EMPTY_ARRAY, 0);
    }
 
    private MetaParamsInternalMetadata(MetaParams params) {
@@ -107,6 +107,66 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
          '}';
    }
 
+   @ProtoField(number = 1)
+   NumericVersion getNumericVersion() {
+      EntryVersion version = version();
+      return version instanceof NumericVersion ? (NumericVersion) version : null;
+   }
+
+   void setNumericVersion(NumericVersion version) {
+      params.add(new MetaEntryVersion(version));
+   }
+
+   @ProtoField(number = 2)
+   SimpleClusteredVersion getClusteredVersion() {
+      EntryVersion version = version();
+      return version instanceof SimpleClusteredVersion ? (SimpleClusteredVersion) version : null;
+   }
+
+   void setClusteredVersion(SimpleClusteredVersion version) {
+      params.add(new MetaEntryVersion(version));
+   }
+
+   @ProtoField(number = 3, defaultValue = "-1")
+   long getCreated() {
+      return created();
+   }
+
+   void setCreated(long created) {
+      if (created > -1)
+         params.add(new MetaCreated(created));
+   }
+
+   @ProtoField(number = 4, defaultValue = "-1")
+   long getLastUsed() {
+      return lastUsed();
+   }
+
+   void setLastUsed(long lastUsed) {
+      if (lastUsed > -1)
+         params.add(new MetaLastUsed(lastUsed));
+   }
+
+   @ProtoField(number = 5, defaultValue = "-1")
+   long getLifespan() {
+      return lifespan();
+   }
+
+   void setLifespan(long lifespan) {
+      if (lifespan > -1)
+         params.add(new MetaLifespan(lifespan));
+   }
+
+   @ProtoField(number = 6, defaultValue = "-1")
+   long getMaxIdle() {
+      return maxIdle();
+   }
+
+   void setMaxIdle(long maxIdle) {
+      if (maxIdle > -1)
+         params.add(new MetaMaxIdle(maxIdle));
+   }
+
    public static class Builder implements Metadata.Builder {
       private final MetaParams params;
 
@@ -171,28 +231,4 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
          return this;
       }
    }
-
-   public static final class Externalizer extends AbstractExternalizer<MetaParamsInternalMetadata> {
-      @Override
-      public void writeObject(ObjectOutput oo, MetaParamsInternalMetadata o) throws IOException {
-         MetaParams.writeTo(oo, o.params);
-      }
-
-      @Override
-      public MetaParamsInternalMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         MetaParams params = MetaParams.readFrom(input);
-         return new MetaParamsInternalMetadata(params);
-      }
-
-      @Override
-      public Set<Class<? extends MetaParamsInternalMetadata>> getTypeClasses() {
-         return Util.<Class<? extends MetaParamsInternalMetadata>>asSet(MetaParamsInternalMetadata.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.META_PARAMS_INTERNAL_METADATA;
-      }
-   }
-
 }
