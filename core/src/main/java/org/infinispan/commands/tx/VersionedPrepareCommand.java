@@ -1,14 +1,14 @@
 package org.infinispan.commands.tx;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.List;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 
@@ -50,13 +50,13 @@ public class VersionedPrepareCommand extends PrepareCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       super.writeTo(output); //writes global tx, one phase, retried and mods.
       MarshallUtil.marshallMap(versionsSeen, output);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       super.readFrom(input);
       versionsSeen = MarshallUtil.unmarshallMap(input, EntryVersionsMap::new);
    }

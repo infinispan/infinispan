@@ -1,14 +1,14 @@
 package org.infinispan.commands.tx;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -109,12 +109,12 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       output.writeObject(globalTx);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       globalTx = (GlobalTransaction) input.readObject();
    }
 

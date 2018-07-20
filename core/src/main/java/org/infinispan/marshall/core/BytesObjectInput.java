@@ -2,16 +2,17 @@ package org.infinispan.marshall.core;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.ObjectInput;
+
+import org.infinispan.commons.marshall.UserObjectInput;
 
 /**
- * Array backed {@link ObjectInput} implementation.
+ * Array backed {@link UserObjectInput} implementation.
  *
  * {@link #skip(long)} and {@link #skipBytes(int)} have been enhanced so that
  * if a negative number is passed in, they skip backwards effectively
  * providing rewind capabilities.
  */
-final class BytesObjectInput implements ObjectInput {
+final class BytesObjectInput extends AbstractUserObjectInput {
 
    final byte bytes[];
 
@@ -266,4 +267,8 @@ final class BytesObjectInput implements ObjectInput {
       }
    }
 
+   @Override
+   public Object readUserObject() throws ClassNotFoundException, IOException {
+      return marshaller.readUserObject(this);
+   }
 }

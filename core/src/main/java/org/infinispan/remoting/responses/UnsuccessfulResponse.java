@@ -1,11 +1,11 @@
 package org.infinispan.remoting.responses;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 
@@ -60,12 +60,12 @@ public class UnsuccessfulResponse extends ValidResponse {
 
    public static class Externalizer extends AbstractExternalizer<UnsuccessfulResponse> {
       @Override
-      public void writeObject(ObjectOutput output, UnsuccessfulResponse response) throws IOException {
+      public void writeObject(UserObjectOutput output, UnsuccessfulResponse response) throws IOException {
          output.writeObject(response.getResponseValue());
       }
 
       @Override
-      public UnsuccessfulResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public UnsuccessfulResponse readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return create(input.readObject());
       }
 

@@ -3,14 +3,14 @@ package org.infinispan.commands.remote.recovery;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import javax.transaction.xa.Xid;
 
 import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -127,7 +127,7 @@ public class TxCompletionNotificationCommand  extends RecoveryCommand implements
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       if (xid == null) {
          output.writeBoolean(true);
          output.writeLong(internalId);
@@ -139,7 +139,7 @@ public class TxCompletionNotificationCommand  extends RecoveryCommand implements
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       if (input.readBoolean()) {
          internalId = input.readLong();
       } else {

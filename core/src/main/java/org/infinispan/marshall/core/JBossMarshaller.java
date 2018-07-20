@@ -8,9 +8,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.jboss.AbstractJBossMarshaller;
-import org.infinispan.commons.marshall.jboss.DefaultContextClassResolver;
 import org.infinispan.commons.marshall.jboss.SerializeWithExtFactory;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.jboss.marshalling.ClassResolver;
 import org.jboss.marshalling.Externalize;
 import org.jboss.marshalling.ObjectTable;
@@ -35,17 +33,18 @@ import org.jboss.marshalling.Unmarshaller;
  */
 public class JBossMarshaller extends AbstractJBossMarshaller implements StreamingMarshaller {
 
-   final GlobalConfiguration globalCfg;
-   final GlobalMarshaller marshaller;
+   private final GlobalMarshaller marshaller;
+   private final ClassResolver classResolver;
+
 
    public JBossMarshaller() {
-      this.globalCfg = null;
+      this.classResolver = null;
       this.marshaller = null;
    }
 
-   public JBossMarshaller(GlobalMarshaller marshaller, GlobalConfiguration globalCfg) {
-      this.globalCfg = globalCfg;
+   public JBossMarshaller(GlobalMarshaller marshaller, ClassResolver classResolver) {
       this.marshaller = marshaller;
+      this.classResolver = classResolver;
    }
 
    @Override
@@ -56,7 +55,7 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
 
       baseCfg.setObjectTable(new ObjectTable() {
          @Override
-         public Writer getObjectWriter(Object object) throws IOException {
+         public Writer getObjectWriter(Object object) {
             BiConsumer<ObjectOutput, Object> writer = marshaller.findWriter(object);
             return writer != null ? writer::accept : null;
          }
@@ -64,18 +63,15 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
          @Override
          public Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {
             AdvancedExternalizer<Object> ext = marshaller.findExternalizerIn(unmarshaller);
-            return ext.readObject(unmarshaller);
+
+            return ext.readObject(new AbstractDelegatingUserObjectInput(unmarshaller) {
+               @Override
+               public Object readUserObject() throws ClassNotFoundException, IOException {
+                  return readObject();
+               }
+            });
          }
       });
-
-      ClassResolver classResolver = globalCfg.serialization().classResolver();
-      if (classResolver == null) {
-         // Override the class resolver with one that can detect injected
-         // classloaders via AdvancedCache.with(ClassLoader) calls.
-         ClassLoader cl = globalCfg.classLoader();
-         classResolver = new DefaultContextClassResolver(cl);
-      }
-
       baseCfg.setClassResolver(classResolver);
    }
 
@@ -92,5 +88,4 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
             || o.getClass().getAnnotation(SerializeWith.class) != null
             || o.getClass().getAnnotation(Externalize.class) != null;
    }
-
 }

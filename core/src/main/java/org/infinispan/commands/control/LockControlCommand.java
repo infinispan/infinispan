@@ -1,8 +1,6 @@
 package org.infinispan.commands.control;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,7 +12,8 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -147,19 +146,19 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       super.writeTo(output);
       output.writeBoolean(unlock);
-      MarshallUtil.marshallCollection(keys, output);
+      output.writeUserCollection(keys);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(flags));
    }
 
    @Override
    @SuppressWarnings("unchecked")
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       super.readFrom(input);
       unlock = input.readBoolean();
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+      keys = input.readUserCollection(ArrayList::new);
       flags = input.readLong();
    }
 

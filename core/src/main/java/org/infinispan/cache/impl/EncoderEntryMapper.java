@@ -1,14 +1,14 @@
 package org.infinispan.cache.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
@@ -84,14 +84,14 @@ public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements Inje
       }
 
       @Override
-      public void writeObject(ObjectOutput output, EncoderEntryMapper object) throws IOException {
+      public void writeObject(UserObjectOutput output, EncoderEntryMapper object) throws IOException {
          DataConversion.writeTo(output, object.keyDataConversion);
          DataConversion.writeTo(output, object.valueDataConversion);
       }
 
       @Override
       @SuppressWarnings("unchecked")
-      public EncoderEntryMapper readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public EncoderEntryMapper readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new EncoderEntryMapper(DataConversion.readFrom(input), DataConversion.readFrom(input));
       }
    }

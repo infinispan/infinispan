@@ -1,8 +1,6 @@
 package org.infinispan.commands.triangle;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -14,6 +12,8 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
@@ -109,43 +109,47 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       writeBase(output);
       MarshallUtil.marshallEnum(operation, output);
-      output.writeObject(key);
+      output.writeUserObject(key);
       switch (operation) {
          case COMPUTE_IF_PRESENT:
          case COMPUTE_IF_ABSENT:
          case COMPUTE:
+            // We must use the internal marshaller for functions
+            output.writeObject(valueOrFunction);
+            output.writeUserObject(metadata);
+            break;
+         case REMOVE_EXPIRED:
          case REPLACE:
          case WRITE:
-            output.writeObject(metadata);
-         case REMOVE_EXPIRED:
-            output.writeObject(valueOrFunction);
+            output.writeUserObjects(valueOrFunction, metadata);
             break;
          case REMOVE:
-            break;
          default:
       }
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       readBase(input);
       operation = MarshallUtil.unmarshallEnum(input, SingleKeyBackupWriteCommand::valueOf);
-      key = input.readObject();
+      key = input.readUserObject();
       switch (operation) {
          case COMPUTE_IF_PRESENT:
          case COMPUTE_IF_ABSENT:
          case COMPUTE:
+            valueOrFunction = input.readObject();
+            metadata = (Metadata) input.readObject();
+            break;
+         case REMOVE_EXPIRED:
          case REPLACE:
          case WRITE:
-            metadata = (Metadata) input.readObject();
-         case REMOVE_EXPIRED:
-            valueOrFunction = input.readObject();
+            valueOrFunction = input.readUserObject();
+            metadata = (Metadata) input.readUserObject();
             break;
          case REMOVE:
-            break;
          default:
       }
    }

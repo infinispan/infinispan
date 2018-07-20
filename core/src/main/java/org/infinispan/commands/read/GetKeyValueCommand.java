@@ -3,11 +3,11 @@ package org.infinispan.commands.read;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -63,15 +63,15 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
+   public void writeTo(UserObjectOutput output) throws IOException {
+      output.writeUserObject(key);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
+      key = input.readUserObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
       setFlagsBitSet(input.readLong());
    }

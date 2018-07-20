@@ -1,8 +1,6 @@
 package org.infinispan.stream.impl.intops;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -32,6 +30,8 @@ import java.util.function.ToLongFunction;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.stream.impl.intops.object.DistinctOperation;
@@ -237,7 +237,7 @@ public class IntermediateOperationExternalizer implements AdvancedExternalizer<I
    }
 
    @Override
-   public void writeObject(ObjectOutput output, IntermediateOperation object) throws IOException {
+   public void writeObject(UserObjectOutput output, IntermediateOperation object) throws IOException {
       int number = operations.get(object.getClass(), -1);
       output.writeByte(number);
       switch (number) {
@@ -356,7 +356,7 @@ public class IntermediateOperationExternalizer implements AdvancedExternalizer<I
    }
 
    @Override
-   public IntermediateOperation readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public IntermediateOperation readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
       int number = input.readUnsignedByte();
       switch (number) {
          case DISTINCT:

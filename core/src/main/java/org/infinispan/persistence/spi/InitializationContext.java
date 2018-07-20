@@ -4,6 +4,7 @@ import java.util.concurrent.ExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactory;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
@@ -24,7 +25,15 @@ public interface InitializationContext {
 
    Cache getCache();
 
+   /**
+    * @deprecated This method will be removed in the future and {@link #getUserMarshaller()}} should be used instead.
+    * @return the results of {@link #getUserMarshaller()} if the user marshaller implements the {@link StreamingMarshaller}
+    * interface, otherwise {@link UnsupportedOperationException};
+    */
+   @Deprecated
    StreamingMarshaller getMarshaller();
+
+   Marshaller getUserMarshaller();
 
    TimeService getTimeService();
 

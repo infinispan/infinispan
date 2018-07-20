@@ -3,15 +3,14 @@ package org.infinispan.commands.write;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collection;
 
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.MVCCEntry;
@@ -106,16 +105,16 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
-      MarshallUtil.marshallArray(keys, output);
+      output.writeUserArray(keys);
       output.writeLong(getFlagsBitSet());
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
-      keys = MarshallUtil.unmarshallArray(input, Util::objectArray);
+      keys = input.readUserArray(Util::objectArray);
       setFlagsBitSet(input.readLong());
    }
 

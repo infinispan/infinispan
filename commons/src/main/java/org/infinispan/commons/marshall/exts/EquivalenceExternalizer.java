@@ -6,12 +6,12 @@ import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 public final class EquivalenceExternalizer extends AbstractExternalizer<Equivalence> {
@@ -40,13 +40,13 @@ public final class EquivalenceExternalizer extends AbstractExternalizer<Equivale
    }
 
    @Override
-   public void writeObject(ObjectOutput out, Equivalence obj) throws IOException {
+   public void writeObject(UserObjectOutput out, Equivalence obj) throws IOException {
       int subId = subIds.get(obj.getClass(), -1);
       out.writeByte(subId);
    }
 
    @Override
-   public Equivalence readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public Equivalence readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
       int subId = input.readUnsignedByte();
       switch (subId) {
          case BYTE_ARRAY_EQ:

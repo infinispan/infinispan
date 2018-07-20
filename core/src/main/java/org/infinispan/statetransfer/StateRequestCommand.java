@@ -1,8 +1,6 @@
 package org.infinispan.statetransfer;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -11,8 +9,10 @@ import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.distexec.DistributedCallable;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.scattered.ScatteredStateProvider;
@@ -161,7 +161,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
 
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       MarshallUtil.marshallEnum(type, output);
       switch (type) {
          case START_CONSISTENCY_CHECK:
@@ -182,7 +182,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       type = MarshallUtil.unmarshallEnum(input, ordinal -> Type.CACHED_VALUES[ordinal]);
       switch (type) {
          case START_CONSISTENCY_CHECK:

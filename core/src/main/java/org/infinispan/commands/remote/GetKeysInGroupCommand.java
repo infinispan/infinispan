@@ -1,8 +1,6 @@
 package org.infinispan.commands.remote;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,6 +9,8 @@ import java.util.Map;
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -65,14 +65,14 @@ public class GetKeysInGroupCommand extends AbstractTopologyAffectedCommand imple
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(groupName);
+   public void writeTo(UserObjectOutput output) throws IOException {
+      output.writeUserObject(groupName);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      groupName = input.readObject();
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
+      groupName = input.readUserObject();
       setFlagsBitSet(input.readLong());
    }
 

@@ -1,12 +1,12 @@
 package org.infinispan.functional.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.functional.MetaParam;
 import org.infinispan.functional.MetaParam.MetaCreated;
 import org.infinispan.functional.MetaParam.MetaEntryVersion;
@@ -174,12 +174,12 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
 
    public static final class Externalizer extends AbstractExternalizer<MetaParamsInternalMetadata> {
       @Override
-      public void writeObject(ObjectOutput oo, MetaParamsInternalMetadata o) throws IOException {
+      public void writeObject(UserObjectOutput oo, MetaParamsInternalMetadata o) throws IOException {
          MetaParams.writeTo(oo, o.params);
       }
 
       @Override
-      public MetaParamsInternalMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MetaParamsInternalMetadata readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          MetaParams params = MetaParams.readFrom(input);
          return new MetaParamsInternalMetadata(params);
       }

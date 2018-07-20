@@ -1,12 +1,12 @@
 package org.infinispan.container.entries;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 
@@ -106,14 +106,14 @@ public class TransientCacheValue extends ImmortalCacheValue {
 
    public static class Externalizer extends AbstractExternalizer<TransientCacheValue> {
       @Override
-      public void writeObject(ObjectOutput output, TransientCacheValue tcv) throws IOException {
+      public void writeObject(UserObjectOutput output, TransientCacheValue tcv) throws IOException {
          output.writeObject(tcv.value);
          UnsignedNumeric.writeUnsignedLong(output, tcv.lastUsed);
          output.writeLong(tcv.maxIdle); // could be negative so should not use unsigned longs
       }
 
       @Override
-      public TransientCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public TransientCacheValue readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
          Long maxIdle = input.readLong();

@@ -1,12 +1,12 @@
 package org.infinispan.atomic;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.marshall.core.Ids;
 
 /**
@@ -57,14 +57,14 @@ public final class DeltaCompositeKey {
    public static class DeltaCompositeKeyExternalizer extends AbstractExternalizer<DeltaCompositeKey> {
 
       @Override
-      public void writeObject(ObjectOutput output, DeltaCompositeKey dck) throws IOException {
+      public void writeObject(UserObjectOutput output, DeltaCompositeKey dck) throws IOException {
          output.writeObject(dck.deltaAwareValueKey);
          output.writeObject(dck.entryKey);
       }
 
       @Override
       @SuppressWarnings("unchecked")
-      public DeltaCompositeKey readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public DeltaCompositeKey readObject(UserObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          Object deltaAwareValueKey = unmarshaller.readObject();
          Object entryKey = unmarshaller.readObject();
          return new DeltaCompositeKey(deltaAwareValueKey, entryKey);

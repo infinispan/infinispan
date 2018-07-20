@@ -1,12 +1,12 @@
 package org.infinispan.notifications.cachelistener.filter;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
@@ -46,12 +46,12 @@ public class CacheEventFilterConverterAsKeyValueFilterConverter<K, V, C> extends
       }
 
       @Override
-      public void writeObject(ObjectOutput output, CacheEventFilterConverterAsKeyValueFilterConverter object) throws IOException {
+      public void writeObject(UserObjectOutput output, CacheEventFilterConverterAsKeyValueFilterConverter object) throws IOException {
          output.writeObject(object.cacheEventFilterConverter);
       }
 
       @Override
-      public CacheEventFilterConverterAsKeyValueFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public CacheEventFilterConverterAsKeyValueFilterConverter readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new CacheEventFilterConverterAsKeyValueFilterConverter((CacheEventFilterConverter) input.readObject());
       }
 

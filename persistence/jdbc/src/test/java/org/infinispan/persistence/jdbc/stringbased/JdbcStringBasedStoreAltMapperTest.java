@@ -7,7 +7,7 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -43,7 +43,7 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
    protected TableManager tableManager;
    protected static final Person MIRCEA = new Person("Mircea", "Markus", 28);
    protected static final Person MANIK = new Person("Manik", "Surtani", 18);
-   protected StreamingMarshaller marshaller;
+   protected Marshaller marshaller;
 
    protected JdbcStringBasedStoreConfigurationBuilder createJdbcConfig(ConfigurationBuilder builder) {
       JdbcStringBasedStoreConfigurationBuilder storeBuilder = builder
@@ -76,7 +76,6 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
    @AfterClass
    public void destroyStore() throws PersistenceException {
       cacheStore.stop();
-      marshaller.stop();
    }
 
    /**

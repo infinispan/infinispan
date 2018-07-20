@@ -4,7 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
@@ -64,11 +64,11 @@ public class LocalConditionalCommandTest extends SingleCacheManagerTest {
    }
 
    private static <K, V> void writeToStore(Cache<K, V> cache, K key, V value) {
-      TestingUtil.getFirstWriter(cache).write(marshalledEntry(key, value, cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller()));
+      TestingUtil.getFirstWriter(cache).write(marshalledEntry(key, value, cache.getAdvancedCache().getComponentRegistry().getUserMarshaller()));
    }
 
-   private static <K, V> MarshalledEntry<K, V> marshalledEntry(K key, V value, StreamingMarshaller marshaller) {
-      return new MarshalledEntryImpl<>(key, value, null, marshaller);
+   private static <K, V> MarshalledEntry<K, V> marshalledEntry(K key, V value, Marshaller marshaller) {
+      return new MarshalledEntryImpl<>(key, value, null, (Marshaller) marshaller);
    }
 
    private static CacheLoaderInterceptor cacheLoaderInterceptor(Cache<?, ?> cache) {

@@ -1,8 +1,6 @@
 package org.infinispan.commands.functional;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.function.Consumer;
 
 import org.infinispan.commands.CommandInvocationId;
@@ -11,6 +9,8 @@ import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -50,8 +50,8 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
+   public void writeTo(UserObjectOutput output) throws IOException {
+      output.writeUserObject(key);
       output.writeObject(f);
       MarshallUtil.marshallEnum(valueMatcher, output);
       UnsignedNumeric.writeUnsignedInt(output, segment);
@@ -63,8 +63,8 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
+      key = input.readUserObject();
       f = (Consumer<WriteEntryView<K, V>>) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       segment = UnsignedNumeric.readUnsignedInt(input);

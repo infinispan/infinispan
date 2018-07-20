@@ -1,8 +1,6 @@
 package org.infinispan.statetransfer;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -11,6 +9,8 @@ import java.util.Set;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
@@ -77,16 +77,17 @@ public class TransactionInfo {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, TransactionInfo object) throws IOException {
+      public void writeObject(UserObjectOutput output, TransactionInfo object) throws IOException {
          output.writeObject(object.globalTransaction);
          output.writeInt(object.topologyId);
          MarshallUtil.marshallArray(object.modifications, output);
+         // TODO use MarshalledEntryFactory?
          MarshallUtil.marshallCollection(object.lockedKeys, output);
       }
 
       @Override
       @SuppressWarnings("unchecked")
-      public TransactionInfo readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public TransactionInfo readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          GlobalTransaction globalTransaction = (GlobalTransaction) input.readObject();
          int topologyId = input.readInt();
          WriteCommand[] modifications = MarshallUtil.unmarshallArray(input, WriteCommand[]::new);

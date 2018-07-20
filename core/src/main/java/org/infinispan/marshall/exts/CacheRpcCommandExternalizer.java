@@ -1,8 +1,6 @@
 package org.infinispan.marshall.exts;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commands.CancelCommand;
@@ -39,6 +37,8 @@ import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.marshall.core.Ids;
@@ -105,7 +105,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
    }
 
    @Override
-   public void writeObject(ObjectOutput output, CacheRpcCommand command) throws IOException {
+   public void writeObject(UserObjectOutput output, CacheRpcCommand command) throws IOException {
       //header: type + method id.
       cmdExt.writeCommandHeader(output, command);
       ByteString cacheName = command.getCacheName();
@@ -117,12 +117,12 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       marshallParameters(command, output);
    }
 
-   private void marshallParameters(CacheRpcCommand cmd, ObjectOutput oo) throws IOException {
+   private void marshallParameters(CacheRpcCommand cmd, UserObjectOutput oo) throws IOException {
       cmdExt.writeCommandParameters(oo, cmd);
    }
 
    @Override
-   public CacheRpcCommand readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public CacheRpcCommand readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
       //header
       byte type = input.readByte();
       byte methodId = (byte) input.readShort();

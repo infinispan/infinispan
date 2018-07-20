@@ -6,6 +6,8 @@ import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.LambdaExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.marshall.ValueMatcherMode;
 import org.infinispan.commons.util.Util;
 import org.infinispan.functional.MetaParam;
@@ -105,12 +107,12 @@ public class MarshallableFunctionExternalizers {
          return org.infinispan.commons.marshall.Ids.LAMBDA_CONSTANT;
       }
 
-      public void writeObject(ObjectOutput oo, Object o) throws IOException {
+      public void writeObject(UserObjectOutput oo, Object o) throws IOException {
          int id = numbers.get(o.getClass(), -1);
          oo.writeShort(id);
       }
 
-      public Object readObject(ObjectInput input) throws IOException {
+      public Object readObject(UserObjectInput input) throws IOException {
          short id = input.readShort();
          switch (id) {
             case SET_VALUE_RETURN_PREV_OR_NULL: return MarshallableFunctions.setValueReturnPrevOrNull();
@@ -181,14 +183,14 @@ public class MarshallableFunctionExternalizers {
       }
 
       @Override
-      public void writeObject(ObjectOutput oo, MarshallableFunctions.LambdaWithMetas o) throws IOException {
+      public void writeObject(UserObjectOutput oo, MarshallableFunctions.LambdaWithMetas o) throws IOException {
          int id = numbers.get(o.getClass(), -1);
          oo.writeShort(id);
          writeMetas(oo, o);
       }
 
       @Override
-      public MarshallableFunctions.LambdaWithMetas readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MarshallableFunctions.LambdaWithMetas readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          short id = input.readShort();
          MetaParam.Writable[] metas = readMetas(input);
          switch (id) {
@@ -221,12 +223,12 @@ public class MarshallableFunctionExternalizers {
 
    public static final class SetValueIfEqualsReturnBooleanExternalizer
             implements LambdaExternalizer<MarshallableFunctions.SetValueIfEqualsReturnBoolean> {
-      public void writeObject(ObjectOutput oo, MarshallableFunctions.SetValueIfEqualsReturnBoolean o) throws IOException {
+      public void writeObject(UserObjectOutput oo, MarshallableFunctions.SetValueIfEqualsReturnBoolean o) throws IOException {
          oo.writeObject(o.oldValue);
          writeMetas(oo, o);
       }
 
-      public MarshallableFunctions.SetValueIfEqualsReturnBoolean readObject(ObjectInput input)
+      public MarshallableFunctions.SetValueIfEqualsReturnBoolean readObject(UserObjectInput input)
          throws IOException, ClassNotFoundException {
          Object oldValue = input.readObject();
          MetaParam.Writable[] metas = readMetas(input);

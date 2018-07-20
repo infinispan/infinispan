@@ -3,14 +3,14 @@ package org.infinispan.commands.functional;
 import static org.infinispan.functional.impl.EntryViews.snapshot;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.function.Function;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -59,8 +59,8 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
+   public void writeTo(UserObjectOutput output) throws IOException {
+      output.writeUserObject(key);
       output.writeObject(f);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       Params.writeObject(output, params);
@@ -69,8 +69,8 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
+      key = input.readUserObject();
       f = (Function<ReadEntryView<K, V>, R>) input.readObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
       params = Params.readObject(input);

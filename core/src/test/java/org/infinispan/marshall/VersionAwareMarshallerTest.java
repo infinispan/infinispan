@@ -56,6 +56,8 @@ import org.infinispan.commons.marshall.PojoWithJBossExternalize;
 import org.infinispan.commons.marshall.PojoWithSerializeWith;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.FastCopyHashMap;
 import org.infinispan.commons.util.Immutables;
@@ -679,13 +681,13 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
       public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<PojoAnnotated> {
          @Override
-         public void writeObject(ObjectOutput output, PojoAnnotated object) throws IOException {
+         public void writeObject(UserObjectOutput output, PojoAnnotated object) throws IOException {
             output.writeInt(object.i);
             output.writeBoolean(object.b);
          }
 
          @Override
-         public PojoAnnotated readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public PojoAnnotated readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new PojoAnnotated(input.readInt(), input.readBoolean());
          }
       }
@@ -717,13 +719,13 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          }
 
          @Override
-         public void writeObject(ObjectOutput output, PojoWithExternalizer object) throws IOException {
+         public void writeObject(UserObjectOutput output, PojoWithExternalizer object) throws IOException {
             output.writeInt(object.i);
             output.writeBoolean(object.b);
          }
 
          @Override
-         public PojoWithExternalizer readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public PojoWithExternalizer readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new PojoWithExternalizer(input.readInt(), input.readBoolean());
          }
       }
@@ -747,14 +749,14 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          }
 
          @Override
-         public void writeObject(ObjectOutput output, Object o) throws IOException {
+         public void writeObject(UserObjectOutput output, Object o) throws IOException {
             PojoWithMultiExternalizer pojo = (PojoWithMultiExternalizer) o;
             output.writeInt(pojo.i);
             output.writeBoolean(pojo.b);
          }
 
          @Override
-         public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public Object readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new PojoWithMultiExternalizer(input.readInt(), input.readBoolean());
          }
       }
@@ -864,13 +866,13 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       public static class Externalizer implements AdvancedExternalizer<PojoWithExternalAndInternal> {
 
          @Override
-         public void writeObject(ObjectOutput out, PojoWithExternalAndInternal obj) throws IOException {
+         public void writeObject(UserObjectOutput out, PojoWithExternalAndInternal obj) throws IOException {
             out.writeObject(obj.human);
             out.writeObject(obj.value);
          }
 
          @Override
-         public PojoWithExternalAndInternal readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public PojoWithExternalAndInternal readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             Human human = (Human) input.readObject();
             String value = (String) input.readObject();
             return new PojoWithExternalAndInternal(human, value);

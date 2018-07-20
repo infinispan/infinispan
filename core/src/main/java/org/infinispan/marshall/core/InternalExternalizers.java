@@ -15,6 +15,7 @@ import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AdminFlagExternalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.exts.EquivalenceExternalizer;
 import org.infinispan.commons.tx.XidImpl;
@@ -62,8 +63,9 @@ import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.KeyValueFilterAsKeyFilter;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.MetaParamsInternalMetadata;
-import org.infinispan.globalstate.ScopedState;
+import org.infinispan.functional.impl.StatsEnvelope;
 import org.infinispan.globalstate.ScopeFilter;
+import org.infinispan.globalstate.ScopedState;
 import org.infinispan.interceptors.distribution.VersionedResult;
 import org.infinispan.interceptors.distribution.VersionedResults;
 import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
@@ -92,7 +94,6 @@ import org.infinispan.notifications.cachelistener.filter.KeyFilterAsCacheEventFi
 import org.infinispan.notifications.cachelistener.filter.KeyValueFilterAsCacheEventFilter;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.MIMECacheEntry;
-import org.infinispan.functional.impl.StatsEnvelope;
 import org.infinispan.remoting.responses.BiasRevocationResponse;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -129,9 +130,8 @@ final class InternalExternalizers {
    private InternalExternalizers() {
    }
 
-   static ClassToExternalizerMap load(
-         GlobalMarshaller marshaller, GlobalComponentRegistry gcr,
-         RemoteCommandsFactory cmdFactory) {
+   static ClassToExternalizerMap load(Marshaller userMarshaller, GlobalComponentRegistry gcr,
+                                      RemoteCommandsFactory cmdFactory) {
       // TODO Add initial value and load factor
       ClassToExternalizerMap exts = new ClassToExternalizerMap(512, 0.6f);
 
@@ -202,7 +202,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new MarshallableFunctionExternalizers.ConstantLambdaExternalizer(), exts);
       addInternalExternalizer(new MarshallableFunctionExternalizers.LambdaWithMetasExternalizer(), exts);
       addInternalExternalizer(new MarshallableFunctionExternalizers.SetValueIfEqualsReturnBooleanExternalizer(), exts);
-      addInternalExternalizer(new MarshalledEntryImpl.Externalizer(marshaller), exts);
+      addInternalExternalizer(new MarshalledEntryImpl.Externalizer(userMarshaller), exts);
       addInternalExternalizer(new MergeFunction.Externalizer(), exts);
       addInternalExternalizer(new MetadataImmortalCacheEntry.Externalizer(), exts);
       addInternalExternalizer(new MetadataImmortalCacheValue.Externalizer(), exts);

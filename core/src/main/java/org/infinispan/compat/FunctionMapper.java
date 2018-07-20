@@ -1,14 +1,14 @@
 package org.infinispan.compat;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 import java.util.function.Function;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -54,14 +54,14 @@ public class FunctionMapper implements Function {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, FunctionMapper object) throws IOException {
+      public void writeObject(UserObjectOutput output, FunctionMapper object) throws IOException {
          output.writeObject(object.function);
          DataConversion.writeTo(output, object.keyDataConversion);
          DataConversion.writeTo(output, object.valueDataConversion);
       }
 
       @Override
-      public FunctionMapper readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public FunctionMapper readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new FunctionMapper((Function) input.readObject(),
                DataConversion.readFrom(input), DataConversion.readFrom(input));
       }

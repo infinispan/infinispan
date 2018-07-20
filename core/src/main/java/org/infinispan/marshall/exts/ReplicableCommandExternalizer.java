@@ -1,7 +1,6 @@
 package org.infinispan.marshall.exts;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Set;
@@ -37,6 +36,8 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.impl.ReplicableCommandManagerFunction;
@@ -62,12 +63,12 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
    }
 
    @Override
-   public void writeObject(ObjectOutput output, ReplicableCommand command) throws IOException {
+   public void writeObject(UserObjectOutput output, ReplicableCommand command) throws IOException {
       writeCommandHeader(output, command);
       writeCommandParameters(output, command);
    }
 
-   protected void writeCommandParameters(ObjectOutput output, ReplicableCommand command) throws IOException {
+   protected void writeCommandParameters(UserObjectOutput output, ReplicableCommand command) throws IOException {
       command.writeTo(output);
       if (command instanceof TopologyAffectedCommand) {
          output.writeInt(((TopologyAffectedCommand) command).getTopologyId());
@@ -88,19 +89,19 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
    }
 
    @Override
-   public ReplicableCommand readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public ReplicableCommand readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
       ReplicableCommand replicableCommand = readCommandHeader(input);
       readCommandParameters(input, replicableCommand);
       return replicableCommand;
    }
 
-   private ReplicableCommand readCommandHeader(ObjectInput input) throws IOException {
+   private ReplicableCommand readCommandHeader(UserObjectInput input) throws IOException {
       byte type = input.readByte();
       short methodId = input.readShort();
       return cmdFactory.fromStream((byte) methodId, type);
    }
 
-   void readCommandParameters(ObjectInput input, ReplicableCommand command) throws IOException, ClassNotFoundException {
+   void readCommandParameters(UserObjectInput input, ReplicableCommand command) throws IOException, ClassNotFoundException {
       command.readFrom(input);
       if (command instanceof TopologyAffectedCommand) {
          ((TopologyAffectedCommand) command).setTopologyId(input.readInt());

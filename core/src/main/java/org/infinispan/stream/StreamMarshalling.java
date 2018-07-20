@@ -1,8 +1,6 @@
 package org.infinispan.stream;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -13,6 +11,8 @@ import java.util.function.Predicate;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.annotations.Inject;
@@ -218,7 +218,7 @@ public class StreamMarshalling {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
+      public void writeObject(UserObjectOutput output, Object object) throws IOException {
          ExternalizerId id = objects.get(object.getClass());
          if (id == null) {
             throw new IllegalArgumentException("Unsupported class " + object.getClass() + " was provided!");
@@ -232,7 +232,7 @@ public class StreamMarshalling {
       }
 
       @Override
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public Object readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          int number = input.readUnsignedByte();
          ExternalizerId[] ids = ExternalizerId.values();
          if (number < 0 || number >= ids.length) {

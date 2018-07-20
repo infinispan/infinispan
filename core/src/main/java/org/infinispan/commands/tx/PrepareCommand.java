@@ -3,8 +3,6 @@ package org.infinispan.commands.tx;
 import static org.infinispan.commons.util.InfinispanCollections.forEach;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,10 +30,12 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -199,7 +199,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       super.writeTo(output); //global tx
       output.writeBoolean(onePhaseCommit);
       output.writeBoolean(retriedCommand);
@@ -207,7 +207,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       super.readFrom(input);
       onePhaseCommit = input.readBoolean();
       retriedCommand = input.readBoolean();

@@ -1,8 +1,6 @@
 package org.infinispan.commands.remote.expiration;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -10,6 +8,8 @@ import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.util.ByteString;
@@ -18,6 +18,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * Command that when invoked will retrieve the last access time from an entry without updating it
+ *
  * @author wburns
  * @since 9.3
  */
@@ -67,24 +68,15 @@ public class RetrieveLastAccessCommand extends BaseRpcCommand implements Topolog
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
-      if (value == null) {
-         output.writeBoolean(false);
-      } else {
-         output.writeBoolean(true);
-         output.writeObject(value);
-      }
+   public void writeTo(UserObjectOutput output) throws IOException {
+      output.writeUserObjects(key, value);
       UnsignedNumeric.writeUnsignedInt(output, segment);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
-      boolean hasValue = input.readBoolean();
-      if (hasValue) {
-         value = input.readObject();
-      }
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
+      key = input.readUserObject();
+      value = input.readUserObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
    }
 

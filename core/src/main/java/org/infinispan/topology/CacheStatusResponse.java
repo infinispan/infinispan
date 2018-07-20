@@ -1,13 +1,13 @@
 package org.infinispan.topology;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.partitionhandling.AvailabilityMode;
 
@@ -59,7 +59,7 @@ public class CacheStatusResponse implements Serializable {
 
    public static class Externalizer extends AbstractExternalizer<CacheStatusResponse> {
       @Override
-      public void writeObject(ObjectOutput output, CacheStatusResponse cacheStatusResponse) throws IOException {
+      public void writeObject(UserObjectOutput output, CacheStatusResponse cacheStatusResponse) throws IOException {
          output.writeObject(cacheStatusResponse.cacheJoinInfo);
          output.writeObject(cacheStatusResponse.cacheTopology);
          output.writeObject(cacheStatusResponse.stableTopology);
@@ -67,7 +67,7 @@ public class CacheStatusResponse implements Serializable {
       }
 
       @Override
-      public CacheStatusResponse readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public CacheStatusResponse readObject(UserObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          CacheJoinInfo cacheJoinInfo = (CacheJoinInfo) unmarshaller.readObject();
          CacheTopology cacheTopology = (CacheTopology) unmarshaller.readObject();
          CacheTopology stableTopology = (CacheTopology) unmarshaller.readObject();

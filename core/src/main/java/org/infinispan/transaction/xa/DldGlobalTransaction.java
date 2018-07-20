@@ -1,13 +1,13 @@
 package org.infinispan.transaction.xa;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -140,7 +140,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, DldGlobalTransaction ddGt) throws IOException {
+      public void writeObject(UserObjectOutput output, DldGlobalTransaction ddGt) throws IOException {
          super.writeObject(output, ddGt);
          output.writeLong(ddGt.getCoinToss());
          if (ddGt.locksAtOrigin.isEmpty()) {
@@ -152,7 +152,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
 
       @Override
       @SuppressWarnings("unchecked")
-      public DldGlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public DldGlobalTransaction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          DldGlobalTransaction ddGt = super.readObject(input);
          ddGt.setCoinToss(input.readLong());
          Object locksAtOriginObj = input.readObject();

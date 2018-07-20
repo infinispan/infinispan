@@ -3,8 +3,6 @@ package org.infinispan.commands.read;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -12,9 +10,10 @@ import java.util.Map;
 
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.util.logging.Log;
@@ -110,15 +109,15 @@ public class GetAllCommand extends AbstractTopologyAffectedCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallCollection(keys, output);
+   public void writeTo(UserObjectOutput output) throws IOException {
+      output.writeUserCollection(keys);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeBoolean(returnEntries);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
+      keys = input.readUserCollection(ArrayList::new);
       setFlagsBitSet(input.readLong());
       returnEntries = input.readBoolean();
    }

@@ -1,8 +1,6 @@
 package org.infinispan.stream;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
@@ -12,6 +10,8 @@ import java.util.stream.Collector;
 
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.function.SerializableSupplier;
 
 /**
@@ -94,12 +94,12 @@ public class CacheCollectors {
       public static final class CollectorSupplierExternalizer implements Externalizer<CollectorSupplier<?, ?>> {
 
          @Override
-         public void writeObject(ObjectOutput output, CollectorSupplier object) throws IOException {
+         public void writeObject(UserObjectOutput output, CollectorSupplier object) throws IOException {
             output.writeObject(object.supplier);
          }
 
          @Override
-         public CollectorSupplier readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CollectorSupplier readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new CollectorSupplier((Supplier<Collector>) input.readObject());
          }
       }

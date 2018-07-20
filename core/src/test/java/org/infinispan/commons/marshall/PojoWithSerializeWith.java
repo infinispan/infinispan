@@ -1,8 +1,6 @@
 package org.infinispan.commons.marshall;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.io.Serializable;
 
 
@@ -45,12 +43,12 @@ public class PojoWithSerializeWith {
 
    public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<PojoWithSerializeWith>, Serializable {
       @Override
-      public void writeObject(ObjectOutput output, PojoWithSerializeWith object) throws IOException {
+      public void writeObject(UserObjectOutput output, PojoWithSerializeWith object) throws IOException {
          PojoWithAttributes.writeObject(output, object.pojo);
       }
 
       @Override
-      public PojoWithSerializeWith readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public PojoWithSerializeWith readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new PojoWithSerializeWith(PojoWithAttributes.readObject(input));
       }
    }

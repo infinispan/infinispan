@@ -1,14 +1,14 @@
 package org.infinispan.counter.api;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
  * The possible states for a counter value.
@@ -50,12 +50,12 @@ public enum CounterState {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, CounterState object) throws IOException {
+      public void writeObject(UserObjectOutput output, CounterState object) throws IOException {
          MarshallUtil.marshallEnum(object, output);
       }
 
       @Override
-      public CounterState readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public CounterState readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return MarshallUtil.unmarshallEnum(input, CounterState::valueOf);
       }
    }

@@ -1,7 +1,5 @@
 package org.infinispan.distribution.ch.impl;
 
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -13,6 +11,8 @@ import java.util.Set;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
@@ -380,12 +380,12 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
    public static class Externalizer extends AbstractExternalizer<SyncConsistentHashFactory> {
 
       @Override
-      public void writeObject(ObjectOutput output, SyncConsistentHashFactory chf) {
+      public void writeObject(UserObjectOutput output, SyncConsistentHashFactory chf) {
       }
 
       @Override
       @SuppressWarnings("unchecked")
-      public SyncConsistentHashFactory readObject(ObjectInput unmarshaller) {
+      public SyncConsistentHashFactory readObject(UserObjectInput unmarshaller) {
          return new SyncConsistentHashFactory();
       }
 

@@ -1,12 +1,12 @@
 package org.infinispan.xsite.statetransfer;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -73,15 +73,15 @@ public class XSiteState {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, XSiteState object) throws IOException {
-         output.writeObject(object.key);
-         output.writeObject(object.value);
-         output.writeObject(object.metadata);
+      public void writeObject(UserObjectOutput output, XSiteState object) throws IOException {
+         output.writeUserObject(object.key);
+         output.writeUserObject(object.value);
+         output.writeUserObject(object.metadata);
       }
 
       @Override
-      public XSiteState readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new XSiteState(input.readObject(), input.readObject(), (Metadata) input.readObject());
+      public XSiteState readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
+         return new XSiteState(input.readUserObject(), input.readUserObject(), (Metadata) input.readUserObject());
       }
    }
 }

@@ -1,13 +1,13 @@
 package org.infinispan.statetransfer;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.marshall.core.Ids;
 
@@ -75,7 +75,7 @@ public class StateChunk {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, StateChunk object) throws IOException {
+      public void writeObject(UserObjectOutput output, StateChunk object) throws IOException {
          output.writeInt(object.segmentId);
          output.writeObject(object.cacheEntries);
          output.writeBoolean(object.isLastChunk);
@@ -83,7 +83,7 @@ public class StateChunk {
 
       @Override
       @SuppressWarnings("unchecked")
-      public StateChunk readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public StateChunk readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          int segmentId = input.readInt();
          Collection<InternalCacheEntry> cacheEntries = (Collection<InternalCacheEntry>) input.readObject();
          boolean isLastChunk = input.readBoolean();

@@ -1,11 +1,11 @@
 package org.infinispan.commands.read;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.LocalCommand;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
  * Abstract class
@@ -20,11 +20,11 @@ public abstract class AbstractLocalCommand extends AbstractFlagAffectedCommand i
       return 0;  // no-op
    }
 
-   public final void writeTo(ObjectOutput output) throws IOException {
+   public final void writeTo(UserObjectOutput output) throws IOException {
       //no-op
    }
 
-   public final void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public final void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       //no-op
    }
 

@@ -1,5 +1,7 @@
 package org.infinispan.factories;
 
+import static org.infinispan.factories.KnownComponentNames.INTERNAL_MARSHALLER;
+
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.BinaryEncoder;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
@@ -16,6 +18,7 @@ import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -30,7 +33,7 @@ import org.infinispan.marshall.core.EncoderRegistryImpl;
 @DefaultFactoryFor(classes = {EncoderRegistry.class})
 public class EncoderRegistryFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
-   @Inject
+   @Inject @ComponentName(INTERNAL_MARSHALLER)
    private StreamingMarshaller globalMarshaller;
    @Inject
    private EmbeddedCacheManager embeddedCacheManager;

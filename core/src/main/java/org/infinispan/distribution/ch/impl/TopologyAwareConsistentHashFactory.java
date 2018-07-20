@@ -1,13 +1,13 @@
 package org.infinispan.distribution.ch.impl;
 
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.distribution.topologyaware.TopologyInfo;
 import org.infinispan.distribution.topologyaware.TopologyLevel;
 import org.infinispan.marshall.core.Ids;
@@ -242,12 +242,12 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
    public static class Externalizer extends AbstractExternalizer<TopologyAwareConsistentHashFactory> {
 
       @Override
-      public void writeObject(ObjectOutput output, TopologyAwareConsistentHashFactory chf) {
+      public void writeObject(UserObjectOutput output, TopologyAwareConsistentHashFactory chf) {
       }
 
       @Override
       @SuppressWarnings("unchecked")
-      public TopologyAwareConsistentHashFactory readObject(ObjectInput unmarshaller) {
+      public TopologyAwareConsistentHashFactory readObject(UserObjectInput unmarshaller) {
          return new TopologyAwareConsistentHashFactory();
       }
 

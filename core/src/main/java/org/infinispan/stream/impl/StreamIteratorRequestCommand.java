@@ -1,14 +1,14 @@
 package org.infinispan.stream.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.util.ByteString;
@@ -61,7 +61,7 @@ public class StreamIteratorRequestCommand<K> extends StreamIteratorNextCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       super.writeTo(output);
       output.writeObject(getOrigin());
       output.writeBoolean(parallelStream);
@@ -75,7 +75,7 @@ public class StreamIteratorRequestCommand<K> extends StreamIteratorNextCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       super.readFrom(input);
       setOrigin((Address) input.readObject());
       parallelStream = input.readBoolean();

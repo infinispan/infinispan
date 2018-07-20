@@ -1,12 +1,12 @@
 package org.infinispan.container.entries.metadata;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.AbstractInternalCacheEntry;
 import org.infinispan.container.entries.ExpiryHelper;
@@ -121,7 +121,7 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
 
    public static class Externalizer extends AbstractExternalizer<MetadataMortalCacheEntry> {
       @Override
-      public void writeObject(ObjectOutput output, MetadataMortalCacheEntry ice) throws IOException {
+      public void writeObject(UserObjectOutput output, MetadataMortalCacheEntry ice) throws IOException {
          output.writeObject(ice.key);
          output.writeObject(ice.value);
          output.writeObject(ice.metadata);
@@ -129,7 +129,7 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
       }
 
       @Override
-      public MetadataMortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MetadataMortalCacheEntry readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          Object k = input.readObject();
          Object v = input.readObject();
          Metadata metadata = (Metadata) input.readObject();

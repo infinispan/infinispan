@@ -1,8 +1,6 @@
 package org.infinispan.distribution.ch.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -13,6 +11,8 @@ import java.util.Set;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
@@ -524,12 +524,12 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
    public static class Externalizer extends AbstractExternalizer<DefaultConsistentHashFactory> {
 
       @Override
-      public void writeObject(ObjectOutput output, DefaultConsistentHashFactory chf) throws IOException {
+      public void writeObject(UserObjectOutput output, DefaultConsistentHashFactory chf) throws IOException {
       }
 
       @Override
       @SuppressWarnings("unchecked")
-      public DefaultConsistentHashFactory readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public DefaultConsistentHashFactory readObject(UserObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          return new DefaultConsistentHashFactory();
       }
 

@@ -1,10 +1,10 @@
 package org.infinispan.commons.hash;
 
-import java.io.ObjectInput;
 import java.nio.charset.Charset;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.commons.marshall.exts.NoStateExternalizer;
 import org.infinispan.commons.util.Util;
 
@@ -419,7 +419,7 @@ public class MurmurHash3Old implements Hash {
       }
 
       @Override
-      public MurmurHash3Old readObject(ObjectInput input) {
+      public MurmurHash3Old readObject(UserObjectInput input) {
          return instance;
       }
 

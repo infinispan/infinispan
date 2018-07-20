@@ -1,8 +1,6 @@
 package org.infinispan.commands.remote;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -11,12 +9,13 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetAllCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
@@ -128,15 +127,15 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallCollection(keys, output);
+   public void writeTo(UserObjectOutput output) throws IOException {
+      output.writeUserCollection(keys);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeObject(gtx);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
+      keys = input.readUserCollection(ArrayList::new);
       setFlagsBitSet(input.readLong());
       gtx = (GlobalTransaction) input.readObject();
    }

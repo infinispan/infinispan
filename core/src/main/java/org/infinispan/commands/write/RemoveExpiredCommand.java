@@ -3,13 +3,13 @@ package org.infinispan.commands.write;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
@@ -128,10 +128,9 @@ public class RemoveExpiredCommand extends RemoveCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
-      output.writeObject(key);
-      output.writeObject(value);
+      output.writeUserObjects(key, value);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       if (lifespan != null) {
          output.writeBoolean(true);
@@ -143,10 +142,10 @@ public class RemoveExpiredCommand extends RemoveCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
-      key = input.readObject();
-      value = input.readObject();
+      key = input.readUserObject();
+      value = input.readUserObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
       boolean lifespanProvided = input.readBoolean();
       if (lifespanProvided) {

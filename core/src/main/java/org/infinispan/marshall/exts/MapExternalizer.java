@@ -1,8 +1,6 @@
 package org.infinispan.marshall.exts;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,6 +12,8 @@ import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentHashMap;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.FastCopyHashMap;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersionsMap;
@@ -52,7 +52,7 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
    }
 
    @Override
-   public void writeObject(ObjectOutput output, Map map) throws IOException {
+   public void writeObject(UserObjectOutput output, Map map) throws IOException {
       int number = numbers.get(map.getClass(), -1);
       output.write(number);
       switch (number) {
@@ -83,7 +83,7 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
    }
 
    @Override
-   public Map readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public Map readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
       int magicNumber = input.readUnsignedByte();
       switch (magicNumber) {
          case HASHMAP:

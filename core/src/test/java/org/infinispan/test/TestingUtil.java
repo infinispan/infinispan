@@ -3,6 +3,8 @@ package org.infinispan.test;
 import static java.io.File.separator;
 import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
 import static org.infinispan.commons.util.Util.EMPTY_OBJECT_ARRAY;
+import static org.infinispan.factories.KnownComponentNames.INTERNAL_MARSHALLER;
+import static org.infinispan.factories.KnownComponentNames.USER_MARSHALLER;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.fail;
@@ -70,6 +72,7 @@ import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.api.Lifecycle;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.cache.CacheMode;
@@ -1029,8 +1032,11 @@ public class TestingUtil {
    }
 
    public static GlobalMarshaller extractGlobalMarshaller(EmbeddedCacheManager cm) {
-      GlobalComponentRegistry gcr = extractField(cm, "globalComponentRegistry");
-      return (GlobalMarshaller) gcr.getComponent(StreamingMarshaller.class);
+      return (GlobalMarshaller) cm.getGlobalComponentRegistry().getComponent(StreamingMarshaller.class, INTERNAL_MARSHALLER);
+   }
+
+   public static Marshaller extractUserMarshaller(EmbeddedCacheManager cm) {
+      return cm.getGlobalComponentRegistry().getComponent(Marshaller.class, USER_MARSHALLER);
    }
 
    /**
@@ -1650,13 +1656,9 @@ public class TestingUtil {
       return allEntries(cl, null);
    }
 
-   public static <K, V> MarshalledEntry<K, V> marshalledEntry(InternalCacheEntry<K, V> ice, StreamingMarshaller marshaller) {
+   public static <K, V> MarshalledEntry<K, V> marshalledEntry(InternalCacheEntry<K, V> ice, Marshaller marshaller) {
       return new MarshalledEntryImpl<>(ice.getKey(), ice.getValue(), PersistenceUtil.internalMetadata(ice), marshaller);
    }
-
-   /*public static MarshalledEntry marshalledEntry(InternalCacheValue icv, StreamingMarshaller marshaller) {
-      return marshalledEntry(icv, marshaller);
-   }*/
 
    public static void outputPropertiesToXML(String outputFile, Properties properties) throws IOException {
       Properties sorted = new Properties() {
@@ -1684,7 +1686,7 @@ public class TestingUtil {
    public static <K, V> void writeToAllStores(K key, V value, Cache<K, V> cache) {
       AdvancedCache<K, V> advCache = cache.getAdvancedCache();
       PersistenceManager pm = advCache.getComponentRegistry().getComponent(PersistenceManager.class);
-      StreamingMarshaller marshaller = extractGlobalMarshaller(advCache.getCacheManager());
+      Marshaller marshaller = extractUserMarshaller(advCache.getCacheManager());
       KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
       pm.writeToAllNonTxStores(new MarshalledEntryImpl<>(key, value, null, marshaller), keyPartitioner.getSegment(key), BOTH);
    }

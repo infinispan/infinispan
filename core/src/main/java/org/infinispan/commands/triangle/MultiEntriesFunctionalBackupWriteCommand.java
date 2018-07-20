@@ -1,8 +1,6 @@
 package org.infinispan.commands.triangle;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,7 +11,8 @@ import org.infinispan.commands.functional.AbstractWriteManyCommand;
 import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -44,7 +43,7 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
    }
 
    public void init(InvocationContextFactory factory, AsyncInterceptorChain chain,
-         ComponentRegistry componentRegistry) {
+                    ComponentRegistry componentRegistry) {
       injectDependencies(factory, chain);
       this.componentRegistry = componentRegistry;
    }
@@ -71,19 +70,19 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       writeBase(output);
       writeFunctionAndParams(output);
       output.writeBoolean(writeOnly);
-      MarshallUtil.marshallMap(entries, output);
+      output.writeUserMap(entries);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       readBase(input);
       readFunctionAndParams(input);
       writeOnly = input.readBoolean();
-      entries = MarshallUtil.unmarshallMap(input, HashMap::new);
+      entries = input.readUserMap(HashMap::new);
    }
 
    @Override

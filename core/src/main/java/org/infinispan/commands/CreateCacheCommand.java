@@ -1,18 +1,18 @@
 package org.infinispan.commands;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ByteString;
@@ -108,14 +108,14 @@ public class CreateCacheCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       output.writeUTF(cacheNameToCreate);
       output.writeUTF(cacheConfigurationName);
       output.writeInt(expectedMembers);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       cacheNameToCreate = input.readUTF();
       cacheConfigurationName = input.readUTF();
       expectedMembers = input.readInt();

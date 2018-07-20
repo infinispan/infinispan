@@ -1,13 +1,13 @@
 package org.infinispan.commands.functional;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.encoding.DataConversion;
@@ -24,7 +24,7 @@ final class Mutations {
    }
 
    // No need to occupy externalizer ids when we have a limited set of options
-   static <K, V, T, R> void writeTo(ObjectOutput output, Mutation<K, V, R> mutation) throws IOException {
+   static <K, V, T, R> void writeTo(UserObjectOutput output, Mutation<K, V, R> mutation) throws IOException {
       BaseMutation bm = (BaseMutation) mutation;
       DataConversion.writeTo(output, bm.keyDataConversion);
       DataConversion.writeTo(output, bm.valueDataConversion);
@@ -36,7 +36,7 @@ final class Mutations {
             break;
          case ReadWriteWithValue.TYPE:
             ReadWriteWithValue<K, V, T, R> rwwv = (ReadWriteWithValue<K, V, T, R>) mutation;
-            output.writeObject(rwwv.argument);
+            output.writeUserObject(rwwv.argument);
             output.writeObject(rwwv.f);
             break;
          case Write.TYPE:
@@ -44,24 +44,24 @@ final class Mutations {
             break;
          case WriteWithValue.TYPE:
             WriteWithValue<K, V, T> wwv = (WriteWithValue<K, V, T>) mutation;
-            output.writeObject(wwv.argument);
+            output.writeUserObject(wwv.argument);
             output.writeObject(wwv.f);
             break;
       }
    }
 
-   static <K, V, T> Mutation<K, V, ?> readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   static <K, V, T> Mutation<K, V, ?> readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       DataConversion keyDataConversion = DataConversion.readFrom(input);
       DataConversion valueDataConversion = DataConversion.readFrom(input);
       switch (input.readByte()) {
          case ReadWrite.TYPE:
             return new ReadWrite<>(keyDataConversion, valueDataConversion, (Function<EntryView.ReadWriteEntryView<K, V>, ?>) input.readObject());
          case ReadWriteWithValue.TYPE:
-            return new ReadWriteWithValue<>(keyDataConversion, valueDataConversion, input.readObject(), (BiFunction<V, EntryView.ReadWriteEntryView<K, V>, ?>) input.readObject());
+            return new ReadWriteWithValue<>(keyDataConversion, valueDataConversion, input.readUserObject(), (BiFunction<V, EntryView.ReadWriteEntryView<K, V>, ?>) input.readObject());
          case Write.TYPE:
             return new Write<>(keyDataConversion, valueDataConversion, (Consumer<EntryView.WriteEntryView<K, V>>) input.readObject());
          case WriteWithValue.TYPE:
-            return new WriteWithValue<>(keyDataConversion, valueDataConversion, input.readObject(), (BiConsumer<T, EntryView.WriteEntryView<K, V>>) input.readObject());
+            return new WriteWithValue<>(keyDataConversion, valueDataConversion, input.readUserObject(), (BiConsumer<T, EntryView.WriteEntryView<K, V>>) input.readObject());
          default:
             throw new IllegalStateException("Unknown type of mutation, broken input?");
       }

@@ -1,8 +1,6 @@
 package org.infinispan.commands.functional.functions;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Set;
@@ -11,6 +9,8 @@ import java.util.function.Function;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
 import org.infinispan.metadata.Metadata;
@@ -64,14 +64,14 @@ public class MergeFunction<K, V> implements Function<EntryView.ReadWriteEntryVie
       }
 
       @Override
-      public void writeObject(ObjectOutput output, MergeFunction object) throws IOException {
+      public void writeObject(UserObjectOutput output, MergeFunction object) throws IOException {
          output.writeObject(object.value);
          output.writeObject(object.remappingFunction);
          output.writeObject(object.metadata);
       }
 
       @Override
-      public MergeFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MergeFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new MergeFunction(input.readObject(),
                (BiFunction) input.readObject(),
                (Metadata) input.readObject());

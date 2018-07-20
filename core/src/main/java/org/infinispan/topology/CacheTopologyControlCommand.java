@@ -1,8 +1,6 @@
 package org.infinispan.topology;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -10,8 +8,10 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -270,7 +270,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       MarshallUtil.marshallString(cacheName, output);
       MarshallUtil.marshallEnum(type, output);
       switch (type) {
@@ -337,7 +337,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       cacheName = MarshallUtil.unmarshallString(input);
       type = MarshallUtil.unmarshallEnum(input, ordinal -> Type.CACHED_VALUES[ordinal]);
       switch (type) {

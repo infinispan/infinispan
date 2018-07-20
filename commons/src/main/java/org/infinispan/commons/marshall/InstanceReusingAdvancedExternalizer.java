@@ -43,7 +43,7 @@ public abstract class InstanceReusingAdvancedExternalizer<T> extends AbstractExt
    private final boolean hasChildren;
 
    @Override
-   public final void writeObject(ObjectOutput output, T object) throws IOException {
+   public final void writeObject(UserObjectOutput output, T object) throws IOException {
       ReusableData data = cachedWriteObjects.get();
       boolean shouldRemove;
       if (hasChildren && data == null) {
@@ -85,7 +85,7 @@ public abstract class InstanceReusingAdvancedExternalizer<T> extends AbstractExt
    public abstract void doWriteObject(ObjectOutput output, T object) throws IOException;
 
    @Override
-   public final T readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public final T readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
       List<Object> data = cachedReadObjects.get();
       boolean shouldRemove;
       if (hasChildren && data == null) {

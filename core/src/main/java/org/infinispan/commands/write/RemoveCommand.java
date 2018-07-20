@@ -3,8 +3,6 @@ package org.infinispan.commands.write;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
@@ -12,6 +10,8 @@ import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -172,22 +172,20 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
-      output.writeObject(value);
+   public void writeTo(UserObjectOutput output) throws IOException {
+      output.writeUserObjects(key, value, metadata);
       UnsignedNumeric.writeUnsignedInt(output, segment);
-      output.writeObject(metadata);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       MarshallUtil.marshallEnum(valueMatcher, output);
       CommandInvocationId.writeTo(output, commandInvocationId);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
-      value = input.readObject();
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
+      key = input.readUserObject();
+      value = input.readUserObject();
+      metadata = (Metadata) input.readUserObject();
       segment = UnsignedNumeric.readUnsignedInt(input);
-      metadata = (Metadata) input.readObject();
       setFlagsBitSet(input.readLong());
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       commandInvocationId = CommandInvocationId.readFrom(input);

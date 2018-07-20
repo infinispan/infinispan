@@ -1,14 +1,14 @@
 package org.infinispan.remoting.rpc;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.io.Serializable;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.UserObjectInput;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.ByteString;
 
 /**
@@ -52,12 +52,12 @@ public class CustomCacheRpcCommand extends BaseRpcCommand implements VisitableCo
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       output.writeObject(arg);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       arg = input.readObject();
    }
 

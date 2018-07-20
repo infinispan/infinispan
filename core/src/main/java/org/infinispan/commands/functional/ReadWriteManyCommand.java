@@ -3,8 +3,6 @@ package org.infinispan.commands.functional;
 import static org.infinispan.functional.impl.EntryViews.snapshot;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -13,7 +11,8 @@ import java.util.function.Function;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
@@ -78,9 +77,9 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
-      MarshallUtil.marshallCollection(keys, output);
+      output.writeUserCollection(keys);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);
@@ -91,9 +90,9 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+      keys = input.readUserCollection(ArrayList::new);
       f = (Function<ReadWriteEntryView<K, V>, R>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);

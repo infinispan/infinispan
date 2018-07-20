@@ -1,11 +1,11 @@
 package org.infinispan.remoting.responses;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 
@@ -23,11 +23,11 @@ public class CacheNotFoundResponse extends InvalidResponse {
 
    public static class Externalizer extends AbstractExternalizer<CacheNotFoundResponse> {
       @Override
-      public void writeObject(ObjectOutput output, CacheNotFoundResponse response) throws IOException {
+      public void writeObject(UserObjectOutput output, CacheNotFoundResponse response) throws IOException {
       }
 
       @Override
-      public CacheNotFoundResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public CacheNotFoundResponse readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return INSTANCE;
       }
 

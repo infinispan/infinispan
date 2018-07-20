@@ -1,11 +1,11 @@
 package org.infinispan.container.entries;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -121,12 +121,12 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
 
    public static class Externalizer extends AbstractExternalizer<ImmortalCacheValue> {
       @Override
-      public void writeObject(ObjectOutput output, ImmortalCacheValue icv) throws IOException {
+      public void writeObject(UserObjectOutput output, ImmortalCacheValue icv) throws IOException {
          output.writeObject(icv.value);
       }
 
       @Override
-      public ImmortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ImmortalCacheValue readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
          return new ImmortalCacheValue(v);
       }

@@ -1,12 +1,12 @@
 package org.infinispan.transaction.xa.recovery;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import javax.transaction.xa.Xid;
 
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -69,14 +69,14 @@ public class RecoveryAwareGlobalTransaction extends GlobalTransaction implements
       }
 
       @Override
-      public void writeObject(ObjectOutput output, RecoveryAwareGlobalTransaction xidGtx) throws IOException {
+      public void writeObject(UserObjectOutput output, RecoveryAwareGlobalTransaction xidGtx) throws IOException {
          super.writeObject(output, xidGtx);
          output.writeObject(xidGtx.xid);
          output.writeLong(xidGtx.getInternalId());
       }
 
       @Override
-      public RecoveryAwareGlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public RecoveryAwareGlobalTransaction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          RecoveryAwareGlobalTransaction xidGtx = super.readObject(input);
          Xid xid = (Xid) input.readObject();
          xidGtx.setXid(xid);

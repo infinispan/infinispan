@@ -1,15 +1,15 @@
 package org.infinispan.marshall.core;
 
 import java.io.IOException;
-import java.io.ObjectOutput;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
+import org.infinispan.commons.marshall.UserObjectOutput;
 
 /**
- * Array backed, expandable {@link ObjectOutput} implementation.
+ * Array backed, expandable {@link UserObjectOutput} implementation.
  */
-final class BytesObjectOutput implements ObjectOutput {
+class BytesObjectOutput extends AbstractUserObjectOutput {
 
    final GlobalMarshaller marshaller;
 
@@ -277,4 +277,8 @@ final class BytesObjectOutput implements ObjectOutput {
       return new ByteBufferImpl(bytes, 0, pos);
    }
 
+   @Override
+   public void writeUserObject(Object object) throws IOException {
+      marshaller.writeUnknown(object, this);
+   }
 }

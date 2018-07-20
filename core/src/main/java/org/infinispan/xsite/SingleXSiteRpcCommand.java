@@ -1,11 +1,11 @@
 package org.infinispan.xsite;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.ByteString;
 
 /**
@@ -48,12 +48,12 @@ public class SingleXSiteRpcCommand extends XSiteReplicateCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       output.writeObject(command);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       command = (VisitableCommand) input.readObject();
    }
 

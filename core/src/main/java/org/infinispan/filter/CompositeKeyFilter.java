@@ -1,13 +1,13 @@
 package org.infinispan.filter;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.marshall.core.Ids;
@@ -47,7 +47,7 @@ public class CompositeKeyFilter<K> implements KeyFilter<K> {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, CompositeKeyFilter object) throws IOException {
+      public void writeObject(UserObjectOutput output, CompositeKeyFilter object) throws IOException {
          UnsignedNumeric.writeUnsignedInt(output, object.filters.length);
          for (KeyFilter filter : object.filters) {
             output.writeObject(filter);
@@ -55,7 +55,7 @@ public class CompositeKeyFilter<K> implements KeyFilter<K> {
       }
 
       @Override
-      public CompositeKeyFilter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public CompositeKeyFilter readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          int filtersSize = UnsignedNumeric.readUnsignedInt(input);
          KeyFilter[] filters = new KeyFilter[filtersSize];
          for (int i = 0; i < filtersSize; ++i) {

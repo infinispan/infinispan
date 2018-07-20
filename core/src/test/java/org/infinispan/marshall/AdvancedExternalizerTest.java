@@ -1,8 +1,6 @@
 package org.infinispan.marshall;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.Set;
@@ -10,6 +8,8 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -80,12 +80,12 @@ public class AdvancedExternalizerTest extends MultipleCacheManagersTest {
 
       public static class Externalizer extends AbstractExternalizer<IdViaConfigObj> {
          @Override
-         public void writeObject(ObjectOutput output, IdViaConfigObj object) throws IOException {
+         public void writeObject(UserObjectOutput output, IdViaConfigObj object) throws IOException {
             output.writeUTF(object.name);
          }
 
          @Override
-         public IdViaConfigObj readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public IdViaConfigObj readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new IdViaConfigObj().setName(input.readUTF());
          }
 
@@ -106,12 +106,12 @@ public class AdvancedExternalizerTest extends MultipleCacheManagersTest {
 
       public static class Externalizer extends AbstractExternalizer<IdViaAnnotationObj> {
          @Override
-         public void writeObject(ObjectOutput output, IdViaAnnotationObj object) throws IOException {
+         public void writeObject(UserObjectOutput output, IdViaAnnotationObj object) throws IOException {
             output.writeObject(object.date);
          }
 
          @Override
-         public IdViaAnnotationObj readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public IdViaAnnotationObj readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new IdViaAnnotationObj().setDate((Date) input.readObject());
          }
 
@@ -137,12 +137,12 @@ public class AdvancedExternalizerTest extends MultipleCacheManagersTest {
 
       public static class Externalizer extends AbstractExternalizer<IdViaBothObj> {
          @Override
-         public void writeObject(ObjectOutput output, IdViaBothObj object) throws IOException {
+         public void writeObject(UserObjectOutput output, IdViaBothObj object) throws IOException {
             output.writeInt(object.age);
          }
 
          @Override
-         public IdViaBothObj readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public IdViaBothObj readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new IdViaBothObj().setAge(input.readInt());
          }
 

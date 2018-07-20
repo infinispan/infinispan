@@ -1,14 +1,13 @@
 package org.infinispan.commands.remote;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.BackupAckCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -77,23 +76,23 @@ public class RevokeBiasCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       output.writeObject(ackTarget);
       if (ackTarget != null) {
          output.writeLong(id);
       }
       output.writeInt(topologyId);
-      MarshallUtil.marshallCollection(keys, output);
+      output.writeUserCollection(keys);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       ackTarget = (Address) input.readObject();
       if (ackTarget != null) {
          id = input.readLong();
       }
       topologyId = input.readInt();
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+      keys = input.readUserCollection(ArrayList::new);
    }
 
    @Override

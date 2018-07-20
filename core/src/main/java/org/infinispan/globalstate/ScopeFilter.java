@@ -1,14 +1,14 @@
 package org.infinispan.globalstate;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 import java.util.function.Predicate;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.filter.KeyFilter;
 
 public class ScopeFilter implements KeyFilter<ScopedState>, Predicate<ScopedState> {
@@ -41,12 +41,12 @@ public class ScopeFilter implements KeyFilter<ScopedState>, Predicate<ScopedStat
       }
 
       @Override
-      public void writeObject(ObjectOutput output, ScopeFilter object) throws IOException {
+      public void writeObject(UserObjectOutput output, ScopeFilter object) throws IOException {
          output.writeUTF(object.scope);
       }
 
       @Override
-      public ScopeFilter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ScopeFilter readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new ScopeFilter(input.readUTF());
       }
    }

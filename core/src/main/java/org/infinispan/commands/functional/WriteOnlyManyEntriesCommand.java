@@ -1,8 +1,6 @@
 package org.infinispan.commands.functional;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -11,7 +9,8 @@ import java.util.function.BiConsumer;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
@@ -74,9 +73,9 @@ public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteMan
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
-      MarshallUtil.marshallMap(arguments, output);
+      output.writeUserMap(arguments);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);
@@ -87,10 +86,10 @@ public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteMan
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
       // We use LinkedHashMap in order to guarantee the same order of iteration
-      arguments = MarshallUtil.unmarshallMap(input, LinkedHashMap::new);
+      arguments = input.readUserMap(LinkedHashMap::new);
       f = (BiConsumer<T, WriteEntryView<K, V>>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);

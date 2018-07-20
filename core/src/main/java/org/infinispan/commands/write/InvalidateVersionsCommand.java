@@ -1,7 +1,12 @@
 package org.infinispan.commands.write;
 
+import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
@@ -13,11 +18,6 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Must be {@link VisitableCommand} as we want to catch it in persistence handling etc.
@@ -136,31 +136,29 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       output.writeInt(topologyId);
       // TODO: topology ids are mostly the same - sort the arrays according to topologyIds and use compaction encoding
       output.writeInt(keys.length);
       for (int i = 0; i < keys.length; ++i) {
-         if (keys[i] == null) {
-            output.writeObject(null);
+         output.writeUserObject(keys[i]);
+         if (keys[i] == null)
             break;
-         } else {
-            output.writeObject(keys[i]);
-            output.writeInt(topologyIds[i]);
-            output.writeLong(versions[i]);
-         }
+
+         output.writeInt(topologyIds[i]);
+         output.writeLong(versions[i]);
       }
       output.writeBoolean(removed);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       topologyId = input.readInt();
       keys = new Object[input.readInt()];
       topologyIds = new int[keys.length];
       versions = new long[keys.length];
       for (int i = 0; i < keys.length; ++i) {
-         Object key = input.readObject();
+         Object key = input.readUserObject();
          if (key == null) {
             break;
          }

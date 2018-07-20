@@ -1,8 +1,6 @@
 package org.infinispan.stream.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,6 +48,8 @@ import org.infinispan.LongCacheStream;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
@@ -334,12 +334,12 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
 
       public static final class IdentityFinishCollectorExternalizer implements Externalizer<IdentifyFinishCollector> {
          @Override
-         public void writeObject(ObjectOutput output, IdentifyFinishCollector object) throws IOException {
+         public void writeObject(UserObjectOutput output, IdentifyFinishCollector object) throws IOException {
             output.writeObject(object.realCollector);
          }
 
          @Override
-         public IdentifyFinishCollector readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public IdentifyFinishCollector readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new IdentifyFinishCollector((Collector) input.readObject());
          }
       }

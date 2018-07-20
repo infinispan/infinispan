@@ -3,8 +3,6 @@ package org.infinispan.commands.write;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,7 +15,8 @@ import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -152,18 +151,18 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallMap(map, output);
-      output.writeObject(metadata);
+   public void writeTo(UserObjectOutput output) throws IOException {
+      output.writeUserMap(map);
+      output.writeUserObject(metadata);
       output.writeBoolean(isForwarded);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      map = MarshallUtil.unmarshallMap(input, LinkedHashMap::new);
-      metadata = (Metadata) input.readObject();
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
+      map = input.readUserMap(LinkedHashMap::new);
+      metadata = (Metadata) input.readUserObject();
       isForwarded = input.readBoolean();
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);

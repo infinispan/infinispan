@@ -6,6 +6,8 @@ import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -103,17 +105,47 @@ public interface ReplicableCommand {
     *
     * @param output the stream.
     * @throws IOException if an error occurred during the I/O.
+    * @deprecated since 9.4 use {@link #writeTo(UserObjectOutput)} instead
     */
-   void writeTo(ObjectOutput output) throws IOException;
+   @Deprecated
+   default void writeTo(ObjectOutput output) throws IOException {
+      // no-op
+   }
 
    /**
-    * Reads this instance from the stream written by {@link #writeTo(ObjectOutput)}.
+    * Writes this instance to the {@link ObjectOutput}.
+    *
+    * @since 9.4
+    * @param output the stream.
+    * @throws IOException if an error occurred during the I/O.
+    */
+   default void writeTo(UserObjectOutput output) throws IOException {
+      writeTo((ObjectOutput) output);
+   }
+
+   /**
+    * Reads this instance from the stream written by {@link #writeTo(UserObjectOutput)}.
+    *
+    * @param input the stream to read.
+    * @throws IOException            if an error occurred during the I/O.
+    * @throws ClassNotFoundException if it tries to load an undefined class.
+    * @deprecated since 9.4 use {@link #writeTo(UserObjectOutput)} instead
+    */
+   @Deprecated
+   default void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      // no-op
+   }
+
+   /**
+    * Reads this instance from the stream written by {@link #writeTo(UserObjectOutput)}.
     *
     * @param input the stream to read.
     * @throws IOException            if an error occurred during the I/O.
     * @throws ClassNotFoundException if it tries to load an undefined class.
     */
-   void readFrom(ObjectInput input) throws IOException, ClassNotFoundException;
+   default void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
+      readFrom((ObjectInput) input);
+   }
 
    /**
     * Sets the sender's {@link Address}.

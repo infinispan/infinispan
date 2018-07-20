@@ -6,14 +6,14 @@ import static org.infinispan.marshall.AdvancedExternalizerTest.IdViaConfigObj;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -155,12 +155,12 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
    static class DuplicateIdClass {
       public static class Externalizer extends AbstractExternalizer<DuplicateIdClass> {
          @Override
-         public DuplicateIdClass readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public DuplicateIdClass readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return null;
          }
 
          @Override
-         public void writeObject(ObjectOutput output, DuplicateIdClass object) throws IOException {
+         public void writeObject(UserObjectOutput output, DuplicateIdClass object) throws IOException {
          }
 
          @Override
@@ -178,12 +178,12 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
    static class TooHighIdClass {
       public static class Externalizer extends AbstractExternalizer<TooHighIdClass> {
          @Override
-         public TooHighIdClass readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public TooHighIdClass readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return null;
          }
 
          @Override
-         public void writeObject(ObjectOutput output, TooHighIdClass object) throws IOException {
+         public void writeObject(UserObjectOutput output, TooHighIdClass object) throws IOException {
          }
 
          @Override
@@ -204,7 +204,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       private final AdvancedExternalizer idViaBothObjExt = new IdViaBothObj.Externalizer();
 
       @Override
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
+      public void writeObject(UserObjectOutput output, Object object) throws IOException {
          AdvancedExternalizer ext;
          if (object instanceof IdViaConfigObj) {
             output.write(0);
@@ -224,7 +224,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       }
 
       @Override
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public Object readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          int index = input.read();
          AdvancedExternalizer ext;
          switch (index) {

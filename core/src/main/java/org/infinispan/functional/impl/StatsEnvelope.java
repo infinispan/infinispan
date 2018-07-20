@@ -1,8 +1,6 @@
 package org.infinispan.functional.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -10,6 +8,8 @@ import java.util.stream.Stream;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -111,13 +111,13 @@ public class StatsEnvelope<T> {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, StatsEnvelope object) throws IOException {
+      public void writeObject(UserObjectOutput output, StatsEnvelope object) throws IOException {
          output.writeObject(object.value);
          output.writeByte(object.flags);
       }
 
       @Override
-      public StatsEnvelope readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public StatsEnvelope readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new StatsEnvelope(input.readObject(), input.readByte());
       }
    }

@@ -3,8 +3,6 @@ package org.infinispan.commands.triangle;
 import static org.infinispan.commands.write.ValueMatcher.MATCH_ALWAYS;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -17,6 +15,8 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -55,7 +55,7 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
    }
 
    public void init(InvocationContextFactory factory, AsyncInterceptorChain chain,
-         ComponentRegistry componentRegistry) {
+                    ComponentRegistry componentRegistry) {
       injectDependencies(factory, chain);
       this.componentRegistry = componentRegistry;
    }
@@ -94,35 +94,39 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       writeBase(output);
       writeFunctionAndParams(output);
       MarshallUtil.marshallEnum(operation, output);
-      output.writeObject(key);
       switch (operation) {
          case READ_WRITE_KEY_VALUE:
-            output.writeObject(prevValue);
-            output.writeObject(prevMetadata);
+            output.writeUserObjects(key, prevValue, prevMetadata, value);
+            break;
          case WRITE_ONLY_KEY_VALUE:
-            output.writeObject(value);
+            output.writeUserObjects(key, value);
+            break;
          case READ_WRITE:
          case WRITE_ONLY:
          default:
+            output.writeUserObject(key);
       }
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       readBase(input);
       readFunctionAndParams(input);
       operation = MarshallUtil.unmarshallEnum(input, SingleKeyFunctionalBackupWriteCommand::valueOf);
-      key = input.readObject();
+      key = input.readUserObject();
       switch (operation) {
          case READ_WRITE_KEY_VALUE:
-            prevValue = input.readObject();
-            prevMetadata = (Metadata) input.readObject();
+            prevValue = input.readUserObject();
+            prevMetadata = (Metadata) input.readUserObject();
+            value = input.readUserObject();
+            break;
          case WRITE_ONLY_KEY_VALUE:
-            value = input.readObject();
+            value = input.readUserObject();
+            break;
          case READ_WRITE:
          case WRITE_ONLY:
          default:

@@ -16,6 +16,7 @@ import org.infinispan.commons.io.ByteBuffer;
  * @author Galder Zamarreño
  * @since 5.0
  */
+@Deprecated
 public abstract class AbstractDelegatingMarshaller implements StreamingMarshaller {
 
    protected StreamingMarshaller marshaller;

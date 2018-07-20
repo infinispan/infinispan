@@ -1,8 +1,6 @@
 package org.infinispan.stream.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Comparator;
 import java.util.DoubleSummaryStatistics;
 import java.util.IntSummaryStatistics;
@@ -43,6 +41,8 @@ import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -330,12 +330,12 @@ final class TerminalFunctions {
 
       public static final class AllMatchFunctionExternalizer implements Externalizer<AllMatchFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AllMatchFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AllMatchFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
          @Override
-         public AllMatchFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AllMatchFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new AllMatchFunction((Predicate) input.readObject());
          }
       }
@@ -356,12 +356,12 @@ final class TerminalFunctions {
 
       public static final class AllMatchDoubleFunctionExternalizer implements Externalizer<AllMatchDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AllMatchDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AllMatchDoubleFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
          @Override
-         public AllMatchDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AllMatchDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new AllMatchDoubleFunction((DoublePredicate) input.readObject());
          }
       }
@@ -382,12 +382,12 @@ final class TerminalFunctions {
 
       public static final class AllMatchIntFunctionExternalizer implements Externalizer<AllMatchIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AllMatchIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AllMatchIntFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
          @Override
-         public AllMatchIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AllMatchIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new AllMatchIntFunction((IntPredicate) input.readObject());
          }
       }
@@ -408,12 +408,12 @@ final class TerminalFunctions {
 
       public static final class AllMatchLongFunctionExternalizer implements Externalizer<AllMatchLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AllMatchLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AllMatchLongFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
          @Override
-         public AllMatchLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AllMatchLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new AllMatchLongFunction((LongPredicate) input.readObject());
          }
       }
@@ -434,12 +434,12 @@ final class TerminalFunctions {
 
       public static final class AnyMatchFunctionExternalizer implements Externalizer<AnyMatchFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AnyMatchFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AnyMatchFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
          @Override
-         public AnyMatchFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AnyMatchFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new AnyMatchFunction((Predicate) input.readObject());
          }
       }
@@ -460,12 +460,12 @@ final class TerminalFunctions {
 
       public static final class AnyMatchDoubleFunctionExternalizer implements Externalizer<AnyMatchDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AnyMatchDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AnyMatchDoubleFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
          @Override
-         public AnyMatchDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AnyMatchDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new AnyMatchDoubleFunction((DoublePredicate) input.readObject());
          }
       }
@@ -486,12 +486,12 @@ final class TerminalFunctions {
 
       public static final class AnyMatchIntFunctionExternalizer implements Externalizer<AnyMatchIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AnyMatchIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AnyMatchIntFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
          @Override
-         public AnyMatchIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AnyMatchIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new AnyMatchIntFunction((IntPredicate) input.readObject());
          }
       }
@@ -512,12 +512,12 @@ final class TerminalFunctions {
 
       public static final class AnyMatchLongFunctionExternalizer implements Externalizer<AnyMatchLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AnyMatchLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AnyMatchLongFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
          @Override
-         public AnyMatchLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AnyMatchLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new AnyMatchLongFunction((LongPredicate) input.readObject());
          }
       }
@@ -541,11 +541,11 @@ final class TerminalFunctions {
 
       public static final class AverageDoubleFunctionExternalizer implements Externalizer<AverageDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AverageDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AverageDoubleFunction object) throws IOException {
          }
 
          @Override
-         public AverageDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AverageDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -569,11 +569,11 @@ final class TerminalFunctions {
 
       public static final class AverageIntFunctionExternalizer implements Externalizer<AverageIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AverageIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AverageIntFunction object) throws IOException {
          }
 
          @Override
-         public AverageIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AverageIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -597,11 +597,11 @@ final class TerminalFunctions {
 
       public static final class AverageLongFunctionExternalizer implements Externalizer<AverageLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, AverageLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, AverageLongFunction object) throws IOException {
          }
 
          @Override
-         public AverageLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public AverageLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -626,11 +626,11 @@ final class TerminalFunctions {
 
       public static final class CountFunctionExternalizer implements Externalizer<CountFunction> {
          @Override
-         public void writeObject(ObjectOutput output, CountFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CountFunction object) throws IOException {
          }
 
          @Override
-         public CountFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CountFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -653,11 +653,11 @@ final class TerminalFunctions {
 
       public static final class CountDoubleFunctionExternalizer implements Externalizer<CountDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, CountDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CountDoubleFunction object) throws IOException {
          }
 
          @Override
-         public CountDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CountDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -680,11 +680,11 @@ final class TerminalFunctions {
 
       public static final class CountIntFunctionExternalizer implements Externalizer<CountIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, CountIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CountIntFunction object) throws IOException {
          }
 
          @Override
-         public CountIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CountIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -707,11 +707,11 @@ final class TerminalFunctions {
 
       public static final class CountLongFunctionExternalizer implements Externalizer<CountLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, CountLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CountLongFunction object) throws IOException {
          }
 
          @Override
-         public CountLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CountLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -734,11 +734,11 @@ final class TerminalFunctions {
 
       public static final class FindAnyFunctionExternalizer implements Externalizer<FindAnyFunction> {
          @Override
-         public void writeObject(ObjectOutput output, FindAnyFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, FindAnyFunction object) throws IOException {
          }
 
          @Override
-         public FindAnyFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public FindAnyFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -766,11 +766,11 @@ final class TerminalFunctions {
 
       public static final class FindAnyDoubleFunctionExternalizer implements Externalizer<FindAnyDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, FindAnyDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, FindAnyDoubleFunction object) throws IOException {
          }
 
          @Override
-         public FindAnyDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public FindAnyDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -798,11 +798,11 @@ final class TerminalFunctions {
 
       public static final class FindAnyIntFunctionExternalizer implements Externalizer<FindAnyIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, FindAnyIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, FindAnyIntFunction object) throws IOException {
          }
 
          @Override
-         public FindAnyIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public FindAnyIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -830,11 +830,11 @@ final class TerminalFunctions {
 
       public static final class FindAnyLongFunctionExternalizer implements Externalizer<FindAnyLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, FindAnyLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, FindAnyLongFunction object) throws IOException {
          }
 
          @Override
-         public FindAnyLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public FindAnyLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return getInstance();
          }
       }
@@ -855,12 +855,12 @@ final class TerminalFunctions {
 
       public static final class NoneMatchFunctionExternalizer implements Externalizer<NoneMatchFunction> {
          @Override
-         public void writeObject(ObjectOutput output, NoneMatchFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, NoneMatchFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
          @Override
-         public NoneMatchFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public NoneMatchFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new NoneMatchFunction((Predicate) input.readObject());
          }
       }
@@ -881,12 +881,12 @@ final class TerminalFunctions {
 
       public static final class NoneMatchDoubleFunctionExternalizer implements Externalizer<NoneMatchDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, NoneMatchDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, NoneMatchDoubleFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
          @Override
-         public NoneMatchDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public NoneMatchDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new NoneMatchDoubleFunction((DoublePredicate) input.readObject());
          }
       }
@@ -907,12 +907,12 @@ final class TerminalFunctions {
 
       public static final class NoneMatchIntFunctionExternalizer implements Externalizer<NoneMatchIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, NoneMatchIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, NoneMatchIntFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
          @Override
-         public NoneMatchIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public NoneMatchIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new NoneMatchIntFunction((IntPredicate) input.readObject());
          }
       }
@@ -933,12 +933,12 @@ final class TerminalFunctions {
 
       public static final class NoneMatchLongFunctionExternalizer implements Externalizer<NoneMatchLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, NoneMatchLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, NoneMatchLongFunction object) throws IOException {
             output.writeObject(object.predicate);
          }
 
          @Override
-         public NoneMatchLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public NoneMatchLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new NoneMatchLongFunction((LongPredicate) input.readObject());
          }
       }
@@ -964,14 +964,14 @@ final class TerminalFunctions {
       public static final class CollectFunctionExternalizer implements Externalizer<CollectFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, CollectFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CollectFunction object) throws IOException {
             output.writeObject(object.supplier);
             output.writeObject(object.accumulator);
             output.writeObject(object.combiner);
          }
 
          @Override
-         public CollectFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CollectFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new CollectFunction((Supplier) input.readObject(), (BiConsumer) input.readObject(),
                     (BiConsumer) input.readObject());
          }
@@ -998,14 +998,14 @@ final class TerminalFunctions {
       public static final class CollectDoubleFunctionExternalizer implements Externalizer<CollectDoubleFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, CollectDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CollectDoubleFunction object) throws IOException {
             output.writeObject(object.supplier);
             output.writeObject(object.accumulator);
             output.writeObject(object.combiner);
          }
 
          @Override
-         public CollectDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CollectDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new CollectDoubleFunction((Supplier) input.readObject(), (ObjDoubleConsumer) input.readObject(),
                     (BiConsumer) input.readObject());
          }
@@ -1032,14 +1032,14 @@ final class TerminalFunctions {
       public static final class CollectIntFunctionExternalizer implements Externalizer<CollectIntFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, CollectIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CollectIntFunction object) throws IOException {
             output.writeObject(object.supplier);
             output.writeObject(object.accumulator);
             output.writeObject(object.combiner);
          }
 
          @Override
-         public CollectIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CollectIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new CollectIntFunction((Supplier) input.readObject(), (ObjIntConsumer) input.readObject(),
                     (BiConsumer) input.readObject());
          }
@@ -1066,14 +1066,14 @@ final class TerminalFunctions {
       public static final class CollectLongFunctionExternalizer implements Externalizer<CollectLongFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, CollectLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CollectLongFunction object) throws IOException {
             output.writeObject(object.supplier);
             output.writeObject(object.accumulator);
             output.writeObject(object.combiner);
          }
 
          @Override
-         public CollectLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CollectLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new CollectLongFunction((Supplier) input.readObject(), (ObjLongConsumer) input.readObject(),
                     (BiConsumer) input.readObject());
          }
@@ -1095,12 +1095,12 @@ final class TerminalFunctions {
 
       public static final class CollectorFunctionExternalizer implements Externalizer<CollectorFunction> {
          @Override
-         public void writeObject(ObjectOutput output, CollectorFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CollectorFunction object) throws IOException {
             output.writeObject(object.collector);
          }
 
          @Override
-         public CollectorFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CollectorFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new CollectorFunction((Collector) input.readObject());
          }
       }
@@ -1122,12 +1122,12 @@ final class TerminalFunctions {
 
       public static final class ForEachFunctionExternalizer implements Externalizer<ForEachFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ForEachFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ForEachFunction object) throws IOException {
             output.writeObject(object.consumer);
          }
 
          @Override
-         public ForEachFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ForEachFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachFunction((Consumer) input.readObject());
          }
       }
@@ -1149,12 +1149,12 @@ final class TerminalFunctions {
 
       public static final class ForEachBiConsumerFunctionExternalizer implements Externalizer<ForEachBiConsumerFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ForEachBiConsumerFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ForEachBiConsumerFunction object) throws IOException {
             output.writeObject(object.consumer);
          }
 
          @Override
-         public ForEachBiConsumerFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ForEachBiConsumerFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachBiConsumerFunction((BiConsumer) input.readObject());
          }
       }
@@ -1176,12 +1176,12 @@ final class TerminalFunctions {
 
       public static final class ForEachDoubleFunctionExternalizer implements Externalizer<ForEachDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ForEachDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ForEachDoubleFunction object) throws IOException {
             output.writeObject(object.consumer);
          }
 
          @Override
-         public ForEachDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ForEachDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachDoubleFunction((DoubleConsumer) input.readObject());
          }
       }
@@ -1203,12 +1203,12 @@ final class TerminalFunctions {
 
       public static final class ForEachObjDoubleFunctionExternalizer implements Externalizer<ForEachObjDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ForEachObjDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ForEachObjDoubleFunction object) throws IOException {
             output.writeObject(object.consumer);
          }
 
          @Override
-         public ForEachObjDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ForEachObjDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachObjDoubleFunction((ObjDoubleConsumer) input.readObject());
          }
       }
@@ -1230,12 +1230,12 @@ final class TerminalFunctions {
 
       public static final class ForEachIntFunctionExternalizer implements Externalizer<ForEachIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ForEachIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ForEachIntFunction object) throws IOException {
             output.writeObject(object.consumer);
          }
 
          @Override
-         public ForEachIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ForEachIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachIntFunction((IntConsumer) input.readObject());
          }
       }
@@ -1257,12 +1257,12 @@ final class TerminalFunctions {
 
       public static final class ForEachObjIntFunctionExternalizer implements Externalizer<ForEachObjIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ForEachObjIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ForEachObjIntFunction object) throws IOException {
             output.writeObject(object.consumer);
          }
 
          @Override
-         public ForEachObjIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ForEachObjIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachObjIntFunction((ObjIntConsumer) input.readObject());
          }
       }
@@ -1284,12 +1284,12 @@ final class TerminalFunctions {
 
       public static final class ForEachLongFunctionExternalizer implements Externalizer<ForEachLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ForEachLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ForEachLongFunction object) throws IOException {
             output.writeObject(object.consumer);
          }
 
          @Override
-         public ForEachLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ForEachLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachLongFunction((LongConsumer) input.readObject());
          }
       }
@@ -1311,12 +1311,12 @@ final class TerminalFunctions {
 
       public static final class ForEachObjLongFunctionExternalizer implements Externalizer<ForEachObjLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ForEachObjLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ForEachObjLongFunction object) throws IOException {
             output.writeObject(object.consumer);
          }
 
          @Override
-         public ForEachObjLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ForEachObjLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachObjLongFunction((ObjLongConsumer) input.readObject());
          }
       }
@@ -1337,12 +1337,12 @@ final class TerminalFunctions {
 
       public static final class MaxFunctionExternalizer implements Externalizer<MaxFunction> {
          @Override
-         public void writeObject(ObjectOutput output, MaxFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, MaxFunction object) throws IOException {
             output.writeObject(object.comparator);
          }
 
          @Override
-         public MaxFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public MaxFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new MaxFunction((Comparator) input.readObject());
          }
       }
@@ -1370,11 +1370,11 @@ final class TerminalFunctions {
 
       public static final class MaxDoubleFunctionExternalizer implements Externalizer<MaxDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, MaxDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, MaxDoubleFunction object) throws IOException {
          }
 
          @Override
-         public MaxDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public MaxDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return MaxDoubleFunction.getInstance();
          }
       }
@@ -1402,11 +1402,11 @@ final class TerminalFunctions {
 
       public static final class MaxIntFunctionExternalizer implements Externalizer<MaxIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, MaxIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, MaxIntFunction object) throws IOException {
          }
 
          @Override
-         public MaxIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public MaxIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return MaxIntFunction.getInstance();
          }
       }
@@ -1434,11 +1434,11 @@ final class TerminalFunctions {
 
       public static final class MaxLongFunctionExternalizer implements Externalizer<MaxLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, MaxLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, MaxLongFunction object) throws IOException {
          }
 
          @Override
-         public MaxLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public MaxLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return MaxLongFunction.getInstance();
          }
       }
@@ -1459,12 +1459,12 @@ final class TerminalFunctions {
 
       public static final class MinFunctionExternalizer implements Externalizer<MinFunction> {
          @Override
-         public void writeObject(ObjectOutput output, MinFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, MinFunction object) throws IOException {
             output.writeObject(object.comparator);
          }
 
          @Override
-         public MinFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public MinFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new MinFunction((Comparator) input.readObject());
          }
       }
@@ -1492,11 +1492,11 @@ final class TerminalFunctions {
 
       public static final class MinDoubleFunctionExternalizer implements Externalizer<MinDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, MinDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, MinDoubleFunction object) throws IOException {
          }
 
          @Override
-         public MinDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public MinDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return MinDoubleFunction.getInstance();
          }
       }
@@ -1524,11 +1524,11 @@ final class TerminalFunctions {
 
       public static final class MinIntFunctionExternalizer implements Externalizer<MinIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, MinIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, MinIntFunction object) throws IOException {
          }
 
          @Override
-         public MinIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public MinIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return MinIntFunction.getInstance();
          }
       }
@@ -1556,11 +1556,11 @@ final class TerminalFunctions {
 
       public static final class MinLongFunctionExternalizer implements Externalizer<MinLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, MinLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, MinLongFunction object) throws IOException {
          }
 
          @Override
-         public MinLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public MinLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return MinLongFunction.getInstance();
          }
       }
@@ -1582,12 +1582,12 @@ final class TerminalFunctions {
       public static final class ReduceFunctionExternalizer implements Externalizer<ReduceFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, ReduceFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ReduceFunction object) throws IOException {
             output.writeObject(object.accumulator);
          }
 
          @Override
-         public ReduceFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ReduceFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ReduceFunction((BinaryOperator) input.readObject());
          }
       }
@@ -1614,12 +1614,12 @@ final class TerminalFunctions {
       public static final class ReduceDoubleFunctionExternalizer implements Externalizer<ReduceDoubleFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, ReduceDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ReduceDoubleFunction object) throws IOException {
             output.writeObject(object.accumulator);
          }
 
          @Override
-         public ReduceDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ReduceDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ReduceDoubleFunction((DoubleBinaryOperator) input.readObject());
          }
       }
@@ -1646,12 +1646,12 @@ final class TerminalFunctions {
       public static final class ReduceIntFunctionExternalizer implements Externalizer<ReduceIntFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, ReduceIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ReduceIntFunction object) throws IOException {
             output.writeObject(object.accumulator);
          }
 
          @Override
-         public ReduceIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ReduceIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ReduceIntFunction((IntBinaryOperator) input.readObject());
          }
       }
@@ -1678,12 +1678,12 @@ final class TerminalFunctions {
       public static final class ReduceLongFunctionExternalizer implements Externalizer<ReduceLongFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, ReduceLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ReduceLongFunction object) throws IOException {
             output.writeObject(object.accumulator);
          }
 
          @Override
-         public ReduceLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ReduceLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ReduceLongFunction((LongBinaryOperator) input.readObject());
          }
       }
@@ -1707,13 +1707,13 @@ final class TerminalFunctions {
       public static final class IdentityReductFunctionExternalizer implements Externalizer<IdentityReduceFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, IdentityReduceFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, IdentityReduceFunction object) throws IOException {
             output.writeObject(object.identity);
             output.writeObject(object.accumulator);
          }
 
          @Override
-         public IdentityReduceFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public IdentityReduceFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new IdentityReduceFunction(input.readObject(), (BinaryOperator) input.readObject());
          }
       }
@@ -1737,13 +1737,13 @@ final class TerminalFunctions {
       public static final class IdentityReductFunctionExternalizer implements Externalizer<IdentityReduceDoubleFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, IdentityReduceDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, IdentityReduceDoubleFunction object) throws IOException {
             output.writeDouble(object.identity);
             output.writeObject(object.accumulator);
          }
 
          @Override
-         public IdentityReduceDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public IdentityReduceDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new IdentityReduceDoubleFunction(input.readDouble(), (DoubleBinaryOperator) input.readObject());
          }
       }
@@ -1767,13 +1767,13 @@ final class TerminalFunctions {
       public static final class IdentityReductFunctionExternalizer implements Externalizer<IdentityReduceIntFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, IdentityReduceIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, IdentityReduceIntFunction object) throws IOException {
             output.writeInt(object.identity);
             output.writeObject(object.accumulator);
          }
 
          @Override
-         public IdentityReduceIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public IdentityReduceIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new IdentityReduceIntFunction(input.readInt(), (IntBinaryOperator) input.readObject());
          }
       }
@@ -1797,13 +1797,13 @@ final class TerminalFunctions {
       public static final class IdentityReductFunctionExternalizer implements Externalizer<IdentityReduceLongFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, IdentityReduceLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, IdentityReduceLongFunction object) throws IOException {
             output.writeLong(object.identity);
             output.writeObject(object.accumulator);
          }
 
          @Override
-         public IdentityReduceLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public IdentityReduceLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new IdentityReduceLongFunction(input.readLong(), (LongBinaryOperator) input.readObject());
          }
       }
@@ -1830,14 +1830,14 @@ final class TerminalFunctions {
       public static final class IdentityReductFunctionExternalizer implements Externalizer<IdentityReduceCombinerFunction> {
 
          @Override
-         public void writeObject(ObjectOutput output, IdentityReduceCombinerFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, IdentityReduceCombinerFunction object) throws IOException {
             output.writeObject(object.identity);
             output.writeObject(object.accumulator);
             output.writeObject(object.combiner);
          }
 
          @Override
-         public IdentityReduceCombinerFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public IdentityReduceCombinerFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new IdentityReduceCombinerFunction(input.readObject(), (BiFunction) input.readObject(),
                     (BinaryOperator) input.readObject());
          }
@@ -1861,11 +1861,11 @@ final class TerminalFunctions {
 
       public static final class SumDoubleFunctionExternalizer implements Externalizer<SumDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, SumDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, SumDoubleFunction object) throws IOException {
          }
 
          @Override
-         public SumDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public SumDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return SumDoubleFunction.getInstance();
          }
       }
@@ -1888,11 +1888,11 @@ final class TerminalFunctions {
 
       public static final class SumIntFunctionExternalizer implements Externalizer<SumIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, SumIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, SumIntFunction object) throws IOException {
          }
 
          @Override
-         public SumIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public SumIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return SumIntFunction.getInstance();
          }
       }
@@ -1915,11 +1915,11 @@ final class TerminalFunctions {
 
       public static final class SumLongFunctionExternalizer implements Externalizer<SumLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, SumLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, SumLongFunction object) throws IOException {
          }
 
          @Override
-         public SumLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public SumLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return SumLongFunction.getInstance();
          }
       }
@@ -1943,11 +1943,11 @@ final class TerminalFunctions {
       public static final class SummaryStatisticsDoubleFunctionExternalizer
               implements Externalizer<SummaryStatisticsDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, SummaryStatisticsDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, SummaryStatisticsDoubleFunction object) throws IOException {
          }
 
          @Override
-         public SummaryStatisticsDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public SummaryStatisticsDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return SummaryStatisticsDoubleFunction.getInstance();
          }
       }
@@ -1971,11 +1971,11 @@ final class TerminalFunctions {
       public static final class SummaryStatisticsIntFunctionExternalizer
               implements Externalizer<SummaryStatisticsIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, SummaryStatisticsIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, SummaryStatisticsIntFunction object) throws IOException {
          }
 
          @Override
-         public SummaryStatisticsIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public SummaryStatisticsIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return SummaryStatisticsIntFunction.getInstance();
          }
       }
@@ -1999,11 +1999,11 @@ final class TerminalFunctions {
       public static final class SummaryStatisticsLongFunctionExternalizer
               implements Externalizer<SummaryStatisticsLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, SummaryStatisticsLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, SummaryStatisticsLongFunction object) throws IOException {
          }
 
          @Override
-         public SummaryStatisticsLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public SummaryStatisticsLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return SummaryStatisticsLongFunction.getInstance();
          }
       }
@@ -2026,11 +2026,11 @@ final class TerminalFunctions {
 
       public static final class ToArrayFunctionExternalizer implements Externalizer<ToArrayFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ToArrayFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ToArrayFunction object) throws IOException {
          }
 
          @Override
-         public ToArrayFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ToArrayFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return ToArrayFunction.getInstance();
          }
       }
@@ -2053,11 +2053,11 @@ final class TerminalFunctions {
 
       public static final class ToArrayDoubleFunctionExternalizer implements Externalizer<ToArrayDoubleFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ToArrayDoubleFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ToArrayDoubleFunction object) throws IOException {
          }
 
          @Override
-         public ToArrayDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ToArrayDoubleFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return ToArrayDoubleFunction.getInstance();
          }
       }
@@ -2080,11 +2080,11 @@ final class TerminalFunctions {
 
       public static final class ToArrayIntFunctionExternalizer implements Externalizer<ToArrayIntFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ToArrayIntFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ToArrayIntFunction object) throws IOException {
          }
 
          @Override
-         public ToArrayIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ToArrayIntFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return ToArrayIntFunction.getInstance();
          }
       }
@@ -2107,11 +2107,11 @@ final class TerminalFunctions {
 
       public static final class ToArrayLongFunctionExternalizer implements Externalizer<ToArrayLongFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ToArrayLongFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ToArrayLongFunction object) throws IOException {
          }
 
          @Override
-         public ToArrayLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ToArrayLongFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return ToArrayLongFunction.getInstance();
          }
       }
@@ -2132,12 +2132,12 @@ final class TerminalFunctions {
 
       public static final class ToArrayGeneratorFunctionExternalizer implements Externalizer<ToArrayGeneratorFunction> {
          @Override
-         public void writeObject(ObjectOutput output, ToArrayGeneratorFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, ToArrayGeneratorFunction object) throws IOException {
             output.writeObject(object.generator);
          }
 
          @Override
-         public ToArrayGeneratorFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public ToArrayGeneratorFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new ToArrayGeneratorFunction((IntFunction) input.readObject());
          }
       }

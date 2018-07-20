@@ -1,10 +1,9 @@
 package org.infinispan.commands.remote;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.util.ByteString;
 
@@ -50,12 +49,12 @@ public class RenewBiasCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallArray(keys, output);
+   public void writeTo(UserObjectOutput output) throws IOException {
+      output.writeUserArray(keys);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      keys = MarshallUtil.unmarshallArray(input, Object[]::new);
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
+      keys = input.readUserArray(Object[]::new);
    }
 }

@@ -2,6 +2,8 @@ package org.infinispan.container.entries;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
@@ -9,8 +11,6 @@ import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.remoting.transport.Address;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 /**
@@ -104,14 +104,14 @@ public class RemoteMetadata implements InternalMetadata {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, RemoteMetadata entry) throws IOException {
+      public void writeObject(UserObjectOutput output, RemoteMetadata entry) throws IOException {
          output.writeObject(entry.getAddress());
          output.writeInt(entry.topologyId);
          output.writeLong(entry.version);
       }
 
       @Override
-      public RemoteMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public RemoteMetadata readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          Address address = (Address) input.readObject();
          int topologyId = input.readInt();
          long version = input.readLong();

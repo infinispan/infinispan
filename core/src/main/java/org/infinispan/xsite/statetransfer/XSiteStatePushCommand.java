@@ -1,11 +1,11 @@
 package org.infinispan.xsite.statetransfer;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.BackupReceiver;
@@ -68,13 +68,13 @@ public class XSiteStatePushCommand extends XSiteReplicateCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
+   public void writeTo(UserObjectOutput output) throws IOException {
       output.writeLong(timeoutMillis);
       MarshallUtil.marshallArray(chunk, output);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(UserObjectInput input) throws IOException, ClassNotFoundException {
       timeoutMillis = input.readLong();
       chunk = MarshallUtil.unmarshallArray(input, XSiteState[]::new);
    }

@@ -1,12 +1,12 @@
 package org.infinispan.container.entries;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 
@@ -108,14 +108,14 @@ public class MortalCacheValue extends ImmortalCacheValue {
 
    public static class Externalizer extends AbstractExternalizer<MortalCacheValue> {
       @Override
-      public void writeObject(ObjectOutput output, MortalCacheValue mcv) throws IOException {
+      public void writeObject(UserObjectOutput output, MortalCacheValue mcv) throws IOException {
          output.writeObject(mcv.value);
          UnsignedNumeric.writeUnsignedLong(output, mcv.created);
          output.writeLong(mcv.lifespan); // could be negative so should not use unsigned longs
       }
 
       @Override
-      public MortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MortalCacheValue readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          Object v = input.readObject();
          long created = UnsignedNumeric.readUnsignedLong(input);
          Long lifespan = input.readLong();

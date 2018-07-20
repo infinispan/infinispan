@@ -1,11 +1,11 @@
 package org.infinispan.commons.util;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 
 @SerializeWith(KeyValueWithPrevious.KeyValueWithPreviousExternalizer.class)
 public class KeyValueWithPrevious<K, V> {
@@ -71,14 +71,14 @@ public class KeyValueWithPrevious<K, V> {
    public static class KeyValueWithPreviousExternalizer implements Externalizer<KeyValueWithPrevious> {
 
       @Override
-      public void writeObject(ObjectOutput output, KeyValueWithPrevious kvPair) throws IOException {
+      public void writeObject(UserObjectOutput output, KeyValueWithPrevious kvPair) throws IOException {
          output.writeObject(kvPair.getKey());
          output.writeObject(kvPair.getValue());
          output.writeObject(kvPair.getPrev());
       }
 
       @Override
-      public KeyValueWithPrevious readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public KeyValueWithPrevious readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new KeyValueWithPrevious(input.readObject(), input.readObject(), input.readObject());
       }
 

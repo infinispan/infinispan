@@ -1,8 +1,6 @@
 package org.infinispan.stream.impl;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -21,6 +19,8 @@ import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.annotations.Inject;
@@ -271,13 +271,13 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
 
       public static final class Externalizer implements org.infinispan.commons.marshall.Externalizer<CacheEntryFunction> {
          @Override
-         public void writeObject(ObjectOutput output, CacheEntryFunction object) throws IOException {
+         public void writeObject(UserObjectOutput output, CacheEntryFunction object) throws IOException {
             output.writeObject(object.biFunction);
             output.writeObject(object.predicate);
          }
 
          @Override
-         public CacheEntryFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CacheEntryFunction readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new CacheEntryFunction((BiFunction) input.readObject(), (Predicate) input.readObject());
          }
       }
@@ -306,13 +306,13 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
 
       public static final class Externalizer implements org.infinispan.commons.marshall.Externalizer<CacheEntryConsumer> {
          @Override
-         public void writeObject(ObjectOutput output, CacheEntryConsumer object) throws IOException {
+         public void writeObject(UserObjectOutput output, CacheEntryConsumer object) throws IOException {
             output.writeObject(object.realConsumer);
             output.writeObject(object.predicate);
          }
 
          @Override
-         public CacheEntryConsumer readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         public CacheEntryConsumer readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
             return new CacheEntryConsumer((BiConsumer) input.readObject(), (Predicate) input.readObject());
          }
       }

@@ -1,13 +1,13 @@
 package org.infinispan.filter;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.marshall.core.Ids;
@@ -50,7 +50,7 @@ public class CompositeKeyValueFilter<K, V> implements KeyValueFilter<K, V> {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, CompositeKeyValueFilter object) throws IOException {
+      public void writeObject(UserObjectOutput output, CompositeKeyValueFilter object) throws IOException {
          UnsignedNumeric.writeUnsignedInt(output, object.filters.length);
          for (KeyValueFilter filter : object.filters) {
             output.writeObject(filter);
@@ -58,7 +58,7 @@ public class CompositeKeyValueFilter<K, V> implements KeyValueFilter<K, V> {
       }
 
       @Override
-      public CompositeKeyValueFilter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public CompositeKeyValueFilter readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          int filtersSize = UnsignedNumeric.readUnsignedInt(input);
          KeyValueFilter[] filters = new KeyValueFilter[filtersSize];
          for (int i = 0; i < filtersSize; ++i) {

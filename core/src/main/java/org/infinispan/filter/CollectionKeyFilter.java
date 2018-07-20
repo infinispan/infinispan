@@ -1,13 +1,13 @@
 package org.infinispan.filter;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.UserObjectInput;
+import org.infinispan.commons.marshall.UserObjectOutput;
 import org.infinispan.marshall.core.Ids;
 
 /**
@@ -43,13 +43,13 @@ public class CollectionKeyFilter<K> implements KeyFilter<K> {
       }
 
       @Override
-      public void writeObject(ObjectOutput output, CollectionKeyFilter object) throws IOException {
+      public void writeObject(UserObjectOutput output, CollectionKeyFilter object) throws IOException {
          output.writeObject(object.keys);
          output.writeBoolean(object.accept);
       }
 
       @Override
-      public CollectionKeyFilter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public CollectionKeyFilter readObject(UserObjectInput input) throws IOException, ClassNotFoundException {
          return new CollectionKeyFilter((Collection<? extends Object>)input.readObject(), input.readBoolean());
       }
 

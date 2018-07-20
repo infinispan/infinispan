@@ -1,7 +1,7 @@
 package org.infinispan.marshall.core;
 
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.metadata.Metadata;
 
 /**
  * Factory for {@link MarshalledEntry}.
@@ -15,5 +15,5 @@ public interface MarshalledEntryFactory<K,V> {
 
    MarshalledEntry<K,V> newMarshalledEntry(Object key, ByteBuffer valueBytes, ByteBuffer metadataBytes);
 
-   MarshalledEntry<K,V> newMarshalledEntry(Object key, Object value, InternalMetadata im);
+   MarshalledEntry<K,V> newMarshalledEntry(Object key, Object value, Metadata im);
 }
