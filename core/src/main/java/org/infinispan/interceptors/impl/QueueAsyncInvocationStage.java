@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.impl;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 
 import org.infinispan.commands.VisitableCommand;
@@ -61,13 +62,24 @@ public class QueueAsyncInvocationStage extends SimpleAsyncInvocationStage implem
    private Object invokeDirectly(InvocationContext ctx, VisitableCommand command, InvocationCallback function) {
       Object rv;
       Throwable throwable;
+      // Leave the context temporarily
+      ctx.exit();
       try {
          rv = future.join();
          throwable = null;
       } catch (Throwable t) {
          rv = null;
          throwable = CompletableFutures.extractException(t);
+      } finally {
+         CompletionStage<Void> cs = ctx.enter();
+         if (cs != null) {
+            if (trace) {
+               log.trace("Blocking before invoking directly");
+            }
+            cs.toCompletableFuture().join();
+         }
       }
+
       try {
          return function.apply(ctx, command, rv, throwable);
       } catch (Throwable t) {
@@ -95,6 +107,18 @@ public class QueueAsyncInvocationStage extends SimpleAsyncInvocationStage implem
    }
 
    private void invokeQueuedHandlers(Object rv, Throwable throwable) {
+      CompletionStage<Void> cs = ctx.enter();
+      if (cs != null) {
+         Object finalRv = rv;
+         Throwable finalThrowable = throwable;
+         cs.whenComplete((nil, t) -> {
+            if (trace && t != null) {
+               log.tracef(t, "Other blocking operation completed with exception, continuing with %s/%s", finalRv, finalThrowable);
+            }
+            invokeQueuedHandlers(finalRv, finalThrowable);
+         });
+         return;
+      }
       if (trace)
          log.tracef("Resuming invocation of command %s with %d handlers", command, queueSize());
       while (true) {
@@ -127,10 +151,12 @@ public class QueueAsyncInvocationStage extends SimpleAsyncInvocationStage implem
                if (currentStage instanceof QueueAsyncInvocationStage) {
                   QueueAsyncInvocationStage queueAsyncInvocationStage = (QueueAsyncInvocationStage) currentStage;
                   queueAsyncInvocationStage.future.whenComplete(this);
+                  ctx.exit();
                   return;
                } else {
                   // Use the CompletableFuture directly, without creating another AsyncInvocationStage instance
                   currentStage.future.whenComplete(this);
+                  ctx.exit();
                   return;
                }
             } else {

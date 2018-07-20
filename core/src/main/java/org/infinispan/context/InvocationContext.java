@@ -99,16 +99,27 @@ public interface InvocationContext extends EntryLookup, Cloneable {
 
    /**
     * Rationale: Commands can fork processing to multiple threads, e.g. by issuing an async RPC
-    * and adding a handler to that. In some cases involving exceptions the handlers might be invoked
-    * in parallel. In order to not synchronize all collections in the context and prevent inconsistencies
+    * and adding a handler to that. Imagine code:
+    * <pre>
+    * CompletableFuture future = rpcManager.invokeCommand(...)
+    *    .thenApply(remoteValue -> {
+    *       ctx.doSomething(remoteValue);
+    * });
+    * ctx.doSomethingElse(...);
+    * return asyncValue(future);
+    * </pre>
+    *
+    * Even if we're issuing only single RPC, the two calls into context might be executed concurrently.
+    * With some effort we could avoid modifying the context after invoking an RPC, but if an exception
+    * is thrown we're quite likely to access the context in other interceptors => concurrent access.
+    *
+    * In order to not synchronize all collections in the context and prevent inconsistencies
     * we introduce a big lock on the context.
     *
     * Acquires a non-reentrant lock on the context. This must be called before processing command
     * with this context.
     * @return Null if the code is free to continue or a stage if the code should be blocked.
     *         Any handler registered on this stage will be executed with acquired lock.
-    * @throws IllegalStateException If the implementation is not expecting any concurrent access
-    *         but we observe that. Example implementation could be a CAS returning non-zero.
     */
    CompletionStage<Void> enter();
 
