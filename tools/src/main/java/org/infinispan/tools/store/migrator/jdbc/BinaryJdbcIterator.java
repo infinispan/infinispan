@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
@@ -21,7 +22,7 @@ import org.infinispan.persistence.spi.PersistenceException;
 class BinaryJdbcIterator extends AbstractJdbcEntryIterator {
    private Iterator<MarshalledEntry> iterator = Collections.emptyIterator();
 
-   BinaryJdbcIterator(ConnectionFactory connectionFactory, TableManager tableManager, StreamingMarshaller marshaller) {
+   BinaryJdbcIterator(ConnectionFactory connectionFactory, TableManager tableManager, Marshaller marshaller) {
       super(connectionFactory, tableManager, marshaller);
    }
 
@@ -57,7 +58,7 @@ class BinaryJdbcIterator extends AbstractJdbcEntryIterator {
 
    private Map<Object, MarshalledEntry> unmarshallBucketEntries(InputStream inputStream) {
       try {
-         return (Map<Object, MarshalledEntry>) marshaller.objectFromInputStream(inputStream);
+         return (Map<Object, MarshalledEntry>) ((StreamingMarshaller) marshaller).objectFromInputStream(inputStream);
       } catch (IOException e) {
          throw new PersistenceException("I/O error while unmarshalling from stream", e);
       } catch (ClassNotFoundException e) {

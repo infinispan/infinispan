@@ -6,7 +6,7 @@ import static org.infinispan.tools.store.migrator.Element.SOURCE;
 import java.util.Iterator;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -33,7 +33,7 @@ import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
 public class JdbcStoreReader implements StoreIterator {
 
    private final StoreProperties props;
-   private final StreamingMarshaller marshaller;
+   private final Marshaller marshaller;
    private final JdbcStringBasedStoreConfiguration config;
    private final ConnectionFactory connectionFactory;
    private final DbMetaData metaData;

@@ -152,7 +152,7 @@ public class EmbeddedMetadata implements Metadata {
       }
    }
 
-   private static class EmbeddedExpirableMetadata extends EmbeddedMetadata {
+   public static class EmbeddedExpirableMetadata extends EmbeddedMetadata {
 
       private final long lifespan;
       private final long maxIdle;
@@ -245,7 +245,7 @@ public class EmbeddedMetadata implements Metadata {
       }
    }
 
-   private static class EmbeddedLifespanExpirableMetadata extends AbstractEmbeddedTimeoutMetadata {
+   public static class EmbeddedLifespanExpirableMetadata extends AbstractEmbeddedTimeoutMetadata {
 
       private EmbeddedLifespanExpirableMetadata(long lifespan, TimeUnit lifespanUnit, EntryVersion version) {
          super(lifespan, lifespanUnit, version);
@@ -272,7 +272,7 @@ public class EmbeddedMetadata implements Metadata {
 
    }
 
-   private static class EmbeddedMaxIdleExpirableMetadata extends AbstractEmbeddedTimeoutMetadata {
+   public static class EmbeddedMaxIdleExpirableMetadata extends AbstractEmbeddedTimeoutMetadata {
 
       private EmbeddedMaxIdleExpirableMetadata(long maxIdle, TimeUnit maxIdleUnit, EntryVersion version) {
          super(maxIdle, maxIdleUnit, version);

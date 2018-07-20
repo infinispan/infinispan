@@ -4,6 +4,7 @@ import java.util.concurrent.ExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactory;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -18,7 +19,7 @@ import org.infinispan.commons.time.TimeService;
 public class DummyInitializationContext implements InitializationContext {
    StoreConfiguration clc;
    Cache cache;
-   StreamingMarshaller marshaller;
+   StreamAwareMarshaller marshaller;
 
    ByteBufferFactory byteBufferFactory;
    MarshalledEntryFactory marshalledEntryFactory;
@@ -27,7 +28,7 @@ public class DummyInitializationContext implements InitializationContext {
    public DummyInitializationContext() {
    }
 
-   public DummyInitializationContext(StoreConfiguration clc, Cache cache, StreamingMarshaller marshaller,
+   public DummyInitializationContext(StoreConfiguration clc, Cache cache, StreamAwareMarshaller marshaller,
                                      ByteBufferFactory byteBufferFactory, MarshalledEntryFactory marshalledEntryFactory,
                                      ExecutorService executorService) {
       this.clc = clc;
@@ -55,7 +56,7 @@ public class DummyInitializationContext implements InitializationContext {
 
    @Override
    public StreamingMarshaller getMarshaller() {
-      return marshaller;
+      return StreamingMarshaller.from(marshaller);
    }
 
    @Override
@@ -76,5 +77,10 @@ public class DummyInitializationContext implements InitializationContext {
    @Override
    public ExecutorService getExecutor() {
       return executorService;
+   }
+
+   @Override
+   public StreamAwareMarshaller getPersistenceMarshaller() {
+      return marshaller;
    }
 }

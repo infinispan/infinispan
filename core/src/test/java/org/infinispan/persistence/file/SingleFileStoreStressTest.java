@@ -20,7 +20,7 @@ import java.util.concurrent.Future;
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -67,7 +67,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
       final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
+      final Marshaller marshaller = TestingUtil.extractComponentRegistry(cache).getPersistenceMarshaller();
       assertEquals(0, store.size());
 
       final List<String> keys = populateStore(5, 0, store, marshaller);
@@ -101,7 +101,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
       final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
+      final Marshaller marshaller = TestingUtil.extractComponentRegistry(cache).getPersistenceMarshaller();
       assertEquals(0, store.size());
 
       final List<String> keys = new ArrayList<>(numberOfKeys);
@@ -133,13 +133,13 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       clearFuture.get();
    }
 
-   public void testSpaceOptimization() throws ExecutionException, InterruptedException {
+   public void testSpaceOptimization() throws InterruptedException {
       final int numberOfKeys = 100;
       final int times = 10;
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
       final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
+      final Marshaller marshaller = TestingUtil.extractComponentRegistry(cache).getPersistenceMarshaller();
       assertEquals(0, store.size());
 
       long [] fileSizesWithoutPurge = new long [times];
@@ -188,7 +188,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
       final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
+      final Marshaller marshaller = TestingUtil.extractComponentRegistry(cache).getPersistenceMarshaller();
       assertEquals(0, store.size());
 
       // Write a few entries into the cache
@@ -236,7 +236,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       assertTrue(String.format("Length1=%d, Length2=%d", length1, length2), length2 < length1);
    }
 
-   public List<String> populateStore(int numKeys, int numPadding, SingleFileStore store, StreamingMarshaller marshaller) {
+   public List<String> populateStore(int numKeys, int numPadding, SingleFileStore store, Marshaller marshaller) {
       final List<String> keys = new ArrayList<>(numKeys);
       for (int j = 0; j < numKeys; j++) {
          String key = "key" + j;
@@ -254,7 +254,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
       final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
+      final Marshaller marshaller = TestingUtil.extractComponentRegistry(cache).getPersistenceMarshaller();
       assertEquals(0, store.size());
 
       final List<String> keys = new ArrayList<>(numberOfKeys);
@@ -283,7 +283,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
       final SingleFileStore store = TestingUtil.getFirstWriter(cache);
-      final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
+      final Marshaller marshaller = TestingUtil.extractComponentRegistry(cache).getPersistenceMarshaller();
       assertEquals(0, store.size());
 
       final List<String> keys = new ArrayList<>(numberOfKeys);
@@ -307,7 +307,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
    }
 
    private void populateStoreRandomValues(int numberOfKeys, SingleFileStore store,
-                                          StreamingMarshaller marshaller, List<String> keys) {
+                                          Marshaller marshaller, List<String> keys) {
       for (int j = 0; j < numberOfKeys; j++) {
          String key = "key" + j;
          String value = key + "_value_" + j + times(new Random().nextInt(10));
@@ -334,11 +334,11 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
    private class WriteTask implements Callable<Object> {
       final SingleFileStore store;
-      final StreamingMarshaller marshaller;
+      final Marshaller marshaller;
       final List<String> keys;
       final CountDownLatch stopLatch;
 
-      WriteTask(SingleFileStore store, StreamingMarshaller marshaller, List<String> keys, CountDownLatch stopLatch) {
+      WriteTask(SingleFileStore store, Marshaller marshaller, List<String> keys, CountDownLatch stopLatch) {
          this.store = store;
          this.marshaller = marshaller;
          this.keys = keys;

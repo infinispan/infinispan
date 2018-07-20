@@ -72,7 +72,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
             cm.getClassWhiteList().addClasses(Person.class);
             Cache<String, Person> cache = cm.getCache();
 
-            Marshaller marshaller = cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+            Marshaller marshaller = cache.getAdvancedCache().getComponentRegistry().getInternalMarshaller();
 
             Person value = new Person();
             cache.put("1", value);

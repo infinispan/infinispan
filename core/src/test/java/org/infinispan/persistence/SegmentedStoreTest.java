@@ -8,7 +8,7 @@ import java.util.function.Function;
 import java.util.function.ToIntFunction;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -39,7 +39,7 @@ public abstract class SegmentedStoreTest extends SingleCacheManagerTest {
 
    protected SegmentedAdvancedLoadWriteStore<Object, Object> store;
    protected Cache<Object, Object> cache;
-   protected StreamingMarshaller sm;
+   protected Marshaller sm;
    protected Set<Integer>[] keys;
 
    @Override

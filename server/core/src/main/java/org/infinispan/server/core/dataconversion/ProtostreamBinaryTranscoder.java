@@ -1,4 +1,4 @@
-package org.infinispan.query.remote.impl.dataconversion;
+package org.infinispan.server.core.dataconversion;
 
 import java.util.HashSet;
 import java.util.Set;

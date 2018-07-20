@@ -21,7 +21,7 @@ import javax.transaction.Transaction;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.IntSet;
@@ -94,7 +94,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
    private String cacheName;
    private ConnectionFactory connectionFactory;
    private MarshalledEntryFactory<K, V> marshalledEntryFactory;
-   private StreamingMarshaller marshaller;
+   private StreamAwareMarshaller marshaller;
    private TableManager tableManager;
    private TimeService timeService;
    private KeyPartitioner keyPartitioner;
@@ -106,7 +106,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
       this.cacheName = ctx.getCache().getName();
       this.globalConfiguration = ctx.getCache().getCacheManager().getCacheManagerConfiguration();
       this.marshalledEntryFactory = ctx.getMarshalledEntryFactory();
-      this.marshaller = ctx.getMarshaller();
+      this.marshaller = ctx.getPersistenceMarshaller();
       this.timeService = ctx.getTimeService();
       this.keyPartitioner = configuration.segmented() ? ctx.getKeyPartitioner() : null;
       this.isDistributedCache = ctx.getCache().getCacheConfiguration() != null && ctx.getCache().getCacheConfiguration().clustering().cacheMode().isDistributed();
@@ -738,7 +738,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
    @SuppressWarnings("unchecked")
    private <T> T unmarshall(InputStream inputStream) throws PersistenceException {
       try {
-         return (T) marshaller.objectFromInputStream(inputStream);
+         return (T) marshaller.readObject(inputStream);
       } catch (IOException e) {
          log.ioErrorUnmarshalling(e);
          throw new PersistenceException("I/O error while unmarshalling from stream", e);

@@ -15,6 +15,7 @@ import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AdminFlagExternalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.exts.EquivalenceExternalizer;
 import org.infinispan.commons.tx.XidImpl;
@@ -53,6 +54,7 @@ import org.infinispan.distribution.ch.impl.TopologyAwareConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.CollectionKeyFilter;
@@ -130,9 +132,8 @@ final class InternalExternalizers {
    private InternalExternalizers() {
    }
 
-   static ClassToExternalizerMap load(
-         GlobalMarshaller marshaller, GlobalComponentRegistry gcr,
-         RemoteCommandsFactory cmdFactory) {
+   static ClassToExternalizerMap load(GlobalComponentRegistry gcr, RemoteCommandsFactory cmdFactory) {
+      final StreamAwareMarshaller persistenceMarshaller = gcr.getComponent(StreamAwareMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
       // TODO Add initial value and load factor
       ClassToExternalizerMap exts = new ClassToExternalizerMap(512, 0.6f);
 
@@ -204,7 +205,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new MarshallableFunctionExternalizers.ConstantLambdaExternalizer(), exts);
       addInternalExternalizer(new MarshallableFunctionExternalizers.LambdaWithMetasExternalizer(), exts);
       addInternalExternalizer(new MarshallableFunctionExternalizers.SetValueIfEqualsReturnBooleanExternalizer(), exts);
-      addInternalExternalizer(new MarshalledEntryImpl.Externalizer(marshaller), exts);
+      addInternalExternalizer(new MarshalledEntryImpl.Externalizer(persistenceMarshaller), exts);
       addInternalExternalizer(new MergeFunction.Externalizer(), exts);
       addInternalExternalizer(new MetadataImmortalCacheEntry.Externalizer(), exts);
       addInternalExternalizer(new MetadataImmortalCacheValue.Externalizer(), exts);

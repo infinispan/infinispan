@@ -19,10 +19,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
@@ -113,7 +113,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
       AdvancedAsyncCacheWriter store = new AdvancedAsyncCacheWriter(backendStore);
       store.init(new DummyInitializationContext() {
          @Override
-         public StreamingMarshaller getMarshaller() {
+         public StreamAwareMarshaller getPersistenceMarshaller() {
             return marshaller;
          }
       });

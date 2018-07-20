@@ -5,7 +5,7 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -15,6 +15,7 @@ import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationB
 import org.infinispan.persistence.remote.configuration.SecurityConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.server.core.dataconversion.ProtostreamBinaryTranscoder;
 import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -48,6 +49,7 @@ public class RemoteStoreSSLTest extends BaseStoreTest {
       TestingUtil.replaceComponent(localCacheManager, TimeService.class, timeService, true);
       localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().rewire();
       ClassLoader cl = RemoteStoreSSLTest.class.getClassLoader();
+      TestingUtil.registerTranscoders(localCacheManager, new ProtostreamBinaryTranscoder());
       SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
       HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
       serverBuilder
@@ -93,8 +95,8 @@ public class RemoteStoreSSLTest extends BaseStoreTest {
    }
 
    @Override
-   protected StreamingMarshaller getMarshaller() {
-      return localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+   protected StreamAwareMarshaller getMarshaller() {
+      return localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().getPersistenceMarshaller();
    }
 
    @Override

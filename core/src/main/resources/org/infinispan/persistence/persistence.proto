@@ -1,0 +1,85 @@
+package persistence;
+
+message UserObject {
+    required bytes wrappedObject = 1;
+}
+
+message WrappedByteArray {
+    required bytes wrappedBytes = 1;
+}
+
+message ByteBuffer {
+    required bytes buffer = 1;
+}
+
+message KeyValuePair {
+    optional bytes key = 1;
+    optional bytes value = 2;
+}
+
+message Metadata {
+    enum Type {
+        IMMORTAL = 0;
+        EXPIRABLE = 1;
+        LIFESPAN_EXPIRABLE = 2;
+        MAXIDLE_EXPIRABLE = 3;
+        META_PARAM = 4;
+    }
+    optional Metadata.Type type = 1;
+    optional EntryVersion version = 2;
+    optional int64 lifespan = 3 [default = -1];
+    optional int64 maxIdle = 4 [default = -1];
+}
+
+message InternalMetadata {
+    required Metadata actual = 1;
+    optional int64 created = 2 [default = -1];
+    optional int64 lastUsed = 3 [default = -1];
+}
+
+message EntryVersion {
+//    https://issues.jboss.org/browse/IPROTO-63
+//    oneof version {
+//        NumericVersion numeric = 1;
+//        ClusteredVersion clustered = 2;
+//    }
+// TODO add support for custom implementation
+    optional NumericVersion numeric = 1;
+    optional ClusteredVersion clustered = 2;
+}
+
+message NumericVersion {
+    required int64 version = 1;
+}
+
+message ClusteredVersion {
+    required int64 version = 1;
+    required int32 topology = 2;
+}
+
+// We can't use the map type as it does not allow a map of bytes
+message Map {
+    enum Type {
+        COLLECTIONS_EMPTY = 0;
+        COLLECTIONS_SINGLETON = 1;
+        CONCURRENT = 2;
+        CUSTOM = 3;
+        FASTCOPY = 4;
+        HASH = 5;
+        TREE = 6;
+    }
+    optional Type type = 1 [default = HASH];
+    optional string implementation = 2;
+    repeated KeyValuePair entry = 3;
+}
+
+message AtomicKeySet {
+    required string cachename = 1;
+    required UserObject group = 2;
+}
+
+message MarshalledEntry {
+    optional ByteBuffer key = 1;
+    optional ByteBuffer value = 2;
+    optional ByteBuffer metadata = 3;
+}

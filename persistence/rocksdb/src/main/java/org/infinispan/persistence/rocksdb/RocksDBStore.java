@@ -20,6 +20,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.IntSet;
@@ -75,6 +76,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     private RocksDBHandler handler;
     private Properties databaseProperties;
     private Properties columnFamilyProperties;
+    private Marshaller marshaller;
     private volatile boolean stopped = true;
 
     @Override
@@ -83,6 +85,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
         this.ctx = ctx;
         this.scheduler = Schedulers.from(ctx.getExecutor());
         this.timeService = ctx.getTimeService();
+        this.marshaller = ctx.getPersistenceMarshaller();
         this.semaphore = new Semaphore(Integer.MAX_VALUE, true);
     }
 
@@ -370,7 +373,7 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
                         byte[] b = db.get(handle, keyBytes);
                         if (b == null)
                             continue;
-                        MarshalledEntry me = (MarshalledEntry) ctx.getMarshaller().objectFromByteBuffer(b);
+                        MarshalledEntry me = (MarshalledEntry) marshaller.objectFromByteBuffer(b);
                         // TODO race condition: the entry could be updated between the get and delete!
                         if (me.getMetadata() != null && me.getMetadata().isExpired(now)) {
                             // somewhat inefficient to FIND then REMOVE...
@@ -406,14 +409,14 @@ public class RocksDBStore<K,V> implements SegmentedAdvancedLoadWriteStore<K,V> {
     }
 
     private byte[] marshall(Object entry) throws IOException, InterruptedException {
-        return ctx.getMarshaller().objectToByteBuffer(entry);
+        return marshaller.objectToByteBuffer(entry);
     }
 
     private Object unmarshall(byte[] bytes) throws IOException, ClassNotFoundException {
         if (bytes == null)
             return null;
 
-        return ctx.getMarshaller().objectFromByteBuffer(bytes);
+        return marshaller.objectFromByteBuffer(bytes);
     }
 
     private void addNewExpiry(MarshalledEntry entry) throws IOException {

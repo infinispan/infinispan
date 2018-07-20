@@ -7,7 +7,6 @@ import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Array;
-import java.util.function.BiConsumer;
 
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.CacheException;
@@ -22,9 +21,12 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -33,6 +35,8 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.ClassToExternalizerMap.IdToExternalizerMap;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jboss.marshalling.ObjectTable;
+import org.jboss.marshalling.Unmarshaller;
 
 /**
  * A globally-scoped marshaller. This is needed so that the transport layer
@@ -98,6 +102,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    @Inject private GlobalComponentRegistry gcr;
    @Inject private RemoteCommandsFactory cmdFactory;
+   @Inject @ComponentName(KnownComponentNames.PERSISTENCE_MARSHALLER) private StreamAwareMarshaller persistenceMarshaller;
 
    private ClassToExternalizerMap internalExts;
    private IdToExternalizerMap reverseInternalExts;
@@ -110,38 +115,27 @@ public class GlobalMarshaller implements StreamingMarshaller {
    public GlobalMarshaller() {
    }
 
-   public GlobalMarshaller(Marshaller external) {
-      this.external = external;
-   }
-
    @Override
    @Start(priority = 8) // Should start after the externalizer table and before transport
    public void start() {
-      internalExts = InternalExternalizers.load(this, gcr, cmdFactory);
+      GlobalConfiguration globalCfg = gcr.getGlobalConfiguration();
+      internalExts = InternalExternalizers.load(gcr, cmdFactory);
       reverseInternalExts = internalExts.reverseMap(Ids.MAX_ID);
       if (trace) {
          log.tracef("Internal class to externalizer ids: %s", internalExts);
          log.tracef("Internal reverse externalizers: %s", reverseInternalExts);
       }
 
-      externalExts = ExternalExternalizers.load(gcr.getGlobalConfiguration());
+      externalExts = ExternalExternalizers.load(globalCfg);
       reverseExternalExts = externalExts.reverseMap();
       if (trace) {
          log.tracef("External class to externalizer ids: %s", externalExts);
          log.tracef("External reverse externalizers: %s", reverseExternalExts);
       }
 
-      if (external == null) {
-         this.external = startDefaultExternalMarshaller(gcr.getGlobalConfiguration());
-      }
-
-      classIdentifiers = ClassIdentifiers.load(gcr.getGlobalConfiguration());
-   }
-
-   public Marshaller startDefaultExternalMarshaller(GlobalConfiguration globalCfg) {
-      StreamingMarshaller marshaller = new ExternalJBossMarshaller(this, globalCfg);
-      marshaller.start();
-      return marshaller;
+      classIdentifiers = ClassIdentifiers.load(globalCfg);
+      external = new ExternalJBossMarshaller(new InternalObjectTable(), globalCfg);
+      external.start();
    }
 
    @Override
@@ -152,12 +146,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
       externalExts = null;
       reverseExternalExts = null;
       classIdentifiers = null;
-      stopDefaultExternalMarshaller();
-   }
-
-   public void stopDefaultExternalMarshaller() {
-      if (external instanceof StreamingMarshaller)
-         ((StreamingMarshaller) external).stop();
+      external.stop();
    }
 
    @Override
@@ -359,34 +348,6 @@ public class GlobalMarshaller implements StreamingMarshaller {
    Object readNullableObject(BytesObjectInput in) throws IOException, ClassNotFoundException {
       int type = in.readUnsignedByte();
       return type == ID_NULL ? null : readNonNullableObject(type, in);
-   }
-
-   BiConsumer<ObjectOutput, Object> findWriter(Object obj) {
-      Class<?> clazz = obj.getClass();
-      AdvancedExternalizer internalExt = getExternalizer(internalExts, clazz);
-      if (internalExt != null)
-         return (out, object) -> {
-            writeInternalClean(object, internalExt, out);
-         };
-
-
-      AdvancedExternalizer externalExt = getExternalizer(externalExts, clazz);
-      if (externalExt != null)
-         return (out, object) -> writeExternalClean(object, externalExt, out);
-
-      return null;
-   }
-
-   <T> AdvancedExternalizer<T> findExternalizerIn(ObjectInput in) throws IOException {
-      int type = in.readUnsignedByte();
-      switch (type) {
-         case ID_INTERNAL:
-            return getExternalizer(reverseInternalExts, in.readUnsignedByte());
-         case ID_EXTERNAL:
-            return getExternalizer(reverseExternalExts, in.readInt());
-         default:
-            return null;
-      }
    }
 
    private void writeNonNullableObject(Object obj, BytesObjectOutput out) throws IOException {
@@ -606,18 +567,36 @@ public class GlobalMarshaller implements StreamingMarshaller {
       }
    }
 
-   private void writeUnknown(Object obj, BytesObjectOutput out) throws IOException {
-      assert ExternallyMarshallable.isAllowed(obj) : "Check support for: " + obj.getClass();
-      out.writeByte(ID_UNKNOWN);
-      writeRawUnknown(obj, out);
+   private void writeUnknownClean(Marshaller marshaller, Object obj, ObjectOutput out) {
+      try {
+         writeUnknown(marshaller, obj, out);
+      } catch (IOException e) {
+         throw new CacheException(e);
+      }
    }
 
-   private void writeRawUnknown(Object obj, BytesObjectOutput out) throws IOException {
-      if (external instanceof StreamingMarshaller)
-         ((StreamingMarshaller) external).objectToObjectStream(obj, out);
-      else {
+   private void writeUnknown(Object obj, BytesObjectOutput out) throws IOException {
+      writeUnknown(external, obj, out);
+   }
+
+   private void writeRawUnknown(Object obj, ObjectOutput out) throws IOException {
+      writeRawUnknown(external, obj, out);
+   }
+
+   private void writeUnknown(Marshaller marshaller, Object obj, ObjectOutput out) throws IOException {
+      out.writeByte(ID_UNKNOWN);
+      writeRawUnknown(marshaller, obj, out);
+   }
+
+   private void writeRawUnknown(Marshaller marshaller, Object obj, ObjectOutput out) throws IOException {
+      if (marshaller instanceof StreamingMarshaller) {
+         ((StreamingMarshaller) marshaller).objectToObjectStream(obj, out);
+      } else if (marshaller instanceof StreamAwareMarshaller && out instanceof StreamBytesObjectOutput) {
+         OutputStream outputStream = ((StreamBytesObjectOutput) out).stream;
+         ((StreamAwareMarshaller) marshaller).writeObject(obj, outputStream);
+      } else {
          try {
-            byte[] bytes = external.objectToByteBuffer(obj);
+            byte[] bytes = marshaller.objectToByteBuffer(obj);
             out.writeInt(bytes.length);
             out.write(bytes);
          } catch (InterruptedException e) {
@@ -646,13 +625,13 @@ public class GlobalMarshaller implements StreamingMarshaller {
       }
    }
 
-   private void writeExternal(Object obj, AdvancedExternalizer ext, ObjectOutput out) throws IOException {
+   private static void writeExternal(Object obj, AdvancedExternalizer ext, ObjectOutput out) throws IOException {
       out.writeByte(ID_EXTERNAL);
       out.writeInt(ext.getId());
       ext.writeObject(out, obj);
    }
 
-   private void writeExternalClean(Object obj, AdvancedExternalizer ext, ObjectOutput out) {
+   static void writeExternalClean(Object obj, AdvancedExternalizer ext, ObjectOutput out) {
       try {
          writeExternal(obj, ext, out);
       } catch (IOException e) {
@@ -867,10 +846,14 @@ public class GlobalMarshaller implements StreamingMarshaller {
       }
    }
 
-   private Object readUnknown(BytesObjectInput in) throws IOException, ClassNotFoundException {
-      if (external instanceof StreamingMarshaller) {
+   private Object readUnknown(ObjectInput in) throws IOException, ClassNotFoundException {
+      return readUnknown(external, in);
+   }
+
+   private Object readUnknown(Marshaller marshaller, ObjectInput in) throws IOException, ClassNotFoundException {
+      if (marshaller instanceof StreamingMarshaller) {
          try {
-            return ((StreamingMarshaller) external).objectFromObjectStream(in);
+            return ((StreamingMarshaller) marshaller).objectFromObjectStream(in);
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return null;
@@ -879,7 +862,46 @@ public class GlobalMarshaller implements StreamingMarshaller {
          int length = in.readInt();
          byte[] bytes = new byte[length];
          in.readFully(bytes);
-         return external.objectFromByteBuffer(bytes);
+         return marshaller.objectFromByteBuffer(bytes);
+      }
+   }
+
+   // The object table used for the GlobalMarshaller. Allows internal and external externalizers to be used for marshalling
+   private class InternalObjectTable implements ObjectTable {
+      @Override
+      public ObjectTable.Writer getObjectWriter(Object obj) {
+         Class<?> clazz = obj.getClass();
+         AdvancedExternalizer internalExt = getExternalizer(internalExts, clazz);
+         if (internalExt != null)
+            return (out, object) -> writeInternalClean(object, internalExt, out);
+
+         // We still try to write via any configured user externalizers, regardless of the user marshaller impl
+         // because calls to writeObject may still fall through to the user marshaller impl.
+         AdvancedExternalizer externalExt = getExternalizer(externalExts, clazz);
+         if (externalExt != null)
+            return (out, object) -> writeExternalClean(object, externalExt, out);
+
+         try {
+            if (persistenceMarshaller.isMarshallable(obj))
+               return (out, object) -> writeUnknownClean(persistenceMarshaller, obj, out);
+         } catch (Exception ignore) {
+         }
+         return null;
+      }
+
+      @Override
+      public Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {
+         int type = unmarshaller.readUnsignedByte();
+         switch (type) {
+            case ID_INTERNAL:
+               return getExternalizer(reverseInternalExts, unmarshaller.readUnsignedByte()).readObject(unmarshaller);
+            case ID_EXTERNAL:
+               return getExternalizer(reverseExternalExts, unmarshaller.readInt()).readObject(unmarshaller);
+            case ID_UNKNOWN:
+               return readUnknown(persistenceMarshaller, unmarshaller);
+            default:
+               return null;
+         }
       }
    }
 }

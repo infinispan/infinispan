@@ -13,21 +13,23 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.atomic.FineGrainedAtomicMap;
-import org.infinispan.container.impl.MergeOnStore;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.functional.EntryView;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.impl.MergeOnStore;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.group.Group;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.functional.EntryView;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.marshall.persistence.impl.UserObject;
+import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -552,6 +554,56 @@ public final class AtomicKeySetImpl<K> implements MergeOnStore {
             default:
                throw new IllegalArgumentException();
          }
+      }
+   }
+
+   public static class Marshaller implements MessageMarshaller<AtomicKeySetImpl> {
+
+      private final GlobalComponentRegistry gcr;
+
+      public Marshaller(GlobalComponentRegistry gcr) {
+         this.gcr = gcr;
+      }
+
+      @Override
+      public AtomicKeySetImpl readFrom(ProtoStreamReader reader) throws IOException {
+         ByteString cacheName1 = ByteString.fromString(reader.readString("cachename"));
+         Object group = reader.readObject("group", UserObject.class).get();
+         ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName1);
+         InvocationContextFactory icf = cr.getComponent(InvocationContextFactory.class);
+         InvocationContext ctx = icf.createNonTxInvocationContext();
+         AsyncInterceptorChain chain = cr.getComponent(AsyncInterceptorChain.class);
+         GetKeysInGroupCommand cmd = cr.getCommandsFactory().buildGetKeysInGroupCommand(0, group);
+         Map<Object, Object> map = (Map<Object, Object>) chain.invoke(ctx, cmd);
+         // GetKeyInGroupCommand will set skip lookup for all entries in context, including the entry which
+         // is currently being loaded. We have to revert the setting or it won't be loaded.
+         CacheEntry entry = ctx.lookupEntry(group);
+         if (entry != null) {
+            entry.setSkipLookup(false);
+         }
+         // In a similar fashion the GetKeyInGroupCommand recorded version seen before it was loaded
+         // it recorded it as a non-existent version.
+         // The versions read map is not immutable, though, so we can undo that operation.
+         if (ctx.isInTxScope()) {
+            ((TxInvocationContext) ctx).getCacheTransaction().getVersionsRead().remove(group);
+         }
+         return new AtomicKeySetImpl(cacheName1, group, map.keySet(), null, null);
+      }
+
+      @Override
+      public void writeTo(ProtoStreamWriter writer, AtomicKeySetImpl atomicKeySet) throws IOException {
+         writer.writeString("cachename", atomicKeySet.cacheName.toString());
+         writer.writeObject("group", new UserObject(atomicKeySet.group), UserObject.class);
+      }
+
+      @Override
+      public Class<AtomicKeySetImpl> getJavaClass() {
+         return AtomicKeySetImpl.class;
+      }
+
+      @Override
+      public String getTypeName() {
+         return "persistence.AtomicKeySet";
       }
    }
 }

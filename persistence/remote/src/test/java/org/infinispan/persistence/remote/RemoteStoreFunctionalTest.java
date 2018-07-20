@@ -11,6 +11,7 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
+import org.infinispan.server.core.dataconversion.ProtostreamBinaryTranscoder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -28,6 +29,7 @@ public class RemoteStoreFunctionalTest extends BaseStoreFunctionalTest {
    @Override
    protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence, boolean preload) {
       localCacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
+      TestingUtil.registerTranscoders(localCacheManager, new ProtostreamBinaryTranscoder());
       hrServer = HotRodClientTestingUtil.startHotRodServer(localCacheManager);
       persistence
          .addStore(RemoteStoreConfigurationBuilder.class)

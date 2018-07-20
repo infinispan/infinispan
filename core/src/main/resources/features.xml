@@ -8,6 +8,7 @@
       <feature version="${project.version}">infinispan-commons</feature>
 
       <bundle>mvn:org.infinispan/infinispan-core/${project.version}</bundle>
+      <bundle>mvn:org.infinispan.protostream/protostream/${version.protostream}</bundle>
       <bundle>mvn:org.jgroups/jgroups/${version.jgroups}</bundle>
       <bundle>mvn:io.reactivex.rxjava2/rxjava/${version.rxjava}</bundle>
       <bundle>mvn:org.reactivestreams/reactive-streams/${version.reactivestreams}</bundle>

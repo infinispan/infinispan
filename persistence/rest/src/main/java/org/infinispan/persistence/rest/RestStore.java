@@ -12,6 +12,7 @@ import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.Util;
@@ -82,6 +83,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private MetadataHelper metadataHelper;
    private final URLCodec urlCodec = new URLCodec();
    private InitializationContext ctx;
+   private Marshaller marshaller;
 
    private EventLoopGroup workerGroup;
 
@@ -92,6 +94,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    public void init(InitializationContext initializationContext) {
       configuration = initializationContext.getConfiguration();
       ctx = initializationContext;
+      marshaller = ctx.getPersistenceMarshaller();
    }
 
    @Override
@@ -118,7 +121,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       maxContentLength = configuration.maxContentLength();
 
       this.key2StringMapper = Util.getInstance(configuration.key2StringMapper(), ctx.getCache().getAdvancedCache().getClassLoader());
-      this.key2StringMapper.setMarshaller(ctx.getMarshaller());
+      this.key2StringMapper.setMarshaller(marshaller);
       this.path = configuration.path();
       try {
          if (configuration.appendCacheNameToPath()) {
@@ -176,7 +179,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          if (isTextContentType(contentType)) {
             return (byte[]) entry.getValue();
          }
-         return ctx.getMarshaller().objectToByteBuffer(entry.getValue());
+         return marshaller.objectToByteBuffer(entry.getValue());
       }
    }
 
@@ -187,7 +190,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          if (isTextContentType(contentType)) {
             return new String(b); // TODO: use response header Content Encoding
          } else {
-            return ctx.getMarshaller().objectFromByteBuffer(b);
+            return marshaller.objectFromByteBuffer(b);
          }
       }
    }

@@ -10,6 +10,7 @@
         <module name="javax.transaction.api"/>
         <module name="org.apache.xerces" services="import"/>
         <module name="org.infinispan.commons" slot="@infinispan.module.slot@" />
+        <module name="org.infinispan.protostream" slot="@infinispan.module.slot@" />
         <module name="com.github.ben-manes.caffeine" slot="@infinispan.module.slot@"/>
         <module name="io.reactivex.rxjava2.rxjava" slot="@infinispan.module.slot@"/>
         <module name="org.reactivestreams.reactive-streams" slot="@infinispan.module.slot@"/>

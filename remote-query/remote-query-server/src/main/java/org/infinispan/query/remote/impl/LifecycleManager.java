@@ -36,10 +36,6 @@ import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.Externalizers.QueryRequestExternalizer;
 import org.infinispan.query.remote.client.ProtostreamSerializationContextInitializer;
 import org.infinispan.query.remote.client.QueryRequest;
-import org.infinispan.query.remote.impl.dataconversion.ProtostreamBinaryTranscoder;
-import org.infinispan.query.remote.impl.dataconversion.ProtostreamJsonTranscoder;
-import org.infinispan.query.remote.impl.dataconversion.ProtostreamObjectTranscoder;
-import org.infinispan.query.remote.impl.dataconversion.ProtostreamTextTranscoder;
 import org.infinispan.query.remote.impl.filter.ContinuousQueryResultExternalizer;
 import org.infinispan.query.remote.impl.filter.FilterResultExternalizer;
 import org.infinispan.query.remote.impl.filter.IckleBinaryProtobufFilterAndConverter;
@@ -50,6 +46,10 @@ import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapperSearchWorkCreator;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.server.core.dataconversion.ProtostreamBinaryTranscoder;
+import org.infinispan.server.core.dataconversion.ProtostreamJsonTranscoder;
+import org.infinispan.server.core.dataconversion.ProtostreamObjectTranscoder;
+import org.infinispan.server.core.dataconversion.ProtostreamTextTranscoder;
 import org.kohsuke.MetaInfServices;
 
 /**

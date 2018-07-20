@@ -30,6 +30,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -38,16 +39,16 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.jmx.JmxUtil;
-import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
-import org.infinispan.util.logging.TraceException;
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.jmx.JmxUtil;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
@@ -80,10 +81,10 @@ import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleTargetRequest;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.logging.TraceException;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
 import org.jgroups.AnycastAddress;
@@ -142,7 +143,7 @@ public class JGroupsTransport implements Transport {
    private static final byte SINGLE_MESSAGE = 2;
 
    @Inject protected GlobalConfiguration configuration;
-   @Inject protected StreamingMarshaller marshaller;
+   @Inject @ComponentName(KnownComponentNames.INTERNAL_MARSHALLER) protected StreamingMarshaller marshaller;
    @Inject protected CacheManagerNotifier notifier;
    @Inject protected TimeService timeService;
    @Inject protected InboundInvocationHandler invocationHandler;

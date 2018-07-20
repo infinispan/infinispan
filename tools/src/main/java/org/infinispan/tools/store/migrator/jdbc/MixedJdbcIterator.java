@@ -2,7 +2,7 @@ package org.infinispan.tools.store.migrator.jdbc;
 
 import java.util.Iterator;
 
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.table.management.TableManager;
@@ -17,7 +17,7 @@ class MixedJdbcIterator implements Iterator<MarshalledEntry>, AutoCloseable {
    private StringJdbcIterator stringIt;
 
    MixedJdbcIterator(ConnectionFactory connectionFactory, TableManager binaryTm, TableManager stringTm,
-                     StreamingMarshaller marshaller, TwoWayKey2StringMapper key2StringMapper) {
+                     Marshaller marshaller, TwoWayKey2StringMapper key2StringMapper) {
       binaryIt = new BinaryJdbcIterator(connectionFactory, binaryTm, marshaller);
       stringIt = new StringJdbcIterator(connectionFactory, stringTm, marshaller, key2StringMapper);
    }

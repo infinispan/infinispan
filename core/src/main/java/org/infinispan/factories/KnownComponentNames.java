@@ -34,10 +34,13 @@ public class KnownComponentNames {
    public static final String TIMEOUT_SCHEDULE_EXECUTOR = "org.infinispan.executors.timeout";
    public static final String CACHE_DEPENDENCY_GRAPH = "org.infinispan.CacheDependencyGraph";
 
+   public static final String INTERNAL_MARSHALLER = "org.infinispan.marshaller.internal";
+   public static final String PERSISTENCE_MARSHALLER = "org.infinispan.marshaller.persistence";
+
    // Please make sure this is kept up to date
    public static final Collection<String> ALL_KNOWN_COMPONENT_NAMES = Arrays.asList(
-      MODULE_COMMAND_INITIALIZERS, MODULE_COMMAND_FACTORIES, CLASS_LOADER,
-      TRANSACTION_VERSION_GENERATOR
+         CLASS_LOADER, INTERNAL_MARSHALLER, MODULE_COMMAND_INITIALIZERS, MODULE_COMMAND_FACTORIES,
+         PERSISTENCE_MARSHALLER, TRANSACTION_VERSION_GENERATOR
    );
 
    private static final Map<String, Integer> DEFAULT_THREAD_COUNT = new HashMap<>(8);

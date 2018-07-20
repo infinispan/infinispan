@@ -1,4 +1,4 @@
-package org.infinispan.query.remote.impl.dataconversion;
+package org.infinispan.server.core.dataconversion;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;

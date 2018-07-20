@@ -4,6 +4,7 @@ import java.util.concurrent.ExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactory;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -32,6 +33,13 @@ public interface InitializationContext {
     */
    KeyPartitioner getKeyPartitioner();
 
+   /**
+    * Returns a wrapped version of {@link #getPersistenceMarshaller()}, which will throw a {@link UnsupportedOperationException}
+    * for any of the operations requiring {@link java.io.ObjectOutput} or {@link java.io.ObjectInput}.
+    *
+    * @deprecated use {@link #getPersistenceMarshaller()} instead
+    */
+   @Deprecated
    StreamingMarshaller getMarshaller();
 
    TimeService getTimeService();
@@ -52,4 +60,9 @@ public interface InitializationContext {
     * @return the executor to be used with stores
     */
    ExecutorService getExecutor();
+
+   /**
+    * Returns the persistence marshaller which should be used to marshall/unmarshall all stored bytes.
+    */
+   StreamAwareMarshaller getPersistenceMarshaller();
 }

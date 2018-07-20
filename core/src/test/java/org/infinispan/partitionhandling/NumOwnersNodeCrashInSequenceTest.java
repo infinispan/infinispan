@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.CacheContainer;
@@ -38,6 +39,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
 
    ControlledConsistentHashFactory cchf;
    private ConfigurationBuilder configBuilder;
+   private GlobalConfigurationBuilder globalBuilder;
    protected AvailabilityMode expectedAvailabilityMode;
 
    public NumOwnersNodeCrashInSequenceTest() {
@@ -51,6 +53,8 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       configBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configBuilder.clustering().partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES);
       configBuilder.clustering().hash().numSegments(4).stateTransfer().timeout(30000);
+      globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalBuilder.serialization().addAdvancedExternalizer(new ControlledConsistentHashFactory.Externalizer());
    }
 
    public void testNodeCrashedBeforeStFinished0() throws Exception {
@@ -90,7 +94,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
 
       cchf.setOwnerIndexes(new int[][]{{a0, a1}, {a1, c0}, {c0, c1}, {c1, a0}});
       configBuilder.clustering().hash().consistentHashFactory(cchf);
-      createCluster(configBuilder, 4);
+      createCluster(globalBuilder, configBuilder, 4);
       waitForClusterToForm();
 
       Object k0 = new MagicKey("k1", cache(a0), cache(a1));

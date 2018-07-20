@@ -19,7 +19,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.configuration.cache.Configuration;
@@ -103,7 +103,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    /**
     * @return a mock marshaller for use with the cache store impls
     */
-   protected StreamingMarshaller getMarshaller() {
+   protected StreamAwareMarshaller getMarshaller() {
       return marshaller;
    }
 

@@ -3,6 +3,7 @@ package org.infinispan.persistence;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.extractPersistenceMarshaller;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
@@ -13,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -40,7 +41,7 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
 
    public void testProcessAfterStop() {
       PersistenceManager persistenceManager = extractComponent(cache, PersistenceManager.class);
-      StreamingMarshaller marshaller = extractComponent(cache, StreamingMarshaller.class);
+      StreamAwareMarshaller marshaller = extractPersistenceMarshaller(cacheManager);
       KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
       String key = "k";
       persistenceManager.writeToAllNonTxStores(marshalledEntry(key, "v", marshaller), keyPartitioner.getSegment(key), BOTH);
@@ -52,7 +53,7 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
 
    public void testStopDuringProcess() throws ExecutionException, InterruptedException, TimeoutException {
       PersistenceManager persistenceManager = extractComponent(cache, PersistenceManager.class);
-      StreamingMarshaller marshaller = extractComponent(cache, StreamingMarshaller.class);
+      StreamAwareMarshaller marshaller = extractPersistenceMarshaller(cacheManager);
       KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
       //simulates the scenario where, concurrently, the cache is stopped during a process loop
       persistenceManager.writeToAllNonTxStores(marshalledEntry("k1", "v1", marshaller), keyPartitioner.getSegment("k1"), BOTH);
@@ -84,7 +85,7 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
-   private <K, V> MarshalledEntry<K, V> marshalledEntry(K key, V value, StreamingMarshaller marshaller) {
+   private <K, V> MarshalledEntry<K, V> marshalledEntry(K key, V value, StreamAwareMarshaller marshaller) {
       return new MarshalledEntryImpl<>(key, value, null, marshaller);
    }
 }

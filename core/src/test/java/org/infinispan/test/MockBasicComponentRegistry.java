@@ -11,6 +11,10 @@ import org.mockito.Mockito;
 public class MockBasicComponentRegistry implements BasicComponentRegistry {
    private ConcurrentMap<String, RunningComponentRef> components = new ConcurrentHashMap<>();
 
+   public void registerMock(String componentName, Class<?> componentType) {
+      registerComponent(componentName, Mockito.mock(componentType, Mockito.RETURNS_DEEP_STUBS), false);
+   }
+
    public void registerMocks(Class<?>... componentTypes) {
       for (Class<?> componentType : componentTypes) {
          registerComponent(componentType, Mockito.mock(componentType, Mockito.RETURNS_DEEP_STUBS), false);

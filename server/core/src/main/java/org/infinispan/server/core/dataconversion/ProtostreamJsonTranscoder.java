@@ -1,4 +1,4 @@
-package org.infinispan.query.remote.impl.dataconversion;
+package org.infinispan.server.core.dataconversion;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;

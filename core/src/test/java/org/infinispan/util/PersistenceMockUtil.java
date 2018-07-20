@@ -10,7 +10,7 @@ import java.util.Set;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -36,11 +36,11 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
  */
 public class PersistenceMockUtil {
 
-   public static InitializationContext createContext(String nodeName, Configuration configuration, StreamingMarshaller marshaller) {
+   public static InitializationContext createContext(String nodeName, Configuration configuration, StreamAwareMarshaller marshaller) {
       return createContext(nodeName, configuration, marshaller, AbstractInfinispanTest.TIME_SERVICE);
    }
 
-   public static InitializationContext createContext(String nodeName, Configuration configuration, StreamingMarshaller marshaller, TimeService timeService) {
+   public static InitializationContext createContext(String nodeName, Configuration configuration, StreamAwareMarshaller marshaller, TimeService timeService) {
       Cache mockCache = mockCache(nodeName, configuration, timeService);
       return new InitializationContextImpl(configuration.persistence().stores().get(0), mockCache,
                                            SingleSegmentKeyPartitioner.getInstance(), marshaller,
@@ -74,5 +74,4 @@ public class PersistenceMockUtil {
       when(cache.getCacheConfiguration()).thenReturn(configuration);
       return cache;
    }
-
 }

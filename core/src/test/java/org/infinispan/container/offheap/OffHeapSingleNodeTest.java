@@ -60,7 +60,7 @@ public class OffHeapSingleNodeTest extends OffHeapMultiNodeTest {
 
       timeService.advance(20);
 
-      Marshaller marshaller = cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+      Marshaller marshaller = cache.getAdvancedCache().getComponentRegistry().getInternalMarshaller();
 
       WrappedBytes keyWB = new WrappedByteArray(marshaller.objectToByteBuffer(key));
 

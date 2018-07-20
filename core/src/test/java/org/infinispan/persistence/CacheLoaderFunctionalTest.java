@@ -23,7 +23,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
@@ -69,7 +69,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    TransactionManager tm;
    ConfigurationBuilder cfg;
    EmbeddedCacheManager cm;
-   StreamingMarshaller sm;
+   StreamAwareMarshaller sm;
 
    long lifespan = 60000000; // very large lifespan so nothing actually expires
 
@@ -82,7 +82,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       store = TestingUtil.getFirstLoader(cache);
       writer = TestingUtil.getFirstLoader(cache);
       tm = TestingUtil.getTransactionManager(cache);
-      sm = cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+      sm = cache.getAdvancedCache().getComponentRegistry().getPersistenceMarshaller();
    }
 
    public CacheLoaderFunctionalTest segmented(boolean segmented) {

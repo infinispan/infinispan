@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.marshall.core.Ids;
+import org.infinispan.protostream.MessageMarshaller;
 
 import net.jcip.annotations.Immutable;
 
@@ -106,6 +107,31 @@ public class SimpleClusteredVersion implements IncrementableEntryVersion {
       @Override
       public Set<Class<? extends SimpleClusteredVersion>> getTypeClasses() {
          return Collections.<Class<? extends SimpleClusteredVersion>>singleton(SimpleClusteredVersion.class);
+      }
+   }
+
+   public static class Marshaller implements MessageMarshaller<SimpleClusteredVersion> {
+      @Override
+      public SimpleClusteredVersion readFrom(ProtoStreamReader reader) throws IOException {
+         int topology = reader.readInt("topology");
+         long version = reader.readLong("version");
+         return new SimpleClusteredVersion(topology, version);
+      }
+
+      @Override
+      public void writeTo(ProtoStreamWriter writer, SimpleClusteredVersion simpleClusteredVersion) throws IOException {
+         writer.writeInt("topology", simpleClusteredVersion.topologyId);
+         writer.writeLong("version", simpleClusteredVersion.version);
+      }
+
+      @Override
+      public Class<SimpleClusteredVersion> getJavaClass() {
+         return SimpleClusteredVersion.class;
+      }
+
+      @Override
+      public String getTypeName() {
+         return "persistence.ClusteredVersion";
       }
    }
 }

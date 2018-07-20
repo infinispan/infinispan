@@ -14,7 +14,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -88,8 +88,8 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       threadMBeanServer.setAttribute(activationInterceptorObjName, new Attribute("StatisticsEnabled", Boolean.TRUE));
    }
 
-   private StreamingMarshaller marshaller() {
-      return cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+   private StreamAwareMarshaller marshaller() {
+      return cache.getAdvancedCache().getComponentRegistry().getPersistenceMarshaller();
    }
 
    public void testActivationOnGet(Method m) throws Exception {

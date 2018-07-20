@@ -20,12 +20,13 @@ import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
+@CleanupAfterMethod
 @Test(groups = "functional", testName = "query.remote.impl.ProtobufMetadataManagerInterceptorTest")
 public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManagersTest {
 
@@ -49,13 +50,6 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
             .customInterceptors().addInterceptor()
             .interceptor(new ProtobufMetadataManagerInterceptor()).after(PessimisticLockingInterceptor.class);
       return cfg;
-   }
-
-   @AfterMethod
-   @Override
-   protected void clearContent() {
-      // the base method cleans only the data container without invoking the interceptor stack...
-      cache(0).clear();
    }
 
    public void testValidatePut() {

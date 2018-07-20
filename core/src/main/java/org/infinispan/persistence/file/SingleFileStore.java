@@ -211,7 +211,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
             // deserialize key and add to entries map
             // Marshaller should allow for provided type return for safety
-            K key = (K) ctx.getMarshaller().objectFromByteBuffer(buf.array(), 0, fe.keyLen);
+            K key = (K) ctx.getPersistenceMarshaller().objectFromByteBuffer(buf.array(), 0, fe.keyLen);
             entries.put(key, fe);
          } else {
             // add to free list

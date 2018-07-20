@@ -8,6 +8,8 @@ import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
+import org.infinispan.protostream.MessageMarshaller;
 
 /**
  *
@@ -83,5 +85,49 @@ public class KeyValuePair<K,V> {
    @Override
    public String toString() {
       return "KeyValuePair{key=" + key + ", value=" + value + '}';
+   }
+
+   public static class Marshaller implements MessageMarshaller<KeyValuePair> {
+
+      private final PersistenceMarshaller marshaller;
+
+      public Marshaller(PersistenceMarshaller marshaller) {
+         this.marshaller = marshaller;
+      }
+
+      @Override
+      public KeyValuePair readFrom(ProtoStreamReader reader) throws IOException {
+         byte[] keyBytes = reader.readBytes("key");
+         byte[] valueBytes = reader.readBytes("value");
+         try {
+            Object key = keyBytes == null ? null : marshaller.objectFromByteBuffer(keyBytes);
+            Object value = valueBytes == null ? null : marshaller.objectFromByteBuffer(valueBytes);
+            return new KeyValuePair<>(key, value);
+         } catch (ClassNotFoundException e) {
+            throw new IllegalStateException(e);
+         }
+      }
+
+      @Override
+      public void writeTo(ProtoStreamWriter writer, KeyValuePair keyValuePair) throws IOException {
+         try {
+            byte[] keyBytes = keyValuePair.key == null ? null : marshaller.objectToByteBuffer(keyValuePair.key);
+            byte[] valueBytes = keyValuePair.value == null ? null : marshaller.objectToByteBuffer(keyValuePair.value);
+            writer.writeBytes("key", keyBytes);
+            writer.writeBytes("value", valueBytes);
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         }
+      }
+
+      @Override
+      public Class<KeyValuePair> getJavaClass() {
+         return KeyValuePair.class;
+      }
+
+      @Override
+      public String getTypeName() {
+         return "persistence.KeyValuePair";
+      }
    }
 }

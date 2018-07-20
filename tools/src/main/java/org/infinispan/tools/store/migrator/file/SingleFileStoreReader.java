@@ -14,7 +14,7 @@ import java.util.NoSuchElementException;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.tools.store.migrator.Element;
@@ -25,7 +25,7 @@ import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
 public class SingleFileStoreReader implements StoreIterator {
 
    private final FileChannel channel;
-   private final StreamingMarshaller marshaller;
+   private final Marshaller marshaller;
 
    public SingleFileStoreReader(StoreProperties props) {
       props.required(Element.LOCATION);

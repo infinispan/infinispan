@@ -32,6 +32,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -67,8 +68,8 @@ public class OnlyPrimaryOwnerTest {
 
       MockBasicComponentRegistry mockRegistry = new MockBasicComponentRegistry();
       when(mockCache.getComponentRegistry().getComponent(BasicComponentRegistry.class)).thenReturn(mockRegistry);
-      mockRegistry.registerMocks(RpcManager.class, StreamingMarshaller.class, CancellationService.class,
-                                 CommandsFactory.class, Encoder.class);
+      mockRegistry.registerMocks(RpcManager.class, CancellationService.class, CommandsFactory.class, Encoder.class);
+      mockRegistry.registerMock(KnownComponentNames.INTERNAL_MARSHALLER, StreamingMarshaller.class);
       TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,
                          mock(InternalEntryFactory.class), mock(ClusterEventManager.class), mock(KeyPartitioner.class));
       cl = new PrimaryOwnerCacheListener();

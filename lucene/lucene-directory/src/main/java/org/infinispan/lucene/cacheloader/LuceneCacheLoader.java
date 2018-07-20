@@ -103,7 +103,7 @@ public class LuceneCacheLoader<K, V> implements AdvancedCacheLoader<K, V> {
             .runOn(Schedulers.from(ctx.getExecutor()))
             .flatMap(dir -> {
                final Set<MarshalledEntry<K, V>> allInternalEntries = new HashSet<>();
-               dir.loadAllEntries(allInternalEntries, Integer.MAX_VALUE, ctx.getMarshaller());
+               dir.loadAllEntries(allInternalEntries, Integer.MAX_VALUE, ctx.getPersistenceMarshaller());
                return Flowable.fromIterable(allInternalEntries);
             })
             .filter(me -> filter == null || filter.test(me.getKey()))

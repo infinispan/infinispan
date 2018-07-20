@@ -39,6 +39,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -129,8 +130,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
       MockBasicComponentRegistry mockRegistry = new MockBasicComponentRegistry();
       when(mockCache.getComponentRegistry().getComponent(BasicComponentRegistry.class)).thenReturn(mockRegistry);
-      mockRegistry.registerMocks(RpcManager.class, StreamingMarshaller.class, CancellationService.class,
-                                 CommandsFactory.class);
+      mockRegistry.registerMocks(RpcManager.class, CancellationService.class, CommandsFactory.class);
+      mockRegistry.registerMock(KnownComponentNames.INTERNAL_MARSHALLER, StreamingMarshaller.class);
       ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
       cdl.init(null, config, mock(KeyPartitioner.class));
       TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,

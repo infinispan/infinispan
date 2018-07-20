@@ -6,11 +6,12 @@ import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.protostream.MessageMarshaller;
 
 /**
  * @author Mircea Markus
@@ -37,23 +38,30 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
    private transient K key;
    private transient V value;
    private transient InternalMetadata metadata;
-   private final transient StreamingMarshaller marshaller;
+   private final transient org.infinispan.commons.marshall.Marshaller marshaller;
 
-   public MarshalledEntryImpl(ByteBuffer key, ByteBuffer valueBytes, ByteBuffer metadataBytes, StreamingMarshaller marshaller) {
+   public MarshalledEntryImpl(ByteBuffer key, ByteBuffer valueBytes, ByteBuffer metadataBytes, org.infinispan.commons.marshall.Marshaller marshaller) {
       this.keyBytes = key;
       this.valueBytes = valueBytes;
       this.metadataBytes = metadataBytes;
       this.marshaller = marshaller;
    }
 
-   public MarshalledEntryImpl(K key, ByteBuffer valueBytes, ByteBuffer metadataBytes, StreamingMarshaller marshaller) {
+   public MarshalledEntryImpl(K key, ByteBuffer valueBytes, ByteBuffer metadataBytes, org.infinispan.commons.marshall.Marshaller marshaller) {
       this.key = key;
       this.valueBytes = valueBytes;
       this.metadataBytes = metadataBytes;
       this.marshaller = marshaller;
    }
 
-   public MarshalledEntryImpl(K key, V value, InternalMetadata im, StreamingMarshaller sm) {
+   public MarshalledEntryImpl(ByteBuffer keyBytes, ByteBuffer valueBytes, InternalMetadata im, org.infinispan.commons.marshall.Marshaller marshaller) {
+      this.keyBytes = keyBytes;
+      this.valueBytes = valueBytes;
+      this.metadata = im;
+      this.marshaller = marshaller;
+   }
+
+   public MarshalledEntryImpl(K key, V value, InternalMetadata im, org.infinispan.commons.marshall.Marshaller sm) {
       this.key = key;
       this.value = value;
       this.metadata = im;
@@ -190,9 +198,9 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
 
       private static final long serialVersionUID = -5291318076267612501L;
 
-      private final StreamingMarshaller marshaller;
+      private final org.infinispan.commons.marshall.Marshaller marshaller;
 
-      public Externalizer(StreamingMarshaller marshaller) {
+      public Externalizer(org.infinispan.commons.marshall.Marshaller marshaller) {
          this.marshaller = marshaller;
       }
 
@@ -220,6 +228,40 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
       @SuppressWarnings("unchecked")
       public Set<Class<? extends MarshalledEntryImpl>> getTypeClasses() {
          return Util.<Class<? extends MarshalledEntryImpl>>asSet(MarshalledEntryImpl.class);
+      }
+   }
+
+   public static class Marshaller implements MessageMarshaller<MarshalledEntryImpl> {
+
+      private final org.infinispan.commons.marshall.Marshaller marshaller;
+
+      public Marshaller(org.infinispan.commons.marshall.Marshaller marshaller) {
+         this.marshaller = marshaller;
+      }
+
+      @Override
+      public MarshalledEntryImpl readFrom(ProtoStreamReader reader) throws IOException {
+         ByteBuffer keyBytes = reader.readObject("key", ByteBufferImpl.class);
+         ByteBuffer valueBytes = reader.readObject("value", ByteBufferImpl.class);
+         ByteBuffer metadataBytes = reader.readObject("metadata", ByteBufferImpl.class);
+         return new MarshalledEntryImpl(keyBytes, valueBytes, metadataBytes, marshaller);
+      }
+
+      @Override
+      public void writeTo(ProtoStreamWriter writer, MarshalledEntryImpl marshalledEntry) throws IOException {
+         writer.writeObject("key", marshalledEntry.getKeyBytes(), ByteBufferImpl.class);
+         writer.writeObject("value", marshalledEntry.getValueBytes(), ByteBufferImpl.class);
+         writer.writeObject("metadata", marshalledEntry.getMetadataBytes(), ByteBufferImpl.class);
+      }
+
+      @Override
+      public Class<? extends MarshalledEntryImpl> getJavaClass() {
+         return MarshalledEntryImpl.class;
+      }
+
+      @Override
+      public String getTypeName() {
+         return "persistence.MarshalledEntry";
       }
    }
 }

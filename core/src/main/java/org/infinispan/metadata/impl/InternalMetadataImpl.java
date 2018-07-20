@@ -14,6 +14,7 @@ import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.MessageMarshaller;
 
 /**
  * @author Mircea Markus
@@ -164,6 +165,33 @@ public class InternalMetadataImpl implements InternalMetadata {
       @SuppressWarnings("unchecked")
       public Set<Class<? extends InternalMetadataImpl>> getTypeClasses() {
          return Util.<Class<? extends InternalMetadataImpl>>asSet(InternalMetadataImpl.class);
+      }
+   }
+
+   public static class Marshaller implements MessageMarshaller<InternalMetadataImpl> {
+      @Override
+      public InternalMetadataImpl readFrom(ProtoStreamReader reader) throws IOException {
+         Metadata actual = reader.readObject("actual", Metadata.class);
+         long created = reader.readLong("created");
+         long lastUsed = reader.readLong("lastUsed");
+         return new InternalMetadataImpl(actual, created, lastUsed);
+      }
+
+      @Override
+      public void writeTo(ProtoStreamWriter writer, InternalMetadataImpl m) throws IOException {
+         writer.writeObject("actual", m.actual, Metadata.class);
+         writer.writeLong("created", m.created);
+         writer.writeLong("lastUsed", m.lastUsed);
+      }
+
+      @Override
+      public Class<InternalMetadataImpl> getJavaClass() {
+         return InternalMetadataImpl.class;
+      }
+
+      @Override
+      public String getTypeName() {
+         return "persistence.InternalMetadata";
       }
    }
 }

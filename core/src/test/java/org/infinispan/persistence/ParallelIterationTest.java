@@ -14,7 +14,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -49,7 +49,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
    protected AdvancedCacheLoader<Object, Object> loader;
    protected AdvancedCacheWriter<Object, Object> writer;
    protected ExecutorService executor;
-   protected StreamingMarshaller sm;
+   protected StreamAwareMarshaller sm;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

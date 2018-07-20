@@ -2,13 +2,12 @@ package org.infinispan.marshall;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.io.OutputStream;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.AbstractMarshaller;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
@@ -26,47 +25,17 @@ import org.infinispan.util.logging.LogFactory;
  * @author Manik Surtani
  */
 @Scope(Scopes.GLOBAL)
-public class TestObjectStreamMarshaller extends AbstractMarshaller implements StreamingMarshaller {
+public class TestObjectStreamMarshaller extends AbstractMarshaller implements StreamAwareMarshaller {
 
    private static Log log = LogFactory.getLog(TestObjectStreamMarshaller.class);
 
-   private final StreamingMarshaller marshaller;
+   private final StreamAwareMarshaller marshaller;
 
    public final EmbeddedCacheManager cacheManager;
 
    public TestObjectStreamMarshaller() {
       cacheManager = TestCacheManagerFactory.createCacheManager();
-      marshaller = cacheManager.getCache().getAdvancedCache().getComponentRegistry().getCacheMarshaller();
-   }
-
-   @Override
-   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant, int expectedByteSize) throws IOException {
-      return marshaller.startObjectOutput(os, isReentrant, expectedByteSize);
-   }
-
-   @Override
-   public void finishObjectOutput(ObjectOutput oo) {
-      marshaller.finishObjectOutput(oo);
-   }
-
-   @Override
-   public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
-      marshaller.objectToObjectStream(obj, out);
-   }
-
-   @Override
-   public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException, InterruptedException {
-      return marshaller.objectFromObjectStream(in);
-   }
-
-   @Override
-   public ObjectInput startObjectInput(InputStream is, boolean isReentrant) throws IOException {
-      return marshaller.startObjectInput(is, isReentrant);
-   }
-
-   @Override
-   public void finishObjectInput(ObjectInput oi) {
-      marshaller.finishObjectInput(oi);
+      marshaller = cacheManager.getCache().getAdvancedCache().getComponentRegistry().getPersistenceMarshaller();
    }
 
    @Override
@@ -77,6 +46,16 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller implements St
    @Override
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {
       return marshaller.objectFromByteBuffer(buf, offset, length);
+   }
+
+   @Override
+   public void writeObject(Object o, OutputStream out) throws IOException {
+      marshaller.writeObject(o, out);
+   }
+
+   @Override
+   public Object readObject(InputStream in) throws ClassNotFoundException, IOException {
+      return marshaller.readObject(in);
    }
 
    @Override

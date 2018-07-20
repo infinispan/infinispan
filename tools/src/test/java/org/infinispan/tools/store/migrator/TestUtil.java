@@ -39,41 +39,43 @@ import org.infinispan.util.KeyValuePair;
 
 public class TestUtil {
    public static final Map<String, Object> TEST_MAP = new HashMap<>();
+   public static final Map<String, Object> TEST_MAP_UNSUPPORTED = new HashMap<>();
    static {
       TEST_MAP.put("List", Arrays.asList(new Person("Alan Shearer"), new Person("Nolberto Solano")));
       TEST_MAP.put("SingletonList", Collections.singletonList(new Key("Key", false)));
       TEST_MAP.put("SingletonMap", Collections.singletonMap("Key", "Value"));
       TEST_MAP.put("SingletonSet", Collections.singleton(new Key("Key", false)));
       TEST_MAP.put("KeyValuePair", new KeyValuePair<>("Key", "Value"));
-      TEST_MAP.put("ImmortalCacheEntry", new ImmortalCacheEntry("Key", "Value"));
-      TEST_MAP.put("MortalCacheEntry", new MortalCacheEntry("Key", "Value", 1, 1));
-      TEST_MAP.put("TransientCacheEntry", new TransientCacheEntry("Key", "Value", 1, 1));
-      TEST_MAP.put("TransientMortalCacheEntry", new TransientMortalCacheEntry("Key", "Value", 1, 1, 1));
-      TEST_MAP.put("ImmortalCacheValue", new ImmortalCacheValue("Value"));
-      TEST_MAP.put("MortalCacheValue", new MortalCacheValue("Value", 1, 1));
-      TEST_MAP.put("TransientCacheValue", new TransientCacheValue("Value", 1, 1));
-      TEST_MAP.put("TransientMortalCacheValue", new TransientMortalCacheValue("Value", 1, 1, 1));
 
       Metadata metadata = new EmbeddedMetadata.Builder().version(new NumericVersion(1)).build();
       TEST_MAP.put("EmbeddedMetadata", metadata);
-
       TEST_MAP.put("SimpleClusteredVersion", new SimpleClusteredVersion(1, 1));
-      TEST_MAP.put("MetadataImmortalCacheEntry", new MetadataImmortalCacheEntry("Key", "Value", metadata));
-      TEST_MAP.put("MetadataMortalCacheEntry", new MetadataMortalCacheEntry("Key", "Value", metadata, 1));
-      TEST_MAP.put("MetadataTransientCacheEntry", new MetadataTransientCacheEntry("Key", "Value", metadata, 1));
-      TEST_MAP.put("MetadataTransientMortalCacheEntry", new MetadataTransientMortalCacheEntry("Key", "Value", metadata, 1));
-      TEST_MAP.put("MetadataImmortalCacheValue", new MetadataImmortalCacheValue("Value", metadata));
-      TEST_MAP.put("MetadataMortalCacheValue", new MetadataMortalCacheValue("Value", metadata, 1));
-      TEST_MAP.put("MetadataTransientCacheValue", new MetadataTransientCacheValue("Value", metadata, 1));
-      TEST_MAP.put("MetadataTransientMortalCacheValue", new MetadataTransientMortalCacheValue("Value", metadata, 1, 1));
 
       byte[] bytes = "Test".getBytes();
       TEST_MAP.put("ByteBufferImpl", new ByteBufferImpl(bytes, 0, bytes.length));
       TEST_MAP.put("KeyValuePair", new KeyValuePair<>("Key", "Value"));
       InternalMetadataImpl internalMetadata = new InternalMetadataImpl(metadata, 1, 1);
       TEST_MAP.put("InternalMetadataImpl", internalMetadata);
-
       TEST_MAP.put("CustomExternalizer", new TestObject(1, "Test"));
+
+      // Put implementation classes that are not serializable by the persistence marshaller
+      TEST_MAP_UNSUPPORTED.put("ImmortalCacheEntry", new ImmortalCacheEntry("Key", "Value"));
+      TEST_MAP_UNSUPPORTED.put("MortalCacheEntry", new MortalCacheEntry("Key", "Value", 1, 1));
+      TEST_MAP_UNSUPPORTED.put("TransientCacheEntry", new TransientCacheEntry("Key", "Value", 1, 1));
+      TEST_MAP_UNSUPPORTED.put("TransientMortalCacheEntry", new TransientMortalCacheEntry("Key", "Value", 1, 1, 1));
+      TEST_MAP_UNSUPPORTED.put("ImmortalCacheValue", new ImmortalCacheValue("Value"));
+      TEST_MAP_UNSUPPORTED.put("MortalCacheValue", new MortalCacheValue("Value", 1, 1));
+      TEST_MAP_UNSUPPORTED.put("TransientCacheValue", new TransientCacheValue("Value", 1, 1));
+      TEST_MAP_UNSUPPORTED.put("TransientMortalCacheValue", new TransientMortalCacheValue("Value", 1, 1, 1));
+
+      TEST_MAP_UNSUPPORTED.put("MetadataImmortalCacheEntry", new MetadataImmortalCacheEntry("Key", "Value", metadata));
+      TEST_MAP_UNSUPPORTED.put("MetadataMortalCacheEntry", new MetadataMortalCacheEntry("Key", "Value", metadata, 1));
+      TEST_MAP_UNSUPPORTED.put("MetadataTransientCacheEntry", new MetadataTransientCacheEntry("Key", "Value", metadata, 1));
+      TEST_MAP_UNSUPPORTED.put("MetadataTransientMortalCacheEntry", new MetadataTransientMortalCacheEntry("Key", "Value", metadata, 1));
+      TEST_MAP_UNSUPPORTED.put("MetadataImmortalCacheValue", new MetadataImmortalCacheValue("Value", metadata));
+      TEST_MAP_UNSUPPORTED.put("MetadataMortalCacheValue", new MetadataMortalCacheValue("Value", metadata, 1));
+      TEST_MAP_UNSUPPORTED.put("MetadataTransientCacheValue", new MetadataTransientCacheValue("Value", metadata, 1));
+      TEST_MAP_UNSUPPORTED.put("MetadataTransientMortalCacheValue", new MetadataTransientMortalCacheValue("Value", metadata, 1, 1));
    }
 
    public static class TestObject {

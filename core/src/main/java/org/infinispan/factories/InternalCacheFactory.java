@@ -99,7 +99,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
 
    private AdvancedCache<K, V> createAndWire(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
                                              String cacheName) throws Exception {
-      StreamingMarshaller marshaller = globalComponentRegistry.getOrCreateComponent(StreamingMarshaller.class);
+      StreamingMarshaller marshaller = globalComponentRegistry.getOrCreateComponent(StreamingMarshaller.class, KnownComponentNames.INTERNAL_MARSHALLER);
 
       final BiFunction<DataConversion, DataConversion, AdvancedCache<K, V>> actualBuilder = (kc, kv) -> new CacheImpl<>(cacheName);
       BiFunction<DataConversion, DataConversion, AdvancedCache<K, V>> usedBuilder;

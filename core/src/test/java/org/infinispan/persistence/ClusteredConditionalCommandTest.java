@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
@@ -80,7 +80,7 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
       cacheHelper.cacheStore(ownership).write(marshalledEntry(key, value, cacheHelper.marshaller(ownership)));
    }
 
-   private static <K, V> MarshalledEntry<K, V> marshalledEntry(K key, V value, StreamingMarshaller marshaller) {
+   private static <K, V> MarshalledEntry<K, V> marshalledEntry(K key, V value, StreamAwareMarshaller marshaller) {
       return new MarshalledEntryImpl<>(key, value, null, marshaller);
    }
 
@@ -588,8 +588,8 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
          return cache != null ? getFirstWriter(cache) : null;
       }
 
-      private StreamingMarshaller marshaller(Ownership ownership) {
-         return cacheEnumMap.get(ownership).getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+      private StreamAwareMarshaller marshaller(Ownership ownership) {
+         return cacheEnumMap.get(ownership).getAdvancedCache().getComponentRegistry().getPersistenceMarshaller();
       }
 
       protected long loads(Ownership ownership) {

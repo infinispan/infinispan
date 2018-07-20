@@ -26,6 +26,11 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.jgroups</groupId>
          <artifactId>jgroups</artifactId>
       </dependency>
@@ -144,6 +149,7 @@
             <filtering>true</filtering>
             <includes>
                <include>features.xml</include>
+               <include>persistence.proto</include>
             </includes>
          </resource>
          <resource>
@@ -203,6 +209,7 @@
                      !${project.groupId}.counter.*,
                      !${project.groupId}.multimap.*,
                      !${project.groupId}.lock.*,
+                     !${project.groupId}.protostream.*,
                      org.infinispan.marshall.core,
                      ${project.groupId}.*;version=${project.version};-split-package:=error
                   </Export-Package>

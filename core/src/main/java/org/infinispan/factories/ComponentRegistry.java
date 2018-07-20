@@ -6,7 +6,9 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.conflict.impl.InternalConflictManager;
@@ -32,7 +34,6 @@ import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.LocalStreamManager;
 import org.infinispan.transaction.TransactionTable;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupSender;
@@ -227,11 +228,23 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       return cacheName;
    }
 
-   /**
-    * Caching shortcut for #getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
-    */
+   @Deprecated
    public StreamingMarshaller getCacheMarshaller() {
-      return globalComponents.getComponent(StreamingMarshaller.class);
+      return getInternalMarshaller();
+   }
+
+   /**
+    * Caching shortcut for #getComponent(StreamingMarshaller.class, INTERNAL_MARSHALLER);
+    */
+   public StreamingMarshaller getInternalMarshaller() {
+      return globalComponents.getComponent(StreamingMarshaller.class, KnownComponentNames.INTERNAL_MARSHALLER);
+   }
+
+   /**
+    * Caching shortcut for #getComponent(StreamAwareMarshaller.class, PERSISTENCE_MARSHALLER);
+    */
+   public StreamAwareMarshaller getPersistenceMarshaller() {
+      return getComponent(StreamAwareMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
    }
 
    /**

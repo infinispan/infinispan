@@ -42,7 +42,6 @@ import org.infinispan.commons.marshall.IdentityMarshaller;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.ExternallyMarshallable;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -60,10 +59,6 @@ public class DataFormatTest extends SingleHotRodServerTest {
 
    private static final String CACHE_NAME = "test";
    private RemoteCache<Object, Object> remoteCache;
-
-   public DataFormatTest() {
-      ExternallyMarshallable.addToWhiteList(ComplexKey.class.getName());
-   }
 
    protected ConfigurationBuilder buildCacheConfig() {
       ConfigurationBuilder builder = new ConfigurationBuilder();

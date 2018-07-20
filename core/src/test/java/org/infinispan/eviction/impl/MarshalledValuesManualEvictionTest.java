@@ -1,5 +1,7 @@
 package org.infinispan.eviction.impl;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -11,10 +13,9 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "eviction.MarshalledValuesManualEvictionTest")
 public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
@@ -25,6 +26,7 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
       cfg.memory().storageType(StorageType.BINARY);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
+      TestingUtil.initJbossMarshallerTypeHints(cm, new ManualEvictionPojo());
       return cm;
    }
 

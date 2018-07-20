@@ -55,6 +55,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.management.MBeanInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
@@ -64,7 +65,6 @@ import javax.security.auth.Subject;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 
-import io.reactivex.Flowable;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.Version;
@@ -73,6 +73,10 @@ import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.api.Lifecycle;
+import org.infinispan.commons.dataconversion.Transcoder;
+import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.cache.CacheMode;
@@ -101,14 +105,15 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.commons.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
@@ -143,6 +148,8 @@ import org.jgroups.protocols.TP;
 import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.stack.ProtocolStack;
 import org.testng.AssertJUnit;
+
+import io.reactivex.Flowable;
 
 public class TestingUtil {
    private static final Log log = LogFactory.getLog(TestingUtil.class);
@@ -1035,8 +1042,11 @@ public class TestingUtil {
    }
 
    public static GlobalMarshaller extractGlobalMarshaller(EmbeddedCacheManager cm) {
-      GlobalComponentRegistry gcr = extractField(cm, "globalComponentRegistry");
-      return (GlobalMarshaller) gcr.getComponent(StreamingMarshaller.class);
+      return (GlobalMarshaller) cm.getGlobalComponentRegistry().getComponent(StreamingMarshaller.class, KnownComponentNames.INTERNAL_MARSHALLER);
+   }
+
+   public static PersistenceMarshaller extractPersistenceMarshaller(EmbeddedCacheManager cm) {
+      return cm.getGlobalComponentRegistry().getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
    }
 
    /**
@@ -1658,7 +1668,7 @@ public class TestingUtil {
       return allEntries(cl, null);
    }
 
-   public static <K, V> MarshalledEntry<K, V> marshalledEntry(InternalCacheEntry<K, V> ice, StreamingMarshaller marshaller) {
+   public static <K, V> MarshalledEntry<K, V> marshalledEntry(InternalCacheEntry<K, V> ice, Marshaller marshaller) {
       return new MarshalledEntryImpl<>(ice.getKey(), ice.getValue(), PersistenceUtil.internalMetadata(ice), marshaller);
    }
 
@@ -1692,7 +1702,7 @@ public class TestingUtil {
    public static <K, V> void writeToAllStores(K key, V value, Cache<K, V> cache) {
       AdvancedCache<K, V> advCache = cache.getAdvancedCache();
       PersistenceManager pm = advCache.getComponentRegistry().getComponent(PersistenceManager.class);
-      StreamingMarshaller marshaller = extractGlobalMarshaller(advCache.getCacheManager());
+      StreamAwareMarshaller marshaller = extractPersistenceMarshaller(advCache.getCacheManager());
       KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
       pm.writeToAllNonTxStores(new MarshalledEntryImpl<>(key, value, null, marshaller), keyPartitioner.getSegment(key), BOTH);
    }
@@ -1979,4 +1989,18 @@ public class TestingUtil {
       }
    }
 
+   // The first call to JbossMarshall::isMarshallable results in an object actually being serialized, the additional
+   // call to PersistenceMarshaller::isMarshallable in the GlobalMarshaller may break stats on test Externalizer implementations
+   // this is simply a convenience method to initialise MarshallableTypeHints
+   public static void initJbossMarshallerTypeHints(EmbeddedCacheManager cm, Object... objects) throws Exception {
+      StreamAwareMarshaller marshaller = extractPersistenceMarshaller(cm);
+      for (Object o : objects)
+         marshaller.isMarshallable(o);
+   }
+
+   public static void registerTranscoders(EmbeddedCacheManager cm, Transcoder... transcoders) {
+      EncoderRegistry encoderRegistry = TestingUtil.extractGlobalComponent(cm, EncoderRegistry.class);
+      for (Transcoder t : transcoders)
+         encoderRegistry.registerTranscoder(t);
+   }
 }

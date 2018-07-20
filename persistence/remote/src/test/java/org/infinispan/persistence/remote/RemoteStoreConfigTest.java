@@ -8,6 +8,7 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.server.core.dataconversion.ProtostreamBinaryTranscoder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -35,6 +36,7 @@ public class RemoteStoreConfigTest extends AbstractInfinispanTest {
    public void startUp() {
       cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
       assertEquals(cacheManager.getCache().size(), 0);
+      TestingUtil.registerTranscoders(cacheManager, new ProtostreamBinaryTranscoder());
       hotRodServer = HotRodTestingUtil.startHotRodServer(cacheManager, 19711);
    }
 
