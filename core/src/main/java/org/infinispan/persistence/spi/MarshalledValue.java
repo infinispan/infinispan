@@ -10,6 +10,7 @@ import org.infinispan.commons.io.ByteBuffer;
  * @since 10.0
  */
 public interface MarshalledValue {
+
    ByteBuffer getValueBytes();
 
    ByteBuffer getMetadataBytes();

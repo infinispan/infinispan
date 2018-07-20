@@ -1,13 +1,6 @@
 package org.infinispan.lucene;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * Lucene's index segment files are chunked, for safe deletion of elements a read lock is
@@ -18,37 +11,20 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
  * @author Sanne Grinovero
  * @since 4.0
  */
-public final class FileReadLockKey implements IndexScopedKey {
+public final class FileReadLockKey extends AbstractIndexScopedKey {
 
-   private final String indexName;
-   private final String fileName;
-   private final int hashCode;
-   private final int affinitySegmentId;
+   @ProtoField(number = 3)
+   String fileName;
+
+   FileReadLockKey() {}
 
    public FileReadLockKey(final String indexName, final String fileName, final int affinitySegmentId) {
+      super(indexName, affinitySegmentId);
       if (indexName == null)
          throw new IllegalArgumentException("indexName shall not be null");
       if (fileName == null)
          throw new IllegalArgumentException("fileName shall not be null");
-      this.indexName = indexName;
       this.fileName = fileName;
-      this.affinitySegmentId = affinitySegmentId;
-      this.hashCode = generateHashCode();
-   }
-
-   /**
-    * Get the indexName.
-    *
-    * @return the indexName.
-    */
-   @Override
-   public String getIndexName() {
-      return indexName;
-   }
-
-   @Override
-   public int getAffinitySegmentId() {
-      return affinitySegmentId;
    }
 
    /**
@@ -67,10 +43,6 @@ public final class FileReadLockKey implements IndexScopedKey {
 
    @Override
    public int hashCode() {
-      return hashCode;
-   }
-
-   private int generateHashCode() {
       final int prime = 31;
       int result = prime + fileName.hashCode();
       return prime * result + indexName.hashCode();
@@ -92,34 +64,4 @@ public final class FileReadLockKey implements IndexScopedKey {
    public String toString() {
       return "RL|" + fileName + "|"+ indexName + "|" + affinitySegmentId;
    }
-
-   public static final class Externalizer extends AbstractExternalizer<FileReadLockKey> {
-
-      @Override
-      public void writeObject(final ObjectOutput output, final FileReadLockKey key) throws IOException {
-         output.writeUTF(key.indexName);
-         output.writeUTF(key.fileName);
-         UnsignedNumeric.writeUnsignedInt(output, key.affinitySegmentId);
-      }
-
-      @Override
-      public FileReadLockKey readObject(final ObjectInput input) throws IOException {
-         String indexName = input.readUTF();
-         String fileName = input.readUTF();
-         final int affinitySegmentId = UnsignedNumeric.readUnsignedInt(input);
-         return new FileReadLockKey(indexName, fileName, affinitySegmentId);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.FILE_READLOCK_KEY;
-      }
-
-      @Override
-      public Set<Class<? extends FileReadLockKey>> getTypeClasses() {
-         return Collections.singleton(FileReadLockKey.class);
-      }
-
-   }
-
 }

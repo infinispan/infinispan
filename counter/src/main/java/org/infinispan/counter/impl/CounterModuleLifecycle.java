@@ -13,11 +13,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
-import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.configuration.CounterManagerConfiguration;
 import org.infinispan.counter.configuration.CounterManagerConfigurationBuilder;
 import org.infinispan.counter.configuration.Reliability;
-import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.function.AddFunction;
 import org.infinispan.counter.impl.function.CompareAndSwapFunction;
 import org.infinispan.counter.impl.function.CreateAndAddFunction;
@@ -30,16 +28,17 @@ import org.infinispan.counter.impl.interceptor.CounterInterceptor;
 import org.infinispan.counter.impl.listener.CounterKeyFilter;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.counter.impl.metadata.ConfigurationMetadata;
-import org.infinispan.counter.impl.strong.StrongCounterKey;
-import org.infinispan.counter.impl.weak.WeakCounterKey;
+import org.infinispan.counter.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.TransactionMode;
@@ -117,18 +116,15 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       final Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalConfiguration.serialization()
             .advancedExternalizers();
 
+      // Only required by GlobalMarshaller
       addAdvancedExternalizer(externalizerMap, ResetFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, CounterKeyFilter.EXTERNALIZER);
-      addAdvancedExternalizer(externalizerMap, StrongCounterKey.EXTERNALIZER);
-      addAdvancedExternalizer(externalizerMap, WeakCounterKey.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, ReadFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, CounterConfiguration.EXTERNALIZER);
-      addAdvancedExternalizer(externalizerMap, CounterValue.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, InitializeCounterFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, ConfigurationMetadata.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, AddFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, CompareAndSwapFunction.EXTERNALIZER);
-      addAdvancedExternalizer(externalizerMap, CounterState.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, CreateAndCASFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, CreateAndAddFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, RemoveFunction.EXTERNALIZER);
@@ -136,6 +132,9 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class);
       EmbeddedCacheManager cacheManager = bcr.getComponent(EmbeddedCacheManager.class).wired();
       InternalCacheRegistry internalCacheRegistry = bcr.getComponent(InternalCacheRegistry.class).running();
+
+      PersistenceMarshaller persistenceMarshaller = bcr.getComponent(KnownComponentNames.PERSISTENCE_MARSHALLER, PersistenceMarshaller.class).wired();
+      persistenceMarshaller.register(new PersistenceContextInitializerImpl());
 
       CounterManagerConfiguration counterManagerConfiguration = extractConfiguration(gcr);
       if (gcr.getGlobalConfiguration().isClustered()) {

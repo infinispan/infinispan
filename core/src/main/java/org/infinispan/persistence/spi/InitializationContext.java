@@ -1,5 +1,6 @@
 package org.infinispan.persistence.spi;
 
+import java.io.ObjectInput;
 import java.util.concurrent.ExecutorService;
 
 import org.infinispan.Cache;
@@ -9,6 +10,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 
 import net.jcip.annotations.ThreadSafe;
 
@@ -32,6 +34,14 @@ public interface InitializationContext {
     */
    KeyPartitioner getKeyPartitioner();
 
+   /**
+    * Returns a wrapped version of {@link #getPersistenceMarshaller()}, which delegates all {@link java.io.ObjectOutput}
+    * and {@link java.io.ObjectInput} calls to the underlying marshaller. Note, calls to {@link ObjectInput#readLine()}
+    * on the returned {@link ObjectInput} instance will throw a {@link UnsupportedOperationException}.
+    *
+    * @deprecated use {@link #getPersistenceMarshaller()} instead
+    */
+   @Deprecated
    StreamingMarshaller getMarshaller();
 
    TimeService getTimeService();
@@ -59,4 +69,9 @@ public interface InitializationContext {
     * Should be used to build all {@link MarshallableEntry} objects.
     */
    <K,V> MarshallableEntryFactory<K,V> getMarshallableEntryFactory();
+
+   /**
+    * Returns the persistence marshaller which should be used to marshall/unmarshall all stored bytes.
+    */
+   PersistenceMarshaller getPersistenceMarshaller();
 }

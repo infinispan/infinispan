@@ -499,6 +499,9 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    }
 
    CompletionStage<Void> storeEntry(InvocationContext ctx, Object key, FlagAffectedCommand command, boolean incrementStats) {
+      if (persistenceManager.isReadOnly())
+         return CompletableFutures.completedNull();
+
       MarshallableEntry entry = marshalledEntry(ctx, key);
       if (entry != null) {
          CompletionStage<Void> stage = persistenceManager.writeToAllNonTxStores(entry,
@@ -514,7 +517,6 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
          }
          return stage;
       }
-
       return CompletableFutures.completedNull();
    }
 

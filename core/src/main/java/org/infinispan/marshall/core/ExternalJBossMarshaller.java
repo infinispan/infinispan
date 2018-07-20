@@ -22,7 +22,7 @@ final class ExternalJBossMarshaller implements StreamingMarshaller {
    final JBossMarshaller marshaller;
 
    ExternalJBossMarshaller(GlobalMarshaller marshaller, GlobalConfiguration globalCfg) {
-      this.marshaller = new JBossMarshaller(marshaller, globalCfg);
+      this.marshaller = new JBossMarshaller(new JbossInternalObjectTable(marshaller), globalCfg);
    }
 
    @Override

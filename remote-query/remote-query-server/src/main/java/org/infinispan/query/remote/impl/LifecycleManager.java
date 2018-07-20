@@ -5,6 +5,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 
 import java.util.Collection;
 import java.util.Map;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -22,6 +23,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.MBeanMetadata;
@@ -29,26 +31,26 @@ import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtostreamSerializationContextInitializer;
 import org.infinispan.query.remote.client.impl.Externalizers.QueryRequestExternalizer;
 import org.infinispan.query.remote.client.impl.QueryRequest;
-import org.infinispan.query.remote.impl.dataconversion.ProtostreamBinaryTranscoder;
-import org.infinispan.query.remote.impl.dataconversion.ProtostreamJsonTranscoder;
-import org.infinispan.query.remote.impl.dataconversion.ProtostreamObjectTranscoder;
-import org.infinispan.query.remote.impl.dataconversion.ProtostreamTextTranscoder;
 import org.infinispan.query.remote.impl.filter.ContinuousQueryResultExternalizer;
 import org.infinispan.query.remote.impl.filter.FilterResultExternalizer;
 import org.infinispan.query.remote.impl.filter.IckleBinaryProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.filter.IckleContinuousQueryProtobufCacheEventFilterConverter;
 import org.infinispan.query.remote.impl.filter.IckleProtobufCacheEventFilterConverter;
 import org.infinispan.query.remote.impl.filter.IckleProtobufFilterAndConverter;
-import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapperSearchWorkCreator;
 import org.infinispan.query.remote.impl.logging.Log;
+import org.infinispan.query.remote.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.server.core.dataconversion.ProtostreamJsonTranscoder;
+import org.infinispan.server.core.dataconversion.ProtostreamObjectTranscoder;
+import org.infinispan.server.core.dataconversion.ProtostreamTextTranscoder;
 
 /**
  * Initializes components for remote query. Each cache manager has its own instance of this class during its lifetime.
@@ -69,7 +71,6 @@ public final class LifecycleManager implements ModuleLifecycle {
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
       Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
-      externalizerMap.put(ExternalizerIds.PROTOBUF_VALUE_WRAPPER, new ProtobufValueWrapper.Externalizer());
       externalizerMap.put(ExternalizerIds.ICKLE_PROTOBUF_CACHE_EVENT_FILTER_CONVERTER, new IckleProtobufCacheEventFilterConverter.Externalizer());
       externalizerMap.put(ExternalizerIds.ICKLE_PROTOBUF_FILTER_AND_CONVERTER, new IckleProtobufFilterAndConverter.Externalizer());
       externalizerMap.put(ExternalizerIds.ICKLE_CONTINUOUS_QUERY_CACHE_EVENT_FILTER_CONVERTER, new IckleContinuousQueryProtobufCacheEventFilterConverter.Externalizer());
@@ -77,18 +78,20 @@ public final class LifecycleManager implements ModuleLifecycle {
       externalizerMap.put(ExternalizerIds.ICKLE_CONTINUOUS_QUERY_RESULT, new ContinuousQueryResultExternalizer());
       externalizerMap.put(ExternalizerIds.ICKLE_FILTER_RESULT, new FilterResultExternalizer());
 
-      initProtobufMetadataManager(globalCfg, gcr);
+      BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class);
+      PersistenceMarshaller persistenceMarshaller = bcr.getComponent(KnownComponentNames.PERSISTENCE_MARSHALLER, PersistenceMarshaller.class).wired();
+      persistenceMarshaller.register(new PersistenceContextInitializerImpl());
+
+      initProtobufMetadataManager(globalCfg, gcr, bcr);
 
       EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
       cacheManager.getClassWhiteList()
             .addClasses(QueryRequest.class, QueryRequestExternalizer.class);
    }
 
-   private void initProtobufMetadataManager(GlobalConfiguration globalCfg, GlobalComponentRegistry gcr) {
+   private void initProtobufMetadataManager(GlobalConfiguration globalCfg, GlobalComponentRegistry gcr, BasicComponentRegistry bcr) {
       ProtobufMetadataManagerImpl protobufMetadataManager = new ProtobufMetadataManagerImpl();
-      BasicComponentRegistry basicComponentRegistry = gcr.getComponent(BasicComponentRegistry.class);
-      basicComponentRegistry.registerComponent(ProtobufMetadataManager.class, protobufMetadataManager, true)
-                            .running();
+      bcr.registerComponent(ProtobufMetadataManager.class, protobufMetadataManager, true).running();
       if (globalCfg.globalJmxStatistics().enabled()) {
          registerProtobufMetadataManagerMBean(protobufMetadataManager, gcr);
       }
@@ -102,7 +105,6 @@ public final class LifecycleManager implements ModuleLifecycle {
       encoderRegistry.registerTranscoder(new ProtostreamJsonTranscoder(serCtx));
       encoderRegistry.registerTranscoder(new ProtostreamTextTranscoder(serCtx));
       encoderRegistry.registerTranscoder(new ProtostreamObjectTranscoder(serCtx, classLoader));
-      encoderRegistry.registerTranscoder(new ProtostreamBinaryTranscoder());
    }
 
    private void processProtostreamSerializationContextInitializers(ClassLoader classLoader, SerializationContext serCtx) {

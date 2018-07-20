@@ -110,8 +110,8 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
             if (entry.getMetadata() != null && entry.getMetadata().version() != null) {
                keys[i] = entry.getKey();
                SimpleClusteredVersion version = (SimpleClusteredVersion) entry.getMetadata().version();
-               topologyIds[i] = version.topologyId;
-               versions[i] = version.version;
+               topologyIds[i] = version.getTopologyId();
+               versions[i] = version.getVersion();
                ++i;
             }
          }

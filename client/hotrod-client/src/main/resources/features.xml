@@ -5,6 +5,7 @@
 
    <feature name="infinispan-client-hotrod" version="${project.version}">
       <feature version="${project.version}">infinispan-commons</feature>
+      <feature version="${version.protostream}">protostream</feature>
       <feature prerequisite="true">wrap</feature>
       <bundle>mvn:org.infinispan/infinispan-client-hotrod/${project.version}</bundle>
       <bundle>wrap:mvn:io.netty/netty-buffer/${version.netty}</bundle>

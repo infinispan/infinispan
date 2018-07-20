@@ -1,8 +1,5 @@
 package org.infinispan.lucene.impl;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -11,9 +8,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.lucene.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoField;
 
 import net.jcip.annotations.ThreadSafe;
 
@@ -38,6 +33,29 @@ public final class FileListCacheValue {
       ReadWriteLock namesLock = new ReentrantReadWriteLock();
       writeLock = namesLock.writeLock();
       readLock = namesLock.readLock();
+   }
+
+   @ProtoField(number = 1, collectionImplementation = HashSet.class, name = "file_names")
+   Set<String> getFileNames() {
+      readLock.lock();
+      try {
+         return new HashSet<>(filenames);
+      } finally {
+         readLock.unlock();
+      }
+   }
+
+   /**
+    * Setter method for protostream, writeLock is not strictly necessary as it should not be
+    * possible for this method to be called before protostream returns the initialized method.
+    */
+   void setFileNames(Set<String> names) {
+      writeLock.lock();
+      try {
+         this.filenames.addAll(names);
+      } finally {
+         writeLock.unlock();
+      }
    }
 
    /**
@@ -160,42 +178,4 @@ public final class FileListCacheValue {
          readLock.unlock();
       }
    }
-
-   public static final class Externalizer extends AbstractExternalizer<FileListCacheValue> {
-
-      @Override
-      public void writeObject(final ObjectOutput output, final FileListCacheValue key) throws IOException {
-         key.readLock.lock();
-         try {
-            UnsignedNumeric.writeUnsignedInt(output, key.filenames.size());
-            for (String name : key.filenames) {
-               output.writeUTF(name);
-            }
-         } finally {
-            key.readLock.unlock();
-         }
-      }
-
-      @Override
-      public FileListCacheValue readObject(final ObjectInput input) throws IOException {
-         int size = UnsignedNumeric.readUnsignedInt(input);
-         String[] names = new String[size];
-         for (int i = 0; i < size; i++) {
-            names[i] = input.readUTF();
-         }
-         return new FileListCacheValue(names);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.FILE_LIST_CACHE_VALUE;
-      }
-
-      @Override
-      public Set<Class<? extends FileListCacheValue>> getTypeClasses() {
-         return Collections.singleton(FileListCacheValue.class);
-      }
-
-   }
-
 }

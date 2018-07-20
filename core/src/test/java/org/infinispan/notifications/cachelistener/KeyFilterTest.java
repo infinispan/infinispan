@@ -15,6 +15,7 @@ import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.MockBasicComponentRegistry;
 import org.infinispan.filter.KeyFilter;
@@ -53,8 +54,8 @@ public class KeyFilterTest extends AbstractInfinispanTest {
       when(mockCache.getComponentRegistry()).thenReturn(componentRegistry);
       MockBasicComponentRegistry mockRegistry = new MockBasicComponentRegistry();
       when(componentRegistry.getComponent(BasicComponentRegistry.class)).thenReturn(mockRegistry);
-      mockRegistry.registerMocks(RpcManager.class, StreamingMarshaller.class, CancellationService.class,
-                                 CommandsFactory.class);
+      mockRegistry.registerMocks(RpcManager.class, CancellationService.class, CommandsFactory.class);
+      mockRegistry.registerMock(KnownComponentNames.INTERNAL_MARSHALLER, StreamingMarshaller.class);
       ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
       Configuration config = new ConfigurationBuilder().build();
       cdl.init(null, config, mock(KeyPartitioner.class));

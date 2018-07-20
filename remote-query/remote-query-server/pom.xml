@@ -24,6 +24,11 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-processor</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-query</artifactId>
       </dependency>
@@ -114,6 +119,7 @@
                   </Export-Package>
                   <Include-Resource>
                      {maven-resources},
+                     /proto=${project.basedir}/target/classes/proto,
                      /META-INF/services=${project.basedir}/target/classes/META-INF/services,
                      /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
                   </Include-Resource>

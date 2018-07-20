@@ -1,16 +1,13 @@
 package org.infinispan.marshall.persistence.impl;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
-import java.util.Set;
 
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.io.ByteBufferImpl;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.persistence.spi.MarshalledValue;
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * A marshallable object that can be used by our internal store implementations to store values, metadata and timestamps.
@@ -22,10 +19,10 @@ public class MarshalledValueImpl implements MarshalledValue {
 
    static final MarshalledValue EMPTY = new MarshalledValueImpl();
 
-   ByteBuffer valueBytes;
-   ByteBuffer metadataBytes;
-   long created;
-   long lastUsed;
+   private ByteBuffer valueBytes;
+   private ByteBuffer metadataBytes;
+   private long created;
+   private long lastUsed;
 
    MarshalledValueImpl(ByteBuffer valueBytes, ByteBuffer metadataBytes, long created, long lastUsed) {
       this.valueBytes = valueBytes;
@@ -36,6 +33,44 @@ public class MarshalledValueImpl implements MarshalledValue {
 
    MarshalledValueImpl() {}
 
+   @ProtoField(number = 1, name = "value")
+   byte[] getValue() {
+      return valueBytes == null ? Util.EMPTY_BYTE_ARRAY : MarshallUtil.toByteArray(valueBytes);
+   }
+
+   void setValue(byte[] bytes) {
+      valueBytes = new ByteBufferImpl(bytes);
+   }
+
+   @ProtoField(number = 2, name = "metadata")
+   byte[] getMetadata() {
+      return metadataBytes == null ? Util.EMPTY_BYTE_ARRAY : MarshallUtil.toByteArray(metadataBytes);
+   }
+
+   void setMetadata(byte[] bytes) {
+      metadataBytes = new ByteBufferImpl(bytes);
+   }
+
+   @Override
+   @ProtoField(number = 3, name = "created", defaultValue = "-1")
+   public long getCreated() {
+      return created;
+   }
+
+   void setCreated(long created) {
+      this.created = created;
+   }
+
+   @Override
+   @ProtoField(number = 4, name = "lastUsed", defaultValue = "-1")
+   public long getLastUsed() {
+      return lastUsed;
+   }
+
+   void setLastUsed(long lastUsed) {
+      this.lastUsed = lastUsed;
+   }
+
    @Override
    public ByteBuffer getValueBytes() {
       return valueBytes;
@@ -44,16 +79,6 @@ public class MarshalledValueImpl implements MarshalledValue {
    @Override
    public ByteBuffer getMetadataBytes() {
       return metadataBytes;
-   }
-
-   @Override
-   public long getCreated() {
-      return created;
-   }
-
-   @Override
-   public long getLastUsed() {
-      return lastUsed;
    }
 
    @Override
@@ -80,36 +105,5 @@ public class MarshalledValueImpl implements MarshalledValue {
             ", created=" + created +
             ", lastUsed=" + lastUsed +
             '}';
-   }
-
-   public static class Externalizer implements AdvancedExternalizer<MarshalledValueImpl> {
-
-      @Override
-      public void writeObject(ObjectOutput output, MarshalledValueImpl e) throws IOException {
-         output.writeObject(e.valueBytes);
-         output.writeObject(e.metadataBytes);
-         output.writeLong(e.created);
-         output.writeLong(e.lastUsed);
-      }
-
-      @Override
-      public MarshalledValueImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         MarshalledValueImpl e = new MarshalledValueImpl();
-         e.valueBytes = (ByteBuffer) input.readObject();
-         e.metadataBytes = (ByteBuffer) input.readObject();
-         e.created = input.readLong();
-         e.lastUsed = input.readLong();
-         return e;
-      }
-
-      @Override
-      public Set<Class<? extends MarshalledValueImpl>> getTypeClasses() {
-         return Util.asSet(MarshalledValueImpl.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.MARSHALLED_VALUE;
-      }
    }
 }

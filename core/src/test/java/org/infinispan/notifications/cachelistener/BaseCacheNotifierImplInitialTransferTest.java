@@ -138,8 +138,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       when(mockCache.getComponentRegistry()).thenReturn(componentRegistry);
       MockBasicComponentRegistry mockRegistry = new MockBasicComponentRegistry();
       when(componentRegistry.getComponent(BasicComponentRegistry.class)).thenReturn(mockRegistry);
-      mockRegistry.registerMocks(RpcManager.class, StreamingMarshaller.class, CancellationService.class,
-                                 CommandsFactory.class);
+      mockRegistry.registerMocks(RpcManager.class, CancellationService.class, CommandsFactory.class);
+      mockRegistry.registerMock(KnownComponentNames.INTERNAL_MARSHALLER, StreamingMarshaller.class);
       ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
       cdl.init(null, config, mock(KeyPartitioner.class));
       TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,

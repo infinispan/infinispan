@@ -30,6 +30,16 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-processor</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.jgroups</groupId>
          <artifactId>jgroups</artifactId>
       </dependency>
@@ -217,6 +227,7 @@
                      !${project.groupId}.counter.*,
                      !${project.groupId}.multimap.*,
                      !${project.groupId}.lock.*,
+                     !${project.groupId}.protostream.*,
                      org.infinispan.marshall.core,
                      ${project.groupId}.*;version=${project.version};-split-package:=error
                   </Export-Package>
@@ -226,6 +237,7 @@
                   </Import-Package>
                   <Include-Resource>
                      {maven-resources},
+                     /proto=${project.basedir}/target/classes/proto,
                      /META-INF/services=${project.basedir}/target/classes/META-INF/services,
                      /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
                   </Include-Resource>

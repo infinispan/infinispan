@@ -11,6 +11,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -30,6 +31,9 @@ public class InvalidatedMarshalledValueTest extends MultipleCacheManagersTest {
       invlSync.memory().storageType(StorageType.BINARY);
 
       createClusteredCaches(2, "invlSync", invlSync);
+      TestingUtil.initJbossMarshallerTypeHints(manager(0), new InvalidatedPojo());
+      TestingUtil.initJbossMarshallerTypeHints(manager(1), new InvalidatedPojo());
+      InvalidatedPojo.invalidSerializationCount = 0;
    }
 
    public void testModificationsOnSameCustomKey() {

@@ -20,9 +20,11 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.DataContainerFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.JBossUserMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.tools.store.migrator.marshaller.MarshallerType;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 @Test(testName = "org.infinispan.tools.store.migrator.AbstractReaderTest", groups = "functional")
@@ -57,9 +59,11 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
 
    protected void configureStoreProperties(Properties properties, Element type) {
       MarshallerType marshallerType = type == SOURCE ? MarshallerType.LEGACY : MarshallerType.CURRENT;
+      // User externalizers must start at JBossUserMarshaller.USER_EXT_ID_MIN in Infinispan 10.x
+      int externalizerId = type == TARGET ? JBossUserMarshaller.USER_EXT_ID_MIN : 256;
       properties.put(propKey(type, CACHE_NAME), TEST_CACHE_NAME);
       properties.put(propKey(type, MARSHALLER, TYPE), marshallerType.toString());
-      properties.put(propKey(type, MARSHALLER, EXTERNALIZERS), "256:" + TestUtil.TestObjectExternalizer.class.getName());
+      properties.put(propKey(type, MARSHALLER, EXTERNALIZERS), externalizerId + ":" + TestUtil.TestObjectExternalizer.class.getName());
 
       if (type == TARGET && segmentCount > 0) {
          properties.put(propKey(type, SEGMENT_COUNT), String.valueOf(segmentCount));
@@ -78,14 +82,14 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
       new StoreMigrator(properties).run();
 
       GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder();
-      globalConfig.serialization().addAdvancedExternalizer(256, new TestUtil.TestObjectExternalizer());
+      globalConfig.serialization().addAdvancedExternalizer(JBossUserMarshaller.USER_EXT_ID_MIN, new TestUtil.TestObjectExternalizer());
 
 
       // Create a new cache instance, with the required externalizers, to ensure that the new RocksDbStore can be
       // loaded and contains all of the expected values.
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(globalConfig, getTargetCacheConfig());
       try {
-         Cache cache = manager.getCache(TEST_CACHE_NAME);
+         Cache<String, Object> cache = manager.getCache(TEST_CACHE_NAME);
          for (String key : TestUtil.TEST_MAP.keySet()) {
             Object stored = cache.get(key);
             assertNotNull(String.format("Key=%s", key), stored);
@@ -93,6 +97,11 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
             assertNotNull(String.format("Key=%s", key), stored);
             assertEquals(expected, stored);
          }
+
+         // Ensure that all of the unsupported classes are not written to the target store
+         TestUtil.TEST_MAP_UNSUPPORTED.keySet().stream()
+               .map(cache::get)
+               .forEach(AssertJUnit::assertNull);
       } finally {
          manager.stop();
       }

@@ -208,7 +208,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Inject ComponentRegistry componentRegistry;
    @Inject OrderedUpdatesManager orderedUpdatesManager;
    @Inject StateTransferLock stateTransferLock;
-   @Inject StreamingMarshaller marshaller;
+   @Inject @ComponentName(KnownComponentNames.INTERNAL_MARSHALLER)
+   StreamingMarshaller marshaller;
    @Inject ComponentRef<BiasManager> biasManager;
    @Inject RpcManager rpcManager;
    @Inject @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS)

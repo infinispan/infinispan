@@ -59,15 +59,6 @@ public class ScriptMetadataParser {
                case "role":
                   metadataBuilder.role(value);
                   break;
-               case "reducer":
-                  metadataBuilder.reducer(value);
-                  break;
-               case "combiner":
-                  metadataBuilder.combiner(value);
-                  break;
-               case "collator":
-                  metadataBuilder.collator(value);
-                  break;
                case "datatype":
                   metadataBuilder.dataType(MediaType.parse(value));
                   break;

@@ -1,7 +1,5 @@
 package org.infinispan.server.eventlogger;
 
-import static org.infinispan.util.logging.events.Messages.MESSAGES;
-
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
 import org.infinispan.util.logging.events.impl.DecoratedEventLogger;
@@ -23,9 +21,7 @@ class DecoratedServerEventLogger extends DecoratedEventLogger {
    @Override
    public void log(EventLogLevel level, EventLogCategory category, String message) {
       StringBuilder sb = new StringBuilder();
-      context.ifPresent(c -> sb.append(MESSAGES.eventLogContext(c)));
-      scope.ifPresent(s -> sb.append(MESSAGES.eventLogContext(s)));
-      who.ifPresent(w -> sb.append(MESSAGES.eventLogWho(w)));
+      addLogsToBuilder(sb);
       // We don't include detail in this implementation
       sb.append(message);
       delegate.textLog(level, category, sb.toString());

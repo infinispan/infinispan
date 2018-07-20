@@ -33,9 +33,9 @@ import org.infinispan.marshall.exts.EnumSetExternalizer;
 import org.infinispan.marshall.exts.MapExternalizer;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
 import org.infinispan.metadata.EmbeddedMetadata;
-import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.tools.store.migrator.marshaller.externalizers.ArrayExternalizers;
 import org.infinispan.tools.store.migrator.marshaller.externalizers.ImmutableListCopyExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.externalizers.InternalMetadataImplExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.externalizers.LegacyIds;
 import org.infinispan.tools.store.migrator.marshaller.externalizers.ListExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.externalizers.SetExternalizer;
@@ -116,7 +116,7 @@ class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new NumericVersion.Externalizer());
       addInternalExternalizer(new ByteBufferImpl.Externalizer());
       addInternalExternalizer(new KeyValuePair.Externalizer());
-      addInternalExternalizer(new InternalMetadataImpl.Externalizer());
+      addInternalExternalizer(new InternalMetadataImplExternalizer());
       addInternalExternalizer(new MarshalledEntryImpl.Externalizer(globalMarshaller));
 
       addInternalExternalizer(new ImmortalCacheEntry.Externalizer());

@@ -17,10 +17,11 @@ import net.jcip.annotations.ThreadSafe;
  * @author Manik Surtani
  * @author Galder Zamarreño
  * @since 4.0
- *
+ * @deprecated for internal use only
  * @see Marshaller
  */
 @ThreadSafe
+@Deprecated
 public interface StreamingMarshaller extends Marshaller {
 
    /**
@@ -123,5 +124,4 @@ public interface StreamingMarshaller extends Marshaller {
    void stop();
 
    void start();
-
 }

@@ -17,8 +17,8 @@ import java.util.Spliterators;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.infinispan.functional.MetaParam;
 import org.infinispan.commons.util.Experimental;
+import org.infinispan.functional.MetaParam;
 
 import net.jcip.annotations.NotThreadSafe;
 
@@ -59,13 +59,13 @@ import net.jcip.annotations.NotThreadSafe;
  */
 @NotThreadSafe
 @Experimental
-final class MetaParams implements Iterable<MetaParam<?>> {
+public final class MetaParams implements Iterable<MetaParam<?>> {
 
-   private static final MetaParam<?>[] EMPTY_ARRAY = {};
+   static final MetaParam<?>[] EMPTY_ARRAY = {};
    private MetaParam<?>[] metas;
    private int length;
 
-   private MetaParams(MetaParam<?>[] metas, int length) {
+   MetaParams(MetaParam<?>[] metas, int length) {
       this.metas = metas;
       this.length = length;
       assert checkLength();

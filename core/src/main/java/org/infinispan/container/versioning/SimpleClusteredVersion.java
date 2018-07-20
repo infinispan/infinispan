@@ -4,10 +4,12 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.marshall.core.Ids;
+import org.infinispan.protostream.annotations.ProtoField;
 
 import net.jcip.annotations.Immutable;
 
@@ -22,12 +24,21 @@ public class SimpleClusteredVersion implements IncrementableEntryVersion {
    /**
     * The cache topology id in which it was first created.
     */
-   public final int topologyId;
-   public final long version;
+   @ProtoField(number = 1, defaultValue = "0")
+   int topologyId;
+
+   @ProtoField(number = 2, defaultValue = "0")
+   long version;
+
+   SimpleClusteredVersion() {}
 
    public SimpleClusteredVersion(int topologyId, long version) {
       this.version = version;
       this.topologyId = topologyId;
+   }
+
+   public int getTopologyId() {
+      return topologyId;
    }
 
    public long getVersion() {
@@ -59,19 +70,14 @@ public class SimpleClusteredVersion implements IncrementableEntryVersion {
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-
       SimpleClusteredVersion that = (SimpleClusteredVersion) o;
-
-      if (topologyId != that.topologyId) return false;
-      return version == that.version;
-
+      return topologyId == that.topologyId &&
+            version == that.version;
    }
 
    @Override
    public int hashCode() {
-      int result = topologyId;
-      result = 31 * result + (int) (version ^ (version >>> 32));
-      return result;
+      return Objects.hash(topologyId, version);
    }
 
    @Override
@@ -105,7 +111,7 @@ public class SimpleClusteredVersion implements IncrementableEntryVersion {
 
       @Override
       public Set<Class<? extends SimpleClusteredVersion>> getTypeClasses() {
-         return Collections.<Class<? extends SimpleClusteredVersion>>singleton(SimpleClusteredVersion.class);
+         return Collections.singleton(SimpleClusteredVersion.class);
       }
    }
 }

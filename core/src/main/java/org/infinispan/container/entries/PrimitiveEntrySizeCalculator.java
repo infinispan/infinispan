@@ -18,7 +18,12 @@ public class PrimitiveEntrySizeCalculator extends AbstractEntrySizeCalculatorHel
    }
 
    protected long handleObject(Object object) {
-      Class<?> objClass = object.getClass();
+      Class<?> objClass;
+      try {
+         objClass = object.getClass();
+      } catch(NullPointerException e) {
+         throw e;
+      }
       if (objClass == String.class) {
          String realString = (String) object;
          // The string is an object and has a reference to its class, int for the hash code and a pointer to the char[]

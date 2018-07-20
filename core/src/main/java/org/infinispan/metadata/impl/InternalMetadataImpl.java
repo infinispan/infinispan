@@ -2,17 +2,9 @@ package org.infinispan.metadata.impl;
 
 import static java.lang.Math.min;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
 
@@ -137,39 +129,5 @@ public class InternalMetadataImpl implements InternalMetadata {
          }
       }
       return toCheck;
-   }
-
-   public static class Externalizer extends AbstractExternalizer<InternalMetadataImpl> {
-
-      private static final long serialVersionUID = -5291318076267612501L;
-
-      public Externalizer() {
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, InternalMetadataImpl b) throws IOException {
-         output.writeLong(b.created);
-         output.writeLong(b.lastUsed);
-         output.writeObject(b.actual);
-      }
-
-      @Override
-      public InternalMetadataImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         long created = input.readLong();
-         long lastUsed = input.readLong();
-         Metadata actual = (Metadata) input.readObject();
-         return new InternalMetadataImpl(actual, created, lastUsed);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.INTERNAL_METADATA_ID;
-      }
-
-      @Override
-      @SuppressWarnings("unchecked")
-      public Set<Class<? extends InternalMetadataImpl>> getTypeClasses() {
-         return Util.<Class<? extends InternalMetadataImpl>>asSet(InternalMetadataImpl.class);
-      }
    }
 }

@@ -17,5 +17,4 @@ public interface KeyVisitor<T> {
    T visit(FileCacheKey fileCacheKey) throws Exception;
 
    T visit(FileReadLockKey fileReadLockKey) throws Exception;
-
 }

@@ -1,4 +1,4 @@
-package org.infinispan.query.remote.impl.dataconversion;
+package org.infinispan.server.core.dataconversion;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -11,9 +11,6 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.util.logging.Log;
 
-/**
- *
- */
 public class ProtostreamTextTranscoder implements Transcoder {
 
    private static final Log log = LogFactory.getLog(ProtostreamTextTranscoder.class, Log.class);

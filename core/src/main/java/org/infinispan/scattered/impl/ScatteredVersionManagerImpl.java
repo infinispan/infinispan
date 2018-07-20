@@ -36,10 +36,10 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.manager.OrderedUpdatesManager;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -138,7 +138,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
          Metadata metadata = me.getMetadata();
          EntryVersion entryVersion = metadata.version();
          if (entryVersion instanceof SimpleClusteredVersion) {
-            int entryTopologyId = ((SimpleClusteredVersion) entryVersion).topologyId;
+            int entryTopologyId = ((SimpleClusteredVersion) entryVersion).getTopologyId();
             if (maxTopologyId.get() < entryTopologyId) {
                maxTopologyId.updateAndGet(current -> Math.max(current, entryTopologyId));
             }
@@ -239,7 +239,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    @Override
    public boolean isVersionActual(int segment, EntryVersion version) {
       SimpleClusteredVersion clusteredVersion = (SimpleClusteredVersion) version;
-      return clusteredVersion.topologyId >= ownerTopologyIds.get(segment);
+      return clusteredVersion.getTopologyId() >= ownerTopologyIds.get(segment);
    }
 
    @Override
@@ -335,7 +335,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    @Override
    public void updatePreloadedEntryVersion(EntryVersion version) {
       if (version instanceof SimpleClusteredVersion) {
-         int topologyId = ((SimpleClusteredVersion) version).topologyId;
+         int topologyId = ((SimpleClusteredVersion) version).getTopologyId();
          preloadedTopologyId = Math.max(preloadedTopologyId, topologyId);
       }
    }
@@ -540,8 +540,8 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
       public final boolean removal;
 
       private InvalidationInfo(SimpleClusteredVersion version, boolean removal) {
-         this.topologyId = version.topologyId;
-         this.version = version.version;
+         this.topologyId = version.getTopologyId();
+         this.version = version.getVersion();
          this.removal = removal;
       }
 

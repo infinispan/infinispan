@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.util.Util;
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * Simple wrapper around a byte[] to provide equals and hashCode semantics
@@ -16,9 +17,12 @@ import org.infinispan.commons.util.Util;
  */
 public class WrappedByteArray implements WrappedBytes {
    public static final WrappedByteArray EMPTY_BYTES = new WrappedByteArray(Util.EMPTY_BYTE_ARRAY);
-   private final byte[] bytes;
+   @ProtoField(number = 1)
+   byte[] bytes;
    private transient int hashCode;
    private transient boolean initializedHashCode;
+
+   public WrappedByteArray() {}
 
    public WrappedByteArray(byte[] bytes) {
       this.bytes = bytes;

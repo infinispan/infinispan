@@ -1,12 +1,12 @@
 package org.infinispan.scripting.impl;
 
-import java.util.Map;
-
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.scripting.ScriptingManager;
 
 /**
@@ -23,7 +23,8 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       ScriptingManagerImpl scriptingManager = new ScriptingManagerImpl();
       gcr.registerComponent(scriptingManager, ScriptingManager.class);
 
-      Map<Integer,AdvancedExternalizer<?>> externalizerMap = gc.serialization().advancedExternalizers();
-      externalizerMap.put(ExternalizerIds.SCRIPT_METADATA, new ScriptMetadata.Externalizer());
+      BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class);
+      PersistenceMarshaller persistenceMarshaller = bcr.getComponent(KnownComponentNames.PERSISTENCE_MARSHALLER, PersistenceMarshaller.class).wired();
+      persistenceMarshaller.register(new PersistenceContextInitializerImpl());
    }
 }

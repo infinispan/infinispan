@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import org.infinispan.commons.util.Util;
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * A simple class which encapsulates a byte[] representation of a String using a predefined encoding (currently UTF-8).
@@ -19,16 +20,17 @@ import org.infinispan.commons.util.Util;
 public class ByteString {
    private static final Charset CHARSET = StandardCharsets.UTF_8;
    private static final ByteString EMPTY = new ByteString(Util.EMPTY_BYTE_ARRAY);
-   private final byte[] b;
    private String s;
-   private final transient int hash;
+   private transient int hash;
+   private byte[] bytes;
 
-   private ByteString(byte[] b) {
-      if (b.length > 255) {
+   ByteString() {}
+
+   private ByteString(byte[] bytes) {
+      if (bytes.length > 255) {
          throw new IllegalArgumentException("ByteString must be shorter than 255 bytes");
       }
-      this.b = b;
-      this.hash = Arrays.hashCode(b);
+      setBytes(bytes);
    }
 
    public static ByteString fromString(String s) {
@@ -52,22 +54,31 @@ public class ByteString {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       ByteString that = (ByteString) o;
-      return Arrays.equals(b, that.b);
+      return Arrays.equals(bytes, that.bytes);
    }
 
    @Override
    public String toString() {
       if (s == null) {
-         s = new String(b, CHARSET);
+         s = new String(bytes, CHARSET);
       }
       return s;
    }
 
+   @ProtoField(number = 1)
+   byte[] getBytes() {
+      return bytes;
+   }
+
+   void setBytes(byte[] bytes) {
+      this.bytes = bytes;
+      this.hash = Arrays.hashCode(bytes);
+   }
 
    public static void writeObject(ObjectOutput output, ByteString object) throws IOException {
-      output.writeByte(object.b.length);
-      if (object.b.length > 0) {
-         output.write(object.b);
+      output.writeByte(object.bytes.length);
+      if (object.bytes.length > 0) {
+         output.write(object.bytes);
       }
    }
 

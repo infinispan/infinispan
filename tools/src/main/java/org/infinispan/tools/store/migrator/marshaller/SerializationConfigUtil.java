@@ -12,13 +12,14 @@ import java.util.Map;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.SerializationConfigurationBuilder;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.tools.store.migrator.StoreProperties;
@@ -39,7 +40,7 @@ public class SerializationConfigUtil {
       return new MarshalledEntryFactoryImpl(marshaller);
    }
 
-   public static StreamingMarshaller getMarshaller(StoreProperties props) {
+   public static Marshaller getMarshaller(StoreProperties props) {
       if (isCustomMarshaller(props)) {
          String marshallerClass = props.get(MARSHALLER, CLASS);
          if (marshallerClass == null)
@@ -47,7 +48,7 @@ public class SerializationConfigUtil {
                   String.format("The property %s.%s must be set if a custom marshaller type is specified", MARSHALLER, CLASS));
 
          try {
-            return (StreamingMarshaller) Util.loadClass(marshallerClass, SerializationConfigUtil.class.getClassLoader()).newInstance();
+            return (Marshaller) Util.loadClass(marshallerClass, SerializationConfigUtil.class.getClassLoader()).newInstance();
          } catch (IllegalAccessException | InstantiationException e) {
             throw new CacheConfigurationException(String.format("Unable to load StreamingMarshaller '%s' for %s store",
                   marshallerClass, SOURCE), e);
@@ -70,7 +71,7 @@ public class SerializationConfigUtil {
             configureExternalizers(props, globalConfig.serialization());
 
             EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig.build(), new ConfigurationBuilder().build());
-            return manager.getCache().getAdvancedCache().getComponentRegistry().getComponent(StreamingMarshaller.class);
+            return manager.getCache().getAdvancedCache().getComponentRegistry().getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
          default:
             throw new IllegalStateException(String.format("Unexpected major version '%d'", majorVersion));
       }

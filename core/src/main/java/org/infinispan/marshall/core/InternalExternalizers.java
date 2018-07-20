@@ -49,6 +49,7 @@ import org.infinispan.distribution.ch.impl.TopologyAwareConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.CollectionKeyFilter;
@@ -57,7 +58,6 @@ import org.infinispan.filter.CompositeKeyValueFilter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.KeyValueFilterAsKeyFilter;
 import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.functional.impl.StatsEnvelope;
 import org.infinispan.globalstate.ScopeFilter;
 import org.infinispan.globalstate.ScopedState;
@@ -75,10 +75,9 @@ import org.infinispan.marshall.exts.OptionalExternalizer;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.marshall.exts.TriangleAckExternalizer;
 import org.infinispan.marshall.exts.UuidExternalizer;
+import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryImpl;
-import org.infinispan.marshall.persistence.impl.MarshalledValueImpl;
 import org.infinispan.metadata.EmbeddedMetadata;
-import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerRemoveCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
@@ -129,9 +128,8 @@ final class InternalExternalizers {
    private InternalExternalizers() {
    }
 
-   static ClassToExternalizerMap load(
-         GlobalMarshaller marshaller, GlobalComponentRegistry gcr,
-         RemoteCommandsFactory cmdFactory) {
+   static ClassToExternalizerMap load(GlobalComponentRegistry gcr, RemoteCommandsFactory cmdFactory) {
+      final PersistenceMarshaller persistenceMarshaller = gcr.getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
       // TODO Add initial value and load factor
       ClassToExternalizerMap exts = new ClassToExternalizerMap(512, 0.6f);
 
@@ -186,7 +184,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new Immutables.ImmutableSetWrapperExternalizer(), exts);
       addInternalExternalizer(new InDoubtTxInfoImpl.Externalizer(), exts);
       addInternalExternalizer(new IntermediateOperationExternalizer(), exts);
-      addInternalExternalizer(new InternalMetadataImpl.Externalizer(), exts);
       addInternalExternalizer(new IntSummaryStatisticsExternalizer(), exts);
       addInternalExternalizer(new JGroupsAddress.Externalizer(), exts);
       addInternalExternalizer(new JGroupsTopologyAwareAddress.Externalizer(), exts);
@@ -197,7 +194,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new MarshallableFunctionExternalizers.ConstantLambdaExternalizer(), exts);
       addInternalExternalizer(new MarshallableFunctionExternalizers.LambdaWithMetasExternalizer(), exts);
       addInternalExternalizer(new MarshallableFunctionExternalizers.SetValueIfEqualsReturnBooleanExternalizer(), exts);
-      addInternalExternalizer(new MarshalledEntryImpl.Externalizer(marshaller), exts);
+      addInternalExternalizer(new MarshalledEntryImpl.Externalizer(persistenceMarshaller), exts);
       addInternalExternalizer(new MergeFunction.Externalizer(), exts);
       addInternalExternalizer(new MetadataImmortalCacheEntry.Externalizer(), exts);
       addInternalExternalizer(new MetadataImmortalCacheValue.Externalizer(), exts);
@@ -210,7 +207,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new MetaParamExternalizers.LifespanExternalizer(), exts);
       addInternalExternalizer(new MetaParamExternalizers.EntryVersionParamExternalizer(), exts);
       addInternalExternalizer(new MetaParamExternalizers.MaxIdleExternalizer(), exts);
-      addInternalExternalizer(new MetaParamsInternalMetadata.Externalizer(), exts);
       addInternalExternalizer(new MIMECacheEntry.Externalizer(), exts); // new
       addInternalExternalizer(new MortalCacheEntry.Externalizer(), exts);
       addInternalExternalizer(new MortalCacheValue.Externalizer(), exts);
@@ -229,7 +225,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new SimpleClusteredVersion.Externalizer(), exts);
       addInternalExternalizer(new StateChunk.Externalizer(), exts);
       addInternalExternalizer(new StatsEnvelope.Externalizer(), exts);
-      addInternalExternalizer(new MarshalledValueImpl.Externalizer(), exts);
       addInternalExternalizer(new StreamMarshalling.StreamMarshallingExternalizer(), exts);
       addInternalExternalizer(new SuccessfulResponse.Externalizer(), exts);
       addInternalExternalizer(new SyncConsistentHashFactory.Externalizer(), exts);

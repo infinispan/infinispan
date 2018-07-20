@@ -2,6 +2,8 @@ package org.infinispan.marshall.persistence.impl;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -22,7 +24,8 @@ public class MarshalledEntryFactoryImpl implements MarshalledEntryFactory, Marsh
 
    private static final MarshallableEntry EMPTY = new MarshalledEntryImpl(null, null, (ByteBuffer) null, null);
 
-   @Inject Marshaller marshaller;
+   @Inject @ComponentName(KnownComponentNames.PERSISTENCE_MARSHALLER)
+   Marshaller marshaller;
 
    public MarshalledEntryFactoryImpl() {
    }

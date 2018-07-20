@@ -18,8 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.io.ByteBufferImpl;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -220,8 +219,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       // Write entry with size larger than any previous to ensure that it is placed at the end of the file
       String key = "key" + numberOfKeys;
       byte[] bytes = new byte[(int) store.getFileSize()];
-      ByteBuffer buf = new ByteBufferImpl(bytes, 0, bytes.length);
-      store.write(MarshalledEntryUtil.create(key, buf, cache));
+      store.write(MarshalledEntryUtil.create(key, new WrappedByteArray(bytes), cache));
       length1 = file.length();
 
       // Delete entry in order to guarantee that there will be space available at the end of the file to truncate
