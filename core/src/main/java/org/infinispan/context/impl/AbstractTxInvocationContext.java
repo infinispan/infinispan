@@ -54,6 +54,7 @@ public abstract class AbstractTxInvocationContext<T extends AbstractCacheTransac
 
    @Override
    public final void addLockedKey(Object key) {
+      assertContextLock();
       cacheTransaction.registerLockedKey(key);
    }
 
@@ -75,6 +76,7 @@ public abstract class AbstractTxInvocationContext<T extends AbstractCacheTransac
 
    @Override
    public final CacheEntry lookupEntry(Object key) {
+      assertContextLock();
       return cacheTransaction.lookupEntry(key);
    }
 
@@ -102,11 +104,13 @@ public abstract class AbstractTxInvocationContext<T extends AbstractCacheTransac
 
    @Override
    public final void putLookedUpEntry(Object key, CacheEntry e) {
+      assertContextLock();
       cacheTransaction.putLookedUpEntry(key, e);
    }
 
    @Override
    public final void removeLookedUpEntry(Object key) {
+      assertContextLock();
       cacheTransaction.removeLookedUpEntry(key);
    }
 

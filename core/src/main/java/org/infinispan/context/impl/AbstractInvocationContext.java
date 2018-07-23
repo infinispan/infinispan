@@ -33,6 +33,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
 
    @Override
    public final Address getOrigin() {
+      assertContextLock();
       return origin;
    }
 
@@ -43,6 +44,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
 
    @Override
    public boolean hasLockedKey(Object key) {
+      assertContextLock();
       return getLockedKeys().contains(key);
    }
 
@@ -79,6 +81,11 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    public void exit() {
       if (trace) log.trace("Leaving context");
       ContextLock.exit(this, contextLockUpdater);
+   }
+
+   protected final void assertContextLock() {
+      Object contextLock = this.contextLock;
+      assert ContextLock.isOwned(contextLock) : "Context lock is " + contextLock;
    }
 
    @Override

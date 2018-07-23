@@ -204,7 +204,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public CompletionStage<Void> enter() {
-      if (trace) log.tracef(new Exception(), "Entering context %08X", System.identityHashCode(this));
+      if (trace) log.tracef("Entering context %08X", System.identityHashCode(this));
       CompletionStage<Void> cs = ContextLock.enter(this, contextLockUpdater);
       if (trace) {
          log.tracef("Current context lock %s", cs);

@@ -36,7 +36,7 @@ public class ContextLock extends CompletableFuture<Void> {
       for (;;) {
          Object currentLock = updater.get(lockHolder);
          if (trace) {
-            log.tracef("Current lock is %s", currentLock);
+            log.tracef("Current lock is %s = %08X", currentLock, System.identityHashCode(currentLock));
          }
          if (currentLock == null) {
             Request newRequest = newRequest();
@@ -63,6 +63,9 @@ public class ContextLock extends CompletableFuture<Void> {
    public static <LockOwner> void exit(LockOwner lockOwner, AtomicReferenceFieldUpdater<LockOwner, Object> updater) {
       Object currentLock = updater.get(lockOwner);
       for (;;) {
+         if (trace) {
+            log.tracef("Current lock is %s = %08X", currentLock, System.identityHashCode(currentLock));
+         }
          if (currentLock == null) {
             throw new IllegalStateException("Double exit?");
          } else if (currentLock instanceof Request) {
