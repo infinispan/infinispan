@@ -10,14 +10,11 @@ import org.infinispan.client.hotrod.event.impl.AbstractClientEvent;
 import org.infinispan.client.hotrod.event.impl.ExpiredEventImpl;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.ClassWhiteList;
 
 import io.netty.buffer.ByteBuf;
 
 public class Codec21 extends Codec20 {
-
-   private static final Log log = LogFactory.getLog(Codec21.class, Log.class);
 
    @Override
    public Log getLog() {

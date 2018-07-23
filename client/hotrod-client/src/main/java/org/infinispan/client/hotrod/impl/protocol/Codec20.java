@@ -31,7 +31,7 @@ import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateExcept
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.impl.operations.BulkGetKeysOperation;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
-import org.infinispan.client.hotrod.impl.operations.PingOperation;
+import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
@@ -53,7 +53,7 @@ import io.netty.buffer.ByteBuf;
  */
 public class Codec20 implements Codec, HotRodConstants {
 
-   private static final Log log = LogFactory.getLog(Codec20.class, Log.class);
+   static final Log log = LogFactory.getLog(Codec.class, Log.class);
 
    final boolean trace = getLog().isTraceEnabled();
 
@@ -237,7 +237,7 @@ public class Codec20 implements Codec, HotRodConstants {
    }
 
    @Override
-   public boolean isObjectStorageHinted(PingOperation.PingResponse pingResponse) {
+   public boolean isObjectStorageHinted(PingResponse pingResponse) {
       return false;
    }
 
@@ -445,5 +445,4 @@ public class Codec20 implements Codec, HotRodConstants {
       }
       return addresses;
    }
-
 }

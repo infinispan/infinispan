@@ -13,7 +13,7 @@ import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.counter.impl.HotRodCounterEvent;
 import org.infinispan.client.hotrod.event.impl.AbstractClientEvent;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
-import org.infinispan.client.hotrod.impl.operations.PingOperation.PingResponse;
+import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.configuration.ClassWhiteList;
@@ -155,5 +155,4 @@ public interface Codec {
     * Read the response code for hints of object storage in the server.
     */
    boolean isObjectStorageHinted(PingResponse pingResponse);
-
 }

@@ -27,7 +27,7 @@
     </target>
 
     <target name="start-server" depends="-check.skipped" unless="tests.skipped">
-        <echo>Starting Infinispan server from ${server.dist}</echo>
+        <echo>Starting Infinispan server from ${server.dist} using configuration ${jboss.config.file}</echo>
 
         <exec dir="${server.dist}/bin" executable="chmod" osfamily="unix">
             <arg value="+x"/>

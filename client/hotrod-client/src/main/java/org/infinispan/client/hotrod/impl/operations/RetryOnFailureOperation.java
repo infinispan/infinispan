@@ -144,7 +144,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
          } finally {
             if (ctx != null) {
                if (trace) {
-                  log.tracef(cause, "(1) Requesting %s close due to exception", ctx.channel());
+                  log.tracef(cause, "(1) %s Requesting %s close due to exception", this.toString(), ctx.channel());
                }
                ctx.close();
             }

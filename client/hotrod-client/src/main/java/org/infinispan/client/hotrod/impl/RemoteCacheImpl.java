@@ -45,7 +45,7 @@ import org.infinispan.client.hotrod.impl.operations.GetOperation;
 import org.infinispan.client.hotrod.impl.operations.GetWithMetadataOperation;
 import org.infinispan.client.hotrod.impl.operations.GetWithVersionOperation;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
-import org.infinispan.client.hotrod.impl.operations.PingOperation;
+import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.client.hotrod.impl.operations.PutAllParallelOperation;
 import org.infinispan.client.hotrod.impl.operations.PutIfAbsentOperation;
 import org.infinispan.client.hotrod.impl.operations.PutOperation;
@@ -537,7 +537,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return result;
    }
 
-   public PingOperation.PingResponse ping() {
+   public PingResponse ping() {
       return await(operationsFactory.newFaultTolerantPingOperation().execute());
    }
 
@@ -844,14 +844,14 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return copy;
    }
 
-   public PingOperation.PingResponse resolveStorage() {
+   public PingResponse resolveStorage() {
       if (remoteCacheManager.isStarted()) {
-         PingOperation.PingResponse result = ping();
+         PingResponse result = ping();
          this.isObjectStorage = operationsFactory.getCodec().isObjectStorageHinted(result);
          this.defaultDataFormat.initialize(remoteCacheManager, isObjectStorage);
          return result;
       }
-      return PingOperation.PingResponse.EMPTY;
+      return PingResponse.EMPTY;
    }
 
    @Override

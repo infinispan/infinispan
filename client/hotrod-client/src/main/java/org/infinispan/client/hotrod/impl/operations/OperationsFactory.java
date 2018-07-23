@@ -44,7 +44,7 @@ public class OperationsFactory implements HotRodConstants {
 
    private final boolean forceReturnValue;
 
-   private final Codec codec;
+   private Codec codec;
 
    private final ClientListenerNotifier listenerNotifier;
 
@@ -83,6 +83,10 @@ public class OperationsFactory implements HotRodConstants {
 
    public Codec getCodec() {
       return codec;
+   }
+
+   public void setCodec(Codec codec) {
+      this.codec = codec;
    }
 
    public <V> GetOperation<V> newGetKeyOperation(Object key, byte[] keyBytes, DataFormat dataFormat) {
@@ -202,7 +206,7 @@ public class OperationsFactory implements HotRodConstants {
     * @param releaseChannel
     */
    public PingOperation newPingOperation(boolean releaseChannel) {
-      return new PingOperation(codec, topologyId, cfg, cacheNameBytes, channelFactory, releaseChannel);
+      return new PingOperation(codec, topologyId, cfg, cacheNameBytes, channelFactory, releaseChannel, this);
    }
 
    /**
@@ -214,7 +218,7 @@ public class OperationsFactory implements HotRodConstants {
     */
    public FaultTolerantPingOperation newFaultTolerantPingOperation() {
       return new FaultTolerantPingOperation(
-            codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg);
+            codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, this);
    }
 
    public QueryOperation newQueryOperation(RemoteQuery remoteQuery, DataFormat dataFormat) {

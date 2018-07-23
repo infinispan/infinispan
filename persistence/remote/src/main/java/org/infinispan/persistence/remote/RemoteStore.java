@@ -16,7 +16,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
-import org.infinispan.client.hotrod.impl.operations.PingOperation;
+import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.configuration.ConfiguredBy;
@@ -127,7 +127,7 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
    @Override
    public boolean isAvailable() {
       try {
-         PingOperation.PingResponse pr = ((RemoteCacheImpl) remoteCache).ping();
+         PingResponse pr = ((RemoteCacheImpl) remoteCache).ping();
          return pr.isSuccess();
       } catch (Exception e) {
          return false;

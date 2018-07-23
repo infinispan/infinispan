@@ -37,9 +37,8 @@ import org.infinispan.client.hotrod.impl.MarshallerRegistry;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.RemoteCacheManagerAdminImpl;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
-import org.infinispan.client.hotrod.impl.operations.PingOperation;
+import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.CodecFactory;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transaction.SyncModeTransactionTable;
 import org.infinispan.client.hotrod.impl.transaction.TransactionTable;
@@ -300,7 +299,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       // Register this one last, so it will replace any that may support the same media type
       marshallerRegistry.registerMarshaller(marshaller);
 
-      codec = CodecFactory.getCodec(configuration.version());
+      codec = configuration.version().getCodec();
 
       listenerNotifier = new ClientListenerNotifier(codec, marshaller, channelFactory, configuration.getClassWhiteList());
       ExecutorFactory executorFactory = configuration.asyncExecutorFactory().factory();
@@ -403,7 +402,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
             RemoteCacheHolder rcc = new RemoteCacheHolder(result, forceReturnValueOverride);
             startRemoteCache(rcc);
 
-            PingOperation.PingResponse pingResponse = result.resolveStorage();
+            PingResponse pingResponse = result.resolveStorage();
             // If ping not successful assume that the cache does not exist
             // Default cache is always started, so don't do for it
             if (!cacheName.equals(RemoteCacheManager.DEFAULT_CACHE_NAME) && pingResponse.isCacheNotFound()) {

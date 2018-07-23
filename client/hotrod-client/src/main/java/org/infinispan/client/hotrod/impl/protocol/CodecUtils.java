@@ -43,7 +43,7 @@ public final class CodecUtils {
       if (keyMediaTypeDefinition == 0) return null;
       if (keyMediaTypeDefinition == 1) return readPredefinedMediaType(byteBuf);
       if (keyMediaTypeDefinition == 2) return readCustomMediaType(byteBuf);
-      throw new HotRodClientException("Unknown MediaType definition");
+      throw new HotRodClientException("Unknown MediaType definition: " + keyMediaTypeDefinition);
    }
 
    static MediaType readPredefinedMediaType(ByteBuf buffer) {

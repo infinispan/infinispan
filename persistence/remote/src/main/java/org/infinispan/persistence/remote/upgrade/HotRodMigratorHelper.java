@@ -5,9 +5,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.client.hotrod.impl.protocol.VersionUtils;
-import org.infinispan.persistence.remote.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.client.hotrod.ProtocolVersion;
 
 /**
  * @author gustavonalle
@@ -16,13 +14,11 @@ import org.infinispan.util.logging.LogFactory;
 public class HotRodMigratorHelper {
 
    static final String MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS = "___MigrationManager_HotRod_KnownKeys___";
-   static final String ITERATOR_MINIMUM_VERSION = "2.5";
+   static final ProtocolVersion ITERATOR_MINIMUM_VERSION = ProtocolVersion.PROTOCOL_VERSION_25;
    static final int DEFAULT_READ_BATCH_SIZE = 10000;
 
-   private static final Log log = LogFactory.getLog(HotRodMigratorHelper.class, Log.class);
-
    static boolean supportsIteration(String protocolVersion) {
-      return protocolVersion == null || VersionUtils.isVersionGreaterOrEquals(protocolVersion, ITERATOR_MINIMUM_VERSION);
+      return protocolVersion == null || ProtocolVersion.parseVersion(protocolVersion).compareTo(ITERATOR_MINIMUM_VERSION) >= 0;
    }
 
    static List<Integer> range(int end) {
