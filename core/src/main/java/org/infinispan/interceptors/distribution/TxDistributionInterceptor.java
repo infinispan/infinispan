@@ -432,7 +432,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                // we need to retrieve the value locally regardless of load type; in transactional mode all operations
                // execute on origin
                // Also, operations that need value on backup [delta write] need to do the remote lookup even on non-origin
-               Object result = remoteGet(ctx, command, command.getKey(), true).thenApply(ctx, command, invokeNextFunction);
+               Object result = asyncInvokeNext(ctx, command, remoteGet(ctx, command, command.getKey(), true));
                return makeStage(result)
                      .andFinally(ctx, command, (rCtx, rCommand, rv, t) ->
                            updateMatcherForRetry((WriteCommand) rCommand));
@@ -505,7 +505,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                return invokeNext(ctx, command);
             } else if (forceRemoteReadForFunctionalCommands && !command.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
-               return remoteGet(ctx, command, key, true).thenApply(ctx, command, invokeNextFunction);
+               return asyncInvokeNext(ctx, command, remoteGet(ctx, command, key, true));
             } else {
                LocalizedCacheTopology cacheTopology = checkTopologyId(command);
                int segment = command.getSegment();
@@ -544,7 +544,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                // in transactional mode, we always need the entry wrapped
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
             } else {
-               return remoteGet(ctx, command, command.getKey(), true).thenApply(ctx, command, invokeNextFunction);
+               return asyncInvokeNext(ctx, command, remoteGet(ctx, command, command.getKey(), true));
             }
          }
          return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) ->

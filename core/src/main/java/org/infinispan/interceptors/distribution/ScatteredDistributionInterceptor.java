@@ -593,7 +593,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          SingleResponseIgnoreLeaversCollector collector = SingleResponseIgnoreLeaversCollector.instance();
          CompletionStage<Response> rpcFuture =
                rpcManager.invokeCommand(info.primary(), clusteredGetCommand, collector, rpcManager.getSyncRpcOptions());
-         return makeStage(asyncValue(rpcFuture).thenAccept(ctx, command, handleRemoteGetResponse)).thenApply(ctx, command, invokeNextFunction);
+         return asyncInvokeNext(ctx, command, makeStage(asyncValue(rpcFuture).thenAccept(ctx, command, handleRemoteGetResponse)));
       } else {
          return UnsureResponse.INSTANCE;
       }

@@ -256,7 +256,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             return invokeRemotely(ctx, command, info.primary());
          } else {
             if (load) {
-               return remoteGet(ctx, command, command.getKey(), true).thenApply(ctx, command, invokeNextFunction);
+               return asyncInvokeNext(ctx, command, remoteGet(ctx, command, command.getKey(), true));
             } else {
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                return invokeNext(ctx, command);
@@ -794,7 +794,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    private Object handleMissingEntryOnLocalRead(InvocationContext ctx, AbstractDataCommand command) {
       return readNeedsRemoteValue(command) ?
-            remoteGet(ctx, command, command.getKey(), false).thenApply(ctx, command, invokeNextFunction) :
+            asyncInvokeNext(ctx, command, remoteGet(ctx, command, command.getKey(), false)) :
             null;
    }
 
