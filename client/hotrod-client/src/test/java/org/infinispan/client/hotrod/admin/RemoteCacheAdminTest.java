@@ -51,8 +51,8 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    }
 
    @Override
-   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(int serverPort) {
-      org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder = super.createHotRodClientConfigurationBuilder(serverPort);
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder = super.createHotRodClientConfigurationBuilder(host, serverPort);
       builder.marshaller(new ProtoStreamMarshaller());
       return builder;
    }

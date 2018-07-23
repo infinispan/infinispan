@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
-import org.infinispan.client.hotrod.impl.operations.PingOperation.PingResponse;
+import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.commons.dataconversion.MediaType;
 
 import io.netty.buffer.ByteBuf;

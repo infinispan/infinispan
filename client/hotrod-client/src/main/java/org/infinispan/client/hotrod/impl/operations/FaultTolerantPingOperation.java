@@ -3,12 +3,13 @@ package org.infinispan.client.hotrod.impl.operations;
 import java.net.SocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.commons.dataconversion.MediaType;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -21,12 +22,18 @@ import io.netty.handler.codec.DecoderException;
  * @author Galder Zamarreño
  * @since 5.2
  */
-public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingOperation.PingResponse> {
+public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingResponse> {
+
+   private final OperationsFactory operationsFactory;
+
+   private PingResponse.Decoder responseBuilder;
 
    protected FaultTolerantPingOperation(Codec codec, ChannelFactory channelFactory,
                                         byte[] cacheName, AtomicInteger topologyId, int flags,
-                                        Configuration cfg) {
+                                        Configuration cfg, OperationsFactory operationsFactory) {
       super(PING_REQUEST, PING_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null);
+      this.operationsFactory = operationsFactory;
+      this.responseBuilder = new PingResponse.Decoder(cfg.version());
    }
 
    @Override
@@ -36,18 +43,19 @@ public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingOper
 
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      MediaType keyMediaType = codec.readKeyType(buf);
-      MediaType valueMediaType = codec.readValueType(buf);
-      PingOperation.PingResponse pingResponse = new PingOperation.PingResponse(status, keyMediaType, valueMediaType);
-      if (pingResponse.isSuccess()) {
+      responseBuilder.processResponse(codec, buf, decoder);
+      if (HotRodConstants.isSuccess(status)) {
+         PingResponse pingResponse = responseBuilder.build(status);
+         if (pingResponse.getVersion() != null && cfg.version() == ProtocolVersion.PROTOCOL_VERSION_AUTO) {
+            operationsFactory.setCodec(pingResponse.getVersion().getCodec());
+         }
          complete(pingResponse);
       } else {
          String hexStatus = Integer.toHexString(status);
          if (trace)
             log.tracef("Unknown response status: %s", hexStatus);
 
-         throw new InvalidResponseException(
-               "Unexpected response status: " + hexStatus);
+         throw new InvalidResponseException("Unexpected response status: " + hexStatus);
       }
    }
 
@@ -56,12 +64,17 @@ public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingOper
       while (cause instanceof DecoderException && cause.getCause() != null) {
          cause = cause.getCause();
       }
-
-      PingOperation.PingResponse pingResponse = new PingOperation.PingResponse(cause);
+      PingResponse pingResponse = new PingResponse(cause);
       if (pingResponse.isCacheNotFound()) {
          complete(pingResponse);
          return null;
       }
       return super.handleException(cause, ctx, address);
+   }
+
+   @Override
+   protected void reset() {
+      super.reset();
+      responseBuilder.reset();
    }
 }

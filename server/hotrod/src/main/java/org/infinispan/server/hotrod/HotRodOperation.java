@@ -114,6 +114,8 @@ public enum HotRodOperation {
    private final boolean isConditional;
    private static final HotRodOperation REQUEST_OPCODES[];
    private static final HotRodOperation RESPONSE_OPCODES[];
+   public static final int REQUEST_COUNT;
+   static final HotRodOperation VALUES[] = values();
 
    HotRodOperation(int requestOpCode, int responseOpCode, EnumSet<OpReqs> opRequirements, DecoderRequirements decoderRequirements) {
       this.requestOpCode = requestOpCode;
@@ -177,22 +179,26 @@ public enum HotRodOperation {
    }
 
    static {
-      REQUEST_OPCODES = new HotRodOperation[255];
-      RESPONSE_OPCODES = new HotRodOperation[255];
-      for(HotRodOperation op : HotRodOperation.values()) {
-         if (op.requestOpCode > 0)
-           REQUEST_OPCODES[op.requestOpCode] = op;
+      REQUEST_OPCODES = new HotRodOperation[256];
+      RESPONSE_OPCODES = new HotRodOperation[256];
+      int requestCount = 0;
+      for(HotRodOperation op : VALUES) {
+         if (op.requestOpCode > 0) {
+            REQUEST_OPCODES[op.requestOpCode] = op;
+            ++requestCount;
+         }
          if (op.responseOpCode > 0)
             RESPONSE_OPCODES[op.responseOpCode] = op;
       }
+      REQUEST_COUNT = requestCount;
    }
 
    public static HotRodOperation fromRequestOpCode(byte op) {
-      return REQUEST_OPCODES[op];
+      return REQUEST_OPCODES[op & 0xff];
    }
 
    public static HotRodOperation fromResponseOpCode(byte op) {
-      return RESPONSE_OPCODES[op];
+      return RESPONSE_OPCODES[op & 0xff];
    }
 }
 

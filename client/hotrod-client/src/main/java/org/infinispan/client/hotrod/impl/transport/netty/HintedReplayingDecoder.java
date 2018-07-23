@@ -3,9 +3,6 @@ package org.infinispan.client.hotrod.impl.transport.netty;
 import java.util.Collections;
 import java.util.List;
 
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
@@ -22,7 +19,6 @@ public abstract class HintedReplayingDecoder<S> extends ByteToMessageDecoder {
    static final Signal REPLAY = Signal.valueOf(HintedReplayingDecoder.class.getName() + ".REPLAY");
    // We don't expect decode() to use the out param
    private static final List<Object> NO_WRITE_LIST = Collections.emptyList();
-   private static final Log log = LogFactory.getLog(HintedReplayingDecoder.class);
 
    private final HintingByteBuf replayable = new HintingByteBuf(this);
    private S state;

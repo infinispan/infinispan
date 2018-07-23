@@ -51,13 +51,17 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
    }
 
    protected RemoteCacheManager createClient(int i) {
-      return new InternalRemoteCacheManager(createHotRodClientConfigurationBuilder(server(i).getPort()).build());
+      return new InternalRemoteCacheManager(createHotRodClientConfigurationBuilder(server(i)).build());
    }
 
-   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(int serverPort) {
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(HotRodServer server) {
+      return createHotRodClientConfigurationBuilder(server.getHost(), server.getPort());
+   }
+
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       clientBuilder.addServer()
-            .host("localhost")
+            .host(host)
             .port(serverPort)
             .maxRetries(maxRetries());
       return clientBuilder;

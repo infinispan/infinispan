@@ -96,8 +96,8 @@ public class RemoteContinuousQueryLeavingRemoteCacheManagerTest extends MultiHot
    }
 
    @Override
-   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(int serverPort) {
-      return super.createHotRodClientConfigurationBuilder(serverPort)
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
+      return super.createHotRodClientConfigurationBuilder(host, serverPort)
             .marshaller(new ProtoStreamMarshaller());
    }
 
@@ -140,7 +140,7 @@ public class RemoteContinuousQueryLeavingRemoteCacheManagerTest extends MultiHot
    public void testContinuousQueryRemoveRCM() throws IOException {
 
       // Create an additional remote cache manager that registers the same query
-      RemoteCacheManager extraRemoteCacheManager = new InternalRemoteCacheManager(createHotRodClientConfigurationBuilder(server(0).getPort()).build());
+      RemoteCacheManager extraRemoteCacheManager = new InternalRemoteCacheManager(createHotRodClientConfigurationBuilder(server(0)).build());
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(extraRemoteCacheManager));
       RemoteCache<String, User> extraRemoteCache = extraRemoteCacheManager.getCache();
 

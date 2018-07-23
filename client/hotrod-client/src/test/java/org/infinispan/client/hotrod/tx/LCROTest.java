@@ -115,9 +115,9 @@ public class LCROTest extends MultiHotRodServersTest {
 
    @Override
    protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(
-         int serverPort) {
+         String host, int serverPort) {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = super
-            .createHotRodClientConfigurationBuilder(serverPort);
+            .createHotRodClientConfigurationBuilder(host, serverPort);
       //force the return value
       clientBuilder.forceReturnValues(true);
       //use our TM to test it to extract the XaResource.

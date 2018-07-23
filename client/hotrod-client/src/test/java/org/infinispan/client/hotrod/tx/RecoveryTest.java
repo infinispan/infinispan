@@ -162,9 +162,9 @@ public class RecoveryTest extends MultiHotRodServersTest {
 
    @Override
    protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(
-         int serverPort) {
+         String host, int serverPort) {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = super
-            .createHotRodClientConfigurationBuilder(serverPort);
+            .createHotRodClientConfigurationBuilder(host, serverPort);
       clientBuilder.forceReturnValues(false);
       clientBuilder.transaction().transactionManagerLookup(RemoteTransactionManagerLookup.getInstance());
       clientBuilder.transaction().transactionMode(TransactionMode.FULL_XA);

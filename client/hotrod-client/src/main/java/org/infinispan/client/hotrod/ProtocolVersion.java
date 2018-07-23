@@ -1,59 +1,91 @@
 package org.infinispan.client.hotrod;
 
-import java.util.EnumSet;
 import java.util.Locale;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+
+import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.Codec20;
+import org.infinispan.client.hotrod.impl.protocol.Codec21;
+import org.infinispan.client.hotrod.impl.protocol.Codec22;
+import org.infinispan.client.hotrod.impl.protocol.Codec23;
+import org.infinispan.client.hotrod.impl.protocol.Codec24;
+import org.infinispan.client.hotrod.impl.protocol.Codec25;
+import org.infinispan.client.hotrod.impl.protocol.Codec26;
+import org.infinispan.client.hotrod.impl.protocol.Codec27;
+import org.infinispan.client.hotrod.impl.protocol.Codec28;
+import org.infinispan.client.hotrod.impl.protocol.Codec29;
+import org.infinispan.client.hotrod.impl.protocol.Codec30;
 
 /**
- * Enumeration of supported Hot Rod client protocol versions.
+ * Enumeration of supported Hot Rod client protocol VERSIONS.
  *
  * @author Radoslav Husar
  * @since 9.0
  */
 public enum ProtocolVersion {
 
-   // These need to go in order of lowest version is first - this way compareTo works for versions
-   PROTOCOL_VERSION_20(2, 0),
-   PROTOCOL_VERSION_21(2, 1),
-   PROTOCOL_VERSION_22(2, 2),
-   PROTOCOL_VERSION_23(2, 3),
-   PROTOCOL_VERSION_24(2, 4),
-   PROTOCOL_VERSION_25(2, 5),
-   PROTOCOL_VERSION_26(2, 6),
-   PROTOCOL_VERSION_27(2, 7),
-   PROTOCOL_VERSION_28(2, 8),
-   PROTOCOL_VERSION_29(2, 9),
-   // New versions go above this line to satisfy compareTo of enum working for versions
+   // These need to go in order: lowest version is first - this way compareTo works for VERSIONS
+   PROTOCOL_VERSION_20(2, 0, new Codec20()),
+   PROTOCOL_VERSION_21(2, 1, new Codec21()),
+   PROTOCOL_VERSION_22(2, 2, new Codec22()),
+   PROTOCOL_VERSION_23(2, 3, new Codec23()),
+   PROTOCOL_VERSION_24(2, 4, new Codec24()),
+   PROTOCOL_VERSION_25(2, 5, new Codec25()),
+   PROTOCOL_VERSION_26(2, 6, new Codec26()),
+   PROTOCOL_VERSION_27(2, 7, new Codec27()),
+   PROTOCOL_VERSION_28(2, 8, new Codec28()),
+   PROTOCOL_VERSION_29(2, 9, new Codec29()),
+   PROTOCOL_VERSION_30(3, 0, new Codec30()),
+   // New VERSIONS go above this line to satisfy compareTo of enum working for VERSIONS
+
+   // The version here doesn't matter as long as it is >= 3.0. It must be the LAST version
+   PROTOCOL_VERSION_AUTO(3, 0, new Codec30()),
    ;
 
-   public static final ProtocolVersion DEFAULT_PROTOCOL_VERSION;
+   private static final ProtocolVersion[] VERSIONS = values();
 
-   static {
-      ProtocolVersion[] versions = values();
-      DEFAULT_PROTOCOL_VERSION = versions[versions.length - 1];
-   }
+   public static final ProtocolVersion DEFAULT_PROTOCOL_VERSION = PROTOCOL_VERSION_AUTO;
+   public static final ProtocolVersion HIGHEST_PROTOCOL_VERSION = VERSIONS[VERSIONS.length - 2];
 
-   private final String version;
+   private final String textVersion;
+   private final int version;
+   private final Codec codec;
 
-   private static final Map<String, ProtocolVersion> versions = EnumSet.allOf(ProtocolVersion.class).stream().collect(Collectors.toMap(ProtocolVersion::toString, Function.identity()));
 
-   ProtocolVersion(int major, int minor) {
-      version = String.format(Locale.ROOT, "%d.%d", major, minor);
+
+   ProtocolVersion(int major, int minor, Codec codec) {
+      assert minor < 10;
+      this.textVersion = String.format(Locale.ROOT, "%d.%d", major, minor);
+      this.version = major * 10 + minor;
+      this.codec = codec;
    }
 
    @Override
    public String toString() {
+      return textVersion;
+   }
+
+   public int getVersion() {
       return version;
    }
 
+   public Codec getCodec() {
+      return codec;
+   }
+
    public static ProtocolVersion parseVersion(String version) {
-      ProtocolVersion v = versions.get(version);
-      if (v != null) {
-         return v;
-      } else {
-         throw new IllegalArgumentException("Illegal version " + version);
+      for (ProtocolVersion v : VERSIONS) {
+         if (v.textVersion.equals(version))
+            return v;
       }
+      throw new IllegalArgumentException("Illegal version " + version);
+   }
+
+   public static ProtocolVersion getBestVersion(int version) {
+      // We skip the last version (auto)
+      for (int i = VERSIONS.length - 2; i > 0; i--) {
+         if (version >= VERSIONS[i].version)
+            return VERSIONS[i];
+      }
+      throw new IllegalArgumentException("Illegal version " + version);
    }
 }

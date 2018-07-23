@@ -47,7 +47,7 @@ public interface VersionedEncoder {
 
    ByteBuf emptyResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status);
 
-   default ByteBuf emptyResponseWithMediaTypes(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status) {
+   default ByteBuf pingResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status) {
       return emptyResponse(header, server, alloc, status);
    }
 

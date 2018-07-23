@@ -93,8 +93,8 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
    }
 
    @Override
-   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(int serverPort) {
-      return super.createHotRodClientConfigurationBuilder(serverPort)
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
+      return super.createHotRodClientConfigurationBuilder(host, serverPort)
             .marshaller(new ProtoStreamMarshaller());
    }
 

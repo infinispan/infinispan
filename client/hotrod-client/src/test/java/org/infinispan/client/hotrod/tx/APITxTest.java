@@ -271,9 +271,9 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
 
    @Override
    protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(
-         int serverPort) {
+         String host, int serverPort) {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = super
-            .createHotRodClientConfigurationBuilder(serverPort);
+            .createHotRodClientConfigurationBuilder(host, serverPort);
       clientBuilder.forceReturnValues(false);
       TransactionSetup.amendJTA(clientBuilder);
       clientBuilder.transaction().transactionMode(transactionMode);

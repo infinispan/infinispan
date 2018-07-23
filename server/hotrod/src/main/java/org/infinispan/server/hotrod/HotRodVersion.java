@@ -11,16 +11,17 @@ import java.util.Arrays;
 
 public enum HotRodVersion {
    UNKNOWN(0, 0),
-   HOTROD_20(2, 0),
-   HOTROD_21(2, 1),
-   HOTROD_22(2, 2),
-   HOTROD_23(2, 3),
-   HOTROD_24(2, 4),
-   HOTROD_25(2, 5),
-   HOTROD_26(2, 6),
-   HOTROD_27(2, 7),
-   HOTROD_28(2, 8),
-   HOTROD_29(2, 9),
+   HOTROD_20(2, 0), // since 7.0
+   HOTROD_21(2, 1), // since 7.1
+   HOTROD_22(2, 2), // since 8.0
+   HOTROD_23(2, 3), // since 8.0
+   HOTROD_24(2, 4), // since 8.1
+   HOTROD_25(2, 5), // since 8.2
+   HOTROD_26(2, 6), // since 9.0
+   HOTROD_27(2, 7), // since 9.2
+   HOTROD_28(2, 8), // since 9.3
+   HOTROD_29(2, 9), // since 9.4
+   HOTROD_30(3, 0), // since 10.0
    ;
 
    private final int major;
@@ -62,18 +63,18 @@ public enum HotRodVersion {
    }
 
    public static final HotRodVersion LATEST;
-   private static final HotRodVersion[] versions = new HotRodVersion[256];
+   private static final HotRodVersion[] VERSIONS = new HotRodVersion[256];
 
    static {
       LATEST = values()[values().length - 1];
-      Arrays.fill(versions, UNKNOWN);
+      Arrays.fill(VERSIONS, UNKNOWN);
       for(HotRodVersion version : values()) {
-         versions[version.version] = version;
+         VERSIONS[version.version] = version;
       }
    }
 
    public static HotRodVersion forVersion(byte version) {
-      return versions[version];
+      return VERSIONS[version];
    }
 
    public static VersionedEncoder getEncoder(byte version) {

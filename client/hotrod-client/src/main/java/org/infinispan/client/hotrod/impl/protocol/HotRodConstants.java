@@ -20,10 +20,6 @@ public interface HotRodConstants {
    short REQUEST_MAGIC = 0xA0;
    short RESPONSE_MAGIC = 0xA1;
 
-   byte VERSION_10 = 10;
-   byte VERSION_11 = 11;
-   byte VERSION_12 = 12;
-   byte VERSION_13 = 13;
    byte VERSION_20 = 20;
    byte VERSION_21 = 21;
    byte VERSION_22 = 22;
@@ -34,6 +30,7 @@ public interface HotRodConstants {
    byte VERSION_27 = 27;
    byte VERSION_28 = 28;
    byte VERSION_29 = 29;
+   byte VERSION_30 = 30;
 
    //requests
    byte ILLEGAL_OP_CODE = 0x00;
@@ -153,8 +150,8 @@ public interface HotRodConstants {
    int INVALID_MAGIC_OR_MESSAGE_ID_STATUS = 0x81;
    int REQUEST_PARSING_ERROR_STATUS = 0x84;
    int UNKNOWN_COMMAND_STATUS = 0x82;
-   int SERVER_ERROR_STATUS = 0x85;
    int UNKNOWN_VERSION_STATUS = 0x83;
+   int SERVER_ERROR_STATUS = 0x85;
    int COMMAND_TIMEOUT_STATUS = 0x86;
    int NODE_SUSPECTED = 0x87;
    int ILLEGAL_LIFECYCLE_STATE = 0x88;

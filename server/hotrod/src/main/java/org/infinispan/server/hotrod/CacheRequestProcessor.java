@@ -56,7 +56,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void ping(HotRodHeader header, Subject subject) {
       server.cache(header, subject); // we need to throw an exception when this cache is inaccessible
-      writeResponse(header, header.encoder().emptyResponseWithMediaTypes(header, server, channel.alloc(), OperationStatus.Success));
+      writeResponse(header, header.encoder().pingResponse(header, server, channel.alloc(), OperationStatus.Success));
    }
 
    void stats(HotRodHeader header, Subject subject) {

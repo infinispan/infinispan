@@ -34,8 +34,8 @@ public class JsonScriptTest extends MultiHotRodServersTest {
    }
 
    @Override
-   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(int serverPort) {
-      return super.createHotRodClientConfigurationBuilder(serverPort).marshaller(new UTF8StringMarshaller());
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
+      return super.createHotRodClientConfigurationBuilder(host, serverPort).marshaller(new UTF8StringMarshaller());
    }
 
    @Test

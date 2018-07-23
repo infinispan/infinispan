@@ -26,7 +26,7 @@ public class Codec28 extends Codec27 {
       return headerParams;
    }
 
-   private void writeDataTypes(ByteBuf buf, DataFormat dataFormat) {
+   protected void writeDataTypes(ByteBuf buf, DataFormat dataFormat) {
       MediaType keyType = null, valueType = null;
       if (dataFormat != null) {
          keyType = dataFormat.getKeyType();

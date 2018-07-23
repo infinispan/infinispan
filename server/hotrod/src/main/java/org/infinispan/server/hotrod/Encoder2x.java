@@ -159,8 +159,21 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf emptyResponseWithMediaTypes(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status) {
-      return writeHeader(header, server, alloc, status, true);
+   public ByteBuf pingResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status) {
+      if (HotRodVersion.HOTROD_30.isAtLeast(header.version)) {
+         ByteBuf buf = writeHeader(header, server, alloc, status, true);
+         buf.writeByte(HotRodVersion.LATEST.getVersion());
+         ExtendedByteBuf.writeUnsignedInt(HotRodOperation.REQUEST_COUNT, buf);
+         for (HotRodOperation op : HotRodOperation.VALUES) {
+            // We only include request ops
+            if (op.getRequestOpCode() > 0) {
+               buf.writeShort(op.getRequestOpCode());
+            }
+         }
+         return buf;
+      } else {
+         return writeHeader(header, server, alloc, status, true);
+      }
    }
 
    @Override
