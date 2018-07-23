@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.base;
 
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.CacheImpl;
@@ -116,7 +117,15 @@ public abstract class CommandInterceptor extends AbstractVisitor implements Asyn
    public final Object invokeNextInterceptor(InvocationContext ctx, VisitableCommand command) throws Throwable {
       Object maybeStage = nextInterceptor.visitCommand(ctx, command);
       if (maybeStage instanceof SimpleAsyncInvocationStage) {
-         return ((InvocationStage) maybeStage).get();
+         ctx.exit();
+         try {
+            return ((InvocationStage) maybeStage).get();
+         } finally {
+            CompletionStage<Void> cs = ctx.enter();
+            if (cs != null) {
+               cs.toCompletableFuture().join();
+            }
+         }
       } else {
          return maybeStage;
       }

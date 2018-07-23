@@ -29,7 +29,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -88,7 +88,7 @@ public class ReplListener {
    public ReplListener(Cache<?, ?> cache, boolean recordCommandsEagerly, boolean watchLocal) {
       this.cache = cache;
       this.watchLocal = watchLocal;
-      this.cache.getAdvancedCache().addInterceptor(new ReplListenerInterceptor(), 1);
+      this.cache.getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new ReplListenerInterceptor(), 1);
    }
 
    /**
@@ -255,12 +255,12 @@ public class ReplListener {
       }
    }
 
-   protected class ReplListenerInterceptor extends CommandInterceptor {
+   protected class ReplListenerInterceptor extends DDAsyncInterceptor {
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
          try {
             // first pass up chain
-            return invokeNextInterceptor(ctx, cmd);
+            return invokeNext(ctx, cmd);
          } finally {//make sure we do mark this command as received even in the case of exceptions(e.g. timeouts)
             if (!ctx.isOriginLocal() || (watchLocal && isPrimaryOwner(cmd))) {
                logCommand(cmd);
@@ -274,7 +274,7 @@ public class ReplListener {
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand cmd) throws Throwable {
          try {
             // first pass up chain
-            return invokeNextInterceptor(ctx, cmd);
+            return invokeNext(ctx, cmd);
          } finally {
             if (!ctx.isOriginLocal() || watchLocal) {
                logCommand(cmd);

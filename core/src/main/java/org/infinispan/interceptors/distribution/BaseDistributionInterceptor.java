@@ -51,6 +51,7 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.impl.ClusteringInterceptor;
 import org.infinispan.remoting.RemoteException;
@@ -164,7 +165,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return topology.getSegmentDistribution(SegmentSpecificCommand.extractSegment(command, key, keyPartitioner));
    }
 
-   protected <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletionStage<Void> remoteGet(
+   protected <C extends FlagAffectedCommand & TopologyAffectedCommand> InvocationStage remoteGet(
          InvocationContext ctx, C command, Object key, boolean isWrite) {
       LocalizedCacheTopology cacheTopology = checkTopologyId(command);
       int topologyId = cacheTopology.getTopologyId();
@@ -190,28 +191,28 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       getCommand.setTopologyId(topologyId);
       getCommand.setWrite(isWrite);
 
-      return rpcManager.invokeCommandStaggered(info.readOwners(), getCommand, new RemoteGetResponseCollector(),
-                                               rpcManager.getSyncRpcOptions())
-                       .thenAccept(r -> {
-                          if (r instanceof SuccessfulResponse) {
-                             SuccessfulResponse response = (SuccessfulResponse) r;
-                             Object responseValue = response.getResponseValue();
-                             if (responseValue == null) {
-                                if (rvrl != null) {
-                                   rvrl.remoteValueNotFound(key);
-                                }
-                                wrapRemoteEntry(ctx, key, NullCacheEntry.getInstance(), isWrite);
-                                return;
-                             }
-                             InternalCacheEntry ice = ((InternalCacheValue) responseValue).toInternalCacheEntry(key);
-                             if (rvrl != null) {
-                                rvrl.remoteValueFound(ice);
-                             }
-                             wrapRemoteEntry(ctx, key, ice, isWrite);
-                             return;
-                          }
-                          throw handleMissingSuccessfulResponse(r);
-                       });
+      CompletionStage<Response> rpcFuture = rpcManager.invokeCommandStaggered(info.readOwners(), getCommand, new RemoteGetResponseCollector(),
+            rpcManager.getSyncRpcOptions());
+      return makeStage(asyncValue(rpcFuture).thenAccept(ctx, command, (rCtx, rCmd, r) -> {
+           if (r instanceof SuccessfulResponse) {
+              SuccessfulResponse response = (SuccessfulResponse) r;
+              Object responseValue = response.getResponseValue();
+              if (responseValue == null) {
+                 if (rvrl != null) {
+                    rvrl.remoteValueNotFound(key);
+                 }
+                 wrapRemoteEntry(rCtx, key, NullCacheEntry.getInstance(), isWrite);
+                 return;
+              }
+              InternalCacheEntry ice = ((InternalCacheValue) responseValue).toInternalCacheEntry(key);
+              if (rvrl != null) {
+                 rvrl.remoteValueFound(ice);
+              }
+              wrapRemoteEntry(rCtx, key, ice, isWrite);
+              return;
+           }
+           throw handleMissingSuccessfulResponse((Response) r);
+        }));
    }
 
    protected static CacheException handleMissingSuccessfulResponse(Response response) {
@@ -255,8 +256,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             return invokeRemotely(ctx, command, info.primary());
          } else {
             if (load) {
-               CompletionStage<?> getFuture = remoteGet(ctx, command, command.getKey(), true);
-               return asyncInvokeNext(ctx, command, getFuture);
+               return remoteGet(ctx, command, command.getKey(), true).thenApply(ctx, command, invokeNextFunction);
             } else {
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                return invokeNext(ctx, command);
@@ -794,7 +794,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    private Object handleMissingEntryOnLocalRead(InvocationContext ctx, AbstractDataCommand command) {
       return readNeedsRemoteValue(command) ?
-            asyncInvokeNext(ctx, command, remoteGet(ctx, command, command.getKey(), false)) :
+            remoteGet(ctx, command, command.getKey(), false).thenApply(ctx, command, invokeNextFunction) :
             null;
    }
 

@@ -19,7 +19,7 @@ import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
  */
 @Experimental
 public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
-   private final InvocationSuccessFunction invokeNextFunction = (rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand);
+   protected final InvocationSuccessFunction invokeNextFunction = (rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand);
 
    @Inject protected Configuration cacheConfiguration;
    private AsyncInterceptor nextInterceptor;

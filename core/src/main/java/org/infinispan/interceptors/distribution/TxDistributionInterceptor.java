@@ -60,6 +60,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
@@ -431,7 +432,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                // we need to retrieve the value locally regardless of load type; in transactional mode all operations
                // execute on origin
                // Also, operations that need value on backup [delta write] need to do the remote lookup even on non-origin
-               Object result = asyncInvokeNext(ctx, command, remoteGet(ctx, command, command.getKey(), true));
+               Object result = remoteGet(ctx, command, command.getKey(), true).thenApply(ctx, command, invokeNextFunction);
                return makeStage(result)
                      .andFinally(ctx, command, (rCtx, rCommand, rv, t) ->
                            updateMatcherForRetry((WriteCommand) rCommand));
@@ -504,7 +505,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                return invokeNext(ctx, command);
             } else if (forceRemoteReadForFunctionalCommands && !command.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
-               return asyncInvokeNext(ctx, command, remoteGet(ctx, command, key, true));
+               return remoteGet(ctx, command, key, true).thenApply(ctx, command, invokeNextFunction);
             } else {
                LocalizedCacheTopology cacheTopology = checkTopologyId(command);
                int segment = command.getSegment();
@@ -543,7 +544,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                // in transactional mode, we always need the entry wrapped
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
             } else {
-               return asyncInvokeNext(ctx, command, remoteGet(ctx, command, command.getKey(), true));
+               return remoteGet(ctx, command, command.getKey(), true).thenApply(ctx, command, invokeNextFunction);
             }
          }
          return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) ->
@@ -581,29 +582,29 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    @Override
-   protected <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletionStage<Void> remoteGet(
+   protected <C extends FlagAffectedCommand & TopologyAffectedCommand> InvocationStage remoteGet(
          InvocationContext ctx, C command, Object key, boolean isWrite) {
-      CompletionStage<Void> cf = super.remoteGet(ctx, command, key, isWrite);
+      InvocationStage stage = super.remoteGet(ctx, command, key, isWrite);
       // If the remoteGet is executed on non-origin node, the mutations list already contains all modifications
       // and we are just trying to execute all of them from EntryWrappingIntercepot$EntryWrappingVisitor
       if (!ctx.isOriginLocal() || !ctx.isInTxScope()) {
-         return cf;
+         return stage;
       }
       List<Mutation> mutationsOnKey = getMutationsOnKey((TxInvocationContext) ctx, key);
       if (mutationsOnKey.isEmpty()) {
-         return cf;
+         return stage;
       }
-      return cf.thenRun(() -> {
-         entryFactory.wrapEntryForWriting(ctx, key, SegmentSpecificCommand.extractSegment(command, key, keyPartitioner),
+      return makeStage(stage.thenAccept(ctx, command, (rCtx, rCommand, nil) -> {
+         entryFactory.wrapEntryForWriting(rCtx, key, SegmentSpecificCommand.extractSegment(rCommand, key, keyPartitioner),
                false, true);
-         MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(key);
+         MVCCEntry cacheEntry = (MVCCEntry) rCtx.lookupEntry(key);
          for (Mutation mutation : mutationsOnKey) {
             EntryView.ReadWriteEntryView readWriteEntryView =
                   EntryViews.readWrite(cacheEntry, mutation.keyDataConversion(), mutation.valueDataConversion());
             mutation.apply(readWriteEntryView);
             cacheEntry.updatePreviousValue();
          }
-      });
+      }));
    }
 
    @Override

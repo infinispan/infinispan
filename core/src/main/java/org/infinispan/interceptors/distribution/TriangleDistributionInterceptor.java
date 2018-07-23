@@ -415,7 +415,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
       CacheEntry entry = context.lookupEntry(command.getKey());
       if (entry == null) {
          if (command.loadType() == OWNER) {
-            return asyncInvokeNext(context, command, remoteGet(context, command, command.getKey(), true));
+            return remoteGet(context, command, command.getKey(), true).thenApply(context, command, invokeNextFunction);
          }
          entryFactory.wrapExternalEntry(context, command.getKey(), null, false, true);
       }

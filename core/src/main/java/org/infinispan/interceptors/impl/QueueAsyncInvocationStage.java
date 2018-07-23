@@ -124,6 +124,8 @@ public class QueueAsyncInvocationStage extends SimpleAsyncInvocationStage implem
       while (true) {
          InvocationCallback function = queuePoll();
          if (function == null) {
+            // We're going to run invokeQueuedHandlers on that future so we need to exit now
+            ctx.exit();
             // Complete the future.
             // We finished running the handlers, and the last pollHandler() call locked the queue.
             if (throwable == null) {
@@ -148,15 +150,15 @@ public class QueueAsyncInvocationStage extends SimpleAsyncInvocationStage implem
          if (rv instanceof SimpleAsyncInvocationStage) {
             SimpleAsyncInvocationStage currentStage = (SimpleAsyncInvocationStage) rv;
             if (!currentStage.isDone()) {
+               // We're going to call accept() -> invokeQueuedHandlers() -> enter() so we need to unlock first
+               ctx.exit();
                if (currentStage instanceof QueueAsyncInvocationStage) {
                   QueueAsyncInvocationStage queueAsyncInvocationStage = (QueueAsyncInvocationStage) currentStage;
                   queueAsyncInvocationStage.future.whenComplete(this);
-                  ctx.exit();
                   return;
                } else {
                   // Use the CompletableFuture directly, without creating another AsyncInvocationStage instance
                   currentStage.future.whenComplete(this);
-                  ctx.exit();
                   return;
                }
             } else {

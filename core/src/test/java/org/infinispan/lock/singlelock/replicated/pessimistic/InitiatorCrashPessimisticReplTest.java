@@ -26,7 +26,7 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
    public void testInitiatorNodeCrashesBeforeCommit() throws Exception {
       TxControlInterceptor txControlInterceptor = new TxControlInterceptor();
       txControlInterceptor.prepareProgress.countDown();
-      advancedCache(1).addInterceptor(txControlInterceptor, 1);
+      advancedCache(1).getAsyncInterceptorChain().addInterceptor(txControlInterceptor, 1);
 
       MagicKey key = new MagicKey("k", cache(0));
       Future<Void> future = beginAndCommitTx(key, 1);
@@ -81,7 +81,7 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
       assert cache(2).get(key).equals("b");
 
       TxControlInterceptor txControlInterceptor = new TxControlInterceptor();
-      advancedCache(1).addInterceptor(txControlInterceptor, 1);
+      advancedCache(1).getAsyncInterceptorChain().addInterceptor(txControlInterceptor, 1);
 
       //prepare is sent, but is not precessed on other nodes because of the txControlInterceptor.preparedReceived
       Future<Void> future = beginAndPrepareTx("k", 1);

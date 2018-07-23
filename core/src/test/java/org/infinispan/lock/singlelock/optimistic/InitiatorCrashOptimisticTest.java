@@ -24,7 +24,7 @@ public class InitiatorCrashOptimisticTest extends AbstractInitiatorCrashTest {
    public void testInitiatorNodeCrashesBeforePrepare() throws Exception {
 
       TxControlInterceptor txControlInterceptor = new TxControlInterceptor();
-      advancedCache(1).addInterceptor(txControlInterceptor, 1);
+      advancedCache(1).getAsyncInterceptorChain().addInterceptor(txControlInterceptor, 1);
       Object k = getKeyForCache(2);
 
       //prepare is sent, but is not precessed on other nodes because of the txControlInterceptor.preparedReceived

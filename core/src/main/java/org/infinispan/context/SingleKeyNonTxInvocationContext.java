@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.BiConsumer;
 
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.impl.ContextLock;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -19,11 +20,12 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Deprecated
 public final class SingleKeyNonTxInvocationContext implements InvocationContext {
-   private static AtomicReferenceFieldUpdater currentThreadUpdater =
-         AtomicReferenceFieldUpdater.newUpdater(SingleKeyNonTxInvocationContext.class, Thread.class, "currentThread");
-
    private static Log log = LogFactory.getLog(SingleKeyNonTxInvocationContext.class);
    private static boolean trace = log.isTraceEnabled();
+
+   private static AtomicReferenceFieldUpdater<SingleKeyNonTxInvocationContext, Object> contextLockUpdater =
+         AtomicReferenceFieldUpdater.newUpdater(SingleKeyNonTxInvocationContext.class, Object.class, "contextLock");
+
    /**
     * It is possible for the key to only be wrapped but not locked, e.g. when a get takes place.
     */
@@ -40,7 +42,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
    private Object lockOwner;
 
    // Let the creating thread automatically acquire it.
-   private volatile Thread currentThread = Thread.currentThread();
+   private volatile Object contextLock = ContextLock.init();
 
    public SingleKeyNonTxInvocationContext(final Address origin) {
       this.origin = origin;
@@ -48,19 +50,19 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public boolean isOriginLocal() {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       return origin == null;
    }
 
    @Override
    public boolean isInTxScope() {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       return false;
    }
 
    @Override
    public Object getLockOwner() {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       return lockOwner;
    }
 
@@ -80,19 +82,19 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public Set<Object> getLockedKeys() {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       return isLocked ? Collections.singleton(key) : Collections.emptySet();
    }
 
    @Override
    public void clearLockedKeys() {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       isLocked = false;
    }
 
    @Override
    public void addLockedKey(final Object key) {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       if (this.key == null) {
          // Set the key here
          this.key = key;
@@ -109,7 +111,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public CacheEntry lookupEntry(final Object key) {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       if (this.key != null && isKeyEquals(key))
          return cacheEntry;
 
@@ -117,19 +119,19 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
    }
 
    public boolean isKeyEquals(Object key) {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       return this.key == key || this.key.equals(key);
    }
 
    @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       return cacheEntry == null ? Collections.emptyMap() : Collections.singletonMap(key, cacheEntry);
    }
 
    @Override
    public void forEachEntry(BiConsumer<Object, CacheEntry> action) {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       if (cacheEntry != null) {
          action.accept(key, cacheEntry);
       }
@@ -137,13 +139,13 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public int lookedUpEntriesCount() {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       return cacheEntry != null ? 1 : 0;
    }
 
    @Override
    public void putLookedUpEntry(final Object key, final CacheEntry e) {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       if (this.key == null) {
          // Set the key here
          this.key = key;
@@ -156,25 +158,25 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public void removeLookedUpEntry(final Object key) {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       if (this.key != null && isKeyEquals(key)) {
          this.cacheEntry = null;
       }
    }
 
    public Object getKey() {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       return key;
    }
 
    public CacheEntry getCacheEntry() {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       return cacheEntry;
    }
 
    @Override
    public Address getOrigin() {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       return origin;
    }
 
@@ -195,32 +197,35 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public boolean isEntryRemovedInContext(final Object key) {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       CacheEntry ce = lookupEntry(key);
       return ce != null && ce.isRemoved() && ce.isChanged();
    }
 
    @Override
    public CompletionStage<Void> enter() {
-      if (trace) log.trace("Entering context");
-      if (currentThreadUpdater.compareAndSet(this, null, Thread.currentThread())) {
-         return null;
-      } else {
-         // we might miss the thread when doing the log...
-         throw new IllegalStateException("Concurrent access by " + currentThread + ", we are " + Thread.currentThread());
+      if (trace) log.tracef(new Exception(), "Entering context %08X", System.identityHashCode(this));
+      CompletionStage<Void> cs = ContextLock.enter(this, contextLockUpdater);
+      if (trace) {
+         log.tracef("Current context lock %s", cs);
       }
+      return cs;
    }
 
    @Override
    public void exit() {
-      if (trace) log.trace("Leaving context");
-      if (!currentThreadUpdater.compareAndSet(this, Thread.currentThread(), null)) {
-         throw new IllegalStateException("Unexpected locking thread: " + currentThread + ", we are " + Thread.currentThread());
-      }
+      if (trace) log.tracef("Leaving context %08X", System.identityHashCode(this));
+      ContextLock.exit(this, contextLockUpdater);
    }
 
+   private void assertContextLock() {
+      Object contextLock = this.contextLock;
+      assert ContextLock.isOwned(contextLock) : "Context lock is " + contextLock;
+   }
+
+
    public void resetState() {
-      assert currentThread == Thread.currentThread();
+      assertContextLock();
       this.key = null;
       this.cacheEntry = null;
       this.isLocked = false;

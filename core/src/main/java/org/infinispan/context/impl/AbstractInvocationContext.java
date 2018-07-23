@@ -1,11 +1,14 @@
 package org.infinispan.context.impl;
 
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Common features of transaction and invocation contexts
@@ -15,7 +18,14 @@ import org.infinispan.remoting.transport.Address;
  * @since 4.0
  */
 public abstract class AbstractInvocationContext implements InvocationContext {
+   private static Log log = LogFactory.getLog(AbstractInvocationContext.class);
+   private static boolean trace = log.isTraceEnabled();
+
+   private static final AtomicReferenceFieldUpdater<AbstractInvocationContext, Object> contextLockUpdater =
+         AtomicReferenceFieldUpdater.newUpdater(AbstractInvocationContext.class, Object.class, "contextLock");
+
    private final Address origin;
+   private volatile Object contextLock = ContextLock.init();
 
    protected AbstractInvocationContext(Address origin) {
       this.origin = origin;
@@ -61,12 +71,14 @@ public abstract class AbstractInvocationContext implements InvocationContext {
 
    @Override
    public CompletionStage<Void> enter() {
-      return null;  // TODO: Customise this generated block
+      if (trace) log.trace("Entering context");
+      return ContextLock.enter(this, contextLockUpdater);
    }
 
    @Override
    public void exit() {
-      // TODO: Customise this generated block
+      if (trace) log.trace("Leaving context");
+      ContextLock.exit(this, contextLockUpdater);
    }
 
    @Override

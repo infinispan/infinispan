@@ -14,7 +14,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
@@ -89,7 +89,7 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
       });
    }
 
-   public static class TxControlInterceptor extends CommandInterceptor {
+   public static class TxControlInterceptor extends DDAsyncInterceptor {
 
       public CountDownLatch prepareProgress = new CountDownLatch(1);
       public CountDownLatch preparedReceived = new CountDownLatch(1);
@@ -98,18 +98,35 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         final Object result = super.visitPrepareCommand(ctx, command);
-         preparedReceived.countDown();
-         prepareProgress.await();
-         return result;
+         return invokeNextThenApply(ctx, command, ((rCtx, rCommand, rv) -> {
+            preparedReceived.countDown();
+            ctx.exit();
+            try {
+               prepareProgress.await();
+            } finally {
+               CompletionStage<Void> cs = ctx.enter();
+               if (cs == null) {
+                  return rv;
+               } else {
+                  return asyncValue(cs.thenApply(nil -> rv));
+               }
+            }
+         }));
       }
 
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-         commitReceived.countDown();
-         commitProgress.await();
-         return super.visitCommitCommand(ctx, command);
-
+         return invokeNextThenApply(ctx, command, ((rCtx, rCommand, rv) -> {
+            commitReceived.countDown();
+            ctx.exit();
+            commitProgress.await();
+            CompletionStage<Void> cs = ctx.enter();
+            if (cs == null) {
+               return rv;
+            } else {
+               return asyncValue(cs.thenApply(nil -> rv));
+            }
+         }));
       }
    }
 
@@ -134,7 +151,7 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
       TxControlInterceptor txControlInterceptor = new TxControlInterceptor();
       txControlInterceptor.prepareProgress.countDown();
       txControlInterceptor.commitProgress.countDown();
-      advancedCache(1).addInterceptor(txControlInterceptor, 1);
+      advancedCache(1).getAsyncInterceptorChain().addInterceptor(txControlInterceptor, 1);
    }
 
 }

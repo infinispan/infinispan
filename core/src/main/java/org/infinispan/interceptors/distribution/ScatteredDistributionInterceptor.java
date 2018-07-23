@@ -91,6 +91,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
+import org.infinispan.remoting.transport.impl.SingleResponseIgnoreLeaversCollector;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.statetransfer.AllOwnersLostException;
@@ -140,6 +141,8 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
 
    private final InvocationSuccessFunction handleWritePrimaryResponse = this::handleWritePrimaryResponse;
    private final InvocationSuccessFunction handleWriteManyOnPrimary = this::handleWriteManyOnPrimary;
+
+   private final InvocationSuccessAction handleRemoteGetResponse = this::handleRemoteGetResponse;
 
    private PutMapHelper putMapHelper = new PutMapHelper(helper -> null);
    private ReadWriteManyHelper readWriteManyHelper = new ReadWriteManyHelper(helper -> null);
@@ -587,30 +590,32 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          ClusteredGetCommand clusteredGetCommand = cf.buildClusteredGetCommand(command.getKey(), info.segmentId(),
                command.getFlagsBitSet());
          clusteredGetCommand.setTopologyId(command.getTopologyId());
-         SingletonMapResponseCollector collector = SingletonMapResponseCollector.ignoreLeavers();
-         CompletionStage<Map<Address, Response>> rpcFuture =
+         SingleResponseIgnoreLeaversCollector collector = SingleResponseIgnoreLeaversCollector.instance();
+         CompletionStage<Response> rpcFuture =
                rpcManager.invokeCommand(info.primary(), clusteredGetCommand, collector, rpcManager.getSyncRpcOptions());
-         Object key = clusteredGetCommand.getKey();
-         return asyncInvokeNext(ctx, command, rpcFuture.thenAccept(responseMap -> {
-            Response response = getSingleResponse(responseMap);
-            if (response.isSuccessful()) {
-               InternalCacheValue value = (InternalCacheValue) ((SuccessfulResponse) response).getResponseValue();
-               if (value != null) {
-                  InternalCacheEntry cacheEntry = value.toInternalCacheEntry(key);
-                  entryFactory.wrapExternalEntry(ctx, key, cacheEntry, true, false);
-               } else {
-                  entryFactory.wrapExternalEntry(ctx, key, NullCacheEntry.getInstance(), false, false);
-               }
-            } else if (response instanceof UnsureResponse) {
-               throw OutdatedTopologyException.INSTANCE;
-            } else if (response instanceof CacheNotFoundResponse) {
-               throw AllOwnersLostException.INSTANCE;
-            } else {
-               throw new IllegalArgumentException("Unexpected response " + response);
-            }
-         }));
+         return makeStage(asyncValue(rpcFuture).thenAccept(ctx, command, handleRemoteGetResponse)).thenApply(ctx, command, invokeNextFunction);
       } else {
          return UnsureResponse.INSTANCE;
+      }
+   }
+
+   private void handleRemoteGetResponse(InvocationContext ctx, VisitableCommand command, Object rv) {
+      Response response = (Response) rv;
+      Object key = ((AbstractDataCommand) command).getKey();
+      if (response.isSuccessful()) {
+         InternalCacheValue value = (InternalCacheValue) ((SuccessfulResponse) response).getResponseValue();
+         if (value != null) {
+            InternalCacheEntry cacheEntry = value.toInternalCacheEntry(key);
+            entryFactory.wrapExternalEntry(ctx, key, cacheEntry, true, false);
+         } else {
+            entryFactory.wrapExternalEntry(ctx, key, NullCacheEntry.getInstance(), false, false);
+         }
+      } else if (response instanceof UnsureResponse) {
+         throw OutdatedTopologyException.INSTANCE;
+      } else if (response instanceof CacheNotFoundResponse) {
+         throw AllOwnersLostException.INSTANCE;
+      } else {
+         throw new IllegalArgumentException("Unexpected response " + response);
       }
    }
 
