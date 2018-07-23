@@ -5,8 +5,10 @@ import static java.util.Collections.singletonList;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
-import static org.junit.Assert.assertArrayEquals;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
+import java.util.Arrays;
 
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.test.data.Address;
@@ -41,6 +43,6 @@ public class XMLTranscoderTest {
       assertEquals("<string>Hello World!</string>", new String((byte[]) asXML));
 
       Object xmlAsText = xmlTranscoder.transcode(asXML, APPLICATION_XML, TEXT_PLAIN);
-      assertArrayEquals("<string>Hello World!</string>".getBytes(), (byte[]) xmlAsText);
+      assertTrue(Arrays.equals("<string>Hello World!</string>".getBytes(), (byte[]) xmlAsText));
    }
 }

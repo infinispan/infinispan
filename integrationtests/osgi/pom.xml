@@ -307,22 +307,9 @@
                <runOrder>alphabetical</runOrder>
                <skipTests>${skipOSGiTests}</skipTests>
                <failIfNoTests>false</failIfNoTests>
-               <testNGArtifactName>none:none</testNGArtifactName>
-               <disableXmlReport>false</disableXmlReport>
                <runOrder>alphabetical</runOrder>
-               <properties>
-                  <usedefaultlisteners>false</usedefaultlisteners>
-                  <listener>${junitListener}</listener>
-               </properties>
                <argLine>${forkJvmArgs} ${testjvm.jigsawArgs}</argLine>
             </configuration>
-            <dependencies>
-               <dependency>
-                  <groupId>org.apache.maven.surefire</groupId>
-                  <artifactId>surefire-junit47</artifactId>
-                  <version>${version.maven.surefire}</version>
-               </dependency>
-            </dependencies>
             <executions>
                <!--
                Make sure two containers are not started at the same time by separating the

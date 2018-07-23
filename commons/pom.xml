@@ -116,7 +116,6 @@
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${junitListener}</listener>
                </properties>
-               <disableXmlReport>false</disableXmlReport>
             </configuration>
             <dependencies>
                <dependency>

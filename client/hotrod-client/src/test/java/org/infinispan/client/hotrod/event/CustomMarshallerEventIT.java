@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.event;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 import java.io.Serializable;
 import java.util.concurrent.ArrayBlockingQueue;
