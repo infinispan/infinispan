@@ -4,12 +4,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+//import org.infinispan.util.logging.Log;
+//import org.infinispan.util.logging.LogFactory;
 
 public class ContextLock extends CompletableFuture<Void> {
-   private static Log log = LogFactory.getLog(ContextLock.class);
-   private static boolean trace = log.isTraceEnabled();
+//   private static Log log = LogFactory.getLog(ContextLock.class);
+//   private static boolean trace = log.isTraceEnabled();
 
    private static final AtomicReferenceFieldUpdater requestorUpdater = AtomicReferenceFieldUpdater.newUpdater(ContextLock.class, Object.class, "requestor");
 
@@ -24,24 +24,25 @@ public class ContextLock extends CompletableFuture<Void> {
 
    public static Object init() {
       Request request = newRequest();
-      request.criticalThread = Thread.currentThread();
+//      request.criticalThread = Thread.currentThread();
       return request;
    }
 
    private static Request newRequest() {
-      return new Request();
+//      return new Request();
+      return Request.INSTANCE;
    }
 
    public static <LockOwner> CompletionStage<Void> enter(LockOwner lockHolder, AtomicReferenceFieldUpdater<LockOwner, Object> updater) {
       for (;;) {
          Object currentLock = updater.get(lockHolder);
-         if (trace) {
-            log.tracef("Current lock is %s = %08X", currentLock, System.identityHashCode(currentLock));
-         }
+//         if (trace) {
+//            log.tracef("Current lock is %s = %08X", currentLock, System.identityHashCode(currentLock));
+//         }
          if (currentLock == null) {
             Request newRequest = newRequest();
             if (updater.compareAndSet(lockHolder, null, newRequest)) {
-               newRequest.criticalThread = Thread.currentThread();
+//               newRequest.criticalThread = Thread.currentThread();
                return null;
             }
          } else if (currentLock instanceof Request) {
@@ -63,9 +64,9 @@ public class ContextLock extends CompletableFuture<Void> {
    public static <LockOwner> void exit(LockOwner lockOwner, AtomicReferenceFieldUpdater<LockOwner, Object> updater) {
       Object currentLock = updater.get(lockOwner);
       for (;;) {
-         if (trace) {
-            log.tracef("Current lock is %s = %08X", currentLock, System.identityHashCode(currentLock));
-         }
+//         if (trace) {
+//            log.tracef("Current lock is %s = %08X", currentLock, System.identityHashCode(currentLock));
+//         }
          if (currentLock == null) {
             throw new IllegalStateException("Double exit?");
          } else if (currentLock instanceof Request) {
@@ -76,11 +77,11 @@ public class ContextLock extends CompletableFuture<Void> {
             ContextLock contextLock = (ContextLock) currentLock;
             Object requestor = contextLock.requestor();
             if (updater.compareAndSet(lockOwner, currentLock, requestor)) {
-               if (requestor instanceof Request) {
-                  ((Request) requestor).criticalThread = Thread.currentThread();
-               } else {
-                  ((ContextLock) requestor).owner.criticalThread = Thread.currentThread();
-               }
+//               if (requestor instanceof Request) {
+//                  ((Request) requestor).criticalThread = Thread.currentThread();
+//               } else {
+//                  ((ContextLock) requestor).owner.criticalThread = Thread.currentThread();
+//               }
                contextLock.complete(null);
                return;
             } else {
@@ -93,15 +94,15 @@ public class ContextLock extends CompletableFuture<Void> {
       }
    }
 
-   public static boolean isOwned(Object contextLock) {
-      if (contextLock instanceof Request) {
-         return ((Request) contextLock).criticalThread == Thread.currentThread();
-      } else if (contextLock instanceof ContextLock) {
-         return ((ContextLock) contextLock).owner.criticalThread == Thread.currentThread();
-      } else {
-         return false;
-      }
-   }
+//   public static boolean isOwned(Object contextLock) {
+//      if (contextLock instanceof Request) {
+//         return ((Request) contextLock).criticalThread == Thread.currentThread();
+//      } else if (contextLock instanceof ContextLock) {
+//         return ((ContextLock) contextLock).owner.criticalThread == Thread.currentThread();
+//      } else {
+//         return false;
+//      }
+//   }
 
    private Object requestor() {
       Object requestor = this.requestor;
@@ -141,18 +142,19 @@ public class ContextLock extends CompletableFuture<Void> {
       }
    }
 
-   @Override
-   public String toString() {
-      return "C:" + owner.criticalThread + " -> " + requestor;
-   }
+//   @Override
+//   public String toString() {
+//      return "C:" + owner.criticalThread + " -> " + requestor;
+//   }
 
    private static final class Request {
+      private static final Request INSTANCE = new Request();
       // TODO: only for diagnostic purposes, remove me later and replace Request with singleton
-      Thread criticalThread;
-
-      @Override
-      public String toString() {
-         return "R:" + criticalThread;
-      }
+//      Thread criticalThread;
+//
+//      @Override
+//      public String toString() {
+//         return "R:" + criticalThread;
+//      }
    }
 }

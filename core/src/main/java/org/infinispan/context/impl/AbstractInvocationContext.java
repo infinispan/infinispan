@@ -33,7 +33,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
 
    @Override
    public final Address getOrigin() {
-      assertContextLock();
+//      assertContextLock();
       return origin;
    }
 
@@ -44,7 +44,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
 
    @Override
    public boolean hasLockedKey(Object key) {
-      assertContextLock();
+//      assertContextLock();
       return getLockedKeys().contains(key);
    }
 
@@ -73,20 +73,20 @@ public abstract class AbstractInvocationContext implements InvocationContext {
 
    @Override
    public CompletionStage<Void> enter() {
-      if (trace) log.tracef("Entering context %08X", System.identityHashCode(this));
+//      if (trace) log.tracef("Entering context %08X", System.identityHashCode(this));
       return ContextLock.enter(this, contextLockUpdater);
    }
 
    @Override
    public void exit() {
-      if (trace) log.tracef("Leaving context %08X", System.identityHashCode(this));
+//      if (trace) log.tracef("Leaving context %08X", System.identityHashCode(this));
       ContextLock.exit(this, contextLockUpdater);
    }
 
-   protected final void assertContextLock() {
-      Object contextLock = this.contextLock;
-      assert ContextLock.isOwned(contextLock) : String.format("Context lock for %08X is %s", System.identityHashCode(this), contextLock);
-   }
+//   protected final void assertContextLock() {
+//      Object contextLock = this.contextLock;
+//      assert ContextLock.isOwned(contextLock) : String.format("Context lock for %08X is %s", System.identityHashCode(this), contextLock);
+//   }
 
    @Override
    public InvocationContext clone() {

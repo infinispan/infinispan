@@ -50,19 +50,19 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public boolean isOriginLocal() {
-      assertContextLock();
+//      assertContextLock();
       return origin == null;
    }
 
    @Override
    public boolean isInTxScope() {
-      assertContextLock();
+//      assertContextLock();
       return false;
    }
 
    @Override
    public Object getLockOwner() {
-      assertContextLock();
+//      assertContextLock();
       return lockOwner;
    }
 
@@ -82,19 +82,19 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public Set<Object> getLockedKeys() {
-      assertContextLock();
+//      assertContextLock();
       return isLocked ? Collections.singleton(key) : Collections.emptySet();
    }
 
    @Override
    public void clearLockedKeys() {
-      assertContextLock();
+//      assertContextLock();
       isLocked = false;
    }
 
    @Override
    public void addLockedKey(final Object key) {
-      assertContextLock();
+//      assertContextLock();
       if (this.key == null) {
          // Set the key here
          this.key = key;
@@ -111,7 +111,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public CacheEntry lookupEntry(final Object key) {
-      assertContextLock();
+//      assertContextLock();
       if (this.key != null && isKeyEquals(key))
          return cacheEntry;
 
@@ -119,19 +119,19 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
    }
 
    public boolean isKeyEquals(Object key) {
-      assertContextLock();
+//      assertContextLock();
       return this.key == key || this.key.equals(key);
    }
 
    @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
-      assertContextLock();
+//      assertContextLock();
       return cacheEntry == null ? Collections.emptyMap() : Collections.singletonMap(key, cacheEntry);
    }
 
    @Override
    public void forEachEntry(BiConsumer<Object, CacheEntry> action) {
-      assertContextLock();
+//      assertContextLock();
       if (cacheEntry != null) {
          action.accept(key, cacheEntry);
       }
@@ -139,13 +139,13 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public int lookedUpEntriesCount() {
-      assertContextLock();
+//      assertContextLock();
       return cacheEntry != null ? 1 : 0;
    }
 
    @Override
    public void putLookedUpEntry(final Object key, final CacheEntry e) {
-      assertContextLock();
+//      assertContextLock();
       if (this.key == null) {
          // Set the key here
          this.key = key;
@@ -158,25 +158,25 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public void removeLookedUpEntry(final Object key) {
-      assertContextLock();
+//      assertContextLock();
       if (this.key != null && isKeyEquals(key)) {
          this.cacheEntry = null;
       }
    }
 
    public Object getKey() {
-      assertContextLock();
+//      assertContextLock();
       return key;
    }
 
    public CacheEntry getCacheEntry() {
-      assertContextLock();
+//      assertContextLock();
       return cacheEntry;
    }
 
    @Override
    public Address getOrigin() {
-      assertContextLock();
+//      assertContextLock();
       return origin;
    }
 
@@ -197,31 +197,27 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public boolean isEntryRemovedInContext(final Object key) {
-      assertContextLock();
+//      assertContextLock();
       CacheEntry ce = lookupEntry(key);
       return ce != null && ce.isRemoved() && ce.isChanged();
    }
 
    @Override
    public CompletionStage<Void> enter() {
-      if (trace) log.tracef("Entering context %08X", System.identityHashCode(this));
-      CompletionStage<Void> cs = ContextLock.enter(this, contextLockUpdater);
-      if (trace) {
-         log.tracef("Current context lock %s", cs);
-      }
-      return cs;
+//      if (trace) log.tracef("Entering context %08X", System.identityHashCode(this));
+      return ContextLock.enter(this, contextLockUpdater);
    }
 
    @Override
    public void exit() {
-      if (trace) log.tracef("Leaving context %08X", System.identityHashCode(this));
+//      if (trace) log.tracef("Leaving context %08X", System.identityHashCode(this));
       ContextLock.exit(this, contextLockUpdater);
    }
 
-   private void assertContextLock() {
-      Object contextLock = this.contextLock;
-      assert ContextLock.isOwned(contextLock) : "Context lock is " + contextLock;
-   }
+//   private void assertContextLock() {
+//      Object contextLock = this.contextLock;
+//      assert ContextLock.isOwned(contextLock) : "Context lock is " + contextLock;
+//   }
 
 
    public void resetState() {
