@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Spliterator;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.transaction.Status;
@@ -684,33 +685,39 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
             }
          }
 
-         while (realIterator.hasNext()) {
-            E iteratedEntry = realIterator.next();
-            Object key = getKey(iteratedEntry);
-            CacheEntry contextEntry;
-            // If the value was in the context then we ignore the stored value since we use the context value
-            if ((contextEntry = ctx.lookupEntry(key)) != null) {
-               if (seenContextKeys.add(contextEntry.getKey()) && !contextEntry.isRemoved() && !contextEntry.isNull()) {
-                  // The entry was wrapped in the context after we took the initial context snapshot
-                  // Skip the rest of the iterator for now and handle it in the "last check" loop below
-                  break;
+         CompletionStage<Void> cs = ctx.enter();
+         assert cs == null;
+         try {
+            while (realIterator.hasNext()) {
+               E iteratedEntry = realIterator.next();
+               Object key = getKey(iteratedEntry);
+               CacheEntry contextEntry;
+               // If the value was in the context then we ignore the stored value since we use the context value
+               if ((contextEntry = ctx.lookupEntry(key)) != null) {
+                  if (seenContextKeys.add(contextEntry.getKey()) && !contextEntry.isRemoved() && !contextEntry.isNull()) {
+                     // The entry was wrapped in the context after we took the initial context snapshot
+                     // Skip the rest of the iterator for now and handle it in the "last check" loop below
+                     break;
+                  }
+               } else {
+                  // We have to add any entry we read from the iterator as if it was read from the context
+                  // otherwise if the reader adds this entry to the context we will see it again
+                  // TODO Dan: what about memory usage?
+                  seenContextKeys.add(key);
+                  return iteratedEntry;
                }
-            } else {
-               // We have to add any entry we read from the iterator as if it was read from the context
-               // otherwise if the reader adds this entry to the context we will see it again
-               // TODO Dan: what about memory usage?
-               seenContextKeys.add(key);
-               return iteratedEntry;
             }
-         }
 
-         // We do a last check to make sure no additional values were added to our context while iterating
-         ctx.forEachValue((key, lookedUpEntry) -> {
-            if (seenContextKeys.add(key)) {
-               contextEntries.add(lookedUpEntry);
-            }
-         });
-         return (E) contextEntries.poll();
+            // We do a last check to make sure no additional values were added to our context while iterating
+            ctx.forEachValue((key, lookedUpEntry) -> {
+               if (seenContextKeys.add(key)) {
+                  contextEntries.add(lookedUpEntry);
+               }
+            });
+            return (E) contextEntries.poll();
+         } finally {
+            ctx.exit();
+         }
       }
    }
 

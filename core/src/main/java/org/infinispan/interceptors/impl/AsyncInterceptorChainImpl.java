@@ -231,9 +231,13 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
    @Override
    public CompletableFuture<Object> invokeAsync(InvocationContext ctx, VisitableCommand command) {
       try {
-         Object result = firstInterceptor.visitCommand(ctx, command);
-         if (result instanceof InvocationStage) {
+         Object result;
+         try {
+            result = firstInterceptor.visitCommand(ctx, command);
+         } finally {
             ctx.exit();
+         }
+         if (result instanceof InvocationStage) {
             return ((InvocationStage) result).toCompletableFuture();
          } else {
             return CompletableFuture.completedFuture(result);
@@ -246,9 +250,13 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
    @Override
    public Object invoke(InvocationContext ctx, VisitableCommand command) {
       try {
-         Object result = firstInterceptor.visitCommand(ctx, command);
-         if (result instanceof InvocationStage) {
+         Object result;
+         try {
+            result = firstInterceptor.visitCommand(ctx, command);
+         } finally {
             ctx.exit();
+         }
+         if (result instanceof InvocationStage) {
             return ((InvocationStage) result).get();
          } else {
             return result;

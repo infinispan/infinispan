@@ -52,6 +52,7 @@ import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.impl.ClusteringInterceptor;
 import org.infinispan.remoting.RemoteException;
@@ -100,6 +101,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    private final ReadOnlyManyHelper readOnlyManyHelper = new ReadOnlyManyHelper();
    private final InvocationSuccessFunction primaryReturnHandler = this::primaryReturnHandler;
+   private final InvocationSuccessAction handleGetKeysInGroup = this::handleGetKeysInGroup;
 
    @Override
    protected Log getLog() {
@@ -134,15 +136,17 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       CompletionStage<ValidResponse> future = rpcManager.invokeCommand(primaryOwner, command,
                                                                        SingleResponseCollector.validOnly(),
                                                                        rpcManager.getSyncRpcOptions());
-      return asyncInvokeNext(ctx, command, future.thenAccept(response -> {
-         if (response instanceof SuccessfulResponse) {
-            //noinspection unchecked
-            List<CacheEntry> cacheEntries = (List<CacheEntry>) response.getResponseValue();
-            for (CacheEntry entry : cacheEntries) {
-               wrapRemoteEntry(ctx, entry.getKey(), entry, false);
-            }
+      return asyncInvokeNext(ctx, command, makeStage(asyncValue(future).thenAccept(ctx, command, handleGetKeysInGroup)));
+   }
+
+   private void handleGetKeysInGroup(InvocationContext ctx, VisitableCommand command, Object rv) {
+      if (rv instanceof SuccessfulResponse) {
+         //noinspection unchecked
+         List<CacheEntry> cacheEntries = (List<CacheEntry>) ((SuccessfulResponse) rv).getResponseValue();
+         for (CacheEntry entry : cacheEntries) {
+            wrapRemoteEntry(ctx, entry.getKey(), entry, false);
          }
-      }));
+      }
    }
 
    @Override

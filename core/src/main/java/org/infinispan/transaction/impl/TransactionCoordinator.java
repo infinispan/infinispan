@@ -4,6 +4,7 @@ import static javax.transaction.xa.XAResource.XA_OK;
 import static javax.transaction.xa.XAResource.XA_RDONLY;
 
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
@@ -120,6 +121,8 @@ public class TransactionCoordinator {
          if (localTransaction.isReadOnly()) {
             if (trace) log.tracef("Readonly transaction: %s", localTransaction.getGlobalTransaction());
             // force a cleanup to release any objects held.  Some TMs don't call commit if it is a READ ONLY tx.  See ISPN-845
+            CompletionStage<Void> cs = ctx.enter();
+            assert cs == null;
             commitInternal(ctx);
             return XA_RDONLY;
          } else {

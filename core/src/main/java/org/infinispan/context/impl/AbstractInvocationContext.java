@@ -73,19 +73,19 @@ public abstract class AbstractInvocationContext implements InvocationContext {
 
    @Override
    public CompletionStage<Void> enter() {
-      if (trace) log.trace("Entering context");
+      if (trace) log.tracef("Entering context %08X", System.identityHashCode(this));
       return ContextLock.enter(this, contextLockUpdater);
    }
 
    @Override
    public void exit() {
-      if (trace) log.trace("Leaving context");
+      if (trace) log.tracef("Leaving context %08X", System.identityHashCode(this));
       ContextLock.exit(this, contextLockUpdater);
    }
 
    protected final void assertContextLock() {
       Object contextLock = this.contextLock;
-      assert ContextLock.isOwned(contextLock) : "Context lock is " + contextLock;
+      assert ContextLock.isOwned(contextLock) : String.format("Context lock for %08X is %s", System.identityHashCode(this), contextLock);
    }
 
    @Override

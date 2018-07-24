@@ -225,10 +225,11 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
 
    public void resetState() {
-      assertContextLock();
       this.key = null;
       this.cacheEntry = null;
       this.isLocked = false;
+      CompletionStage<Void> cs = enter();
+      assert cs == null;
    }
 
    @Override

@@ -21,6 +21,7 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -595,6 +596,10 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          Map<K, V> keys = internalGetGroup(groupName, explicitFlagsBitSet, context);
          long removeFlags = addIgnoreReturnValuesFlag(explicitFlagsBitSet);
          for (K key : keys.keySet()) {
+            // We need to re-enter the context which is going to be reused
+            CompletionStage<Void> cs = context.enter();
+            // There should be no pending threads left
+            assert cs == null;
             executeCommandAndCommitIfNeeded(i -> context, createRemoveCommand(key, removeFlags), UNBOUNDED);
          }
          if (!onGoingTransaction) {

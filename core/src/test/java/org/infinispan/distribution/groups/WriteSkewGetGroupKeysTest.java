@@ -43,6 +43,10 @@ public class WriteSkewGetGroupKeysTest extends TransactionalGetGroupKeysTest {
       isolationLevel = IsolationLevel.REPEATABLE_READ;
    }
 
+   @Override
+   public void testRemoveGroupKeys() {
+      super.testRemoveGroupKeys();    // TODO: Customise this generated block
+   }
 
    public void testRemoveGroupWithConcurrentConflictingUpdate() throws Exception{
       final TestCache testCache = createTestCacheAndReset(GROUP, this.caches());
