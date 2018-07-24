@@ -4,6 +4,12 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ASYNC_EX
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_CALLBACK_HANDLER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_CLIENT_SUBJECT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_SERVER_NAME;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_EXHAUSTED_ACTION;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MAX_ACTIVE;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MAX_PENDING_REQUESTS;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MAX_WAIT;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MIN_IDLE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECT_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.HASH_FUNCTION_PREFIX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
@@ -74,14 +80,20 @@ public class ConfigurationTest {
       OPTIONS.put(ASYNC_EXECUTOR_FACTORY, c -> c.asyncExecutorFactory().factoryClass());
       OPTIONS.put(REQUEST_BALANCING_STRATEGY, c -> c.balancingStrategyFactory().get().getClass());
       OPTIONS.put("maxActive", c -> c.connectionPool().maxActive());
+      OPTIONS.put(CONNECTION_POOL_MAX_ACTIVE, c -> c.connectionPool().maxActive());
       OPTIONS.put("maxTotal", c -> c.connectionPool().maxTotal());
       OPTIONS.put("maxWait", c -> c.connectionPool().maxWait());
+      OPTIONS.put(CONNECTION_POOL_MAX_WAIT, c -> c.connectionPool().maxWait());
       OPTIONS.put("maxIdle", c -> c.connectionPool().maxIdle());
       OPTIONS.put("minIdle", c -> c.connectionPool().minIdle());
+      OPTIONS.put(CONNECTION_POOL_MIN_IDLE, c -> c.connectionPool().minIdle());
       OPTIONS.put("exhaustedAction", c -> c.connectionPool().exhaustedAction());
+      OPTIONS.put(CONNECTION_POOL_EXHAUSTED_ACTION, c -> c.connectionPool().exhaustedAction());
       OPTIONS.put("numTestsPerEvictionRun", c -> c.connectionPool().numTestsPerEvictionRun());
       OPTIONS.put("timeBetweenEvictionRunsMillis", c -> c.connectionPool().timeBetweenEvictionRuns());
       OPTIONS.put("minEvictableIdleTimeMillis", c -> c.connectionPool().minEvictableIdleTime());
+      OPTIONS.put(CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME, c -> c.connectionPool().minEvictableIdleTime());
+      OPTIONS.put(CONNECTION_POOL_MAX_PENDING_REQUESTS, c -> c.connectionPool().maxPendingRequests());
       OPTIONS.put("testOnBorrow", c -> c.connectionPool().testOnBorrow());
       OPTIONS.put("testOnReturn", c -> c.connectionPool().testOnReturn());
       OPTIONS.put("testWhileIdle", c -> c.connectionPool().testWhileIdle());
@@ -116,7 +128,7 @@ public class ConfigurationTest {
       OPTIONS.put(NEAR_CACHE_NAME_PATTERN, c -> c.nearCache().cacheNamePattern().pattern());
 
       TYPES.put(Boolean.class, b -> Boolean.toString((Boolean) b));
-      TYPES.put(ExhaustedAction.class, e -> Integer.toString(((ExhaustedAction) e).ordinal()));
+      TYPES.put(ExhaustedAction.class, e -> e.toString());
       TYPES.put(Class.class, c -> ((Class<?>) c).getName());
       TYPES.put(Integer.class, Object::toString);
       TYPES.put(Long.class, Object::toString);
@@ -165,16 +177,17 @@ public class ConfigurationTest {
          .balancingStrategy(SomeRequestBalancingStrategy.class)
          .connectionPool()
             .maxActive(100)
-            .maxTotal(150)
             .maxWait(1000)
-            .maxIdle(20)
             .minIdle(10)
+            .minEvictableIdleTime(12000)
             .exhaustedAction(ExhaustedAction.WAIT)
+            .maxPendingRequests(12)
+            .maxIdle(20)
+            .maxTotal(150)
             .numTestsPerEvictionRun(5)
             .testOnBorrow(true)
             .testOnReturn(true)
             .testWhileIdle(false)
-            .minEvictableIdleTime(12000)
             .timeBetweenEvictionRuns(15000)
          .connectionTimeout(100)
          .version(ProtocolVersion.PROTOCOL_VERSION_13)
@@ -224,15 +237,16 @@ public class ConfigurationTest {
       p.setProperty(ASYNC_EXECUTOR_FACTORY, "org.infinispan.client.hotrod.SomeAsyncExecutorFactory");
       p.setProperty(REQUEST_BALANCING_STRATEGY, "org.infinispan.client.hotrod.SomeRequestBalancingStrategy");
       p.setProperty(HASH_FUNCTION_PREFIX + "." + 2, "org.infinispan.client.hotrod.SomeCustomConsistentHashV2");
-      p.setProperty("maxActive", "100");
+      p.setProperty(CONNECTION_POOL_MAX_ACTIVE, "100");
       p.setProperty("maxTotal", "150");
-      p.setProperty("maxWait", "1000");
+      p.setProperty(CONNECTION_POOL_MAX_WAIT, "1000");
       p.setProperty("maxIdle", "20");
-      p.setProperty("minIdle", "10");
-      p.setProperty("exhaustedAction", "1");
+      p.setProperty(CONNECTION_POOL_MIN_IDLE, "10");
+      p.setProperty(CONNECTION_POOL_EXHAUSTED_ACTION, ExhaustedAction.WAIT.name());
       p.setProperty("numTestsPerEvictionRun", "5");
       p.setProperty("timeBetweenEvictionRunsMillis", "15000");
-      p.setProperty("minEvictableIdleTimeMillis", "12000");
+      p.setProperty(CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME, "12000");
+      p.setProperty(CONNECTION_POOL_MAX_PENDING_REQUESTS, "12");
       p.setProperty("testOnBorrow", "true");
       p.setProperty("testOnReturn", "true");
       p.setProperty("testWhileIdle", "false");
@@ -493,14 +507,19 @@ public class ConfigurationTest {
       assertEquals(null, configuration.consistentHashImpl(1));
       assertEquals(SomeCustomConsistentHashV2.class, configuration.consistentHashImpl(2));
       assertEqualsConfig(100, "maxActive", configuration);
+      assertEqualsConfig(100, CONNECTION_POOL_MAX_ACTIVE, configuration);
       assertEqualsConfig(150, "maxTotal", configuration);
       assertEqualsConfig(1000L, "maxWait", configuration);
+      assertEqualsConfig(1000L, CONNECTION_POOL_MAX_WAIT, configuration);
       assertEqualsConfig(20, "maxIdle", configuration);
       assertEqualsConfig(10, "minIdle", configuration);
-      assertEqualsConfig(ExhaustedAction.WAIT, "exhaustedAction", configuration);
+      assertEqualsConfig(10, CONNECTION_POOL_MIN_IDLE, configuration);
+      assertEqualsConfig(ExhaustedAction.WAIT, CONNECTION_POOL_EXHAUSTED_ACTION, configuration);
       assertEqualsConfig(5, "numTestsPerEvictionRun", configuration);
       assertEqualsConfig(15000L, "timeBetweenEvictionRunsMillis", configuration);
       assertEqualsConfig(12000L, "minEvictableIdleTimeMillis", configuration);
+      assertEqualsConfig(12000L, CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME, configuration);
+      assertEqualsConfig(12, CONNECTION_POOL_MAX_PENDING_REQUESTS, configuration);
       assertEqualsConfig(true, "testOnBorrow", configuration);
       assertEqualsConfig(true, "testOnReturn", configuration);
       assertEqualsConfig(false, "testWhileIdle", configuration);

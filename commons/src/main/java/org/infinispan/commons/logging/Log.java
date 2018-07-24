@@ -203,5 +203,9 @@ public interface Log extends BasicLogger {
    @Message(value = "WEAK and BOUNDED encoded flag isn't supported!", id = 28022)
    CounterException invalidCounterTypeEncoded();
 
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to convert property [%s] to an enum! Using default value of %d", id = 28023)
+   void unableToConvertStringPropertyToEnum(String value, String defaultValue);
+
    //----- counters exceptions // don't use the same id range  ------
 }

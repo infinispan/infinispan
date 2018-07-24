@@ -251,7 +251,7 @@ public class Configuration {
    }
 
    public Properties properties() {
-      Properties properties = new Properties();
+      TypedProperties properties = new TypedProperties();
       if (asyncExecutorFactory().factoryClass() != null) {
          properties.setProperty(ConfigurationProperties.ASYNC_EXECUTOR_FACTORY, asyncExecutorFactory().factoryClass().getName());
          TypedProperties aefProps = asyncExecutorFactory().properties();
@@ -271,30 +271,37 @@ public class Configuration {
                   consistentHashImpl(version).getName());
          }
       }
-      properties.setProperty(ConfigurationProperties.FORCE_RETURN_VALUES, Boolean.toString(forceReturnValues()));
-      properties.setProperty(ConfigurationProperties.KEY_SIZE_ESTIMATE, Integer.toString(keySizeEstimate()));
+      properties.setProperty(ConfigurationProperties.FORCE_RETURN_VALUES, forceReturnValues());
+      properties.setProperty(ConfigurationProperties.KEY_SIZE_ESTIMATE, keySizeEstimate());
       properties.setProperty(ConfigurationProperties.MARSHALLER, marshallerClass().getName());
       properties.setProperty(ConfigurationProperties.PROTOCOL_VERSION, version().toString());
-      properties.setProperty(ConfigurationProperties.SO_TIMEOUT, Integer.toString(socketTimeout()));
-      properties.setProperty(ConfigurationProperties.TCP_NO_DELAY, Boolean.toString(tcpNoDelay()));
-      properties.setProperty(ConfigurationProperties.TCP_KEEP_ALIVE, Boolean.toString(tcpKeepAlive()));
-      properties.setProperty(ConfigurationProperties.VALUE_SIZE_ESTIMATE, Integer.toString(valueSizeEstimate()));
-      properties.setProperty(ConfigurationProperties.MAX_RETRIES, Integer.toString(maxRetries()));
+      properties.setProperty(ConfigurationProperties.SO_TIMEOUT, socketTimeout());
+      properties.setProperty(ConfigurationProperties.TCP_NO_DELAY, tcpNoDelay());
+      properties.setProperty(ConfigurationProperties.TCP_KEEP_ALIVE, tcpKeepAlive());
+      properties.setProperty(ConfigurationProperties.VALUE_SIZE_ESTIMATE, valueSizeEstimate());
+      properties.setProperty(ConfigurationProperties.MAX_RETRIES, maxRetries());
 
-      properties.setProperty("exhaustedAction", Integer.toString(connectionPool().exhaustedAction().ordinal()));
-      properties.setProperty("maxActive", Integer.toString(connectionPool().maxActive()));
-      properties.setProperty("maxTotal", Integer.toString(connectionPool().maxTotal()));
-      properties.setProperty("maxWait", Long.toString(connectionPool().maxWait()));
-      properties.setProperty("maxIdle", Integer.toString(connectionPool().maxIdle()));
-      properties.setProperty("minIdle", Integer.toString(connectionPool().minIdle()));
-      properties.setProperty("numTestsPerEvictionRun", Integer.toString(connectionPool().numTestsPerEvictionRun()));
-      properties.setProperty("minEvictableIdleTimeMillis", Long.toString(connectionPool().minEvictableIdleTime()));
-      properties.setProperty("timeBetweenEvictionRunsMillis", Long.toString(connectionPool().timeBetweenEvictionRuns()));
+      properties.setProperty(ConfigurationProperties.CONNECTION_POOL_EXHAUSTED_ACTION, connectionPool().exhaustedAction().name());
+      properties.setProperty("exhaustedAction", connectionPool().exhaustedAction().ordinal());
+      properties.setProperty(ConfigurationProperties.CONNECTION_POOL_MAX_ACTIVE, connectionPool().maxActive());
+      properties.setProperty("maxActive", connectionPool().maxActive());
+      properties.setProperty(ConfigurationProperties.CONNECTION_POOL_MAX_WAIT, connectionPool().maxWait());
+      properties.setProperty("maxWait", connectionPool().maxWait());
+      properties.setProperty(ConfigurationProperties.CONNECTION_POOL_MIN_IDLE, connectionPool().minIdle());
+      properties.setProperty("minIdle", connectionPool().minIdle());
+      properties.setProperty(ConfigurationProperties.CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME, connectionPool().minEvictableIdleTime());
+      properties.setProperty("minEvictableIdleTimeMillis", connectionPool().minEvictableIdleTime());
+      properties.setProperty(ConfigurationProperties.CONNECTION_POOL_MAX_PENDING_REQUESTS, connectionPool().maxPendingRequests());
 
-      properties.setProperty("lifo", Boolean.toString(connectionPool().lifo()));
-      properties.setProperty("testOnBorrow", Boolean.toString(connectionPool().testOnBorrow()));
-      properties.setProperty("testOnReturn", Boolean.toString(connectionPool().testOnReturn()));
-      properties.setProperty("testWhileIdle", Boolean.toString(connectionPool().testWhileIdle()));
+      // Deprecated properties
+      properties.setProperty("maxIdle", connectionPool().maxIdle());
+      properties.setProperty("maxTotal", connectionPool().maxTotal());
+      properties.setProperty("numTestsPerEvictionRun", connectionPool().numTestsPerEvictionRun());
+      properties.setProperty("timeBetweenEvictionRunsMillis", connectionPool().timeBetweenEvictionRuns());
+      properties.setProperty("lifo", connectionPool().lifo());
+      properties.setProperty("testOnBorrow", connectionPool().testOnBorrow());
+      properties.setProperty("testOnReturn", connectionPool().testOnReturn());
+      properties.setProperty("testWhileIdle", connectionPool().testWhileIdle());
 
       StringBuilder servers = new StringBuilder();
       for (ServerConfiguration server : servers()) {
