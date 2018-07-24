@@ -242,9 +242,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Classpath does not look correct. Make sure you are not mixing uber and jars", id = 4065)
    void warnAboutUberJarDuplicates();
 
-   @LogMessage(level = WARN)
+   /*@LogMessage(level = WARN)
    @Message(value = "Unable to convert property [%s] to an enum! Using default value of %d", id = 4066)
-   void unableToConvertStringPropertyToEnum(String value, String defaultValue);
+   void unableToConvertStringPropertyToEnum(String value, String defaultValue);*/
 
    @Message(value = "Cannot specify both a callback handler and a username for authentication", id = 4067)
    CacheConfigurationException callbackHandlerAndUsernameMutuallyExclusive();

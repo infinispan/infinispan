@@ -2,8 +2,9 @@ package org.infinispan.client.hotrod.configuration;
 
 import java.util.Properties;
 
-import org.infinispan.client.hotrod.impl.TypedProperties;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
  * ConnectionPoolConfigurationBuilder. Specifies connection pooling properties for the HotRod client.
@@ -211,20 +212,34 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
     */
    public ConnectionPoolConfigurationBuilder withPoolProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
-      exhaustedAction(ExhaustedAction.values()[typed.getIntProperty("whenExhaustedAction", exhaustedAction.ordinal(), true)]);
+      exhaustedAction(typed.getEnumProperty(ConfigurationProperties.CONNECTION_POOL_EXHAUSTED_ACTION, ExhaustedAction.class,
+         ExhaustedAction.values()[typed.getIntProperty("whenExhaustedAction", exhaustedAction.ordinal(), true)],
+            true));
+      maxActive(typed.getIntProperty(ConfigurationProperties.CONNECTION_POOL_MAX_ACTIVE,
+                  typed.getIntProperty("maxActive", maxActive, true),
+                  true));
+      maxWait(typed.getLongProperty(ConfigurationProperties.CONNECTION_POOL_MAX_WAIT,
+            typed.getLongProperty("maxWait", maxWait, true),
+            true));
+      minIdle(typed.getIntProperty(ConfigurationProperties.CONNECTION_POOL_MIN_IDLE,
+            typed.getIntProperty("minIdle", minIdle, true),
+            true));
+      minEvictableIdleTime(typed.getLongProperty(ConfigurationProperties.CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME,
+            typed.getLongProperty("minEvictableIdleTimeMillis", minEvictableIdleTime, true),
+            true));
+      maxPendingRequests(typed.getIntProperty(ConfigurationProperties.CONNECTION_POOL_MAX_PENDING_REQUESTS,
+            typed.getIntProperty("maxPendingRequests", maxPendingRequests, true),
+            true));
+
       lifo(typed.getBooleanProperty("lifo", lifo, true));
-      maxActive(typed.getIntProperty("maxActive", maxActive, true));
       maxTotal(typed.getIntProperty("maxTotal", maxTotal, true));
-      maxWait(typed.getLongProperty("maxWait", maxWait, true));
       maxIdle(typed.getIntProperty("maxIdle", maxIdle, true));
-      minIdle(typed.getIntProperty("minIdle", minIdle, true));
       numTestsPerEvictionRun(typed.getIntProperty("numTestsPerEvictionRun", numTestsPerEvictionRun, true));
       timeBetweenEvictionRuns(typed.getLongProperty("timeBetweenEvictionRunsMillis", timeBetweenEvictionRuns, true));
-      minEvictableIdleTime(typed.getLongProperty("minEvictableIdleTimeMillis", minEvictableIdleTime, true));
       testOnBorrow(typed.getBooleanProperty("testOnBorrow", testOnBorrow, true));
       testOnReturn(typed.getBooleanProperty("testOnReturn", testOnReturn, true));
       testWhileIdle(typed.getBooleanProperty("testWhileIdle", testWhileIdle, true));
-      maxPendingRequests(typed.getIntProperty("maxPendingRequests", maxPendingRequests, true));
+
       return this;
    }
 

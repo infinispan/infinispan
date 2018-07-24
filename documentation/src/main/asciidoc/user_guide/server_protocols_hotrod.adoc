@@ -82,7 +82,7 @@ In the above example the value of the _infinispan.client.hotrod.server_list_ pro
 
 which means that the value should be taken from a system property named jboss.bind.address.management and if it is not defined use 127.0.0.1.
 
-For a complete reference of the available configuration options for the properties file please refer to link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager]'s javadoc.
+For a complete reference of the available configuration options for the properties file please refer to link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html#package.description[remote client configuration] javadoc.
 
 ==== Authentication
 
