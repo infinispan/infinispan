@@ -92,6 +92,16 @@ class AssertsNearCache<K, V> {
       return this;
    }
 
+   AssertsNearCache<K, V> putAsync(K key, V value, long time, TimeUnit timeUnit) throws ExecutionException, InterruptedException {
+      remote.putAsync(key, value, time, timeUnit).get();
+      return this;
+   }
+
+   AssertsNearCache<K, V> putAsync(K key, V value, long time, TimeUnit timeUnit, long idle, TimeUnit idleTimeUnit) throws ExecutionException, InterruptedException {
+      remote.putAsync(key, value, time, timeUnit, idle, idleTimeUnit).get();
+      return this;
+   }
+
    AssertsNearCache<K, V> remove(K key) {
       remote.remove(key);
       return this;
