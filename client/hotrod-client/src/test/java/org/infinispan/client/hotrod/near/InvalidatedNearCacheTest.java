@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -136,6 +137,8 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
       assertClient.getAsync(1, "v2").expectNearGetValue(1, "v2");
       assertClient.putAsync(1, "v3").expectNearRemove(1);
       assertClient.removeAsync(1).expectNearRemove(1);
+      assertClient.putAsync(1, "v4", 3, TimeUnit.MILLISECONDS).expectNearRemove(1);
+      assertClient.putAsync(1, "v5", 3, TimeUnit.MILLISECONDS, 3, TimeUnit.MILLISECONDS).expectNearRemove(1);
    }
 
    public void testGetUpdatesNearCache() {
