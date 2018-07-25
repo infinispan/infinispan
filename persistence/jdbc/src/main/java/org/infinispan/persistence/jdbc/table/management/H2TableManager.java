@@ -22,15 +22,20 @@ class H2TableManager extends AbstractTableManager {
    @Override
    public String getUpsertRowSql() {
       if (upsertRowSql == null) {
-         upsertRowSql = String.format("MERGE INTO %1$s (%2$s, %3$s, %4$s) KEY(%4$s) VALUES(?, ?, ?)", getTableName(),
-                                      config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+         if (metaData.isSegmentedDisabled()) {
+            upsertRowSql = String.format("MERGE INTO %1$s (%2$s, %3$s, %4$s) KEY(%4$s) VALUES(?, ?, ?)", getTableName(),
+                  config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+         } else {
+            upsertRowSql = String.format("MERGE INTO %1$s (%2$s, %3$s, %4$s, %5$s) KEY(%4$s) VALUES(?, ?, ?, ?)", getTableName(),
+                  config.dataColumnName(), config.timestampColumnName(), config.idColumnName(), config.segmentColumnName());
+         }
       }
       return upsertRowSql;
    }
 
    @Override
-   protected void dropTimestampIndex(Connection conn) throws PersistenceException {
-      String dropIndexDdl = String.format("DROP INDEX IF EXISTS  %s", getIndexName(true));
+   protected void dropIndex(Connection conn, String indexName) throws PersistenceException {
+      String dropIndexDdl = String.format("DROP INDEX IF EXISTS  %s", getIndexName(true, indexName));
       executeUpdateSql(conn, dropIndexDdl);
    }
 }

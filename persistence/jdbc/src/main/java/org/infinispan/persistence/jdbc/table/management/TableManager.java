@@ -55,15 +55,21 @@ public interface TableManager {
 
    String getSelectIdRowSql();
 
-   String getCountRowsSql();
+   String getCountNonExpiredRowsSql();
+
+   String getCountNonExpiredRowsSqlForSegments(int numSegments);
 
    String getDeleteRowSql();
 
    String getLoadNonExpiredAllRowsSql();
 
+   String getLoadNonExpiredRowsSqlForSegments(int numSegments);
+
    String getLoadAllRowsSql();
 
    String getDeleteAllRowsSql();
+
+   String getDeleteRowsSqlForSegments(int numSegments);
 
    String getSelectExpiredBucketsSql();
 
@@ -73,9 +79,7 @@ public interface TableManager {
 
    String encodeString(String stringToEncode);
 
-   void prepareUpsertStatement(PreparedStatement ps, String key, long timestamp, ByteBuffer byteBuffer) throws SQLException;
+   void prepareUpsertStatement(PreparedStatement ps, String key, long timestamp, int segment, ByteBuffer byteBuffer) throws SQLException;
 
-   default void prepareUpdateStatement(PreparedStatement ps, String key, long timestamp, ByteBuffer byteBuffer) throws SQLException {
-      prepareUpsertStatement(ps, key, timestamp, byteBuffer);
-   }
+   void prepareUpdateStatement(PreparedStatement ps, String key, long timestamp, int segment, ByteBuffer byteBuffer) throws SQLException;
 }

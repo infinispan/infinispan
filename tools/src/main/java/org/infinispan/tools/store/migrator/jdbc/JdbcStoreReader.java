@@ -20,6 +20,7 @@ import org.infinispan.persistence.jdbc.table.management.TableManager;
 import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
+import org.infinispan.tools.store.migrator.Element;
 import org.infinispan.tools.store.migrator.StoreIterator;
 import org.infinispan.tools.store.migrator.StoreProperties;
 import org.infinispan.tools.store.migrator.StoreType;
@@ -44,7 +45,10 @@ public class JdbcStoreReader implements StoreIterator {
       this.marshaller = SerializationConfigUtil.getMarshaller(props);
       this.config = JdbcConfigurationUtil.getStoreConfig(props);
       this.connectionFactory = new PooledConnectionFactory();
-      this.metaData = new DbMetaData(config.dialect(), config.dbMajorVersion(), config.dbMinorVersion(), false, false);
+      String segmentCount = props.get(Element.SEGMENT_COUNT);
+      this.metaData = new DbMetaData(config.dialect(), config.dbMajorVersion(), config.dbMinorVersion(), false, false,
+            // If we don't have segments then disable it
+            segmentCount == null || Integer.parseInt(segmentCount) <= 0);
       this.stringConfig = config.table();
       this.binaryConfig = createBinaryTableConfig();
 

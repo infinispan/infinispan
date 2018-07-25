@@ -112,7 +112,9 @@ public class UnitTestDatabaseManager {
          .dataColumnName("DATA_COLUMN")
          .dataColumnType("BLOB")
          .timestampColumnName("TIMESTAMP_COLUMN")
-         .timestampColumnType("BIGINT");
+         .timestampColumnType("BIGINT")
+         .segmentColumnName("SEGMENT_COLUMN")
+         .segmentColumnType("INTEGER");
    }
 
    /**

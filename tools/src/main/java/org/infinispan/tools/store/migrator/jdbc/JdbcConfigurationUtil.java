@@ -15,6 +15,7 @@ import static org.infinispan.tools.store.migrator.Element.MAJOR_VERSION;
 import static org.infinispan.tools.store.migrator.Element.MINOR_VERSION;
 import static org.infinispan.tools.store.migrator.Element.NAME;
 import static org.infinispan.tools.store.migrator.Element.PASSWORD;
+import static org.infinispan.tools.store.migrator.Element.SEGMENT;
 import static org.infinispan.tools.store.migrator.Element.STRING;
 import static org.infinispan.tools.store.migrator.Element.TABLE;
 import static org.infinispan.tools.store.migrator.Element.TABLE_NAME_PREFIX;
@@ -69,6 +70,8 @@ public class JdbcConfigurationUtil {
             .dataColumnType(props.get(TABLE, tableType, DATA, TYPE))
             .timestampColumnName(props.get(TABLE, tableType, TIMESTAMP, NAME))
             .timestampColumnType(props.get(TABLE, tableType, TIMESTAMP, TYPE))
+            .segmentColumnName(props.get(TABLE, tableType, SEGMENT, NAME))
+            .segmentColumnType(props.get(TABLE, tableType, SEGMENT, TYPE))
             .create();
    }
 

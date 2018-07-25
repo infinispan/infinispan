@@ -26,9 +26,15 @@ class SQLiteTableManager extends AbstractTableManager {
    @Override
    public String getUpsertRowSql() {
       if (upsertRowSql == null) {
-         upsertRowSql = String.format("INSERT OR REPLACE INTO %s (%s, %s, %s) VALUES (?, ?, ?)",
-                                      getTableName(), config.dataColumnName(), config.timestampColumnName(),
-                                      config.idColumnName());
+         if (metaData.isSegmentedDisabled()) {
+            upsertRowSql = String.format("INSERT OR REPLACE INTO %s (%s, %s, %s) VALUES (?, ?, ?)",
+                  getTableName(), config.dataColumnName(), config.timestampColumnName(),
+                  config.idColumnName());
+         } else {
+            upsertRowSql = String.format("INSERT OR REPLACE INTO %s (%s, %s, %s, %s) VALUES (?, ?, ?, ?)",
+                  getTableName(), config.dataColumnName(), config.timestampColumnName(),
+                  config.idColumnName(), config.segmentColumnName());
+         }
       }
       return upsertRowSql;
    }

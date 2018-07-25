@@ -25,7 +25,9 @@ public enum Element {
 
    DATA_COLUMN("data-column"),
    ID_COLUMN("id-column"),
-   TIMESTAMP_COLUMN("timestamp-column"), ;
+   TIMESTAMP_COLUMN("timestamp-column"),
+   SEGMENT_COLUMN("segment-column"),
+   ;
 
    private final String name;
 

@@ -16,16 +16,16 @@ class SybaseTableManager extends AbstractTableManager {
    }
 
    @Override
-   protected String getDropTimestampSql() {
-      return String.format("DROP INDEX %s.%s", getTableName(), getIndexName(true));
+   protected String getDropTimestampSql(String indexName) {
+      return String.format("DROP INDEX %s.%s", getTableName(), getIndexName(true, indexName));
    }
 
    @Override
    public String getUpdateRowSql() {
       if (updateRowSql == null) {
          updateRowSql = String.format("UPDATE %s SET %s = ? , %s = ? WHERE %s = convert(%s,?)",
-                                      getTableName(), config.dataColumnName(), config.timestampColumnName(),
-                                      config.idColumnName(), config.idColumnType());
+               getTableName(), config.dataColumnName(), config.timestampColumnName(),
+               config.idColumnName(), config.idColumnType());
       }
       return updateRowSql;
    }
@@ -67,12 +67,22 @@ class SybaseTableManager extends AbstractTableManager {
    @Override
    public String getUpsertRowSql() {
       if (upsertRowSql == null) {
-         upsertRowSql = String.format("MERGE INTO %1$s AS t " +
-                     "USING (SELECT ? %2$s, ? %3$s, ? %4$s) AS tmp " +
-                     "ON (t.%4$s = tmp.%4$s) " +
-                     "WHEN MATCHED THEN UPDATE SET t.%2$s = tmp.%2$s, t.%3$s = tmp.%3$s " +
-                     "WHEN NOT MATCHED THEN INSERT VALUES (tmp.%4$s, tmp.%2$s, tmp.%3$s)",
-               this.getTableName(), config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+         if (metaData.isSegmentedDisabled()) {
+            upsertRowSql = String.format("MERGE INTO %1$s AS t " +
+                        "USING (SELECT ? %2$s, ? %3$s, ? %4$s) AS tmp " +
+                        "ON (t.%4$s = tmp.%4$s) " +
+                        "WHEN MATCHED THEN UPDATE SET t.%2$s = tmp.%2$s, t.%3$s = tmp.%3$s " +
+                        "WHEN NOT MATCHED THEN INSERT VALUES (tmp.%4$s, tmp.%2$s, tmp.%3$s)",
+                  this.getTableName(), config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+         } else {
+            upsertRowSql = String.format("MERGE INTO %1$s AS t " +
+                        "USING (SELECT ? %2$s, ? %3$s, ? %4$s, ? %5$s) AS tmp " +
+                        "ON (t.%4$s = tmp.%4$s) " +
+                        "WHEN MATCHED THEN UPDATE SET t.%2$s = tmp.%2$s, t.%3$s = tmp.%3$s " +
+                        "WHEN NOT MATCHED THEN INSERT VALUES (tmp.%4$s, tmp.%2$s, tmp.%3$s, tmp.%5$s)",
+                  this.getTableName(), config.dataColumnName(), config.timestampColumnName(), config.idColumnName(),
+                  config.segmentColumnName());
+         }
       }
       return upsertRowSql;
    }

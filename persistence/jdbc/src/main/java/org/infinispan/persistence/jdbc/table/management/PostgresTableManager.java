@@ -20,8 +20,8 @@ class PostgresTableManager extends AbstractTableManager {
    }
 
    @Override
-   protected void dropTimestampIndex(Connection conn) throws PersistenceException {
-      String dropIndexDdl = String.format("DROP INDEX IF EXISTS  %s", getIndexName(true));
+   protected void dropIndex(Connection conn, String indexName) throws PersistenceException {
+      String dropIndexDdl = String.format("DROP INDEX IF EXISTS  %s", getIndexName(true, indexName));
       executeUpdateSql(conn, dropIndexDdl);
    }
 
@@ -29,8 +29,8 @@ class PostgresTableManager extends AbstractTableManager {
    public String getUpdateRowSql() {
       if (updateRowSql == null) {
          updateRowSql = String.format("UPDATE %s SET %s = ? , %s = ? WHERE %s = cast(? as %s)",
-                                      getTableName(), config.dataColumnName(), config.timestampColumnName(),
-                                      config.idColumnName(), config.idColumnType());
+               getTableName(), config.dataColumnName(), config.timestampColumnName(),
+               config.idColumnName(), config.idColumnType());
       }
       return updateRowSql;
    }
@@ -81,8 +81,8 @@ class PostgresTableManager extends AbstractTableManager {
    public String getUpsertRowSql() {
       if (upsertRowSql == null) {
          upsertRowSql = String.format("%1$s ON CONFLICT (%2$s) DO UPDATE SET %3$s = EXCLUDED.%3$s, %4$s = EXCLUDED.%4$s",
-                                      getInsertRowSql(), config.idColumnName(), config.dataColumnName(),
-                                      config.timestampColumnName());
+               getInsertRowSql(), config.idColumnName(), config.dataColumnName(),
+               config.timestampColumnName());
       }
       return upsertRowSql;
    }

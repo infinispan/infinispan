@@ -241,6 +241,12 @@ public class JdbcStoreConfigurationParser implements ConfigurationParser {
                builder.timestampColumnType(column.type);
                break;
             }
+            case SEGMENT_COLUMN: {
+               Column column = parseTableElementAttributes(reader);
+               builder.segmentColumnName(column.name);
+               builder.segmentColumnType(column.type);
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedElement(reader);
             }

@@ -26,7 +26,7 @@ public class TableManagerFactory {
    public static TableManager getManager(ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config) {
       DbMetaData metaData = getDbMetaData(connectionFactory, config.dialect(), config.dbMajorVersion(),
             config.dbMinorVersion(), isPropertyDisabled(config, UPSERT_DISABLED),
-            isPropertyDisabled(config, INDEXING_DISABLED));
+            isPropertyDisabled(config, INDEXING_DISABLED), !config.segmented());
 
       return getManager(metaData, connectionFactory, config.table());
    }
@@ -59,9 +59,9 @@ public class TableManagerFactory {
 
    private static DbMetaData getDbMetaData(ConnectionFactory connectionFactory, DatabaseType databaseType,
                                            Integer majorVersion, Integer minorVersion, boolean disableUpsert,
-                                           boolean disableIndexing) {
+                                           boolean disableIndexing, boolean disableSegmented) {
       if (databaseType != null && majorVersion != null && minorVersion != null)
-         return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert, disableIndexing);
+         return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
 
       Connection connection = null;
       if (majorVersion == null || minorVersion == null) {
@@ -81,7 +81,7 @@ public class TableManagerFactory {
 
             // If we already know the DatabaseType via User, then don't check
             if (databaseType != null)
-               return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert, disableIndexing);
+               return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
          } catch (SQLException e) {
             if (LOG.isDebugEnabled())
                LOG.debug("Unable to retrieve DB Major and Minor versions from JDBC metadata.", e);
@@ -93,7 +93,7 @@ public class TableManagerFactory {
       try {
          connection = connectionFactory.getConnection();
          String dbProduct = connection.getMetaData().getDatabaseProductName();
-         return new DbMetaData(guessDialect(dbProduct), majorVersion, minorVersion, disableUpsert, disableIndexing);
+         return new DbMetaData(guessDialect(dbProduct), majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
       } catch (Exception e) {
          if (LOG.isDebugEnabled())
             LOG.debug("Unable to guess dialect from JDBC metadata.", e);
@@ -106,7 +106,7 @@ public class TableManagerFactory {
       try {
          connection = connectionFactory.getConnection();
          String dbProduct = connectionFactory.getConnection().getMetaData().getDriverName();
-         return new DbMetaData(guessDialect(dbProduct), majorVersion, minorVersion, disableUpsert, disableIndexing);
+         return new DbMetaData(guessDialect(dbProduct), majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
       } catch (Exception e) {
          if (LOG.isDebugEnabled())
             LOG.debug("Unable to guess database dialect from JDBC driver name.", e);
@@ -120,7 +120,7 @@ public class TableManagerFactory {
 
       if (LOG.isDebugEnabled())
          LOG.debugf("Guessing database dialect as '%s'.  If this is incorrect, please specify the correct dialect using the 'dialect' attribute in your configuration.  Supported database dialect strings are %s", databaseType, Arrays.toString(DatabaseType.values()));
-      return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert, disableIndexing);
+      return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
    }
 
    private static DatabaseType guessDialect(String name) {

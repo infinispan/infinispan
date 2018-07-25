@@ -236,6 +236,7 @@ public class ModelKeys {
     static final String SECURITY_NAME = "SECURITY";
     static final String SEGMENTS = "segments";
     static final String SEGMENTED = "segmented";
+    static final String SEGMENT_COLUMN = "segment-column";
     static final String CAPACITY_FACTOR = "capacity-factor";
     static final String SECURITY_REALM = "security-realm";
     static final String SHARED = "shared";

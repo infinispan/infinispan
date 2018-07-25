@@ -49,14 +49,14 @@ class OracleTableManager extends AbstractTableManager {
    }
 
    @Override
-   protected boolean timestampIndexExists(Connection conn) throws PersistenceException {
+   protected boolean indexExists(String indexName, Connection conn) throws PersistenceException {
       ResultSet rs = null;
       try {
          DatabaseMetaData meta = conn.getMetaData();
          rs = meta.getIndexInfo(null, null, getTableName().toString(), false, false);
-         String indexName = getIndexName(false);
          while (rs.next()) {
-            if (indexName.equalsIgnoreCase(rs.getString("INDEX_NAME"))) {
+            String index = rs.getString("INDEX_NAME");
+            if (indexName.equalsIgnoreCase(index)) {
                return true;
             }
          }
@@ -69,14 +69,15 @@ class OracleTableManager extends AbstractTableManager {
    }
 
    @Override
-   public String getIndexName(boolean withIdentifier) {
-      int maxNameSize = MAX_INDEX_IDENTIFIER_SIZE - INDEX_PREFIX.length() - 1;
-      if (withIdentifier) {
-         maxNameSize -= 2;
+   public String getIndexName(boolean withIdentifier, String indexExt) {
+      if (indexExt.equals(timestampIndexExt)) {
+         // Timestamp for Oracle began with IDX, to keep backwards compatible we have to keep using that
+         indexExt = INDEX_PREFIX;
       }
+      int maxNameSize = MAX_INDEX_IDENTIFIER_SIZE - indexExt.length() - 1;
       String tableName = getTableName().toString().replace(identifierQuoteString, "");
       String truncatedName = tableName.length() > maxNameSize ? tableName.substring(0, maxNameSize) : tableName;
-      String indexName = INDEX_PREFIX + "_" + truncatedName;
+      String indexName = indexExt + "_" + truncatedName;
       if (withIdentifier) {
          return identifierQuoteString + indexName + identifierQuoteString;
       }
@@ -84,14 +85,19 @@ class OracleTableManager extends AbstractTableManager {
    }
 
    protected String getDropTimestampSql() {
-      return String.format("DROP INDEX %s", getIndexName(true));
+      return String.format("DROP INDEX %s", getIndexName(true, timestampIndexExt));
    }
 
    @Override
    public String getInsertRowSql() {
       if (insertRowSql == null) {
-         insertRowSql = String.format("INSERT INTO %s (%s,%s,%s) VALUES (?,?,?)", getTableName(),
-               config.idColumnName(), config.timestampColumnName(), config.dataColumnName());
+         if (metaData.isSegmentedDisabled()) {
+            insertRowSql = String.format("INSERT INTO %s (%s,%s,%s) VALUES (?,?,?)", getTableName(),
+                  config.idColumnName(), config.timestampColumnName(), config.dataColumnName());
+         } else {
+            insertRowSql = String.format("INSERT INTO %s (%s,%s,%s,%s) VALUES (?,?,?,?)", getTableName(),
+                  config.idColumnName(), config.timestampColumnName(), config.dataColumnName(), config.segmentColumnName());
+         }
       }
       return insertRowSql;
    }
@@ -108,27 +114,42 @@ class OracleTableManager extends AbstractTableManager {
    @Override
    public String getUpsertRowSql() {
       if (upsertRowSql == null) {
-         upsertRowSql = String.format("MERGE INTO %1$s t " +
-                     "USING (SELECT ? %2$s, ? %3$s, ? %4$s from dual) tmp ON (t.%2$s = tmp.%2$s) " +
-                     "WHEN MATCHED THEN UPDATE SET t.%3$s = tmp.%3$s, t.%4$s = tmp.%4$s " +
-                     "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s)",
-               this.getTableName(), config.idColumnName(), config.timestampColumnName(), config.dataColumnName());
+         if (metaData.isSegmentedDisabled()) {
+            upsertRowSql = String.format("MERGE INTO %1$s t " +
+                        "USING (SELECT ? %2$s, ? %3$s, ? %4$s from dual) tmp ON (t.%2$s = tmp.%2$s) " +
+                        "WHEN MATCHED THEN UPDATE SET t.%3$s = tmp.%3$s, t.%4$s = tmp.%4$s " +
+                        "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s)",
+                  this.getTableName(), config.idColumnName(), config.timestampColumnName(), config.dataColumnName());
+         } else {
+            upsertRowSql = String.format("MERGE INTO %1$s t " +
+                        "USING (SELECT ? %2$s, ? %3$s, ? %4$s, ? %5$s from dual) tmp ON (t.%2$s = tmp.%2$s) " +
+                        "WHEN MATCHED THEN UPDATE SET t.%3$s = tmp.%3$s, t.%4$s = tmp.%4$s " +
+                        "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s, %5$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s, tmp.%5$s)",
+                  this.getTableName(), config.idColumnName(), config.timestampColumnName(), config.dataColumnName(),
+                  config.segmentColumnName());
+         }
       }
       return upsertRowSql;
    }
 
    @Override
-   public void prepareUpsertStatement(PreparedStatement ps, String key, long timestamp, ByteBuffer byteBuffer) throws SQLException {
+   public void prepareUpsertStatement(PreparedStatement ps, String key, long timestamp, int segment, ByteBuffer byteBuffer) throws SQLException {
       ps.setString(1, key);
       ps.setLong(2, timestamp);
       // We must use BLOB here to avoid ORA-01461 caused by implicit casts on dual
       ps.setBlob(3, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
+      if (!metaData.isSegmentedDisabled()) {
+         ps.setInt(4, segment);
+      }
    }
 
    @Override
-   public void prepareUpdateStatement(PreparedStatement ps, String key, long timestamp, ByteBuffer byteBuffer) throws SQLException {
+   public void prepareUpdateStatement(PreparedStatement ps, String key, long timestamp, int segment, ByteBuffer byteBuffer) throws SQLException {
       ps.setLong(1, timestamp);
       ps.setBinaryStream(2, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
       ps.setString(3, key);
+      if (!metaData.isSegmentedDisabled()) {
+         ps.setInt(4, segment);
+      }
    }
 }

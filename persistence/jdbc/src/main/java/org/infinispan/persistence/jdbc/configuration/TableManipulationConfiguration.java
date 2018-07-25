@@ -15,6 +15,8 @@ public class TableManipulationConfiguration {
    public static final AttributeDefinition<String> DATA_COLUMN_TYPE = AttributeDefinition.builder("dataColumnType", null, String.class).immutable().build();
    public static final AttributeDefinition<String> TIMESTAMP_COLUMN_NAME = AttributeDefinition.builder("timestampColumnName", null, String.class).immutable().build();
    public static final AttributeDefinition<String> TIMESTAMP_COLUMN_TYPE = AttributeDefinition.builder("timestampColumnType", null, String.class).immutable().build();
+   public static final AttributeDefinition<String> SEGMENT_COLUMN_NAME = AttributeDefinition.builder("segmentColumnName", null, String.class).immutable().build();
+   public static final AttributeDefinition<String> SEGMENT_COLUMN_TYPE = AttributeDefinition.builder("segmentColumnType", null, String.class).immutable().build();
    // TODO remove in 10.0
    public static final AttributeDefinition<Integer> BATCH_SIZE = AttributeDefinition.builder("batchSize", AbstractStoreConfiguration.MAX_BATCH_SIZE.getDefaultValue()).immutable().build();
    public static final AttributeDefinition<Integer> FETCH_SIZE = AttributeDefinition.builder("fetchSize", TableManager.DEFAULT_FETCH_SIZE).immutable().build();
@@ -22,8 +24,9 @@ public class TableManipulationConfiguration {
    public static final AttributeDefinition<Boolean> DROP_ON_EXIT = AttributeDefinition.builder("dropOnExit", false).immutable().build();
 
    static AttributeSet attributeSet() {
-      return new AttributeSet(TableManipulationConfiguration.class, ID_COLUMN_NAME, ID_COLUMN_TYPE, TABLE_NAME_PREFIX, CACHE_NAME, DATA_COLUMN_NAME, DATA_COLUMN_TYPE,
-                              TIMESTAMP_COLUMN_NAME, TIMESTAMP_COLUMN_TYPE, BATCH_SIZE, FETCH_SIZE, CREATE_ON_START, DROP_ON_EXIT);
+      return new AttributeSet(TableManipulationConfiguration.class, ID_COLUMN_NAME, ID_COLUMN_TYPE, TABLE_NAME_PREFIX,
+            CACHE_NAME, DATA_COLUMN_NAME, DATA_COLUMN_TYPE, TIMESTAMP_COLUMN_NAME, TIMESTAMP_COLUMN_TYPE,
+            SEGMENT_COLUMN_NAME, SEGMENT_COLUMN_TYPE, BATCH_SIZE, FETCH_SIZE, CREATE_ON_START, DROP_ON_EXIT);
    }
 
    private final Attribute<String> idColumnName;
@@ -34,6 +37,8 @@ public class TableManipulationConfiguration {
    private final Attribute<String> dataColumnType;
    private final Attribute<String> timestampColumnName;
    private final Attribute<String> timestampColumnType;
+   private final Attribute<String> segmentColumnName;
+   private final Attribute<String> segmentColumnType;
    private final Attribute<Integer> batchSize;
    private final Attribute<Integer> fetchSize;
    private final Attribute<Boolean> createOnStart;
@@ -50,6 +55,8 @@ public class TableManipulationConfiguration {
       dataColumnType = attributes.attribute(DATA_COLUMN_TYPE);
       timestampColumnName = attributes.attribute(TIMESTAMP_COLUMN_NAME);
       timestampColumnType = attributes.attribute(TIMESTAMP_COLUMN_TYPE);
+      segmentColumnName = attributes.attribute(SEGMENT_COLUMN_NAME);
+      segmentColumnType = attributes.attribute(SEGMENT_COLUMN_TYPE);
       batchSize = attributes.attribute(BATCH_SIZE);
       fetchSize = attributes.attribute(FETCH_SIZE);
       createOnStart = attributes.attribute(CREATE_ON_START);
@@ -94,6 +101,14 @@ public class TableManipulationConfiguration {
 
    public String timestampColumnType() {
       return timestampColumnType.get();
+   }
+
+   public String segmentColumnName() {
+      return segmentColumnName.get();
+   }
+
+   public String segmentColumnType() {
+      return segmentColumnType.get();
    }
 
    public int fetchSize() {

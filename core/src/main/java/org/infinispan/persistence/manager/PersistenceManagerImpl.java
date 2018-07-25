@@ -525,9 +525,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
    <K, V> SegmentedAdvancedLoadWriteStore<K, V> getFirstSegmentedStore(AccessMode mode) {
       storesMutex.readLock().lock();
       try {
-         for (CacheLoader loader : loaders) {
-            if (mode.canPerform(getStoreConfig(loader)) && loader instanceof SegmentedAdvancedLoadWriteStore) {
-               return ((SegmentedAdvancedLoadWriteStore<K, V>) loader);
+         for (CacheLoader l : loaders) {
+            StoreConfiguration storeConfiguration;
+            if (l instanceof SegmentedAdvancedLoadWriteStore &&
+                  (storeConfiguration = getStoreConfig(l)) != null && storeConfiguration.segmented() &&
+                  mode.canPerform(storeConfiguration)) {
+               return ((SegmentedAdvancedLoadWriteStore<K, V>) l);
             }
          }
       } finally {
@@ -776,8 +779,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
       try {
          checkStoreAvailability();
          for (CacheLoader l : loaders) {
-            if (l instanceof SegmentedAdvancedLoadWriteStore)
+            StoreConfiguration storeConfiguration;
+            if (l instanceof SegmentedAdvancedLoadWriteStore &&
+                  ((storeConfiguration = getStoreConfig(l)) != null && storeConfiguration.segmented())) {
                return ((SegmentedAdvancedLoadWriteStore) l).size(segments);
+            }
          }
          long count = Flowable.fromPublisher(publishKeys(segments, null, AccessMode.BOTH))
                .count().blockingGet();
