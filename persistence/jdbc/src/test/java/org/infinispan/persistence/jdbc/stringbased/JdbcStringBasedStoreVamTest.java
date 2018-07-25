@@ -8,6 +8,7 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -21,6 +22,14 @@ public class JdbcStringBasedStoreVamTest extends JdbcStringBasedStoreTest {
 
    EmbeddedCacheManager cm;
    StreamingMarshaller marshaller;
+
+   @Factory
+   public Object[] factory() {
+      return new Object[] {
+            new JdbcStringBasedStoreVamTest().segmented(false),
+            new JdbcStringBasedStoreVamTest().segmented(true),
+      };
+   }
 
    @BeforeClass
    public void setUpClass() {

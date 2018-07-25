@@ -22,19 +22,29 @@ class SQLServerTableManager extends AbstractTableManager {
       if (upsertRowSql == null) {
          // As SQL Server does not handle a merge atomically, we must acquire the table lock here otherwise it's possible
          // for deadlocks to occur.
-         upsertRowSql = String.format("MERGE %1$s WITH (TABLOCK) " +
-                     "USING (VALUES (?, ?, ?)) AS tmp (%2$s, %3$s, %4$s) " +
-                     "ON (%1$s.%4$s = tmp.%4$s) " +
-                     "WHEN MATCHED THEN UPDATE SET %2$s = tmp.%2$s, %3$s = tmp.%3$s " +
-                     "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s);",
-               getTableName(), config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+         if (metaData.isSegmentedDisabled()) {
+            upsertRowSql = String.format("MERGE %1$s WITH (TABLOCK) " +
+                        "USING (VALUES (?, ?, ?)) AS tmp (%2$s, %3$s, %4$s) " +
+                        "ON (%1$s.%4$s = tmp.%4$s) " +
+                        "WHEN MATCHED THEN UPDATE SET %2$s = tmp.%2$s, %3$s = tmp.%3$s " +
+                        "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s);",
+                  getTableName(), config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+         } else {
+            upsertRowSql = String.format("MERGE %1$s WITH (TABLOCK) " +
+                        "USING (VALUES (?, ?, ?, ?)) AS tmp (%2$s, %3$s, %4$s, %5$s) " +
+                        "ON (%1$s.%4$s = tmp.%4$s) " +
+                        "WHEN MATCHED THEN UPDATE SET %2$s = tmp.%2$s, %3$s = tmp.%3$s " +
+                        "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s, %5$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s, %5$s);",
+                  getTableName(), config.dataColumnName(), config.timestampColumnName(), config.idColumnName(),
+                  config.segmentColumnName());
+         }
       }
       return upsertRowSql;
    }
 
    @Override
    public boolean isStringEncodingRequired() {
-      return metaData.getMajorVersion() < 13;
+      return metaData.getMajorVersion() <= 13;
    }
 
    @Override

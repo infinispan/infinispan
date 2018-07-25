@@ -30,6 +30,7 @@ public enum Element {
    NAME("name"),
    PASSWORD("password"),
    SOURCE("source"),
+   SEGMENT("segment"),
    SEGMENT_COUNT("segment_count"),
    SIZE("size"),
    STRING("string"),

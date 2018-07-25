@@ -13,6 +13,7 @@ import org.infinispan.persistence.jdbc.table.management.TableManager;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -23,12 +24,33 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "persistence.jdbc.stringbased.JdbcStringBasedStoreTest")
 public class JdbcStringBasedStoreTest extends BaseStoreTest {
 
+   boolean segmented;
+
+   public JdbcStringBasedStoreTest segmented(boolean segmented) {
+      this.segmented = segmented;
+      return this;
+   }
+
+   @Factory
+   public Object[] factory() {
+      return new Object[] {
+            new JdbcStringBasedStoreTest().segmented(false),
+            new JdbcStringBasedStoreTest().segmented(true),
+      };
+   }
+
+   @Override
+   protected String parameters() {
+      return "[" + segmented + "]";
+   }
+
    @Override
    protected AdvancedLoadWriteStore createStore() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       JdbcStringBasedStoreConfigurationBuilder storeBuilder = builder
             .persistence()
                .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
+      storeBuilder.segmented(segmented);
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
       JdbcStringBasedStore stringBasedCacheStore = new JdbcStringBasedStore();

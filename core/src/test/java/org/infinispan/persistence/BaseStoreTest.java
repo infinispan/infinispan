@@ -483,6 +483,18 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       }
    }
 
+   public void testReplaceEntry() {
+      assertIsEmpty();
+      InternalCacheEntry ice = internalCacheEntry("k1", "v1", -1);
+      cl.write(marshalledEntry(ice));
+      assertEquals("v1", unwrap(cl.load("k1").getValue()));
+
+      InternalCacheEntry ice2 = internalCacheEntry("k1", "v2", -1);
+      cl.write(marshalledEntry(ice2));
+
+      assertEquals("v2", unwrap(cl.load("k1").getValue()));
+   }
+
    public void testReplaceExpiredEntry() throws Exception {
       assertIsEmpty();
       final long lifespan = 3000;

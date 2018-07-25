@@ -1052,7 +1052,10 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
               .dataColumnName(this.getColumnProperty(context, table, ModelKeys.DATA_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_NAME, "datum"))
               .dataColumnType(this.getColumnProperty(context, table, ModelKeys.DATA_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_TYPE, "BINARY"))
               .timestampColumnName(this.getColumnProperty(context, table, ModelKeys.TIMESTAMP_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_NAME, "version"))
-              .timestampColumnType(this.getColumnProperty(context, table, ModelKeys.TIMESTAMP_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_TYPE, "BIGINT"));
+              .timestampColumnType(this.getColumnProperty(context, table, ModelKeys.TIMESTAMP_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_TYPE, "BIGINT"))
+              .segmentColumnName(this.getColumnProperty(context, table, ModelKeys.SEGMENT_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_NAME, "segment"))
+              .segmentColumnType(this.getColumnProperty(context, table, ModelKeys.SEGMENT_COLUMN, BaseJDBCStoreConfigurationResource.COLUMN_TYPE, "INTEGER"))
+        ;
     }
 
     private String getColumnProperty(OperationContext context, ModelNode table, String columnKey, AttributeDefinition columnAttribute, String defaultValue) throws OperationFailedException

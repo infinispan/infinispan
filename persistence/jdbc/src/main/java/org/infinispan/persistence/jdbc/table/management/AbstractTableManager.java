@@ -25,6 +25,7 @@ public abstract class AbstractTableManager implements TableManager {
    protected final ConnectionFactory connectionFactory;
    protected final TableManipulationConfiguration config;
    protected final String timestampIndexExt = "timestamp_index";
+   protected final String segmentIndexExt = "segment_index";
 
    protected String identifierQuoteString = "\"";
    protected String cacheName;
@@ -61,7 +62,10 @@ public abstract class AbstractTableManager implements TableManager {
             if (!tableExists(conn)) {
                createTable(conn);
             }
-            createTimestampIndex(conn);
+            createIndex(conn, timestampIndexExt, config.timestampColumnName());
+            if (!metaData.isSegmentedDisabled()) {
+               createIndex(conn, segmentIndexExt, config.segmentColumnName());
+            }
          } finally {
             connectionFactory.releaseConnection(conn);
          }
@@ -114,9 +118,17 @@ public abstract class AbstractTableManager implements TableManager {
       if (cacheName == null || cacheName.trim().length() == 0)
          throw new PersistenceException("cacheName needed in order to create table");
 
-      String ddl = String.format("CREATE TABLE %1$s (%2$s %3$s NOT NULL, %4$s %5$s NOT NULL, %6$s %7$s NOT NULL, PRIMARY KEY (%2$s))",
-                                 getTableName(), config.idColumnName(), config.idColumnType(), config.dataColumnName(),
-                                 config.dataColumnType(), config.timestampColumnName(), config.timestampColumnType());
+      String ddl;
+      if (metaData.isSegmentedDisabled()) {
+         ddl = String.format("CREATE TABLE %1$s (%2$s %3$s NOT NULL, %4$s %5$s NOT NULL, %6$s %7$s NOT NULL, PRIMARY KEY (%2$s))",
+               getTableName(), config.idColumnName(), config.idColumnType(), config.dataColumnName(),
+               config.dataColumnType(), config.timestampColumnName(), config.timestampColumnType());
+      } else {
+         ddl = String.format("CREATE TABLE %1$s (%2$s %3$s NOT NULL, %4$s %5$s NOT NULL, %6$s %7$s NOT NULL, %8$s %9$s NOT NULL, PRIMARY KEY (%2$s))",
+               getTableName(), config.idColumnName(), config.idColumnType(), config.dataColumnName(),
+               config.dataColumnType(), config.timestampColumnName(), config.timestampColumnType(),
+               config.segmentColumnName(), config.segmentColumnType());
+      }
 
       if (log.isTraceEnabled()) {
          log.tracef("Creating table with following DDL: '%s'.", ddl);
@@ -124,20 +136,20 @@ public abstract class AbstractTableManager implements TableManager {
       executeUpdateSql(conn, ddl);
    }
 
-   protected void createTimestampIndex(Connection conn) throws PersistenceException {
+   private void createIndex(Connection conn, String indexExt, String columnName) throws PersistenceException {
       if (metaData.isIndexingDisabled()) return;
 
-      boolean indexExists = timestampIndexExists(conn);
+      boolean indexExists = indexExists(getIndexName(false, indexExt), conn);
       if (!indexExists) {
-         String ddl = String.format("CREATE INDEX %s ON %s (%s)", getIndexName(true), getTableName(), config.timestampColumnName());
+         String ddl = String.format("CREATE INDEX %s ON %s (%s)", getIndexName(true, indexExt), getTableName(), columnName);
          if (log.isTraceEnabled()) {
-            log.tracef("Adding timestamp index with following DDL: '%s'.", ddl);
+            log.tracef("Adding index with following DDL: '%s'.", ddl);
          }
          executeUpdateSql(conn, ddl);
       }
    }
 
-   protected boolean timestampIndexExists(Connection conn) throws PersistenceException {
+   protected boolean indexExists(String indexName, Connection conn) throws PersistenceException {
       ResultSet rs = null;
       try {
          TableName table = getTableName();
@@ -145,8 +157,7 @@ public abstract class AbstractTableManager implements TableManager {
          rs = meta.getIndexInfo(null, table.getSchema(), table.getName(), false, false);
 
          while (rs.next()) {
-            String indexName = rs.getString("INDEX_NAME");
-            if (indexName != null && indexName.equalsIgnoreCase(getIndexName(false))) {
+            if (indexName.equalsIgnoreCase(rs.getString("INDEX_NAME"))) {
                return true;
             }
          }
@@ -172,28 +183,31 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    public void dropTable(Connection conn) throws PersistenceException {
-      dropTimestampIndex(conn);
-      String dropTableDdl = "DROP TABLE " + getTableName();
+      dropIndex(conn, timestampIndexExt);
+      dropIndex(conn, segmentIndexExt);
+
       String clearTable = "DELETE FROM " + getTableName();
       executeUpdateSql(conn, clearTable);
+
+      String dropTableDdl = "DROP TABLE " + getTableName();
       if (log.isTraceEnabled()) {
          log.tracef("Dropping table with following DDL '%s'", dropTableDdl);
       }
       executeUpdateSql(conn, dropTableDdl);
    }
 
-   protected void dropTimestampIndex(Connection conn) throws PersistenceException {
-      if (!timestampIndexExists(conn)) return;
+   protected void dropIndex(Connection conn, String indexName) throws PersistenceException {
+      if (!indexExists(getIndexName(true, indexName), conn)) return;
 
-      String dropIndexDdl = getDropTimestampSql();
+      String dropIndexDdl = getDropTimestampSql(indexName);
       if (log.isTraceEnabled()) {
          log.tracef("Dropping timestamp index with '%s'", dropIndexDdl);
       }
       executeUpdateSql(conn, dropIndexDdl);
    }
 
-   protected String getDropTimestampSql() {
-      return String.format("DROP INDEX %s ON %s", getIndexName(true), getTableName());
+   protected String getDropTimestampSql(String indexName) {
+      return String.format("DROP INDEX %s ON %s", getIndexName(true, indexName), getTableName());
    }
 
    public int getFetchSize() {
@@ -220,10 +234,10 @@ public abstract class AbstractTableManager implements TableManager {
       return tableName;
    }
 
-   public String getIndexName(boolean withIdentifier) {
+   public String getIndexName(boolean withIdentifier, String indexExt) {
       TableName table = getTableName();
       String tableName = table.toString().replace(identifierQuoteString, "");
-      String indexName = tableName + "_" + timestampIndexExt;
+      String indexName = tableName + "_" + indexExt;
       if (withIdentifier) {
          return identifierQuoteString + indexName + identifierQuoteString;
       }
@@ -233,8 +247,13 @@ public abstract class AbstractTableManager implements TableManager {
    @Override
    public String getInsertRowSql() {
       if (insertRowSql == null) {
-         insertRowSql = String.format("INSERT INTO %s (%s,%s,%s) VALUES (?,?,?)", getTableName(),
-                                      config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+         if (metaData.isSegmentedDisabled()) {
+            insertRowSql = String.format("INSERT INTO %s (%s,%s,%s) VALUES (?,?,?)", getTableName(),
+                  config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+         } else {
+            insertRowSql = String.format("INSERT INTO %s (%s,%s,%s,%s) VALUES (?,?,?,?)", getTableName(),
+                  config.dataColumnName(), config.timestampColumnName(), config.idColumnName(), config.segmentColumnName());
+         }
       }
       return insertRowSql;
    }
@@ -243,7 +262,7 @@ public abstract class AbstractTableManager implements TableManager {
    public String getUpdateRowSql() {
       if (updateRowSql == null) {
          updateRowSql = String.format("UPDATE %s SET %s = ? , %s = ? WHERE %s = ?", getTableName(),
-                                      config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+               config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
       }
       return updateRowSql;
    }
@@ -286,11 +305,33 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    @Override
-   public String getCountRowsSql() {
+   public String getCountNonExpiredRowsSql() {
       if (countRowsSql == null) {
-         countRowsSql = "SELECT COUNT(*) FROM " + getTableName();
+         countRowsSql = "SELECT COUNT(*) FROM " + getTableName() +
+         " WHERE " + config.timestampColumnName() + " < 0 OR " + config.timestampColumnName() + " > ?";
       }
       return countRowsSql;
+   }
+
+   @Override
+   public String getCountNonExpiredRowsSqlForSegments(int numSegments) {
+      StringBuilder stringBuilder = new StringBuilder("SELECT COUNT(*) FROM ");
+      stringBuilder.append(getTableName());
+      // Note the timestamp or is surrounded with parenthesis
+      stringBuilder.append(" WHERE (");
+      stringBuilder.append(config.timestampColumnName());
+      stringBuilder.append(" > ? OR ");
+      stringBuilder.append(config.timestampColumnName());
+      stringBuilder.append(" < 0) AND ");
+      stringBuilder.append(config.segmentColumnName());
+      stringBuilder.append(" IN (?");
+
+      for (int i = 1; i < numSegments; ++i) {
+         stringBuilder.append(",?");
+      }
+      stringBuilder.append(")");
+
+      return stringBuilder.toString();
    }
 
    @Override
@@ -302,6 +343,23 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    @Override
+   public String getDeleteRowsSqlForSegments(int numSegments) {
+      StringBuilder stringBuilder = new StringBuilder("DELETE FROM ");
+      stringBuilder.append(getTableName());
+      // Note the timestamp or is surrounded with parenthesis
+      stringBuilder.append(" WHERE ");
+      stringBuilder.append(config.segmentColumnName());
+      stringBuilder.append(" IN (?");
+
+      for (int i = 1; i < numSegments; ++i) {
+         stringBuilder.append(",?");
+      }
+      stringBuilder.append(")");
+
+      return stringBuilder.toString();
+   }
+
+   @Override
    public String getLoadNonExpiredAllRowsSql() {
       if (loadAllNonExpiredRowsSql == null) {
          loadAllNonExpiredRowsSql = String.format("SELECT %1$s, %2$s, %3$s FROM %4$s WHERE %3$s > ? OR %3$s < 0",
@@ -309,6 +367,31 @@ public abstract class AbstractTableManager implements TableManager {
                                                   config.timestampColumnName(), getTableName());
       }
       return loadAllNonExpiredRowsSql;
+   }
+
+   @Override
+   public String getLoadNonExpiredRowsSqlForSegments(int numSegments) {
+      StringBuilder stringBuilder = new StringBuilder("SELECT ");
+      stringBuilder.append(config.dataColumnName());
+      stringBuilder.append(", ");
+      stringBuilder.append(config.idColumnName());
+      stringBuilder.append(" FROM ");
+      stringBuilder.append(getTableName());
+      // Note the timestamp or is surrounded with parenthesis
+      stringBuilder.append(" WHERE (");
+      stringBuilder.append(config.timestampColumnName());
+      stringBuilder.append(" > ? OR ");
+      stringBuilder.append(config.timestampColumnName());
+      stringBuilder.append(" < 0) AND ");
+      stringBuilder.append(config.segmentColumnName());
+      stringBuilder.append(" IN (?");
+
+      for (int i = 1; i < numSegments; ++i) {
+         stringBuilder.append(",?");
+      }
+      stringBuilder.append(")");
+
+      return stringBuilder.toString();
    }
 
    @Override
@@ -347,12 +430,21 @@ public abstract class AbstractTableManager implements TableManager {
    @Override
    public String getUpsertRowSql() {
       if (upsertRowSql == null) {
-         upsertRowSql = String.format("MERGE INTO %1$s " +
-                              "USING (VALUES (?, ?, ?)) AS tmp (%2$s, %3$s, %4$s) " +
-                              "ON (%2$s = tmp.%2$s) " +
-                              "WHEN MATCHED THEN UPDATE SET %3$s = tmp.%3$s, %4$s = tmp.%4$s " +
-                              "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s)",
-                              getTableName(), config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+         if (metaData.isSegmentedDisabled()) {
+            upsertRowSql = String.format("MERGE INTO %1$s " +
+                        "USING (VALUES (?, ?, ?)) AS tmp (%2$s, %3$s, %4$s) " +
+                        "ON (%2$s = tmp.%2$s) " +
+                        "WHEN MATCHED THEN UPDATE SET %3$s = tmp.%3$s, %4$s = tmp.%4$s " +
+                        "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s)",
+                  getTableName(), config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+         } else {
+            upsertRowSql = String.format("MERGE INTO %1$s " +
+                        "USING (VALUES (?, ?, ?, ?)) AS tmp (%2$s, %3$s, %4$s, %5$s) " +
+                        "ON (%2$s = tmp.%2$s) " +
+                        "WHEN MATCHED THEN UPDATE SET %3$s = tmp.%3$s, %4$s = tmp.%4$s, %5$s = tmp.%5$s " +
+                        "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s, %5$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s, tmp.%5$s)",
+                  getTableName(), config.dataColumnName(), config.timestampColumnName(), config.idColumnName(), config.segmentColumnName());
+         }
 
       }
       return upsertRowSql;
@@ -369,7 +461,17 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    @Override
-   public void prepareUpsertStatement(PreparedStatement ps, String key, long timestamp, ByteBuffer byteBuffer) throws SQLException {
+   public void prepareUpsertStatement(PreparedStatement ps, String key, long timestamp, int segment, ByteBuffer byteBuffer) throws SQLException {
+      ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
+      ps.setLong(2, timestamp);
+      ps.setString(3, key);
+      if (!metaData.isSegmentedDisabled()) {
+         ps.setInt(4, segment);
+      }
+   }
+
+   @Override
+   public void prepareUpdateStatement(PreparedStatement ps, String key, long timestamp, int segment, ByteBuffer byteBuffer) throws SQLException {
       ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
       ps.setLong(2, timestamp);
       ps.setString(3, key);

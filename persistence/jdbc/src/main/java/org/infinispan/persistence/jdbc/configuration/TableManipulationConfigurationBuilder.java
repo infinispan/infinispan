@@ -8,6 +8,8 @@ import static org.infinispan.persistence.jdbc.configuration.TableManipulationCon
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.FETCH_SIZE;
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.ID_COLUMN_NAME;
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.ID_COLUMN_TYPE;
+import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.SEGMENT_COLUMN_NAME;
+import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.SEGMENT_COLUMN_TYPE;
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.TABLE_NAME_PREFIX;
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.TIMESTAMP_COLUMN_NAME;
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.TIMESTAMP_COLUMN_TYPE;
@@ -132,9 +134,26 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
       return self();
    }
 
+   /**
+    * The name of the database column used to store the segments
+    */
+   public S segmentColumnName(String segmentColumnName) {
+      attributes.attribute(SEGMENT_COLUMN_NAME).set(segmentColumnName);
+      return self();
+   }
+
+   /**
+    * The type of the database column used to store the segments
+    */
+   public S segmentColumnType(String segmentColumnType) {
+      attributes.attribute(SEGMENT_COLUMN_TYPE).set(segmentColumnType);
+      return self();
+   }
+
    @Override
    public void validate() {
-      validateIfSet(ID_COLUMN_NAME, ID_COLUMN_TYPE, DATA_COLUMN_NAME, DATA_COLUMN_TYPE, TIMESTAMP_COLUMN_NAME, TIMESTAMP_COLUMN_TYPE, TABLE_NAME_PREFIX);
+      validateIfSet(ID_COLUMN_NAME, ID_COLUMN_TYPE, DATA_COLUMN_NAME, DATA_COLUMN_TYPE, TIMESTAMP_COLUMN_NAME,
+            TIMESTAMP_COLUMN_TYPE, SEGMENT_COLUMN_NAME, SEGMENT_COLUMN_TYPE, TABLE_NAME_PREFIX);
    }
 
    private void validateIfSet(AttributeDefinition<?>... definitions) {

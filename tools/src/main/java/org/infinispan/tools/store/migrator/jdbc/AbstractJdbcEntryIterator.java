@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Iterator;
 
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -34,13 +33,14 @@ abstract class AbstractJdbcEntryIterator implements Iterator<MarshalledEntry>, A
       this.tableManager = tableManager;
       this.marshaller = marshaller;
 
-      Statement st = null;
+      PreparedStatement countPs = null;
       ResultSet countRs = null;
       try {
          conn = connectionFactory.getConnection();
 
-         st = conn.createStatement();
-         countRs = st.executeQuery(tableManager.getCountRowsSql());
+         countPs = conn.prepareStatement(tableManager.getCountNonExpiredRowsSql());
+         countPs.setLong(1, System.currentTimeMillis());
+         countRs = countPs.executeQuery();
          countRs.next();
          numberOfRows = countRs.getInt(1);
 
@@ -50,7 +50,7 @@ abstract class AbstractJdbcEntryIterator implements Iterator<MarshalledEntry>, A
       } catch (SQLException e) {
          throw new PersistenceException("SQL error while fetching all StoredEntries", e);
       } finally {
-         JdbcUtil.safeClose(st);
+         JdbcUtil.safeClose(countPs);
          JdbcUtil.safeClose(countRs);
       }
    }
