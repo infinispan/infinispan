@@ -1,5 +1,6 @@
 package org.infinispan.server.hotrod;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.counter.util.EncodeUtil.encodeConfiguration;
 import static org.infinispan.server.core.transport.VInt.write;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeString;
@@ -410,7 +411,9 @@ class Encoder2x implements VersionedEncoder {
 
          cacheTopology = cacheMode.isClustered() ? cr.getDistributionManager().getCacheTopology() : null;
          newTopology = getTopologyResponse(header.clientIntel, header.topologyId, addressCache, cacheMode, cacheTopology);
+         boolean objectStorage = configuration != null && APPLICATION_OBJECT.match(configuration.encoding().keyDataType().mediaType());
          compatibilityEnabled = configuration != null && configuration.compatibility().enabled();
+         compatibilityEnabled |= objectStorage;
       }
 
 
@@ -443,7 +446,7 @@ class Encoder2x implements VersionedEncoder {
    }
 
    private CacheTopology getCounterCacheTopology(EmbeddedCacheManager cacheManager) {
-      AdvancedCache<?,?> cache = cacheManager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME).getAdvancedCache();
+      AdvancedCache<?, ?> cache = cacheManager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME).getAdvancedCache();
       return cache.getCacheConfiguration().clustering().cacheMode().isClustered() ?
             cache.getComponentRegistry().getDistributionManager().getCacheTopology() :
             null; //local cache

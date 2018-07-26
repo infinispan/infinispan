@@ -11,6 +11,10 @@
                      </memory>
                  </local-cache>
                  <local-cache name="object" >
+                     <encoding>
+                         <key media-type="application/x-jboss-marshalling"/>
+                         <value media-type="application/x-jboss-marshalling"/>
+                     </encoding>
                      <memory>
                          <object size="3"/>
                      </memory>

@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.distexec.DistributedCallable;
@@ -49,7 +50,8 @@ public class DistributedServerTask<T> implements Serializable, DistributedCallab
    private TaskContext prepareContext() {
       TaskContext context = new TaskContext();
       if (parameters.isPresent()) context.parameters(parameters.get());
-      if (cache != null) context.cache(cache);
+      String type = MediaType.APPLICATION_OBJECT_TYPE;
+      if (cache != null) context.cache(cache.getAdvancedCache().withMediaType(type, type));
       if (marshaller != null) context.marshaller(marshaller);
 
       return context;

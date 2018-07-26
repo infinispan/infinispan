@@ -12,6 +12,7 @@ import java.util.List;
 import javax.security.auth.Subject;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -57,6 +58,8 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
                 .permission(AuthorizationPermission.READ)
                 .permission(AuthorizationPermission.WRITE);
         builder.security().authorization().enable().role("admin").role("runner").role("pheidippides");
+        builder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
+              .encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
         Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
             @Override
             public Void run() throws Exception {

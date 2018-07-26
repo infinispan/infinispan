@@ -41,17 +41,24 @@ public final class StandardConversions {
     */
    public static Object convertTextToText(Object source, MediaType sourceType, MediaType destinationType) {
       if (source == null) return null;
-      if (sourceType == null || destinationType == null) {
-         throw new NullPointerException("MediaType cannot be null!");
-      }
-      if (!sourceType.match(MediaType.TEXT_PLAIN)) {
-         throw log.invalidMediaType(TEXT_PLAIN_TYPE, sourceType.toString());
-      }
+      if (sourceType == null) throw new NullPointerException("MediaType cannot be null!");
+      if (!sourceType.match(MediaType.TEXT_PLAIN)) throw log.invalidMediaType(TEXT_PLAIN_TYPE, sourceType.toString());
+
+      String destinationClass = destinationType.getParameter("type").orElse(null);
+      boolean asString = String.class.getName().equalsIgnoreCase(destinationClass);
+
       Charset sourceCharset = sourceType.getCharset();
       Charset destinationCharset = destinationType.getCharset();
-      if (sourceCharset.equals(destinationCharset)) return source;
+      if (sourceCharset.equals(destinationCharset)) return convertTextClass(source, destinationType, asString);
       byte[] byteContent = source instanceof byte[] ? (byte[]) source : source.toString().getBytes(sourceCharset);
-      return convertCharset(byteContent, sourceCharset, destinationCharset);
+      return convertTextClass(convertCharset(byteContent, sourceCharset, destinationCharset), destinationType, asString);
+   }
+
+   private static Object convertTextClass(Object text, MediaType destination, boolean asString) {
+      if (asString) {
+         return text instanceof byte[] ? new String((byte[]) text, destination.getCharset()) : text.toString();
+      }
+      return text instanceof byte[] ? text : text.toString().getBytes(destination.getCharset());
    }
 
    /**

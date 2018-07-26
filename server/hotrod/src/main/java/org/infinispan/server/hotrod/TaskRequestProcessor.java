@@ -6,8 +6,6 @@ import java.util.concurrent.Executor;
 import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
@@ -25,16 +23,8 @@ public class TaskRequestProcessor extends BaseRequestProcessor {
    }
 
    public void exec(HotRodHeader header, Subject subject, String taskName, Map<String, byte[]> taskParams) {
-      // TODO: could we store the marshaller in a final field?
-      Marshaller marshaller;
-      if (server.getMarshaller() != null) {
-         marshaller = server.getMarshaller();
-      } else {
-         marshaller = new GenericJBossMarshaller(server.getCacheManager().getClassWhiteList());
-      }
       AdvancedCache<byte[], byte[]> cache = server.cache(header, subject);
       TaskContext taskContext = new TaskContext()
-            .marshaller(marshaller)
             .cache(cache)
             .parameters(taskParams)
             .subject(subject);

@@ -1,13 +1,16 @@
 package org.infinispan.server.infinispan.task;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.scripting.utils.ScriptConversions;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.AuthorizationHelper;
@@ -22,12 +25,14 @@ import org.infinispan.tasks.spi.TaskEngine;
  */
 public class ServerTaskEngine implements TaskEngine {
    private final AuthorizationHelper globalAuthzHelper;
+   private final ScriptConversions scriptConversions;
    private final ServerTaskRegistry registry;
    private final ServerTaskRunnerFactory runnerFactory = new ServerTaskRunnerFactory();
 
-   public ServerTaskEngine(ServerTaskRegistry manager, EmbeddedCacheManager cacheManager) {
+   public ServerTaskEngine(ServerTaskRegistry manager, EmbeddedCacheManager cacheManager, ScriptConversions scriptConversions) {
       this.registry = manager;
       this.globalAuthzHelper = cacheManager.getGlobalComponentRegistry().getComponent(AuthorizationHelper.class);
+      this.scriptConversions = scriptConversions;
    }
 
    @Override
@@ -53,35 +58,15 @@ public class ServerTaskEngine implements TaskEngine {
    private <T> CompletableFuture<T> invokeTask(TaskContext context, ServerTaskWrapper<T> task) {
       ServerTaskRunner runner = runnerFactory.getRunner(task.getExecutionMode());
       launderParameters(context);
-      return runner.execute(task.getName(), context).thenApply(r ->
-            (T) context.getMarshaller().map(m -> toBytes(r, m)).orElse(r));
-   }
-
-   private static Object toBytes(Object obj, Marshaller marshaller) {
-      try {
-         return marshaller.objectToByteBuffer(obj);
-      } catch (Exception e) {
-         throw new CacheException(e);
-      }
+      MediaType requestMediaType = context.getCache().map(c -> c.getAdvancedCache().getValueDataConversion().getRequestMediaType()).orElse(MediaType.MATCH_ALL);
+      context.getCache().ifPresent(c -> context.cache(c.getAdvancedCache().withMediaType(APPLICATION_OBJECT_TYPE, APPLICATION_OBJECT_TYPE)));
+      return runner.execute(task.getName(), context).thenApply(r -> (T) scriptConversions.convertToRequestType(r, APPLICATION_OBJECT, requestMediaType));
    }
 
    private void launderParameters(TaskContext context) {
-      if (context.getParameters().isPresent() && context.getMarshaller().isPresent()) {
-         Map<String, ?> params = context.getParameters().get();
-         Marshaller m = context.getMarshaller().get();
-         for (Map.Entry<String, ?> e : params.entrySet()) {
-            Object v = e.getValue();
-            Object entryValue = v instanceof byte[] ? fromBytes(v, m) : v;
-            context.addParameter(e.getKey(), entryValue);
-         }
-      }
-   }
-
-   private static Object fromBytes(Object obj, Marshaller marshaller) {
-      try {
-         return marshaller.objectFromByteBuffer((byte[]) obj);
-      } catch (Exception e) {
-         throw new CacheException(e);
+      if (context.getParameters().isPresent()) {
+         Map<String, ?> convertParameters = scriptConversions.convertParameters(context);
+         context.parameters(convertParameters);
       }
    }
 

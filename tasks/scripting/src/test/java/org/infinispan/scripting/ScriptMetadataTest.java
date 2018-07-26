@@ -1,12 +1,13 @@
 package org.infinispan.scripting;
 
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.scripting.impl.DataType;
 import org.infinispan.scripting.impl.ScriptMetadata;
 import org.infinispan.scripting.impl.ScriptMetadataParser;
 import org.testng.annotations.Test;
@@ -69,7 +70,8 @@ public class ScriptMetadataTest {
       assertEquals("test", metadata.name());
       assertEquals("javascript", metadata.language().get());
       assertEquals("js", metadata.extension());
-      assertEquals(DataType.UTF8, metadata.dataType());
+      assertTrue(metadata.dataType().match(TEXT_PLAIN));
+      assertEquals(StandardCharsets.UTF_8, metadata.dataType().getCharset());
    }
 
    public void testDataTypeOther() throws Exception {
@@ -77,7 +79,8 @@ public class ScriptMetadataTest {
       assertEquals("test", metadata.name());
       assertEquals("javascript", metadata.language().get());
       assertEquals("js", metadata.extension());
-      assertEquals(DataType.DEFAULT, metadata.dataType());
+      assertTrue(metadata.dataType().match(TEXT_PLAIN));
+      assertEquals(StandardCharsets.US_ASCII, metadata.dataType().getCharset());
    }
 
    public void testArrayValues() throws Exception {

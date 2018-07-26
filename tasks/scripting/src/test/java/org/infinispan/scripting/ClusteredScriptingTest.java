@@ -15,7 +15,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
@@ -29,20 +32,22 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "scripting.ClusteredScriptingTest")
 public class ClusteredScriptingTest extends AbstractInfinispanTest {
 
-   public static final int EXPECTED_WORDS = 3202;
+   private static final int EXPECTED_WORDS = 3202;
 
    @Test(dataProvider = "cacheModeProvider")
-   public void testLocalScriptExecutionWithCache(final CacheMode cacheMode) throws IOException, ExecutionException, InterruptedException {
+   public void testLocalScriptExecutionWithCache(final CacheMode cacheMode) {
       withCacheManagers(new MultiCacheManagerCallable(
-              TestCacheManagerFactory.createCacheManager(cacheMode, false),
-              TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
+            TestCacheManagerFactory.createCacheManager(cacheMode, false),
+            TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
          @Override
          public void call() throws IOException, ExecutionException, InterruptedException {
             ScriptingManager scriptingManager = getScriptingManager(cms[0]);
-            for(EmbeddedCacheManager cm : cms) {
-               cm.defineConfiguration(ScriptingTest.CACHE_NAME, cm.getDefaultCacheConfiguration());
+            Configuration configuration = new ConfigurationBuilder()
+                  .encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
+                  .encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE).build();
+            for (EmbeddedCacheManager cm : cms) {
+               cm.defineConfiguration(ScriptingTest.CACHE_NAME, configuration);
             }
-            Cache cache = cms[0].getCache(ScriptingTest.CACHE_NAME);
             loadScript(scriptingManager, "/test.js");
             executeScriptOnManager("test.js", cms[0]);
             executeScriptOnManager("test.js", cms[1]);
@@ -51,14 +56,17 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
    }
 
    @Test(dataProvider = "cacheModeProvider")
-   public void testLocalScriptExecutionWithCache1(final CacheMode cacheMode) throws IOException, ExecutionException, InterruptedException {
+   public void testLocalScriptExecutionWithCache1(final CacheMode cacheMode) {
       withCacheManagers(new MultiCacheManagerCallable(TestCacheManagerFactory.createCacheManager(cacheMode, false),
-              TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
+            TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
 
          @Override
          public void call() throws Exception {
-            for(EmbeddedCacheManager cm : cms) {
-               cm.defineConfiguration(ScriptingTest.CACHE_NAME, cm.getDefaultCacheConfiguration());
+            Configuration configuration = new ConfigurationBuilder()
+                  .encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
+                  .encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE).build();
+            for (EmbeddedCacheManager cm : cms) {
+               cm.defineConfiguration(ScriptingTest.CACHE_NAME, configuration);
             }
             Cache<Object, Object> cache = cms[0].getCache(ScriptingTest.CACHE_NAME);
             ScriptingManager scriptingManager = getScriptingManager(cms[0]);
@@ -73,9 +81,9 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
    }
 
    @Test(dataProvider = "cacheModeProvider")
-   public void testDistExecScriptWithCache(final CacheMode cacheMode) throws IOException, InterruptedException, ExecutionException {
+   public void testDistExecScriptWithCache(final CacheMode cacheMode) {
       withCacheManagers(new MultiCacheManagerCallable(TestCacheManagerFactory.createCacheManager(cacheMode, false),
-              TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
+            TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
          public void call() throws Exception {
             Cache cache1 = cms[0].getCache();
             Cache cache2 = cms[1].getCache();
@@ -94,9 +102,14 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
    }
 
    @Test(dataProvider = "cacheModeProvider")
-   public void testDistExecScriptWithCacheManagerAndParams(final CacheMode cacheMode) throws IOException, InterruptedException, ExecutionException {
-      withCacheManagers(new MultiCacheManagerCallable(TestCacheManagerFactory.createCacheManager(cacheMode, false),
-              TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
+   public void testDistExecScriptWithCacheManagerAndParams(final CacheMode cacheMode) {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(cacheMode)
+            .encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
+            .encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+
+      withCacheManagers(new MultiCacheManagerCallable(TestCacheManagerFactory.createClusteredCacheManager(builder),
+            TestCacheManagerFactory.createClusteredCacheManager(builder)) {
          public void call() throws Exception {
             Cache cache1 = cms[0].getCache();
             Cache cache2 = cms[1].getCache();
@@ -106,7 +119,7 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             waitForNoRebalance(cache1, cache2);
 
             CompletableFuture<ArrayList<JGroupsAddress>> resultsFuture = scriptingManager.runScript("distExec.js",
-                    new TaskContext().cache(cache1).addParameter("a", "value"));
+                  new TaskContext().cache(cache1).addParameter("a", "value"));
 
             ArrayList<JGroupsAddress> results = resultsFuture.get();
             assertEquals(2, results.size());
@@ -120,9 +133,9 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
    }
 
    @Test(expectedExceptions = IllegalStateException.class, dataProvider = "cacheModeProvider", expectedExceptionsMessageRegExp = ".*without a cache binding.*")
-   public void testDistributedScriptExecutionWithoutCacheBinding(final CacheMode cacheMode) throws IOException, ExecutionException, InterruptedException {
+   public void testDistributedScriptExecutionWithoutCacheBinding(final CacheMode cacheMode) {
       withCacheManagers(new MultiCacheManagerCallable(TestCacheManagerFactory.createCacheManager(cacheMode, false),
-              TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
+            TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
          public void call() throws Exception {
             ScriptingManager scriptingManager = getScriptingManager(cms[0]);
             loadScript(scriptingManager, "/distExec.js");
@@ -133,9 +146,9 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
    }
 
    @Test(dataProvider = "cacheModeProvider")
-   public void testDistributedMapReduceStreamWithFlag(final CacheMode cacheMode) throws IOException, ExecutionException, InterruptedException {
+   public void testDistributedMapReduceStreamWithFlag(final CacheMode cacheMode) {
       withCacheManagers(new MultiCacheManagerCallable(TestCacheManagerFactory.createCacheManager(cacheMode, false),
-              TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
+            TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
          public void call() throws Exception {
             ScriptingManager scriptingManager = getScriptingManager(cms[0]);
             Cache cache1 = cms[0].getCache();
@@ -162,7 +175,7 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
    @Test(enabled = false, dataProvider = "cacheModeProvider", description = "Disabled due to ISPN-6173.")
    public void testDistributedMapReduceStreamLocalMode(final CacheMode cacheMode) throws IOException, ExecutionException, InterruptedException {
       withCacheManagers(new MultiCacheManagerCallable(TestCacheManagerFactory.createCacheManager(cacheMode, false),
-              TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
+            TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
          public void call() throws Exception {
             ScriptingManager scriptingManager = getScriptingManager(cms[0]);
             Cache cache1 = cms[0].getCache();
@@ -173,7 +186,7 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             waitForNoRebalance(cache1, cache2);
 
             ArrayList<Map<String, Long>> resultsFuture = (ArrayList<Map<String, Long>>) scriptingManager.runScript(
-                    "wordCountStream_serializable.js", new TaskContext().cache(cache1)).get();
+                  "wordCountStream_serializable.js", new TaskContext().cache(cache1)).get();
             assertEquals(2, resultsFuture.size());
             assertEquals(EXPECTED_WORDS, resultsFuture.get(0).size());
             assertEquals(EXPECTED_WORDS, resultsFuture.get(1).size());
@@ -186,7 +199,7 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
    @Test(enabled = false, dataProvider = "cacheModeProvider", description = "Disabled due to ISPN-6173.")
    public void testDistributedMapReduceStreamLocalModeWithExecutors(final CacheMode cacheMode) throws IOException, ExecutionException, InterruptedException {
       withCacheManagers(new MultiCacheManagerCallable(TestCacheManagerFactory.createCacheManager(cacheMode, false),
-              TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
+            TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
          public void call() throws Exception {
             ScriptingManager scriptingManager = getScriptingManager(cms[0]);
             Cache cache1 = cms[0].getCache();
@@ -197,7 +210,7 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             waitForNoRebalance(cache1, cache2);
 
             ArrayList<Map<String, Long>> resultsFuture = (ArrayList<Map<String, Long>>) scriptingManager.runScript(
-                    "wordCountStream_Exec.js", new TaskContext().cache(cache1)).get();
+                  "wordCountStream_Exec.js", new TaskContext().cache(cache1)).get();
             assertEquals(2, resultsFuture.size());
             assertEquals(EXPECTED_WORDS, resultsFuture.get(0).size());
             assertEquals(EXPECTED_WORDS, resultsFuture.get(1).size());
@@ -210,7 +223,7 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
    @Test(enabled = false, dataProvider = "cacheModeProvider", description = "Disabled due to ISPN-6173.")
    public void testDistributedMapReduceStream(final CacheMode cacheMode) throws IOException, ExecutionException, InterruptedException {
       withCacheManagers(new MultiCacheManagerCallable(TestCacheManagerFactory.createCacheManager(cacheMode, false),
-              TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
+            TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
          public void call() throws Exception {
             ScriptingManager scriptingManager = getScriptingManager(cms[0]);
             Cache cache1 = cms[0].getCache();
@@ -221,7 +234,7 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             waitForNoRebalance(cache1, cache2);
 
             ArrayList<Map<String, Long>> resultsFuture = (ArrayList<Map<String, Long>>) scriptingManager.runScript(
-                    "wordCountStream_dist.js", new TaskContext().cache(cache1)).get();
+                  "wordCountStream_dist.js", new TaskContext().cache(cache1)).get();
             assertEquals(2, resultsFuture.size());
             assertEquals(EXPECTED_WORDS, resultsFuture.get(0).size());
             assertEquals(EXPECTED_WORDS, resultsFuture.get(1).size());
@@ -239,6 +252,6 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
 
    @DataProvider(name = "cacheModeProvider")
    private static Object[][] provideCacheMode() {
-      return new Object[][] {{CacheMode.REPL_SYNC}, {CacheMode.DIST_SYNC}};
+      return new Object[][]{{CacheMode.REPL_SYNC}, {CacheMode.DIST_SYNC}};
    }
 }

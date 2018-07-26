@@ -1,5 +1,6 @@
 package org.infinispan.commons.dataconversion;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
@@ -83,7 +84,7 @@ public final class DefaultTranscoder implements Transcoder {
          if (contentType.match(TEXT_PLAIN)) {
             return StandardConversions.convertTextToOctetStream(content, contentType);
          }
-         return StandardConversions.convertJavaToOctetStream(content, contentType, javaMarshaller);
+         return StandardConversions.convertJavaToOctetStream(content, contentType, jbossMarshaller);
       } catch (EncodingException | InterruptedException | IOException e) {
          throw log.unsupportedContent(content);
       }
@@ -161,8 +162,8 @@ public final class DefaultTranscoder implements Transcoder {
       } catch (IOException | ClassNotFoundException e1) {
          try {
             return javaMarshaller.objectFromByteBuffer(content);
-         } catch (IOException | ClassNotFoundException e2) {
-            throw log.unsupportedContent(content);
+         } catch (IOException | ClassNotFoundException e) {
+            return new String(content, UTF_8);
          }
       }
    }

@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.test.TestingUtil;
@@ -26,13 +27,16 @@ public class ScriptingTest extends AbstractScriptingTest {
    static final String CACHE_NAME = "script-exec";
 
    protected String[] getScripts() {
-      return new String[] { "test.js", "testMissingMetaProps.js", "testExecWithoutProp.js", "testInnerScriptCall.js" };
+      return new String[]{"test.js", "testMissingMetaProps.js", "testExecWithoutProp.js", "testInnerScriptCall.js"};
    }
 
    @Override
    protected void setup() throws Exception {
       super.setup();
-      cacheManager.defineConfiguration(CACHE_NAME, new ConfigurationBuilder().build());
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+      builder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+      cacheManager.defineConfiguration(CACHE_NAME, builder.build());
    }
 
    @Override
@@ -128,7 +132,7 @@ public class ScriptingTest extends AbstractScriptingTest {
 
    public void testScriptCallFromJavascript() throws Exception {
       String result = (String) scriptingManager.runScript("testInnerScriptCall.js",
-              new TaskContext().cache(cacheManager.getCache(CACHE_NAME)).addParameter("a", "ahoj")).get();
+            new TaskContext().cache(cacheManager.getCache(CACHE_NAME)).addParameter("a", "ahoj")).get();
 
       assertEquals("script1:additionFromJavascript", result);
       assertEquals("ahoj", cacheManager.getCache(CACHE_NAME).get("a"));
@@ -198,11 +202,11 @@ public class ScriptingTest extends AbstractScriptingTest {
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*Cannot find an appropriate script engine for script.*")
    public void testNonSupportedScript() {
       scriptingManager.addScript("Test.java", "//mode=local,language=java\n" +
-              "public class Test {\n" +
-              "      public static void main(String[] args) {\n" +
-              "         System.out.println(cache.get(\"test.js\"));\n" +
-              "      }\n" +
-              "   }");
+            "public class Test {\n" +
+            "      public static void main(String[] args) {\n" +
+            "         System.out.println(cache.get(\"test.js\"));\n" +
+            "      }\n" +
+            "   }");
 
       scriptingManager.runScript("Test.java");
    }

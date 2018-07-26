@@ -147,7 +147,7 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public <V> ReplaceOperation<V> newReplaceOperation(Object key, byte[] keyBytes, byte[] values,
-           long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
+                                                      long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
       return new ReplaceOperation<>(
             codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
             cfg, values, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat);
@@ -170,7 +170,7 @@ public class OperationsFactory implements HotRodConstants {
 
    public <K> BulkGetKeysOperation<K> newBulkGetKeysOperation(int scope) {
       return new BulkGetKeysOperation<>(
-         codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, scope);
+            codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, scope);
    }
 
    public AddClientListenerOperation newAddClientListenerOperation(Object listener, DataFormat dataFormat) {
@@ -222,9 +222,9 @@ public class OperationsFactory implements HotRodConstants {
       return new SizeOperation(codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg);
    }
 
-   public <T> ExecuteOperation<T> newExecuteOperation(String taskName, Map<String, byte[]> marshalledParams, Object key) {
+   public <T> ExecuteOperation<T> newExecuteOperation(String taskName, Map<String, byte[]> marshalledParams, Object key, DataFormat dataFormat) {
       return new ExecuteOperation<>(codec, channelFactory, cacheNameBytes,
-            topologyId, flags(), cfg, taskName, marshalledParams, key);
+            topologyId, flags(), cfg, taskName, marshalledParams, key, dataFormat);
    }
 
    public AdminOperation newAdminOperation(String taskName, Map<String, byte[]> marshalledParams) {
@@ -313,7 +313,7 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public PrepareTransactionOperation newPrepareTransactionOperation(Xid xid, boolean onePhaseCommit,
-         Collection<Modification> modifications) {
+                                                                     Collection<Modification> modifications) {
       return new PrepareTransactionOperation(codec, channelFactory, cacheNameBytes, topologyId, cfg, xid,
             onePhaseCommit, modifications);
    }

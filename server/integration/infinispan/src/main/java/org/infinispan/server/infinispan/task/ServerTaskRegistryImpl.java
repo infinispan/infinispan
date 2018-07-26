@@ -10,10 +10,11 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.scripting.utils.ScriptConversions;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskManager;
-import org.infinispan.tasks.impl.TaskManagerImpl;
 
 /**
  * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
@@ -27,8 +28,9 @@ public class ServerTaskRegistryImpl implements ServerTaskRegistry {
 
    @Inject
    public void init(TaskManager taskManager, EmbeddedCacheManager cacheManager) {
-      ServerTaskEngine engine = new ServerTaskEngine(this, cacheManager);
-      ((TaskManagerImpl) taskManager).registerTaskEngine(engine);
+      EncoderRegistry encoderRegistry = cacheManager.getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
+      ServerTaskEngine engine = new ServerTaskEngine(this, cacheManager, new ScriptConversions(encoderRegistry));
+      taskManager.registerTaskEngine(engine);
    }
 
    @Override

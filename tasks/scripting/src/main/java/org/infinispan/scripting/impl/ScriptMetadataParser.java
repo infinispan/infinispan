@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.scripting.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -68,7 +69,7 @@ public class ScriptMetadataParser {
                   metadataBuilder.collator(value);
                   break;
                case "datatype":
-                  metadataBuilder.dataType(DataType.fromMime(value));
+                  metadataBuilder.dataType(MediaType.parse(value));
                   break;
                default:
                   throw log.unknownScriptProperty(key);
