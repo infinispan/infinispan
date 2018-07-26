@@ -7,7 +7,6 @@ import java.util.Optional;
 import javax.security.auth.Subject;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
@@ -51,12 +50,7 @@ public class TaskContext {
     * other caches can be obtained from the cache manager
     */
    public TaskContext cache(Cache<?, ?> cache) {
-      Optional<Cache<?, ?>> optionalCache = Optional.of(cache);
-      this.cache = optionalCache.map(c -> {
-         if (SecurityActions.getCacheConfiguration(c.getAdvancedCache()).compatibility().enabled())
-            return c.getAdvancedCache().withEncoding(IdentityEncoder.class);
-         return c;
-      });
+      this.cache = Optional.of(cache);
       return this;
    }
 

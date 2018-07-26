@@ -726,7 +726,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       if (key != null) {
          keyHint = hasCompatibility ? key : keyToBytes(key);
       }
-      ExecuteOperation<T> op = operationsFactory.newExecuteOperation(taskName, marshalledParams, keyHint);
+      ExecuteOperation<T> op = operationsFactory.newExecuteOperation(taskName, marshalledParams, keyHint, dataFormat);
       return await(op.execute());
    }
 

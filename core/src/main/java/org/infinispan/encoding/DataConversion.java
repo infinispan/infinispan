@@ -98,7 +98,7 @@ public final class DataConversion {
 
    public DataConversion withRequestMediaType(MediaType requestMediaType) {
       if (Objects.equals(this.requestMediaType, requestMediaType)) return this;
-      return new DataConversion(this.encoderClass, this.wrapperClass, requestMediaType, this.storageMediaType,
+      return new DataConversion(null, this.wrapperClass, requestMediaType, this.storageMediaType,
             this.isKey);
    }
 
@@ -160,6 +160,7 @@ public final class DataConversion {
       this.encoderRegistry = encoderRegistry;
       this.classWhiteList = cacheManager.getClassWhiteList();
       boolean embeddedMode = Configurations.isEmbeddedMode(gcr);
+      this.storageMediaType = getStorageMediaType(configuration, embeddedMode);
       CompatibilityModeConfiguration compatibility = configuration.compatibility();
       boolean compat = compatibility.enabled();
 
@@ -178,12 +179,12 @@ public final class DataConversion {
             encoderClass = BinaryEncoder.class;
          }
          if (compat) {
-            this.encoderClass = embeddedMode ? IdentityEncoder.class : CompatModeEncoder.class;
+            boolean requestMatchStorage = storageMediaType.equals(requestMediaType);
+            this.encoderClass = embeddedMode || requestMatchStorage ? IdentityEncoder.class : CompatModeEncoder.class;
          }
       }
       this.lookupWrapper();
       this.lookupEncoder(compatibility, gcr);
-      this.storageMediaType = getStorageMediaType(configuration, embeddedMode);
       this.lookupTranscoder();
    }
 

@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -29,8 +30,8 @@ public class ExecuteOperation<T> extends RetryOnFailureOperation<T> {
 
    protected ExecuteOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
                               AtomicInteger topologyId, int flags, Configuration cfg,
-                              String taskName, Map<String, byte[]> marshalledParams, Object key) {
-      super(EXEC_REQUEST, EXEC_RESPONSE, codec, channelFactory, cacheName == null ? DEFAULT_CACHE_NAME_BYTES : cacheName, topologyId, flags, cfg, null);
+                              String taskName, Map<String, byte[]> marshalledParams, Object key, DataFormat dataFormat) {
+      super(EXEC_REQUEST, EXEC_RESPONSE, codec, channelFactory, cacheName == null ? DEFAULT_CACHE_NAME_BYTES : cacheName, topologyId, flags, cfg, dataFormat);
       this.taskName = taskName;
       this.marshalledParams = marshalledParams;
       this.key = key;

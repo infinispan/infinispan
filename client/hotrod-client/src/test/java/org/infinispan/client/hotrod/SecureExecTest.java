@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JBOSS_MARSHALLING_TYPE;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
@@ -45,19 +46,21 @@ public class SecureExecTest extends AbstractAuthenticationTest {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization().enable().principalRoleMapper(new IdentityRoleMapper());
       globalRoles
-         .role("admin")
+            .role("admin")
             .permission(AuthorizationPermission.ALL)
-         .role("RWEuser")
+            .role("RWEuser")
             .permission(AuthorizationPermission.READ)
             .permission(AuthorizationPermission.WRITE)
             .permission(AuthorizationPermission.EXEC)
-         .role("RWuser")
+            .role("RWuser")
             .permission(AuthorizationPermission.READ)
             .permission(AuthorizationPermission.WRITE);
 
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       config
-         .security().authorization().enable().role("admin").role("RWEuser").role("RWuser");
+            .security().authorization().enable().role("admin").role("RWEuser").role("RWuser");
+      config.encoding().key().mediaType(APPLICATION_JBOSS_MARSHALLING_TYPE);
+      config.encoding().value().mediaType(APPLICATION_JBOSS_MARSHALLING_TYPE);
       cacheManager = TestCacheManagerFactory.createCacheManager(global, config);
       cacheManager.defineConfiguration(CACHE_NAME, config.build());
       cacheManager.getCache();

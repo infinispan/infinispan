@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.loadScript;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScript;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -62,9 +63,8 @@ public class ExecTest extends MultiHotRodServersTest {
 
    private void defineInAll(String cacheName, CacheMode mode) {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(mode, true);
-      builder.dataContainer()
-            .compatibility().enable()
-            .marshaller(new GenericJBossMarshaller())
+      builder.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
+      builder.encoding().value().mediaType(APPLICATION_OBJECT_TYPE)
             .locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       defineInAll(cacheName, builder);
    }
@@ -133,11 +133,12 @@ public class ExecTest extends MultiHotRodServersTest {
    }
 
    @Test(enabled = false, dataProvider = "CacheModeProvider",
-           description = "Disabling this test until the distributed scripts in DIST mode are fixed - ISPN-6173")
+         description = "Disabling this test until the distributed scripts in DIST mode are fixed - ISPN-6173")
    public void testRemoteMapReduceWithStreams(CacheMode cacheMode) throws Exception {
       String cacheName = "testRemoteMapReduce_Streams_dist_" + cacheMode.toString();
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, true);
-      builder.dataContainer() .compatibility().enable().marshaller(new GenericJBossMarshaller());
+      builder.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
+      builder.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
       defineInAll(cacheName, builder);
       waitForClusterToForm(cacheName);
 
@@ -187,14 +188,14 @@ public class ExecTest extends MultiHotRodServersTest {
    public void testLocalExecPutGetWithListener(String cacheName) {
       final EventLogListener<String> l = new EventLogListener<>(clients.get(0).getCache(cacheName));
       withClientListener(l, remote ->
-         withScript(manager(0), "/test-put-get.js", scriptName -> {
-            Map<String, String> params = new HashMap<>();
-            params.put("k", "local-key-listen");
-            params.put("v", "local-value-listen");
-            String result = remote.execute(scriptName, params);
-            l.expectOnlyCreatedEvent("local-key-listen");
-            assertEquals("local-value-listen", result);
-      }));
+            withScript(manager(0), "/test-put-get.js", scriptName -> {
+               Map<String, String> params = new HashMap<>();
+               params.put("k", "local-key-listen");
+               params.put("v", "local-value-listen");
+               String result = remote.execute(scriptName, params);
+               l.expectOnlyCreatedEvent("local-key-listen");
+               assertEquals("local-value-listen", result);
+            }));
    }
 
    @Test(dataProvider = "CacheNameProvider")
@@ -223,14 +224,14 @@ public class ExecTest extends MultiHotRodServersTest {
          params.put("k", key);
          params.put("v", value);
          params.put("cacheName", cacheName);
-         Object results =  clients.get(0).getCache(cacheName).execute(scriptName, params);
+         Object results = clients.get(0).getCache(cacheName).execute(scriptName, params);
          mode.assertResult.accept(value, results);
       });
    }
 
    @DataProvider(name = "CacheNameProvider")
    private static Object[][] provideCacheMode() {
-      return new Object[][] {{REPL_CACHE}, {DIST_CACHE}};
+      return new Object[][]{{REPL_CACHE}, {DIST_CACHE}};
    }
 
    enum ExecMode {

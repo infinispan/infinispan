@@ -1,5 +1,7 @@
 package org.infinispan.server.test.task.servertask;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,15 +49,9 @@ public class JSExecutingServerTask implements ServerTask {
         ScriptingManager scriptingManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
         loadScript(scriptingManager, "/stream_serverTask.js");
 
-        // Running a JS script is really designed for direct remote execution,
-        // and hence it's expected to return a byte[] result for sending back
-        // to remote client.
-        // To deploy a Java server task that then runs a Javascript file is
-        // not the common case, so it makes sense for such edge cases to do
-        // the hard work.
-        byte[] result = (byte[]) scriptingManager.runScript("/stream_serverTask.js",
-              new TaskContext().cache(usedCache).marshaller(taskContext.getMarshaller().get())).get();
-        return taskContext.getMarshaller().get().objectFromByteBuffer(result);
+        TaskContext taskContext = new TaskContext().cache(usedCache.getAdvancedCache()
+              .withMediaType(APPLICATION_OBJECT_TYPE, APPLICATION_OBJECT_TYPE));
+        return scriptingManager.runScript("/stream_serverTask.js", taskContext).get();
     }
 
     public String getCacheName() {

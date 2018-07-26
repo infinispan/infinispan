@@ -1,8 +1,9 @@
 package org.infinispan.scripting.impl;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
+
 import java.util.EnumSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
@@ -18,11 +19,7 @@ import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.dataconversion.GenericJbossMarshallerEncoder;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
-import org.infinispan.commons.dataconversion.UTF8Encoder;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -33,10 +30,12 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.InternalCacheRegistry.Flag;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.scripting.logging.Log;
+import org.infinispan.scripting.utils.ScriptConversions;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.AuthorizationHelper;
@@ -62,11 +61,14 @@ public class ScriptingManagerImpl implements ScriptingManager {
    private TaskManager taskManager;
    @Inject
    private InternalCacheRegistry internalCacheRegistry;
+   @Inject
+   private EncoderRegistry encoderRegistry;
 
    private ScriptEngineManager scriptEngineManager;
    private ConcurrentMap<String, ScriptEngine> scriptEnginesByExtension = CollectionFactory.makeConcurrentMap(2);
    private ConcurrentMap<String, ScriptEngine> scriptEnginesByLanguage = CollectionFactory.makeConcurrentMap(2);
    private Cache<String, String> scriptCache;
+   private ScriptConversions scriptConversions;
    ConcurrentMap<String, CompiledScript> compiledScripts = CollectionFactory.makeConcurrentMap();
    private AuthorizationHelper globalAuthzHelper;
 
@@ -82,11 +84,12 @@ public class ScriptingManagerImpl implements ScriptingManager {
       this.scriptEngineManager = new ScriptEngineManager(classLoader);
       internalCacheRegistry.registerInternalCache(SCRIPT_CACHE, getScriptCacheConfiguration().build(), EnumSet.of(Flag.USER, Flag.PROTECTED, Flag.PERSISTENT, Flag.GLOBAL));
       taskManager.registerTaskEngine(new ScriptingTaskEngine(this));
+      scriptConversions = new ScriptConversions(encoderRegistry);
    }
 
    Cache<String, String> getScriptCache() {
       if (scriptCache == null) {
-         scriptCache = (Cache<String, String>) cacheManager.getCache(SCRIPT_CACHE).getAdvancedCache().withEncoding(IdentityEncoder.class);
+         scriptCache = cacheManager.getCache(SCRIPT_CACHE);
       }
       return scriptCache;
    }
@@ -95,9 +98,9 @@ public class ScriptingManagerImpl implements ScriptingManager {
       GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
 
       ConfigurationBuilder cfg = new ConfigurationBuilder();
-      GenericJBossMarshaller marshaller = new GenericJBossMarshaller(cacheManager.getClassWhiteList());
-      cfg.compatibility().enable()
-            .marshaller(marshaller).customInterceptors().addInterceptor().interceptor(new ScriptingInterceptor()).before(CacheMgmtInterceptor.class);
+      cfg.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
+      cfg.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
+      cfg.customInterceptors().addInterceptor().interceptor(new ScriptingInterceptor()).before(CacheMgmtInterceptor.class);
       if (globalConfiguration.security().authorization().enabled()) {
          globalConfiguration.security().authorization().roles().put(SCRIPT_MANAGER_ROLE, new CacheRoleImpl(SCRIPT_MANAGER_ROLE, AuthorizationPermission.ALL));
          cfg.security().authorization().enable().role(SCRIPT_MANAGER_ROLE);
@@ -155,7 +158,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
       return SecurityActions.getUnwrappedCache(getScriptCache()).keySet();
    }
 
-   public boolean containsScript(String taskName) {
+   boolean containsScript(String taskName) {
       return SecurityActions.getUnwrappedCache(getScriptCache()).containsKey(taskName);
    }
 
@@ -163,6 +166,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
    public <T> CompletableFuture<T> runScript(String scriptName) {
       return runScript(scriptName, new TaskContext());
    }
+
 
    @Override
    public <T> CompletableFuture<T> runScript(String scriptName, TaskContext context) {
@@ -178,31 +182,22 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
       }
 
-      DataType dataType = metadata.dataType();
+      String scriptMediaType = metadata.dataType().toString();
+      MediaType requestMediaType = context.getCache().map(c -> c.getAdvancedCache().getValueDataConversion().getRequestMediaType()).orElse(MediaType.MATCH_ALL);
       Bindings userBindings = context.getParameters()
             .map(p -> {
-               Map<String, ?> params = metadata.dataType().transformer.toDataType(context.getParameters().get(), context.getMarshaller());
+               Map<String, ?> params = scriptConversions.convertParameters(context);
                return new SimpleBindings((Map<String, Object>) params);
             })
             .orElseGet(() -> new SimpleBindings());
 
       SimpleBindings systemBindings = new SimpleBindings();
-      DataTypedCacheManager dataTypedCacheManager = new DataTypedCacheManager(dataType, context.getMarshaller(), cacheManager, context.getSubject().orElse(null));
+      DataTypedCacheManager dataTypedCacheManager = new DataTypedCacheManager(scriptMediaType, cacheManager, context.getSubject().orElse(null));
       systemBindings.put(SystemBindings.CACHE_MANAGER.toString(), dataTypedCacheManager);
       systemBindings.put(SystemBindings.SCRIPTING_MANAGER.toString(), this);
       context.getCache().ifPresent(cache -> {
-         if (dataType == DataType.UTF8) {
-            cache = cache.getAdvancedCache().withEncoding(UTF8Encoder.class);
-         } else {
-            boolean compat = SecurityActions.getCacheConfiguration(cache).compatibility().enabled();
-            Optional<Marshaller> marshaller = context.getMarshaller();
-            if (compat) {
-               cache = cache.getAdvancedCache().withEncoding(IdentityEncoder.class);
-            } else {
-               if (marshaller.isPresent()) {
-                  cache = cache.getAdvancedCache().withEncoding(GenericJbossMarshallerEncoder.class);
-               }
-            }
+         if (requestMediaType != null && !requestMediaType.equals(MediaType.MATCH_ALL)) {
+            cache = cache.getAdvancedCache().withMediaType(scriptMediaType, scriptMediaType);
          }
          systemBindings.put(SystemBindings.CACHE.toString(), cache);
       });
@@ -216,7 +211,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
       ScriptRunner runner = metadata.mode().getRunner();
 
       return runner.runScript(this, metadata, bindings).thenApply(t ->
-            (T) metadata.dataType().transformer.fromDataType(t, context.getMarshaller()));
+            (T) scriptConversions.convertToRequestType(t, metadata.dataType(), requestMediaType));
    }
 
    ScriptMetadata getScriptMetadata(String scriptName) {
@@ -224,8 +219,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
       if (scriptEntry == null) {
          throw log.noNamedScript(scriptName);
       }
-      ScriptMetadata metadata = (ScriptMetadata) scriptEntry.getMetadata();
-      return metadata;
+      return (ScriptMetadata) scriptEntry.getMetadata();
    }
 
    <T> CompletableFuture<T> execute(ScriptMetadata metadata, Bindings bindings) {
