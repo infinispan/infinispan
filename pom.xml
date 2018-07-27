@@ -1686,6 +1686,7 @@
                   <Implementation-Build-Commit-Id>${buildNumber}</Implementation-Build-Commit-Id>
                   <Implementation-Build-Branch>${scmBranch}</Implementation-Build-Branch>
                </instructions>
+               <obrRepository>NONE</obrRepository>
             </configuration>
          </plugin>
 
