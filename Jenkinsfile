@@ -22,7 +22,7 @@ pipeline {
                 script {
                     env.MAVEN_HOME = tool('Maven')
                     env.MAVEN_OPTS = "-XX:+UseG1GC -Xmx800m -XX:+HeapDumpOnOutOfMemoryError -XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:FlightRecorderOptions=settings=profile,stackdepth=128,dumponexitpath=. -XX:StartFlightRecording=dumponexit=true"
-                    env.MAVEN_OPTS = "-XX:+UseG1GC -Xmx1G -XX:+HeapDumpOnOutOfMemoryError -XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:FlightRecorderOptions=settings=profile,stackdepth=128,dumponexitpath=. -XX:StartFlightRecording=dumponexit=true"
+                    env.MAVEN_FORK_OPTS = "-XX:+UseG1GC -Xmx1G -XX:+HeapDumpOnOutOfMemoryError -XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:FlightRecorderOptions=settings=profile,stackdepth=128,dumponexitpath=. -XX:StartFlightRecording=dumponexit=true"
                     env.JAVA_HOME = tool('JDK 8')
                     env.JAVA10_HOME = tool('JDK 10')
                 }
