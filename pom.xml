@@ -205,7 +205,6 @@
       <module.skipMavenRemoteResource>false</module.skipMavenRemoteResource>
       <module.skipCopyDependencies>true</module.skipCopyDependencies>
       <module.skipSupportModuleDeployment>true</module.skipSupportModuleDeployment>
-      <packaging>jar</packaging>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
       <testNGListeners>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter</testNGListeners>
@@ -2441,10 +2440,6 @@
                </plugin>
             </plugins>
          </build>
-         <properties>
-            <!-- By default create OSGI bundles -->
-            <packaging>bundle</packaging>
-         </properties>
       </profile>
       <profile>
          <id>test-CI</id>
