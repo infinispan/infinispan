@@ -21,7 +21,8 @@ pipeline {
                 // Workaround for JENKINS-47230
                 script {
                     env.MAVEN_HOME = tool('Maven')
-                    env.MAVEN_OPTS = "-Xmx800m -XX:+HeapDumpOnOutOfMemoryError -XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:FlightRecorderOptions=stackdepth=128,dumponexitpath=. -XX:StartFlightRecording=dumponexit=true"
+                    env.MAVEN_OPTS = "-XX:+UseG1GC -Xmx800m -XX:+HeapDumpOnOutOfMemoryError -XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:FlightRecorderOptions=stackdepth=128,dumponexitpath=. -XX:StartFlightRecording=dumponexit=true"
+                    env.MAVEN_OPTS = "-XX:+UseG1GC -Xmx1G -XX:+HeapDumpOnOutOfMemoryError -XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:FlightRecorderOptions=stackdepth=128,dumponexitpath=. -XX:StartFlightRecording=dumponexit=true"
                     env.JAVA_HOME = tool('JDK 8')
                     env.JAVA10_HOME = tool('JDK 10')
                 }
@@ -46,31 +47,31 @@ pipeline {
             }
         }
 
-//        stage('Tests') {
-//            steps {
-//                configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-//                    sh "$MAVEN_HOME/bin/mvn verify -B -V -e -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true -Dansi.strip=true -Djava10.home=$JAVA10_HOME"
-//                }
-//                // TODO Add StabilityTestDataPublisher after https://issues.jenkins-ci.org/browse/JENKINS-42610 is fixed
-//                // Capture target/surefire-reports/*.xml, target/failsafe-reports/*.xml,
-//                // target/failsafe-reports-embedded/*.xml, target/failsafe-reports-remote/*.xml
-//                junit testResults: '**/target/*-reports*/*.xml',
-//                        testDataPublishers: [[$class: 'ClaimTestDataPublisher']],
-//                        healthScaleFactor: 100, allowEmptyResults: true
-//
-//                // Workaround for SUREFIRE-1426: Fail the build if there a fork crashed
-//                script {
-//                    if (manager.logContains("org.apache.maven.surefire.booter.SurefireBooterForkException:.*")) {
-//                        echo "Fork error found"
-//                        manager.buildFailure()
-//                    }
-//                }
-//
-//                // Dump any dump files to the console
-//                sh 'find . -name "*.dump*" -exec echo {} \\; -exec cat {} \\;'
-//                sh 'find . -name "hs_err_*" -exec echo {} \\; -exec grep "^# " {} \\;'
-//            }
-//        }
+        stage('Tests') {
+            steps {
+                configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
+                    sh "$MAVEN_HOME/bin/mvn verify -B -V -e -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true -Dansi.strip=true -Djava10.home=$JAVA10_HOME -pl core"
+                }
+                // TODO Add StabilityTestDataPublisher after https://issues.jenkins-ci.org/browse/JENKINS-42610 is fixed
+                // Capture target/surefire-reports/*.xml, target/failsafe-reports/*.xml,
+                // target/failsafe-reports-embedded/*.xml, target/failsafe-reports-remote/*.xml
+                junit testResults: '**/target/*-reports*/*.xml',
+                        testDataPublishers: [[$class: 'ClaimTestDataPublisher']],
+                        healthScaleFactor: 100, allowEmptyResults: true
+
+                // Workaround for SUREFIRE-1426: Fail the build if there a fork crashed
+                script {
+                    if (manager.logContains("org.apache.maven.surefire.booter.SurefireBooterForkException:.*")) {
+                        echo "Fork error found"
+                        manager.buildFailure()
+                    }
+                }
+
+                // Dump any dump files to the console
+                sh 'find . -name "*.dump*" -exec echo {} \\; -exec cat {} \\;'
+                sh 'find . -name "hs_err_*" -exec echo {} \\; -exec grep "^# " {} \\;'
+            }
+        }
     }
 
     post {
