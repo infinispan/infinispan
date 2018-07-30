@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<features name="infinispan-hibernate-cache-v53-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.4.0">
+  <repository>mvn:org.infinispan/infinispan-core/${project.version}/xml/features</repository>
+
+  <feature name="infinispan-hibernate-cache-v53" version="${project.version}" description="Feature for easily adding Infinispan-based caching support to hibernate-orm">
+    <feature>hibernate-orm</feature>
+    <feature version="${project.version}">infinispan-core</feature>
+    <bundle>wrap:mvn:org.infinispan/infinispan-hibernate-cache-spi/${project.version}</bundle>
+    <bundle>wrap:mvn:org.infinispan/infinispan-hibernate-cache-commons/${project.version}</bundle>
+    <bundle>wrap:mvn:org.infinispan/infinispan-hibernate-cache-v53/${project.version}</bundle>
+  </feature>
+</features>

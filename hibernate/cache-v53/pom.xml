@@ -46,6 +46,16 @@
    </dependencies>
 
    <build>
+      <resources>
+         <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>features.xml</include>
+               <include>OSGI-INF/blueprint/blueprint.xml</include>
+            </includes>
+         </resource>
+      </resources>
       <testResources>
          <testResource>
             <directory>${project.basedir}/src/test/resources</directory>
@@ -102,6 +112,28 @@
                   <version>${version.maven.surefire}</version>
                </dependency>
             </dependencies>
+         </plugin>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>attach-artifacts</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>attach-artifact</goal>
+                  </goals>
+                  <configuration>
+                     <artifacts>
+                        <artifact>
+                           <file>target/classes/features.xml</file>
+                           <type>xml</type>
+                           <classifier>features</classifier>
+                        </artifact>
+                     </artifacts>
+                  </configuration>
+               </execution>
+            </executions>
          </plugin>
       </plugins>
    </build>
