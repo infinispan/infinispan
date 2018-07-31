@@ -553,7 +553,7 @@ public class TcpTransportFactory implements TransportFactory {
 
             for (int i = 0; i < candidateClusters.size(); i++) {
                ClusterInfo cluster = candidateClusters.get(i % candidateClusters.size());
-               boolean alive = checkServersAlive(cluster.clusterAddresses);
+               boolean alive = checkAnyServerAlive(cluster.clusterAddresses);
                if (alive) {
                   topologyAge.incrementAndGet();
                   Collection<SocketAddress> servers = updateTopologyInfo(cacheName, cluster.clusterAddresses, true);
@@ -585,16 +585,17 @@ public class TcpTransportFactory implements TransportFactory {
       }
    }
 
-   public boolean checkServersAlive(Collection<SocketAddress> servers) {
+   public boolean checkAnyServerAlive(Collection<SocketAddress> servers) {
       for (SocketAddress server : servers) {
          try {
             connectionPool.addObject(server);
+            log.tracef("Server %s is alive", server);
+            return true;
          } catch (Exception e) {
             log.tracef(e, "Error checking whether this server is alive: %s", server);
-            return false;
          }
       }
-      return true;
+      return false;
    }
 
    private boolean isSwitchedClusterNotAvailable(String failedClusterName, String currentClusterName) {
