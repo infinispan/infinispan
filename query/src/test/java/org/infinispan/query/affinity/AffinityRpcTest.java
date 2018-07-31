@@ -12,6 +12,7 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -35,6 +36,11 @@ public class AffinityRpcTest extends BaseAffinityTest {
    @Override
    protected int getNumOwners() {
       return 1;
+   }
+
+   @Override
+   protected int getNumShards() {
+      return HashConfiguration.NUM_SEGMENTS.getDefaultValue();
    }
 
    public void shouldAvoidRpcsDuringIndexing() throws Exception {

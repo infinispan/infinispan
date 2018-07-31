@@ -26,7 +26,7 @@ public final class ShardAllocationManagerImpl implements ShardAllocatorManager {
    private DistributionManager distributionManager;
    private volatile boolean initialized;
    private int numSegments;
-   private Integer numShards;
+   private int numShards;
    private volatile ShardDistribution shardDistribution;
 
    @Inject
@@ -67,9 +67,9 @@ public final class ShardAllocationManagerImpl implements ShardAllocatorManager {
    }
 
    @Override
-   public void initialize(Integer numberOfShards, int numSegments) {
+   public void initialize(int numberOfShards, int numSegments) {
       this.numSegments = numSegments;
-      this.numShards = numberOfShards == null ? numSegments : numberOfShards;
+      this.numShards = numberOfShards;
       initialized = true;
    }
 
