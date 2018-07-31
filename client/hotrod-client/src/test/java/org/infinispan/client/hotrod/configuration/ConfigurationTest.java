@@ -11,6 +11,8 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STOR
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_FILE_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_PASSWORD;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MAX_RETRIES;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.NEAR_CACHE_MAX_ENTRIES;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.NEAR_CACHE_MODE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SASL_MECHANISM;
@@ -107,6 +109,8 @@ public class ConfigurationTest {
       OPTIONS.put(SASL_PROPERTIES_PREFIX + ".B", c -> c.security().authentication().saslProperties().get("B"));
       OPTIONS.put(SASL_PROPERTIES_PREFIX + ".C", c -> c.security().authentication().saslProperties().get("C"));
       OPTIONS.put(JAVA_SERIAL_WHITELIST, Configuration::serialWhitelist);
+      OPTIONS.put(NEAR_CACHE_MODE, c -> c.nearCache().mode());
+      OPTIONS.put(NEAR_CACHE_MAX_ENTRIES, c -> c.nearCache().maxEntries());
 
       TYPES.put(Boolean.class, b -> Boolean.toString((Boolean) b));
       TYPES.put(ExhaustedAction.class, e -> Integer.toString(((ExhaustedAction) e).ordinal()));
@@ -119,6 +123,7 @@ public class ConfigurationTest {
       TYPES.put(Subject.class, s -> s);
       TYPES.put(ProtocolVersion.class, p -> p.toString());
       TYPES.put(mkClass(), l -> String.join(",", (List<String>) l));
+      TYPES.put(NearCacheMode.class, e -> e.toString());
    }
 
    private static Class<?> mkClass() {
@@ -193,7 +198,10 @@ public class ConfigurationTest {
                .serverName("my-server-name")
                .clientSubject(clientSubject)
                .saslProperties(saslProperties)
-         .addJavaSerialWhiteList(".*Person.*", ".*Employee.*");
+         .addJavaSerialWhiteList(".*Person.*", ".*Employee.*")
+         .nearCache()
+               .mode(NearCacheMode.INVALIDATED)
+               .maxEntries(128);
 
       Configuration configuration = builder.build();
       validateConfiguration(configuration);
@@ -247,6 +255,8 @@ public class ConfigurationTest {
       p.setProperty(SASL_PROPERTIES_PREFIX + ".B", "2");
       p.setProperty(SASL_PROPERTIES_PREFIX + ".C", "3");
       p.setProperty(JAVA_SERIAL_WHITELIST, ".*Person.*,.*Employee.*");
+      p.setProperty(NEAR_CACHE_MODE, "INVALIDATED");
+      p.setProperty(NEAR_CACHE_MAX_ENTRIES, "128");
 
       Configuration configuration = builder.withProperties(p).build();
       validateConfiguration(configuration);
@@ -512,6 +522,8 @@ public class ConfigurationTest {
       assertEqualsConfig("3", SASL_PROPERTIES_PREFIX + ".C", configuration);
       assertEqualsConfig(ProtocolVersion.PROTOCOL_VERSION_13, PROTOCOL_VERSION, configuration);
       assertEqualsConfig(Arrays.asList(".*Person.*", ".*Employee.*"), JAVA_SERIAL_WHITELIST, configuration);
+      assertEqualsConfig(NearCacheMode.INVALIDATED, NEAR_CACHE_MODE, configuration);
+      assertEqualsConfig(128, NEAR_CACHE_MAX_ENTRIES, configuration);
    }
 
    private void validateSSLContextConfiguration(Configuration configuration) {

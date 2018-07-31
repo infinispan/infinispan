@@ -353,6 +353,7 @@ public class Configuration {
       properties.setProperty(ConfigurationProperties.BATCH_SIZE, Integer.toString(batchSize));
 
       transaction.toProperties(properties);
+      nearCache.toProperties(properties);
       return properties;
    }
 }

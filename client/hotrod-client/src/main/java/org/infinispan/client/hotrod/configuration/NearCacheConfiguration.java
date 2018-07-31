@@ -1,5 +1,9 @@
 package org.infinispan.client.hotrod.configuration;
 
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+
+import java.util.Properties;
+
 public class NearCacheConfiguration {
    // TODO: Consider an option to configure key equivalence function for near cache (e.g. for byte arrays)
    private final NearCacheMode mode;
@@ -25,4 +29,10 @@ public class NearCacheConfiguration {
             ", maxEntries=" + maxEntries +
             '}';
    }
+
+   void toProperties(Properties properties) {
+      properties.setProperty(ConfigurationProperties.NEAR_CACHE_MODE, mode.name());
+      properties.setProperty(ConfigurationProperties.NEAR_CACHE_MAX_ENTRIES, Integer.toString(maxEntries));
+   }
+
 }
