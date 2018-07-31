@@ -321,4 +321,8 @@ public class OperationsFactory implements HotRodConstants {
    public CompleteTransactionOperation newCompleteTransactionOperation(Xid xid, boolean commit) {
       return new CompleteTransactionOperation(codec, channelFactory, cacheNameBytes, topologyId, cfg, xid, commit);
    }
+
+   public ForgetTransactionOperation newForgetTransactionOperation(Xid xid) {
+      return new ForgetTransactionOperation(codec, channelFactory, cacheNameBytes, topologyId, cfg, xid);
+   }
 }

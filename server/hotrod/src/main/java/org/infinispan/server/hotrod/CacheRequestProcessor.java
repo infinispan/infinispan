@@ -13,6 +13,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
@@ -580,5 +581,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       } finally {
          buf.release();
       }
+   }
+
+   EmbeddedCacheManager getCacheManager() {
+      return server.getCacheManager();
    }
 }

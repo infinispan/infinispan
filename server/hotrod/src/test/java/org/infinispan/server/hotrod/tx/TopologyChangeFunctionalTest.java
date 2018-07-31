@@ -5,6 +5,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
 import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
@@ -14,14 +15,22 @@ import javax.transaction.xa.XAResource;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.HotRodVersion;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.hotrod.test.RemoteTransaction;
+import org.infinispan.server.hotrod.tx.table.CacheXid;
+import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
+import org.infinispan.server.hotrod.tx.table.PerCacheTxTable;
+import org.infinispan.server.hotrod.tx.table.TxState;
+import org.infinispan.server.hotrod.tx.table.functions.CreateStateFunction;
+import org.infinispan.server.hotrod.tx.table.functions.TxFunction;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.ByteString;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -75,6 +84,7 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
       killNode(1);
 
       tx.commitAndAssert(XAResource.XA_OK);
+      tx.forget();
 
       assertData(k1, v1);
       assertData(k2, v2);
@@ -98,6 +108,7 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
       addNewNode();
 
       tx.commitAndAssert(XAResource.XA_OK);
+      tx.forget();
 
       assertData(k1, v1);
       assertData(k2, v2);
@@ -123,6 +134,7 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
 
       //index 0 is removed, index 0 is the old index 1
       tx.commitAndAssert(clients().get(0), XAResource.XA_OK);
+      tx.forget(clients().get(0));
 
       assertData(k1, v1);
       assertData(k2, v2);
@@ -146,13 +158,17 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
       killNode(0);
 
       //set the tx state to running
-      ServerTransactionTable transactionTable = extractComponent(cache(0, cacheName()), ServerTransactionTable.class);
-      TxState state = transactionTable.getGlobalState(tx.getXid());
-      transactionTable.updateGlobalState(tx.getXid(), state, new TxState(state.getGlobalTransaction()));
+      GlobalTxTable transactionTable = extractGlobalComponent(manager(0), GlobalTxTable.class);
+      CacheXid cacheXid = new CacheXid(ByteString.fromString(cacheName()), tx.getXid());
+      TxState state = transactionTable.getState(cacheXid);
+      transactionTable.remove(cacheXid);
+      TxFunction function = new CreateStateFunction(state.getGlobalTransaction(), false, 60000);
+      transactionTable.update(cacheXid, function, 60000);
 
       //index 0 is removed, index 0 is the old index 1
       tx.prepareAndAssert(clients().get(0), XAResource.XA_OK);
       tx.commitAndAssert(clients().get(0), XAResource.XA_OK);
+      tx.forget(clients().get(0));
 
       assertData(k1, v1);
       assertData(k2, v2);
@@ -231,8 +247,12 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
 
    private void assertServerTransactionTableEmpty() {
       for (Cache cache : caches(cacheName())) {
-         ServerTransactionTable serverTransactionTable = extractComponent(cache, ServerTransactionTable.class);
-         assertTrue(serverTransactionTable.isEmpty());
+         PerCacheTxTable perCacheTxTable = extractComponent(cache, PerCacheTxTable.class);
+         assertTrue(perCacheTxTable.isEmpty());
+      }
+      for (EmbeddedCacheManager cm : managers()) {
+         GlobalTxTable globalTxTable = extractGlobalComponent(cm, GlobalTxTable.class);
+         assertTrue(globalTxTable.isEmpty());
       }
    }
 

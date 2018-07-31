@@ -315,7 +315,7 @@ public class TransactionImpl implements Transaction {
     *
     * @param forceRollback force the transaction to rollback.
     */
-   public void runCommit(boolean forceRollback)
+   public synchronized void runCommit(boolean forceRollback) //synch because of client transactions
          throws HeuristicMixedException, HeuristicRollbackException, RollbackException {
       if (trace) {
          log.tracef("runCommit(forceRollback=%b) invoked in transaction with Xid=%s", forceRollback, xid);

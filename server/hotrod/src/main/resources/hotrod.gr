@@ -235,6 +235,8 @@ branchId returns byte[]
    ;
 
 onePhaseCommit: bool;
+recoverable: bool;
+timeout: long;
 
 numModifications: vInt;
 modifications returns List<TransactionWrite>
@@ -310,9 +312,12 @@ parameters switch opCode
    | { PUT_STREAM_REQUEST }? key expiration entryVersion chunkedValue { cacheProcessor.putStream(getHeader(), auth.getSubject(operation), key, chunkedValue, entryVersion, expiration) }
 
 // Transactions
-   | { PREPARE_TX }? xid onePhaseCommit modifications { cacheProcessor.prepareTransaction(getHeader(), auth.getSubject(operation), xid, onePhaseCommit, modifications); }
+   | { PREPARE_TX }? xid onePhaseCommit modifications { cacheProcessor.prepareTransaction(getHeader(), auth.getSubject(operation), xid, onePhaseCommit, modifications, false, 60000); }
    | { COMMIT_TX }? xid { cacheProcessor.commitTransaction(getHeader(), auth.getSubject(operation), xid); }
    | { ROLLBACK_TX }? xid { cacheProcessor.rollbackTransaction(getHeader(), auth.getSubject(operation), xid); }
+   | { FORGET_TX }? xid { cacheProcessor.forgetTransaction(getHeader(), auth.getSubject(operation), xid); }
+   | { FETCH_TX_RECOVERY }? { cacheProcessor.getPreparedTransactions(getHeader(), auth.getSubject(operation)); }
+   | { PREPARE_TX_2 }? xid onePhaseCommit recoverable timeout modifications { cacheProcessor.prepareTransaction(getHeader(), auth.getSubject(operation), xid, onePhaseCommit, modifications, recoverable, timeout); }
 
 // Counters
    | { COUNTER_CREATE_REQUEST }? counterName counterConfiguration { counterProcessor.createCounter(getHeader(), auth.getSubject(operation), counterName, counterConfiguration.build()); }

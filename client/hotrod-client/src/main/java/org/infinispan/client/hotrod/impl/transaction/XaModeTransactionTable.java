@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.impl.transaction;
 
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +62,7 @@ public class XaModeTransactionTable implements TransactionTable {
    private class XaAdapter implements XAResource {
       private final Transaction transaction;
       private final Map<String, TransactionContext<?, ?>> registeredCaches = new ConcurrentSkipListMap<>();
-      private final Collection<TransactionContext<?, ?>> preparedCaches = new LinkedList<>();
+      private final List<TransactionContext<?, ?>> preparedCaches = new LinkedList<>();
       private volatile Xid currentXid;
 
       private XaAdapter(Transaction transaction) {
@@ -396,6 +395,10 @@ public class XaModeTransactionTable implements TransactionTable {
       }
 
       private void cleanup() {
+         //TODO use proper method!
+         if (!preparedCaches.isEmpty()) {
+            preparedCaches.get(0).forget(currentXid);
+         }
          registeredTransactions.remove(transaction);
          registeredCaches.clear();
          preparedCaches.clear();

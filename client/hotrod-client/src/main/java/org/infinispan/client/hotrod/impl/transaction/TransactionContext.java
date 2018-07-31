@@ -19,6 +19,7 @@ import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.impl.operations.CompleteTransactionOperation;
+import org.infinispan.client.hotrod.impl.operations.ForgetTransactionOperation;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PrepareTransactionOperation;
 import org.infinispan.client.hotrod.impl.transaction.entry.Modification;
@@ -216,6 +217,20 @@ public class TransactionContext<K, V> {
       } catch (Exception e) {
          log.debug("Exception while commit/rollback.", e);
          return XAException.XA_HEURRB; //heuristically rolled-back
+      }
+   }
+
+   void forget(Xid xid) {
+      try {
+         if (trace) {
+            log.tracef("Forgetting transaction xid=%s, remote-cache=%s", xid, cacheName);
+         }
+         ForgetTransactionOperation operation = operationsFactory.newForgetTransactionOperation(xid);
+         operation.execute().get();
+      } catch (Exception e) {
+         if (trace) {
+            log.tracef(e, "Exception in forget transaction xid=%s", xid);
+         }
       }
    }
 

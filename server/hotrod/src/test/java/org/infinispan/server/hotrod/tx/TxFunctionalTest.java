@@ -4,6 +4,8 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertKeyDoesN
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertSuccess;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
@@ -14,11 +16,13 @@ import javax.transaction.xa.XAResource;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
 import org.infinispan.server.hotrod.HotRodVersion;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.RemoteTransaction;
-import org.infinispan.test.TestingUtil;
+import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
+import org.infinispan.server.hotrod.tx.table.PerCacheTxTable;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
@@ -68,6 +72,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAResource.XA_OK);
       tx.commitAndAssert(XAResource.XA_OK);
+      tx.forget();
 
       assertData(k1, v1);
       assertData(k2, v2);
@@ -91,6 +96,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAResource.XA_OK);
       tx.commitAndAssert(XAResource.XA_OK);
+      tx.forget();
 
       assertData(k1, v1);
       assertData(k2, v2);
@@ -114,6 +120,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAResource.XA_OK);
       tx.commitAndAssert(XAResource.XA_OK);
+      tx.forget();
 
       assertData(k1, v1);
       assertData(k2, v2);
@@ -140,6 +147,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAException.XA_RBROLLBACK);
       tx.rollbackAndAssert(XAResource.XA_OK);
+      tx.forget();
 
       assertData(k1, v1_1);
       assertDataDoesNotExist(k2);
@@ -167,6 +175,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAResource.XA_OK);
       tx.commitAndAssert(XAResource.XA_OK);
+      tx.forget();
 
       assertData(k1, v1_1);
       assertData(k2, v2_1);
@@ -197,6 +206,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAException.XA_RBROLLBACK);
       tx.rollbackAndAssert(XAResource.XA_OK);
+      tx.forget();
 
       assertData(k1, v1_1_1);
       assertData(k2, v2);
@@ -218,6 +228,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAResource.XA_OK);
       tx.commitAndAssert(XAResource.XA_OK);
+      tx.forget();
 
       assertDataDoesNotExist(k1);
       assertData(k2, v2);
@@ -248,6 +259,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAResource.XA_OK);
       tx.commitAndAssert(XAResource.XA_OK);
+      tx.forget();
 
       assertDataDoesNotExist(k1);
       assertData(k2, v2_1);
@@ -273,6 +285,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAResource.XA_OK);
       tx.commitAndAssert(XAResource.XA_OK);
+      tx.forget();
 
       assertDataDoesNotExist(k1);
       assertData(k2, v2);
@@ -301,6 +314,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAException.XA_RBROLLBACK);
       tx.rollbackAndAssert(XAResource.XA_OK);
+      tx.forget();
 
       assertData(k1, v1_1);
       assertDataDoesNotExist(k2);
@@ -327,6 +341,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAResource.XA_OK);
       tx.commitAndAssert(XAResource.XA_OK);
+      tx.forget();
 
       assertDataDoesNotExist(k1);
       assertData(k2, v2_1);
@@ -356,6 +371,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAException.XA_RBROLLBACK);
       tx.rollbackAndAssert(XAResource.XA_OK);
+      tx.forget();
 
       assertData(k1, v1_1);
       assertData(k2, v2);
@@ -382,6 +398,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAResource.XA_OK);
       tx.commitAndAssert(XAResource.XA_OK);
+      tx.forget();
 
       assertDataDoesNotExist(k1);
       assertData(k2, v2_1);
@@ -399,6 +416,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAResource.XA_OK);
       tx.commitAndAssert(XAResource.XA_OK);
+      tx.forget();
 
       assertData(k1, v1_1);
       assertData(k2, v2_1);
@@ -422,6 +440,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAResource.XA_OK);
       tx.commitAndAssert(clients().get(1), XAResource.XA_OK);
+      tx.forget(clients().get(1));
 
       assertDataDoesNotExist(k1);
       assertData(k2, v2);
@@ -437,6 +456,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAResource.XA_OK);
       tx.commitAndAssert(clients().get(1), XAResource.XA_OK);
+      tx.forget(clients().get(1));
 
       assertData(k1, v1_1);
       assertData(k2, v2);
@@ -460,6 +480,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAResource.XA_OK);
       tx.rollbackAndAssert(clients().get(1), XAResource.XA_OK);
+      tx.forget(clients().get(1));
 
       assertData(k1, v1);
       assertData(k2, v2);
@@ -475,6 +496,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
       tx.prepareAndAssert(XAResource.XA_OK);
       tx.rollbackAndAssert(clients().get(1), XAResource.XA_OK);
+      tx.forget(clients().get(1));
 
       assertData(k1, v1);
       assertData(k2, v2);
@@ -498,6 +520,7 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
       tx.prepareAndAssert(clients().get(1), XAResource.XA_OK);
 
       tx.commitAndAssert(XAResource.XA_OK);
+      tx.forget();
 
       assertData(k1, v1);
       assertData(k2, v2);
@@ -559,9 +582,12 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
    private void assertServerTransactionTableEmpty() {
       for (Cache cache : caches(cacheName())) {
-         ServerTransactionTable serverTransactionTable = TestingUtil
-               .extractComponent(cache, ServerTransactionTable.class);
-         assertTrue(serverTransactionTable.isEmpty());
+         PerCacheTxTable perCacheTxTable = extractComponent(cache, PerCacheTxTable.class);
+         assertTrue(perCacheTxTable.isEmpty());
+      }
+      for (EmbeddedCacheManager cm : managers()) {
+         GlobalTxTable globalTxTable = extractGlobalComponent(cm, GlobalTxTable.class);
+         assertTrue(globalTxTable.isEmpty());
       }
    }
 }

@@ -28,5 +28,12 @@ public final class ExternalizerIds {
    public static final int TX_STATE = 1113;
    public static final int CACHE_XID = 1114;
    public static final int CLIENT_ADDRESS = 1115;
+   public static final int CREATE_STATE_FUNCTION = 1116;
+   public static final int PREPARING_FUNCTION = 1117;
+   public static final int COMPLETE_FUNCTION = 1118;
+   public static final int DECISION_FUNCTION = 1119;
+   public static final int PREPARED_FUNCTION = 1120;
+   public static final int XID_PREDICATE = 1121;
+   public static final int CONDITIONAL_MARK_ROLLBACK_FUNCTION = 1122;
 
 }

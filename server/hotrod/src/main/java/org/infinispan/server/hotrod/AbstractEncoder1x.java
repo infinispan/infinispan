@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.transaction.xa.Xid;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
@@ -106,6 +108,11 @@ public abstract class AbstractEncoder1x implements VersionedEncoder {
 
    @Override
    public ByteBuf transactionResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, int xaReturnCode) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public ByteBuf recoveryResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Collection<Xid> xids) {
       throw new UnsupportedOperationException();
    }
 
