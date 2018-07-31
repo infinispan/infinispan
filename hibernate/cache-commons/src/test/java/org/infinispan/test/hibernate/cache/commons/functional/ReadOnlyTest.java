@@ -100,7 +100,7 @@ public class ReadOnlyTest extends SingleNodeTest {
       final Statistics stats = sessionFactory().getStatistics();
       stats.clear();
 
-      final Item item = new Item("query-cache-rollback", "Querying caching on rollback");
+      final Item item = new Item("query-cache-rb", "Querying caching on RB");
       withTxSession(s -> s.persist(item));
 
       // Delay added to guarantee that query cache results won't be considered
