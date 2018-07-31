@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 
+import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.Cache;
@@ -18,6 +19,7 @@ import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.hotrod.test.TestErrorResponse;
 import org.infinispan.server.hotrod.test.TxResponse;
+import org.infinispan.server.hotrod.tx.table.PerCacheTxTable;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
@@ -127,10 +129,10 @@ public class ServerConfigurationTest extends HotRodMultiNodeTest {
       try {
          TestErrorResponse response = (TestErrorResponse) client.prepareTx(xid, false, Collections.emptyList());
          assertEquals(errorMsg, response.msg);
-         response = (TestErrorResponse) client.commitTx(xid);
-         assertEquals(errorMsg, response.msg);
-         response = (TestErrorResponse) client.rollbackTx(xid);
-         assertEquals(errorMsg, response.msg);
+         TxResponse response2 = (TxResponse) client.commitTx(xid);
+         assertEquals(XAException.XAER_NOTA, response2.xaCode);
+         response2 = (TxResponse) client.rollbackTx(xid);
+         assertEquals(XAException.XAER_NOTA, response2.xaCode);
          assertServerTransactionTableEmpty(cacheName);
       } finally {
          HotRodTestingUtil.killClient(client);
@@ -146,9 +148,9 @@ public class ServerConfigurationTest extends HotRodMultiNodeTest {
          TxResponse response = (TxResponse) client.prepareTx(xid, false, Collections.emptyList());
          assertEquals(XAResource.XA_RDONLY, response.xaCode);
          response = (TxResponse) client.commitTx(xid);
-         assertEquals(XAResource.XA_OK, response.xaCode);
+         assertEquals(XAException.XAER_NOTA, response.xaCode);
          response = (TxResponse) client.rollbackTx(xid);
-         assertEquals(XAResource.XA_OK, response.xaCode);
+         assertEquals(XAException.XAER_NOTA, response.xaCode);
          assertServerTransactionTableEmpty(cacheName);
       } finally {
          HotRodTestingUtil.killClient(client);
@@ -158,8 +160,8 @@ public class ServerConfigurationTest extends HotRodMultiNodeTest {
    private void assertServerTransactionTableEmpty(String cacheName) {
       for (Cache cache : caches(cacheName)) {
          if (cache.getCacheConfiguration().transaction().transactionMode().isTransactional()) {
-            ServerTransactionTable serverTransactionTable = extractComponent(cache, ServerTransactionTable.class);
-            assertTrue(serverTransactionTable.isEmpty());
+            PerCacheTxTable perCacheTxTable = extractComponent(cache, PerCacheTxTable.class);
+            assertTrue(perCacheTxTable.isEmpty());
          }
       }
    }

@@ -134,6 +134,16 @@ public class RemoteTransaction {
       assertEquals(message, expectedXaCode, ((TxResponse) another.rollbackTx(xid)).xaCode);
    }
 
+   public void forget() {
+      log.debugf("FORGET[%s]", xid);
+      client.forgetTx(xid);
+   }
+
+   public void forget(HotRodClient another) {
+      log.debugf("FORGET[%s]", xid);
+      another.forgetTx(xid);
+   }
+
    public XidImpl getXid() {
       return xid;
    }

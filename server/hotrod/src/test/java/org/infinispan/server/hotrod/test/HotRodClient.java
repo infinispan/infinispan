@@ -11,6 +11,7 @@ import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeRanged
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeString;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedInt;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedLong;
+import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeXid;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -34,14 +35,13 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 import javax.transaction.xa.Xid;
 
-import org.infinispan.commons.io.SignedNumeric;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.core.transport.NettyInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
-import org.infinispan.server.core.transport.VInt;
 import org.infinispan.server.hotrod.Constants;
+import org.infinispan.server.hotrod.HotRodConstants;
 import org.infinispan.server.hotrod.HotRodOperation;
 import org.infinispan.server.hotrod.OperationStatus;
 import org.infinispan.server.hotrod.ProtocolFlag;
@@ -52,6 +52,7 @@ import org.infinispan.server.hotrod.counter.op.CounterOp;
 import org.infinispan.server.hotrod.counter.response.CounterConfigurationTestResponse;
 import org.infinispan.server.hotrod.counter.response.CounterNamesTestResponse;
 import org.infinispan.server.hotrod.counter.response.CounterValueTestResponse;
+import org.infinispan.server.hotrod.counter.response.RecoveryTestResponse;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
 import org.infinispan.test.TestingUtil;
@@ -462,7 +463,7 @@ public class HotRodClient {
    }
 
    public TestResponse prepareTx(Xid xid, boolean onePhaseCommit, Collection<TxWrite> modifications) {
-      PrepareOp op = new PrepareOp(0xA0, protocolVersion, defaultCacheName, protocolVersion, 0, xid,
+      PrepareOp op = new PrepareOp(protocolVersion, defaultCacheName, 0, xid,
             onePhaseCommit, modifications);
       writeOp(op);
       ClientHandler handler = (ClientHandler) ch.pipeline().last();
@@ -470,14 +471,28 @@ public class HotRodClient {
    }
 
    public TestResponse commitTx(Xid xid) {
-      CommitOrRollbackOp op = new CommitOrRollbackOp(protocolVersion, defaultCacheName, protocolVersion, xid, true);
+      CommitOrRollbackOp op = new CommitOrRollbackOp(protocolVersion, defaultCacheName, xid, true);
       writeOp(op);
       ClientHandler handler = (ClientHandler) ch.pipeline().last();
       return handler.getResponse(op.id);
    }
 
    public TestResponse rollbackTx(Xid xid) {
-      CommitOrRollbackOp op = new CommitOrRollbackOp(protocolVersion, defaultCacheName, protocolVersion, xid, false);
+      CommitOrRollbackOp op = new CommitOrRollbackOp(protocolVersion, defaultCacheName, xid, false);
+      writeOp(op);
+      ClientHandler handler = (ClientHandler) ch.pipeline().last();
+      return handler.getResponse(op.id);
+   }
+
+   public TestResponse forgetTx(Xid xid) {
+      TxOp op = new ForgetTxOp(protocolVersion, xid);
+      writeOp(op);
+      ClientHandler handler = (ClientHandler) ch.pipeline().last();
+      return handler.getResponse(op.id);
+   }
+
+   public TestResponse recovery() {
+      Op op = new RecoveryOp(protocolVersion);
       writeOp(op);
       ClientHandler handler = (ClientHandler) ch.pipeline().last();
       return handler.getResponse(op.id);
@@ -531,23 +546,6 @@ class Encoder extends MessageToByteEncoder<Object> {
       this.protocolVersion = protocolVersion;
    }
 
-   private void encodePrepareOp(PrepareOp op, ByteBuf buffer) {
-      writeHeader(op, buffer);
-      VInt.write(buffer, SignedNumeric.encode(op.xid.getFormatId()));
-      writeRangedBytes(op.xid.getGlobalTransactionId(), buffer);
-      writeRangedBytes(op.xid.getBranchQualifier(), buffer);
-      buffer.writeByte(op.onePhaseCommit ? 1 : 0);
-      writeUnsignedInt(op.modifications.size(), buffer);
-      op.modifications.forEach(txWrite -> txWrite.encodeTo(buffer));
-   }
-
-   private void encodeCommitOrRollbackOp(CommitOrRollbackOp op, ByteBuf byteBuf) {
-      writeHeader(op, byteBuf);
-      VInt.write(byteBuf, SignedNumeric.encode(op.xid.getFormatId()));
-      writeRangedBytes(op.xid.getGlobalTransactionId(), byteBuf);
-      writeRangedBytes(op.xid.getBranchQualifier(), byteBuf);
-   }
-
    @Override
    protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf buffer) throws Exception {
       log.tracef("Encode %s so that it's sent to the server", msg);
@@ -572,15 +570,16 @@ class Encoder extends MessageToByteEncoder<Object> {
          writeRangedBytes(op.listenerId, buffer);
       } else if (msg instanceof PrepareOp) {
          encodePrepareOp((PrepareOp) msg, buffer);
-      } else if (msg instanceof CommitOrRollbackOp) {
-         encodeCommitOrRollbackOp((CommitOrRollbackOp) msg, buffer);
+      } else if (msg instanceof TxOp) {
+         encodeTxOp((TxOp) msg, buffer);
       } else if (msg instanceof CounterOp) {
          writeHeader((Op) msg, buffer);
          ((CounterOp) msg).writeTo(buffer);
       } else if (msg instanceof Op) {
          Op op = (Op) msg;
          writeHeader(op, buffer);
-         if (op.code == HotRodOperation.COUNTER_GET_NAMES.getRequestOpCode()) {
+         if (op.code == HotRodOperation.COUNTER_GET_NAMES.getRequestOpCode() ||
+             op.code == HotRodConstants.FETCH_TX_RECOVERY) {
             //nothing more to add
             return;
          }
@@ -643,6 +642,19 @@ class Encoder extends MessageToByteEncoder<Object> {
             writeRangedBytes(((AuthOp) op).response, buffer);
          }
       }
+   }
+
+   private void encodePrepareOp(PrepareOp op, ByteBuf buffer) {
+      writeHeader(op, buffer);
+      writeXid(op.xid, buffer);
+      buffer.writeByte(op.onePhaseCommit ? 1 : 0);
+      writeUnsignedInt(op.modifications.size(), buffer);
+      op.modifications.forEach(txWrite -> txWrite.encodeTo(buffer));
+   }
+
+   private void encodeTxOp(TxOp op, ByteBuf byteBuf) {
+      writeHeader(op, byteBuf);
+      writeXid(op.xid, byteBuf);
    }
 
    private void writeNamedFactory(Optional<KeyValuePair<String, List<byte[]>>> namedFactory, ByteBuf buffer) {
@@ -894,6 +906,17 @@ class Decoder extends ReplayingDecoder<Void> {
          case COMMIT_TX:
             resp = new TxResponse(client.protocolVersion, id, client.defaultCacheName, op.clientIntel, opCode, status,
                   op.topologyId, topologyChangeResponse, status == OperationStatus.Success ? buf.readInt() : 0);
+            break;
+         case FORGET_TX:
+            resp = new TestResponse(op.version, id, op.cacheName, op.clientIntel, opCode, status, op.topologyId,
+                  topologyChangeResponse);
+            break;
+         case FETCH_TX_RECOVERY:
+            resp = status == OperationStatus.Success ?
+                   new RecoveryTestResponse(op.version, id, op.cacheName, op.clientIntel, opCode, status, op.topologyId,
+                         topologyChangeResponse, buf) :
+                   new TestResponse(op.version, id, op.cacheName, op.clientIntel, opCode, status, op.topologyId,
+                         topologyChangeResponse);
             break;
          case COUNTER_REMOVE:
          case COUNTER_CREATE:
@@ -1252,9 +1275,9 @@ class PrepareOp extends TxOp {
    final boolean onePhaseCommit;
    final List<TxWrite> modifications;
 
-   PrepareOp(int magic, byte version, String cacheName, byte clientIntel, int topologyId, Xid xid,
-         boolean onePhaseCommit, Collection<TxWrite> modifications) {
-      super(magic, version, (byte) 0x3B, cacheName, clientIntel, topologyId, xid);
+   PrepareOp(byte version, String cacheName, int topologyId, Xid xid, boolean onePhaseCommit,
+         Collection<TxWrite> modifications) {
+      super(0xA0, version, (byte) 0x3B, cacheName, (byte) 1, topologyId, xid);
       this.onePhaseCommit = onePhaseCommit;
       this.modifications = new ArrayList<>(modifications);
    }
@@ -1262,9 +1285,22 @@ class PrepareOp extends TxOp {
 
 class CommitOrRollbackOp extends TxOp {
 
-   CommitOrRollbackOp(byte version, String cacheName, byte clientIntel, Xid xid,
-         boolean commit) {
-      super(0xA0, version, (byte) (commit ? 0x3D : 0x3F), cacheName, clientIntel, 0, xid);
+   CommitOrRollbackOp(byte version, String cacheName, Xid xid, boolean commit) {
+      super(0xA0, version, (byte) (commit ? 0x3D : 0x3F), cacheName, (byte) 1, 0, xid);
+   }
+}
+
+class ForgetTxOp extends TxOp {
+
+   ForgetTxOp(byte version, Xid xid) {
+      super(0xA0, version, HotRodConstants.FORGET_TX, "", (byte) 1, 0, xid);
+   }
+}
+
+class RecoveryOp extends AbstractOp {
+
+   RecoveryOp(byte version) {
+      super(0xA0, version, HotRodConstants.FETCH_TX_RECOVERY, "", (byte) 0, 0);
    }
 }
 

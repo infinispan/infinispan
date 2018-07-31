@@ -380,10 +380,13 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 
    public AdvancedCache<byte[], byte[]> cache(HotRodHeader header, Subject subject) throws RequestParsingException {
-      if (isCacheIgnored(header.cacheName)) {
+      return cache(header, subject, header.cacheName);
+   }
+
+   public AdvancedCache<byte[], byte[]> cache(HotRodHeader header, Subject subject, String cacheName) throws RequestParsingException {
+      if (isCacheIgnored(cacheName)) {
          throw new CacheUnavailableException();
       }
-      String cacheName = header.cacheName;
       // Try to avoid calling cacheManager.getCacheNames() if possible, since this creates a lot of unnecessary garbage
       AdvancedCache<byte[], byte[]> cache = knownCaches.get(scopedCacheKey(cacheName, header));
       if (cache == null) {

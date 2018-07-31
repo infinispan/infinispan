@@ -10,7 +10,7 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.command.Ids;
-import org.infinispan.server.hotrod.tx.CommitTransactionDecodeContext;
+import org.infinispan.server.hotrod.tx.operation.Util;
 import org.infinispan.util.ByteString;
 
 /**
@@ -23,15 +23,17 @@ import org.infinispan.util.ByteString;
 public class ForwardCommitCommand extends BaseRpcCommand {
 
    private XidImpl xid;
+   private long timeout;
    private AdvancedCache<byte[], byte[]> cache;
 
    public ForwardCommitCommand(ByteString cacheName) {
       super(cacheName);
    }
 
-   public ForwardCommitCommand(ByteString cacheName, XidImpl xid) {
+   public ForwardCommitCommand(ByteString cacheName, XidImpl xid, long timeout) {
       super(cacheName);
       this.xid = xid;
+      this.timeout = timeout;
    }
 
    @Override
@@ -52,17 +54,18 @@ public class ForwardCommitCommand extends BaseRpcCommand {
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       XidImpl.writeTo(output, xid);
+      output.writeLong(timeout);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public void readFrom(ObjectInput input) throws IOException {
       xid = XidImpl.readFrom(input);
+      timeout = input.readLong();
    }
 
    @Override
    public Object invoke() throws Throwable {
-      CommitTransactionDecodeContext context = new CommitTransactionDecodeContext(cache, xid);
-      context.perform();
+      Util.commitLocalTransaction(cache, xid, timeout);
       return null;
    }
 
