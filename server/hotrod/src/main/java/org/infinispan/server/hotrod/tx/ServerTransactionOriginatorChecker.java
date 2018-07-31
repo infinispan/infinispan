@@ -5,6 +5,7 @@ import java.util.Collection;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.server.hotrod.tx.table.ClientAddress;
 import org.infinispan.transaction.impl.TransactionOriginatorChecker;
 import org.infinispan.transaction.xa.GlobalTransaction;
 

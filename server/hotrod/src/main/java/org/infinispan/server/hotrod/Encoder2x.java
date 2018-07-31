@@ -4,7 +4,9 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 import static org.infinispan.counter.util.EncodeUtil.encodeConfiguration;
 import static org.infinispan.server.core.transport.VInt.write;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeString;
+import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedInt;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedLong;
+import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeXid;
 
 import java.security.PrivilegedActionException;
 import java.util.Collection;
@@ -15,6 +17,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import javax.transaction.xa.Xid;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -356,6 +360,16 @@ class Encoder2x implements VersionedEncoder {
    public ByteBuf transactionResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, int xaReturnCode) {
       ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
       buf.writeInt(xaReturnCode);
+      return buf;
+   }
+
+   @Override
+   public ByteBuf recoveryResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Collection<Xid> xids) {
+      ByteBuf buf = writeHeader(header, server, alloc, OperationStatus.Success);
+      writeUnsignedInt(xids.size(), buf);
+      for (Xid xid : xids) {
+         writeXid(xid, buf);
+      }
       return buf;
    }
 

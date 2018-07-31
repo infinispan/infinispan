@@ -136,13 +136,19 @@ public class SyncModeTransactionTable implements TransactionTable {
             log.tracef("AfterCompletion(xid=%s, status=%s, remote-caches=%s)", xid, transactionStatusToString(status),
                   preparedCaches);
          }
+         TransactionContext<?,?> lastCtx = null;
          //we only use the preparedCaches. the remaining caches are read-only or they didn't contact the server.
          try {
             boolean commit = status == Status.STATUS_COMMITTED;
             for (TransactionContext<?, ?> ctx : preparedCaches) {
                ctx.complete(xid, commit);
+               lastCtx = ctx;
             }
          } finally {
+            //TODO make it better
+            if (lastCtx != null) {
+               lastCtx.forget(xid);
+            }
             cleanupTask.accept(transaction);
          }
       }

@@ -58,6 +58,9 @@ public enum HotRodOperation {
    PREPARE_TX(0x3B, 0x3C, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
    COMMIT_TX(0x3D, 0x3E, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
    ROLLBACK_TX(0x3F, 0x40, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
+   FORGET_TX(HotRodConstants.FORGET_TX, HotRodConstants.FORGET_TX + 1, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
+   FETCH_TX_RECOVERY(HotRodConstants.FETCH_TX_RECOVERY, HotRodConstants.FETCH_TX_RECOVERY + 1, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
+   PREPARE_TX_2(HotRodConstants.PREPARE_TX_2,HotRodConstants.PREPARE_TX_2 + 1, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
 
    // Counter's operation [0x4B - 0x5F]
    COUNTER_CREATE(0x4B, 0x4C, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
@@ -83,6 +86,13 @@ public enum HotRodOperation {
    CONTAINS_ENTRY_MULTIMAP(0x73, 0x74, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_VALUE, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD), DecoderRequirements.VALUE),
    CONTAINS_KEY_MULTIMAP(0x75, 0x76, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD), DecoderRequirements.KEY),
    CONTAINS_VALUE_MULTIMAP(0x77, 0x78, EnumSet.of(OpReqs.REQUIRES_VALUE, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD), DecoderRequirements.VALUE),
+
+   // 0x79 => FORGET_TX request
+   // 0x7A => FORGET_TX response
+   // 0x7B => FETCH_TX_RECOVERY request
+   // 0x7C => FETCH_TX_RECOVERY response
+   // 0x7D => PREPARE_TX_2 request
+   // 0x7E => PREPARE_TX_2 response
 
    // Responses
    ERROR(0x50),
