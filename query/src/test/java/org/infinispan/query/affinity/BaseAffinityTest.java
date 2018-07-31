@@ -87,8 +87,8 @@ public abstract class BaseAffinityTest extends MultipleCacheManagersTest {
       return Integer.getInteger(SEGMENTS_SYS_PROP, DEFAULT_NUM_SEGMENTS);
    }
 
-   protected String getNumShards() {
-      return System.getProperty(SHARDS_SYS_PROP, String.valueOf(DEFAULT_NUM_SHARDS));
+   protected int getNumShards() {
+      return Integer.getInteger(SHARDS_SYS_PROP, DEFAULT_NUM_SHARDS);
    }
 
    protected int getRemoteTimeoutInMinutes() {
@@ -140,7 +140,7 @@ public abstract class BaseAffinityTest extends MultipleCacheManagersTest {
       props.put("default.indexwriter.ram_buffer_size", "256");
       props.put("default.reader.async_refresh_period_ms", getReaderRefresh());
       if (indexManager.equals(AffinityIndexManager.class.getName())) {
-         props.put("entity.sharding_strategy.nbr_of_shards", getNumShards());
+         props.put("entity.sharding_strategy.nbr_of_shards", String.valueOf(getNumShards()));
       }
       return props;
    }

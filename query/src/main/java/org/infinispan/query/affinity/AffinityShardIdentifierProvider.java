@@ -35,8 +35,10 @@ import org.infinispan.remoting.transport.LocalModeAddress;
 public class AffinityShardIdentifierProvider implements ShardIdentifierProvider {
 
    private static final Log log = LogFactory.getLog(AffinityShardIdentifierProvider.class, Log.class);
+   public static final int DEFAULT_NUMBER_SHARDS = 4;
 
    private static final String NUMBER_OF_SHARDS_PROP = "nbr_of_shards";
+   private static final String SHARDING_STRATEGY_PROP = "sharding_strategy";
 
    // these are lazily initialized from ComponentRegistry
    private RpcManager rpcManager;
@@ -56,7 +58,7 @@ public class AffinityShardIdentifierProvider implements ShardIdentifierProvider 
       String cacheName = componentRegistry.getCacheName();
       ClusteringConfiguration clusteringConfiguration =
             embeddedCacheManager.getCacheConfiguration(cacheName).clustering();
-      Integer numberOfShards = getNumberOfShards(properties);
+      int numberOfShards = getNumberOfShards(properties);
       shardAllocatorManager = this.componentRegistry.getComponent(ShardAllocatorManager.class);
       shardAllocatorManager.initialize(numberOfShards, clusteringConfiguration.hash().numSegments());
       if (log.isDebugEnabled()) {
@@ -119,9 +121,12 @@ public class AffinityShardIdentifierProvider implements ShardIdentifierProvider 
       return distributionManager;
    }
 
-   private static Integer getNumberOfShards(Properties properties) {
+   private static int getNumberOfShards(Properties properties) {
       String nShards = properties.getProperty(NUMBER_OF_SHARDS_PROP);
-      return nShards != null ? Integer.valueOf(nShards) : null;
+      if (nShards != null) return Integer.valueOf(nShards);
+
+      String value = properties.getProperty(SHARDING_STRATEGY_PROP + "." + NUMBER_OF_SHARDS_PROP);
+      return value != null ? Integer.valueOf(value) : DEFAULT_NUMBER_SHARDS;
    }
 
 }

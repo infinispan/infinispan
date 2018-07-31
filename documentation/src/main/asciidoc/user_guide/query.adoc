@@ -439,7 +439,7 @@ XML Configuration:
         <property name="default.indexmanager">
             org.infinispan.query.affinity.AffinityIndexManager
         </property>
-        <!-- optional: control the number of shards -->
+        <!-- optional: control the number of shards, the default is 4 -->
         <property name="default.sharding_strategy.nbr_of_shards">10</property>
     </indexing>
 </distributed-cache>
@@ -458,7 +458,7 @@ cacheCfg.clustering().hash().keyPartitioner(new AffinityPartitioner());
 cacheCfg.indexing()
       .index(Index.PRIMARY_OWNER)
       .addProperty("default.indexmanager", AffinityIndexManager.class.getName())
-      .addProperty("default.sharding_strategy.nbr_of_shards", "4")
+      .addProperty("default.sharding_strategy.nbr_of_shards", "10")
 
 ----
 

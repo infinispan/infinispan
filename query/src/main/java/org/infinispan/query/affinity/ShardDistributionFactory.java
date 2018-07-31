@@ -11,8 +11,7 @@ final class ShardDistributionFactory {
    private ShardDistributionFactory() {
    }
 
-   public static ShardDistribution build(Integer numShards, int nSegments, ConsistentHash consistentHash) {
-      int shards = numShards == null ? nSegments : numShards;
+   public static ShardDistribution build(int shards, int nSegments, ConsistentHash consistentHash) {
       if (consistentHash != null) {
          return shards == nSegments ? new PerSegmentShardDistribution(consistentHash) :
                new FixedShardsDistribution(consistentHash, shards);

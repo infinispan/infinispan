@@ -50,5 +50,5 @@ public interface ShardAllocatorManager {
    /**
     * Initializes the {@link ShardAllocatorManager} with the configured number of segments and shards.
     */
-   void initialize(Integer numberOfShards, int numSegments);
+   void initialize(int numberOfShards, int numSegments);
 }
