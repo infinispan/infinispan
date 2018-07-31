@@ -102,11 +102,7 @@ public final class QueryResultsRegionImpl extends BaseRegionImpl implements Quer
       @Override
       public CompletableFuture<Object> invoke(boolean success) {
          transactionContext.remove(session);
-         if (success) {
-            return putCache.putAsync(key, value);
-         } else {
-            return null;
-         }
+         return putCache.putAsync(key, value);
       }
    }
 }

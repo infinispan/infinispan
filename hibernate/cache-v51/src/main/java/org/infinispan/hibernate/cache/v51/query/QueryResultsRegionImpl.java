@@ -170,9 +170,7 @@ public final class QueryResultsRegionImpl extends BaseTransactionalDataRegion im
 
       @Override
       protected void invoke(boolean success) {
-         if (success) {
-            putCache.put(key, value);
-         }
+         putCache.put(key, value);
       }
    }
 }
