@@ -145,9 +145,9 @@ public interface HotRodConstants {
    int SUCCESS_WITH_PREVIOUS = 0x03;
    int NOT_EXECUTED_WITH_PREVIOUS = 0x04;
    int INVALID_ITERATION = 0x05;
-   byte NO_ERROR_STATUS_COMPAT = 0x06;
-   byte SUCCESS_WITH_PREVIOUS_COMPAT = 0x07;
-   byte NOT_EXECUTED_WITH_PREVIOUS_COMPAT = 0x08;
+   byte NO_ERROR_STATUS_OBJ_STORAGE = 0x06;
+   byte SUCCESS_WITH_PREVIOUS_OBJ_STORAGE = 0x07;
+   byte NOT_EXECUTED_WITH_PREVIOUS_OBJ_STORAGE = 0x08;
 
    int INVALID_MAGIC_OR_MESSAGE_ID_STATUS = 0x81;
    int REQUEST_PARSING_ERROR_STATUS = 0x84;
@@ -190,15 +190,15 @@ public interface HotRodConstants {
 
    static boolean isSuccess(int status) {
       return status == NO_ERROR_STATUS
-            || status == NO_ERROR_STATUS_COMPAT
+            || status == NO_ERROR_STATUS_OBJ_STORAGE
             || status == SUCCESS_WITH_PREVIOUS
-            || status == SUCCESS_WITH_PREVIOUS_COMPAT;
+            || status == SUCCESS_WITH_PREVIOUS_OBJ_STORAGE;
    }
 
    static boolean isNotExecuted(int status) {
       return status == NOT_PUT_REMOVED_REPLACED_STATUS
             || status == NOT_EXECUTED_WITH_PREVIOUS
-            || status == NOT_EXECUTED_WITH_PREVIOUS_COMPAT;
+            || status == NOT_EXECUTED_WITH_PREVIOUS_OBJ_STORAGE;
    }
 
    static boolean isNotExist(int status) {
@@ -207,15 +207,15 @@ public interface HotRodConstants {
 
    static boolean hasPrevious(int status) {
       return status == SUCCESS_WITH_PREVIOUS
-            || status == SUCCESS_WITH_PREVIOUS_COMPAT
+            || status == SUCCESS_WITH_PREVIOUS_OBJ_STORAGE
             || status == NOT_EXECUTED_WITH_PREVIOUS
-            || status == NOT_EXECUTED_WITH_PREVIOUS_COMPAT;
+            || status == NOT_EXECUTED_WITH_PREVIOUS_OBJ_STORAGE;
    }
 
-   static boolean hasCompatibility(short status) {
-      return status == NO_ERROR_STATUS_COMPAT
-            || status == SUCCESS_WITH_PREVIOUS_COMPAT
-            || status == NOT_EXECUTED_WITH_PREVIOUS_COMPAT;
+   static boolean isObjectStorage(short status) {
+      return status == NO_ERROR_STATUS_OBJ_STORAGE
+            || status == SUCCESS_WITH_PREVIOUS_OBJ_STORAGE
+            || status == NOT_EXECUTED_WITH_PREVIOUS_OBJ_STORAGE;
    }
 
    static boolean isInvalidIteration(short status) {

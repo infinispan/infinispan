@@ -52,10 +52,10 @@ public class Codec10 implements Codec {
 
    @Override
    public void writeExpirationParams(ByteBuf buf, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      if (!CodecUtils.isIntCompatible(lifespan)) {
+      if (!CodecUtils.isGreaterThan4bytes(lifespan)) {
          getLog().warn("Lifespan value greater than the max supported size (Integer.MAX_VALUE), this can cause precision loss");
       }
-      if (!CodecUtils.isIntCompatible(maxIdle)) {
+      if (!CodecUtils.isGreaterThan4bytes(maxIdle)) {
          getLog().warn("MaxIdle value greater than the max supported size (Integer.MAX_VALUE), this can cause precision loss");
       }
       int lifespanSeconds = CodecUtils.toSeconds(lifespan, lifespanTimeUnit);

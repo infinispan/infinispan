@@ -341,7 +341,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
             RemoteCacheHolder rcc = new RemoteCacheHolder(result, forceReturnValueOverride);
             startRemoteCache(rcc);
 
-            PingResult pingResult = result.resolveCompatibility();
+            PingResult pingResult = result.resolveStorage();
             // If ping not successful assume that the cache does not exist
             // Default cache is always started, so don't do for it
             if (!cacheName.equals(RemoteCacheManager.DEFAULT_CACHE_NAME) &&

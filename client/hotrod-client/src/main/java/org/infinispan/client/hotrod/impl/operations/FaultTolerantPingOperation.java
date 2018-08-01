@@ -38,8 +38,8 @@ public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingOper
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isSuccess(status)) {
-         complete(HotRodConstants.hasCompatibility(status)
-               ? PingOperation.PingResult.SUCCESS_WITH_COMPAT
+         complete(HotRodConstants.isObjectStorage(status)
+               ? PingOperation.PingResult.SUCCESS_WITH_OBJECT_STORAGE
                : PingOperation.PingResult.SUCCESS);
       } else {
          String hexStatus = Integer.toHexString(status);
