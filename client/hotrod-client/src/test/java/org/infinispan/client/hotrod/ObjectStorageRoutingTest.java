@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -13,8 +14,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.testng.annotations.Test;
 
-@Test(testName = "client.hotrod.CompatRoutingTest", groups = "functional")
-public class CompatRoutingTest extends MultiHotRodServersTest {
+@Test(testName = "client.hotrod.ObjectStorageRoutingTest", groups = "functional")
+public class ObjectStorageRoutingTest extends MultiHotRodServersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -23,12 +24,14 @@ public class CompatRoutingTest extends MultiHotRodServersTest {
 
    private ConfigurationBuilder getCacheConfiguration() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      builder.clustering().hash().numOwners(1).compatibility().enabled(true);
+      builder.clustering().hash().numOwners(1)
+      .encoding().key().mediaType(APPLICATION_OBJECT_TYPE)
+      .encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
       builder.jmxStatistics().enable();
       return builder;
    }
 
-   public void testGetWithCompatibility() {
+   public void testGetWithObjectStorage() {
       RemoteCache<String, String> client = client(0).getCache();
       HashMap<String, String> cachedValues = new HashMap<>();
       for (int i = 0; i < 100; i++) {

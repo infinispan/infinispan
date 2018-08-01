@@ -20,7 +20,6 @@ import java.util.function.BiConsumer;
 import org.infinispan.client.hotrod.event.EventLogListener;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.scripting.ScriptingManager;
@@ -106,7 +105,8 @@ public class ExecTest extends MultiHotRodServersTest {
    public void testScriptExecutionWithPassingParams(CacheMode cacheMode) throws IOException {
       String cacheName = "testScriptExecutionWithPassingParams_" + cacheMode.toString();
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, true);
-      builder.dataContainer().compatibility().enable().marshaller(new GenericJBossMarshaller());
+      builder.encoding().key().mediaType(APPLICATION_OBJECT_TYPE)
+            .encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
       defineInAll(cacheName, builder);
       try (InputStream is = this.getClass().getResourceAsStream("/distExec.js")) {
          String script = TestingUtil.loadFileAsString(is);
