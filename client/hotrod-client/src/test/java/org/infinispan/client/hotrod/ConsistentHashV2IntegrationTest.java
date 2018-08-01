@@ -126,7 +126,7 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
          remoteCache.put(key, "v");
       }
 
-      // compatibility with 1.0/1.1 clients is not perfect, so we must allow for some misses
+      // support for 1.0/1.1 clients is not perfect, so we must allow for some misses
       assertTrue(hitCountInterceptor(cacheIndex).getHits() > NUM_KEYS * 0.99);
       hitCountInterceptor(cacheIndex).reset();
    }
