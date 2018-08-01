@@ -59,8 +59,8 @@ public class PingOperation extends HotRodOperation<PingOperation.PingResult> imp
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isSuccess(status)) {
-         complete(HotRodConstants.hasCompatibility(status)
-               ? PingResult.SUCCESS_WITH_COMPAT
+         complete(HotRodConstants.isObjectStorage(status)
+               ? PingResult.SUCCESS_WITH_OBJECT_STORAGE
                : PingResult.SUCCESS);
       } else {
          String hexStatus = Integer.toHexString(status);
@@ -85,19 +85,19 @@ public class PingOperation extends HotRodOperation<PingOperation.PingResult> imp
    public enum PingResult {
       // Success if the ping request was responded correctly
       SUCCESS,
-      // Success with compatibility enabled
-      SUCCESS_WITH_COMPAT,
+      // Success with object storage in the server
+      SUCCESS_WITH_OBJECT_STORAGE,
       // When the ping request fails due to non-existing cache
       CACHE_DOES_NOT_EXIST,
       // For any other type of failures
       FAIL;
 
       public boolean isSuccess() {
-         return this == SUCCESS || this == SUCCESS_WITH_COMPAT;
+         return this == SUCCESS || this == SUCCESS_WITH_OBJECT_STORAGE;
       }
 
-      public boolean hasCompatibility() {
-         return this == SUCCESS_WITH_COMPAT;
+      public boolean isObjectStorage() {
+         return this == SUCCESS_WITH_OBJECT_STORAGE;
       }
    }
 }

@@ -126,7 +126,7 @@ public class RemoteStore<K, V> implements SegmentedAdvancedLoadWriteStore<K, V>,
    public boolean isAvailable() {
       try {
          PingOperation.PingResult pr = ((RemoteCacheImpl) remoteCache).ping();
-         return pr == PingOperation.PingResult.SUCCESS || pr == PingOperation.PingResult.SUCCESS_WITH_COMPAT;
+         return pr == PingOperation.PingResult.SUCCESS || pr == PingOperation.PingResult.SUCCESS_WITH_OBJECT_STORAGE;
       } catch (Exception e) {
          return false;
       }

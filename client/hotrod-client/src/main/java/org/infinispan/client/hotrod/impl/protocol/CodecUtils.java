@@ -18,7 +18,7 @@ public final class CodecUtils {
    private CodecUtils() {
    }
 
-   public static boolean isIntCompatible(long value) {
+   static boolean isGreaterThan4bytes(long value) {
       int narrowed = (int) value;
       return narrowed == value;
    }

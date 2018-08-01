@@ -30,9 +30,9 @@ public final class MarshallerUtil {
       if (bytes == null || bytes.length == 0) return null;
       try {
          Object ret = marshaller.objectFromByteBuffer(bytes);
-         if (HotRodConstants.hasCompatibility(status)) {
-            // Compatibility mode enabled
-            // No extra configuration is required for client when using compatibility mode,
+         if (HotRodConstants.isObjectStorage(status)) {
+            // Server stores objects
+            // No extra configuration is required for client in this scenario,
             // and no different marshaller should be required to deal with standard serialization.
             // So, if the unmarshalled object is still a byte[], it could be a standard
             // serialized object, so check for stream magic
