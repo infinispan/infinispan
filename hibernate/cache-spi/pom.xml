@@ -9,7 +9,7 @@
    </parent>
 
    <artifactId>infinispan-hibernate-cache-spi</artifactId>
-   <packaging>jar</packaging>
+   <packaging>bundle</packaging>
    <name>Infinispan Hibernate Cache SPI</name>
    <description>Infinispan Hibernate Cache SPI module</description>
 
@@ -29,6 +29,20 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-checkstyle-plugin</artifactId>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <configuration>
+               <instructions>
+                  <Export-Package>
+                     ${project.groupId}.hibernate.cache.spi.*;version=${project.version};-split-package:=error
+                  </Export-Package>
+                  <Include-Resource>
+                     {maven-resources}
+                  </Include-Resource>
+               </instructions>
+            </configuration>
          </plugin>
       </plugins>
    </build>
