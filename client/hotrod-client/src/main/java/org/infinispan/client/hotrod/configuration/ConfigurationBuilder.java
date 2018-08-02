@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,6 +29,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.commons.util.Util;
 
 /**
@@ -297,6 +299,12 @@ import org.infinispan.commons.util.Util;
  *       <td>{@link TransactionMode#NONE NONE}</td>
  *       <td>{@link TransactionConfigurationBuilder#transactionMode(TransactionMode)}</td>
  *    </tr>
+ *    <tr>
+ *  *       <td><b>infinispan.client.hotrod.transaction.timeout</b></td>
+ *  *       <td>Long</td>
+ *  *       <td>{@link TransactionConfigurationBuilder#DEFAULT_TIMEOUT 60000}</td>
+ *  *       <td>{@link TransactionConfigurationBuilder#timeout(long, TimeUnit)}</td>
+ *  *    </tr>
  * </table>
  *
  * @author Tristan Tarrant

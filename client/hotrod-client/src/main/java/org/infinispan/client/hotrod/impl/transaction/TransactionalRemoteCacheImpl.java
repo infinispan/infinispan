@@ -57,6 +57,7 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
    };
 
    private final boolean forceReturnValue;
+   private final boolean recoveryEnabled;
    private final TransactionManager transactionManager;
    private final TransactionTable transactionTable;
 
@@ -67,10 +68,11 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
    private volatile boolean hasTransactionSupport = false;
 
    public TransactionalRemoteCacheImpl(RemoteCacheManager rcm, String name, boolean forceReturnValue,
-         TransactionManager transactionManager,
+         boolean recoveryEnabled, TransactionManager transactionManager,
          TransactionTable transactionTable) {
       super(rcm, name);
       this.forceReturnValue = forceReturnValue;
+      this.recoveryEnabled = recoveryEnabled;
       this.transactionManager = transactionManager;
       this.transactionTable = transactionTable;
    }
@@ -236,7 +238,8 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
    }
 
    public void checkTransactionSupport() {
-      PrepareTransactionOperation op = operationsFactory.newPrepareTransactionOperation(DUMMY_XID, true, Collections.emptyList());
+      PrepareTransactionOperation op = operationsFactory.newPrepareTransactionOperation(DUMMY_XID, true, Collections.emptyList(),
+            false, 60000);
       try {
          hasTransactionSupport = op.execute().handle((integer, throwable) -> {
             if (throwable != null) {
@@ -249,6 +252,10 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
       } catch (ExecutionException e) {
          log.debugf("Exception while checking transaction support in server", e);
       }
+   }
+
+   boolean isRecoveryEnabled() {
+      return recoveryEnabled;
    }
 
    Function<K, byte[]> keyMarshaller() {

@@ -92,8 +92,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    private final Runnable start = this::start;
    private final Runnable stop = this::stop;
    private final RemoteCounterManager counterManager;
-   private final TransactionTable syncTransactionTable = new SyncModeTransactionTable();
-   private final TransactionTable xaTransactionTable = new XaModeTransactionTable();
+   private final TransactionTable syncTransactionTable;
+   private final TransactionTable xaTransactionTable;
 
    /**
     * Create a new RemoteCacheManager using the supplied {@link Configuration}.
@@ -117,6 +117,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    public RemoteCacheManager(Configuration configuration, boolean start) {
       this.configuration = configuration;
       this.counterManager = new RemoteCounterManager();
+      this.syncTransactionTable = new SyncModeTransactionTable(configuration.transaction().timeout());
+      this.xaTransactionTable = new XaModeTransactionTable(configuration.transaction().timeout());
       if (start) start();
    }
 
@@ -155,6 +157,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
       }
       this.configuration = builder.build();
       this.counterManager = new RemoteCounterManager();
+      this.syncTransactionTable = new SyncModeTransactionTable(configuration.transaction().timeout());
+      this.xaTransactionTable = new XaModeTransactionTable(configuration.transaction().timeout());
       if (start) start();
    }
 
@@ -331,7 +335,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
                result = createRemoteCache(cacheName);
             } else {
                TransactionManager transactionManager = getTransactionManager(transactionManagerOverride);
-               result = createRemoteTransactionalCache(cacheName, forceReturnValueOverride, transactionMode, transactionManager);
+               result = createRemoteTransactionalCache(cacheName, forceReturnValueOverride,
+                     transactionMode == TransactionMode.FULL_XA, transactionMode, transactionManager);
             }
             RemoteCacheHolder rcc = new RemoteCacheHolder(result, forceReturnValueOverride);
             startRemoteCache(rcc);
@@ -449,16 +454,17 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
          case NON_XA:
             return syncTransactionTable;
          case NON_DURABLE_XA:
-            return xaTransactionTable;
          case FULL_XA:
+            return xaTransactionTable;
          default:
-            throw new IllegalArgumentException("FULL_XA isn't supported yet!");
+            throw new IllegalStateException();
       }
    }
 
    private <K, V> TransactionalRemoteCacheImpl<K, V> createRemoteTransactionalCache(String cacheName,
-                                                                                    boolean forceReturnValues, TransactionMode transactionMode, TransactionManager transactionManager) {
-      return new TransactionalRemoteCacheImpl<>(this, cacheName, forceReturnValues, transactionManager,
+         boolean forceReturnValues, boolean recoveryEnabled, TransactionMode transactionMode,
+         TransactionManager transactionManager) {
+      return new TransactionalRemoteCacheImpl<>(this, cacheName, forceReturnValues, recoveryEnabled, transactionManager,
             getTransactionTable(transactionMode));
    }
 

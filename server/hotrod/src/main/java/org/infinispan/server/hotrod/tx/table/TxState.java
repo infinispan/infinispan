@@ -34,7 +34,7 @@ import net.jcip.annotations.Immutable;
 public class TxState {
 
    public static final AdvancedExternalizer<TxState> EXTERNALIZER = new Externalizer();
-   
+
    private final GlobalTransaction globalTransaction;
    private final Status status;
    private final List<WriteCommand> modifications;

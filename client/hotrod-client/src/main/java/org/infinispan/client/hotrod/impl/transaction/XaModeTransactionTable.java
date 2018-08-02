@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod.impl.transaction;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -16,6 +16,8 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.impl.transaction.recovery.RecoveryIterator;
+import org.infinispan.client.hotrod.impl.transaction.recovery.RecoveryManager;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.CacheException;
@@ -38,10 +40,15 @@ public class XaModeTransactionTable implements TransactionTable {
 
    private static final Log log = LogFactory.getLog(XaModeTransactionTable.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
-   private static final Xid[] NO_XIDS = new Xid[0];
 
    private final Map<Transaction, XaAdapter> registeredTransactions = new ConcurrentHashMap<>();
+   private final RecoveryManager recoveryManager = new RecoveryManager();
    private final Function<Transaction, XaAdapter> constructor = this::createTransactionData;
+   private final long timeout;
+
+   public XaModeTransactionTable(long timeout) {
+      this.timeout = timeout;
+   }
 
    @Override
    public <K, V> TransactionContext<K, V> enlist(TransactionalRemoteCacheImpl<K, V> txRemoteCache, Transaction tx) {
@@ -50,7 +57,7 @@ public class XaModeTransactionTable implements TransactionTable {
    }
 
    private XaAdapter createTransactionData(Transaction transaction) {
-      XaAdapter xaAdapter = new XaAdapter(transaction);
+      XaAdapter xaAdapter = new XaAdapter(transaction, timeout);
       try {
          transaction.enlistResource(xaAdapter);
       } catch (RollbackException | SystemException e) {
@@ -62,19 +69,22 @@ public class XaModeTransactionTable implements TransactionTable {
    private class XaAdapter implements XAResource {
       private final Transaction transaction;
       private final Map<String, TransactionContext<?, ?>> registeredCaches = new ConcurrentSkipListMap<>();
-      private final List<TransactionContext<?, ?>> preparedCaches = new LinkedList<>();
       private volatile Xid currentXid;
+      private volatile RecoveryIterator iterator;
+      private long timeoutMs;
+      private boolean needsRecovery = false;
 
-      private XaAdapter(Transaction transaction) {
+      private XaAdapter(Transaction transaction, long timeout) {
          this.transaction = transaction;
+         this.timeoutMs = timeout;
       }
 
       @Override
       public String toString() {
          return "TransactionData{" +
-               "xid=" + currentXid +
-               ", caches=" + registeredCaches.keySet() +
-               '}';
+                "xid=" + currentXid +
+                ", caches=" + registeredCaches.keySet() +
+                '}';
       }
 
       @Override
@@ -110,11 +120,6 @@ public class XaModeTransactionTable implements TransactionTable {
          }
          assertStartInvoked();
          assertSameXid(xid, XAException.XAER_OUTSIDE);
-         if (flags == XAResource.TMFAIL) {
-            //tx will rollback. we can cleanup immediately
-            registeredCaches.clear();
-         }
-         //no other work to be done.
       }
 
       @Override
@@ -132,8 +137,13 @@ public class XaModeTransactionTable implements TransactionTable {
          if (trace) {
             log.tracef("XaResource.commit(%s, %s)", xid, onePhaseCommit);
          }
-         assertStartInvoked();
-         assertSameXid(xid, XAException.XAER_INVAL);
+         if (currentXid == null) {
+            //no transaction running. we are doing some recovery work
+            currentXid = xid;
+         } else {
+            assertSameXid(xid, XAException.XAER_INVAL);
+         }
+
          try {
             if (onePhaseCommit) {
                onePhaseCommit();
@@ -150,10 +160,16 @@ public class XaModeTransactionTable implements TransactionTable {
          if (trace) {
             log.tracef("XaResource.rollback(%s)", xid);
          }
-         assertStartInvoked();
-         assertSameXid(xid, XAException.XAER_INVAL);
+         boolean ignoreNoTx = true;
+         if (currentXid == null) {
+            //no transaction running. we are doing some recovery work
+            currentXid = xid;
+            ignoreNoTx = false;
+         } else {
+            assertSameXid(xid, XAException.XAER_INVAL);
+         }
          try {
-            internalRollback();
+            internalRollback(ignoreNoTx);
          } finally {
             cleanup();
          }
@@ -172,25 +188,50 @@ public class XaModeTransactionTable implements TransactionTable {
          if (trace) {
             log.tracef("XaResource.forget(%s)", xid);
          }
-         //no-op
+         recoveryManager.forgetTransaction(xid);
+         getAnyTransactionContext().forget(xid);
       }
 
       @Override
-      public Xid[] recover(int i) {
-         //no recovery yet
-         return NO_XIDS;
+      public Xid[] recover(int flags) throws XAException {
+         if (trace) {
+            log.tracef("XaResource.recover(%s)", flags);
+         }
+         RecoveryIterator it = this.iterator;
+         if ((flags & XAResource.TMSTARTRSCAN) != 0) {
+            if (it == null) {
+               it = recoveryManager.startScan(getAnyTransactionContext().fetchPreparedTransactions());
+               iterator = it;
+            } else {
+               //we have an iteration in progress.
+               throw new XAException(XAException.XAER_INVAL);
+            }
+         }
+         if ((flags & XAResource.TMENDRSCAN) != 0) {
+            if (it == null) {
+               //we don't have an iteration in progress
+               throw new XAException(XAException.XAER_INVAL);
+            } else {
+               iterator.finish(timeoutMs);
+               iterator = null;
+            }
+         }
+         if (it == null) {
+            //we don't have an iteration in progress
+            throw new XAException(XAException.XAER_INVAL);
+         }
+         return it.next();
       }
 
       @Override
-      public boolean setTransactionTimeout(int i) {
-         //not supported yet
-         return false;
+      public boolean setTransactionTimeout(int timeoutSeconds) {
+         this.timeoutMs = TimeUnit.SECONDS.toMillis(timeoutSeconds);
+         return true;
       }
 
       @Override
       public int getTransactionTimeout() {
-         //not supported yet
-         return 0;
+         return (int) TimeUnit.MILLISECONDS.toSeconds(timeoutMs);
       }
 
       private void assertStartInvoked() throws XAException {
@@ -207,121 +248,44 @@ public class XaModeTransactionTable implements TransactionTable {
          }
       }
 
-      private void internalRollback() throws XAException {
-         boolean hasCommit = false;
-         boolean hasRollback = false;
-         boolean alreadyForgot = false;
-         boolean unknown = false;
-         int unknownErrorCode = 0;
-
-         for (TransactionContext<?, ?> ctx : preparedCaches) {
-            int xa_code = ctx.complete(currentXid, false);
-            switch (xa_code) {
-               case XAResource.XA_OK:       //no issues
-               case XAResource.XA_RDONLY:   //no issues
-               case XAException.XA_HEURRB:  //heuristically rolled back
-                  hasRollback = true;
+      private void internalRollback(boolean ignoreNoTx) throws XAException {
+         int xa_code = getAnyTransactionContext().complete(currentXid, false);
+         switch (xa_code) {
+            case XAResource.XA_OK:       //no issues
+            case XAResource.XA_RDONLY:   //no issues
+            case XAException.XA_HEURRB:  //heuristically rolled back
+               break;
+            case XAException.XAER_NOTA:  //no transaction in server. already rolled-back or never reached the server
+               if (ignoreNoTx) {
                   break;
-               case XAException.XAER_NOTA:
-                  //tx already forgotten by the server.
-                  alreadyForgot = true;
-                  break;
-               case XAException.XA_HEURMIX: //completed but not sure how
-               case XAException.XA_HEURHAZ: //heuristically committed and rolled back
-                  hasCommit = true;
-                  hasRollback = true;
-                  break;
-               case XAException.XA_HEURCOM: //heuristically committed
-                  hasCommit = true;
-                  break;
-               default:
-                  //other error codes
-                  unknown = true;
-                  unknownErrorCode = xa_code;
-                  break;
-            }
+               }
+            default:
+               throw new XAException(xa_code);
          }
+      }
 
-         if (!hasCommit && !hasRollback) {
-            //nothing committed neither rolled back
-            if (alreadyForgot) {
-               //no tx
-               throw new XAException(XAException.XAER_NOTA);
-            } else if (unknown) {
-               //unknown. we throw what we received
-               throw new XAException(unknownErrorCode);
-            }
-         } else if (hasCommit && hasRollback) {
-            //we have something committed and something rolled back
-            throw new XAException(XAException.XA_HEURMIX);
-         } else if (hasCommit) {
-            //we only got commits
-            throw new XAException(XAException.XA_HEURCOM);
-         }
-         //we only got rollbacks
+      private TransactionContext<?, ?> getAnyTransactionContext() {
+         return registeredCaches.values().iterator().next();
       }
 
       private void internalCommit() throws XAException {
-         boolean hasCommit = false;
-         boolean hasRollback = false;
-         boolean alreadyForgot = false;
-         boolean unknown = false;
-         int unknownErrorCode = 0;
-
-         for (TransactionContext<?, ?> ctx : preparedCaches) {
-            int xa_code = ctx.complete(currentXid, true);
-            switch (xa_code) {
-               case XAResource.XA_OK:       //no issues
-               case XAResource.XA_RDONLY:   //no issues
-               case XAException.XA_HEURCOM: //heuristically committed
-                  hasCommit = true;
-                  break;
-               case XAException.XAER_NOTA:
-                  //tx already forgotten by the server.
-                  alreadyForgot = true;
-                  break;
-               case XAException.XA_HEURMIX: //completed. not sure how
-               case XAException.XA_HEURHAZ: //heuristically committed and rolled back
-                  hasCommit = true;
-                  hasRollback = true;
-                  break;
-               case XAException.XA_HEURRB: //heuristically rolled back
-                  hasRollback = true;
-                  break;
-               default:
-                  //other error codes
-                  unknown = true;
-                  unknownErrorCode = xa_code;
-                  break;
-            }
+         int xa_code = getAnyTransactionContext().complete(currentXid, true);
+         switch (xa_code) {
+            case XAResource.XA_OK:       //no issues
+            case XAResource.XA_RDONLY:   //no issues
+            case XAException.XA_HEURCOM:  //heuristically committed
+               break;
+            default:
+               throw new XAException(xa_code);
          }
-
-         if (!hasCommit && !hasRollback) {
-            //nothing committed neither rolled back
-            if (alreadyForgot) {
-               //no tx
-               throw new XAException(XAException.XAER_NOTA);
-            } else if (unknown) {
-               //unknown. we throw what we received
-               throw new XAException(unknownErrorCode);
-            }
-         } else if (hasCommit && hasRollback) {
-            //we have something committed and something rolled back
-            throw new XAException(XAException.XA_HEURMIX);
-         } else if (hasRollback) {
-            //rollbacks only
-            throw new XAException(XAException.XA_HEURRB);
-         }
-         // commits only.
       }
 
       private int internalPrepare() throws XAException {
          boolean readOnly = true;
          for (TransactionContext<?, ?> ctx : registeredCaches.values()) {
-            switch (ctx.prepareContext(currentXid, false)) {
+            switch (ctx.prepareContext(currentXid, false, timeoutMs)) {
                case XAResource.XA_OK:
                   readOnly = false;
-                  preparedCaches.add(ctx);
                   break;
                case XAResource.XA_RDONLY:
                   break; //read only tx.
@@ -331,16 +295,18 @@ public class XaModeTransactionTable implements TransactionTable {
                default:
                   //any other code we need to rollback
                   //we may need to send the rollback later
-                  preparedCaches.add(ctx);
                   throw new XAException(XAException.XA_RBROLLBACK);
             }
+         }
+         if (needsRecovery) {
+            recoveryManager.addTransaction(currentXid);
          }
          return readOnly ? XAResource.XA_RDONLY : XAResource.XA_OK;
       }
 
       private void onePhaseCommit() throws XAException {
          //check only the write transaction to know who is the last cache to commit
-         List<TransactionContext<?,?>> txCaches = registeredCaches.values().stream()
+         List<TransactionContext<?, ?>> txCaches = registeredCaches.values().stream()
                .filter(TransactionContext::isReadWrite)
                .collect(Collectors.toList());
          int size = txCaches.size();
@@ -349,11 +315,11 @@ public class XaModeTransactionTable implements TransactionTable {
          }
          boolean commit = true;
 
-         outer: for (int i = 0; i < size - 1; ++i) {
-            TransactionContext<?,?> ctx = txCaches.get(i);
-            switch (ctx.prepareContext(currentXid, false)) {
+         outer:
+         for (int i = 0; i < size - 1; ++i) {
+            TransactionContext<?, ?> ctx = txCaches.get(i);
+            switch (ctx.prepareContext(currentXid, false, timeoutMs)) {
                case XAResource.XA_OK:
-                  preparedCaches.add(ctx);
                   break;
                case Integer.MIN_VALUE:
                   //signals a marshaller error of key or value. the server wasn't contacted
@@ -362,17 +328,16 @@ public class XaModeTransactionTable implements TransactionTable {
                default:
                   //any other code we need to rollback
                   //we may need to send the rollback later
-                  preparedCaches.add(ctx);
                   commit = false;
                   break outer;
             }
          }
 
          //last resource one phase commit!
-         if (commit && txCaches.get(size - 1).prepareContext(currentXid, true) == XAResource.XA_OK) {
+         if (commit && txCaches.get(size - 1).prepareContext(currentXid, true, timeoutMs) == XAResource.XA_OK) {
             internalCommit(); //commit other caches
          } else {
-            internalRollback();
+            internalRollback(true);
             throw new XAException(XAException.XA_RBROLLBACK); //tell TM to rollback
          }
       }
@@ -381,6 +346,7 @@ public class XaModeTransactionTable implements TransactionTable {
          if (currentXid == null) {
             throw new CacheException("XaResource wasn't invoked!");
          }
+         needsRecovery |= txRemoteCache.isRecoveryEnabled();
          //noinspection unchecked
          return (TransactionContext<K, V>) registeredCaches
                .computeIfAbsent(txRemoteCache.getName(), s -> createTxContext(txRemoteCache));
@@ -391,17 +357,15 @@ public class XaModeTransactionTable implements TransactionTable {
             log.tracef("Registering remote cache '%s' for transaction xid=%s", remoteCache.getName(), currentXid);
          }
          return new TransactionContext<>(remoteCache.keyMarshaller(), remoteCache.valueMarshaller(),
-               remoteCache.getOperationsFactory(), remoteCache.getName());
+               remoteCache.getOperationsFactory(), remoteCache.getName(), remoteCache.isRecoveryEnabled());
       }
 
       private void cleanup() {
-         //TODO use proper method!
-         if (!preparedCaches.isEmpty()) {
-            preparedCaches.get(0).forget(currentXid);
-         }
          registeredTransactions.remove(transaction);
-         registeredCaches.clear();
-         preparedCaches.clear();
+         //this instance can be used for recovery. we need at least one cache registered in order to access
+         // the operation factory
+         registeredCaches.values().forEach(TransactionContext::cleanupEntries);
+         recoveryManager.forgetTransaction(currentXid); //transaction completed, we can remove it from recovery
          currentXid = null;
       }
    }
