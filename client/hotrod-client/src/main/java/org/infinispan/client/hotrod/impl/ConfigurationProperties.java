@@ -70,6 +70,7 @@ public class ConfigurationProperties {
    public static final String BATCH_SIZE = "infinispan.client.hotrod.batch_size";
    public static final String TRANSACTION_MANAGER_LOOKUP = "infinispan.client.hotrod.transaction.transaction_manager_lookup";
    public static final String TRANSACTION_MODE = "infinispan.client.hotrod.transaction.transaction_mode";
+   public static final String TRANSACTION_TIMEOUT = "infinispan.client.hotrod.transaction.timeout";
 
    // defaults
 
@@ -213,4 +214,7 @@ public class ConfigurationProperties {
       return Objects.equals(version, "1.0") || Objects.equals(version, "1.1");
    }
 
+   public long getTransactionTimeout() {
+      return props.getLongProperty(TRANSACTION_TIMEOUT, TransactionConfigurationBuilder.DEFAULT_TIMEOUT);
+   }
 }

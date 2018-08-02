@@ -33,15 +33,19 @@ public class PrepareTransactionOperation extends RetryOnFailureOperation<Integer
    private final Xid xid;
    private final boolean onePhaseCommit;
    private final Collection<Modification> modifications;
+   private final boolean recoverable;
+   private final long timeoutMs;
    private boolean retry;
 
    PrepareTransactionOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
          AtomicInteger topologyId, Configuration cfg, Xid xid, boolean onePhaseCommit,
-         Collection<Modification> modifications) {
-      super(PREPARE_REQUEST, PREPARE_RESPONSE, codec, channelFactory, cacheName, topologyId, 0, cfg, null);
+         Collection<Modification> modifications, boolean recoverable, long timeoutMs) {
+      super(PREPARE_TX_2_REQUEST, PREPARE_TX_2_RESPONSE, codec, channelFactory, cacheName, topologyId, 0, cfg, null);
       this.xid = xid;
       this.onePhaseCommit = onePhaseCommit;
       this.modifications = modifications;
+      this.recoverable = recoverable;
+      this.timeoutMs = timeoutMs;
    }
 
    public boolean shouldRetry() {
@@ -65,7 +69,9 @@ public class PrepareTransactionOperation extends RetryOnFailureOperation<Integer
       ByteBuf buf = channel.alloc().buffer(estimateSize());
       codec.writeHeader(buf, header);
       writeXid(buf, xid);
-      buf.writeByte(onePhaseCommit ? 1 : 0);
+      buf.writeBoolean(onePhaseCommit);
+      buf.writeBoolean(recoverable);
+      buf.writeLong(timeoutMs);
       writeVInt(buf, modifications.size());
       for (Modification m : modifications) {
          m.writeTo(buf, codec);

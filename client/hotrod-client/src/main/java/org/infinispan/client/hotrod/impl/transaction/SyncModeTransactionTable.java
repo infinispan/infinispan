@@ -2,8 +2,6 @@ package org.infinispan.client.hotrod.impl.transaction;
 
 import static org.infinispan.commons.tx.Util.transactionStatusToString;
 
-import java.util.Collection;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,12 +14,9 @@ import javax.transaction.Status;
 import javax.transaction.Synchronization;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
-import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.impl.operations.PrepareTransactionOperation;
-import org.infinispan.client.hotrod.impl.transaction.entry.Modification;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.transaction.manager.RemoteXid;
@@ -47,8 +42,13 @@ public class SyncModeTransactionTable implements TransactionTable {
    private static final boolean trace = log.isTraceEnabled();
    private final Map<Transaction, SynchronizationAdapter> registeredTransactions = new ConcurrentHashMap<>();
    private final UUID uuid = UUID.randomUUID();
-   private final Function<Transaction, SynchronizationAdapter> constructor = this::createSynchronizationAdapter;
    private final Consumer<Transaction> cleanup = registeredTransactions::remove;
+   private final long timeout;
+   private final Function<Transaction, SynchronizationAdapter> constructor = this::createSynchronizationAdapter;
+
+   public SyncModeTransactionTable(long timeout) {
+      this.timeout = timeout;
+   }
 
    @Override
    public <K, V> TransactionContext<K, V> enlist(TransactionalRemoteCacheImpl<K, V> txRemoteCache, Transaction tx) {
@@ -66,7 +66,8 @@ public class SyncModeTransactionTable implements TransactionTable {
     * Creates and registers the {@link SynchronizationAdapter} in the {@link Transaction}.
     */
    private SynchronizationAdapter createSynchronizationAdapter(Transaction transaction) {
-      SynchronizationAdapter adapter = new SynchronizationAdapter(transaction, cleanup, RemoteXid.create(uuid));
+      SynchronizationAdapter adapter = new SynchronizationAdapter(transaction, cleanup, RemoteXid.create(uuid),
+            timeout);
       try {
          transaction.registerSynchronization(adapter);
       } catch (RollbackException | SystemException e) {
@@ -81,24 +82,26 @@ public class SyncModeTransactionTable implements TransactionTable {
    private static class SynchronizationAdapter implements Synchronization {
 
       private final Map<String, TransactionContext<?, ?>> registeredCaches = new ConcurrentSkipListMap<>();
-      private final Collection<TransactionContext<?, ?>> preparedCaches = new LinkedList<>();
       private final Transaction transaction;
       private final Consumer<Transaction> cleanupTask;
       private final RemoteXid xid;
+      private final long timeout;
 
-      private SynchronizationAdapter(Transaction transaction, Consumer<Transaction> cleanupTask, RemoteXid xid) {
+      private SynchronizationAdapter(Transaction transaction, Consumer<Transaction> cleanupTask, RemoteXid xid,
+            long timeout) {
          this.transaction = transaction;
          this.cleanupTask = cleanupTask;
          this.xid = xid;
+         this.timeout = timeout;
       }
 
       @Override
       public String toString() {
          return "SynchronizationAdapter{" +
-               "registeredCaches=" + registeredCaches.keySet() +
-               ", transaction=" + transaction +
-               ", xid=" + xid +
-               '}';
+                "registeredCaches=" + registeredCaches.keySet() +
+                ", transaction=" + transaction +
+                ", xid=" + xid +
+                '}';
       }
 
       @Override
@@ -110,10 +113,8 @@ public class SyncModeTransactionTable implements TransactionTable {
             return;
          }
          for (TransactionContext<?, ?> txContext : registeredCaches.values()) {
-            switch (prepareContext(txContext)) {
+            switch (txContext.prepareContext(xid, false, timeout)) {
                case XAResource.XA_OK:
-                  preparedCaches.add(txContext);
-                  break;
                case XAResource.XA_RDONLY:
                   break; //read only tx.
                case Integer.MIN_VALUE:
@@ -121,9 +122,6 @@ public class SyncModeTransactionTable implements TransactionTable {
                   markAsRollback();
                   return;
                default:
-                  //any other code we need to rollback
-                  //we may need to send the rollback later
-                  preparedCaches.add(txContext);
                   markAsRollback();
                   return;
             }
@@ -134,21 +132,15 @@ public class SyncModeTransactionTable implements TransactionTable {
       public void afterCompletion(int status) {
          if (trace) {
             log.tracef("AfterCompletion(xid=%s, status=%s, remote-caches=%s)", xid, transactionStatusToString(status),
-                  preparedCaches);
+                  registeredCaches.keySet());
          }
-         TransactionContext<?,?> lastCtx = null;
-         //we only use the preparedCaches. the remaining caches are read-only or they didn't contact the server.
+         TransactionContext<?, ?> ctx = registeredCaches.values().iterator().next();
+         //the server commits everything when the first request arrives.
          try {
             boolean commit = status == Status.STATUS_COMMITTED;
-            for (TransactionContext<?, ?> ctx : preparedCaches) {
-               ctx.complete(xid, commit);
-               lastCtx = ctx;
-            }
+            ctx.complete(xid, commit);
          } finally {
-            //TODO make it better
-            if (lastCtx != null) {
-               lastCtx.forget(xid);
-            }
+            ctx.forget(xid); //no recovery sync
             cleanupTask.accept(transaction);
          }
       }
@@ -158,39 +150,6 @@ public class SyncModeTransactionTable implements TransactionTable {
             transaction.setRollbackOnly();
          } catch (SystemException e) {
             log.debug("Exception in markAsRollback", e);
-         }
-      }
-
-      /**
-       * Prepares the {@link Transaction} in the server and returns the {@link XAResource} code.
-       * <p>
-       * A special value {@link Integer#MIN_VALUE} is used to signal an error before contacting the server (for example,
-       * it wasn't able to marshall the key/value)
-       */
-      private int prepareContext(TransactionContext<?, ?> context) {
-         PrepareTransactionOperation operation;
-         Collection<Modification> modifications;
-         try {
-            modifications = context.toModification();
-            if (trace) {
-               log.tracef("Preparing transaction xid=%s, remote-cache=%s, modification-size=%d", xid,
-                     context.getCacheName(), modifications.size());
-            }
-            if (modifications.isEmpty()) {
-               return XAResource.XA_RDONLY;
-            }
-         } catch (Exception e) {
-            return Integer.MIN_VALUE;
-         }
-         try {
-            int xaReturnCode;
-            do {
-               operation = context.getOperationsFactory().newPrepareTransactionOperation(xid, false, modifications);
-               xaReturnCode = operation.execute().get();
-            } while (operation.shouldRetry());
-            return xaReturnCode;
-         } catch (Exception e) {
-            return XAException.XA_RBROLLBACK;
          }
       }
 
@@ -215,7 +174,7 @@ public class SyncModeTransactionTable implements TransactionTable {
             log.tracef("Registering remote cache '%s' for transaction xid=%s", remoteCache.getName(), xid);
          }
          return new TransactionContext<>(remoteCache.keyMarshaller(), remoteCache.valueMarshaller(),
-               remoteCache.getOperationsFactory(), remoteCache.getName());
+               remoteCache.getOperationsFactory(), remoteCache.getName(), false);
       }
    }
 }

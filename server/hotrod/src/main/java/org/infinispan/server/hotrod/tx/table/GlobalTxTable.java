@@ -205,9 +205,14 @@ public class GlobalTxTable implements Runnable, Lifecycle {
       long currentTimestamp = timeService.time();
       Collection<Xid> preparedTx = new HashSet<>(); //remove duplicates!
       for (Map.Entry<CacheXid, TxState> entry : storage.entrySet()) {
+         Xid xid = entry.getKey().getXid();
          TxState state = entry.getValue();
+         if (trace) {
+            log.tracef("Checking transaction xid=%s for recovery. TimedOut?=%s, Recoverable?=%s, Status=%s",
+                  xid, state.hasTimedOut(currentTimestamp), state.isRecoverable(), state.getStatus());
+         }
          if (state.hasTimedOut(currentTimestamp) && state.isRecoverable() &&  state.getStatus() == Status.PREPARED) {
-            preparedTx.add(entry.getKey().getXid());
+            preparedTx.add(xid);
          }
       }
       return preparedTx;

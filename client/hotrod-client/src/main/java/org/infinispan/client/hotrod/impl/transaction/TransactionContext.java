@@ -50,22 +50,24 @@ public class TransactionContext<K, V> {
    private final Function<V, byte[]> valueMarshaller;
    private final OperationsFactory operationsFactory;
    private final String cacheName;
+   private final boolean recoverable;
 
    TransactionContext(Function<K, byte[]> keyMarshaller, Function<V, byte[]> valueMarshaller,
-         OperationsFactory operationsFactory, String cacheName) {
+         OperationsFactory operationsFactory, String cacheName, boolean recoveryEnabled) {
       this.keyMarshaller = keyMarshaller;
       this.valueMarshaller = valueMarshaller;
       this.operationsFactory = operationsFactory;
       this.cacheName = cacheName;
+      this.recoverable = recoveryEnabled;
       entries = new ConcurrentHashMap<>();
    }
 
    @Override
    public String toString() {
       return "TransactionContext{" +
-            "cacheName='" + cacheName + '\'' +
-            ", context-size=" + entries.size() + " (entries)" +
-            '}';
+             "cacheName='" + cacheName + '\'' +
+             ", context-size=" + entries.size() + " (entries)" +
+             '}';
    }
 
    boolean containsKey(Object key, Function<K, MetadataValue<V>> remoteValueSupplier) {
@@ -177,16 +179,17 @@ public class TransactionContext<K, V> {
    /**
     * Prepares the {@link Transaction} in the server and returns the {@link XAResource} code.
     * <p>
-    * A special value {@link Integer#MIN_VALUE} is used to signal an error before contacting the server (for example,
-    * it wasn't able to marshall the key/value)
+    * A special value {@link Integer#MIN_VALUE} is used to signal an error before contacting the server (for example, it
+    * wasn't able to marshall the key/value)
     */
-   int prepareContext(Xid xid, boolean onePhaseCommit) {
+   int prepareContext(Xid xid, boolean onePhaseCommit, long timeout) {
       PrepareTransactionOperation operation;
       Collection<Modification> modifications;
       try {
          modifications = toModification();
          if (trace) {
-            log.tracef("Preparing transaction xid=%s, remote-cache=%s, modification-size=%d", xid, cacheName, modifications.size());
+            log.tracef("Preparing transaction xid=%s, remote-cache=%s, modification-size=%d", xid, cacheName,
+                  modifications.size());
          }
          if (modifications.isEmpty()) {
             return XAResource.XA_RDONLY;
@@ -197,7 +200,8 @@ public class TransactionContext<K, V> {
       try {
          int xaReturnCode;
          do {
-            operation = operationsFactory.newPrepareTransactionOperation(xid, onePhaseCommit, modifications);
+            operation = operationsFactory
+                  .newPrepareTransactionOperation(xid, onePhaseCommit, modifications, recoverable, timeout);
             xaReturnCode = operation.execute().get();
          } while (operation.shouldRetry());
          return xaReturnCode;
@@ -210,7 +214,7 @@ public class TransactionContext<K, V> {
    int complete(Xid xid, boolean commit) {
       try {
          if (trace) {
-            log.tracef("%s transaction xid=%s, remote-cache=%s", commit ? "Committing" : "Rolling-Back", xid, cacheName);
+            log.tracef("Complete (%s) transaction xid=%s, cache-name=%s", commit, xid, cacheName);
          }
          CompleteTransactionOperation operation = operationsFactory.newCompleteTransactionOperation(xid, commit);
          return operation.execute().get();
@@ -232,6 +236,17 @@ public class TransactionContext<K, V> {
             log.tracef(e, "Exception in forget transaction xid=%s", xid);
          }
       }
+   }
+
+   CompletableFuture<Collection<Xid>> fetchPreparedTransactions() {
+      if (trace) {
+         log.trace("Fetch prepared transactions XID for recovery");
+      }
+      return operationsFactory.newRecoveryOperation().execute();
+   }
+
+   void cleanupEntries() {
+      entries.clear();
    }
 
    private TransactionEntry<K, V> createEntryFromRemote(K key, Function<K, MetadataValue<V>> remoteValueSupplier) {
@@ -319,8 +334,8 @@ public class TransactionContext<K, V> {
       @Override
       public String toString() {
          return "WrappedKey{" +
-               "key=" + toStr(key) +
-               '}';
+                "key=" + toStr(key) +
+                '}';
       }
    }
 

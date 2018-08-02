@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.tx;
 
+import static org.infinispan.client.hotrod.configuration.TransactionMode.FULL_XA;
 import static org.infinispan.client.hotrod.configuration.TransactionMode.NON_DURABLE_XA;
 import static org.infinispan.client.hotrod.configuration.TransactionMode.NON_XA;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.assertNoTransaction;
@@ -61,7 +62,11 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
 
             new APITxTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(NON_DURABLE_XA),
             new APITxTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA),
-            new APITxTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA)
+            new APITxTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(NON_DURABLE_XA),
+
+            new APITxTest<String, String>().keyValueGenerator(STRING_GENERATOR).transactionMode(FULL_XA),
+            new APITxTest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).transactionMode(FULL_XA),
+            new APITxTest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).transactionMode(FULL_XA)
       };
    }
 

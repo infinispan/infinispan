@@ -313,9 +313,10 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public PrepareTransactionOperation newPrepareTransactionOperation(Xid xid, boolean onePhaseCommit,
-                                                                     Collection<Modification> modifications) {
+                                                                     Collection<Modification> modifications,
+                                                                     boolean recoverable, long timeoutMs) {
       return new PrepareTransactionOperation(codec, channelFactory, cacheNameBytes, topologyId, cfg, xid,
-            onePhaseCommit, modifications);
+            onePhaseCommit, modifications, recoverable, timeoutMs);
    }
 
    public CompleteTransactionOperation newCompleteTransactionOperation(Xid xid, boolean commit) {
@@ -324,5 +325,9 @@ public class OperationsFactory implements HotRodConstants {
 
    public ForgetTransactionOperation newForgetTransactionOperation(Xid xid) {
       return new ForgetTransactionOperation(codec, channelFactory, cacheNameBytes, topologyId, cfg, xid);
+   }
+
+   public RecoveryOperation newRecoveryOperation() {
+      return new RecoveryOperation(codec, channelFactory, cacheNameBytes, topologyId, cfg);
    }
 }

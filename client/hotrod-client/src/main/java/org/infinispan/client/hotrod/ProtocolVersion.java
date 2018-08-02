@@ -28,6 +28,7 @@ public enum ProtocolVersion {
    PROTOCOL_VERSION_26(2, 6),
    PROTOCOL_VERSION_27(2, 7),
    PROTOCOL_VERSION_28(2, 8),
+   PROTOCOL_VERSION_29(2, 9),
    // New versions go above this line to satisfy compareTo of enum working for versions
    ;
 
