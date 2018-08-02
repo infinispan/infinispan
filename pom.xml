@@ -222,7 +222,7 @@
       <version.cdi>1.2</version.cdi>
       <version.commonslang3>3.4</version.commonslang3>
       <version.groovy>2.4.8</version.groovy>
-      <version.hibernate.core>5.3.1.Final</version.hibernate.core>
+      <version.hibernate.core>5.3.4.Final</version.hibernate.core>
       <version.javax.persistence>2.2</version.javax.persistence>
       <version.hibernate.search>5.10.1.Final</version.hibernate.search>
       <version.hibernate.search.module.slot>5.10</version.hibernate.search.module.slot>
