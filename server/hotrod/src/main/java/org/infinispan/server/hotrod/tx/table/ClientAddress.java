@@ -1,4 +1,4 @@
-package org.infinispan.server.hotrod.tx;
+package org.infinispan.server.hotrod.tx.table;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -24,7 +24,7 @@ public class ClientAddress implements Address {
    public static final AdvancedExternalizer<ClientAddress> EXTERNALIZER = new Externalizer();
    private final Address localAddress;
 
-   ClientAddress(Address localAddress) {
+   public ClientAddress(Address localAddress) {
       this.localAddress = localAddress;
    }
 

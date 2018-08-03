@@ -1,10 +1,12 @@
-package org.infinispan.server.hotrod.tx;
+package org.infinispan.server.hotrod.tx.table;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
+
+import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.tx.XidImpl;
@@ -27,9 +29,13 @@ public class CacheXid {
    private final ByteString cacheName;
    private final XidImpl xid;
 
-   CacheXid(ByteString cacheName, XidImpl xid) {
+   public CacheXid(ByteString cacheName, XidImpl xid) {
       this.cacheName = cacheName;
       this.xid = xid;
+   }
+
+   public boolean sameXid(Xid other) {
+      return xid.equals(other);
    }
 
    public static void writeTo(ObjectOutput output, CacheXid object) throws IOException {
@@ -37,7 +43,7 @@ public class CacheXid {
       XidImpl.writeTo(output, object.xid);
    }
 
-   public static CacheXid readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   public static CacheXid readFrom(ObjectInput input) throws IOException {
       return new CacheXid(ByteString.readObject(input), XidImpl.readFrom(input));
    }
 
@@ -69,6 +75,14 @@ public class CacheXid {
             '}';
    }
 
+   public ByteString getCacheName() {
+      return cacheName;
+   }
+
+   public XidImpl getXid() {
+      return xid;
+   }
+
    private static class Externalizer implements AdvancedExternalizer<CacheXid> {
 
       @Override
@@ -87,7 +101,7 @@ public class CacheXid {
       }
 
       @Override
-      public CacheXid readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public CacheXid readObject(ObjectInput input) throws IOException {
          return readFrom(input);
       }
    }
