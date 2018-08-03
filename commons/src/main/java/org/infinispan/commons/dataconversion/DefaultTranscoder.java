@@ -53,6 +53,7 @@ public final class DefaultTranscoder implements Transcoder {
    public Object transcode(Object content, MediaType contentType, MediaType destinationType) {
       try {
          if (destinationType.equals(APPLICATION_UNKNOWN)) {
+            if (contentType.match(APPLICATION_UNKNOWN)) return content;
             return convertToByteArray(content, contentType);
          }
          if (destinationType.match(APPLICATION_OCTET_STREAM)) {
