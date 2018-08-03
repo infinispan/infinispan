@@ -238,27 +238,27 @@ public class EventLogListener<K> implements RemoteCacheSupplier<K> {
    }
 
    @NamedFactory(name = "static-filter-factory")
-   public static class StaticCacheEventFilterFactory implements CacheEventFilterFactory {
-      private final int staticKey;
+   public static class StaticCacheEventFilterFactory<K> implements CacheEventFilterFactory {
+      private final K staticKey;
 
-      public StaticCacheEventFilterFactory(int staticKey) {
+      public StaticCacheEventFilterFactory(K staticKey) {
          this.staticKey = staticKey;
       }
 
       @Override
-      public CacheEventFilter<Integer, String> getFilter(final Object[] params) {
+      public CacheEventFilter<K, String> getFilter(final Object[] params) {
          return new StaticCacheEventFilter(staticKey);
       }
 
-      static class StaticCacheEventFilter implements CacheEventFilter<Integer, String>, Serializable, ExternalPojo {
-         final Integer staticKey;
+      static class StaticCacheEventFilter<K> implements CacheEventFilter<K, String>, Serializable, ExternalPojo {
+         final K staticKey;
 
-         StaticCacheEventFilter(Integer staticKey) {
+         StaticCacheEventFilter(K staticKey) {
             this.staticKey = staticKey;
          }
 
          @Override
-         public boolean accept(Integer key, String previousValue, Metadata previousMetadata, String value,
+         public boolean accept(K key, String previousValue, Metadata previousMetadata, String value,
                                Metadata metadata, EventType eventType) {
             return staticKey.equals(key);
          }
