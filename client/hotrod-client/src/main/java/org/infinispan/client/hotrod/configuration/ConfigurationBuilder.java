@@ -630,6 +630,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
       this.batchSize(typed.getIntProperty(ConfigurationProperties.BATCH_SIZE, batchSize, true));
       transaction.withTransactionProperties(properties);
+      nearCache.withNearCacheProperties(properties);
       return this;
    }
 

@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
@@ -70,6 +71,8 @@ public class ConfigurationProperties {
    public static final String BATCH_SIZE = "infinispan.client.hotrod.batch_size";
    public static final String TRANSACTION_MANAGER_LOOKUP = "infinispan.client.hotrod.transaction.transaction_manager_lookup";
    public static final String TRANSACTION_MODE = "infinispan.client.hotrod.transaction.transaction_mode";
+   public static final String NEAR_CACHE_MODE = "infinispan.client.hotrod.nearcache.mode";
+   public static final String NEAR_CACHE_MAX_ENTRIES = "infinispan.client.hotrod.nearcache.max_entries";
 
    // defaults
 
@@ -80,6 +83,7 @@ public class ConfigurationProperties {
    public static final int DEFAULT_CONNECT_TIMEOUT = 60000;
    public static final int DEFAULT_MAX_RETRIES = 10;
    public static final int DEFAULT_BATCH_SIZE = 10000;
+   public static final NearCacheMode DEFAULT_NEAR_CACHE_MODE = NearCacheMode.DISABLED;
 
    private final TypedProperties props;
 
@@ -203,6 +207,18 @@ public class ConfigurationProperties {
 
    public TransactionMode getTransactionMode() {
       return props.getEnumProperty(TRANSACTION_MODE, TransactionMode.class, TransactionMode.NONE, true);
+   }
+
+   public NearCacheMode getNearCacheMode() {
+      return props.getEnumProperty(NEAR_CACHE_MODE, NearCacheMode.class, DEFAULT_NEAR_CACHE_MODE, true);
+   }
+
+   public Integer getNearCacheMaxEntries() {
+      final String nearCacheMaxEntries = props.getProperty(NEAR_CACHE_MAX_ENTRIES);
+      if (nearCacheMaxEntries == null)
+         return null;
+
+      return Integer.parseInt(nearCacheMaxEntries);
    }
 
    /**
