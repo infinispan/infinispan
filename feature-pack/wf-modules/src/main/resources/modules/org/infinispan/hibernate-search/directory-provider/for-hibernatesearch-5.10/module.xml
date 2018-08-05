@@ -23,7 +23,7 @@ and obviously needs to avoid dependencies to different versions of Hibernate Sea
     </resources>
 
     <dependencies>
-        <module name="org.apache.lucene" slot="@lucene.module.slot@" />
+        <module name="org.apache.lucene" slot="5.5" />
         <module name="org.hibernate.search.engine" slot="@hibernate.search.module.slot@" />
         <module name="javax.api"/>
         <module name="org.infinispan.commons" slot="@infinispan.module.slot@" export="true"/>
