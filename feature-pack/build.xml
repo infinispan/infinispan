@@ -7,13 +7,11 @@
                 <filter token="infinispan.brand.version" value="${infinispan.brand.version}"/>
                 <filter token="infinispan.module.slot" value="${infinispan.module.slot}"/>
                 <filter token="infinispan.module.slot.prefix" value="${infinispan.module.slot.prefix}"/>
-                <filter token="lucene.module.slot" value="${version.lucene}"/>
+                <filter token="lucene.module.slot" value="${version.lucene.module.slot}"/>
                 <filter token="hibernate.search.module.slot" value="${version.hibernate.search}"/>
             </filterset>
             <regexpmapper from="(.*)/slot/(.*)" to="\1/${infinispan.module.slot}/\2" />
         </move>
-        <replace dir="${feature-pack.modules}" includes="**/5.5/**" token="@lucene.module.slot@" value="${version.lucene.module.slot}"/>
-        <replace dir="${feature-pack.modules}" includes="**" token="@lucene.module.slot@" value="${version.lucene.module.slot}"/>
         <replace dir="${feature-pack.modules}" includes="**" token="@hibernate.search.module.slot@" value="${version.hibernate.search.module.slot}"/>
         <delete includeemptydirs="true">
             <fileset dir="${feature-pack.modules}">
