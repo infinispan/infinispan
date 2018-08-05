@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<module-alias xmlns="urn:jboss:module:1.5"
-              name="org.apache.lucene.internal" slot="5.5"
-              target-name="org.apache.lucene.internal" target-slot="@lucene.module.slot@" />
