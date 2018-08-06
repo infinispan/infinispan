@@ -132,6 +132,56 @@ public class ReadOnlyTest extends SingleNodeTest {
       });
    }
 
+   @Test
+   @TestForIssue(jiraKey = "ISPN-9369")
+   public void testAvoidUncommittedResultsInQuery() throws Exception {
+      final Statistics stats = sessionFactory().getStatistics();
+      stats.clear();
+
+      final Item item = new Item("item 1", "item one");
+      withTxSession(s -> s.persist(item));
+
+      // Delay added to guarantee that query cache results won't be considered
+      // as not up to date due to persist session and query results from first
+      // query happening simultaneously.
+      TIME_SERVICE.advance(60001);
+
+      withTxSession(s -> {
+         final List results = TEST_SESSION_ACCESS.execQueryListCacheable(s, "from Item");
+         assertEquals(1, results.size());
+         assertEquals(0, stats.getQueryCacheHitCount());
+         assertEquals(1, stats.getQueryCacheMissCount());
+         assertEquals(1, stats.getQueryCachePutCount());
+      });
+
+      stats.clear();
+
+      try {
+         withTxSession(s -> {
+            final Item item2 = new Item("item 2", "item two");
+            s.persist(item2);
+            final List results = TEST_SESSION_ACCESS.execQueryListCacheable(s, "from Item");
+            assertEquals(2, results.size());
+            assertEquals(0, stats.getQueryCacheHitCount());
+            assertEquals(1, stats.getQueryCacheMissCount());
+            assertEquals(1, stats.getQueryCachePutCount());
+            throw new InducedException("Force it to rollback");
+         });
+      } catch (InducedException e) {
+         // ignore
+      }
+
+      stats.clear();
+
+      withTxSession(s -> {
+         final List results = TEST_SESSION_ACCESS.execQueryListCacheable(s, "from Item");
+         assertEquals(1, results.size());
+         assertEquals(0, stats.getQueryCacheHitCount());
+         assertEquals(1, stats.getQueryCacheMissCount());
+         assertEquals(1, stats.getQueryCachePutCount());
+      });
+   }
+
 	@Override
 	protected void addSettings(Map settings) {
 		super.addSettings(settings);
