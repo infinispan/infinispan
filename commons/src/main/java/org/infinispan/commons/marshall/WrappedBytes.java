@@ -34,6 +34,7 @@ public interface WrappedBytes {
    byte getByte(int offset);
 
    default boolean equalsWrappedBytes(WrappedBytes other) {
+      if (other == null) return false;
       int length = getLength();
       if (other.getLength() != length) return false;
       if (other.hashCode() != hashCode()) return false;

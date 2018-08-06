@@ -208,6 +208,34 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       return MEMORY.getInt(entryAddress, headerOffset);
    }
 
+   @Override
+   public byte[] getKey(long address) {
+      // 16 bytes for eviction if needed (optional)
+      // 8 bytes for linked pointer
+      int offset = evictionEnabled ? 24 : 8;
+
+      byte metadataType = MEMORY.getByte(address, offset);
+      offset += 1;
+      // Ignore hashCode bytes
+      offset += 4;
+      byte[] keyBytes = new byte[MEMORY.getInt(address, offset)];
+      offset += 4;
+
+      switch (metadataType) {
+         case CUSTOM:
+         case HAS_VERSION:
+            // These have additional 4 bytes for custom metadata
+            offset += 4;
+      }
+
+      // Ignore value bytes
+      offset += 4;
+
+      // Finally read the bytes and return
+      MEMORY.getBytes(address, offset, keyBytes, 0, keyBytes.length);
+      return keyBytes;
+   }
+
    /**
     * Assumes the address doesn't contain the linked pointer at the beginning
     * @param address the address to read the entry from

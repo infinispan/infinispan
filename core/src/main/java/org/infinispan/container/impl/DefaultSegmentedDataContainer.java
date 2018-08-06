@@ -1,18 +1,14 @@
 package org.infinispan.container.impl;
 
 import java.lang.invoke.MethodHandles;
-import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.PrimitiveIterator;
-import java.util.Set;
 import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.BiConsumer;
@@ -20,13 +16,14 @@ import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.ConcatIterator;
 import org.infinispan.commons.util.FlattenSpliterator;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -36,7 +33,7 @@ import org.infinispan.factories.annotations.Stop;
  * the segment that the entries belong to. This provides for much better iteration of entries when a subset of
  * segments are required.
  * <p>
- * This implemenation doesn't support bounding or temporary entries (L1).
+ * This implementation doesn't support bounding or temporary entries (L1).
  * @author wburns
  * @since 9.3
  */
@@ -46,11 +43,13 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    private static final boolean trace = log.isTraceEnabled();
 
    protected final AtomicReferenceArray<ConcurrentMap<K, InternalCacheEntry<K, V>>> maps;
+   protected final Supplier<ConcurrentMap<K, InternalCacheEntry<K, V>>> mapSupplier;
    protected boolean shouldStopSegments;
 
 
-   public DefaultSegmentedDataContainer(int numSegments) {
+   public DefaultSegmentedDataContainer(Supplier<ConcurrentMap<K, InternalCacheEntry<K, V>>> mapSupplier, int numSegments) {
       maps = new AtomicReferenceArray<>(numSegments);
+      this.mapSupplier = Objects.requireNonNull(mapSupplier);
    }
 
    @Start
@@ -59,7 +58,7 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
       // Scattered needs this for backups as they can be for any segment
       // Distributed needs them all only at beginning for preload of data - rehash event will remove others
       for (int i = 0; i < maps.length(); ++i) {
-         maps.set(i, new ConcurrentHashMap<>());
+         startNewMap(i);
       }
       // Distributed is the only mode that allows for dynamic addition/removal of maps as others own all segments
       // in some fashion
@@ -69,17 +68,17 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    @Stop(priority = 999)
    public void stop() {
       for (int i = 0; i < maps.length(); ++i) {
-         maps.set(0, null);
+         stopMap(i, false);
       }
    }
 
    @Override
-   protected int getSegmentForKey(Object key) {
+   public int getSegmentForKey(Object key) {
       return keyPartitioner.getSegment(key);
    }
 
    @Override
-   protected ConcurrentMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment) {
+   public ConcurrentMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment) {
       return maps.get(segment);
    }
 
@@ -237,45 +236,40 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
          if (trace) {
             log.tracef("Removing segments: %s from container", segments);
          }
-         segments.forEach((int s) -> {
-            ConcurrentMap<K, InternalCacheEntry<K, V>> map = maps.getAndSet(s, null);
-            if (map != null && !map.isEmpty()) {
-               listeners.forEach(c -> c.accept(map.values()));
-            }
-         });
+         for (PrimitiveIterator.OfInt segmentIterator = segments.iterator(); segmentIterator.hasNext(); ) {
+            int segment = segmentIterator.nextInt();
+            stopMap(segment, true);
+         }
       }
-   }
-
-   @Override
-   public Set<K> keySet() {
-      // This automatically immutable
-      return new AbstractSet<K>() {
-         @Override
-         public boolean contains(Object o) {
-            return containsKey(o);
-         }
-
-         @Override
-         public Iterator<K> iterator() {
-            return new IteratorMapper<>(iteratorIncludingExpired(), Map.Entry::getKey);
-         }
-
-         @Override
-         public int size() {
-            return DefaultSegmentedDataContainer.this.size();
-         }
-
-         @Override
-         public Spliterator<K> spliterator() {
-            return Spliterators.spliterator(this, Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.CONCURRENT);
-         }
-      };
    }
 
    private void startNewMap(int segment) {
       if (maps.get(segment) == null) {
+         ConcurrentMap<K, InternalCacheEntry<K, V>> newMap = mapSupplier.get();
          // Just in case of concurrent starts - this shouldn't be possible
-         maps.compareAndSet(segment, null, new ConcurrentHashMap<>());
+         if (!maps.compareAndSet(segment, null, newMap) && newMap instanceof AutoCloseable) {
+            try {
+               ((AutoCloseable) newMap).close();
+            } catch (Exception e) {
+               throw new CacheException(e);
+            }
+         }
+      }
+   }
+
+   private void stopMap(int segment, boolean notifyListener) {
+      ConcurrentMap<K, InternalCacheEntry<K, V>> map = maps.getAndSet(segment, null);
+      if (map != null) {
+         if (notifyListener && !map.isEmpty()) {
+            listeners.forEach(c -> c.accept(map.values()));
+         }
+         if (map instanceof AutoCloseable) {
+            try {
+               ((AutoCloseable) map).close();
+            } catch (Exception e) {
+               throw new CacheException(e);
+            }
+         }
       }
    }
 }

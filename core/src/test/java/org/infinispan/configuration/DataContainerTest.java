@@ -7,6 +7,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -141,7 +144,7 @@ public class DataContainerTest extends AbstractInfinispanTest {
 
    @Test
    public void testInternalDataContainer() {
-      DefaultSegmentedDataContainer container = new DefaultSegmentedDataContainer(1);
+      DefaultSegmentedDataContainer container = new DefaultSegmentedDataContainer((Supplier<ConcurrentMap>) ConcurrentHashMap::new, 1);
       ConfigurationBuilder configuration = new ConfigurationBuilder();
       configuration.dataContainer().dataContainer(container);
 

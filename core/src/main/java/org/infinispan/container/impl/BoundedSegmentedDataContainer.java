@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.PrimitiveIterator;
 import java.util.Spliterator;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -32,7 +33,8 @@ import com.github.benmanes.caffeine.cache.RemovalCause;
  * Bounded implementation of segmented data container. Bulk operations (iterator|spliterator) that are given segments
  * use the segments maps directly to only read the given segments (non segment based just read from bounded container).
  * <p>
- * Note this implementation supports both temporary non owned segments and not (L1).
+ * Note this implementation supports both temporary non owned segments and not (L1). This map only utilizes heap based
+ * (ie. ConcurrentHashMap) maps internally
  * @author wburns
  * @since 9.3
  */
@@ -41,7 +43,7 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
    protected final ConcurrentMap<K, InternalCacheEntry<K, V>> entries;
 
    public BoundedSegmentedDataContainer(int numSegments, long thresholdSize, EvictionType thresholdPolicy) {
-      super(numSegments);
+      super(ConcurrentHashMap::new, numSegments);
 
       Caffeine<K, InternalCacheEntry<K, V>> caffeine = caffeineBuilder();
 
@@ -64,7 +66,7 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
 
    public BoundedSegmentedDataContainer(int numSegments, long thresholdSize,
          EntrySizeCalculator<? super K, ? super InternalCacheEntry<K, V>> sizeCalculator) {
-      super(numSegments);
+      super(ConcurrentHashMap::new, numSegments);
       DefaultEvictionListener evictionListener = new DefaultEvictionListener();
 
       evictionCache = applyListener(Caffeine.newBuilder()
@@ -110,7 +112,7 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
    }
 
    @Override
-   protected ConcurrentMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment) {
+   public ConcurrentMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment) {
       // All writes and other ops go directly to the caffeine cache
       return entries;
    }

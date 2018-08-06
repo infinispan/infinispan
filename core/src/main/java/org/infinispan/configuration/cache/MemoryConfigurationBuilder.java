@@ -150,8 +150,12 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
    @Override
    public void validate() {
       StorageType type = attributes.attribute(STORAGE_TYPE).get();
-      if (type != StorageType.OBJECT && getBuilder().compatibility().isEnabled()) {
-         throw log.compatibilityModeOnlyCompatibleWithObjectStorage(type);
+      if (type != StorageType.OBJECT) {
+         if (getBuilder().compatibility().isEnabled()) {
+            throw log.compatibilityModeOnlyCompatibleWithObjectStorage(type);
+         } else if (getBuilder().clustering().hash().groups().isEnabled()) {
+            throw log.groupingOnlyCompatibleWithObjectStorage(type);
+         }
       }
 
       long size = attributes.attribute(SIZE).get();
