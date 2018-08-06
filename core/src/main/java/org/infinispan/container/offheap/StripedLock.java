@@ -3,28 +3,24 @@ package org.infinispan.container.offheap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.infinispan.commons.util.ProcessorInfo;
+import org.infinispan.commons.util.Util;
 
 /**
  * Holder for read write locks that provides ability to retrieve them by offset and hashCode
+ * Note that locks protect entries
  * @author wburns
  * @since 9.0
  */
 public class StripedLock {
-   private static final int MAXIMUM_CAPACITY = 1 << 30;
-   private static final int HASH_BITS = 0x7fffffff; // usable bits of normal node hash
-
    private final ReadWriteLock[] locks;
+   private final OffsetCalculator offSetCalculator;
 
-   public StripedLock() {
-      this(ProcessorInfo.availableProcessors() * 2);
-   }
-
-   public StripedLock(int lockCount) {
-      locks = new ReadWriteLock[tableSizeFor(lockCount)];
+   public StripedLock(int lockCount, OffsetCalculator offSetCalculator) {
+      locks = new ReadWriteLock[Util.findNextHighestPowerOfTwo(lockCount)];
       for (int i = 0; i< locks.length; ++i) {
          locks[i] = new ReentrantReadWriteLock();
       }
+      this.offSetCalculator = offSetCalculator;
    }
 
    /**
@@ -42,8 +38,7 @@ public class StripedLock {
     * @return the lock associated with the given hashCode
     */
    public ReadWriteLock getLockFromHashCode(int hashCode) {
-      int h = spread(hashCode);
-      int offset = h & (locks.length - 1);
+      int offset = offSetCalculator.calculateOffsetUsingHashCode(hashCode);
       return locks[offset];
    }
 
@@ -64,8 +59,8 @@ public class StripedLock {
     * Locks all write locks.  Ensure that {@link StripedLock#unlockAll()} is called in a proper finally block
     */
    public void lockAll() {
-      for (int i = 0; i < locks.length; ++i) {
-         locks[i].writeLock().lock();
+      for (ReadWriteLock rwLock : locks) {
+         rwLock.writeLock().lock();
       }
    }
 
@@ -73,22 +68,8 @@ public class StripedLock {
     * Unlocks all write locks, useful after {@link StripedLock#lockAll()} was invoked.
     */
    void unlockAll() {
-      for (int i = 0; i < locks.length; ++i) {
-         locks[i].writeLock().unlock();
+      for (ReadWriteLock rwLock : locks) {
+         rwLock.writeLock().unlock();
       }
-   }
-
-   private static final int tableSizeFor(int c) {
-      int n = c - 1;
-      n |= n >>> 1;
-      n |= n >>> 2;
-      n |= n >>> 4;
-      n |= n >>> 8;
-      n |= n >>> 16;
-      return (n < 0) ? 1 : (n >= MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : n + 1;
-   }
-
-   static final int spread(int h) {
-      return (h ^ (h >>> 16)) & HASH_BITS;
    }
 }

@@ -1820,4 +1820,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Content '%s (MediaType: '%s') cannot be converted to '%s'", id = 533)
    EncodingException cannotConvertContent(Object content, MediaType contentType, MediaType destination);
+
+   @Message(value = "Grouping requires OBJECT storage type but was: %s", id = 534)
+   CacheConfigurationException groupingOnlyCompatibleWithObjectStorage(StorageType storageType);
 }

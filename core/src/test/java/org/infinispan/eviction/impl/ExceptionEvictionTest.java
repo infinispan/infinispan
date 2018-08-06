@@ -493,10 +493,11 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          }
       }
 
+      Object storageKey = cache(0).getAdvancedCache().getKeyDataConversion().toStorage(expiringKey);
       // Entry should be completely removed at some point - note that expired entries, that haven't been removed, still
       // count against counts
       for (Cache cache : caches()) {
-         eventually(() -> cache.getAdvancedCache().getDataContainer().peek(expiringKey) == null);
+         eventually(() -> cache.getAdvancedCache().getDataContainer().peek(storageKey) == null);
       }
 
       // This insert should work now
@@ -646,7 +647,6 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
 
          numberToKill++;
 
-         boolean dist = cacheMode.isDistributed();
          assertInterceptorCount();
 
          addClusterEnabledCacheManager(configurationBuilder);

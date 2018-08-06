@@ -7,11 +7,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.PrimitiveIterator;
 import java.util.Spliterator;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ConcatIterator;
 import org.infinispan.commons.util.FlattenSpliterator;
 import org.infinispan.commons.util.IntSet;
@@ -30,13 +31,25 @@ import org.infinispan.container.entries.InternalCacheEntry;
 public class L1SegmentedDataContainer<K, V> extends DefaultSegmentedDataContainer<K, V> {
    private final ConcurrentMap<K, InternalCacheEntry<K, V>> nonOwnedEntries;
 
-   public L1SegmentedDataContainer(int numSegments) {
-      super(numSegments);
-      this.nonOwnedEntries = new ConcurrentHashMap<>();
+   public L1SegmentedDataContainer(Supplier<ConcurrentMap<K, InternalCacheEntry<K, V>>> mapSupplier, int numSegments) {
+      super(mapSupplier, numSegments);
+      this.nonOwnedEntries = mapSupplier.get();
    }
 
    @Override
-   protected ConcurrentMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment) {
+   public void stop() {
+      super.stop();
+      if (nonOwnedEntries instanceof AutoCloseable) {
+         try {
+            ((AutoCloseable) nonOwnedEntries).close();
+         } catch (Exception e) {
+            throw new CacheException(e);
+         }
+      }
+   }
+
+   @Override
+   public ConcurrentMap<K, InternalCacheEntry<K, V>> getMapForSegment(int segment) {
       ConcurrentMap<K, InternalCacheEntry<K, V>> map = super.getMapForSegment(segment);
       if (map == null) {
          map = nonOwnedEntries;

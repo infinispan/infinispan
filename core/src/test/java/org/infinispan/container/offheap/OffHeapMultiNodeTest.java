@@ -9,12 +9,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.DataContainer;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.container.DataContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -107,7 +108,12 @@ public class OffHeapMultiNodeTest extends MultipleCacheManagersTest {
 
       map.putAll(original);
       Iterator<Map.Entry<byte[], byte[]>> iterator = map.entrySet().iterator();
-      iterator.forEachRemaining(e -> assertEquals(e.getValue(), map.get(e.getKey())));
+      AtomicInteger count = new AtomicInteger();
+      iterator.forEachRemaining(e -> {
+         count.incrementAndGet();
+         assertEquals(e.getValue(), map.get(e.getKey()));
+      });
+      assertEquals(cacheSize, count.get());
    }
 
    static DataContainer<WrappedByteArray, WrappedByteArray> castDC(Object obj) {

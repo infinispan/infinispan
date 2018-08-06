@@ -487,7 +487,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       //then
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("text/plain");
-      ResponseAssertion.assertThat(response).hasReturnedText("key1\nkey2");
+      ResponseAssertion.assertThat(response).hasReturnedText("key1\nkey2", "key2\nkey1");
    }
 
    @Test
@@ -505,7 +505,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       //then
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("text/plain;charset=UTF-8");
-      ResponseAssertion.assertThat(response).hasReturnedText("key1\nkey2");
+      ResponseAssertion.assertThat(response).hasReturnedText("key1\nkey2", "key2\nkey1");
    }
 
    @Test
@@ -523,7 +523,7 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       //then
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("text/plain; charset=ISO-8859-1");
-      ResponseAssertion.assertThat(response).hasReturnedText("key1\nkey2");
+      ResponseAssertion.assertThat(response).hasReturnedText("key1\nkey2", "key2\nkey1");
    }
 
    @Test
@@ -541,7 +541,8 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       //then
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("application/json");
-      ResponseAssertion.assertThat(response).hasReturnedText("keys=[key1,key2]");
+      // keys can be returned in any order
+      ResponseAssertion.assertThat(response).hasReturnedText("keys=[key1,key2]", "keys=[key2,key1]");
    }
 
    @Test
@@ -559,7 +560,9 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       //then
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("application/xml");
-      ResponseAssertion.assertThat(response).hasReturnedText("<?xml version=\"1.0\" encoding=\"UTF-8\"?><keys><key>key1</key><key>key2</key></keys>");
+      ResponseAssertion.assertThat(response).hasReturnedText(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><keys><key>key1</key><key>key2</key></keys>",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><keys><key>key2</key><key>key1</key></keys>");
    }
 
    @Test
@@ -577,7 +580,10 @@ public abstract class BaseRestOperationsTest extends AbstractInfinispanTest {
       //then
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
-      ResponseAssertion.assertThat(response).hasReturnedText(String.format("%s\n%s", bytesToHex("key1".getBytes()), bytesToHex("key2".getBytes())));
+      // keys can be returned in any order
+      ResponseAssertion.assertThat(response).hasReturnedText(
+            String.format("%s\n%s", bytesToHex("key1".getBytes()), bytesToHex("key2".getBytes())),
+            String.format("%s\n%s", bytesToHex("key2".getBytes()), bytesToHex("key1".getBytes())));
    }
 
    @Test

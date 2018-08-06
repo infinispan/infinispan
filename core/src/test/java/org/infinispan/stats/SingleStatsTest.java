@@ -1,6 +1,7 @@
 package org.infinispan.stats;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.Cache;
@@ -112,17 +113,17 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
       refreshStats();
       assertEquals(TOTAL_ENTRIES - EVICTION_MAX_ENTRIES + 1, stats.getEvictions());
 
-      cache.get("key1");
-      cache.get("key2");
-      cache.remove("key1");
-      cache.remove("key2");
-      cache.remove("non-existing");
-      cache.get("key1");
-      cache.get("key2");
+      assertEquals("value1", cache.get("key1"));
+      assertEquals("value2", cache.get("key2"));
+      assertEquals("value1", cache.remove("key1"));
+      assertEquals("value2", cache.remove("key2"));
+      assertNull(cache.remove("non-existing"));
+      assertNull(cache.get("key1"));
+      assertNull(cache.get("key2"));
 
       refreshStats();
-      //assertEquals(2, stats.getHits()); //https://issues.jboss.org/browse/ISPN-8442
-      //assertEquals(2, stats.getMisses()); //https://issues.jboss.org/browse/ISPN-8442
+      assertEquals(2, stats.getHits());
+      assertEquals(2, stats.getMisses());
       assertEquals(2, stats.getRemoveHits());
       assertEquals(1, stats.getRemoveMisses());
       assertEquals(4, stats.getRetrievals());

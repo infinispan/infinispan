@@ -24,6 +24,10 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
       attributes = GroupsConfiguration.attributeDefinitionSet();
    }
 
+   public boolean isEnabled() {
+      return attributes.attribute(ENABLED).get();
+   }
+
    /**
     * Enable grouping support so that {@link Group} annotations are honored and any configured
     * groupers will be invoked

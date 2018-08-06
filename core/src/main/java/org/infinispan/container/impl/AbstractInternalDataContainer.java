@@ -27,6 +27,7 @@ import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.EvictionListener;
 import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.PeekableMap;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
@@ -318,6 +319,32 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          }
          return null;
       }
+   }
+
+   @Override
+   public Set<K> keySet() {
+      // This automatically immutable
+      return new AbstractSet<K>() {
+         @Override
+         public boolean contains(Object o) {
+            return containsKey(o);
+         }
+
+         @Override
+         public Iterator<K> iterator() {
+            return new IteratorMapper<>(iteratorIncludingExpired(), Map.Entry::getKey);
+         }
+
+         @Override
+         public int size() {
+            return AbstractInternalDataContainer.this.size();
+         }
+
+         @Override
+         public Spliterator<K> spliterator() {
+            return Spliterators.spliterator(this, Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.CONCURRENT);
+         }
+      };
    }
 
    @Override

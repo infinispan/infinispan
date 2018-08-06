@@ -37,6 +37,18 @@ public class ResponseAssertion {
       return this;
    }
 
+   public ResponseAssertion hasReturnedText(String... textPossibilities) {
+      Assertions.assertThat(response.getContentAsString()).matches(s -> {
+         for (String possible : textPossibilities) {
+            if (s.equals(possible)) {
+               return true;
+            }
+         }
+         return false;
+      }, "Content: " + response.getContentAsString() + " doesn't match any of " + textPossibilities);
+      return this;
+   }
+
    public ResponseAssertion containsReturnedText(String text) {
       Assertions.assertThat(response.getContentAsString()).contains(text);
       return this;

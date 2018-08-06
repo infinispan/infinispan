@@ -52,6 +52,13 @@ public interface OffHeapEntryFactory extends KeyValueMetadataSizeCalculator<Wrap
    int getHashCode(long address);
 
    /**
+    * Returns the key of the address.
+    * @param address the address of the entry
+    * @return the bytes for the key
+    */
+   byte[] getKey(long address);
+
+   /**
     * Create an entry from the off heap pointer
     * @param address the address of the entry to read
     * @return the entry created on heap from off heap
