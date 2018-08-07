@@ -1,4 +1,4 @@
-package org.infinispan.rest.search;
+package org.infinispan.query.remote.json;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 
 /**
- * @since 9.2
+ * @since 9.4
  */
 public class HitSerializer extends JsonSerializer<Object> {
 

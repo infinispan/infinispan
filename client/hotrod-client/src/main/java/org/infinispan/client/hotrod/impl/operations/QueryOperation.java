@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -10,18 +9,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.EnumMarshaller;
-import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.client.QueryRequest;
-import org.infinispan.query.remote.client.QueryResponse;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -31,14 +26,16 @@ import io.netty.channel.Channel;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public final class QueryOperation extends RetryOnFailureOperation<QueryResponse> {
+public final class QueryOperation extends RetryOnFailureOperation<Object> {
 
    private final RemoteQuery remoteQuery;
+   private final QuerySerializer querySerializer;
 
    public QueryOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicInteger topologyId,
                          int flags, Configuration cfg, RemoteQuery remoteQuery, DataFormat dataFormat) {
       super(QUERY_REQUEST, QUERY_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat);
       this.remoteQuery = remoteQuery;
+      this.querySerializer = QuerySerializer.findByMediaType(dataFormat.getValueType());
    }
 
    @Override
@@ -55,26 +52,7 @@ public final class QueryOperation extends RetryOnFailureOperation<QueryResponse>
       queryRequest.setIndexedQueryMode(remoteQuery.getIndexedQueryMode().toString());
 
       // marshall and write the request
-      byte[] requestBytes;
-      final SerializationContext serCtx = remoteQuery.getSerializationContext();
-      Marshaller marshaller = null;
-      if (serCtx != null) {
-         try {
-            requestBytes = ProtobufUtil.toByteArray(serCtx, queryRequest);
-         } catch (IOException e) {
-            throw new HotRodClientException(e);
-         }
-      } else {
-         marshaller = remoteQuery.getCache().getRemoteCacheManager().getMarshaller();
-         try {
-            requestBytes = marshaller.objectToByteBuffer(queryRequest);
-         } catch (IOException e) {
-            throw new HotRodClientException(e);
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new HotRodClientException(e);
-         }
-      }
+      byte[] requestBytes = querySerializer.serializeQueryRequest(remoteQuery, queryRequest);
 
       scheduleRead(channel);
 
@@ -118,19 +96,6 @@ public final class QueryOperation extends RetryOnFailureOperation<QueryResponse>
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       byte[] responseBytes = ByteBufUtil.readArray(buf);
-      SerializationContext serCtx = remoteQuery.getSerializationContext();
-      if (serCtx != null) {
-         try {
-            complete(ProtobufUtil.fromByteArray(serCtx, responseBytes, QueryResponse.class));
-         } catch (IOException e) {
-            throw new HotRodClientException(e);
-         }
-      } else {
-         try {
-            complete((QueryResponse) channelFactory.getMarshaller().objectFromByteBuffer(responseBytes));
-         } catch (IOException | ClassNotFoundException e) {
-            throw new HotRodClientException(e);
-         }
-      }
+      complete(querySerializer.readQueryResponse(channelFactory.getMarshaller(), remoteQuery, responseBytes));
    }
 }

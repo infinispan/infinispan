@@ -235,6 +235,7 @@
       <version.jta>1.0.1.Final</version.jta>
       <version.lucene>5.5.5</version.lucene>
       <version.lucene.module.slot>5.5</version.lucene.module.slot>
+      <version.gson.module.slot>2.8</version.gson.module.slot>
       <version.maven-compiler-plugin>3.7.0-jboss-1</version.maven-compiler-plugin> <!-- MCOMPILER-320 -->
       <version.maven.source>3.0.1</version.maven.source>
       <version.osgi>4.3.1</version.osgi>
@@ -350,6 +351,7 @@
       <version.netty-conscrypt-optional>1.0.0</version.netty-conscrypt-optional>
       <!-- The Hot Rod Client's Karaf feature requires this. -->
       <version.netty>4.1.22.Final</version.netty>
+      <version.gson>2.8.2</version.gson>
    </properties>
    <dependencyManagement>
       <dependencies>

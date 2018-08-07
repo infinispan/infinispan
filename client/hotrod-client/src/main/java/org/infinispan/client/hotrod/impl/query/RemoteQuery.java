@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.query;
 
+import static java.util.stream.StreamSupport.stream;
 import static org.infinispan.client.hotrod.impl.Util.await;
 
 import java.io.IOException;
@@ -7,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
@@ -20,11 +22,18 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.QueryResponse;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
 public final class RemoteQuery extends BaseQuery {
+
+   private static final String JSON_TOTAL_RESULTS = "total_results";
+   private static final String JSON_HITS = "hits";
+   private static final String JSON_HIT = "hit";
 
    private final RemoteCacheImpl<?, ?> cache;
    private final SerializationContext serializationContext;
@@ -72,9 +81,20 @@ public final class RemoteQuery extends BaseQuery {
          validateNamedParameters();
 
          QueryOperation op = cache.getOperationsFactory().newQueryOperation(this, cache.getDataFormat());
-         QueryResponse response = await(op.execute());
-         totalResults = (int) response.getTotalResults();
-         results = unwrapResults(response.getProjectionSize(), response.getResults());
+         Object response = await(op.execute());
+         if (response instanceof QueryResponse) {
+            QueryResponse resp = (QueryResponse) response;
+            totalResults = (int) resp.getTotalResults();
+            results = unwrapResults(resp.getProjectionSize(), resp.getResults());
+         }
+         if (response instanceof JsonObject) {
+            JsonObject resp = (JsonObject) response;
+            totalResults = resp.get(JSON_TOTAL_RESULTS).getAsInt();
+            JsonArray hits = resp.get(JSON_HITS).getAsJsonArray();
+            results = stream(hits.spliterator(), false)
+                  .map(hit -> hit.getAsJsonObject().get(JSON_HIT).toString())
+                  .collect(Collectors.toList());
+         }
       }
    }
 

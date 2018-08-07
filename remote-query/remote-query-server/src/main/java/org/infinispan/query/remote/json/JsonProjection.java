@@ -1,20 +1,20 @@
-package org.infinispan.rest.search;
+package org.infinispan.query.remote.json;
 
-import static org.infinispan.rest.JSONConstants.HIT;
+import static org.infinispan.query.remote.json.JSONConstants.HIT;
 
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * @since 9.2
+ * @since 9.4
  */
-public class Projection {
+public class JsonProjection {
 
    @JsonProperty(HIT)
    private Map<String, Object> value;
 
-   Projection(Map<String, Object> value) {
+   JsonProjection(Map<String, Object> value) {
       this.value = value;
    }
 

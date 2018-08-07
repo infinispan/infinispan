@@ -1,21 +1,20 @@
-package org.infinispan.rest.search;
+package org.infinispan.query.remote.json;
 
-import static org.infinispan.rest.JSONConstants.TOTAL_RESULTS;
+import static org.infinispan.query.remote.json.JSONConstants.TOTAL_RESULTS;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * @since 9.2
+ * @since 9.4
  */
 
-@SuppressWarnings("unused")
-class BaseQueryResult implements QueryResponse {
+class BaseJsonQueryResult extends JsonQueryResponse {
 
    private int totalResults;
 
    @JsonCreator
-   BaseQueryResult(@JsonProperty(TOTAL_RESULTS) int totalResults) {
+   BaseJsonQueryResult(@JsonProperty(TOTAL_RESULTS) int totalResults) {
       this.totalResults = totalResults;
    }
 

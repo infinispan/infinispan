@@ -1,16 +1,10 @@
 package org.infinispan.query.remote.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.query.dsl.IndexedQueryMode;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.remote.client.QueryRequest;
-import org.infinispan.query.remote.client.QueryResponse;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
@@ -42,27 +36,21 @@ public final class QueryFacadeImpl implements QueryFacade {
       }
       RemoteQueryManager remoteQueryManager = SecurityActions.getRemoteQueryManager(cache);
       MediaType requestMediaType = cache.getValueDataConversion().getRequestMediaType();
-      BaseRemoteQueryEngine queryEngine = remoteQueryManager.getQueryEngine(cache);
-      if (queryEngine == null) {
+      if (!remoteQueryManager.isQueryEnabled(cache)) {
          throw log.queryingNotEnabled(cache.getName());
       }
 
       try {
          QueryRequest request = remoteQueryManager.decodeQueryRequest(query, requestMediaType);
 
-         long startOffset = request.getStartOffset() == null ? -1 : request.getStartOffset();
-         int maxResults = request.getMaxResults() == null ? -1 : request.getMaxResults();
+         int startOffset = request.getStartOffset().intValue();
+         int maxResults = request.getMaxResults();
 
-         // create the query
-         IndexedQueryMode queryMode = IndexedQueryMode.FETCH;
-         if (request.getIndexedQueryMode() != null) {
-            queryMode = IndexedQueryMode.valueOf(request.getIndexedQueryMode());
-         }
-         Query q = queryEngine.makeQuery(request.getQueryString(), request.getNamedParametersMap(), startOffset, maxResults, queryMode);
+         IndexedQueryMode queryMode = request.getIndexedQueryMode() == null ?
+               IndexedQueryMode.FETCH : IndexedQueryMode.valueOf(request.getIndexedQueryMode());
 
-         // execute query and make the response object
-         QueryResponse response = makeResponse(q);
-         return remoteQueryManager.encodeQueryResponse(response, requestMediaType);
+         return remoteQueryManager.executeQuery(request.getQueryString(),
+               request.getNamedParametersMap(), startOffset, maxResults, queryMode, cache, requestMediaType);
       } catch (Exception e) {
          if (log.isDebugEnabled()) {
             log.debugf(e, "Error executing remote query : %s", e.getMessage());
@@ -71,29 +59,4 @@ public final class QueryFacadeImpl implements QueryFacade {
       }
    }
 
-   private QueryResponse makeResponse(Query query) {
-      List<?> list = query.list();
-      int numResults = list.size();
-      String[] projection = query.getProjection();
-      int projSize = projection != null ? projection.length : 0;
-      List<WrappedMessage> results = new ArrayList<>(projSize == 0 ? numResults : numResults * projSize);
-
-      for (Object o : list) {
-         if (projSize == 0) {
-            results.add(new WrappedMessage(o));
-         } else {
-            Object[] row = (Object[]) o;
-            for (int i = 0; i < projSize; i++) {
-               results.add(new WrappedMessage(row[i]));
-            }
-         }
-      }
-
-      QueryResponse response = new QueryResponse();
-      response.setTotalResults(query.getResultSize());
-      response.setNumResults(numResults);
-      response.setProjectionSize(projSize);
-      response.setResults(results);
-      return response;
-   }
 }

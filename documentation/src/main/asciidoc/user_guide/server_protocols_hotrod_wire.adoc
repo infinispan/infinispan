@@ -15,6 +15,7 @@ the custom TCP client/server Hot Rod protocol.
 * link:#hot_rod_protocol_2_6[Hot Rod Protocol 2.6]
 * link:#hot_rod_protocol_2_7[Hot Rod Protocol 2.7]
 * link:#hot_rod_protocol_2_8[Hot Rod Protocol 2.8]
+* link:#hot_rod_protocol_2_8[Hot Rod Protocol 2.9]
 
 ==== Hot Rod Protocol 1.0
 
@@ -2645,6 +2646,135 @@ Response Header `Status` possible values:
 * `0x02`: The counter isn't defined.
 * See the <<Response Header>> for error codes.
 
+==== Hot Rod Protocol 2.8
+
+.Infinispan versions
+TIP: This version of the protocol is implemented since Infinispan 9.3
+
+.Events
+
+The protocol allows clients to send requests on the same connection that was previously used for Add Client Listener
+operation, and in protocol < 2.8 is reserved for sending events to the client. This includes registering additional
+listeners, therefore receiving events for multiple listeners.
+
+The binary format of requests/responses/events does not change but the previously meaningless `messageId` in events
+must be set to:
+
+* `messageId` of the Add Client Listener operation for the include-current-state events
+* `0` for the events sent after the Add Client Listener operation has been finished (response sent).
+
+The same holds for counter events: client can send further requests after Counter Add Listener.
+Previously meaningless `messageId` in counter event is always set to `0`.
+
+These modifications of the protocol do not require any changes on the client side (as the client simply
+won't send additional operations if it does not support that; the changes are more permissive to the clients)
+but the server has to handle load on the connection correctly.
+
+.MediaType
+
+This Hot Rod protocol version also adds support for specifying the MediaType of Keys and Values, allowing data
+to be read (and written) in different formats. This information is part of the Header.
+
+The data formats are described using a _MediaType_ object, that is represented as follows:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| type   | 1 byte   |
++0x00+ = No MediaType supplied +
++0x01+ = Pre-defined MediaType supplied +
++0x02+ = Custom MediaType supplied +
+| id  | vInt       | (Optional) For a pre-defined MediaType (type=0x01), the Id of the MediaType. The currently supported Ids can be found at link:https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/dataconversion/MediaTypeIds.java[MediaTypeIds]
+| customString | string | (Optional) If a custom MediaType is supplied (type=0x02), the custom MediaType of the key, including type and subtype. E.g.: _text/plain_, _application/json_, etc.
+| paramSize | vInt | The size of the parameters for the MediaType
+| paramKey1 | string | (Optional) The first parameter's key
+| paramValue1 | string | (Optional) The first parameter's value
+| ...             | ...    | ...
+| paramKeyN | string | (Optional) The nth parameter's key
+| paramValueN | string | (Optional) The nth parameter's value
+|==============================================================================
+
+
+===== Request Header
+
+The request header has the following extra fields:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Type       | Value
+| Key Format  | MediaType   | The MediaType to be used for keys during the operation. It applies to both the keys sent and received.
+| Value Format  | MediaType   | Analogous to Key Format, but applied for the values.
+|==============================================================================
+
+==== Hot Rod Protocol 2.9
+
+.Infinispan versions
+TIP: This version of the protocol is implemented since Infinispan 9.4
+
+This version supports query requests and responses in JSON format. The format of the operations *0x1F* (Query Request) and *0x20* (Query Response) are not changed.
+
+To send JSON payloads, the "Value Format" field in the header should be _application/json_.
+
+.Query
+
+Request (0x1F):
+
+[cols="3,^2,10a",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Request header
+| Query Length | vInt | The length of the UTF-8 encoded query object.
+| Query | byte array | Byte array containing the JSON (UTF-8) encoded query object, having a length specified by the previous field. Example of payload:
+
+ {
+  "query":"From Entity where field1:'value1'",
+  "offset": 12,
+  "max-results": 1000,
+  "query-mode": "FETCH"
+ }
+
+Where:
+
+ query: the Ickle query String.
+ offset: the index of the first result to return.
+ max_results: the maximum number of results to return.
+ query_mode: the indexed query mode. Either FETCH or BROADCAST. FECTH is the default.
+|==============================================================================
+
+Response (0x20):
+
+[cols="3,^2,10a",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Response header
+| Response payload Length | vInt | The length of the UTF-8 encoded response object
+| Response payload | byte array | Byte array containing the JSON encoded response object, having a length specified by previous field. Example payload:
+
+ {
+   "total_results":801,
+   "hits":[
+      {
+         "hit":{
+            "field1":565,
+            "field2":"value2"
+         }
+      },
+      {
+         "hit":{
+            "field1":34,
+            "field2":"value22"
+         }
+      }
+   ]
+ }
+
+Where:
+
+ total_results: the total number of results of the query.
+ hits: an ARRAY of OBJECT representing the results.
+ hit: each OBJECT above contain another OBJECT in the "hit" field, containing the result of the query, in JSON format.
+|==============================================================================
+
 ==== Hot Rod Hash Functions
 {brandname} makes use of a consistent hash function to place nodes on a hash
 wheel, and to place keys of entries on the same wheel to determine where
@@ -2745,65 +2875,3 @@ Returns the cache names as a JSON array of strings, e.g. ["cache1", "cache2"]
 | name  | The name of the cache to reindex. | Yes
 | flags | See the flags table above. |No, all flags will be ignored
 |==============================================================================
-
-==== Hot Rod Protocol 2.8
-
-.Infinispan versions
-TIP: This version of the protocol is implemented since Infinispan 9.3
-
-.Events
-
-The protocol allows clients to send requests on the same connection that was previously used for Add Client Listener
-operation, and in protocol < 2.8 is reserved for sending events to the client. This includes registering additional
-listeners, therefore receiving events for multiple listeners.
-
-The binary format of requests/responses/events does not change but the previously meaningless `messageId` in events
-must be set to:
-
-* `messageId` of the Add Client Listener operation for the include-current-state events
-* `0` for the events sent after the Add Client Listener operation has been finished (response sent).
-
-The same holds for counter events: client can send further requests after Counter Add Listener.
-Previously meaningless `messageId` in counter event is always set to `0`.
-
-These modifications of the protocol do not require any changes on the client side (as the client simply
-won't send additional operations if it does not support that; the changes are more permissive to the clients)
-but the server has to handle load on the connection correctly.
-
-.MediaType
-
-This Hot Rod protocol version also adds support for specifying the MediaType of Keys and Values, allowing data
-to be read (and written) in different formats. This information is part of the Header.
-
-The data formats are described using a _MediaType_ object, that is represented as follows:
-
-[cols="3,^2,10",options="header"]
-|==============================================================================
-| Field Name          | Size       | Value
-| type   | 1 byte   | 
-+0x00+ = No MediaType supplied +
-+0x01+ = Pre-defined MediaType supplied +
-+0x02+ = Custom MediaType supplied +
-| id  | vInt       | (Optional) For a pre-defined MediaType (type=0x01), the Id of the MediaType. The currently supported Ids can be found at link:https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/dataconversion/MediaTypeIds.java[MediaTypeIds]
-| customString | string | (Optional) If a custom MediaType is supplied (type=0x02), the custom MediaType of the key, including type and subtype. E.g.: _text/plain_, _application/json_, etc.
-| paramSize | vInt | The size of the parameters for the MediaType
-| paramKey1 | string | (Optional) The first parameter's key
-| paramValue1 | string | (Optional) The first parameter's value
-| ...             | ...    | ...
-| paramKeyN | string | (Optional) The nth parameter's key
-| paramValueN | string | (Optional) The nth parameter's value
-|==============================================================================
-
- 
-===== Request Header
-
-The request header has the following extra fields:
-
-[cols="3,^2,10",options="header"]
-|==============================================================================
-| Field Name          | Type       | Value
-| Key Format  | MediaType   | The MediaType to be used for keys during the operation. It applies to both the keys sent and received.
-| Value Format  | MediaType   | Analogous to Key Format, but applied for the values.
-|==============================================================================
-
-

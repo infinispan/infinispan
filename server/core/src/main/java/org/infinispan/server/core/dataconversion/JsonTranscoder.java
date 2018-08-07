@@ -33,6 +33,7 @@ public class JsonTranscoder extends OneToManyTranscoder {
    protected final static Log logger = LogFactory.getLog(JsonTranscoder.class, Log.class);
 
    public static final String TYPE_PROPERTY = "_type";
+   private static final String MEDIA_CLASS_TYPE_PROPERTY = "type";
 
    private final ObjectMapper objectMapper;
 
@@ -94,11 +95,14 @@ public class JsonTranscoder extends OneToManyTranscoder {
       }
       if (destinationType.match(APPLICATION_OBJECT)) {
          try {
+            Optional<String> destinationClassName = destinationType.getParameter(MEDIA_CLASS_TYPE_PROPERTY);
+            Class<?> destinationClass = Object.class;
+            if (destinationClassName.isPresent()) destinationClass = Class.forName(destinationClassName.get());
             if (content instanceof byte[]) {
-               return objectMapper.readValue((byte[]) content, Object.class);
+               return objectMapper.readValue((byte[]) content, destinationClass);
             }
-            return objectMapper.readValue((String) content, Object.class);
-         } catch (IOException e) {
+            return objectMapper.readValue((String) content, destinationClass);
+         } catch (IOException | ClassNotFoundException e) {
             throw new CacheException(e);
          }
       }
