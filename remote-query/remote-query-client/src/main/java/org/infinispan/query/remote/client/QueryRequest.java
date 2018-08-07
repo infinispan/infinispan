@@ -36,7 +36,7 @@ public final class QueryRequest {
    }
 
    public Long getStartOffset() {
-      return startOffset;
+      return startOffset == null ? -1L : startOffset;
    }
 
    public void setStartOffset(Long startOffset) {
@@ -44,7 +44,7 @@ public final class QueryRequest {
    }
 
    public Integer getMaxResults() {
-      return maxResults;
+      return maxResults == null ? -1 : maxResults;
    }
 
    public void setMaxResults(Integer maxResults) {

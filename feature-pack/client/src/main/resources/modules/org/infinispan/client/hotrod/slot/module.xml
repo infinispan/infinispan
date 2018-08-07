@@ -18,6 +18,7 @@
         <module name="org.infinispan.protostream" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.query.dsl" slot="@infinispan.module.slot@"/>
         <module name="org.infinispan.query.remote.client" slot="@infinispan.module.slot@"/>
+        <module name="com.google.code.gson" slot="@gson.module.slot@" optional="true"/>
         <module name="org.jboss.logging"/>
     </dependencies>
 </module>

@@ -1,7 +1,7 @@
-package org.infinispan.rest.search;
+package org.infinispan.query.remote.json;
 
-import static org.infinispan.rest.JSONConstants.HITS;
-import static org.infinispan.rest.JSONConstants.TOTAL_RESULTS;
+import static org.infinispan.query.remote.json.JSONConstants.HITS;
+import static org.infinispan.query.remote.json.JSONConstants.TOTAL_RESULTS;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,15 +11,14 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
- * @since 9.2
+ * @since 9.4
  */
-@SuppressWarnings("unused")
 @JsonPropertyOrder({TOTAL_RESULTS, HITS})
-public class ProjectedResult extends BaseQueryResult {
+public class ProjectedJsonResult extends BaseJsonQueryResult {
 
-   private final List<Projection> hits;
+   private final List<JsonProjection> hits;
 
-   public ProjectedResult(int totalResults, String[] projections, List<Object> values) {
+   public ProjectedJsonResult(int totalResults, String[] projections, List<Object> values) {
       super(totalResults);
       hits = new ArrayList<>(projections.length);
       for (Object result1 : values) {
@@ -28,11 +27,11 @@ public class ProjectedResult extends BaseQueryResult {
          for (int j = 0; j < projections.length; j++) {
             p.put(projections[j], result[j]);
          }
-         hits.add(new Projection(p));
+         hits.add(new JsonProjection(p));
       }
    }
 
-   public List<Projection> getHits() {
+   public List<JsonProjection> getHits() {
       return hits;
    }
 

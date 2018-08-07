@@ -1,14 +1,19 @@
 package org.infinispan.query.remote.impl;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
+
 import java.util.Collection;
 import java.util.Map;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.ServiceFinder;
@@ -197,9 +202,26 @@ public final class LifecycleManager implements ModuleLifecycle {
    private RemoteQueryManager buildQueryManager(Configuration cfg, SerializationContext ctx, ComponentRegistry cr) {
       ContentTypeConfiguration valueEncoding = cfg.encoding().valueDataType();
       MediaType valueStorageMediaType = valueEncoding.mediaType();
-      boolean isObjectStorage = valueStorageMediaType != null && valueStorageMediaType.match(MediaType.APPLICATION_OBJECT);
-      if (isObjectStorage) return new ObjectRemoteQueryManager(cr);
-      return new ProtobufRemoteQueryManager(ctx, cr);
+      MediaType storageMediaType = cr.getComponent(Cache.class).getAdvancedCache().getValueDataConversion().getStorageMediaType();
+      QuerySerializers querySerializers = buildQuerySerializers(cr, storageMediaType);
+
+      boolean isObjectStorage = valueStorageMediaType != null && valueStorageMediaType.match(APPLICATION_OBJECT);
+      if (isObjectStorage) return new ObjectRemoteQueryManager(cr, querySerializers);
+      return new ProtobufRemoteQueryManager(ctx, cr, querySerializers);
+   }
+
+   private QuerySerializers buildQuerySerializers(ComponentRegistry cr, MediaType storageMediaType) {
+      EncoderRegistry encoderRegistry = cr.getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
+      QuerySerializers querySerializers = new QuerySerializers();
+      DefaultQuerySerializer defaultQuerySerializer = new DefaultQuerySerializer(encoderRegistry);
+      querySerializers.addSerializer(MediaType.MATCH_ALL, defaultQuerySerializer);
+
+      if (encoderRegistry.isConversionSupported(storageMediaType, APPLICATION_JSON)) {
+         Transcoder jsonStorage = encoderRegistry.getTranscoder(APPLICATION_JSON, storageMediaType);
+         Transcoder jsonObject = encoderRegistry.getTranscoder(APPLICATION_JSON, APPLICATION_OBJECT);
+         querySerializers.addSerializer(APPLICATION_JSON, new JsonQuerySerializer(storageMediaType, jsonStorage, jsonObject));
+      }
+      return querySerializers;
    }
 
    @Override

@@ -1,8 +1,8 @@
-package org.infinispan.rest.search;
+package org.infinispan.query.remote.json;
 
-import static org.infinispan.rest.JSONConstants.CAUSE;
-import static org.infinispan.rest.JSONConstants.ERROR;
-import static org.infinispan.rest.JSONConstants.MESSAGE;
+import static org.infinispan.query.remote.json.JSONConstants.CAUSE;
+import static org.infinispan.query.remote.json.JSONConstants.ERROR;
+import static org.infinispan.query.remote.json.JSONConstants.MESSAGE;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonTypeInfo(include = JsonTypeInfo.As.WRAPPER_OBJECT, use = JsonTypeInfo.Id.NAME)
 @JsonTypeName(ERROR)
 @SuppressWarnings("unused")
-public class QueryErrorResult implements QueryResponse {
+public class JsonQueryErrorResult extends JsonQueryResponse {
 
    @JsonProperty(MESSAGE)
    private String message;
@@ -21,12 +21,12 @@ public class QueryErrorResult implements QueryResponse {
    @JsonProperty(CAUSE)
    private String cause;
 
-   QueryErrorResult(String message, String cause) {
+   public JsonQueryErrorResult(String message, String cause) {
       this.message = message;
       this.cause = cause;
    }
 
-   public QueryErrorResult() {
+   public JsonQueryErrorResult() {
    }
 
    public String getMessage() {
