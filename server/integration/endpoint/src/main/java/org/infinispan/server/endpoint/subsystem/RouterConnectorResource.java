@@ -60,7 +60,7 @@ public class RouterConnectorResource extends SimpleResourceDefinition {
                .setAllowExpression(true)
                .setXmlName(ModelKeys.TCP_KEEPALIVE)
                .setRestartAllServices()
-               .setDefaultValue(new ModelNode().set(true))
+               .setDefaultValue(new ModelNode().set(false))
                .build();
 
    static final SimpleAttributeDefinition TCP_NODELAY =
