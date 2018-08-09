@@ -26,9 +26,6 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.EncodingUtils;
-import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
@@ -509,9 +506,7 @@ public class DistributedMultimapCacheTest extends BaseDistFunctionalTest<String,
    @Override
    protected void assertOwnershipAndNonOwnership(Object key, boolean allowL1) {
       for (Cache cache : caches) {
-         Wrapper keyWrapper = cache.getAdvancedCache().getKeyWrapper();
-         Encoder keyEncoder = cache.getAdvancedCache().getKeyEncoder();
-         Object keyToBeChecked = keyEncoder != null && keyWrapper != null ? EncodingUtils.toStorage(key, keyEncoder, keyWrapper) : key;
+         Object keyToBeChecked = cache.getAdvancedCache().getKeyDataConversion().toStorage(key);
          DataContainer dc = cache.getAdvancedCache().getDataContainer();
          InternalCacheEntry ice = dc.get(keyToBeChecked);
          if (isOwner(cache, keyToBeChecked)) {
