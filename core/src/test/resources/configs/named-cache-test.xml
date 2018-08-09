@@ -107,6 +107,12 @@
             <object strategy="REMOVE" size="5000"/>
          </memory>
       </local-cache>
+      <local-cache name="evictionMemoryExceptionCache">
+         <transaction mode="NON_DURABLE_XA" auto-commit="true"  />
+         <memory>
+            <binary strategy="EXCEPTION" eviction="MEMORY" size="5000"/>
+         </memory>
+      </local-cache>
       <replicated-cache name="withouthJmxEnabled" mode="ASYNC" statistics="false"/>
       <distributed-cache name="withDeadlockDetection" mode="SYNC" remote-timeout="20000" statistics="false" deadlock-detection-spin="1221" />
       <local-cache name="cacheWithCustomInterceptors">
