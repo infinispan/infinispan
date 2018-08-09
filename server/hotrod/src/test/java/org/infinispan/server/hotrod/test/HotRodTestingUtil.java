@@ -36,6 +36,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -320,26 +321,29 @@ public class HotRodTestingUtil {
                                                    List<HotRodServer> servers, String cacheName, int expectedTopologyId) {
       TestHashDistAware20Response hashTopologyResp = (TestHashDistAware20Response) topoResp;
       assertEquals(expectedTopologyId, hashTopologyResp.topologyId);
+      assertEquals(hashTopologyResp.members.size(), servers.size());
       Set<ServerAddress> serverAddresses = servers.stream().map(HotRodServer::getAddress).collect(Collectors.toSet());
-      assertEquals(new HashSet<>(hashTopologyResp.members), serverAddresses);
+      hashTopologyResp.members.forEach(member -> assertTrue(serverAddresses.contains(member)));
       assertEquals(hashTopologyResp.hashFunction, 3);
       // Assert segments
       Cache cache = servers.get(0).getCacheManager().getCache(cacheName);
-      DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
-      ConsistentHash ch = distributionManager.getCacheTopology().getCurrentCH();
+      LocalizedCacheTopology cacheTopology = cache.getAdvancedCache().getDistributionManager().getCacheTopology();
+      assertEquals(cacheTopology.getActualMembers().size(), servers.size());
+      ConsistentHash ch = cacheTopology.getCurrentCH();
       int numSegments = ch.getNumSegments();
       int numOwners = ch.getNumOwners();
       assertEquals(hashTopologyResp.segments.size(), numSegments);
       for (int i = 0; i < numSegments; ++i) {
          List<Address> segment = ch.locateOwnersForSegment(i);
          Iterable<ServerAddress> members = hashTopologyResp.segments.get(i);
-         assertEquals(numOwners, segment.size());
+         assertEquals(Math.min(numOwners, ch.getMembers().size()), segment.size());
          int count = 0;
          for (ServerAddress member : members) {
             count++;
             assertTrue(serverAddresses.contains(member));
          }
-         assertEquals(numOwners, count);
+         // The number of servers could be smaller than the number of CH members (same as the number of actual members)
+         assertEquals(Math.min(numOwners, servers.size()), count);
       }
    }
 
@@ -565,9 +569,8 @@ public class HotRodTestingUtil {
    static class UniquePortThreadLocal extends ThreadLocal<Integer> {
       @Override
       protected Integer initialValue() {
-         log.debugf("Before incrementing, server port is: %d", uniqueAddr.get());
          int port = uniqueAddr.getAndAdd(110);
-         log.debugf("For next thread, server port will be: %d", uniqueAddr.get());
+         log.debugf("Server port range for test thread %s is: %d-%d", Thread.currentThread().getId(), port, port + 109);
          return port;
       }
    }

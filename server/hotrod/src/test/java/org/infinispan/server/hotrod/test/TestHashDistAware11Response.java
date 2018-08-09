@@ -21,4 +21,16 @@ public class TestHashDistAware11Response extends AbstractTestTopologyAwareRespon
       this.hashSpace = hashSpace;
       this.numVirtualNodes = numVirtualNodes;
    }
+
+   @Override
+   public String toString() {
+      return "TestHashDistAware11Response{" +
+             "numOwners=" + numOwners +
+             ", hashFunction=" + hashFunction +
+             ", hashSpace=" + hashSpace +
+             ", numVirtualNodes=" + numVirtualNodes +
+             ", topologyId=" + topologyId +
+             ", members=" + members +
+             '}';
+   }
 }

@@ -19,6 +19,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
+import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.server.core.test.ServerTestingUtil;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.TestResponse;
@@ -26,7 +27,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.CacheTopology;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "server.hotrod.HotRodMergeTest")
@@ -35,21 +35,33 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
    private List<HotRodServer> servers = new ArrayList<>();
    private HotRodClient client;
 
+   public Object[] factory() {
+      return new Object[]{
+            new HotRodMergeTest().partitionHandling(PartitionHandling.DENY_READ_WRITES),
+            new HotRodMergeTest().partitionHandling(PartitionHandling.ALLOW_READ_WRITES)
+      };
+   }
+
    public HotRodMergeTest() {
       numMembersInCluster = 2;
       cacheMode = CacheMode.DIST_SYNC;
       cleanup = CleanupPhase.AFTER_TEST;
    }
 
-   @BeforeClass(alwaysRun = true)
    @Override
-   public void createBeforeClass() throws Throwable {
-      super.createBeforeClass();
+   protected void createCacheManagers() throws Throwable {
+      ConfigurationBuilder dcc = hotRodCacheConfiguration();
+      dcc.clustering().cacheMode(cacheMode).hash().numOwners(1);
+      dcc.clustering().partitionHandling().whenSplit(partitionHandling);
+      createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true));
+      waitForClusterToForm();
 
-      int nextServerPort = serverPort();
+      // Allow servers for both instances to run in parallel
+      int threadServerPort = serverPort();
+      int nextServerPort = threadServerPort + partitionHandling.ordinal() * numMembersInCluster;
       for (int i = 0; i < numMembersInCluster; i++) {
          servers.add(startHotRodServer(cacheManagers.get(i), nextServerPort));
-         nextServerPort += 50;
+         nextServerPort += 1;
       }
 
       client = new HotRodClient("127.0.0.1", servers.get(0).getPort(), DEFAULT_CACHE_NAME, 60, (byte) 21);
@@ -61,18 +73,12 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
    protected void destroy() {
       try {
          killClient(client);
+         client = null;
          servers.forEach(ServerTestingUtil::killServer);
+         servers.clear();
       } finally {
          super.destroy();
       }
-   }
-
-   @Override
-   protected void createCacheManagers() {
-      ConfigurationBuilder dcc = hotRodCacheConfiguration(new ConfigurationBuilder());
-      dcc.clustering().cacheMode(cacheMode).hash().numOwners(1);
-      createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true));
-      waitForClusterToForm();
    }
 
    public void testNewTopologySentAfterCleanMerge() {
@@ -83,19 +89,25 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
       PartitionDescriptor p0 = new PartitionDescriptor(0);
       PartitionDescriptor p1 = new PartitionDescriptor(1);
       splitCluster(p0.getNodes(), p1.getNodes());
-      TestingUtil.waitForNoRebalance(cache(p1.node(0)));
-      TestingUtil.waitForNoRebalance(cache(p0.node(0)));
+      eventuallyEquals(1, () -> advancedCache(0).getDistributionManager().getCacheTopology().getActualMembers().size());
+      eventuallyEquals(1, () -> advancedCache(1).getDistributionManager().getCacheTopology().getActualMembers().size());
       expectPartialTopology(client, initialTopology + 1);
       partition(0).merge(partition(1));
-      eventuallyExpectCompleteTopology(client, initialTopology + 8);
+      int finalTopologyId =  initialTopology + (partitionHandling == PartitionHandling.DENY_READ_WRITES ? 4 : 8);
+      eventuallyExpectCompleteTopology(client, finalTopologyId);
       // Check that we got the number of topology updates to NO_REBALANCE right
+      // With DENY_READ_WRITES:
+      // T+1: DEGRADED_MODE in both partitions
+      // T+3: merged, still DEGRADED_MODE
+      // T+4: back to AVAILABLE
+      // With ALLOW_READ_WRITES:
       // T+2: NO_REBALANCE in partition [B] before merge
       // T+3: CONFLICT_RESOLUTION, preferred CH: owners = (1) [test-NodeA-22368: 256+0]
       // T+4: NO_REBALANCE update topology after CR and before rebalance begins
       // T+5:READ_OLD (rebalance starts), T+6:READ_ALL, T+7:READ_NEW, T+8: NO_REBALANCE
       LocalizedCacheTopology newTopology = advancedCache(0).getDistributionManager().getCacheTopology();
       assertEquals(CacheTopology.Phase.NO_REBALANCE, newTopology.getPhase());
-      assertEquals(initialTopology + 8, newTopology.getTopologyId());
+      assertEquals(finalTopologyId, newTopology.getTopologyId());
    }
 
    public void testNewTopologySentAfterOverlappingMerge() {
@@ -107,12 +119,18 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
       // which is not possible as all messages received by Node 1 from Node 0 are discarded by the DISCARD protocol.
       // Therefore, it is necessary for the state transfer timeout to be < then the timeout utilised by TestingUtil::waitForNoRebalance
       isolatePartition(p1.getNodes());
-      TestingUtil.waitForNoRebalance(cache(p1.node(0)));
+      eventuallyEquals(1, () -> advancedCache(0).getDistributionManager().getCacheTopology().getActualMembers().size());
       eventuallyExpectPartialTopology(client, initialTopology + 1);
 
       partition(0).merge(partition(1));
-      eventuallyExpectCompleteTopology(client, initialTopology + 7);
+      int finalTopologyId = initialTopology + (partitionHandling == PartitionHandling.DENY_READ_WRITES ? 2 : 7);
+      eventuallyExpectCompleteTopology(client, finalTopologyId);
       // Check that we got the number of topology updates to NO_REBALANCE right
+      // With DENY_READ_WRITES:
+      // T+1: DEGRADED_MODE in partition [A]
+      // T+2: back to AVAILABLE
+      // With ALLOW_READ_WRITES:
+      // With ALLOW_READ_WRITES:
       // T+2: CONFLICT_RESOLUTION, preferred CH: owners = (1) [test-NodeA-22368: 256+0]
       // T+3: NO_REBALANCE update topology after CR and before rebalance begins
       // T+4:READ_OLD (rebalance starts), T+5:READ_ALL, T+6:READ_NEW, T+7: NO_REBALANCE
