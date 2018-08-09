@@ -93,4 +93,9 @@ public class SinglePortEndpointRouter extends AbstractProtocolServer<SinglePortR
       return Protocol.SINGLE_PORT;
    }
 
+   @Override
+   public int getWorkerThreads() {
+      return configuration.workerThreads();
+   }
+
 }

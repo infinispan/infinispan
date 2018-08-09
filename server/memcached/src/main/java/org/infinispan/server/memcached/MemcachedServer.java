@@ -73,4 +73,9 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
       super.stop();
       scheduler.shutdown();
    }
+
+   @Override
+   public int getWorkerThreads() {
+      return Integer.getInteger("infinispan.server.memcached.workerThreads", configuration.workerThreads());
+   }
 }

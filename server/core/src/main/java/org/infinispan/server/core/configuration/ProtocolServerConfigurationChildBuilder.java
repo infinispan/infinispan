@@ -66,6 +66,11 @@ public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServe
    SslConfigurationBuilder<T, S> ssl();
 
    /**
+    * Sets the number of I/O threads
+    */
+   S ioThreads(int ioThreads);
+
+   /**
     * Sets the number of worker threads
     */
    S workerThreads(int workerThreads);

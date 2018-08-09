@@ -30,7 +30,6 @@ public class MockServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    @Override
    public MockServerConfiguration create() {
-      return new MockServerConfiguration(defaultCacheName, name, host, port, idleTimeout, recvBufSize, sendBufSize,
-            ssl.create(), tcpNoDelay, tcpKeepAlive, workerThreads, ignoredCaches, startTransport, adminOperationsHandler);
+      return new MockServerConfiguration(attributes.protect(), ssl.create());
    }
 }

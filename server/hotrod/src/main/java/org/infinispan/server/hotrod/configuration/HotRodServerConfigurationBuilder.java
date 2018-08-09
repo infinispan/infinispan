@@ -10,6 +10,14 @@ import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuild
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.HOST;
+import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.PROXY_HOST;
+import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.PROXY_PORT;
+import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.TOPOLOGY_AWAIT_INITIAL_TRANSFER;
+import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.TOPOLOGY_LOCK_TIMEOUT;
+import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.TOPOLOGY_REPL_TIMEOUT;
+import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.TOPOLOGY_STATE_TRANSFER;
+
 /**
  * HotRodServerConfigurationBuilder.
  *
@@ -20,16 +28,9 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
       Builder<HotRodServerConfiguration>, HotRodServerChildConfigurationBuilder {
    private Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    private final AuthenticationConfigurationBuilder authentication = new AuthenticationConfigurationBuilder(this);
-   private String proxyHost;
-   private int proxyPort = -1;
-   private long topologyLockTimeout = 10000L;
-   private long topologyReplTimeout = 10000L;
-   private boolean topologyAwaitInitialTransfer = true;
-   private boolean topologyStateTransfer = true;
-
 
    public HotRodServerConfigurationBuilder() {
-      super(11222);
+      super(11222, HotRodServerConfiguration.attributeDefinitionSet());
    }
 
    @Override
@@ -47,7 +48,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
     */
    @Override
    public HotRodServerConfigurationBuilder proxyHost(String proxyHost) {
-      this.proxyHost = proxyHost;
+      attributes.attribute(PROXY_HOST).set(proxyHost);
       return this;
    }
 
@@ -56,7 +57,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
     */
    @Override
    public HotRodServerConfigurationBuilder proxyPort(int proxyPort) {
-      this.proxyPort = proxyPort;
+      attributes.attribute(PROXY_PORT).set(proxyPort);
       return this;
    }
 
@@ -66,7 +67,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
     */
    @Override
    public HotRodServerConfigurationBuilder topologyLockTimeout(long topologyLockTimeout) {
-      this.topologyLockTimeout = topologyLockTimeout;
+      attributes.attribute(TOPOLOGY_LOCK_TIMEOUT).set(topologyLockTimeout);
       return this;
    }
 
@@ -76,7 +77,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
     */
    @Override
    public HotRodServerConfigurationBuilder topologyReplTimeout(long topologyReplTimeout) {
-      this.topologyReplTimeout = topologyReplTimeout;
+      attributes.attribute(TOPOLOGY_REPL_TIMEOUT).set(topologyReplTimeout);
       return this;
    }
 
@@ -86,7 +87,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
     */
    @Override
    public HotRodServerConfigurationBuilder topologyAwaitInitialTransfer(boolean topologyAwaitInitialTransfer) {
-      this.topologyAwaitInitialTransfer = topologyAwaitInitialTransfer;
+      attributes.attribute(TOPOLOGY_AWAIT_INITIAL_TRANSFER).set(topologyAwaitInitialTransfer);
       return this;
    }
 
@@ -97,32 +98,26 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
     */
    @Override
    public HotRodServerConfigurationBuilder topologyStateTransfer(boolean topologyStateTransfer) {
-      this.topologyStateTransfer = topologyStateTransfer;
+      attributes.attribute(TOPOLOGY_STATE_TRANSFER).set(topologyStateTransfer);
       return this;
    }
 
    @Override
    public HotRodServerConfiguration create() {
-      return new HotRodServerConfiguration(defaultCacheName, proxyHost == null ? host : proxyHost, proxyPort < 0 ? port : proxyPort, topologyLockTimeout, topologyReplTimeout, topologyAwaitInitialTransfer, topologyStateTransfer, name, host, port, idleTimeout,
-            recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, tcpKeepAlive, workerThreads, authentication.create(), ignoredCaches, startTransport, adminOperationsHandler);
+      return new HotRodServerConfiguration(attributes.protect(), ssl.create(), authentication.create());
    }
 
    @Override
    public HotRodServerConfigurationBuilder read(HotRodServerConfiguration template) {
       super.read(template);
-      this.proxyHost = template.proxyHost();
-      this.proxyPort = template.proxyPort();
-      this.topologyLockTimeout = template.topologyLockTimeout();
-      this.topologyReplTimeout = template.topologyReplTimeout();
-      this.topologyAwaitInitialTransfer = template.topologyAwaitInitialTransfer();
-      this.topologyStateTransfer = template.topologyStateTransfer();
+      this.authentication.read(template.authentication());
       return this;
    }
 
    @Override
    public void validate() {
       super.validate();
-      if (proxyHost == null && host == null) {
+      if (attributes.attribute(PROXY_HOST).isNull() && attributes.attribute(HOST).isNull()) {
          throw log.missingHostAddress();
       }
       authentication.validate();

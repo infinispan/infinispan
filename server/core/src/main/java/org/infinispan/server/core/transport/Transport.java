@@ -56,8 +56,16 @@ public interface Transport {
    int getPort();
 
    @ManagedAttribute(
-         description = "Returns the number of worker threads.",
-         displayName = "Number of worker threads",
+         description = "Returns the number of I/O threads.",
+         displayName = "Number of I/O threads",
+         dataType = DataType.TRAIT,
+         displayType = DisplayType.SUMMARY
+   )
+   int getNumberIOThreads();
+
+   @ManagedAttribute(
+         description = "Returns the number of slave threads.",
+         displayName = "Number of slave threads",
          dataType = DataType.TRAIT,
          displayType = DisplayType.SUMMARY
    )

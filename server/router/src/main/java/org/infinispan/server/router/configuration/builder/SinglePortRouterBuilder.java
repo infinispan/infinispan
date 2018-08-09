@@ -4,6 +4,8 @@ import java.io.File;
 
 import javax.net.ssl.SSLContext;
 
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfigurationBuilder;
 import org.infinispan.server.router.configuration.HotRodRouterConfiguration;
 import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
@@ -48,7 +50,14 @@ public class SinglePortRouterBuilder extends AbstractRouterBuilder {
             else if (keystorePath != null) {
                 sslConfigurationBuilder.keyStoreFileName(keystorePath).keyStorePassword(keystorePassword).enable();
             }
-            return new SinglePortRouterConfiguration(name, ip, port, sendBufferSize, receiveBufferSize, sslConfigurationBuilder.create());
+            AttributeSet attributes = ProtocolServerConfiguration.attributeDefinitionSet();
+            attributes.attribute(ProtocolServerConfiguration.NAME).set(name);
+            attributes.attribute(ProtocolServerConfiguration.HOST).set(ip.getHostName());
+            attributes.attribute(ProtocolServerConfiguration.PORT).set(port);
+            attributes.attribute(ProtocolServerConfiguration.IDLE_TIMEOUT).set(100);
+            attributes.attribute(ProtocolServerConfiguration.RECV_BUF_SIZE).set(receiveBufferSize);
+            attributes.attribute(ProtocolServerConfiguration.SEND_BUF_SIZE).set(sendBufferSize);
+            return new SinglePortRouterConfiguration(attributes.protect(), sslConfigurationBuilder.create());
         }
         return null;
     }

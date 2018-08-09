@@ -79,6 +79,12 @@ public abstract class AbstractProtocolServerConfigurationChildBuilder<T extends 
    }
 
    @Override
+   public S ioThreads(int ioThreads) {
+      builder.ioThreads(ioThreads);
+      return self();
+   }
+
+   @Override
    public S workerThreads(int workerThreads) {
       builder.workerThreads(workerThreads);
       return self();

@@ -18,6 +18,7 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
+import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.endpoint.Constants;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
@@ -45,11 +46,19 @@ public class ProtocolServerConnectorResource extends CommonConnectorResource {
                  .setRestartAllServices()
                  .build();
 
+   static final SimpleAttributeDefinition IO_THREADS =
+         new SimpleAttributeDefinitionBuilder(ModelKeys.IO_THREADS, ModelType.INT, true)
+               .setAllowExpression(true)
+               .setXmlName(ModelKeys.IO_THREADS)
+               .setDefaultValue(new ModelNode().set(ProtocolServerConfiguration.IO_THREADS.getDefaultValue()))
+               .setRestartAllServices()
+               .build();
+
    static final SimpleAttributeDefinition WORKER_THREADS =
          new SimpleAttributeDefinitionBuilder(ModelKeys.WORKER_THREADS, ModelType.INT, true)
                  .setAllowExpression(true)
                  .setXmlName(ModelKeys.WORKER_THREADS)
-                 .setDefaultValue(new ModelNode().set(160))
+                 .setDefaultValue(new ModelNode().set(ProtocolServerConfiguration.WORKER_THREADS.getDefaultValue()))
                  .setRestartAllServices()
                  .build();
 
@@ -57,7 +66,7 @@ public class ProtocolServerConnectorResource extends CommonConnectorResource {
          new SimpleAttributeDefinitionBuilder(ModelKeys.IDLE_TIMEOUT, ModelType.INT, true)
                  .setAllowExpression(true)
                  .setXmlName(ModelKeys.IDLE_TIMEOUT)
-                 .setDefaultValue(new ModelNode().set(-1))
+                 .setDefaultValue(new ModelNode().set(ProtocolServerConfiguration.IDLE_TIMEOUT.getDefaultValue()))
                  .setRestartAllServices()
                  .build();
 
@@ -66,7 +75,7 @@ public class ProtocolServerConnectorResource extends CommonConnectorResource {
                  .setAllowExpression(true)
                  .setXmlName(ModelKeys.TCP_NODELAY)
                  .setRestartAllServices()
-                 .setDefaultValue(new ModelNode().set(true))
+                 .setDefaultValue(new ModelNode().set(ProtocolServerConfiguration.TCP_NODELAY.getDefaultValue()))
                  .build();
 
    static final SimpleAttributeDefinition TCP_KEEPALIVE =
@@ -74,7 +83,7 @@ public class ProtocolServerConnectorResource extends CommonConnectorResource {
                .setAllowExpression(true)
                .setXmlName(ModelKeys.TCP_KEEPALIVE)
                .setRestartAllServices()
-               .setDefaultValue(new ModelNode().set(false))
+               .setDefaultValue(new ModelNode().set(ProtocolServerConfiguration.TCP_KEEPALIVE.getDefaultValue()))
                .build();
 
    static final SimpleAttributeDefinition RECEIVE_BUFFER_SIZE =
@@ -82,7 +91,7 @@ public class ProtocolServerConnectorResource extends CommonConnectorResource {
                  .setAllowExpression(true)
                  .setXmlName(ModelKeys.RECEIVE_BUFFER_SIZE)
                  .setRestartAllServices()
-                 .setDefaultValue(new ModelNode().set(0))
+                 .setDefaultValue(new ModelNode().set(ProtocolServerConfiguration.RECV_BUF_SIZE.getDefaultValue()))
                  .build();
 
    static final SimpleAttributeDefinition SEND_BUFFER_SIZE =
@@ -90,11 +99,11 @@ public class ProtocolServerConnectorResource extends CommonConnectorResource {
                  .setAllowExpression(true)
                  .setXmlName(ModelKeys.SEND_BUFFER_SIZE)
                  .setRestartAllServices()
-                 .setDefaultValue(new ModelNode().set(0))
+                 .setDefaultValue(new ModelNode().set(ProtocolServerConfiguration.SEND_BUF_SIZE.getDefaultValue()))
                  .build();
 
    static final SimpleAttributeDefinition[] PROTOCOL_SERVICE_ATTRIBUTES = {
-         SOCKET_BINDING, IDLE_TIMEOUT, TCP_NODELAY, TCP_KEEPALIVE, RECEIVE_BUFFER_SIZE, SEND_BUFFER_SIZE, WORKER_THREADS
+         SOCKET_BINDING, IDLE_TIMEOUT, TCP_NODELAY, TCP_KEEPALIVE, RECEIVE_BUFFER_SIZE, SEND_BUFFER_SIZE, IO_THREADS, WORKER_THREADS
    };
 
 

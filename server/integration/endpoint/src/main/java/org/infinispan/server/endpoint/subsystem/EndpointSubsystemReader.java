@@ -214,6 +214,10 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
          ProtocolServerConnectorResource.TCP_KEEPALIVE.parseAndSetParameter(value, connector, reader);
          break;
       }
+      case IO_THREADS: {
+         ProtocolServerConnectorResource.IO_THREADS.parseAndSetParameter(value, connector, reader);
+         break;
+      }
       case WORKER_THREADS: {
          ProtocolServerConnectorResource.WORKER_THREADS.parseAndSetParameter(value, connector, reader);
          break;

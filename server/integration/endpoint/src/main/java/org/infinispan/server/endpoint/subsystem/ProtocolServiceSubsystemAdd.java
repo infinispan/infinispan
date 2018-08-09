@@ -44,6 +44,7 @@ public abstract class ProtocolServiceSubsystemAdd extends AbstractAddStepHandler
       if (config.hasDefined(ModelKeys.NAME)) {
          builder.name(config.get(ModelKeys.NAME).asString());
       }
+      builder.ioThreads(ProtocolServerConnectorResource.IO_THREADS.resolveModelAttribute(context, config).asInt());
       builder.workerThreads(ProtocolServerConnectorResource.WORKER_THREADS.resolveModelAttribute(context, config).asInt());
       builder.idleTimeout(ProtocolServerConnectorResource.IDLE_TIMEOUT.resolveModelAttribute(context, config).asInt());
       builder.tcpNoDelay(ProtocolServerConnectorResource.TCP_NODELAY.resolveModelAttribute(context, config).asBoolean());

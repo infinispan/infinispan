@@ -9,17 +9,21 @@ This guide walks you through the process of upgrading Infinispan.
 
 == Upgrading from 9.3 to 9.4
 
-=== WebSocket endpoint removal
+=== Client/Server changes
+
+==== WebSocket endpoint removal
 The WebSocket endpoint has been unmaintained for several years. It has been removed.
 
-=== Hot Rod client connection pool properties
-
+==== Hot Rod client connection pool properties
 Since the Hot Rod client was overhauled in 9.2, the way the connection pool configuration is handled has changed.
 Infinispan 9.4 introduces a new naming scheme for the connection pool properties which deprecates the old _commons-pool_
 names. For a complete reference of the available configuration options for the properties file please refer to
 link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html#package.description[remote client configuration] javadoc.
 
-=== Store Changes
+==== Server thread pools
+The threads that handle the child Netty event loops have been renamed from *-ServerWorker to *-ServerIO
+
+=== Persistence Changes
 
 ==== Shared and Passivation
 

@@ -76,7 +76,7 @@ public class NettyTransport implements Transport {
 
       // Need to initialize these in constructor since they require configuration
       masterGroup = buildEventLoop(1, new DefaultThreadFactory(threadNamePrefix + "-ServerMaster"));
-      workerGroup = buildEventLoop(0, new DefaultThreadFactory(threadNamePrefix + "-ServerWorker"));
+      ioGroup = buildEventLoop(configuration.ioThreads(), new DefaultThreadFactory(threadNamePrefix + "-ServerIO"));
 
       serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels", ImmediateEventExecutor.INSTANCE);
       acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted", ImmediateEventExecutor.INSTANCE);
@@ -96,7 +96,7 @@ public class NettyTransport implements Transport {
    final ChannelGroup acceptedChannels;
 
    private final EventLoopGroup masterGroup;
-   private final EventLoopGroup workerGroup;
+   private final EventLoopGroup ioGroup;
 
    private final NettyTransportConnectionStats connectionStats;
 
@@ -109,7 +109,7 @@ public class NettyTransport implements Transport {
          InternalLoggerFactory.setDefaultFactory(Log4J2LoggerFactory.INSTANCE);
 
       ServerBootstrap bootstrap = new ServerBootstrap();
-      bootstrap.group(masterGroup, workerGroup);
+      bootstrap.group(masterGroup, ioGroup);
       bootstrap.channel(getServerSocketChannel());
       bootstrap.childHandler(handler);
       bootstrap.childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
@@ -133,10 +133,10 @@ public class NettyTransport implements Transport {
    @Override
    public void stop() {
       Future<?> masterTerminationFuture = masterGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
-      Future<?> workerTerminationFuture = workerGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
+      Future<?> slaveTerminationFuture = ioGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
 
       masterTerminationFuture.awaitUninterruptibly();
-      workerTerminationFuture.awaitUninterruptibly();
+      slaveTerminationFuture.awaitUninterruptibly();
 
       // This is probably not necessary, all Netty resources should have been freed already
       ChannelGroupFuture serverChannelsTerminationFuture = serverChannels.close();
@@ -187,6 +187,11 @@ public class NettyTransport implements Transport {
    @Override
    public int getPort() {
       return nettyPort.orElse(address.getPort());
+   }
+
+   @Override
+   public int getNumberIOThreads() {
+      return configuration.ioThreads();
    }
 
    @Override

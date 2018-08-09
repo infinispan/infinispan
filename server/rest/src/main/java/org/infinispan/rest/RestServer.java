@@ -87,4 +87,9 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       this.cacheOperations = new CacheOperations(configuration, restCacheManager);
       this.searchOperations = new SearchOperations(configuration, restCacheManager);
    }
+
+   @Override
+   public int getWorkerThreads() {
+      return Integer.getInteger("infinispan.server.rest.workerThreads", configuration.workerThreads());
+   }
 }
