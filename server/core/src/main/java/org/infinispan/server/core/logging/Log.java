@@ -101,4 +101,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Class '%s' blocked by deserialization white list. Include the class name in the server cache manager white list to authorize.", id = 5035)
    CacheException errorDeserializing(String className);
+
+   @Message(value = "Illegal number of ioThreads: %d", id = 5036)
+   IllegalArgumentException illegalIOThreads(int ioThreads);
 }

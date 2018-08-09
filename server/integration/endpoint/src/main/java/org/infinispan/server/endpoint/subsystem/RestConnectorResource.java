@@ -19,7 +19,7 @@
 package org.infinispan.server.endpoint.subsystem;
 
 import org.infinispan.rest.configuration.ExtendedHeaders;
-import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
+import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
@@ -53,7 +53,7 @@ public class RestConnectorResource extends CommonConnectorResource {
                .setAllowExpression(true)
                .setXmlName(ModelKeys.CONTEXT_PATH)
                .setRestartAllServices()
-               .setDefaultValue(new ModelNode().set(RestServerConfigurationBuilder.DEFAULT_CONTEXT_PATH))
+               .setDefaultValue(new ModelNode().set(RestServerConfiguration.CONTEXT_PATH.getDefaultValue()))
                .build();
 
    static final SimpleAttributeDefinition EXTENDED_HEADERS =
@@ -61,7 +61,7 @@ public class RestConnectorResource extends CommonConnectorResource {
                  .setAllowExpression(true)
                  .setXmlName(ModelKeys.EXTENDED_HEADERS)
                  .setValidator(new EnumValidator<>(ExtendedHeaders.class, true, false))
-                 .setDefaultValue(new ModelNode().set(ExtendedHeaders.ON_DEMAND.name()))
+                 .setDefaultValue(new ModelNode().set(RestServerConfiguration.EXTENDED_HEADERS.getDefaultValue().name()))
                  .setRestartAllServices()
                  .build();
 
@@ -70,7 +70,7 @@ public class RestConnectorResource extends CommonConnectorResource {
                .setAllowExpression(true)
                .setXmlName(ModelKeys.MAX_CONTENT_LENGTH)
                .setRestartAllServices()
-               .setDefaultValue(new ModelNode().set(RestServerConfigurationBuilder.DEFAULT_MAX_CONTENT_LENGTH))
+               .setDefaultValue(new ModelNode().set(RestServerConfiguration.MAX_CONTENT_LENGTH.getDefaultValue()))
                .build();
 
    static final SimpleAttributeDefinition COMPRESSION_LEVEL =
@@ -78,7 +78,7 @@ public class RestConnectorResource extends CommonConnectorResource {
                .setAllowExpression(true)
                .setXmlName(ModelKeys.COMPRESSION_LEVEL)
                .setRestartAllServices()
-               .setDefaultValue(new ModelNode().set(RestServerConfigurationBuilder.DEFAULT_COMPRESS_LEVEL))
+               .setDefaultValue(new ModelNode().set(RestServerConfiguration.COMPRESSION_LEVEL.getDefaultValue()))
                .build();
 
    static final SimpleAttributeDefinition[] REST_ATTRIBUTES = {SOCKET_BINDING, CONTEXT_PATH, EXTENDED_HEADERS, MAX_CONTENT_LENGTH, COMPRESSION_LEVEL};

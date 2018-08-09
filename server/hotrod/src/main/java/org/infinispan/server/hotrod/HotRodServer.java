@@ -107,8 +107,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    private static final long MILLISECONDS_IN_30_DAYS = TimeUnit.DAYS.toMillis(30);
 
-   private static final String WORKER_THREADS_SYS_PROP = "infinispan.server.hotrod.workerThreads";
-
    private static final Flag[] LOCAL_NON_BLOCKING_GET = new Flag[]{Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_LOAD};
 
 
@@ -273,7 +271,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    protected ExecutorService getExecutor(String threadPrefix) {
       if (this.executor == null || this.executor.isShutdown()) {
          DefaultThreadFactory factory = new DefaultThreadFactory(threadPrefix + "-ServerHandler");
-         int workerThreads = Integer.getInteger(WORKER_THREADS_SYS_PROP, configuration.workerThreads());
+         int workerThreads = getWorkerThreads();
          this.executor = new ThreadPoolExecutor(
                workerThreads,
                workerThreads,
@@ -335,7 +333,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private void addSelfToTopologyView(EmbeddedCacheManager cacheManager) {
       addressCache = cacheManager.getCache(configuration.topologyCacheName());
       clusterAddress = cacheManager.getAddress();
-      address = new ServerAddress(configuration.proxyHost(), configuration.proxyPort());
+      address = new ServerAddress(configuration.publicHost(), configuration.publicPort());
       distributedExecutorService = new DefaultExecutorService(addressCache);
 
       viewChangeListener = new CrashedMemberDetectorListener(addressCache, this);
@@ -658,6 +656,11 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       } else {
          return duration;
       }
+   }
+
+   @Override
+   public int getWorkerThreads() {
+      return Integer.getInteger("infinispan.server.hotrod.workerThreads", configuration.workerThreads());
    }
 
    public static class CacheInfo {

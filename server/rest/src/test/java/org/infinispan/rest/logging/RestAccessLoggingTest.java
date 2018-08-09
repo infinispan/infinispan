@@ -35,7 +35,7 @@ public class RestAccessLoggingTest extends SingleCacheManagerTest {
       super.setup();
       logAppender = new StringLogAppender("org.infinispan.REST_ACCESS_LOG",
             Level.TRACE,
-            t -> t.getName().startsWith("REST-RestAccessLoggingTest-ServerWorker-"),
+            t -> t.getName().startsWith("REST-RestAccessLoggingTest-ServerIO-"),
             PatternLayout.newBuilder().withPattern(LOG_FORMAT).build());
       logAppender.install();
       restServer = new RestServerHelper(cacheManager);

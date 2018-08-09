@@ -33,6 +33,11 @@
                 <xs:documentation>The logical name to give to this connector. This attribute is required when there are more connectors of the same type defined.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="io-threads" type="xs:int" use="optional">
+            <xs:annotation>
+                <xs:documentation>Sets the number of I/O threads. Defaults to 2 * cpu cores</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
         <xs:attribute name="worker-threads" type="xs:int" use="optional">
             <xs:annotation>
                 <xs:documentation>Sets the number of worker threads. Defaults to 160</xs:documentation>

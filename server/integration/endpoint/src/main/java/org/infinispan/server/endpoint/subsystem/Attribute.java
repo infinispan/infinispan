@@ -42,6 +42,7 @@ public enum Attribute {
     @Deprecated
     CACHE_SUFFIX(ModelKeys.CACHE_SUFFIX),
     IGNORED_CACHES(ModelKeys.IGNORED_CACHES),
+    IO_THREADS(ModelKeys.IO_THREADS),
     EXTENDED_HEADERS(ModelKeys.EXTENDED_HEADERS),
     EXTERNAL_HOST(ModelKeys.EXTERNAL_HOST),
     EXTERNAL_PORT(ModelKeys.EXTERNAL_PORT),

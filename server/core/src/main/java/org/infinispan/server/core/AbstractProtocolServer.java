@@ -184,4 +184,6 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    public NettyTransport getTransport() {
       return transport;
    }
+
+   public abstract int getWorkerThreads();
 }

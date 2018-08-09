@@ -14,7 +14,7 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
       Builder<MemcachedServerConfiguration> {
 
    public MemcachedServerConfigurationBuilder() {
-      super(MemcachedServerConfiguration.DEFAULT_MEMCACHED_PORT);
+      super(MemcachedServerConfiguration.DEFAULT_MEMCACHED_PORT, MemcachedServerConfiguration.attributeDefinitionSet());
       this.defaultCacheName(MemcachedServerConfiguration.DEFAULT_MEMCACHED_CACHE);
    }
 
@@ -40,8 +40,7 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
 
    @Override
    public MemcachedServerConfiguration create() {
-      return new MemcachedServerConfiguration(defaultCacheName, name, host, port, idleTimeout, recvBufSize, sendBufSize,
-            ssl.create(), tcpNoDelay, tcpKeepAlive, workerThreads, ignoredCaches, startTransport, adminOperationsHandler);
+      return new MemcachedServerConfiguration(attributes.protect(), ssl.create());
    }
 
    public MemcachedServerConfiguration build(boolean validate) {

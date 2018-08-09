@@ -7,7 +7,6 @@ import static io.netty.handler.codec.http.HttpMethod.OPTIONS;
 import static io.netty.handler.codec.http.HttpMethod.POST;
 import static io.netty.handler.codec.http.HttpMethod.PUT;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
@@ -18,6 +17,12 @@ import org.infinispan.util.logging.LogFactory;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.cors.CorsConfig;
 import io.netty.handler.codec.http.cors.CorsConfigBuilder;
+
+import static org.infinispan.rest.configuration.RestServerConfiguration.COMPRESSION_LEVEL;
+import static org.infinispan.rest.configuration.RestServerConfiguration.CONTEXT_PATH;
+import static org.infinispan.rest.configuration.RestServerConfiguration.CORS_RULES;
+import static org.infinispan.rest.configuration.RestServerConfiguration.EXTENDED_HEADERS;
+import static org.infinispan.rest.configuration.RestServerConfiguration.MAX_CONTENT_LENGTH;
 
 /**
  * RestServerConfigurationBuilder.
@@ -33,37 +38,29 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
    public static final String DEFAULT_CONTEXT_PATH = "rest";
    public static final int DEFAULT_PORT = 8080;
    public static final String DEFAULT_NAME = "rest";
-   public static final int DEFAULT_MAX_CONTENT_LENGTH = 10 * 1024 * 1024;
-   public static final int DEFAULT_COMPRESS_LEVEL = 6;
-
-   private ExtendedHeaders extendedHeaders = ExtendedHeaders.ON_DEMAND;
-   private List<CorsConfig> corsRules = new ArrayList<>(3);
-   private String contextPath = DEFAULT_CONTEXT_PATH;
-   private int maxContentLength = DEFAULT_MAX_CONTENT_LENGTH;
-   private int compressionLevel = DEFAULT_COMPRESS_LEVEL;
 
    public RestServerConfigurationBuilder() {
-      super(DEFAULT_PORT);
+      super(DEFAULT_PORT, RestServerConfiguration.attributeDefinitionSet());
       name(DEFAULT_NAME);
    }
 
    public RestServerConfigurationBuilder extendedHeaders(ExtendedHeaders extendedHeaders) {
-      this.extendedHeaders = extendedHeaders;
+      attributes.attribute(EXTENDED_HEADERS).set(extendedHeaders);
       return this;
    }
 
    public RestServerConfigurationBuilder contextPath(String contextPath) {
-      this.contextPath = contextPath;
+      attributes.attribute(CONTEXT_PATH).set(contextPath);
       return this;
    }
 
    public RestServerConfigurationBuilder maxContentLength(int maxContentLength) {
-      this.maxContentLength = maxContentLength;
+      attributes.attribute(MAX_CONTENT_LENGTH).set(maxContentLength);
       return this;
    }
 
    public RestServerConfigurationBuilder compressionLevel(int compressLevel) {
-      this.compressionLevel = compressLevel;
+      attributes.attribute(COMPRESSION_LEVEL).set(compressLevel);
       return this;
    }
 
@@ -76,17 +73,18 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
             .allowedRequestMethods(GET, POST, PUT, DELETE, HEAD, OPTIONS)
             .allowedRequestHeaders(HttpHeaderNames.CONTENT_TYPE)
             .build();
-      corsRules.add(corsConfig);
+      attributes.attribute(CORS_RULES).get().add(corsConfig);
       return this;
    }
 
    public RestServerConfigurationBuilder addAll(List<CorsConfig> corsConfig) {
-      corsRules.addAll(corsConfig);
+      attributes.attribute(CORS_RULES).get().addAll(corsConfig);
       return this;
    }
 
    @Override
    public void validate() {
+      int compressionLevel = attributes.attribute(COMPRESSION_LEVEL).get();
       if (compressionLevel < 0 || compressionLevel > 9) {
          throw logger.illegalCompressionLevel(compressionLevel);
       }
@@ -94,18 +92,12 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    @Override
    public RestServerConfiguration create() {
-      return new RestServerConfiguration(defaultCacheName, name, extendedHeaders, host, port, ignoredCaches, ssl.create(),
-            startTransport, contextPath, adminOperationsHandler, maxContentLength, corsRules, compressionLevel);
+      return new RestServerConfiguration(attributes.protect(), ssl.create());
    }
 
    @Override
    public Builder<?> read(RestServerConfiguration template) {
-      this.extendedHeaders = template.extendedHeaders();
-      this.host = template.host();
-      this.port = template.port();
-      this.maxContentLength = template.maxContentLength();
-      this.corsRules = template.getCorsRules();
-      this.compressionLevel = template.getCompressionLevel();
+      super.read(template);
       return this;
    }
 
