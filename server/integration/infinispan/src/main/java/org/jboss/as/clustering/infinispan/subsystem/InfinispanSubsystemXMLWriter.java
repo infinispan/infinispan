@@ -473,15 +473,18 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             if ((memoryValues = memory.get(ModelKeys.BINARY_NAME)).isDefined()) {
                 writer.writeStartElement(Element.BINARY.getLocalName());
                 this.writeOptional(writer, Attribute.SIZE, memoryValues, ModelKeys.SIZE);
+                this.writeOptional(writer, Attribute.STRATEGY, memoryValues, ModelKeys.STRATEGY);
                 this.writeOptional(writer, Attribute.EVICTION, memoryValues, ModelKeys.EVICTION);
                 writer.writeEndElement();
             } else if ((memoryValues = memory.get(ModelKeys.OBJECT_NAME)).isDefined()) {
                 writer.writeStartElement(Element.OBJECT.getLocalName());
                 this.writeOptional(writer, Attribute.SIZE, memoryValues, ModelKeys.SIZE);
+                this.writeOptional(writer, Attribute.STRATEGY, memoryValues, ModelKeys.STRATEGY);
                 writer.writeEndElement();
             } else if ((memoryValues = memory.get(ModelKeys.OFF_HEAP_NAME)).isDefined()) {
                 writer.writeStartElement(Element.OFF_HEAP.getLocalName());
                 this.writeOptional(writer, Attribute.SIZE, memoryValues, ModelKeys.SIZE);
+                this.writeOptional(writer, Attribute.STRATEGY, memoryValues, ModelKeys.STRATEGY);
                 this.writeOptional(writer, Attribute.EVICTION, memoryValues, ModelKeys.EVICTION);
                 this.writeOptional(writer, Attribute.ADDRESS_COUNT, memoryValues, ModelKeys.ADDRESS_COUNT);
                 writer.writeEndElement();

@@ -57,7 +57,7 @@ public class MemoryBinaryConfigurationResource extends CacheConfigurationChildRe
 
     static final SimpleAttributeDefinition EVICTION =
           new SimpleAttributeDefinitionBuilder(ModelKeys.EVICTION, ModelType.STRING, true)
-                .setXmlName(Attribute.TYPE.getLocalName())
+                .setXmlName(Attribute.EVICTION.getLocalName())
                 .setAllowExpression(true)
                 .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                 .setValidator(new EnumValidator<>(EvictionType.class, true, false))

@@ -32,6 +32,7 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.interceptors.FooInterceptor;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
@@ -669,9 +670,17 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       c = cm.getCacheConfiguration("evictionCache");
       assertEquals(5000, c.memory().size());
       assertEquals(EvictionStrategy.REMOVE, c.memory().evictionStrategy());
+      assertEquals(EvictionType.COUNT, c.memory().evictionType());
+      assertEquals(StorageType.OBJECT, c.memory().storageType());
       assertEquals(60000, c.expiration().lifespan());
       assertEquals(1000, c.expiration().maxIdle());
       assertEquals(500, c.expiration().wakeUpInterval());
+
+      c = cm.getCacheConfiguration("evictionMemoryExceptionCache");
+      assertEquals(5000, c.memory().size());
+      assertEquals(EvictionStrategy.EXCEPTION, c.memory().evictionStrategy());
+      assertEquals(EvictionType.MEMORY, c.memory().evictionType());
+      assertEquals(StorageType.BINARY, c.memory().storageType());
 
       c = cm.getCacheConfiguration("withDeadlockDetection");
       assertFalse(c.deadlockDetection().enabled());

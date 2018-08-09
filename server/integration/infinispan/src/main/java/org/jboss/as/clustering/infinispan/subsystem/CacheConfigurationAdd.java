@@ -66,6 +66,7 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.DatabaseType;
@@ -470,16 +471,22 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                 builder.memory().storageType(StorageType.OBJECT);
                 final long size = MemoryObjectConfigurationResource.SIZE.resolveModelAttribute(context, node).asLong();
                 builder.memory().size(size);
+                final EvictionStrategy strategy = EvictionStrategy.valueOf(MemoryObjectConfigurationResource.STRATEGY.resolveModelAttribute(context, node).asString());
+                builder.memory().evictionStrategy(strategy);
             } else if ((node = memoryNode.get(ModelKeys.BINARY_NAME)).isDefined()) {
                 builder.memory().storageType(StorageType.BINARY);
                 final long size = MemoryBinaryConfigurationResource.SIZE.resolveModelAttribute(context, node).asLong();
                 builder.memory().size(size);
+                final EvictionStrategy strategy = EvictionStrategy.valueOf(MemoryObjectConfigurationResource.STRATEGY.resolveModelAttribute(context, node).asString());
+                builder.memory().evictionStrategy(strategy);
                 final EvictionType type = EvictionType.valueOf(MemoryBinaryConfigurationResource.EVICTION.resolveModelAttribute(context, node).asString());
                 builder.memory().evictionType(type);
             } else if ((node = memoryNode.get(ModelKeys.OFF_HEAP_NAME)).isDefined()) {
                 builder.memory().storageType(StorageType.OFF_HEAP);
                 final long size = MemoryOffHeapConfigurationResource.SIZE.resolveModelAttribute(context, node).asLong();
                 builder.memory().size(size);
+                final EvictionStrategy strategy = EvictionStrategy.valueOf(MemoryObjectConfigurationResource.STRATEGY.resolveModelAttribute(context, node).asString());
+                builder.memory().evictionStrategy(strategy);
                 final EvictionType type = EvictionType.valueOf(MemoryOffHeapConfigurationResource.EVICTION.resolveModelAttribute(context, node).asString());
                 builder.memory().evictionType(type);
                 final int addressCount = MemoryOffHeapConfigurationResource.ADDRESS_COUNT.resolveModelAttribute(context, node).asInt();
