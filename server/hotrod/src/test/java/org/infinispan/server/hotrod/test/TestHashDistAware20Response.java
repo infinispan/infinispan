@@ -15,4 +15,13 @@ public class TestHashDistAware20Response extends AbstractTestTopologyAwareRespon
       this.segments = segments;
       this.hashFunction = hashFunction;
    }
+
+   @Override
+   public String toString() {
+      return "TestHashDistAware20Response{" +
+             "hashFunction=" + hashFunction +
+             ", topologyId=" + topologyId +
+             ", members=" + members +
+             '}';
+   }
 }

@@ -636,7 +636,7 @@ class Encoder2x implements VersionedEncoder {
       // will have the topology id of the server - 1, so it won't prevent a regular topology update if/when
       // the topology cache is updated.
       int currentTopologyId = cacheTopology.getTopologyId();
-      List<Address> cacheMembers = cacheTopology.getMembers();
+      List<Address> cacheMembers = cacheTopology.getActualMembers();
       Map<Address, ServerAddress> serverEndpoints = new HashMap<>();
       addressCache.forEach(serverEndpoints::put);
 

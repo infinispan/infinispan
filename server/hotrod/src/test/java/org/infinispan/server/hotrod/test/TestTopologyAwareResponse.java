@@ -8,4 +8,12 @@ public class TestTopologyAwareResponse extends AbstractTestTopologyAwareResponse
    protected TestTopologyAwareResponse(int topologyId, Collection<ServerAddress> members) {
       super(topologyId, members);
    }
+
+   @Override
+   public String toString() {
+      return "TestTopologyAwareResponse{" +
+             "topologyId=" + topologyId +
+             ", members=" + members +
+             '}';
+   }
 }
