@@ -564,6 +564,8 @@
                                         <arg value="${project.build.testOutputDirectory}/server.csr"/>
                                         <arg value="-outfile"/>
                                         <arg value="${project.build.testOutputDirectory}/server.cer"/>
+                                        <arg value="-ext"/>
+                                        <arg value="san=dns:localhost"/>
                                     </args>
                                 </keytool>
                                 <keytool command="-importkeystore">
