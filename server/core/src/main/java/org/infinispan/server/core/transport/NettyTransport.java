@@ -133,10 +133,10 @@ public class NettyTransport implements Transport {
    @Override
    public void stop() {
       Future<?> masterTerminationFuture = masterGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
-      Future<?> slaveTerminationFuture = ioGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
+      Future<?> ioTerminationFuture = ioGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
 
       masterTerminationFuture.awaitUninterruptibly();
-      slaveTerminationFuture.awaitUninterruptibly();
+      ioTerminationFuture.awaitUninterruptibly();
 
       // This is probably not necessary, all Netty resources should have been freed already
       ChannelGroupFuture serverChannelsTerminationFuture = serverChannels.close();
