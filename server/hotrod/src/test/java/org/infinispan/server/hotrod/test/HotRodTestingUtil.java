@@ -17,7 +17,6 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -222,7 +221,7 @@ public class HotRodTestingUtil {
       return builder;
    }
 
-   public static Iterator<NetworkInterface> findNetworkInterfaces(boolean loopback) {
+   public static List<NetworkInterface> findNetworkInterfaces(boolean loopback) {
       try {
          List<NetworkInterface> matchingInterfaces = new ArrayList<>();
          Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
@@ -232,7 +231,7 @@ public class HotRodTestingUtil {
                matchingInterfaces.add(ni);
             }
          }
-         return matchingInterfaces.iterator();
+         return matchingInterfaces;
       } catch (SocketException e) {
          throw new CacheException(e);
       }

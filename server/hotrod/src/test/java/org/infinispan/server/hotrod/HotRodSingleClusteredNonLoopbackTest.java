@@ -15,7 +15,9 @@ import static org.testng.Assert.assertEquals;
 import java.lang.reflect.Method;
 import java.net.NetworkInterface;
 import java.util.EnumSet;
+import java.util.List;
 
+import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -49,7 +51,9 @@ public class HotRodSingleClusteredNonLoopbackTest extends MultipleCacheManagersT
    @Override
    public void createBeforeClass() throws Throwable {
       super.createBeforeClass();
-      NetworkInterface iface = findNetworkInterfaces(false).next();
+      List<NetworkInterface> nonLoopInterfaces = findNetworkInterfaces(false);
+      SkipTestNG.skipIf(nonLoopInterfaces.isEmpty(), "No non-loop network interface");
+      NetworkInterface iface = nonLoopInterfaces.iterator().next();
       String address = iface.getInetAddresses().nextElement().getHostAddress();
       hotRodServer = startHotRodServer(cacheManagers.get(0), address, serverPort(), 0, getDefaultHotRodConfiguration());
       hotRodClient = new HotRodClient(address, hotRodServer.getPort(), cacheName, 60, (byte) 20);
