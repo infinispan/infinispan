@@ -6,7 +6,7 @@ import static org.infinispan.profiling.testinternals.Generator.generateAddress;
 import static org.infinispan.profiling.testinternals.Generator.getRandomByteArray;
 import static org.infinispan.profiling.testinternals.Generator.getRandomString;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.Collection;
@@ -225,8 +225,6 @@ public class HashFunctionComparisonTest {
 
 class SuperFastHash implements Hash {
 
-   public static final Charset CHARSET_UTF8 = Charset.forName("UTF-8");
-
    @Override
    public int hash(int hashcode) {
       byte[] b = new byte[4];
@@ -242,7 +240,7 @@ class SuperFastHash implements Hash {
       if (o instanceof byte[])
          return hash((byte[]) o);
       else if (o instanceof String)
-         return hash(((String) o).getBytes(CHARSET_UTF8));
+         return hash(((String) o).getBytes(StandardCharsets.UTF_8));
       else
          return hash(o.hashCode());
    }

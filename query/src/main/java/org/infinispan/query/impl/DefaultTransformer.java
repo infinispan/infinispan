@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 import org.infinispan.commons.CacheException;
@@ -47,12 +47,7 @@ public class DefaultTransformer implements Transformer {
             oos.writeObject(customType);
             oos.close();
             byte[] base64encoded = baos.toByteArray();
-            try {
-               return new String(base64encoded, "UTF-8");
-            } catch (UnsupportedEncodingException ex) {
-               // highly unlikely in this part of the Universe
-               return new String(base64encoded);
-            }
+            return new String(base64encoded, StandardCharsets.UTF_8);
          } catch (IOException e) {
             log.error("Error while encoding object", e);
             throw new CacheException(e);

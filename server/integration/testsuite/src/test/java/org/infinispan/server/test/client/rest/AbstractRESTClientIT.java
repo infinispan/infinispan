@@ -19,6 +19,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import org.apache.http.HttpResponse;
@@ -430,7 +431,7 @@ public abstract class AbstractRESTClientIT {
    @Test
    public void testByteArrayStorage() throws Exception {
       final String KEY_Z = "z";
-      byte[] data = "data".getBytes("UTF-8");
+      byte[] data = "data".getBytes(StandardCharsets.UTF_8);
 
       ByteArrayOutputStream bout = new ByteArrayOutputStream();
       ObjectOutputStream oo = new ObjectOutputStream(bout);

@@ -1,6 +1,6 @@
 package org.infinispan.commons.dataconversion;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
@@ -14,19 +14,20 @@ public class UTF8Encoder implements Encoder {
 
    private static final Log log = LogFactory.getLog(UTF8Encoder.class);
 
-   private static final Charset CHARSET_UTF8 = Charset.forName("UTF-8");
-
    public static final UTF8Encoder INSTANCE = new UTF8Encoder();
 
    @Override
    public Object toStorage(Object content) {
-      if (content instanceof String) return String.class.cast(content).getBytes(CHARSET_UTF8);
+      if (content instanceof String) {
+         return String.class.cast(content).getBytes(StandardCharsets.UTF_8);
+      }
+
       throw log.unsupportedContent(content);
    }
 
    @Override
    public Object fromStorage(Object stored) {
-      return new String((byte[]) stored, CHARSET_UTF8);
+      return new String((byte[]) stored, StandardCharsets.UTF_8);
    }
 
    @Override
@@ -43,5 +44,4 @@ public class UTF8Encoder implements Encoder {
    public short id() {
       return EncoderIds.UTF8;
    }
-
 }

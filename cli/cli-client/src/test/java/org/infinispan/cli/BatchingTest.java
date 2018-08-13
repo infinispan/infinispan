@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 
 import org.infinispan.cli.shell.Shell;
 import org.infinispan.cli.shell.ShellImpl;
@@ -19,7 +20,7 @@ public class BatchingTest {
       InputStream in = System.in;
       PrintStream out = System.out;
       try {
-         bais = new ByteArrayInputStream("version;\n".getBytes("UTF-8"));
+         bais = new ByteArrayInputStream("version;\n".getBytes(StandardCharsets.UTF_8));
          baos = new ByteArrayOutputStream();
          System.setIn(bais);
          System.setOut(new PrintStream(baos));
