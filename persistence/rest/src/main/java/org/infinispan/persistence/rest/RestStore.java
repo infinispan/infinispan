@@ -3,6 +3,7 @@ package org.infinispan.persistence.rest;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -360,7 +361,7 @@ public class RestStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             Channel ch = bootstrap.connect(configuration.host(), configuration.port()).awaitUninterruptibly().channel().pipeline().addLast(
                   new HttpObjectAggregator(maxContentLength), handler).channel();
             ch.writeAndFlush(get).sync().channel().closeFuture().sync();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteBufInputStream((handler.getResponse()).content()), "UTF-8"));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteBufInputStream((handler.getResponse()).content()), StandardCharsets.UTF_8));
             // Response can't be null now
             return new KeyValuePair<>(handler.getResponse(), reader);
          } catch (Throwable t) {

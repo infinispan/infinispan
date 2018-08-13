@@ -2,7 +2,6 @@ package org.infinispan.cli.interpreter.codec;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.infinispan.cli.interpreter.Interpreter;
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.commons.configuration.ClassWhiteList;
 import org.infinispan.util.logging.LogFactory;
@@ -16,7 +15,7 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices(org.infinispan.cli.interpreter.codec.Codec.class)
 public class MemcachedCodec extends AbstractCodec {
-   private static final Log log = LogFactory.getLog(Interpreter.class, Log.class);
+   private static final Log log = LogFactory.getLog(MemcachedCodec.class, Log.class);
 
    public MemcachedCodec() {
       try {
@@ -72,7 +71,5 @@ public class MemcachedCodec extends AbstractCodec {
       } else {
          return null;
       }
-
    }
-
 }

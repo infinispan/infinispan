@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.stress;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.net.SocketAddress;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -42,7 +44,7 @@ public class ClientConsistentHashPerfTest extends MultiHotRodServersTest {
       byte[][] keys = new byte[NUM_KEYS][];
 
       for (int i = 0; i < NUM_KEYS; i++) {
-         keys[i] = String.valueOf(i).getBytes("UTF-8");
+         keys[i] = String.valueOf(i).getBytes(UTF_8);
       }
 
       SocketAddress aServer = null;

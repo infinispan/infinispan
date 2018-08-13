@@ -1,7 +1,7 @@
 package org.infinispan.commons.hash;
 
 import java.io.ObjectInput;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.Ids;
@@ -35,8 +35,6 @@ public class MurmurHash3Old implements Hash {
 
    private MurmurHash3Old() {
    }
-
-   private static final Charset UTF8 = Charset.forName("UTF-8");
 
    static class State {
       long h1;
@@ -391,7 +389,7 @@ public class MurmurHash3Old implements Hash {
       else if (o instanceof long[])
          return hash((long[]) o);
       else if (o instanceof String)
-         return hash(((String) o).getBytes(UTF8));
+         return hash(((String) o).getBytes(StandardCharsets.UTF_8));
       else
          return hash(o.hashCode());
    }
@@ -415,7 +413,7 @@ public class MurmurHash3Old implements Hash {
       @Override
       @SuppressWarnings("unchecked")
       public Set<Class<? extends MurmurHash3Old>> getTypeClasses() {
-         return Util.<Class<? extends MurmurHash3Old>>asSet(MurmurHash3Old.class);
+         return Util.asSet(MurmurHash3Old.class);
       }
 
       @Override

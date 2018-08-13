@@ -177,7 +177,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
    public void testIntegerKeysAndByteArrayValue() throws Exception {
       String integerKeyType = "application/x-java-object; type=java.lang.Integer";
       byte[] value = {12};
-      byte[] otherValue = "random".getBytes("UTF-8");
+      byte[] otherValue = "random".getBytes(UTF_8);
 
       // Write <Integer, byte[]> via Hot Rod (the HR client is configured with the default marshaller)
       defaultMarshalledRemoteCache.put(10, value);
@@ -360,7 +360,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
    private String asString(Object content) throws Exception {
       if (content instanceof byte[]) {
-         return new String((byte[]) content, "UTF-8");
+         return new String((byte[]) content, UTF_8);
       }
       return content.toString();
    }
