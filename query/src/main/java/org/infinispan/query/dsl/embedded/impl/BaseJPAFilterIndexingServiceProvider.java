@@ -185,7 +185,7 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
          if (invocations == null) {
             return null;
          }
-         DelegatingCacheEntryListenerInvocation<K, V>[] invocationsArray = invocations.toArray(new DelegatingCacheEntryListenerInvocation[invocations.size()]);
+         DelegatingCacheEntryListenerInvocation<K, V>[] invocationsArray = invocations.toArray(new DelegatingCacheEntryListenerInvocation[0]);
          for (DelegatingCacheEntryListenerInvocation di : invocationsArray) {
             ((DelegatingCacheEntryListenerInvocationImpl) di).callback = this;
          }

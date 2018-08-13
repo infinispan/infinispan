@@ -241,7 +241,7 @@ public class LifecycleManager implements ModuleLifecycle {
             String dataCacheName = getDataCacheName(indexingProperties);
             if (cacheName.equals(dataCacheName) && (cacheName.equals(metadataCacheName) || cacheName.equals(lockingCacheName))) {
                // Infinispan Directory causes runtime circular dependencies so we need to postpone creation of indexes until all components are initialised
-               Class<?>[] indexedEntities = indexingConfiguration.indexedEntities().toArray(new Class<?>[indexingConfiguration.indexedEntities().size()]);
+               Class<?>[] indexedEntities = indexingConfiguration.indexedEntities().toArray(new Class<?>[0]);
                searchFactory.addClasses(indexedEntities);
                checkIndexableClasses(searchFactory, indexingConfiguration.indexedEntities());
             }

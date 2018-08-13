@@ -581,7 +581,7 @@ public class QueryEngine<TypeMetadata> {
                }
             }
          }
-         sortFields = sortFieldMap.values().toArray(new SortField[sortFieldMap.size()]);
+         sortFields = sortFieldMap.values().toArray(new SortField[0]);
       }
 
       //todo [anistor] do not allow hybrid queries with fulltext. exception, allow a fully indexed query followed by in-memory aggregation. the aggregated or 'having' field should not be analyzed
@@ -629,7 +629,7 @@ public class QueryEngine<TypeMetadata> {
                         }
                         return outRow;
                      };
-                     PropertyPath[] deduplicatedProjection = projectionsMap.keySet().toArray(new PropertyPath[projectionsMap.size()]);
+                     PropertyPath[] deduplicatedProjection = projectionsMap.keySet().toArray(new PropertyPath[0]);
                      IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, deduplicatedProjection, projectedTypes, deduplicatedProjectedNullMarkers, sortFields);
                      return new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, parsingResult.getProjections(), rowProcessor, startOffset, maxResults, queryMode);
                   } else {

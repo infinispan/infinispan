@@ -193,7 +193,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
          }
       }
       Collections.sort(fileNames);
-      return fileNames.toArray(new String[fileNames.size()]);
+      return fileNames.toArray(new String[0]);
    }
 
    @ManagedOperation(description = "Get the contents of a protobuf definition file", displayName = "Get Protofile")

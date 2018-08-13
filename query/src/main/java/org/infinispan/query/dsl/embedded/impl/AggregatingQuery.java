@@ -40,7 +40,7 @@ final class AggregatingQuery extends HybridQuery {
          throw new IllegalArgumentException("Aggregating query must use projections");
       }
       this.noOfGroupingColumns = noOfGroupingColumns;
-      this.accumulators = accumulators != null ? accumulators.toArray(new FieldAccumulator[accumulators.size()]) : null;
+      this.accumulators = accumulators != null ? accumulators.toArray(new FieldAccumulator[0]) : null;
       this.twoPhaseAcc = twoPhaseAcc;
    }
 
