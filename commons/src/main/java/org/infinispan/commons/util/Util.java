@@ -20,6 +20,7 @@ import java.lang.reflect.Modifier;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileLock;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.text.NumberFormat;
@@ -424,7 +425,7 @@ public final class Util {
      */
     public static String read(InputStream is) throws IOException {
        try {
-          final Reader reader = new InputStreamReader(is, "UTF-8");
+          final Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
           StringWriter writer = new StringWriter();
           char[] buf = new char[1024];
           int len;

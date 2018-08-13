@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.protocol;
 
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -178,7 +179,7 @@ public interface HotRodConstants {
     */
    @Deprecated
    byte CLIENT_INTELLIGENCE_HASH_DISTRIBUTION_AWARE = 0x03;
-   Charset HOTROD_STRING_CHARSET = Charset.forName("UTF-8");
+   Charset HOTROD_STRING_CHARSET = StandardCharsets.UTF_8;
 
    byte[] DEFAULT_CACHE_NAME_BYTES = new byte[]{};
 

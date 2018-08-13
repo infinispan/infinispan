@@ -1,5 +1,7 @@
 package org.infinispan.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -19,7 +21,7 @@ public class BatchingTest {
       InputStream in = System.in;
       PrintStream out = System.out;
       try {
-         bais = new ByteArrayInputStream("version;\n".getBytes("UTF-8"));
+         bais = new ByteArrayInputStream("version;\n".getBytes(UTF_8));
          baos = new ByteArrayOutputStream();
          System.setIn(bais);
          System.setOut(new PrintStream(baos));
