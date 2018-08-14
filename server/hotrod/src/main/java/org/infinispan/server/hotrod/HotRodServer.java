@@ -1,5 +1,6 @@
 package org.infinispan.server.hotrod;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
 import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterManager;
 
@@ -549,13 +550,14 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 
    private String scopedCacheKey(String cacheName, HotRodHeader header) {
-      String keyType = MATCH_ALL.getTypeSubtype();
-      String valueType = MATCH_ALL.getTypeSubtype();
-      if (header != null) {
-         keyType = header.getKeyMediaType().getTypeSubtype();
-         valueType = header.getValueMediaType().getTypeSubtype();
-      }
-      return cacheName + "|" + keyType + "|" + valueType;
+      String keyTypeAsString = header == null ? MATCH_ALL.getTypeSubtype() : asString(header.getKeyMediaType());
+      String valueTypeAsString = header == null ? MATCH_ALL.getTypeSubtype() : asString(header.getValueMediaType());
+      return cacheName + "|" + keyTypeAsString + "|" + valueTypeAsString;
+   }
+
+   private String asString(MediaType mediaType) {
+      boolean isDetermined = mediaType != null && !MATCH_ALL.equals(mediaType) && !APPLICATION_UNKNOWN.equals(mediaType);
+      return isDetermined ? mediaType.getTypeSubtype() : MATCH_ALL.getTypeSubtype();
    }
 
    @Override
