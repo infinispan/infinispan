@@ -33,6 +33,14 @@ public class ClusterConfigurationBuilder extends AbstractConfigurationChildBuild
       return this;
    }
 
+   public ClusterConfigurationBuilder addClusterNodes(String serverList) {
+      ConfigurationBuilder.parseServers(serverList, (host, port) -> {
+         ServerConfigurationBuilder serverBuilder = new ServerConfigurationBuilder(builder);
+         servers.add(serverBuilder.host(host).port(port));
+      });
+      return this;
+   }
+
    @Override
    public void validate() {
       if (clusterName == null || clusterName.isEmpty()) {
