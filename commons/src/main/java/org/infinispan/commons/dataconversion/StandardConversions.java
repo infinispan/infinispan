@@ -160,8 +160,13 @@ public final class StandardConversions {
 
       Object decoded = decodeObjectContent(source, sourceMediaType);
       if (decoded instanceof byte[]) return (byte[]) decoded;
-      if (decoded instanceof String) return ((String) decoded).getBytes(StandardCharsets.UTF_8);
+      if (decoded instanceof String && isJavaString(sourceMediaType))
+         return ((String) decoded).getBytes(StandardCharsets.UTF_8);
       return marshaller.objectToByteBuffer(source);
+   }
+
+   private static boolean isJavaString(MediaType mediaType) {
+      return mediaType.match(MediaType.APPLICATION_OBJECT) && mediaType.getParameter("type").orElse("").equals(String.class.getName());
    }
 
    /**

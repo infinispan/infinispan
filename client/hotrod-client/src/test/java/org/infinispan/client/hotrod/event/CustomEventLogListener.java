@@ -138,13 +138,13 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
       expiredCustomEvents.add(e.getEventData());
    }
 
-   public static final class CustomEvent implements Serializable {
-      final Integer key;
+   public static final class CustomEvent<K> implements Serializable {
+      final K key;
       final String value;
       final long timestamp;
       final int counter;
 
-      public CustomEvent(Integer key, String value, int counter) {
+      public CustomEvent(K key, String value, int counter) {
          this.key = key;
          this.value = value;
          this.timestamp = System.nanoTime();
@@ -239,15 +239,15 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
    }
 
    @NamedFactory(name = "static-converter-factory")
-   public static class StaticConverterFactory implements CacheEventConverterFactory {
+   public static class StaticConverterFactory<K> implements CacheEventConverterFactory {
       @Override
-      public CacheEventConverter<Integer, String, CustomEvent> getConverter(Object[] params) {
-         return new StaticConverter();
+      public CacheEventConverter<K, String, CustomEvent> getConverter(Object[] params) {
+         return new StaticConverter<>();
       }
 
-      static class StaticConverter implements CacheEventConverter<Integer, String, CustomEvent>, Serializable, ExternalPojo {
+      static class StaticConverter<K> implements CacheEventConverter<K, String, CustomEvent>, Serializable, ExternalPojo {
          @Override
-         public CustomEvent convert(Integer key, String previousValue, Metadata previousMetadata, String value,
+         public CustomEvent convert(K key, String previousValue, Metadata previousMetadata, String value,
                                     Metadata metadata, EventType eventType) {
             return new CustomEvent(key, value, 0);
          }
@@ -255,13 +255,13 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
    }
 
    @NamedFactory(name = "dynamic-converter-factory")
-   public static class DynamicConverterFactory implements CacheEventConverterFactory {
+   public static class DynamicConverterFactory<K> implements CacheEventConverterFactory {
       @Override
-      public CacheEventConverter<Integer, String, CustomEvent> getConverter(final Object[] params) {
+      public CacheEventConverter<K, String, CustomEvent> getConverter(final Object[] params) {
          return new DynamicConverter(params);
       }
 
-      static class DynamicConverter implements CacheEventConverter<Integer, String, CustomEvent>, Serializable {
+      static class DynamicConverter<K> implements CacheEventConverter<K, String, CustomEvent>, Serializable {
          private final Object[] params;
 
          public DynamicConverter(Object[] params) {
@@ -269,7 +269,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
          }
 
          @Override
-         public CustomEvent convert(Integer key, String previousValue, Metadata previousMetadata, String value,
+         public CustomEvent convert(K key, String previousValue, Metadata previousMetadata, String value,
                                     Metadata metadata, EventType eventType) {
             if (params[0].equals(key))
                return new CustomEvent(key, null, 0);
