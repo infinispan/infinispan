@@ -1,10 +1,13 @@
 package org.infinispan.client.hotrod.configuration;
 
+import java.util.Properties;
 import java.util.regex.Pattern;
 
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.util.TypedProperties;
 
 public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBuilder
       implements Builder<NearCacheConfiguration> {
@@ -80,5 +83,20 @@ public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBui
       maxEntries = template.maxEntries();
       cacheNamePattern = template.cacheNamePattern();
       return this;
+   }
+
+   @Override
+   public ConfigurationBuilder withProperties(Properties properties) {
+      TypedProperties typed = TypedProperties.toTypedProperties(properties);
+      if (typed.containsKey(ConfigurationProperties.NEAR_CACHE_MAX_ENTRIES)) {
+         this.maxEntries(typed.getIntProperty(ConfigurationProperties.NEAR_CACHE_MAX_ENTRIES, -1));
+      }
+      if (typed.containsKey(ConfigurationProperties.NEAR_CACHE_MODE)) {
+         this.mode(NearCacheMode.valueOf(typed.getProperty(ConfigurationProperties.NEAR_CACHE_MODE)));
+      }
+      if (typed.containsKey(ConfigurationProperties.NEAR_CACHE_NAME_PATTERN)) {
+         this.cacheNamePattern(typed.getProperty(ConfigurationProperties.NEAR_CACHE_NAME_PATTERN));
+      }
+      return builder;
    }
 }

@@ -91,6 +91,10 @@ public class ConfigurationProperties {
    public static final String CONNECTION_POOL_MAX_PENDING_REQUESTS = ICH + "connection_pool.max_pending_requests";
    public static final String CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME = ICH + "connection_pool.min_evictable_idle_time";
    public static final String CONNECTION_POOL_EXHAUSTED_ACTION = ICH + "connection_pool.exhausted_action";
+   // XSite properties
+   public static final String CLUSTER_PROPERTIES_PREFIX = ICH + "cluster";
+   public static final Pattern CLUSTER_PROPERTIES_PREFIX_REGEX =
+         Pattern.compile('^' + ConfigurationProperties.CLUSTER_PROPERTIES_PREFIX + '.');
 
    // defaults
    public static final int DEFAULT_KEY_SIZE = 64;

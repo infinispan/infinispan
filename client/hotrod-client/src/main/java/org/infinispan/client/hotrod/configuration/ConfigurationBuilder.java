@@ -6,8 +6,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,6 +29,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 
@@ -54,7 +57,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private final ConnectionPoolConfigurationBuilder connectionPool;
    private int connectionTimeout = ConfigurationProperties.DEFAULT_CONNECT_TIMEOUT;
    @SuppressWarnings("unchecked")
-   private final Class<? extends ConsistentHash> consistentHashImpl[] = new Class[] {
+   private final Class<? extends ConsistentHash> consistentHashImpl[] = new Class[]{
          null, ConsistentHashV2.class, SegmentConsistentHash.class
    };
    private boolean forceReturnValues;
@@ -101,6 +104,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
    @Override
    public ConfigurationBuilder addServers(String servers) {
+      parseServers(servers, (host, port) -> addServer().host(host).port(port));
+      return this;
+   }
+
+   public static final void parseServers(String servers, BiConsumer<String, Integer> c) {
       for (String server : servers.split(";")) {
          Matcher matcher = ADDRESS_PATTERN.matcher(server.trim());
          if (matcher.matches()) {
@@ -111,13 +119,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
             int port = portString == null
                   ? ConfigurationProperties.DEFAULT_HOTROD_PORT
                   : Integer.parseInt(portString);
-            this.addServer().host(host).port(port);
+            c.accept(host, port);
          } else {
             throw log.parseErrorServerAddress(server);
          }
 
       }
-      return this;
    }
 
    @Override
@@ -367,16 +374,18 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
       this.batchSize(typed.getIntProperty(ConfigurationProperties.BATCH_SIZE, batchSize, true));
       transaction.withTransactionProperties(properties);
+      nearCache.withProperties(properties);
 
-      if (typed.containsKey(ConfigurationProperties.NEAR_CACHE_MAX_ENTRIES)) {
-         this.nearCache().maxEntries(typed.getIntProperty(ConfigurationProperties.NEAR_CACHE_MAX_ENTRIES, -1));
-      }
-      if (typed.containsKey(ConfigurationProperties.NEAR_CACHE_MODE)) {
-         this.nearCache().mode(NearCacheMode.valueOf(typed.getProperty(ConfigurationProperties.NEAR_CACHE_MODE)));
-      }
-      if (typed.containsKey(ConfigurationProperties.NEAR_CACHE_NAME_PATTERN)) {
-         this.nearCache().cacheNamePattern(typed.getProperty(ConfigurationProperties.NEAR_CACHE_NAME_PATTERN));
-      }
+      Map<String, String> xsiteProperties = typed.entrySet().stream()
+            .filter(e -> ((String) e.getKey()).startsWith(ConfigurationProperties.CLUSTER_PROPERTIES_PREFIX))
+            .collect(Collectors.toMap(
+                  e -> ConfigurationProperties.CLUSTER_PROPERTIES_PREFIX_REGEX
+                        .matcher((String) e.getKey()).replaceFirst(""),
+                  e -> StringPropertyReplacer.replaceProperties((String) e.getValue())));
+      xsiteProperties.entrySet().forEach(entry -> {
+         ClusterConfigurationBuilder cluster = this.addCluster(entry.getKey());
+         parseServers(entry.getValue(), (host, port) -> cluster.addClusterNode(host, port));
+      });
       return this;
    }
 
@@ -411,7 +420,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       }
 
       List<ClusterConfiguration> serverClusterConfigs = clusters.stream()
-         .map(ClusterConfigurationBuilder::create).collect(Collectors.toList());
+            .map(ClusterConfigurationBuilder::create).collect(Collectors.toList());
       if (marshaller == null && marshallerClass == null) {
          marshallerClass = GenericJBossMarshaller.class;
       }
