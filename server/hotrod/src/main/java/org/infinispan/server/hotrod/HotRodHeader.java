@@ -22,11 +22,11 @@ public class HotRodHeader {
    }
 
    public MediaType getKeyMediaType() {
-      return keyType == null ? MediaType.MATCH_ALL : keyType;
+      return keyType == null ? MediaType.APPLICATION_UNKNOWN : keyType;
    }
 
    public MediaType getValueMediaType() {
-      return valueType == null ? MediaType.MATCH_ALL : valueType;
+      return valueType == null ? MediaType.APPLICATION_UNKNOWN : valueType;
    }
 
    public byte getVersion() {
