@@ -50,9 +50,13 @@ public final class ScriptConversions {
    public Object convertToRequestType(Object obj, MediaType objType, MediaType requestType) {
       if (obj == null) return null;
       if (requestType.equals(MediaType.MATCH_ALL)) return obj;
-      OutputFormatter outputFormatter = formatterByMediaType.get(requestType.getTypeSubtype());
-      if (obj instanceof Collection && outputFormatter != null) {
-         return outputFormatter.formatCollection((Collection<?>) obj, objType, requestType);
+      // Older HR clients do not send request type and assume the script metadata type is the output type
+      MediaType outputFormat = requestType.match(MediaType.APPLICATION_UNKNOWN) ? objType : requestType;
+      OutputFormatter outputFormatter = formatterByMediaType.get(outputFormat.getTypeSubtype());
+      if (obj instanceof Collection) {
+         if (outputFormatter != null) {
+            return outputFormatter.formatCollection((Collection<?>) obj, objType, requestType);
+         }
       }
       Transcoder transcoder = encoderRegistry.getTranscoder(objType, requestType);
       return transcoder.transcode(obj, objType, requestType);
