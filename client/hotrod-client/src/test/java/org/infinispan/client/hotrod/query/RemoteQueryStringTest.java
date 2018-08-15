@@ -55,7 +55,7 @@ public class RemoteQueryStringTest extends QueryStringTest {
 
    private static final String CUSTOM_ANALYZER_PROTO_SCHEMA = "package sample_bank_account;\n" +
          "/* @Indexed \n" +
-         "   @Analyzer(definition = \"standard\") */" +
+         "   @Analyzer(definition = \"standard-with-stop\") */" +
          "message AnalyzerTestEntity {\n" +
          "\t/* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"stemmer\")) */\n" +
          "\toptional string f1 = 1;\n" +

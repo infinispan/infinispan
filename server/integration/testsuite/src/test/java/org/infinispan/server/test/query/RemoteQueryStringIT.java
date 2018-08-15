@@ -8,14 +8,6 @@ import java.io.File;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.lucene.analysis.core.LowerCaseFilterFactory;
-import org.apache.lucene.analysis.core.StopFilterFactory;
-import org.apache.lucene.analysis.ngram.NGramFilterFactory;
-import org.apache.lucene.analysis.snowball.SnowballPorterFilterFactory;
-import org.apache.lucene.analysis.standard.StandardFilterFactory;
-import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
-import org.hibernate.search.cfg.SearchMapping;
-import org.infinispan.Cache;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
@@ -67,11 +59,10 @@ public class RemoteQueryStringIT {
    @BeforeClass
    public static void before() {
       JavaArchive programmaticSearchMappingProviderArchive = ShrinkWrap.create(JavaArchive.class)
-            .addClass(TestAnalyzerProvider.class)
             .addClass(TestSearchMappingFactory.class)
             .addClass(TestSearchMappingFactory.MySearchableEntity.class)
             .add(new StringAsset("Dependencies: org.infinispan.query, org.hibernate.search.engine"), "META-INF/MANIFEST.MF")
-            .addAsServiceProvider(ProgrammaticSearchMappingProvider.class, TestAnalyzerProvider.class);
+            .addAsServiceProvider(ProgrammaticSearchMappingProvider.class);
 
       deployment = new File(System.getProperty("server1.dist"), "/standalone/deployments/" + TEST_PROGRAMMATIC_SEARCH_MAPPING_PROVIDER_JAR);
       programmaticSearchMappingProviderArchive.as(ZipExporter.class).exportTo(deployment, true);
@@ -143,32 +134,4 @@ public class RemoteQueryStringIT {
       assertEquals("card was not present", tx.getNotes());
    }
 
-   /**
-    * This is a service provider present in META-INF of test-ProgrammaticSearchMappingProvider.jar. This deployment is
-    * also listed in the 'modules' element of the cache container, so the provider can be loaded.
-    */
-   public static final class TestAnalyzerProvider implements ProgrammaticSearchMappingProvider {
-
-      @Override
-      public void defineMappings(Cache cache, SearchMapping searchMapping) {
-         searchMapping
-               .analyzerDef("standard", StandardTokenizerFactory.class)
-                  .filter(StandardFilterFactory.class)
-                  .filter(LowerCaseFilterFactory.class)
-                  .filter(StopFilterFactory.class)
-               .analyzerDef("stemmer", StandardTokenizerFactory.class)
-                  .filter(StandardFilterFactory.class)
-                  .filter(LowerCaseFilterFactory.class)
-                  .filter(StopFilterFactory.class)
-                  .filter(SnowballPorterFilterFactory.class)
-                     .param("language", "English")
-               .analyzerDef("ngram", StandardTokenizerFactory.class)
-                  .filter(StandardFilterFactory.class)
-                  .filter(LowerCaseFilterFactory.class)
-                  .filter(StopFilterFactory.class)
-                  .filter(NGramFilterFactory.class)
-                     .param("minGramSize", "3")
-                     .param("maxGramSize", "3");
-         }
-   }
 }
