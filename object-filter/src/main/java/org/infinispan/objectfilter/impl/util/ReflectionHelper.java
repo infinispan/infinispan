@@ -302,7 +302,6 @@ public final class ReflectionHelper {
    }
 
    private static PropertyAccessor getFieldAccessor(Field f) {
-      f.setAccessible(true);
       Class<?> fieldClass = f.getType();
       if (fieldClass.isArray()) {
          return new ArrayFieldPropertyAccessor(f);
