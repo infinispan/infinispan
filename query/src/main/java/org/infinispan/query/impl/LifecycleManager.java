@@ -6,6 +6,7 @@ import static org.infinispan.query.impl.IndexPropertyInspector.getMetadataCacheN
 import static org.infinispan.query.impl.IndexPropertyInspector.hasInfinispanDirectory;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Properties;
@@ -321,7 +322,8 @@ public class LifecycleManager implements ModuleLifecycle {
       //defend against multiple initialization:
       if (searchFactory == null) {
          ClassLoader aggregatedClassLoader = makeAggregatedClassLoader(cr.getGlobalComponentRegistry().getGlobalConfiguration().classLoader());
-         Collection<ProgrammaticSearchMappingProvider> programmaticSearchMappingProviders = ServiceFinder.load(ProgrammaticSearchMappingProvider.class, aggregatedClassLoader);
+         Collection<ProgrammaticSearchMappingProvider> programmaticSearchMappingProviders = new HashSet<>(ServiceFinder.load(ProgrammaticSearchMappingProvider.class, aggregatedClassLoader));
+         programmaticSearchMappingProviders.add(new DefaultSearchMappingProvider());
          Collection<LuceneAnalysisDefinitionProvider> analyzerDefProviders = ServiceFinder.load(LuceneAnalysisDefinitionProvider.class, aggregatedClassLoader);
          // Set up the search factory for Hibernate Search first.
          SearchConfiguration config = new SearchableCacheConfiguration(indexingConfiguration.indexedEntities(),
