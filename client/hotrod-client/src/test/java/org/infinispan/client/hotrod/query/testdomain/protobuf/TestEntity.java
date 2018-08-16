@@ -27,9 +27,13 @@ public class TestEntity {
 
       @Override
       public TestEntity readFrom(ProtoStreamReader reader) throws IOException {
-         return new TestEntity(reader.readString("name1"), reader.readString("name2"),
-               reader.readString("name3"), reader.readString("name4"),
-               reader.readString("name5"), reader.readString("name6"));
+         String name1 = reader.readString("name1");
+         String name2 = reader.readString("name2");
+         String name3 = reader.readString("name3");
+         String name4 = reader.readString("name4");
+         String name5 = reader.readString("name5");
+         String name6 = reader.readString("name6");
+         return new TestEntity(name1, name2, name3, name4, name5, name6);
       }
 
       @Override
@@ -43,7 +47,7 @@ public class TestEntity {
       }
 
       @Override
-      public Class<? extends TestEntity> getJavaClass() {
+      public Class<TestEntity> getJavaClass() {
          return TestEntity.class;
       }
 
