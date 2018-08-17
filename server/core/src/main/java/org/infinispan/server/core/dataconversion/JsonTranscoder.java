@@ -80,12 +80,16 @@ public class JsonTranscoder extends OneToManyTranscoder {
          }
          try {
             if (content instanceof byte[]) {
-               String contentAsString = new String((byte[]) content, destinationType.getCharset());
-               return objectMapper.writeValueAsBytes(contentAsString);
+               try {
+                  return objectMapper.readTree((byte[]) content).toString().getBytes(destinationType.getCharset());
+               } catch (IOException e) {
+                  String contentAsString = new String((byte[]) content, destinationType.getCharset());
+                  return objectMapper.writeValueAsBytes(contentAsString);
+               }
             }
             return objectMapper.writeValueAsBytes(content);
          } catch (IOException e) {
-            throw new CacheException(e);
+            throw logger.cannotConvertContent(content, contentType, destinationType);
          }
       }
       if (destinationType.match(APPLICATION_OBJECT)) {
