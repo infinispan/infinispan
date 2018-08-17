@@ -13,6 +13,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.util.logging.Log;
@@ -70,8 +71,10 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
    public synchronized void unregisterInternalCache(String name) {
       if (isInternalCache(name)) {
          Cache<Object, Object> cache = cacheManager.getCache(name, false);
-         if (cache != null)
+         if (cache != null) {
             cache.stop();
+            cache.getAdvancedCache().getComponentRegistry().getComponent(CacheJmxRegistration.class).unregisterCacheMBean();
+         }
          internalCaches.remove(name);
          privateCaches.remove(name);
          SecurityActions.undefineConfiguration(cacheManager, name);

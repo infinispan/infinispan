@@ -47,6 +47,8 @@ public abstract class SingleHotRodServerTest extends SingleCacheManagerTest {
    public void shutDownHotrod() {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotrodServer);
+      hotrodServer = null;
+      remoteCacheManager = null;
    }
 
 }
