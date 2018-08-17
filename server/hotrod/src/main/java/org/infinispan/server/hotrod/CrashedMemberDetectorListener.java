@@ -22,7 +22,6 @@ import org.infinispan.server.hotrod.logging.Log;
       // Use a separate thread to avoid blocking the view handler thread
 class CrashedMemberDetectorListener {
    private final Cache<Address, ServerAddress> addressCache;
-   private final HotRodServer server;
 
    private static final Log log = LogFactory.getLog(CrashedMemberDetectorListener.class, Log.class);
 
@@ -30,7 +29,6 @@ class CrashedMemberDetectorListener {
       // Let all nodes remove the address from their own cache locally.
       // This will exclude the address from their topology updates.
       this.addressCache = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
-      this.server = server;
    }
 
    @ViewChanged

@@ -205,6 +205,7 @@ public class HotRodTestingUtil {
          builder.name(shortTestName + builder.name());
       }
       builder.host(host).port(port);
+      builder.ioThreads(3);
       server.start(builder.build(), manager);
 
       return server;

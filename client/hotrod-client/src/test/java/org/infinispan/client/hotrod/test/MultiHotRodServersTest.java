@@ -85,6 +85,8 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
             HotRodClientTestingUtil.killServers(server);
       } finally {
          // And then the caches and cache managers
+         servers.clear();
+         clients.clear();
          super.destroy();
       }
    }
