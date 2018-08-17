@@ -1817,4 +1817,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Invalid cache loader configuration for '%s'.  If a cache loader is configured with passivation, the cache loader cannot be shared in a cluster!", id = 532)
    CacheConfigurationException passivationStoreCannotBeShared(String name);
+
+   @Message(value = "Content '%s (MediaType: '%s') cannot be converted to '%s'", id = 533)
+   EncodingException cannotConvertContent(Object content, MediaType contentType, MediaType destination);
 }
