@@ -303,6 +303,22 @@ public class DataFormatTest extends SingleHotRodServerTest {
       });
    }
 
+   @Test
+   public void testJsonFromDefaultCache() {
+      DataFormat jsonValues = DataFormat.builder()
+            .valueType(APPLICATION_JSON)
+            .valueMarshaller(new UTF8StringMarshaller()).build();
+
+      RemoteCache<Integer, String> cache = remoteCacheManager.getCache().withDataFormat(jsonValues);
+
+      String value = "{\"json_key\":\"json_value\"}";
+      cache.put(1, value);
+
+      String valueAsJson = cache.get(1);
+
+      assertEquals(value, valueAsJson);
+   }
+
    private byte[] marshall(Object o) throws Exception {
       return remoteCache.getRemoteCacheManager().getMarshaller().objectToByteBuffer(o);
    }
