@@ -1807,4 +1807,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Class '%s' blocked by deserialization white list. Include the class name in the server white list to authorize.", id = 529)
    CacheException errorDeserializing(String className);
+
+   @Message(value = "Content '%s (MediaType: '%s') cannot be converted to '%s'", id = 533)
+   EncodingException cannotConvertContent(Object content, MediaType contentType, MediaType destination);
 }
