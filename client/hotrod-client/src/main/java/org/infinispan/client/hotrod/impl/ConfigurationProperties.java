@@ -464,4 +464,8 @@ public class ConfigurationProperties {
    public long getTransactionTimeout() {
       return props.getLongProperty(TRANSACTION_TIMEOUT, TransactionConfigurationBuilder.DEFAULT_TIMEOUT);
    }
+
+   public String getServerList(){
+      return props.getProperty(SERVER_LIST);
+   }
 }
