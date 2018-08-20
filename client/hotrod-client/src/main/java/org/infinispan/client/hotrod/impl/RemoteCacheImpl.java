@@ -92,7 +92,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       this.name = name;
       this.remoteCacheManager = rcm;
       this.defaultDataFormat = DataFormat.builder().build();
-      this.defaultDataFormat.initialize(remoteCacheManager);
    }
 
    public void init(Marshaller marshaller, OperationsFactory operationsFactory,
@@ -370,7 +369,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public Map<K, V> getBulk(int size) {
       assertRemoteCacheManagerIsStarted();
-      BulkGetOperation<K, V> op = operationsFactory.newBulkGetOperation(size);
+      BulkGetOperation<K, V> op = operationsFactory.newBulkGetOperation(size, dataFormat);
       return await(op.execute().thenApply(Collections::unmodifiableMap));
    }
 
@@ -481,7 +480,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return result;
    }
 
-   public PingOperation.PingResult ping() {
+   public PingOperation.PingResponse ping() {
       return await(operationsFactory.newFaultTolerantPingOperation().execute());
    }
 
@@ -776,7 +775,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public <T, U> RemoteCache<T, U> withDataFormat(DataFormat newDataFormat) {
       newDataFormat = Objects.requireNonNull(newDataFormat, "Data Format must not be null");
-      newDataFormat.initialize(remoteCacheManager);
+      newDataFormat.initialize(remoteCacheManager, isObjectStorage);
       RemoteCacheImpl<T, U> instance = newInstance();
       instance.dataFormat = newDataFormat;
       return instance;
@@ -788,14 +787,14 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return copy;
    }
 
-   public PingOperation.PingResult resolveStorage() {
+   public PingOperation.PingResponse resolveStorage() {
       if (remoteCacheManager.isStarted()) {
-         PingOperation.PingResult result = ping();
-         isObjectStorage = result.isObjectStorage();
+         PingOperation.PingResponse result = ping();
+         this.isObjectStorage = operationsFactory.getCodec().isObjectStorageHinted(result);
+         this.defaultDataFormat.initialize(remoteCacheManager, isObjectStorage);
          return result;
       }
-
-      return PingOperation.PingResult.FAIL;
+      return PingOperation.PingResponse.EMPTY;
    }
 
    @Override

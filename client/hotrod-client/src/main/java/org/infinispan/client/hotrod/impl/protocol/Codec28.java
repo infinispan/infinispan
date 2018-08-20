@@ -16,12 +16,17 @@ public class Codec28 extends Codec27 {
 
    @Override
    public HeaderParams writeHeader(ByteBuf buf, HeaderParams params) {
-      HeaderParams headerParams = writeHeader(buf, params, HotRodConstants.VERSION_28);
+      return this.writeHeader(buf, params, HotRodConstants.VERSION_28);
+   }
+
+   @Override
+   protected HeaderParams writeHeader(ByteBuf buf, HeaderParams params, byte version) {
+      HeaderParams headerParams = super.writeHeader(buf, params, version);
       writeDataTypes(buf, params.dataFormat);
       return headerParams;
    }
 
-   void writeDataTypes(ByteBuf buf, DataFormat dataFormat) {
+   private void writeDataTypes(ByteBuf buf, DataFormat dataFormat) {
       MediaType keyType = null, valueType = null;
       if (dataFormat != null) {
          keyType = dataFormat.getKeyType();

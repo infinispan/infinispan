@@ -4,12 +4,11 @@ import java.net.SocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.commons.dataconversion.MediaType;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -22,7 +21,7 @@ import io.netty.handler.codec.DecoderException;
  * @author Galder Zamarreño
  * @since 5.2
  */
-public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingOperation.PingResult> {
+public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingOperation.PingResponse> {
 
    protected FaultTolerantPingOperation(Codec codec, ChannelFactory channelFactory,
                                         byte[] cacheName, AtomicInteger topologyId, int flags,
@@ -37,10 +36,11 @@ public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingOper
 
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      if (HotRodConstants.isSuccess(status)) {
-         complete(HotRodConstants.isObjectStorage(status)
-               ? PingOperation.PingResult.SUCCESS_WITH_OBJECT_STORAGE
-               : PingOperation.PingResult.SUCCESS);
+      MediaType keyMediaType = codec.readKeyType(buf);
+      MediaType valueMediaType = codec.readValueType(buf);
+      PingOperation.PingResponse pingResponse = new PingOperation.PingResponse(status, keyMediaType, valueMediaType);
+      if (pingResponse.isSuccess()) {
+         complete(pingResponse);
       } else {
          String hexStatus = Integer.toHexString(status);
          if (trace)
@@ -56,8 +56,10 @@ public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingOper
       while (cause instanceof DecoderException && cause.getCause() != null) {
          cause = cause.getCause();
       }
-      if (cause instanceof HotRodClientException && cause.getMessage().contains("CacheNotFoundException")) {
-         complete(PingOperation.PingResult.CACHE_DOES_NOT_EXIST);
+
+      PingOperation.PingResponse pingResponse = new PingOperation.PingResponse(cause);
+      if (pingResponse.isCacheNotFound()) {
+         complete(pingResponse);
          return null;
       }
       return super.handleException(cause, ctx, address);

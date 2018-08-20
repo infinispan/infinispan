@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Set;
 
+import org.infinispan.client.hotrod.impl.operations.PingOperation;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 
 import io.netty.buffer.ByteBuf;
@@ -41,5 +42,13 @@ public class Codec24 extends Codec23 {
    @Override
    public int readProjectionSize(ByteBuf buf) {
       return ByteBufUtil.readVInt(buf);
+   }
+
+   @Override
+   public boolean isObjectStorageHinted(PingOperation.PingResponse pingResponse) {
+      short status = pingResponse.getStatus();
+      return status == NO_ERROR_STATUS_OBJ_STORAGE
+            || status == SUCCESS_WITH_PREVIOUS_OBJ_STORAGE
+            || status == NOT_EXECUTED_WITH_PREVIOUS_OBJ_STORAGE;
    }
 }

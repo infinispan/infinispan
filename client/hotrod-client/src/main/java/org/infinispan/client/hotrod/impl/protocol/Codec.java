@@ -13,9 +13,11 @@ import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.counter.impl.HotRodCounterEvent;
 import org.infinispan.client.hotrod.event.impl.AbstractClientEvent;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.PingOperation.PingResponse;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.configuration.ClassWhiteList;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
@@ -63,17 +65,12 @@ public interface Codec {
 
    AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> listenerDataFormat, short eventTypeId, ClassWhiteList whitelist, SocketAddress serverAddress);
 
-   Object returnPossiblePrevValue(ByteBuf buf, short status, int flags, ClassWhiteList whitelist, Marshaller marshaller);
+   Object returnPossiblePrevValue(ByteBuf buf, short status, DataFormat dataFormat, int flags, ClassWhiteList whitelist, Marshaller marshaller);
 
    /**
     * Logger for Hot Rod client codec
     */
    Log getLog();
-
-   /**
-    * Read and unmarshall byte array.
-    */
-   <T> T readUnmarshallByteArray(ByteBuf buf, short status, ClassWhiteList whitelist, Marshaller marshaller);
 
    void writeClientListenerInterests(ByteBuf buf, Set<Class<? extends Annotation>> classes);
 
@@ -139,4 +136,24 @@ public interface Codec {
          IntSet segments, int batchSize) {
       throw new UnsupportedOperationException("This version doesn't support iterating upon entries!");
    }
+
+   /**
+    * Reads the {@link MediaType} of the key during initial ping of the cache.
+    */
+   default MediaType readKeyType(ByteBuf buf) {
+      return MediaType.APPLICATION_UNKNOWN;
+   }
+
+   /**
+    * Reads the {@link MediaType} of the key during initial ping of the cache.
+    */
+   default MediaType readValueType(ByteBuf buf) {
+      return MediaType.APPLICATION_UNKNOWN;
+   }
+
+   /**
+    * Read the response code for hints of object storage in the server.
+    */
+   boolean isObjectStorageHinted(PingResponse pingResponse);
+
 }

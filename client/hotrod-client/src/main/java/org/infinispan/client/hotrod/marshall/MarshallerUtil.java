@@ -6,7 +6,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectStreamConstants;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.CacheException;
@@ -26,11 +25,11 @@ public final class MarshallerUtil {
    }
 
    @SuppressWarnings("unchecked")
-   public static <T> T bytes2obj(Marshaller marshaller, byte[] bytes, short status, ClassWhiteList whitelist) {
+   public static <T> T bytes2obj(Marshaller marshaller, byte[] bytes, boolean objectStorage, ClassWhiteList whitelist) {
       if (bytes == null || bytes.length == 0) return null;
       try {
          Object ret = marshaller.objectFromByteBuffer(bytes);
-         if (HotRodConstants.isObjectStorage(status)) {
+         if (objectStorage) {
             // Server stores objects
             // No extra configuration is required for client in this scenario,
             // and no different marshaller should be required to deal with standard serialization.

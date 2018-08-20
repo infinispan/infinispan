@@ -47,6 +47,10 @@ public interface VersionedEncoder {
 
    ByteBuf emptyResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status);
 
+   default ByteBuf emptyResponseWithMediaTypes(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status) {
+      return emptyResponse(header, server, alloc, status);
+   }
+
    ByteBuf statsResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, Stats stats, NettyTransport transport, ComponentRegistry cacheRegistry);
 
    ByteBuf valueWithVersionResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, byte[] value, long version);

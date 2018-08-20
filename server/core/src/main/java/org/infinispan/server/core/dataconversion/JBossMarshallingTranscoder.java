@@ -16,6 +16,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.dataconversion.Transcoder;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -85,6 +86,8 @@ public class JBossMarshallingTranscoder extends OneToManyTranscoder {
       }
       if (destinationType.equals(APPLICATION_UNKNOWN)) {
          try {
+            //TODO: Remove wrapping of byte[] into WrappedByteArray from the Hot Rod Multimap operations.
+            if (content instanceof WrappedByteArray) return content;
             return StandardConversions.convertJavaToOctetStream(content, MediaType.APPLICATION_OBJECT, marshaller);
          } catch (IOException | InterruptedException e) {
             throw logger.unsupportedContent(content);
