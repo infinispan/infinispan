@@ -21,7 +21,8 @@ pipeline {
                 // Workaround for JENKINS-47230
                 script {
                     env.MAVEN_HOME = tool('Maven')
-                    env.MAVEN_OPTS = "-Xmx800m -XX:+HeapDumpOnOutOfMemoryError"
+                    env.MAVEN_OPTS = "-XX:+UseG1GC -Xmx800m -XX:+HeapDumpOnOutOfMemoryError -XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:FlightRecorderOptions=settings=profile,stackdepth=128,dumponexitpath=. -XX:StartFlightRecording=dumponexit=true"
+                    env.MAVEN_FORK_OPTS = "-XX:-UseBiasedLocking -XX:+UseG1GC -Xmx1G -XX:+HeapDumpOnOutOfMemoryError -XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:FlightRecorderOptions=settings=profile,stackdepth=128,dumponexitpath=. -XX:StartFlightRecording=dumponexit=true"
                     env.JAVA_HOME = tool('JDK 8')
                     env.JAVA10_HOME = tool('JDK 10')
                 }
@@ -39,7 +40,7 @@ pipeline {
         stage('Build') {
             steps {
                 configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                    sh "$MAVEN_HOME/bin/mvn clean install -B -V -e -s $MAVEN_SETTINGS -DskipTests -Djava10.home=$JAVA10_HOME"
+                    sh "$MAVEN_HOME/bin/mvn clean install -B -V -e -s $MAVEN_SETTINGS -DskipTests -Djava10.home=$JAVA10_HOME -am -pl core"
                 }
                 warnings canRunOnFailed: true, consoleParsers: [[parserName: 'Maven'], [parserName: 'Java Compiler (javac)']], shouldDetectModules: true
                 checkstyle canRunOnFailed: true, pattern: '**/target/checkstyle-result.xml', shouldDetectModules: true
@@ -49,7 +50,7 @@ pipeline {
         stage('Tests') {
             steps {
                 configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                    sh "$MAVEN_HOME/bin/mvn verify -B -V -e -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true -Dansi.strip=true -Djava10.home=$JAVA10_HOME"
+                    sh "$MAVEN_HOME/bin/mvn verify -B -V -e -o -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true -Dansi.strip=true -Djava10.home=$JAVA10_HOME -pl core -Dcheckstyle.skip=true"
                 }
                 // TODO Add StabilityTestDataPublisher after https://issues.jenkins-ci.org/browse/JENKINS-42610 is fixed
                 // Capture target/surefire-reports/*.xml, target/failsafe-reports/*.xml,
@@ -77,7 +78,7 @@ pipeline {
         always {
             // Archive logs and dump files
             sh 'find . \\( -name "*.log" -o -name "*.dump*" -o -name "hs_err_*" \\) -exec xz {} \\;'
-            archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.xz,documentation/target/generated-html/**,**/surefire-reports/TEST-*.xml'
+            archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.jfr,**/*.xz,documentation/target/generated-html/**,**/surefire-reports/TEST-*.xml'
 
             // Clean
             sh 'git clean -fdx -e "*.hprof" || echo "git clean failed, exit code $?"'

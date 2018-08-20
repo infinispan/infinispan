@@ -789,7 +789,6 @@
                   <excludes>
                      <exclude>**/package-info.java</exclude>
                   </excludes>
-                  <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files</compilerArgument>
                </configuration>
             </plugin>
          </plugins>
