@@ -43,7 +43,7 @@ public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T>
    }
 
    protected T returnPossiblePrevValue(ByteBuf buf, short status) {
-      return (T) codec.returnPossiblePrevValue(buf, status, flags, cfg.getClassWhiteList(), channelFactory.getMarshaller());
+      return (T) codec.returnPossiblePrevValue(buf, status, dataFormat, flags, cfg.getClassWhiteList(), channelFactory.getMarshaller());
    }
 
    protected VersionedOperationResponse returnVersionedOperationResponse(ByteBuf buf, short status) {

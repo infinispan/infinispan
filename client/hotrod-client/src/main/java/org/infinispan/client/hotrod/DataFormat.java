@@ -27,6 +27,7 @@ public final class DataFormat {
 
    private MarshallerRegistry marshallerRegistry;
    private Marshaller defaultMarshaller;
+   private boolean isObjectStorage;
 
    private DataFormat(MediaType keyType, MediaType valueType, Marshaller keyMarshaller, Marshaller valueMarshaller) {
       this.keyType = keyType;
@@ -51,9 +52,10 @@ public final class DataFormat {
       return marshaller == null ? null : marshaller.mediaType();
    }
 
-   public void initialize(RemoteCacheManager remoteCacheManager) {
+   public void initialize(RemoteCacheManager remoteCacheManager, boolean serverObjectStorage) {
       this.marshallerRegistry = remoteCacheManager.getMarshallerRegistry();
       this.defaultMarshaller = remoteCacheManager.getMarshaller();
+      this.isObjectStorage = serverObjectStorage;
    }
 
    private Marshaller resolveValueMarshaller() {
@@ -65,6 +67,10 @@ public final class DataFormat {
       log.debugf("No marshaller registered for %s, using no-op marshaller", valueType);
 
       return IdentityMarshaller.INSTANCE;
+   }
+
+   public boolean isObjectStorage() {
+      return isObjectStorage;
    }
 
    private Marshaller resolveKeyMarshaller() {
@@ -88,14 +94,14 @@ public final class DataFormat {
       return obj2bytes(valueMarshaller, value, false, estimateKeySize, estimateValueSize);
    }
 
-   public <T> T keyToObj(byte[] bytes, short status, ClassWhiteList whitelist) {
+   public <T> T keyToObj(byte[] bytes, ClassWhiteList whitelist) {
       Marshaller keyMarshaller = resolveKeyMarshaller();
-      return bytes2obj(keyMarshaller, bytes, status, whitelist);
+      return bytes2obj(keyMarshaller, bytes, isObjectStorage, whitelist);
    }
 
-   public <T> T valueToObj(byte[] bytes, short status, ClassWhiteList whitelist) {
+   public <T> T valueToObj(byte[] bytes, ClassWhiteList whitelist) {
       Marshaller valueMarshaller = resolveValueMarshaller();
-      return bytes2obj(valueMarshaller, bytes, status, whitelist);
+      return bytes2obj(valueMarshaller, bytes, isObjectStorage, whitelist);
    }
 
    @Override

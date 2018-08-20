@@ -2,12 +2,14 @@ package org.infinispan.client.hotrod.impl.multimap.operations;
 
 import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.GET_MULTIMAP_REQUEST;
 import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.GET_MULTIMAP_RESPONSE;
+import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.operations.AbstractKeyOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -34,8 +36,8 @@ public class GetKeyMultimapOperation<V> extends AbstractKeyOperation<Collection<
 
    public GetKeyMultimapOperation(Codec codec, ChannelFactory channelFactory,
                                   Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags,
-                                  Configuration cfg) {
-      super(GET_MULTIMAP_REQUEST, GET_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, null);
+                                  Configuration cfg, DataFormat dataFormat) {
+      super(GET_MULTIMAP_REQUEST, GET_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, dataFormat);
    }
 
    @Override
@@ -60,7 +62,7 @@ public class GetKeyMultimapOperation<V> extends AbstractKeyOperation<Collection<
          result = new HashSet<>(size);
       }
       while (result.size() < size) {
-         V value = codec.readUnmarshallByteArray(buf, status, cfg.getClassWhiteList(), channelFactory.getMarshaller());
+         V value = bytes2obj(channelFactory.getMarshaller(), ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), cfg.getClassWhiteList());
          result.add(value);
          decoder.checkpoint();
       }

@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.DataFormat;
@@ -54,7 +56,7 @@ public class GetWithVersionOperation<V> extends AbstractKeyOperation<VersionedVa
       if (trace) {
          log.tracef("Received version: %d", version);
       }
-      V value = codec.readUnmarshallByteArray(buf, status, cfg.getClassWhiteList(), channelFactory.getMarshaller());
+      V value = bytes2obj(channelFactory.getMarshaller(), ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), cfg.getClassWhiteList());
       complete(new VersionedValueImpl<V>(version, value));
    }
 }

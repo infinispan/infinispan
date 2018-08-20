@@ -1,9 +1,12 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -24,8 +27,8 @@ public class BulkGetKeysOperation<K> extends RetryOnFailureOperation<Set<K>> {
    private final Set<K> result = new HashSet<>();
 
    public BulkGetKeysOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
-                               AtomicInteger topologyId, int flags, Configuration cfg, int scope) {
-      super(BULK_GET_KEYS_REQUEST, BULK_GET_KEYS_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null);
+                               AtomicInteger topologyId, int flags, Configuration cfg, int scope, DataFormat dataFormat) {
+      super(BULK_GET_KEYS_REQUEST, BULK_GET_KEYS_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat);
       this.scope = scope;
    }
 
@@ -49,7 +52,7 @@ public class BulkGetKeysOperation<K> extends RetryOnFailureOperation<Set<K>> {
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       while (buf.readUnsignedByte() == 1) { //there's more!
-         result.add(codec.readUnmarshallByteArray(buf, status, cfg.getClassWhiteList(), channelFactory.getMarshaller()));
+         result.add(bytes2obj(channelFactory.getMarshaller(), ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), cfg.getClassWhiteList()));
          decoder.checkpoint();
       }
       complete(result);

@@ -14,10 +14,12 @@ import org.infinispan.client.hotrod.impl.transport.netty.ChannelOperation;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.dataconversion.MediaType;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.DecoderException;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -27,7 +29,7 @@ import net.jcip.annotations.Immutable;
  * @since 4.1
  */
 @Immutable
-public class PingOperation extends HotRodOperation<PingOperation.PingResult> implements ChannelOperation {
+public class PingOperation extends HotRodOperation<PingOperation.PingResponse> implements ChannelOperation {
    private static final Log log = LogFactory.getLog(PingOperation.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -52,16 +54,17 @@ public class PingOperation extends HotRodOperation<PingOperation.PingResult> imp
    }
 
    @Override
-   public CompletableFuture<PingResult> execute() {
+   public CompletableFuture<PingResponse> execute() {
       throw new UnsupportedOperationException("Cannot execute directly");
    }
 
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      if (HotRodConstants.isSuccess(status)) {
-         complete(HotRodConstants.isObjectStorage(status)
-               ? PingResult.SUCCESS_WITH_OBJECT_STORAGE
-               : PingResult.SUCCESS);
+      MediaType keyMediaType = codec.readKeyType(buf);
+      MediaType valueMediaType = codec.readKeyType(buf);
+      PingOperation.PingResponse pingResponse = new PingOperation.PingResponse(status, keyMediaType, valueMediaType);
+      if (pingResponse.isSuccess()) {
+         complete(pingResponse);
       } else {
          String hexStatus = Integer.toHexString(status);
          if (trace)
@@ -74,30 +77,60 @@ public class PingOperation extends HotRodOperation<PingOperation.PingResult> imp
 
    @Override
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-      if (cause instanceof HotRodClientException && cause.getMessage().contains("CacheNotFoundException")) {
-         complete(PingResult.CACHE_DOES_NOT_EXIST);
-         return;
+      while (cause instanceof DecoderException && cause.getCause() != null) {
+         cause = cause.getCause();
+      }
+      PingOperation.PingResponse pingResponse = new PingOperation.PingResponse(cause);
+      if (pingResponse.isCacheNotFound()) {
+         complete(pingResponse);
       } else {
          super.exceptionCaught(ctx, cause);
       }
    }
 
-   public enum PingResult {
-      // Success if the ping request was responded correctly
-      SUCCESS,
-      // Success with object storage in the server
-      SUCCESS_WITH_OBJECT_STORAGE,
-      // When the ping request fails due to non-existing cache
-      CACHE_DOES_NOT_EXIST,
-      // For any other type of failures
-      FAIL;
+   public static class PingResponse {
+
+      public static PingResponse EMPTY = new PingResponse(null);
+
+      private final short status;
+      private final MediaType keyMediaType;
+      private final MediaType valueMediaType;
+      private final Throwable error;
+
+      PingResponse(short status, MediaType keyMediaType, MediaType valueMediaType) {
+         this.status = status;
+         this.keyMediaType = keyMediaType;
+         this.valueMediaType = valueMediaType;
+         this.error = null;
+      }
+
+      PingResponse(Throwable error) {
+         this.status = -1;
+         this.keyMediaType = MediaType.APPLICATION_UNKNOWN;
+         this.valueMediaType = MediaType.APPLICATION_UNKNOWN;
+         this.error = error;
+      }
+
+      public short getStatus() {
+         return status;
+      }
 
       public boolean isSuccess() {
-         return this == SUCCESS || this == SUCCESS_WITH_OBJECT_STORAGE;
+         return HotRodConstants.isSuccess(status);
       }
 
       public boolean isObjectStorage() {
-         return this == SUCCESS_WITH_OBJECT_STORAGE;
+         return keyMediaType != null && keyMediaType.match(MediaType.APPLICATION_OBJECT);
       }
+
+      public boolean isFailed() {
+         return error != null;
+      }
+
+      public boolean isCacheNotFound() {
+         return error instanceof HotRodClientException && error.getMessage().contains("CacheNotFoundException");
+      }
+
    }
+
 }

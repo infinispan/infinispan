@@ -2,12 +2,14 @@ package org.infinispan.client.hotrod.impl.multimap.operations;
 
 import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.GET_MULTIMAP_WITH_METADATA_REQUEST;
 import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.GET_MULTIMAP_WITH_METADATA_RESPONSE;
+import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.multimap.metadata.MetadataCollectionImpl;
 import org.infinispan.client.hotrod.impl.operations.AbstractKeyOperation;
@@ -38,8 +40,8 @@ public class GetKeyWithMetadataMultimapOperation<V> extends AbstractKeyOperation
 
    public GetKeyWithMetadataMultimapOperation(Codec codec, ChannelFactory channelFactory,
                                               Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags,
-                                              Configuration cfg) {
-      super(GET_MULTIMAP_WITH_METADATA_REQUEST, GET_MULTIMAP_WITH_METADATA_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, null);
+                                              Configuration cfg, DataFormat dataFormat) {
+      super(GET_MULTIMAP_WITH_METADATA_REQUEST, GET_MULTIMAP_WITH_METADATA_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, dataFormat);
    }
 
    @Override
@@ -78,7 +80,7 @@ public class GetKeyWithMetadataMultimapOperation<V> extends AbstractKeyOperation
       int size = ByteBufUtil.readVInt(buf);
       Collection<V> values = new ArrayList<>(size);
       for (int i = 0; i < size; ++i) {
-         V value = codec.readUnmarshallByteArray(buf, status, cfg.getClassWhiteList(), channelFactory.getMarshaller());
+         V value = bytes2obj(channelFactory.getMarshaller(), ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), cfg.getClassWhiteList());
          values.add(value);
       }
       complete(new MetadataCollectionImpl<>(values, creation, lifespan, lastUsed, maxIdle, version));

@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
+
 import java.lang.annotation.Annotation;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -19,6 +21,7 @@ import org.infinispan.client.hotrod.event.impl.AbstractClientEvent;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
+import org.infinispan.client.hotrod.impl.operations.PingOperation.PingResponse;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
@@ -157,9 +160,14 @@ public class Codec10 implements Codec {
    }
 
    @Override
-   public Object returnPossiblePrevValue(ByteBuf buf, short status, int flags, ClassWhiteList whitelist, Marshaller marshaller) {
+   public boolean isObjectStorageHinted(PingResponse pingResponse) {
+      return false;
+   }
+
+   @Override
+   public Object returnPossiblePrevValue(ByteBuf buf, short status, DataFormat dataFormat, int flags, ClassWhiteList whitelist, Marshaller marshaller) {
       if (hasForceReturn(flags)) {
-         return CodecUtils.readUnmarshallByteArray(buf, status, whitelist, marshaller);
+         return bytes2obj(marshaller, ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), whitelist);
       } else {
          return null;
       }
@@ -172,11 +180,6 @@ public class Codec10 implements Codec {
    @Override
    public Log getLog() {
       return log;
-   }
-
-   @Override
-   public <T> T readUnmarshallByteArray(ByteBuf buf, short status, ClassWhiteList whitelist, Marshaller marshaller) {
-      return CodecUtils.readUnmarshallByteArray(buf, status, whitelist, marshaller);
    }
 
    public void writeClientListenerInterests(ByteBuf buf, Set<Class<? extends Annotation>> classes) {

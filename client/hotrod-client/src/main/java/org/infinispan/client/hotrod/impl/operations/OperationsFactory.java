@@ -163,14 +163,14 @@ public class OperationsFactory implements HotRodConstants {
             codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg);
    }
 
-   public <K, V> BulkGetOperation<K, V> newBulkGetOperation(int size) {
+   public <K, V> BulkGetOperation<K, V> newBulkGetOperation(int size, DataFormat dataFormat) {
       return new BulkGetOperation(
-            codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, size);
+            codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, size, dataFormat);
    }
 
-   public <K> BulkGetKeysOperation<K> newBulkGetKeysOperation(int scope) {
+   public <K> BulkGetKeysOperation<K> newBulkGetKeysOperation(int scope, DataFormat dataFormat) {
       return new BulkGetKeysOperation<>(
-            codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, scope);
+            codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, scope, dataFormat);
    }
 
    public AddClientListenerOperation newAddClientListenerOperation(Object listener, DataFormat dataFormat) {

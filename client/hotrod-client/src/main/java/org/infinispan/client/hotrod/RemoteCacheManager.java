@@ -32,7 +32,7 @@ import org.infinispan.client.hotrod.impl.MarshallerRegistry;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.RemoteCacheManagerAdminImpl;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
-import org.infinispan.client.hotrod.impl.operations.PingOperation.PingResult;
+import org.infinispan.client.hotrod.impl.operations.PingOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.CodecFactory;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -341,11 +341,10 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
             RemoteCacheHolder rcc = new RemoteCacheHolder(result, forceReturnValueOverride);
             startRemoteCache(rcc);
 
-            PingResult pingResult = result.resolveStorage();
+            PingOperation.PingResponse pingResponse = result.resolveStorage();
             // If ping not successful assume that the cache does not exist
             // Default cache is always started, so don't do for it
-            if (!cacheName.equals(RemoteCacheManager.DEFAULT_CACHE_NAME) &&
-                  pingResult == PingResult.CACHE_DOES_NOT_EXIST) {
+            if (!cacheName.equals(RemoteCacheManager.DEFAULT_CACHE_NAME) && pingResponse.isCacheNotFound()) {
                return null;
             }
             if (transactionMode != TransactionMode.NONE) {

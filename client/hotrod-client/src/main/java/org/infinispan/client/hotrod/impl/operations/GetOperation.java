@@ -38,7 +38,7 @@ public class GetOperation<V> extends AbstractKeyOperation<V> {
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (!HotRodConstants.isNotExist(status) && HotRodConstants.isSuccess(status)) {
-         complete(dataFormat.valueToObj(ByteBufUtil.readArray(buf), status, cfg.getClassWhiteList()));
+         complete(dataFormat.valueToObj(ByteBufUtil.readArray(buf), cfg.getClassWhiteList()));
       } else {
          complete(null);
       }

@@ -25,6 +25,8 @@ import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.MediaTypeIds;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.CloseableIterator;
@@ -41,6 +43,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.server.core.transport.NettyTransport;
+import org.infinispan.server.core.transport.VInt;
 import org.infinispan.server.hotrod.counter.listener.ClientCounterEvent;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.logging.Log;
@@ -153,6 +156,11 @@ class Encoder2x implements VersionedEncoder {
    @Override
    public ByteBuf emptyResponse(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status) {
       return writeHeader(header, server, alloc, status);
+   }
+
+   @Override
+   public ByteBuf emptyResponseWithMediaTypes(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status) {
+      return writeHeader(header, server, alloc, status, true);
    }
 
    @Override
@@ -403,6 +411,10 @@ class Encoder2x implements VersionedEncoder {
    }
 
    private ByteBuf writeHeader(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status) {
+      return writeHeader(header, server, alloc, status, false);
+   }
+
+   private ByteBuf writeHeader(HotRodHeader header, HotRodServer server, ByteBufAllocator alloc, OperationStatus status, boolean sendMediaType) {
       ByteBuf buf = alloc.ioBuffer();
       // Sometimes an error happens before we have added the cache to the knownCaches/knownCacheConfigurations map
       // If that happens, we pretend the cache is LOCAL and we skip the topology update
@@ -411,13 +423,15 @@ class Encoder2x implements VersionedEncoder {
             server.getAddressCache() : null;
 
       Optional<AbstractTopologyResponse> newTopology;
-      boolean compatibilityEnabled;
+
+      MediaType keyMediaType = null;
+      MediaType valueMediaType = null;
+      boolean objectStorage = false;
       CacheTopology cacheTopology;
 
       if (CounterModuleLifecycle.COUNTER_CACHE_NAME.equals(cacheName)) {
          cacheTopology = getCounterCacheTopology(server.getCacheManager());
          newTopology = getTopologyResponse(header.clientIntel, header.topologyId, addressCache, CacheMode.DIST_SYNC, cacheTopology);
-         compatibilityEnabled = false;
       } else {
          ComponentRegistry cr = server.getCacheRegistry(cacheName);
          Configuration configuration = server.getCacheConfiguration(cacheName);
@@ -425,16 +439,18 @@ class Encoder2x implements VersionedEncoder {
 
          cacheTopology = cacheMode.isClustered() ? cr.getDistributionManager().getCacheTopology() : null;
          newTopology = getTopologyResponse(header.clientIntel, header.topologyId, addressCache, cacheMode, cacheTopology);
-         boolean objectStorage = configuration != null && APPLICATION_OBJECT.match(configuration.encoding().keyDataType().mediaType());
-         compatibilityEnabled = configuration != null && configuration.compatibility().enabled();
-         compatibilityEnabled |= objectStorage;
+         if (configuration != null) {
+            keyMediaType = configuration.encoding().keyDataType().mediaType();
+            valueMediaType = configuration.encoding().valueDataType().mediaType();
+            objectStorage = configuration.compatibility().enabled() || APPLICATION_OBJECT.match(keyMediaType);
+         }
       }
 
 
       buf.writeByte(Constants.MAGIC_RES);
       writeUnsignedLong(header.messageId, buf);
       buf.writeByte(header.op.getResponseOpCode());
-      writeStatus(header, buf, server, compatibilityEnabled, status);
+      writeStatus(header, buf, server, objectStorage, status);
       if (newTopology.isPresent()) {
          AbstractTopologyResponse topology = newTopology.get();
          if (topology instanceof TopologyAwareResponse) {
@@ -449,6 +465,10 @@ class Encoder2x implements VersionedEncoder {
       } else {
          if (trace) log.trace("Write topology response header with no change");
          buf.writeByte(0);
+      }
+      if (sendMediaType && HotRodVersion.HOTROD_29.isAtLeast(header.version)) {
+         writeMediaType(buf, keyMediaType);
+         writeMediaType(buf, valueMediaType);
       }
       return buf;
    }
@@ -475,11 +495,32 @@ class Encoder2x implements VersionedEncoder {
    }
 
    private void writeStatus(HotRodHeader header, ByteBuf buf, HotRodServer server, boolean compatibilityEnabled, OperationStatus status) {
-      if (server == null || HotRodVersion.HOTROD_24.isOlder(header.version))
+      if (server == null || HotRodVersion.HOTROD_24.isOlder(header.version) || HotRodVersion.HOTROD_29.isAtLeast(header.version))
          buf.writeByte(status.getCode());
       else {
-         OperationStatus st = OperationStatus.withCompatibility(status, compatibilityEnabled);
+         OperationStatus st = OperationStatus.withLegacyStorageHint(status, compatibilityEnabled);
          buf.writeByte(st.getCode());
+      }
+   }
+
+   private void writeMediaType(ByteBuf buf, MediaType mediaType) {
+      if (mediaType == null) {
+         buf.writeByte(0);
+      } else {
+         Short id = MediaTypeIds.getId(mediaType.toString());
+         if (id != null) {
+            buf.writeByte(1);
+            VInt.write(buf, id);
+         } else {
+            buf.writeByte(2);
+            ExtendedByteBuf.writeString(mediaType.toString(), buf);
+         }
+         Map<String, String> parameters = mediaType.getParameters();
+         VInt.write(buf, parameters.size());
+         parameters.forEach((key, value) -> {
+            ExtendedByteBuf.writeString(key, buf);
+            ExtendedByteBuf.writeString(value, buf);
+         });
       }
    }
 

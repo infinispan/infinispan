@@ -42,7 +42,7 @@ class SegmentKeyTracker implements KeyTracker {
 
    public boolean track(byte[] key, short status, ClassWhiteList whitelist) {
       int segment = HotRodConstants.isObjectStorage(status) ?
-            segmentConsistentHash.getSegment(dataFormat.keyToObj(key, status, whitelist)) :
+            segmentConsistentHash.getSegment(dataFormat.keyToObj(key, whitelist)) :
             segmentConsistentHash.getSegment(key);
       Set<WrappedByteArray> keys = keysPerSegment.get(segment);
       // TODO: this assertion may fail due to ISPN

@@ -253,7 +253,7 @@ public final class MediaType {
    }
 
    public MediaType withParameters(Map<String, String> parameters) {
-      return new MediaType(this.type, this.subType, parameters);
+      return parameters.isEmpty() ? this : new MediaType(this.type, this.subType, parameters);
    }
 
    private static String validate(String token) {

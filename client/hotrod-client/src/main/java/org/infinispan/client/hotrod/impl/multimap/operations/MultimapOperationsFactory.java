@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl.multimap.operations;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
@@ -34,8 +35,9 @@ public class MultimapOperationsFactory {
    private final Codec codec;
 
    private final Configuration cfg;
+   private final DataFormat dataFormat;
 
-   public MultimapOperationsFactory(ChannelFactory channelFactory, String cacheName, Codec codec, Configuration cfg) {
+   public MultimapOperationsFactory(ChannelFactory channelFactory, String cacheName, Codec codec, Configuration cfg, DataFormat dataFormat) {
       this.transportFactory = channelFactory;
       this.cacheNameBytes = cacheName == null ? null : RemoteCacheManager.cacheNameBytes(cacheName);
       this.topologyId = channelFactory != null
@@ -44,16 +46,17 @@ public class MultimapOperationsFactory {
       this.forceReturnValue = cfg.forceReturnValues();
       this.codec = codec;
       this.cfg = cfg;
+      this.dataFormat = dataFormat;
    }
 
    public <K, V> GetKeyMultimapOperation<V> newGetKeyMultimapOperation(K key, byte[] keyBytes) {
       return new GetKeyMultimapOperation(
-            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg);
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat);
    }
 
    public <K, V> GetKeyWithMetadataMultimapOperation<V> newGetKeyWithMetadataMultimapOperation(K key, byte[] keyBytes) {
       return new GetKeyWithMetadataMultimapOperation(
-            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg);
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat);
    }
 
    public <K> PutKeyValueMultimapOperation newPutKeyValueOperation(K key, byte[] keyBytes, byte[] value,

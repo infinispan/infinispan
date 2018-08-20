@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.protocol;
 
 import static org.infinispan.client.hotrod.impl.Util.await;
 import static org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil.hexDump;
+import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
 
 import java.lang.annotation.Annotation;
 import java.net.InetSocketAddress;
@@ -30,6 +31,7 @@ import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateExcept
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.impl.operations.BulkGetKeysOperation;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.PingOperation;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
@@ -54,11 +56,6 @@ public class Codec20 implements Codec, HotRodConstants {
    private static final Log log = LogFactory.getLog(Codec20.class, Log.class);
 
    final boolean trace = getLog().isTraceEnabled();
-
-   @Override
-   public <T> T readUnmarshallByteArray(ByteBuf buf, short status, ClassWhiteList whitelist, Marshaller marshaller) {
-      return CodecUtils.readUnmarshallByteArray(buf, status, whitelist, marshaller);
-   }
 
    public void writeClientListenerInterests(ByteBuf buf, Set<Class<? extends Annotation>> classes) {
       // No-op
@@ -234,9 +231,14 @@ public class Codec20 implements Codec, HotRodConstants {
       if (segments != null) {
          throw new UnsupportedOperationException("This version doesn't support iterating upon keys by segment!");
       }
-      BulkGetKeysOperation<K> op = operationsFactory.newBulkGetKeysOperation(0);
+      BulkGetKeysOperation<K> op = operationsFactory.newBulkGetKeysOperation(0, remoteCache.getDataFormat());
       Set<K> keys = await(op.execute());
       return Closeables.iterator(keys.iterator());
+   }
+
+   @Override
+   public boolean isObjectStorageHinted(PingOperation.PingResponse pingResponse) {
+      return false;
    }
 
    @Override
@@ -267,18 +269,18 @@ public class Codec20 implements Codec, HotRodConstants {
       boolean isRetried = buf.readUnsignedByte() == 1;
       DataFormat dataFormat = listenerDataFormat.apply(listenerId);
       if (isCustom == 1) {
-         final Object eventData = dataFormat.valueToObj(ByteBufUtil.readArray(buf), status, whitelist);
+         final Object eventData = dataFormat.valueToObj(ByteBufUtil.readArray(buf), whitelist);
          return createCustomEvent(listenerId, eventData, eventType, isRetried);
       } else {
          switch (eventType) {
             case CLIENT_CACHE_ENTRY_CREATED:
                long createdDataVersion = buf.readLong();
-               return createCreatedEvent(listenerId, dataFormat.keyToObj(ByteBufUtil.readArray(buf), status, whitelist), createdDataVersion, isRetried);
+               return createCreatedEvent(listenerId, dataFormat.keyToObj(ByteBufUtil.readArray(buf), whitelist), createdDataVersion, isRetried);
             case CLIENT_CACHE_ENTRY_MODIFIED:
                long modifiedDataVersion = buf.readLong();
-               return createModifiedEvent(listenerId, dataFormat.keyToObj(ByteBufUtil.readArray(buf), status, whitelist), modifiedDataVersion, isRetried);
+               return createModifiedEvent(listenerId, dataFormat.keyToObj(ByteBufUtil.readArray(buf), whitelist), modifiedDataVersion, isRetried);
             case CLIENT_CACHE_ENTRY_REMOVED:
-               return createRemovedEvent(listenerId, dataFormat.keyToObj(ByteBufUtil.readArray(buf), status, whitelist), isRetried);
+               return createRemovedEvent(listenerId, dataFormat.keyToObj(ByteBufUtil.readArray(buf), whitelist), isRetried);
             default:
                throw log.unknownEvent(eventTypeId);
          }
@@ -286,9 +288,9 @@ public class Codec20 implements Codec, HotRodConstants {
    }
 
    @Override
-   public Object returnPossiblePrevValue(ByteBuf buf, short status, int flags, ClassWhiteList whitelist, Marshaller marshaller) {
+   public Object returnPossiblePrevValue(ByteBuf buf, short status, DataFormat dataFormat, int flags, ClassWhiteList whitelist, Marshaller marshaller) {
       if (HotRodConstants.hasPrevious(status)) {
-         return CodecUtils.readUnmarshallByteArray(buf, status, whitelist, marshaller);
+         return bytes2obj(marshaller, ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), whitelist);
       } else {
          return null;
       }

@@ -15,7 +15,7 @@ the custom TCP client/server Hot Rod protocol.
 * link:#hot_rod_protocol_2_6[Hot Rod Protocol 2.6]
 * link:#hot_rod_protocol_2_7[Hot Rod Protocol 2.7]
 * link:#hot_rod_protocol_2_8[Hot Rod Protocol 2.8]
-* link:#hot_rod_protocol_2_8[Hot Rod Protocol 2.9]
+* link:#hot_rod_protocol_2_9[Hot Rod Protocol 2.9]
 
 ==== Hot Rod Protocol 1.0
 
@@ -2711,13 +2711,35 @@ The request header has the following extra fields:
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 9.4
 
+.Compatibility Mode removal
+
+The compatibility mode hint from the _Response status_ fields from the operations is not sent anymore. Consequently, the following statuses are removed:
+
+* `0x06`: Success status with compatibility mode.
+* `0x07`: Success status with return previous value and compatibility mode.
+* `0x08`: Not executed with return previous value and compatibility mode.
+
+To figure out what is the server's storage, the configured MediaType of keys and values are returned on the ping operation:
+
+Ping Response (0x18):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header              | variable   | same as before
+| Response status     | 1 byte     | same as before
+| Key Type | MediaType | Media Type of the key stored in the server
+| Value Type | MediaType | Media Type of the value stored in the server
+|==============================================================================
+
+
+.New query format
+
 This version supports query requests and responses in JSON format. The format of the operations *0x1F* (Query Request) and *0x20* (Query Response) are not changed.
 
 To send JSON payloads, the "Value Format" field in the header should be _application/json_.
 
-.Query
-
-Request (0x1F):
+Query Request (0x1F):
 
 [cols="3,^2,10a",options="header"]
 |==============================================================================
@@ -2741,7 +2763,7 @@ Where:
  query_mode: the indexed query mode. Either FETCH or BROADCAST. FECTH is the default.
 |==============================================================================
 
-Response (0x20):
+Query Response (0x20):
 
 [cols="3,^2,10a",options="header"]
 |==============================================================================

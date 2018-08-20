@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
+
 import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -64,6 +66,6 @@ public class ExecuteOperation<T> extends RetryOnFailureOperation<T> {
 
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      complete(codec.readUnmarshallByteArray(buf, status, cfg.getClassWhiteList(), channelFactory.getMarshaller()));
+      complete(bytes2obj(channelFactory.getMarshaller(), ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), cfg.getClassWhiteList()));
    }
 }

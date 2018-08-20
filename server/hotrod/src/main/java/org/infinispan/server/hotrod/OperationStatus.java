@@ -18,9 +18,9 @@ public enum OperationStatus {
    NotExecutedWithPrevious(0x04),
    InvalidIteration(0x05),
 
-   SuccessCompat(0x06),
-   SuccessWithPreviousCompat(0x07),
-   NotExecutedWithPreviousCompat(0x08),
+   SuccessObjStorage(0x06),
+   SuccessWithPreviousObjStorage(0x07),
+   NotExecutedWithPreviousObjStorage(0x08),
 
    InvalidMagicOrMsgId(0x81),
    UnknownOperation(0x82),
@@ -53,15 +53,15 @@ public enum OperationStatus {
       return intMap.get(code);
    }
 
-   static OperationStatus withCompatibility(OperationStatus st, boolean isCompatibilityEnabled) {
+   static OperationStatus withLegacyStorageHint(OperationStatus st, boolean isCompatibilityEnabled) {
       if (isCompatibilityEnabled) {
          switch (st) {
             case Success:
-               return SuccessCompat;
+               return SuccessObjStorage;
             case SuccessWithPrevious:
-               return SuccessWithPreviousCompat;
+               return SuccessWithPreviousObjStorage;
             case NotExecutedWithPrevious:
-               return NotExecutedWithPreviousCompat;
+               return NotExecutedWithPreviousObjStorage;
             default:
                return st;
          }

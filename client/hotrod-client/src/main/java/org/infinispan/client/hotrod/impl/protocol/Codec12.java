@@ -4,6 +4,7 @@ import static org.infinispan.client.hotrod.impl.Util.await;
 
 import java.util.Set;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.impl.operations.BulkGetKeysOperation;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
@@ -62,7 +63,7 @@ public class Codec12 extends Codec11 {
       if (segments != null) {
          throw new UnsupportedOperationException("This version doesn't support iterating upon keys by segment!");
       }
-      BulkGetKeysOperation<K> op = operationsFactory.newBulkGetKeysOperation(0);
+      BulkGetKeysOperation<K> op = operationsFactory.newBulkGetKeysOperation(0, DataFormat.builder().build());
       Set<K> keys = await(op.execute());
       return Closeables.iterator(keys.iterator());
    }

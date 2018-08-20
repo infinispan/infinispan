@@ -1,5 +1,6 @@
 package org.infinispan.server.hotrod.test;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.server.hotrod.OperationStatus.KeyDoesNotExist;
 import static org.infinispan.server.hotrod.OperationStatus.Success;
 import static org.testng.AssertJUnit.assertEquals;
@@ -121,8 +122,10 @@ public class HotRodTestingUtil {
    public static HotRodServer startHotRodServerWithoutTransport(HotRodServerConfigurationBuilder builder, String... definedCaches) {
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder();
 
-      Configuration cacheConfiguration = new ConfigurationBuilder().
-            compatibility().enable().build();
+      Configuration cacheConfiguration = new ConfigurationBuilder()
+            .encoding().key().mediaType(APPLICATION_OBJECT_TYPE)
+            .encoding().value().mediaType(APPLICATION_OBJECT_TYPE)
+            .build();
 
       builder.startTransport(false);
 
